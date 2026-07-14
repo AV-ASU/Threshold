@@ -62,7 +62,7 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "clearing", "graveyard",
                   "country_lane", "cornfield_maze",
                   "arrival_road",
-                  "gravel_road_north", "river_crossing",
+                  "gravel_road_north",
                   "backwoods_cabin"}
 
 # The continuous outside world. Crossing between any two of these is
@@ -265,36 +265,42 @@ CULT_WAKE_EV = 1
 CULTIST_SCENES = {
     "cornfield_path", "lodge_yard", "graveyard",
     "brimley", "country_lane",
-    "gravel_road_north", "river_crossing", "backwoods_cabin",
+    "gravel_road_north", "backwoods_cabin",
     "cornfield_maze",
 }
-# Scenes open enough for His gaze to fix on you and bind a Watcher -- the
-# claimed town under open sky (NARRATIVE.md §4 / DESIGN.md §1). The curse is His own
-# attention. Safe rooms are exempt via KING_FREE_SCENES.
-GAZE_BIND_SCENES = {"brimley", "graveyard", "cornfield_maze"}
-# Sustained exposure (seconds) at high visibility before His eye fixes and the
-# first Watcher opens; hiding / dropping visibility bleeds the timer back.
-GAZE_BIND_TIME = 6.0
-GAZE_BIND_VIS = 0.45          # visibility below which His gaze can't fix
+# (The old GAZE_BIND high-visibility trigger was retired in the play-notes
+# Watcher rework: Watchers now open on EXPOSURE from WATCHER_WAKE_EV evidence,
+# not on a visibility threshold. See the WATCHER_* block below and
+# systems/threat_mixin._tick_watchers.)
 
 # King "existence" range: it's a dark void at/beyond _FAR px from the player and
 # fully manifests (blazing) by _NEAR px -- tune to slide the materialize window.
 KING_THREAT_NEAR = 48.0        # px: fully real / blazing inside this
 KING_THREAT_FAR = 340.0        # px: a dark void at/beyond this
-# The watcher-curse (replaces the old permanent curse-level spiral): being
-# cursed binds ONE Watcher to you; it clones (up to WATCHER_MAX) while you
-# stay EXPOSED (in the open), and each live Watcher raises the visibility
-# FLOOR. Clear them all -- stare each down for WATCHER_GAZE_DISPEL seconds,
-# or put one down instantly with the axe or a round -- and the curse lifts.
-WATCHER_MAX = 5                # the curse-swarm clones up to this many
-# Walking through a FOLD or a seamless world-passage has this chance to
-# manifest +1 Watcher on the far side. The first one BINDS the curse (it's
-# what starts the cloning); later rolls add to the swarm. Never fires once
-# the player already carries the max (WATCHER_MAX) -- that's the ceiling.
-FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold/portal traversal
-WATCHER_FLOOR = 0.12           # each live Watcher raises the visibility floor
-WATCHER_CLONE_INTERVAL = 7.0   # seconds of EXPOSURE between clones
-WATCHER_GAZE_DISPEL = 2.0      # seconds holding one in your gaze to dissolve it
+# The WATCHERS -- His gaze made manifest, and THE below-3 threat (play-notes
+# rework). From WATCHER_WAKE_EV evidence, while the player is EXPOSED (in the
+# open, not in cover / a safe room), the domain opens Watchers on a timer:
+# WATCHER_GRACE seconds before the FIRST of a fresh wave (and after clearing
+# one), then the evidence-scaled interval between the rest. Each live Watcher
+# HOLDS you while you are exposed and drives visibility UP by WATCHER_GAZE per
+# second (the active CLIMB -- the main visibility driver below the cult), on
+# top of a small residual WATCHER_FLOOR: ignore them and it SNOWBALLS. Clear
+# them all -- stare each down for WATCHER_GAZE_DISPEL s, or the axe / a round --
+# and the domain looks elsewhere for the grace. Cover pauses the timer and
+# drops the hold; safe rooms (KING_FREE_SCENES) suppress them entirely.
+WATCHER_WAKE_EV = 1            # evidence at which the domain starts watching
+WATCHER_MAX = 5               # the field caps here (survivable, just under King)
+WATCHER_GRACE = 6.0           # s of exposure before the first Watcher of a wave
+WATCHER_SPAWN_BASE = 7.0      # s between spawns at WATCHER_WAKE_EV ...
+WATCHER_SPAWN_STEP = 1.0      # ... shaved per further evidence (He floods them
+WATCHER_SPAWN_MIN = 3.0       #     deep) down to this floor
+WATCHER_GAZE = 0.05           # visibility CLIMB per live Watcher per second
+                              # while exposed -- the teeth of the mechanic
+WATCHER_FLOOR = 0.07          # residual visibility floor per live Watcher
+WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
+# Walking through a rift FOLD has this chance to open an extra Watcher on the
+# far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
+FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal
 VIS_FLOOR_TOTAL_CAP = 0.92     # summed floor stays just under the King (1.0)
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
@@ -323,7 +329,15 @@ KING_SEARCH_TIME = 120.0     # s searching after losing you before he loosens to
 KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
 KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
-KING_ROAM_SPEED = 1.7        # in-room float speed (px*60/s via _yk_update)
+KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
+                             # ~117 px/s, just above the player's ~105 px/s
+                             # sprint so a locked King always closes the gap
+                             # (play-notes rebalance)
+# Player sprint = PLAYER_SPRINT_MULT x the base walk (entities/player.py
+# speed). Tuned so sprint reads ~2.5x the walk yet stays ~0.9x the King
+# above: you can flee a cultist but never the apex (play-notes rebalance;
+# TODO #5 is the human tuning loop).
+PLAYER_SPRINT_MULT = 2.5
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 
 # The portal (KING_PROMPT M2): pin visibility at 100% for PORTAL_CHARGE_TIME and

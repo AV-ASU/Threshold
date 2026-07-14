@@ -1029,7 +1029,6 @@ DISPLAY_NAMES = {
     "gravel_road_north":    "the Gravel Road",
     "backwoods_cabin":      "the Hunter's Cabin",
     "backwoods_cabin_interior": "the Cabin",
-    "river_crossing":       "the River Crossing",
     "bell_tower":           "the Bell Tower",
     "cornfield_maze":       "the Cornfield",
 }

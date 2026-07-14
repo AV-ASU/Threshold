@@ -318,8 +318,6 @@ def build_brimley():
     # Road corridors poke cleanly through the 7-tile forest band so the
     # scattered trees don't grow over an exit or the lodge square.
     def _border_protected(tx, ty):
-        if tx in (13, 14, 15) and ty <= 6:
-            return True                                  # north river_crossing 'a'
         if tx in (21, 22, 23) and ty <= 6:
             return True                                  # cornfield_maze corridor
         if tx in (35, 36, 37) and ty <= 6:
@@ -531,7 +529,6 @@ def build_brimley():
     sc.wrap_x = True
     sc.wrap_y = True
     sc.add_exit("4", "country_lane",      "from_brimley")
-    sc.add_exit("a", "river_crossing",    "from_brimley")
     sc.add_exit("m", "church",            "from_brimley")
     sc.add_exit("o", "abandoned_farmhouse", "from_brimley")
     sc.add_exit("J", "toby_house",        "from_brimley")
@@ -545,9 +542,6 @@ def build_brimley():
     clearing_tx, clearing_ty = 10, 50
     objects_list = [list(r) for r in objects]
     objects_list[clearing_ty][clearing_tx] = "j"
-    # North passage to the river_crossing -- single 'a' tile, west of the
-    # river, in the north tree line.
-    objects_list[0][14] = "a"
     # Gravel road passage (north) -- single 'R' tile on the east bank.
     objects_list[0][50] = "R"
     # The fold road -- gaps in both tree walls at row 25 so the road can be
@@ -585,7 +579,6 @@ def build_brimley():
     # spawn survives on the east square in case anything routes here.
     sc.set_spawn("from_woodshed", 50, 21)
     sc.set_spawn("from_gravel_road", 50, 2)
-    sc.set_spawn("from_river_crossing", 14, 1)
     sc.set_spawn("from_cornfield_maze", 22, 1)
     sc.set_spawn("from_cornfield_path", 36, 1)
     sc.set_spawn("from_clearing", clearing_tx + 1, clearing_ty)
@@ -675,9 +668,12 @@ def build_brimley():
         "No deliveries. In a while now. But we manage. We always.",
         "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
     ], movement="homebody", radius=34)
-    # Old Pell -- the schoolhouse step, the stopped calendar behind him.
-    # He never ducks inside (the schoolhouse is enterable and empty).
-    _resident(school_out[0], school_out[1], "Old Pell", "old_townsman",
+    # Old Pell -- BESIDE the schoolhouse door (2 tiles east of the step), the
+    # stopped calendar behind him. He never ducks inside (the schoolhouse is
+    # enterable and empty), and he no longer stands ON the door: his home is
+    # clear of the door tile, its approach, and the return spawn, so he never
+    # blocks the way in (play-notes: no NPC on a door or its approach).
+    _resident(school_out[0] + 2, school_out[1], "Old Pell", "old_townsman",
               movement="homebody", radius=34, convo=PELL_CONVO,
               vanish=False,
         beats=[("beat_pell_coal",

@@ -64,7 +64,8 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
         log = game.save.arg("evidence", [])
         if isinstance(log, list) and not any(
                 isinstance(e, dict) and e.get("name") == name for e in log):
-            log.append({"name": name, "lines": list(lines),
+            log.append({"name": name,
+                        "lines": [_strip_markup(x) for x in lines],
                         "weight": CANONICAL_EVIDENCE[name]})
             game.save.set_arg("evidence", log)
             if hasattr(game, "_flash_notebook"):
@@ -102,6 +103,25 @@ def _cult_tell(game, npc_key):
     return
 
 
+def _strip_markup(text):
+    """Drop dialog markup tags ([c=dim] ... [/c], [f=], [s=], [w=], ...)
+    from a string, mirroring how parse_dialogue consumes them, so text
+    STORED to the casebook (notes + evidence) is plain. The Case card
+    renders through a non-markup wrapper, so any tag left in a stored
+    line prints literally (the '[c=dim]' leak the player saw)."""
+    out = []
+    i = 0
+    while i < len(text):
+        if text[i] == "[":
+            end = text.find("]", i)
+            if end != -1:
+                i = end + 1
+                continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
 def _log_note(game, key, lines):
     """File a PI case NOTE once, keyed by name. NOTES are the interior
     voice, shown in the notebook after the clues; they must NEVER go in
@@ -112,7 +132,7 @@ def _log_note(game, key, lines):
     notes = game.save.arg("notes", [])
     if isinstance(notes, list) and not any(
             isinstance(e, dict) and e.get("name") == key for e in notes):
-        notes.append({"name": key, "lines": list(lines)})
+        notes.append({"name": key, "lines": [_strip_markup(x) for x in lines]})
         game.save.set_arg("notes", notes)
         if hasattr(game, "_flash_notebook"):
             game._flash_notebook(key)

@@ -215,7 +215,7 @@ def _draw_cavity(cell, cx, cy, split, eyemass, facing, t, seed):
     # sits in a dark socket so it reads against the cavity, with a wet
     # glint -- the Yellow-King "mass of eyes" signature.
     if eyemass > 0.0:
-        ecount = int(3 + eyemass * 12)
+        ecount = int(2 + eyemass * 5)
         fx, fy = facing
         erng = random.Random(seed * 911 + 7)
         for i in range(ecount):
@@ -260,7 +260,7 @@ def _draw_skin_eyes(cell, cx, cy, split, eyemass, facing, t, seed):
     maw. Most stay shut and open intermittently."""
     rng = random.Random(seed * 1303 + 11)
     fx, fy = facing
-    for i in range(int(eyemass * 7)):
+    for i in range(int(eyemass * 3)):
         ang = rng.uniform(0, math.tau)
         rad = rng.uniform(0.95, 1.4)
         ex = cx + math.cos(ang) * (7 + split * 9) * rad

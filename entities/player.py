@@ -5,10 +5,13 @@ from systems.items import Inventory
 class Player:
     def __init__(self, x, y):
         self.x = x; self.y = y
-        # 1.25x the surface cultist chase speed (0.85*60 = 51 px/s): a
-        # patrol is a real threat to outrun now, not a walk-away, and the
-        # King (102 px/s) outpaces you outright -- stealth, not kiting.
-        self.speed = 64
+        # Deliberate dread WALK (play-notes rebalance): slower than a
+        # chasing cultist (0.85*60 = 51 px/s), so a locked patrol must be
+        # SPRINTED away from, not strolled past. Sprint (PLAYER_SPRINT_MULT
+        # x this = ~105 px/s) reads much faster than the walk and lands at
+        # ~0.9x the King (KING_ROAM_SPEED, ~117 px/s): you never outrun the
+        # apex, only hide.
+        self.speed = 42
         self.facing = (0, 1)
         self.size = 12
         self.walk_phase = 0.0

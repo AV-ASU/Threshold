@@ -30,7 +30,6 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_gravel_road_north,
                                 build_backwoods_cabin,
                                 build_backwoods_cabin_interior,
-                                build_river_crossing,
                                 build_bell_tower,
                                 build_cornfield_maze)
 
@@ -110,7 +109,6 @@ SCENE_BUILDERS = {
     "gravel_road_north":  build_gravel_road_north,
     "backwoods_cabin":    build_backwoods_cabin,
     "backwoods_cabin_interior": build_backwoods_cabin_interior,
-    "river_crossing":     build_river_crossing,
     "bell_tower":         build_bell_tower,
     "cornfield_maze":     build_cornfield_maze,
     # Hidden fold scenes (direction-sensitive warps off the main world).

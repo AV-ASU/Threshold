@@ -784,8 +784,6 @@ is gone, his witness account is photo-earned.)*
   §2 corrects the image for Mara ("not into the corn"). Crane's "more every
   season" and Sable's "no end of those this past year... They come" keep
   arrivals in the habitual present; arrivals ended before the seal.
-- Revolver description leaks mechanics: "(3+ evidence)" (`systems/items.py`);
-  also "fires it in the way you're facing."
 - Descent interior voice wobbles POV (first-person notes vs second-person
   on-screen beats, `systems/game.py`).
 - ~~Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk

@@ -315,8 +315,10 @@ it renders the procedural sprites to a labelled PNG strip.
   converges the room) or the window expires into the CAPTURED death.
   `_tick_visibility` reads the concealment-weighted gaze; only an
   enclosed hide keeps the strong `VIS_HIDE_BLEED` drain (corn gets idle
-  decay). Apex pursuers (`_force_chase`: King, hollow Sheriff) are
-  **exempt** — they bypass suspicion and cover entirely. Guarded
+  decay). The **hollow Sheriff** (`_force_chase`) is **exempt** — it bypasses
+  suspicion and cover entirely. The roaming **King** honors `player.hidden`
+  (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);
+  he is relentless in re-finding you, not in seeing through cover. Guarded
   end-to-end by `tests/stealth.py`. (The Pillar-2 "peek" verb is
   deliberately deferred — free look under tilt already gives the
   information function; revisit in the human-tuning pass.)
@@ -378,18 +380,26 @@ it renders the procedural sprites to a labelled PNG strip.
   then **falls** as a charred husk that stays for the visit. First
   flare files a case NOTE (never evidence). Guarded by
   `tests/stealth.py` §9.
-- **Curse** (the watcher-curse): a cultist ritual (`_tick_ritual` →
-  `_apply_curse`) binds a **Watcher** to you (`_cursed`). It **clones** —
-  up to `WATCHER_MAX` (5) — while you stay **exposed** (in the open;
-  cloning pauses in cover), and **each live Watcher raises the visibility
-  floor** by `WATCHER_FLOOR` (summed, capped at `VIS_FLOOR_TOTAL_CAP`
-  0.92 — just under the King, so it's survivable). You **cure** it by
-  clearing them all (`_tick_watchers`/`_dispel_watcher`): hold one in
-  your **gaze** for `WATCHER_GAZE_DISPEL` s (its eyes go dark, then it
-  dissolves), or put one down instantly with the **axe** arc or a
-  **round**. `SAFE_SCENES` only *suppress* Watchers; they re-form on the
-  way out. The gun and axe **share one weapon slot** (left-click to use;
-  switch which one is equipped from the inventory screen).
+- **The Watchers** (His gaze made manifest; the play-notes rework made them
+  **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
+  `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
+  in cover / a safe room), the domain **opens** a Watcher on a timer:
+  `WATCHER_GRACE` (6s) before the FIRST of a wave (and after you clear one),
+  then the **evidence-scaled** interval between the rest
+  (`_watcher_spawn_interval`: `WATCHER_SPAWN_BASE` shaved per further
+  evidence down to `WATCHER_SPAWN_MIN` — the King floods them deep). Each live
+  Watcher **HOLDS you while you are exposed and drives visibility UP** by
+  `WATCHER_GAZE`/s (the active climb — `_watcher_gaze`, the main visibility
+  driver below the cult), on top of a small residual `WATCHER_FLOOR` (summed,
+  capped `VIS_FLOOR_TOTAL_CAP` 0.92, just under the King). Ignore them and it
+  **snowballs** (more open, faster); it caps at `WATCHER_MAX` (5). You clear
+  them (`_dispel_watcher`): hold one in your **gaze** `WATCHER_GAZE_DISPEL` s
+  (its eyes go dark, then it dissolves), or the **axe** / a **round**.
+  **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
+  `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
+  `FOLD_WATCHER_CHANCE` to open an extra. (The old GAZE_BIND high-visibility
+  trigger is retired.) The gun and axe **share one weapon slot** (left-click
+  to use; switch which is equipped from the inventory screen).
 - **Killing locals**: the gun is *not* cult-only. A clean round drops any
   living **local** instantly (lethal regardless of the evidence stagger
   gate, which only ever protected the cult — see `Projectile._strike` /
@@ -584,6 +594,50 @@ it renders the procedural sprites to a labelled PNG strip.
      footprints re-checked with smoke's flood-fill (hides + exits
      reachable) BEFORE the full gate.
 - `__pycache__/` is gitignored; never commit `.pyc`.
+- **PLAYTEST ERROR CLASSES (audit for these BEFORE calling a scene, interaction, or
+  line "done" -- a 2026-07 play-test surfaced every one of them, and each is a CLASS,
+  not a one-off).** When you touch anything nearby, actively hunt the whole class
+  (a grep/preview that catches all of a kind beats fixing one instance):
+  1. **Wrong interaction verb.** Evidence and pickups are **walk-over ground items**
+     (`scene.add_item` + the auto-pickup path), NOT an `[E]` proximity prompt. An `[E]`
+     cue is only for readables/handoffs that must run a side effect the auto-pickup loop
+     can't. When you see a new `add_interactable` / `_pos` readable, ask "should this just
+     be a pickup?"
+  2. **Side-effect fires on the wrong beat.** A note/dream/pointer must trigger on the
+     event the fiction names (the door-dream ON PICKUP of the journal, not the 3rd read;
+     the desk-pointer only after meeting Sable; never write a case note before the PI has
+     actually read the thing). When you add a trigger, state the exact beat it fires on
+     and verify it.
+  3. **Mechanics in player-facing text.** No name/description/note/caption may state a
+     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", a moth
+     note that says "kill them quiet"). State the FICTION; never the system. (Companion to
+     the no-dashes HARD RULE: player-facing strings are held to a higher bar than code.)
+  4. **Editorializing / over-written captions.** A narrator beat states the fact and
+     stops; it never spells out the conclusion the player is meant to draw, and a routine
+     action (a key, a body, a prop) never becomes a long unstoppable blob. If a beat wants
+     a close-up it earns a mini-cutscene, else it is a terse line or nothing.
+  5. **Knowledge the speaker can't have.** No PI or NPC line may assume a fact the player
+     hasn't earned; testimony must not STATE the cosmology the game is built to make the
+     player infer (what the door promises, "what do you want most").
+  6. **Raw markup leaking as text.** `[c=...]` / `[/c]` and any style token must be
+     stripped on EVERY render path (notebook, scribble toast, caption), never printed
+     literally.
+  7. **Tilt-projection artifacts.** A prop must be in exactly the right tilt set (a
+     man-made thing is a `SOLID_PROPS`/`FURNITURE` volume or a `_WALL_DECO`, never a
+     swivelling standee); portals stand on a seam with **no reachable back and no floating
+     bottom frame**; wall decos and doors occlude honestly. Preview before placing (the
+     SCENE-DRESSING PROCESS above).
+  8. **Scene-geometry defects.** No NPC home/spawn on a door tile or its single approach
+     tile; a door **replaces** a wall segment, it is not a hole punched inside one; no
+     missing walls; no walkable water the fiction says is a barrier; break the grid
+     lockstep (no perfect straight prop rows); decorate more than just the one north wall
+     face; beds/furniture sit in the room's back, not across the door. **VIEW EVERY ROOM
+     FROM ALL FOUR N/E/S/W FACINGS before calling it done** (`tools/capture_world.py` per
+     facing) -- most of these hide on the one facing you happened to check.
+  9. **Threat pacing.** Speed ratios are intentional (player sprint below the King so a
+     locked apex can't be outrun but CAN be hidden from); pursuit rules, apex spawn
+     placement (never on the player's exit tile), and monster visibility/design must
+     preserve dread rather than expose it. Re-derive the ratios whenever you touch a speed.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §4)
 

@@ -14,9 +14,10 @@
 ## 1. The Threat Model
 
 A single meter: **VISIBILITY** `[0, 1]` — how visible you are to the King
-right now. Cultist gaze + Watcher figures push it up; **hiding** bleeds
-it back down (passive corn-cover tiles, plus the few crawl-**under**-
-furniture `hide_spots` via E).
+right now. The **Watchers** (His gaze made manifest) are the main driver
+below 3 evidence; cultist gaze adds on top. **Hiding** bleeds it back down
+(passive corn-cover tiles, plus the few crawl-**under**-furniture
+`hide_spots` via E). See the Watcher note in §4.
 
 > **The King is a verdict, not a monster** *(the design spine of the roaming
 > King; the mechanics + tuning live in `CLAUDE.md` and the `KING_*` config,
@@ -51,8 +52,11 @@ shake a pursuer by **putting cover between you** — round a pillar, slip
 behind a wall, melt into the corn — not by pressing E at a marked spot.
 The only E-press hides left are the handful where you **crawl under**
 furniture (a bed, a desk, the cot), a distinct act you can't do by simply
-walking. The apex pursuers (the King, the hollow Sheriff) are **exempt** —
-they never lose sight of you.
+walking. The **hollow Sheriff** (the `_force_chase` apex) is **exempt** — he
+never loses sight of you and cover cannot break him. The roaming **King** is
+not on that path: he honors `player.hidden` (stepping into corn OR an enclosed
+hide drops his hunt to searching, guarded by `tests/king_roam.py`), though he
+re-finds you rather than losing you for good, and his catch is birth-gated.
 
 **The flashlight (`[F]`) is the player's hand on that meter.** Found in
 the woodshed (beside the axe), it casts a long beam **cone** in
@@ -297,12 +301,19 @@ Only display names and fiction change.
   `scenes/base.py`) steers pursuers **around** the volumetric props (pillars,
   pews, cots, basins) while staying a straight shot in the open. Both wired
   into both cult paths (`enemy.py` underground + `npc.py` surface chasers); the
-  `_force_chase` apex stays straight and **never loses sight** (relentless). A chase carries **through
-  portals and folds** alike (`_note_fold_pursuit`/`_tick_fold_pursuit` —
-  surface NPC chasers AND underground Enemy cultists, the latter spawned native
-  to the destination), with **SAFE_SCENES the one refuge** that always shakes
-  it. Guards: flow.py §20 (no preset routes + nav routes around cover) and §21
-  (portals carry the chase; the refuge is never breached).
+  `_force_chase` apex stays straight and **never loses sight** (relentless). A
+  chase carries **only across a direction-gated rift FOLD** now
+  (`_note_fold_pursuit`/`_tick_fold_pursuit` — surface NPC chasers AND
+  underground Enemy cultists, the latter spawned native to the destination); an
+  **ordinary crossing shakes it** — a door, ladder, rope, a seamless outdoor
+  passage, a road loop, or any non-fold target — so a chaser follows within a
+  scene and across a fold but **never across an ordinary scene boundary**
+  (play-notes narrowing, 2026-07). **SAFE_SCENES** stay the refuge a fold can't
+  breach. The Watcher-curse gaze still seeds on any fold OR passage
+  (`_exit_is_fold`) — that is His attention reaching across the wrongness, not
+  a cultist on foot. Guards: flow.py §20 (no preset routes + nav routes around
+  cover) and §21 (only a rift fold carries the chase; the refuge is never
+  breached), plus tests/fold_pursuit.py.
 - ~~**Scrub the eat-cult fiction (code ↔ NARRATIVE §2).**~~ **DONE.** Canon is a
   **claiming** cult that renders no bodies (no cannibalism). The `works_cistern`
   is **the Cistern** (the dig hitting the river — *"the water runs on,
@@ -340,13 +351,22 @@ Only display names and fiction change.
   you'll ever see — the work, no worker. Locked in `tests/flow.py`. *(Its
   one-time siblings `husk_grove` / `scarecrow_ring` were cut with the walk-in
   discovery folds, 2026-07.)*
-- ~~**Rehome the Watchers as His gaze (§1).**~~ **DONE (2026-07).** The
-  mechanic is unchanged (they raise visibility; dispel by breaking the
-  gaze / axe / round) and both halves are re-pointed: the trigger is His
-  own gaze (`_tick_gaze_bind`), and the bind/escalate/clear notices in
-  `_apply_curse`/`_dispel_watcher` read as **His eye reaching into the
-  plane** ("An eye has opened on you"), never a side-cult's spell.
-  Internal names (`_cursed`, `_apply_curse`) stay as code plumbing.
+- ~~**Rehome the Watchers as His gaze (§1).**~~ **DONE (2026-07), then made
+  THE below-3 threat (play-notes rework).** The Watchers are His gaze made
+  manifest and the primary visibility driver below the King-gate. From
+  `WATCHER_WAKE_EV` (1) evidence, while the player is EXPOSED (open, not in
+  cover / a safe room), the domain OPENS Watchers on a timer
+  (`_tick_watchers`): `WATCHER_GRACE` (6s) before the first of a wave and
+  after clearing one, then the evidence-scaled `_watcher_spawn_interval`
+  between the rest (the King floods them deep). Each live Watcher HOLDS the
+  exposed player and drives visibility UP by `WATCHER_GAZE`/s (the active
+  climb, `_watcher_gaze`) plus a small residual `WATCHER_FLOOR`, so ignoring
+  them SNOWBALLS toward the King line; the field caps at `WATCHER_MAX`. Clear
+  them (gaze `WATCHER_GAZE_DISPEL` s / axe / round, `_dispel_watcher`); cover
+  pauses the timer and drops the hold. The old high-visibility
+  `_tick_gaze_bind` / `GAZE_BIND_*` trigger is retired. Notices read as **His
+  eye reaching into the plane** ("An eye has opened on you"), never a
+  side-cult's spell. Internal names (`_cursed`, `_apply_curse`) stay plumbing.
 - ~~**Gun = false-power threshold (§1).**~~ **DONE + flow-guarded.** The
   mechanic matches canon and `tests/flow.py` locks all four facts:
   **< 3 evidence kills cultists**, **3+ only staggers**, the **King and
@@ -1312,11 +1332,16 @@ ground unchanged (gaze sum × `VIS_GAZE`, minus idle decay); concealment
 cover scales the gaze contribution by `concealment_factor` (leaky, not
 zero); an enclosed hide contributes ≈ 0 (the strong break) but the
 flashlight leak (`VIS_LIT_RISE`) still applies and the **check** is the real
-threat. The evidence/Watcher **floor** is unchanged (`WATCHER_FLOOR`,
-`VIS_FLOOR_TOTAL_CAP`); only an enclosed hide keeps the strong
+threat. The evidence floor is unchanged (`VIS_FLOOR_TOTAL_CAP`); the Watcher
+contribution is now an active CLIMB while exposed (`WATCHER_GAZE`) plus a
+smaller residual floor (`WATCHER_FLOOR`) -- the play-notes below-3 threat
+(§1). Only an enclosed hide keeps the strong
 `VIS_HIDE_BLEED` drain (corn gets idle decay). SAFE_SCENES remain the only
-true refuge. **Apex pursuers** (`_force_chase`: King, hollow Sheriff) are
-exempt -- they bypass suspicion and cover entirely.
+true refuge. The **hollow Sheriff** (`_force_chase`) bypasses suspicion and
+cover entirely. The roaming **King** honors `player.hidden` instead (corn or
+an enclosed hide drops his hunt to searching, `tests/king_roam.py`); he is
+relentless in that he re-finds you and his catch is birth-gated, not in that
+cover fails against him.
 
 ### Placement principles (the tuning-pass guide, `TODO.md` #5)
 

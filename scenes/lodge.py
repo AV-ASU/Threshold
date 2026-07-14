@@ -257,7 +257,7 @@ def bedroom_interact(game):
             game.player.inventory.add("pistol", 1)
             game.player.inventory.equipped["weapon"] = "pistol"
             game.audio.play("pickup", 0.7)
-            game.show_notice("You take your revolver off the desk.")
+            game.show_notice("You take your pistol off the desk.")
             return
         # After the Dark, the case has rewritten itself. The notebook
         # the player opens the game on is the same one that closes it.

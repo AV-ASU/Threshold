@@ -252,37 +252,8 @@ class ThreatMixin:
         self.audio.play("bump", 0.6)
         self.show_notice("You tear free.", duration=1.8)
 
-    def _tick_gaze_bind(self, dt):
-        """His gaze, binding the curse (NARRATIVE §4 / DESIGN.md §1). In a GAZE_BIND_SCENES
-        scene, staying EXPOSED (not
-        hidden) while visibility is high lets His eye fix on you: a timer
-        climbs, and crossing GAZE_BIND_TIME binds the first Watcher. Hiding,
-        or dropping below GAZE_BIND_VIS, bleeds the timer back -- cover and
-        keeping your head down are the only way out. Once cursed, the Watcher
-        system (_tick_watchers) owns the swarm; this only lands the seed."""
-        if self._cursed:
-            self._gaze_bind_t = 0.0
-            return
-        if (self.scene is None or self.player is None
-                or self.scene.key not in GAZE_BIND_SCENES
-                or self.scene.key in KING_FREE_SCENES):
-            self._gaze_bind_t = 0.0
-            return
-        exposed = (self.player.hidden is None
-                   and self.visibility >= GAZE_BIND_VIS)
-        t = getattr(self, "_gaze_bind_t", 0.0)
-        if exposed:
-            if t == 0.0:
-                self.audio.play("low_pulse", 0.6)
-                self.show_notice("You feel it find you. Get out of the open.",
-                                 duration=3.0)
-            t += dt
-            if t >= GAZE_BIND_TIME:
-                self._apply_curse()
-                t = 0.0
-        else:
-            t = max(0.0, t - dt * 1.5)
-        self._gaze_bind_t = t
+    # (_tick_gaze_bind retired in the play-notes Watcher rework -- the trigger
+    #  is EXPOSURE from WATCHER_WAKE_EV evidence now, owned by _tick_watchers.)
 
     def _ensure_cultists(self, key, dt):
         """Keep the current cult scene topped up to its roaming target
@@ -291,8 +262,8 @@ class ThreatMixin:
         spawn-point pool (`Scene.cult_spawns`, else the map corners) so a
         cult scene reads populated the moment you enter; after that a killed
         cultist respawns only on the rate-limited breather
-        (CULT_TOPUP_INTERVAL). (The watcher-curse is His own gaze, bound in
-        _tick_gaze_bind; NARRATIVE §4 / DESIGN.md §1.)"""
+        (CULT_TOPUP_INTERVAL). (The Watchers are His own gaze, opened on
+        exposure by _tick_watchers; NARRATIVE §4 / DESIGN.md §1.)"""
         target = getattr(self.scene, "cult_target", None) or CULT_REGULARS
         regulars = [n for n in self.scene.npcs
                     if getattr(n, "tag", "") == "cult_regular"
@@ -467,8 +438,10 @@ class ThreatMixin:
         """True if taking this exit is a FOLD or a seamless world-passage --
         the world's wrongness (a direction-gated fold) or its open ground (an
         outdoor-to-outdoor crossing). A mundane fade -- a door, ladder, or
-        rope into an interior -- is NOT a fold. Shared by the fold-pursuit
-        stash and the fold-watcher roll so both read 'fold' the same way."""
+        rope into an interior -- is NOT a fold. Used by the fold-watcher roll
+        (His curse-gaze seeds on any fold OR passage). Pursuit no longer uses
+        this: a chaser on foot follows only across a direction-gated rift
+        fold (play-notes narrowing, see _note_fold_pursuit)."""
         if self.scene is None or self.player is None:
             return False
         target_scene = exit_data[0]
@@ -498,19 +471,16 @@ class ThreatMixin:
         self._cursed = True
 
     def _note_fold_pursuit(self, exit_data):
-        """Called the instant an exit fires, BEFORE the scene swaps. A chase
-        carries through PORTALS and FOLDS alike (DESIGN.md §4): if a cultist
-        is in active chase within FOLD_PURSUE_RANGE when the player crosses an
-        exit, stash that one pursuer so it follows a beat behind, whether the
-        exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
+        """Called the instant an exit fires, BEFORE the scene swaps. A chaser
+        follows the player ONLY across a true rift FOLD -- a direction-gated
+        pane (play-notes narrowing of DESIGN.md §7): if a cultist is in active
+        chase within FOLD_PURSUE_RANGE when the player steps through a fold,
+        stash that one pursuer so it follows a beat behind at the seam. Both
         cultist classes count -- the surface NPC chasers AND the underground
-        Enemy cultists. The chase carries through a FOLD or seamless PASSAGE, or
-        a descent into cult-held ground (underground / a CULTIST_SCENE) -- INCL.
-        a hidden-fold grove that hosts no cult of its own: the one chaser you
-        brought with you crosses the seam and can still reach you (it does NOT
-        make the grove cult territory). The escapes that shake it: a refuge
-        (FOLD_REFUGE_SCENES), or a mundane door/ladder/rope into an ordinary
-        interior (architecture is the player-only way out)."""
+        Enemy cultists. Every ORDINARY crossing shakes the chase: a door,
+        ladder, rope, a seamless outdoor passage, a road loop, or any non-fold
+        target -- a chaser does not cross an ordinary scene boundary. A refuge
+        (FOLD_REFUGE_SCENES) is never breached even by a fold."""
         target_scene, _spawn_id = exit_data
         # A same-scene relocation (the maze 'I'/'Q' folds) never touches the
         # stash: no scene load follows, the pursuer is still physically in
@@ -521,15 +491,17 @@ class ThreatMixin:
         if target_scene in FOLD_REFUGE_SCENES:
             self._fold_pursuer = None
             return
-        # Otherwise the pursuer follows only where it can reach you on the far
-        # side: through a FOLD or seamless PASSAGE (the cult's own wrong-ground,
-        # incl. a hidden grove that hosts no cult of its own), or down into
-        # cult-held ground -- the underground (Enemy cultists) or a surface
-        # CULTIST_SCENE (NPC chasers). A mundane door / ladder / rope into an
-        # ordinary interior is the player-only escape: it shakes the chase.
-        if not (self._exit_is_fold(exit_data)
-                or target_scene in UNDERGROUND_SCENES
-                or target_scene in CULTIST_SCENES):
+        # A chaser follows ONLY across a true rift FOLD (a direction-gated
+        # pane: the descent rite, the King's tears). Every ORDINARY crossing
+        # shakes it now -- a door / ladder / rope, a seamless outdoor passage,
+        # a road loop, or any non-fold target (play-notes: pursuit is
+        # same-scene + rift folds only; this narrows the old passage /
+        # UNDERGROUND / CULTIST_SCENE carry, DESIGN.md §7). The Watcher-curse
+        # gaze still seeds on any fold OR passage (_exit_is_fold) -- that is
+        # His attention reaching across the wrongness, not a cultist on foot.
+        ch = (self.scene.char_object_at(self.player.x, self.player.y)
+              if self.scene is not None else None)
+        if ch is None or ch not in self.scene.exit_directions:
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
@@ -712,13 +684,17 @@ class ThreatMixin:
         if _is_enclosed(self.player):
             self.visibility += dt * (lit_rise - VIS_HIDE_BLEED)
         else:
-            rise = self._gaze_count * VIS_GAZE + lit_rise
+            rise = (self._gaze_count * VIS_GAZE
+                    + getattr(self, "_watcher_gaze", 0.0) * WATCHER_GAZE
+                    + lit_rise)
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
         # The being-seen RATE the HUD reads (the faucet): human/cult gaze on
         # you THIS second + a lit torch, concealment-weighted the same way.
         # The King's own gaze is NOT counted here (added to visibility in
         # the roam tick) -- the bar reads the cult puzzle, the King stays felt.
-        seen_rate = self._gaze_count * VIS_GAZE + lit_rise
+        seen_rate = (self._gaze_count * VIS_GAZE
+                     + getattr(self, "_watcher_gaze", 0.0) * WATCHER_GAZE
+                     + lit_rise)
         self._being_seen = max(0.0, min(1.0, seen_rate / BEING_SEEN_FULL))
         # One-shot teach (TODO #5): the first time eyes really pile on,
         # name what the notched bar is and what breaks it.
@@ -785,57 +761,80 @@ class ThreatMixin:
         self.audio.king_tone(False)
 
     def _apply_curse(self):
-        """Land the watcher-curse. Rather than a permanent escalation it
-        BINDS a Watcher to you; it clones (up to WATCHER_MAX) while you stay
-        exposed, and each live Watcher raises the visibility FLOOR. Clear
-        them all -- stare each down, or put one down with the axe or a round
-        -- and the curse lifts. Safe interiors only suppress them."""
+        """Open the first Watcher of a wave -- His gaze finding the exposed
+        investigator (the ambient trigger in _tick_watchers, and the
+        fold-crossing seed). Sets the wave live and spawns the seed; it grows
+        + holds in _tick_watchers, and clearing it (_dispel_watcher) lifts it
+        and sets the grace before the next. The opening line is a one-time
+        teach; the void-sting marks every wave."""
         self.audio.play("void_sting", 0.8)
         if not self._cursed:
             self._cursed = True
-            self._watcher_clone_t = WATCHER_CLONE_INTERVAL
-            self.show_notice("An eye has opened on you. It will not close "
-                             "until you make it.", duration=3.8)
+            self._watcher_clone_t = self._watcher_spawn_interval()
+            if not (self.save and self.save.flag("teach_watcher")):
+                if self.save:
+                    self.save.set_flag("teach_watcher", True)
+                self.show_notice("An eye has opened on you. It will not close "
+                                 "until you make it.", duration=3.8)
             self._spawn_watcher()
         else:
             self.visibility = min(1.0, self.visibility + 0.1)
-            self.show_notice("The gaze presses harder. More eyes will open.",
-                             duration=3.0)
 
     def _tick_watchers(self, dt):
-        """The watcher-curse. While cursed a Watcher is bound to the player
-        and CLONES (up to WATCHER_MAX) while the player is EXPOSED (in the
-        open); each live Watcher raises the visibility floor (in
-        _tick_visibility). Safe interiors only suppress them -- they re-form
-        on the way out. The curse lifts only when the player clears them all
-        (gaze / axe / shot), handled in _dispel_watcher."""
+        """The WATCHERS -- His gaze made manifest, and the below-3 threat
+        (play-notes rework). From WATCHER_WAKE_EV evidence, while the player is
+        EXPOSED (in the open, not in cover / a safe room), the domain opens
+        Watchers on a timer: WATCHER_GRACE before the FIRST of a wave (and
+        after clearing one), then the evidence-scaled interval between the
+        rest. Each live Watcher HOLDS the exposed player -- driving visibility
+        up in _tick_visibility (`_watcher_gaze`), so ignoring them SNOWBALLS.
+        Cover pauses the timer and drops the hold; safe rooms suppress them;
+        clearing them all (gaze / axe / shot, _dispel_watcher) sets the grace."""
         if self.scene is None or self.player is None:
             return
         # Drop any swept on load/death.
         self._watchers = [w for w in self._watchers if w in self.scene.npcs]
-        if not self._cursed:
+        key = self.scene.key
+        # The domain watches once the thread is pulled -- never in a safe /
+        # King-free room, never before the first evidence.
+        watching = (key not in KING_FREE_SCENES
+                    and self._evidence_count() >= WATCHER_WAKE_EV)
+        if not watching:
             if self._watchers:
                 self.scene.npcs = [n for n in self.scene.npcs
                                    if getattr(n, "tag", "") != "watcher"]
                 self._watchers = []
+            self._cursed = False
+            self._watcher_clone_t = WATCHER_GRACE
+            self._watcher_gaze = 0.0
             return
-        if self.scene.key in KING_FREE_SCENES:      # safe room: suppress only
-            if self._watchers:
-                self.scene.npcs = [n for n in self.scene.npcs
-                                   if getattr(n, "tag", "") != "watcher"]
-                self._watchers = []
-            return
-        if not self._watchers:                      # re-form the seed on exit
+        exposed = self.player.hidden is None
+        # A wave carried in from a fold (or across a scene) re-forms its seed.
+        if self._cursed and not self._watchers:
             self._spawn_watcher()
-            self._watcher_clone_t = WATCHER_CLONE_INTERVAL
-        # Cloning is EXPOSURE-gated: advances in the open, pauses in cover.
-        if self.player.hidden is None and len(self._watchers) < WATCHER_MAX:
+            self._watcher_clone_t = self._watcher_spawn_interval()
+        # Exposure-gated cadence: the grace before the first of a wave, the
+        # evidence-scaled interval between the rest. Cover pauses the timer.
+        if exposed and len(self._watchers) < WATCHER_MAX:
             self._watcher_clone_t -= dt
-            if self._watcher_clone_t <= 0:
-                self._watcher_clone_t = WATCHER_CLONE_INTERVAL
-                self._spawn_watcher()
+            if self._watcher_clone_t <= 0.0:
+                if not self._cursed:
+                    self._apply_curse()             # first Watcher of the wave
+                else:
+                    self._spawn_watcher()            # a clone
+                self._watcher_clone_t = self._watcher_spawn_interval()
+        # Live Watchers HOLD you while you are exposed -> the active visibility
+        # climb (read in _tick_visibility). Any cover drops the hold.
+        self._watcher_gaze = float(len(self._watchers)) if exposed else 0.0
         # Staring one down dissolves it (the cure).
         self._tick_watcher_gaze(dt)
+
+    def _watcher_spawn_interval(self):
+        """Seconds between Watcher spawns, shaved by evidence (the King floods
+        them deep) down to WATCHER_SPAWN_MIN."""
+        ev = self._evidence_count()
+        return max(WATCHER_SPAWN_MIN,
+                   WATCHER_SPAWN_BASE - ev * WATCHER_SPAWN_STEP)
 
     def _spawn_watcher(self):
         """Manifest one Watcher at a walkable tile a little way off, in a
@@ -913,6 +912,7 @@ class ThreatMixin:
         if (self._cursed and not self._watchers and self.scene is not None
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
+            self._watcher_clone_t = WATCHER_GRACE   # the breather before the next
             self.show_notice("The last of the eyes closes. He looks "
                              "elsewhere, for now.", duration=3.2)
 
