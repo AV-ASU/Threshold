@@ -622,10 +622,11 @@ def _hettie_saw_photo(game):
 
 
 # Mara's store tab -- surface evidence (the receipt; NARRATIVE §6,
-# DESIGN.md §9). WORLD-PERSISTENT: it lives on the shop spike, so it is
-# reachable whether Hettie is alive, dead, or never spoken to. Two ways in
-# funnel HERE so it can never double-fire or soft-lock: the cold find (the
-# shop's on_interact_fn) and Hettie's warm handover (her Mara-memory beat).
+# DESIGN.md §9). WORLD-PERSISTENT: reachable whether Hettie is alive or
+# dead, so killing her can never soft-lock the descent. Two ways in funnel
+# HERE so it can never double-fire: Hettie's WARM handover (her Mara-memory
+# beat, when she's alive -- show her the photo) and the spike FALLBACK (a
+# walk-over pickup the shop's on_update_fn opens only once Hettie is dead).
 def grant_receipt(game):
     if game.save.flag("evidence_maras_receipt"):
         return
@@ -755,14 +756,15 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    # A faint memory of the girl herself (TODO #6): fires once the PI
-    # carries her journal (her hand is in his pocket; the asking got
-    # real). Mara passed through Brimley for a season before she went
-    # below; Hettie knew her the way a counter knows anyone. NARRATIVE
+    # A faint memory of the girl herself (TODO #6): fires once the PI has
+    # SHOWN HER MARA'S PHOTOGRAPH (the asking got real, and it is how you get
+    # her tab now -- NARRATIVE §6: show the photo, they react and hand it
+    # over; play-notes). Mara passed through Brimley for a season before she
+    # went below; Hettie knew her the way a counter knows anyone. NARRATIVE
     # §2: she does NOT know Walter; this is the girl, never the family.
     if (save.flag("hettie_greeted")
             and not save.flag("hettie_mara_memory")
-            and game.player.inventory.has("mom_notebook")):
+            and save.flag("hettie_saw_photo")):
         save.set_flag("hettie_mara_memory", True)
         _lines = [
             "Your girl. I'll tell you the one thing I know that's "

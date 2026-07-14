@@ -243,22 +243,27 @@ def build_shop():
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Mara's store tab, spiked on the counter (surface evidence;
-    # NARRATIVE §6, DESIGN.md §9). It lives HERE, on the spike, so it is
-    # reachable whether Hettie is alive, dead, or never spoken to -- the
-    # world-persistent cold find. Her warm handover (the Mara-memory beat)
-    # grants the SAME tab; both funnel through grant_receipt (flag-gated,
-    # never double-fires).
+    # Mara's store tab (surface evidence; NARRATIVE §6, DESIGN.md §9). You get
+    # it by TALKING to Hettie (show her Mara's photo -> her warm handover;
+    # play-notes). The curled slip on the spike is only the world-persistent
+    # FALLBACK, reachable once Hettie is DEAD, so killing her can never
+    # soft-lock the descent. Both funnel through grant_receipt (flag-gated).
     sc._receipt_pos = (9 * TILE + 16, 9 * TILE + 16)
     sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 6, "papers",
                                  seed=23))
-    sc.add_interactable(sc._receipt_pos[0], sc._receipt_pos[1], 40)
 
-    def _shop_interact(game):
-        rx, ry = sc._receipt_pos
-        if abs(game.player.x - rx) < 40 and abs(game.player.y - ry) < 40:
+    def _shop_update(game, scene, dt):
+        # The spike is the fallback: a walk-over pickup, and ONLY once Hettie
+        # is dead (while she's alive, talk to her for the tab -- no dead [E]
+        # cue advertising the spike).
+        if game.save.flag("evidence_maras_receipt"):
+            return
+        if not game._local_is_dead("Hettie"):
+            return
+        rx, ry = scene._receipt_pos
+        if abs(game.player.x - rx) < 22 and abs(game.player.y - ry) < 22:
             grant_receipt(game)
-    sc.on_interact_fn = _shop_interact
+    sc.on_update_fn = _shop_update
     sc.hide_spots = []
     return sc
 def build_barn():

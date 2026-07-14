@@ -531,11 +531,20 @@ def main():
     # trail beats -- the store tab (shop), the booking slip (office), the
     # journal (barn) -- each a world-persistent pickup, findable in any
     # order. Three surface beats = exactly the King-gate above ground.
+    from scenes.dialogue import hettie_dialogue as _hettie_fn
     ge = new_game()
-    fire(ge, "shop", "_receipt_pos")                   # maras_receipt
+    # The store tab comes from Hettie's WARM handover now (play-notes): show
+    # her Mara's photo, she works the tab off the spike and hands it over.
+    ge.load_scene_now("shop")
+    ready(ge)
+    _het = next((nn for nn in ge.scene.npcs if nn.name == "Hettie"), None)
+    check(_het is not None, "shop: Hettie keeps the counter")
+    ge.save.set_flag("hettie_greeted", True)
+    ge.save.set_flag("hettie_saw_photo", True)         # the PI showed the photo
+    _hettie_fn(ge, _het)                                # her Mara-memory beat
     check(ge.player.inventory.has("receipt")
           and has_evidence(ge, "maras_receipt"),
-          "shop: the store tab is a world-persistent pickup (surface evidence)")
+          "shop: Hettie hands over the store tab shown Mara's photo (surface evidence)")
     fire(ge, "sheriff_office", "_record_pos")          # maras_record
     check(ge.player.inventory.has("detention_record")
           and has_evidence(ge, "maras_record"),
@@ -564,7 +573,12 @@ def main():
     gwp = new_game()
     gwp.save.set_arg("dead_locals", {"shop:Hettie": {
         "scene": "shop", "x": 0, "y": 0, "name": "Hettie", "idx": None}})
-    fire(gwp, "shop", "_receipt_pos")
+    # With Hettie dead, the spike is the FALLBACK: a walk-over pickup the
+    # shop's on_update_fn opens (no warm handover to lean on).
+    gwp.load_scene_now("shop")
+    ready(gwp)
+    gwp.player.x, gwp.player.y = gwp.scene._receipt_pos   # step onto the spike
+    gwp.scene.on_update_fn(gwp, gwp.scene, 0.05)          # the walk-over pickup
     check(has_evidence(gwp, "maras_receipt"),
           "persist: the store tab is reachable with Hettie recorded dead")
     gwp.save.set_arg("dead_locals", {"sheriff_office:Sheriff": {
@@ -2388,7 +2402,7 @@ def main():
     gh.load_scene_now("shop")
     ready(gh)
     gh.save.set_flag("hettie_greeted", True)
-    gh.player.inventory.add("mom_notebook", 1)
+    gh.save.set_flag("hettie_saw_photo", True)     # the PI showed Mara's photo
     from scenes.dialogue import hettie_dialogue as _hd
     _hshown = []
     _horig = gh.dialog.show
@@ -2402,7 +2416,10 @@ def main():
         pass
     _hd(gh, _HStub())
     check(any("smiling I minded" in p for p in _hshown),
-          "hettie: the memory of the girl fires once the journal is carried")
+          "hettie: the memory of the girl fires once shown Mara's photo")
+    check(gh.player.inventory.has("receipt")
+          and has_evidence(gh, "maras_receipt"),
+          "hettie: the memory beat hands over the store tab (warm handover)")
     check(not any(("—" in p) or ("–" in p) or ("--" in p) for p in _hshown),
           "hettie: no dashes in the memory beat")
 
