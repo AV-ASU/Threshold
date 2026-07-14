@@ -40,7 +40,8 @@ CANONICAL_EVIDENCE = {
 }
 
 
-def _evidence(game, name, content, weight=None, show=True, note=False):
+def _evidence(game, name, content, weight=None, show=True, note=False,
+              quiet=False):
     """Surface a one-shot narrator line. If `name` is one of the CANONICAL
     beats it is ALSO logged as evidence -- counting toward the King-gate and
     raising the visibility FLOOR by its canonical weight (the "knowing dooms
@@ -68,9 +69,9 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
                         "lines": [_strip_markup(x) for x in lines],
                         "weight": CANONICAL_EVIDENCE[name]})
             game.save.set_arg("evidence", log)
-            if hasattr(game, "_flash_notebook"):
+            if not quiet and hasattr(game, "_flash_notebook"):
                 game._flash_notebook(name)    # corner scribble: you wrote it down
-            if hasattr(game, "audio"):
+            if not quiet and hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
             # Save on evidence pickup (play-notes): the clue IS the
             # checkpoint, not a trip back to the cot.
@@ -87,7 +88,10 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
     # must still land its nudges, or the case stalls without a voice
     # (the R-gate stall finding). Defined after this fn; safe at call
     # time.
-    extra = _collect_revisit(game, name)
+    # quiet=True (the journal walk-over pickup): log + autosave for the gate,
+    # but surface NOTHING -- no scribble, no nudges, no caption. No note pops
+    # before the PI has read the thing (play-notes).
+    extra = [] if quiet else _collect_revisit(game, name)
     # `show=False` files the beat (log + scribble) WITHOUT the forced dialog --
     # for readable items whose text lives in the kit, so picking one up doesn't
     # hijack the moment to read it at you. Any nudges still surface, as

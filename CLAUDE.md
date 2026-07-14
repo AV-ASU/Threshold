@@ -658,11 +658,14 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §4)
 
-- **Trigger (two-stage since the §15 rework):** reading `mom_notebook`
-  (Mara's journal) a third time sets `flashback_pending`
-  (`ui/journal_ui.py`); `Game._tick_flashback` polls it, sets
-  `flashback_seen`, and fires a ~0.5s MEMORY FLASH (two flickers of the
-  door, no swarm; `FLASHBACK_FLASH_DUR`). The FULL ~7s wordless dream
+- **Trigger (two-stage):** picking up `mom_notebook` (Mara's journal, a
+  WALK-OVER pickup in the barn, `scenes/interiors.py _barn_update`) sets
+  `flashback_pending` (play-notes: the dream fires ON PICKUP, not the old
+  3rd-read; reading the journal is now just reading); `Game._tick_flashback`
+  polls it, sets `flashback_seen`, and fires a ~2.2s MEMORY FLASH (a dwelling
+  fade-in/hold/out look at the door, no swarm; `FLASHBACK_FLASH_DUR`). The
+  pickup logs the gate beat QUIETLY (`_evidence(..., quiet=True)`) so no case
+  note pops before he has read it. The FULL ~7s wordless dream
   (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
   `begin_rite_dream` — completing it opens the descent fold
   (`rite_performed`) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;

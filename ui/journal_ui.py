@@ -170,15 +170,13 @@ class JournalUI:
             inv.equip(key)
             self.audio.play("confirm", 0.7)
         elif key == "mom_notebook" and self.save:
-            # Mara's Journal is paged: each Enter turns one leaf; turning
-            # past the last leaf fires the witnessing door-dream flashback.
+            # Mara's Journal is paged: each Enter turns one leaf. The
+            # door-dream now fires on PICKUP of the journal, not on the 3rd
+            # read (play-notes; scenes/interiors.py _barn_update), so reading
+            # it is just reading -- no flashback trigger here.
             n = self.save.arg("notebook_pages_read", 0) + 1
             self.save.set_arg("notebook_pages_read", min(3, n))
-            if n >= 3 and not self.save.flag("flashback_seen"):
-                self.save.set_flag("flashback_pending", True)
-                self.open = False
-            else:
-                self.audio.play("blip_soft", 0.45)
+            self.audio.play("blip_soft", 0.45)
         else:
             self.audio.play("cursor", 0.5)
         items = self._filtered_items(inv)

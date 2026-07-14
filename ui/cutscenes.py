@@ -22,8 +22,10 @@ from rendering.spread_drive import draw_spread_drive
 # ---- Cutscene tuning constants (owned here; re-exported by systems.game) ----
 
 FLASHBACK_DUR = 7.0            # seconds the FULL door-dream holds (the rite)
-FLASHBACK_FLASH_DUR = 0.55     # the journal's intrusive MEMORY FLASH: two
-                               # hard flickers of the door, in and gone
+FLASHBACK_FLASH_DUR = 2.2      # the journal's MEMORY of the door on pickup:
+                               # a longer, dwelling flash now (play-notes),
+                               # fades in / holds / fades out; still no swarm
+                               # or audio bed (the full dream waits at the rite)
 FLASHBACK_MASK_FRAMES = 3      # frames each individual mask holds on screen
 # Mask SWARM: dark-wood faces flash all over the inside of the doorframe
 # (some clipped by it), starting slow ~START s in and accelerating to a
@@ -86,12 +88,15 @@ class CutsceneMixin:
         dur = getattr(self, "_flashback_dur", FLASHBACK_DUR)
         t = self._flashback_t / max(0.01, dur)   # 0..1 over the hold
         if getattr(self, "_flashback_mode", "rite") == "flash":
-            # The journal's INTRUSIVE MEMORY: two hard flickers of the
-            # door, forced in over half a second and gone. No swarm, no
-            # audio bed; the full dream waits at the grove rite.
-            if not (t < 0.28 or 0.48 < t < 0.86):
-                return
-            fade = 1.0
+            # The journal's MEMORY of the door (on pickup): a longer, dwelling
+            # look now (play-notes) -- fades in, holds, fades out over ~2s. No
+            # swarm, no audio bed; the full dream waits at the grove rite.
+            if t < 0.15:
+                fade = t / 0.15
+            elif t > 0.75:
+                fade = max(0.0, (1.0 - t) / 0.25)
+            else:
+                fade = 1.0
         # Whole-still fade: in over first 12%, out over last 18%.
         elif t < 0.12:
             fade = t / 0.12

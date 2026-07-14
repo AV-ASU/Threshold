@@ -275,10 +275,10 @@ def effective_desc(key, save=None):
 # one Enter at a time in the inventory. The arc is the whole of her
 # descent in miniature -- the ache that drew her, the dream of the door,
 # the glad walk down toward it (NARRATIVE §2: she was answered, not
-# deceived). Turning past the LAST page is what fires the door-dream
-# flashback, so the count here must stay at three (it drives the
-# `notebook_pages_read` 3-gate the Game system polls). No dashes in any
-# of this text -- it is read by the player.
+# deceived). The door-dream now fires on PICKUP of the journal (play-notes;
+# scenes/interiors.py _barn_update), not on a page-turn -- reading these
+# leaves is just reading. No dashes in any of this text -- it is read by
+# the player.
 MARA_JOURNAL_PAGES = [
     "I came north because I could not stand the quiet of that "
     "apartment one more night. They told me grief would pass. It did "

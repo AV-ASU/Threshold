@@ -412,13 +412,13 @@ def main():
         g.step(1 / 60.0)
         check(g.scene.key == k, f"depths: {k} loads and ticks")
     # The door-dream is TWO-STAGE now: the journal fires a brief memory
-    # FLASH (two flickers, ~0.5s, no swarm -- the half-dismissed memory
-    # surfacing); the FULL wordless dream (door + accelerating mask
-    # swarm) plays at the GROVE RITE. Same dream, two weights.
+    # FLASH (a longer dwelling look on PICKUP now, ~2s, no swarm -- the
+    # half-dismissed memory surfacing); the FULL wordless dream (door +
+    # accelerating mask swarm) plays at the GROVE RITE. Same dream, two weights.
     from ui.cutscenes import (FLASHBACK_DUR as _FBD,
                               FLASHBACK_FLASH_DUR as _FBF)
-    check(0.0 < _FBF <= 1.0 < _FBD,
-          "flashback: the journal flash is brief; the rite dream is long")
+    check(0.0 < _FBF <= 3.0 < _FBD,
+          "flashback: the journal flash is short; the rite dream is long")
     check(hasattr(g, "_spawn_flashback_masks")
           and hasattr(g, "_build_flashback_pool")
           and hasattr(g, "begin_rite_dream"),
@@ -540,7 +540,11 @@ def main():
     check(ge.player.inventory.has("detention_record")
           and has_evidence(ge, "maras_record"),
           "office: the booking slip is a world-persistent pickup (surface evidence)")
-    fire(ge, "barn", "_journal_pos")                   # maras_journal
+    # The journal is a WALK-OVER pickup now (play-notes), not an [E] interact.
+    ge.load_scene_now("barn")
+    ready(ge)
+    ge.player.x, ge.player.y = ge.scene._journal_pos   # step onto it
+    ge.scene.on_update_fn(ge, ge.scene, 0.05)          # the walk-over pickup
     jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
                    if e.get("name") == "maras_journal"), [])
     jtext = " ".join(jlines).lower()
@@ -721,31 +725,37 @@ def main():
     check(getattr(gw, "transition_target", (None,))[0] == "woodshed",
           "geo: the cellar key opens the yard shed -> woodshed interior")
 
-    # --- 13c. Reading Mara's journal in the inventory fires the dream ---
-    # The journal is a paged, readable item: opening it shows page 1, and
-    # turning past the LAST leaf (the third Enter) sets flashback_pending.
-    # Lock that the three-read count drives the door-dream, since the
-    # mechanic is the only in-game trigger for the §1b cutscene.
+    # --- 13c. Picking up Mara's journal (walk-over) fires the dream -----
+    # The journal is a WALK-OVER pickup now (play-notes): stepping onto it
+    # takes the item, logs the gate beat QUIETLY (no scribble before he has
+    # read it), and fires the door-dream ON PICKUP. Reading it later is just
+    # reading -- no second trigger.
     from systems.items import MARA_JOURNAL_PAGES, journal_page as _jpage
     from ui.journal_ui import PAPERS_TAB
     gj = new_game()
-    gj.player.inventory.add("mom_notebook", 1)
+    gj.load_scene_now("barn", "default")
+    ready(gj)
+    gj.player.x, gj.player.y = gj.scene._journal_pos
+    gj.scene.on_update_fn(gj, gj.scene, 0.05)         # step onto it
+    check(gj.player.inventory.has("mom_notebook"),
+          "journal: walking onto it picks it up (a ground item, not an [E] cue)")
+    check(has_evidence(gj, "maras_journal"),
+          "journal: the pickup logs the gate beat")
+    check(gj.save.flag("flashback_pending"),
+          "journal: the door-dream fires ON PICKUP, not the 3rd read")
+    # Reading it is now just reading -- no second dream trigger.
+    gj.save.set_flag("flashback_pending", False)
     gj.inv_ui.open = True
-    gj.inv_ui.tab = PAPERS_TAB                        # the readable journal lives here
+    gj.inv_ui.tab = PAPERS_TAB
     _fk = [k for _, k, _ in gj.inv_ui._filtered_items(gj.player.inventory)]
     gj.inv_ui.cursor = _fk.index("mom_notebook")
     check(_jpage(gj.save)[1] == 0,
           "journal: opens on page 1 (its words are visible immediately)")
-    gj.inv_ui.use_selected(gj.player)                 # turn 1 -> page 2
-    gj.inv_ui.use_selected(gj.player)                 # turn 2 -> page 3
-    check(_jpage(gj.save)[1] == len(MARA_JOURNAL_PAGES) - 1
-          and not gj.save.flag("flashback_pending"),
-          "journal: reading short of the last leaf does NOT fire the dream")
-    gj.inv_ui.use_selected(gj.player)                 # turn past the last leaf
-    check(gj.save.flag("flashback_pending"),
-          "journal: turning past the last leaf fires the door-dream")
-    check(not gj.inv_ui.open,
-          "journal: the inventory closes as the dream takes over")
+    gj.inv_ui.use_selected(gj.player)                 # turn the leaves
+    gj.inv_ui.use_selected(gj.player)
+    gj.inv_ui.use_selected(gj.player)
+    check(not gj.save.flag("flashback_pending"),
+          "journal: reading it does NOT re-fire the dream (pickup is the trigger)")
 
     # --- 14. "He knows you": the dream note + Threshold recognition ---
     # Living the journal door-dream writes a personal NOTE (not a clue), and

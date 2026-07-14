@@ -330,9 +330,12 @@ def build_barn():
     sc._barn_hatch_pos = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
     # Mara's journal, stashed behind the workbench -- a surface trail beat.
+    # A WALK-OVER pickup (play-notes: it's an item, not an [E] prompt); the
+    # door-dream fires on pickup, handled in _barn_update below.
     sc._journal_pos = (11 * TILE + 16, 3 * TILE + 16)
-    # [E] cue so the player knows there's something behind the workbench.
-    sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
+    _jrnl = Decoration(sc._journal_pos[0], sc._journal_pos[1], "papers", seed=17)
+    _jrnl.tag = "maras_journal"
+    sc.add_decoration(_jrnl)
     sc.hide_spots = []
     # Chalk doors -- the cult's drawn-door compulsion. The barn (Mara's, the
     # diggers' old quarters) is where the PI first meets the motif: one chalked
@@ -342,20 +345,37 @@ def build_barn():
 
     def _barn_interact(game):
         px, py = game.player.x, game.player.y
-        # Mara's journal behind the workbench (a surface trail beat). Grants the
-        # journal item so the page-3 inventory flashback still fires.
-        jx, jy = sc._journal_pos
-        if abs(px - jx) < 40 and abs(py - jy) < 40:
-            if game.save.flag("evidence_maras_journal"):
-                return
+        # The old tunnel down to the Works has been nailed shut: the
+        # rite (the grove's descent fold) is the ONLY way underground
+        # now (no secret paths).
+        if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
+            game.audio.play("door_locked", 0.6)
+            game.show_notice("Nailed fast from the underside. It does "
+                             "not give.")
+    sc.on_interact_fn = _barn_interact
+
+    def _barn_update(game, scene, dt):
+        # Mara's journal is a WALK-OVER pickup (play-notes: an item, not an
+        # [E] prompt). Stepping onto it takes it and drops the PI back into his
+        # one year-old dream ON PICKUP (not the 3rd read). The gate beat is
+        # logged QUIETLY -- no case note pops before he has read it.
+        if game.save.flag("evidence_maras_journal"):
+            # Already taken: strip the token the scene rebuild re-adds.
+            if any(getattr(d, "tag", None) == "maras_journal"
+                   for d in scene.decorations):
+                scene.decorations = [
+                    d for d in scene.decorations
+                    if getattr(d, "tag", None) != "maras_journal"]
+            return
+        px, py = game.player.x, game.player.y
+        jx, jy = scene._journal_pos
+        if abs(px - jx) < 22 and abs(py - jy) < 22:
             game.player.inventory.add("mom_notebook", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
-            # File the case beat silently; the journal itself reads from the
-            # kit (its entries are the item desc), not forced on pickup.
-            # The log excerpts quote MARA_JOURNAL_PAGES (systems/items.py)
-            # so the evidence beat and the readable journal can never
-            # drift apart again: the ache, the door, the glad dig down.
+            game.show_notice("Her journal.")
+            # The log excerpts quote MARA_JOURNAL_PAGES (systems/items.py) so
+            # the evidence beat and the readable journal never drift apart.
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
                 "hand. It's hers, the same as the letter.",
@@ -368,17 +388,14 @@ def build_barn():
                 "\"They dreamed the same door, every one of them. We are "
                 "digging down to it together now. I am not lost. I have "
                 "never been this close.\"",
-            ], show=False)
-            game.show_notice("Her journal.")
-            return
-        # The old tunnel down to the Works has been nailed shut: the
-        # rite (the grove's descent fold) is the ONLY way underground
-        # now (no secret paths).
-        if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
-            game.audio.play("door_locked", 0.6)
-            game.show_notice("Nailed fast from the underside. It does "
-                             "not give.")
-    sc.on_interact_fn = _barn_interact
+            ], show=False, quiet=True)
+            # The door-dream hits ON PICKUP now (play-notes), not the 3rd read.
+            if not game.save.flag("flashback_seen"):
+                game.save.set_flag("flashback_pending", True)
+            scene.decorations = [
+                d for d in scene.decorations
+                if getattr(d, "tag", None) != "maras_journal"]
+    sc.on_update_fn = _barn_update
     return sc
 
 
