@@ -9,9 +9,12 @@
 > against the 2026-07 build sweep. Each candidate was checked against the
 > actual code; **anything already implemented is deleted from this list
 > outright** (no "done" archive).
-> Cross-check against `NARRATIVE.md` before writing prose, run the full
-> gate (`python tests/run_all.py`) before commit, and add a
-> `tests/flow.py` guard when a new note locks a canon fact.
+> Cross-check against `NARRATIVE.md` (the facts) and `DIALOGUE.md` (the
+> exact spoken lines + narrator boxes) before writing prose; land any
+> dialogue/narrator-text change in the code and `DIALOGUE.md` together (the
+> `DIALOGUE.md` contract); run the full gate (`python tests/run_all.py`)
+> before commit, and add a `tests/flow.py` guard when a new note locks a
+> canon fact.
 
 ---
 

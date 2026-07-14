@@ -4,8 +4,9 @@
 > the implementation map, open design threads, the Works level design,
 > art direction, and the fold mechanics. The FICTION itself (premise,
 > door, timeline, cast, evidence, descent, endings, canon invariants)
-> lives in `NARRATIVE.md`, the story bible; open work lives in
-> `TODO.md`. These sections were relocated whole from the old
+> lives in `NARRATIVE.md`, the story bible; the exact player-facing TEXT
+> (spoken lines + narrator boxes) lives in `DIALOGUE.md`; open work lives
+> in `TODO.md`. These sections were relocated whole from the old
 > NARRATIVE.md (2026-07 split); §-references here use this file's own
 > numbering, and cross-references into the bible say `NARRATIVE §n`.
 

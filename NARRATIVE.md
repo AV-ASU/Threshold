@@ -3,10 +3,12 @@
 > The canonical source of truth for the FICTION. How the systems deliver
 > it (threat model, world rot, fold mechanics, level design, art
 > direction, the code map) lives in `DESIGN.md`; open work lives in
-> `TODO.md`. Rules of this document: it locks **facts, never phrasings**
-> (exact wordings belong to `tests/flow.py` canon-guards, not to prose
-> quoted here); it states what IS, not what isn't; every fact has one
-> home and other sections point to it.
+> `TODO.md`; the exact TEXT that delivers the fiction (every spoken line
+> and narrator box, verbatim) lives in `DIALOGUE.md`. Rules of this
+> document: it locks **facts, never phrasings** (the phrasings live in
+> `DIALOGUE.md` and the `tests/flow.py` canon-guards, not in prose quoted
+> here); it states what IS, not what isn't; every fact has one home and
+> other sections point to it.
 
 ---
 

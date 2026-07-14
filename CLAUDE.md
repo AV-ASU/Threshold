@@ -3,20 +3,20 @@
 > **HARD RULE #0 — READ THE CANON IN FULL, EVERY TIME, BEFORE YOU ANSWER.**
 > Before responding to ANY request about THRESHOLD — a question, a review, a
 > design chat, a one-line edit, anything — you MUST read **`CLAUDE.md`,
-> `NARRATIVE.md`, `DESIGN.md`, and `TODO.md` IN FULL**, from top to bottom, in
-> this same turn.
+> `NARRATIVE.md`, `DESIGN.md`, `TODO.md`, and `DIALOGUE.md` IN FULL**, from
+> top to bottom, in this same turn.
 > Not a section. Not a grep. Not "I read them earlier." Not from memory or a
-> summary. All four, whole, every single time, no exceptions. Treat your
+> summary. All five, whole, every single time, no exceptions. Treat your
 > memory of them as STALE by default — the docs are the only source of truth,
 > they change, and answering from a half-remembered version is how canon gets
-> broken (it has been, repeatedly). If you have not read all four this turn,
+> broken (it has been, repeatedly). If you have not read all five this turn,
 > you are not ready to answer: read them first, then answer. This is the
 > project's non-negotiable first step; do it automatically, never wait to be
 > asked, and never announce you are "about to" instead of doing it.
 >
-> **The four-doc canon.** This file (`CLAUDE.md`) is the project's entry
-> point and operating guide, and now the first of the four you read in full;
-> the other three named above are the rest of the canon:
+> **The five-doc canon.** This file (`CLAUDE.md`) is the project's entry
+> point and operating guide, and now the first of the five you read in full;
+> the other four named above are the rest of the canon:
 > - **`NARRATIVE.md`** — the story bible: premise, lore, cast, place, the
 >   evidence trail, the endings, and the canon invariants. The source of
 >   truth for anything the fiction asserts.
@@ -25,11 +25,17 @@
 >   and art direction.
 > - **`TODO.md`** — the live list of genuinely open work. Not a place for
 >   lore.
+> - **`DIALOGUE.md`** — the dialogue & narrator bible: every word the player
+>   reads (spoken NPC/PI lines and narrator/world boxes), organized by WHO
+>   says what and WHAT causes what, plus the voice rules. **Its contract:
+>   the code and `DIALOGUE.md` are ONE — any change to a player-facing line
+>   in code is a change to `DIALOGUE.md` in the SAME commit, and the reverse.
+>   A disagreement between them is rot.**
 >
-> These four files are the ENTIRE doc canon. The old per-topic docs
+> These five files are the ENTIRE doc canon. The old per-topic docs
 > (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
 > audit files) were folded into them and deleted (2026-07), so every design
-> or story reference now lives in one of these four. When you change a canon
+> or story reference now lives in one of these five. When you change a canon
 > fact, change it in its ONE home and reconcile the others: a detail that is
 > true in one doc and stale in another is rot.
 
@@ -707,12 +713,20 @@ it renders the procedural sprites to a labelled PNG strip.
   moved: **`TODO.md`** when a ticket lands, changes scope, or a new task
   surfaces (mark it, do not leave it stale); **`NARRATIVE.md`** when a canon
   fact, invariant, or player-facing story detail changes; **`DESIGN.md`** when
-  a system, a mechanic, or its code-map changes; **`CLAUDE.md`** when the
-  layout, a convention, or a workflow changes. One fact, one home, then
-  reconcile the siblings (a detail true in one doc and stale in another is
-  rot). A change is not "done" until its docs match it, so before you commit,
-  ask which of the four canon docs your diff just made stale and fix them in
-  the same breath.
+  a system, a mechanic, or its code-map changes; **`DIALOGUE.md`** when ANY
+  player-facing spoken line or narrator box changes (see the next bullet);
+  **`CLAUDE.md`** when the layout, a convention, or a workflow changes. One
+  fact, one home, then reconcile the siblings (a detail true in one doc and
+  stale in another is rot). A change is not "done" until its docs match it,
+  so before you commit, ask which of the five canon docs your diff just made
+  stale and fix them in the same breath.
+- **DIALOGUE AND ITS DOC ARE ONE (non-negotiable, `DIALOGUE.md` contract).**
+  Every word the player reads lives in two homes: the code that ships it and
+  `DIALOGUE.md`. They are the same text. If your diff changes, adds, or cuts
+  a spoken line or a narrator box, it changes `DIALOGUE.md` in the SAME
+  commit, and vice versa. There is no "update the dialogue doc later." A
+  disagreement between code and `DIALOGUE.md` is a bug (rot), reconciled on
+  sight; a `tests/flow.py` canon-guard on an exact wording wins over both.
 - **"Push to main" MEANS MERGE TO MAIN.** When the maintainer says "push to
   main" / "PR and push to main", that is an instruction to open the PR **and
   merge it into `main`** in the same action — not to stop after creating the
