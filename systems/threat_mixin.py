@@ -771,11 +771,8 @@ class ThreatMixin:
         if not self._cursed:
             self._cursed = True
             self._watcher_clone_t = self._watcher_spawn_interval()
-            if not (self.save and self.save.flag("teach_watcher")):
-                if self.save:
-                    self.save.set_flag("teach_watcher", True)
-                self.show_notice("An eye has opened on you. It will not close "
-                                 "until you make it.", duration=3.8)
+            # No narrator box on a Watcher opening (play-notes) -- the
+            # void-sting + the eye itself are the tell.
             self._spawn_watcher()
         else:
             self.visibility = min(1.0, self.visibility + 0.1)
@@ -845,7 +842,7 @@ class ThreatMixin:
         spot = None
         for _ in range(12):
             ang = random.uniform(0, math.tau)
-            r = random.uniform(180, 300)
+            r = random.uniform(110, 200)   # closer in (play-notes: hard to see far)
             wx = self.player.x + math.cos(ang) * r
             wy = self.player.y + math.sin(ang) * r
             if (0 < wx < scene.w * Scene.TILE
@@ -913,8 +910,8 @@ class ThreatMixin:
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
             self._watcher_clone_t = WATCHER_GRACE   # the breather before the next
-            self.show_notice("The last of the eyes closes. He looks "
-                             "elsewhere, for now.", duration=3.2)
+            # No narrator box on the last eye closing (play-notes) -- the
+            # watcher_dispel sound carries it.
 
     def _dispel_watcher_in_line(self, p, fx, fy):
         """A round (or the axe arc) puts a Watcher down instantly. The gun

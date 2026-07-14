@@ -334,10 +334,11 @@ KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
                              # sprint so a locked King always closes the gap
                              # (play-notes rebalance)
 # Player sprint = PLAYER_SPRINT_MULT x the base walk (entities/player.py
-# speed). Tuned so sprint reads ~2.5x the walk yet stays ~0.9x the King
-# above: you can flee a cultist but never the apex (play-notes rebalance;
-# TODO #5 is the human tuning loop).
-PLAYER_SPRINT_MULT = 2.5
+# speed). With the walk doubled (play-notes), sprint is a modest gear-up
+# that still lands ~0.9x the King above: you can never outrun the apex,
+# only hide (TODO #5 is the human tuning loop; raising this needs the King
+# raised too, or you outrun him).
+PLAYER_SPRINT_MULT = 1.25
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 
 # The portal (KING_PROMPT M2): pin visibility at 100% for PORTAL_CHARGE_TIME and
