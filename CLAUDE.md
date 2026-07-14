@@ -3,20 +3,20 @@
 > **HARD RULE #0 — READ THE CANON IN FULL, EVERY TIME, BEFORE YOU ANSWER.**
 > Before responding to ANY request about THRESHOLD — a question, a review, a
 > design chat, a one-line edit, anything — you MUST read **`CLAUDE.md`,
-> `NARRATIVE.md`, `DESIGN.md`, `TODO.md`, and `DIALOGUE.md` IN FULL**, from
-> top to bottom, in this same turn.
+> `NARRATIVE.md`, `DESIGN.md`, `TODO.md`, `DIALOGUE.md`, and `VISION.md` IN
+> FULL**, from top to bottom, in this same turn.
 > Not a section. Not a grep. Not "I read them earlier." Not from memory or a
-> summary. All five, whole, every single time, no exceptions. Treat your
+> summary. All six, whole, every single time, no exceptions. Treat your
 > memory of them as STALE by default — the docs are the only source of truth,
 > they change, and answering from a half-remembered version is how canon gets
-> broken (it has been, repeatedly). If you have not read all five this turn,
+> broken (it has been, repeatedly). If you have not read all six this turn,
 > you are not ready to answer: read them first, then answer. This is the
 > project's non-negotiable first step; do it automatically, never wait to be
 > asked, and never announce you are "about to" instead of doing it.
 >
-> **The five-doc canon.** This file (`CLAUDE.md`) is the project's entry
-> point and operating guide, and now the first of the five you read in full;
-> the other four named above are the rest of the canon:
+> **The six-doc canon.** This file (`CLAUDE.md`) is the project's entry
+> point and operating guide, and now the first of the six you read in full;
+> the other five named above are the rest of the canon:
 > - **`NARRATIVE.md`** — the story bible: premise, lore, cast, place, the
 >   evidence trail, the endings, and the canon invariants. The source of
 >   truth for anything the fiction asserts.
@@ -31,11 +31,15 @@
 >   the code and `DIALOGUE.md` are ONE — any change to a player-facing line
 >   in code is a change to `DIALOGUE.md` in the SAME commit, and the reverse.
 >   A disagreement between them is rot.**
+> - **`VISION.md`** — see it, don't guess it: the one rule that when you
+>   change, dress, or judge how a scene LOOKS, you render it and LOOK (all
+>   four facings for your own check; one angle when you show the maintainer)
+>   instead of trusting the code. Plus how to capture.
 >
-> These five files are the ENTIRE doc canon. The old per-topic docs
+> These six files are the ENTIRE doc canon. The old per-topic docs
 > (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
 > audit files) were folded into them and deleted (2026-07), so every design
-> or story reference now lives in one of these five. When you change a canon
+> or story reference now lives in one of these six. When you change a canon
 > fact, change it in its ONE home and reconcile the others: a detail that is
 > true in one doc and stale in another is rot.
 
@@ -715,11 +719,12 @@ it renders the procedural sprites to a labelled PNG strip.
   fact, invariant, or player-facing story detail changes; **`DESIGN.md`** when
   a system, a mechanic, or its code-map changes; **`DIALOGUE.md`** when ANY
   player-facing spoken line or narrator box changes (see the next bullet);
-  **`CLAUDE.md`** when the layout, a convention, or a workflow changes. One
-  fact, one home, then reconcile the siblings (a detail true in one doc and
-  stale in another is rot). A change is not "done" until its docs match it,
-  so before you commit, ask which of the five canon docs your diff just made
-  stale and fix them in the same breath.
+  **`VISION.md`** when the see-it-don't-guess rule or the capture workflow
+  changes; **`CLAUDE.md`** when the layout, a convention, or a workflow
+  changes. One fact, one home, then reconcile the siblings (a detail true in
+  one doc and stale in another is rot). A change is not "done" until its docs
+  match it, so before you commit, ask which of the six canon docs your diff
+  just made stale and fix them in the same breath.
 - **DIALOGUE AND ITS DOC ARE ONE (non-negotiable, `DIALOGUE.md` contract).**
   Every word the player reads lives in two homes: the code that ships it and
   `DIALOGUE.md`. They are the same text. If your diff changes, adds, or cuts
