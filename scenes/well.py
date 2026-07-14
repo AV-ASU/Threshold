@@ -674,8 +674,7 @@ def build_works_scriptorium():
                 "over down the page.",
                 "The hand is hers. The same as the journal, the same as the "
                 "letter.",
-                "No captive draws this. She sat here and did the work, "
-                "willing, like all of them.",
+                "No captive draws this.",
             ], show=False)
             game.show_notice("The Sign, in her hand.")
             return

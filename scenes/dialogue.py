@@ -630,7 +630,7 @@ def grant_receipt(game):
         "A store tab off Hettie's spike, headed 'M. Blaine' in her hand.",
         "Matches, canned milk, the same short list run down most of a "
         "year. The staples a resident buys, week on week.",
-        "Not a visitor passing through. She lived here.",
+        "She lived here.",
     ], show=False)
     if hasattr(game, "show_notice"):
         game.show_notice("Her tab from the shop.")
@@ -1829,5 +1829,4 @@ def preacher_body_examine(game, npc):
         "They opened him for it and left him on the bank, where the whole "
         "town could find him.",
         "His collar's still white. His cross lies in the mess. You take it.",
-        "[c=dim]This is what naming them costs.[/c]",
     ], note=True)

@@ -434,7 +434,30 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 - **`maras_receipt`** (`grant_receipt`): "A store tab off Hettie's spike,
   headed 'M. Blaine' in her hand." / "Matches, canned milk, the same short
   list run down most of a year. The staples a resident buys, week on week." /
-  "Not a visitor passing through. She lived here."
+  "She lived here."
+- **`maras_record`** (`_office_interact`, `scenes/villager_houses.py`): "A
+  booking slip in the Sheriff's records. Blaine, Mara." / "Held a night for a
+  disturbance on the main road, shouting at the sky. Released at dawn, no
+  charge filed."
+- **`maras_dig`** (`build_works_scriptorium._interact`, `scenes/well.py`):
+  the Sign in Mara's own hand / "No captive draws this."
+- **`the_fall`** (`build_depths_antechamber._interact`, `scenes/depths.py`):
+  "There is no way back above you, and you are not hurt. Cut stone, worn
+  smooth by years of feet that came this way before you."
+- **`threshing_floor`** (`build_depths_threshing._interact`): "The yield,
+  raked into low heaps: grain, all of it, tithed down from the fields above.
+  The town's whole harvest, carried down and never carried back up."
+- **`the_old_stores_shelves`** (`build_the_old_stores._interact`): "Shelves
+  of the dig's gear: lamps burned black, pick hafts worn down to the grain,
+  every one tagged in the same steady brown hand."
+- **`the_preacher`** (`preacher_body_examine`, note): "The Preacher. He
+  named them from his pulpit, every Sunday. Then he went down to the river
+  after them, believing a flock can be talked home." / "They opened him for
+  it and left him on the bank, where the whole town could find him." / "His
+  collar's still white. His cross lies in the mess. You take it."
+- **`cult_digging`** (`build_the_old_stores._interact`, note): "The last
+  pages stop being sentences. Just the word door, over and over, pressed hard
+  enough to tear the paper."
 - **`the_how`** (`_vane_how_told`, note): "[c=dim]The sheriff spent his one
   card. A blind man, no name, lit up with certainty, promised his own eyes by
   the dream once the work is finished. Sent to fetch the last holdout, and
@@ -457,11 +480,10 @@ a case note.
   real one, and careful about it. A frame laid flat, like you could step down
   through it. ...Kids do stranger. I wrote it down anyway."
 - **`descent_mask`** (the temptation): "His face, in your hands. Light as
-  folded paper, cold, and it knows your grip." / "The origin of every half
-  reflection daubed on this town's walls. The pale mask hums in your hand." /
-  "And you KNOW it, the way you know a thing in a dream. Carry this, and the
-  town opens. The roads let you out." / "The names, the register, the girl
-  her father wanted found. You have enough. You could be in the car by
+  folded paper, cold, and it knows your grip." / "The pale mask hums in your
+  hand." / "And you KNOW it, the way you know a thing in a dream. Carry this,
+  and the town opens. The roads let you out." / "The names, the register, the
+  girl her father wanted found. You have enough. You could be in the car by
   morning. You could just go."
 - **`chalk_deep`**: "The drawn doors are behind my eyes now, every time I
   shut them. Everything in me is pulling for the surface. The way back is
@@ -490,11 +512,19 @@ spatial fold only (looping roads), never the door or the cosmology.
 `sheriff` → TAKEN INTO CUSTODY (the hollow lawman); `king` → the Carcosa
 mask-furnace cutscene. Card text is flow-guarded.
 
-## Prop examines (indexed; Wave 6 transcribes)
-Routine world-prop examine captions across the scene files (lodge register /
-ledger, the well, news rack, payphone, cellar key, headstone, candle,
-`barrow_tools`, `scarecrow`, `worn_stone`, `bell_tower`, `the_burning`,
-`the_fall`, `threshing_floor`, the deep evidence beats, the burn site). These
-are the narrator-sweep targets (`TODO.md` #13b/#15). Listed here by trigger;
-transcribed verbatim as the sweep reaches each. The code is authoritative for
-their exact words until then; the contract still binds.
+## Prop examines
+Transcribed as the narrator sweep (`TODO.md` #13b/#15) reaches each. The
+ones landed so far:
+- **`the_burning`** (`build_clearing._void_boss_interact`,
+  `scenes/interiors.py`): "A fire pit big enough to stand a family around,
+  cold a long while. What it burned was not all wood. Buckles, bowl rims,
+  boot eyelets, a watch case, slagged in the ash."
+- **the procession candles** (`build_depths_procession._candles_interact`,
+  first read): "[c=dim]They walked this in single file, carrying light.
+  Nobody hurried. The wax says nobody ever hurried.[/c]"
+
+The rest (lodge register / ledger, the well, news rack, payphone, cellar
+key, headstone, `barrow_tools`, `scarecrow`, `worn_stone`, `bell_tower`)
+remain indexed: the code is authoritative for their exact words until the
+sweep transcribes them here, and the contract still binds (touch one, update
+the other).

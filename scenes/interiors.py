@@ -136,9 +136,7 @@ def build_clearing():
         # it never touches the evidence count or the King-gate.
         _evidence(game, "the_burning",
             "A fire pit big enough to stand a family around, cold a long "
-            "while. What it burned was not all wood. Buckles, bowl rims, "
-            "boot eyelets, a watch case, slagged in the ash. People "
-            "burned their things here. All of their things."
+            "while. What it burned was not all wood. Buckles, bowl rims, boot eyelets, a watch case, slagged in the ash."
         )
     sc.on_interact_fn = _void_boss_interact
     return sc
@@ -453,7 +451,6 @@ def build_toby_house():
     sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 2,
                                  "kerosene_lamp"))
     sc.add_decoration(Decoration(12 * TILE + 8, 1 * TILE + 16, "clock"))
-    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     # Toby's own things, played out in secret in the closet: two corn dolls
     # on the floor where he walks them through the procession he saw. A
     # MISSING flyer for his dad -- who walked the road out for help and
