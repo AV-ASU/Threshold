@@ -49,14 +49,21 @@ it is wrong and gets updated to fit the tilt: a real `SOLID_PROPS` /
 (the tilt dispatch map in `CLAUDE.md`). When you render a scene, actively ask
 of each swiveling card: *should this really face the camera?*
 
-**2. Wall detail can HIDE at the cardinal facings (check +/- 45 degrees).**
-Details attached to a wall (`_WALL_DECO`, hung things, window and door trim,
-anything on a wall face) go **edge-on or occluded** when you look straight down
-a cardinal direction, so a pure N/E/S/W sweep can miss them entirely and you
-will think a wall is bare when it is dressed. So **when you are checking a
-scene's WALL sprites specifically, also render +/- 45 degrees off each facing**
-(the same head-turn arc the player has). Look at what sits on the walls from
-the angles that actually reveal the wall faces, not just dead-on.
+**2. Wall detail can HIDE at the cardinal facings (check +/- 45 degrees, on
+EVERY wall).** Details attached to a wall (`_WALL_DECO`, hung things, window
+and door trim, anything on a wall face) go **edge-on, occluded, or
+depth-sorted away** at a given camera angle, so a pure N/E/S/W sweep can miss
+them entirely and you will think a wall is bare when it is dressed. This is
+**not just the east/west walls** (the obvious edge-on case). It is **every
+wall, N/E/S/W alike**: a near wall can occlude its own face, a far wall's
+detail can sink behind the wall mass, and any hung thing can be swallowed by
+the depth sort from some facings and clear from others. Do **not** assume a
+wall is safe because you put its detail on the "camera-facing" north wall (it
+isn't) or because one facing looked fine. So the rule: **whenever you dress a
+wall, render +/- 45 degrees off each facing for that wall** (the same
+head-turn arc the player has), and do it for every wall you touched, not only
+the side ones. Look at what sits on the walls from the angles that actually
+reveal each wall face, not just dead-on.
 
 ## HOW TO RENDER
 

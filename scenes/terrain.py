@@ -3119,7 +3119,7 @@ _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
-    "chalk_door_wall", "chalkboard",
+    "chalk_door_wall", "chalkboard", "wall_cross",
     # Framed needlework, a varnish-dark portrait, and a larder shelf of
     # preserves: all HANG on the wall face.
     "sampler", "oil_portrait", "preserve_shelf",

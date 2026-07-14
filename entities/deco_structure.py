@@ -670,6 +670,28 @@ class DecoStructureMixin:
         pygame.draw.circle(surf, (180, 180, 200), (x, y + 2), 4, 2)
         pygame.draw.circle(surf, (90, 90, 110), (x, y + 2), 4, 1)
 
+    def _draw_wall_cross(self, surf, x, y):
+        """A plain wooden cross hung on the wall above the church altar (a
+        `_WALL_DECO` billboard). Two dark beams with a lit near edge and a
+        soft grain seam. Deliberately austere: a poor country parish, not a
+        gilded one."""
+        wood = (78, 58, 38)
+        lit = (116, 90, 58)
+        dk = (44, 32, 20)
+        vw, vh = 6, 40            # vertical beam
+        hw, hh = 26, 6           # horizontal beam, crossing near the top third
+        cy = y - vh // 2 + 13    # the crossing height
+        # vertical beam
+        pygame.draw.rect(surf, wood, (x - vw // 2, y - vh // 2, vw, vh))
+        pygame.draw.rect(surf, lit, (x - vw // 2, y - vh // 2, 2, vh))       # lit left edge
+        pygame.draw.rect(surf, dk, (x - vw // 2, y - vh // 2, vw, vh), 1)
+        # horizontal beam
+        pygame.draw.rect(surf, wood, (x - hw // 2, cy - hh // 2, hw, hh))
+        pygame.draw.rect(surf, lit, (x - hw // 2, cy - hh // 2, hw, 2))      # lit top edge
+        pygame.draw.rect(surf, dk, (x - hw // 2, cy - hh // 2, hw, hh), 1)
+        # a faint grain seam down the vertical beam
+        pygame.draw.line(surf, dk, (x, y - vh // 2 + 2), (x, y + vh // 2 - 2), 1)
+
     def _draw_lodge_gable(self, surf, x, y):
         """Flat (pitch-0) fallback for the loft dormer gable: a small gabled
         block with a lit window (the tilt view draws it as a volume rising over
