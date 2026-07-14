@@ -146,60 +146,19 @@ def _log_note(game, key, lines):
             game._flash_notebook(key)
 
 
-# The investigation grows: when the PI makes a DISCOVERY, some of what he
-# learns points back at someone he has already met (she left smiling; the
-# clerk saw her every day; go ask him). Each nudge fires ONCE, only if the
-# NPC has been met, and it (a) files a case note and (b) appends the PI's
-# interior line onto the discovery's own narration so it reads as one beat
-# ("...I should go back and ask him"). The matching follow-up QUESTION is
-# gated on the same evidence in that NPC's conversation, so even if the
-# nudge is missed (met the NPC after the find) the question still opens.
-_REVISIT_NUDGES = {
-    "the_ledger": [{
-        "key": "revisit_sable_checkouts",
-        "met": "sable_greeted",
-        "lines": [
-            "[c=dim]The old registers cut off a year back. A year of "
-            "guests signed in, and not one of them ever signed out.",
-            "The clerk keeps that desk like it owes him something.[/c]",
-        ],
-    }],
-    "maras_journal": [{
-        "key": "revisit_sable_smile",
-        "met": "sable_greeted",
-        "lines": [
-            "[c=dim]She wrote like someone already halfway through a door.",
-            "The clerk saw her every day she stayed here. He would know the "
-            "day she stopped writing.[/c]",
-        ],
-    }],
-    "the_preacher": [{
-        "key": "revisit_vane_murder",
-        "met": "vane_greeted",
-        "lines": [
-            "[c=dim]They left him on the bank where the whole town draws "
-            "its water. Nobody carried him home.",
-            "The sheriff was born here. He knew this man his whole life.[/c]",
-        ],
-    }],
-}
+# The per-discovery revisit nudges ("...I should go back and ask him") were
+# CUT (play-notes: the game should not do the player's thinking -- the
+# follow-up QUESTION still opens on the same evidence in each NPC's
+# conversation, so nothing is lost but the hand-holding append). The only
+# survivor is the act-break desk pointer below, which is progression signage,
+# not a revisit nudge.
 
 
 def _collect_revisit(game, name):
-    """For a just-fired discovery `name`, file any met-gated revisit notes
-    and return their interior-voice lines to append to the discovery's
-    narration."""
-    out = []
-    for n in _REVISIT_NUDGES.get(name, []):
-        if not game.save.flag(n["met"]):
-            continue
-        if game.save.flag("nudged_" + n["key"]):
-            continue
-        game.save.set_flag("nudged_" + n["key"], True)
-        _log_note(game, n["key"], n["lines"])
-        out.extend(n["lines"])
-    out.extend(_ready_for_the_desk(game, name))
-    return out
+    """For a just-fired discovery, return the act-break desk pointer (the
+    Invitation signpost) if the readiness line is crossed. The old
+    per-discovery revisit nudges were cut (play-notes)."""
+    return _ready_for_the_desk(game, name)
 
 
 def _ready_for_the_desk(game, name):
@@ -1334,9 +1293,10 @@ SABLE_CONVO = {
                         "till morning. Everything here does. Get some rest."),
             ],
         },
-        # Unlocked by reading the cellar Ledger (evidence the_ledger); the
-        # discovery nudges the PI back here (see _REVISIT_NUDGES). The mask
-        # thins: he stops pretending to keep the paperwork, keeps the promise.
+        # Unlocked by reading the cellar Ledger (evidence the_ledger): the
+        # follow-up question opens on the evidence alone (the old revisit
+        # nudge that pointed here was cut). The mask thins: he stops
+        # pretending to keep the paperwork, keeps the promise.
         {
             "key": "checkouts",
             "label": "The checkouts stop a year back.",

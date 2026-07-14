@@ -522,9 +522,18 @@ ones landed so far:
 - **the procession candles** (`build_depths_procession._candles_interact`,
   first read): "[c=dim]They walked this in single file, carrying light.
   Nobody hurried. The wax says nobody ever hurried.[/c]"
+- **`barrow_tools`** (`_brimley` barrow examine, note): "Digging tools left
+  in the barrow, rusted over. The edges are still bright."
+- **the emptied church** (`old_man_house_on_enter`, after `preacher_doomed`):
+  "[c=dim]Mud on the aisle boards, dried in a line toward the door. River
+  mud.[/c]" (the atmospheric "lectern stands empty / stove is cold" line was
+  cut, play-notes; the river-mud pointer stays, it is the only in-church
+  signal toward the riverbank body).
+- **the payphone** (`_brimley`): examine **CUT** (play-notes). The dead
+  phone stays as silent set-dressing; the "you hear your own voice" beat is
+  gone. No pointer or evidence was on it.
 
-The rest (lodge register / ledger, the well, news rack, payphone, cellar
-key, headstone, `barrow_tools`, `scarecrow`, `worn_stone`, `bell_tower`)
-remain indexed: the code is authoritative for their exact words until the
-sweep transcribes them here, and the contract still binds (touch one, update
-the other).
+The rest (lodge register / ledger, the well, news rack, cellar key,
+headstone, `scarecrow`, `worn_stone`, `bell_tower`) remain indexed: the code
+is authoritative for their exact words until the sweep transcribes them here,
+and the contract still binds (touch one, update the other).

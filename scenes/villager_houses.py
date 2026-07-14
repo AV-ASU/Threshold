@@ -136,8 +136,10 @@ def old_man_house_on_enter(game, scene):
                   if getattr(n, "tag", None) != "preacher"]
     if not game.save.flag("church_empty_seen"):
         game.save.set_flag("church_empty_seen", True)
+        # Trimmed (play-notes): the atmospheric line is cut; the river-mud
+        # pointer stays because it is the only in-church signal toward the
+        # riverbank body (load-bearing for the preacher discovery).
         game.dialog.show([
-            "[c=dim]The lectern stands empty. The stove is cold.[/c]",
             "[c=dim]Mud on the aisle boards, dried in a line toward the "
             "door. River mud.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
