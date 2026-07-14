@@ -76,10 +76,17 @@ case:
   cultists at the door you entered from** (a reinforcement pulse on a
   cooldown, and only once the cult is awake at 1+ evidence — the ev-0 town
   spawns no patrols at all). The net tightens, but it isn't lethal yet.
+- **At 2 evidence (`KING_TURNS_HEAD_EV`):** the ramp's telegraph — he
+  **turns his head** toward you (the `the_turning` note), aware but not yet
+  moving, so the gate is not an ambush (play-notes).
 - **At 3+ evidence:** the King himself **walks** — the roam arms and He
   hunts the world room by room (the design spine above; mechanics in
-  `systems/king_roam_mixin.py`). *You make Brimley deadly by understanding
-  it.*
+  `systems/king_roam_mixin.py`). But crossing the gate is not an ambush: the
+  world **holds its breath** for `KING_ARM_GRACE` (~25s) first — he stands
+  far and does not close (`arm_grace`, the `the_breath` note), the window to
+  reach the lodge for the Invitation before the hunt begins (play-notes ramp;
+  decouples the difficulty spike from progression). *You make Brimley deadly
+  by understanding it.*
 
 > **The King's pursuit is personal.** He isn't drawn to noise — he's drawn
 > back to the **face he met in the dream** (NARRATIVE §2). Read visibility as *how

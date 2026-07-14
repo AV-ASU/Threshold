@@ -584,6 +584,14 @@ EVIDENCE_FLOOR_DEFAULT = 0.10  # per-evidence floor weight if none recorded
 # cultist reinforcement wave at your entry instead of the King -- the net
 # tightening, not yet lethal. At/above it, the same trigger brings the King.
 KING_GATE_EVIDENCE = 3
+# The King-arrival RAMP (play-notes). Crossing the gate shouldn't be an
+# ambush: at KING_GATE_EVIDENCE the roam arms but the world HOLDS ITS BREATH
+# for KING_ARM_GRACE seconds first -- he stands far and does not close, the
+# window to reach the lodge for the Invitation before the hunt begins. One
+# tier earlier (KING_TURNS_HEAD_EV) a single telegraph note lands: he has
+# turned his head toward you, but has not moved yet.
+KING_TURNS_HEAD_EV = 2        # evidence at which the "he turns his head" beat fires
+KING_ARM_GRACE = 25.0         # s the world holds its breath before the hunt begins
 REINFORCE_COUNT = 2            # cultists per wave
 REINFORCE_COOLDOWN = 8.0      # seconds between waves (pulses, never floods)
 # The notebook-scribble toast: the corner card the PI scribbles a beat onto

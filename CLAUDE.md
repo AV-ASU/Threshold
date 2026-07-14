@@ -355,12 +355,18 @@ it renders the procedural sprites to a labelled PNG strip.
   populated the moment you enter; killed cultists then respawn one at a time on
   the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
   **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
-  evidence-gated like any patrol. **Ev 2**: his attention finds YOU — a
-  single SEEKER moth materialises in the player's room every
-  `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door, drops
-  in on the `"b"` arrival ramp). **Ev 3**: he walks (the roam arms),
-  his own shedding starts, the seeker slows to `MOTH_SEEK3_*`
-  (5-6 min).
+  evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
+  attention finds YOU — a single SEEKER moth materialises in the player's
+  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
+  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
+  (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
+  but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
+  (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
+  its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
+  NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
+  window to reach the lodge for the Invitation before the hunt begins
+  (decouples the spike from progression). Then his shedding starts and the
+  seeker slows to `MOTH_SEEK3_*` (5-6 min).
 - **The Moths** (the King's heralds; `MOTH_*` config, sim in
   `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
   `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
