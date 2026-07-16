@@ -174,20 +174,45 @@ full economy table is still to be drafted).
   (nothing stops the PI but himself); **existing verbs only** (give via E /
   dialog).
 
-### 2b. **[Opus + Fable]** Close-up examine tableaux  *(play-notes feature; PILOT LANDED 2026-07)*
+### 2b. **[Opus + Fable]** Dialogue-as-tableau ENCOUNTERS  *(play-notes feature; pilot landed 2026-07; DIRECTION EXPANDED by the maintainer 2026-07 — this is now the dialogue presentation end-state)*
 
-The diegetic "look at the thing" modal: press `[E]` on a tagged prop and the
-world pauses on an animated procedural close-up with a **menu** that mutates it
-live (take the gun off the desk, read the case file) and can open readable text
-(walking away interrupts). Art in `ui/tableau.py`, state machine in
+The diegetic close-up modal: art in `ui/tableau.py`, state machine in
 `systems/tableau_mixin.py` (a `Game` mixin), wired like the flashback cutscene
 (`_tableau is not None` freezes the world; `_draw_tableau` paints over
 everything; `_tableau_input` owns input). **PILOT LANDED:** the bedroom writing
-desk (pistol + case file) replaced the old linear "E takes gun, next E reads
-notes." Guarded by `tests/flow.py` §14; player-facing text in `DIALOGUE.md`
-Part B. **Still open (the maintainer greenlights each):** reuse the system for
-a **pedestal** (the Mask on the altar) and the **"face across a table"** beats
-(Mara's confrontation, the cult Talk). Art refinement per beat, then wire.
+desk (pistol + case file), guarded by `tests/flow.py` §14; text in
+`DIALOGUE.md` Part B.
+
+**THE EXPANDED DIRECTION (maintainer, verbatim intent):** ALL dialogue becomes
+tableaux — each "a realistic depiction of the character and environmental
+beats as necessary." Named beats: the **Mask altar** (obviously), **every step
+of the school ritual** (incense, the chalk door). And the beats become
+**ENCOUNTERS**: at the end of a dialogue, or on certain choices, an NPC can
+**LOCK YOU OUT** — they don't want to talk to you anymore, and close out in
+the live game space "saying go away, effectively." This gives beats like the
+Talk real weight — e.g. a **"reach for gun" option** — and "gives us better
+control on what happens in these situations and conveys our narrative."
+
+Build notes for the scoping pass (not yet settled with the maintainer):
+- Per-character close-up art is the big lift: a procedural face/torso per
+  principal (Sable at the register, Vane across his desk, Hettie over the
+  counter, Toby looking up, Mara in the rank, the cultist of the Talk),
+  animated, mutating with the exchange (the desk pilot is the model).
+- The lockout is a real state: a per-NPC flag the conversation engine
+  checks; a locked NPC gives the in-world brush-off (a float line, no menu)
+  from then on. Choices that can burn a bridge must telegraph enough that
+  the lockout reads as consequence, not a bug.
+- "Reach for gun" class options sit inside the tableau menu next to the
+  spoken lines; some end the encounter into live play (the Talk breaking
+  into a chase, an NPC fleeing/locking out).
+- Integration tension to resolve on purpose: the shipped conversation verb
+  deliberately keeps the WORLD RUNNING (float speech, DESIGN.md dialog
+  channels); the tableau freezes it. The maintainer's call is that the
+  control/weight is worth it for these beats — decide at scoping whether
+  ALL exchanges freeze, or the tableau reserves itself for the principals'
+  exchanges while ambient chorus lines stay floats.
+- Sequencing (maintainer): the narrator copy pass (#13b/#15) finishes FIRST;
+  then this. Each tableau needs its art previewed per VISION.md before wiring.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
