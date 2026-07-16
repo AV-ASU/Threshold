@@ -1239,14 +1239,17 @@ SABLE_CONVO = {
                 ]),
             ],
         },
-        # A STARTING question that seeds the Ledger: he points you at the
-        # register on the desk (a lead) and shrugs off the padlocked cellar
-        # where the old books really went.
+        # Gated on finding the cellar key (on the nail behind the house): the
+        # PI will not reference "that cellar of yours" before he knows there
+        # is one. Seeds the Ledger -- he points you at the desk register (a
+        # lead) and shrugs off the padlocked cellar where the old books went.
         {
             "key": "cellar",
             "label": "About that cellar of yours.",
             "q": "A lot of doors in this town stay locked. You keep a cellar "
                  "under this place?",
+            "avail": lambda g: (g.save.flag("cellar_key_taken")
+                                or g.player.inventory.has("cellar_key")),
             "beats": [
                 ("npc", "Storage, mostly. The key is about somewhere. Nothing "
                         "down there worth the dust, I promise you."),
@@ -1255,42 +1258,26 @@ SABLE_CONVO = {
                         "Read it as long as you like."),
             ],
         },
-        # A STARTING question: the town has been sealed since the mid-January
-        # rite (it is mid-April now -- THREE months; NARRATIVE §1). The PI has
-        # the dates from his own case; Sable downplays a supernatural seal as
-        # ordinary winter and never lets the word "trapped" near it.
         {
-            "key": "sealed",
-            "label": "Nothing leaves this town. Why?",
-            "q": "Nothing leaves this town. No car, no truck, no mail since "
-                 "January. That's three months. What happened here?",
-            "beats": [
-                ("npc", "Happened? Nothing happened. The snows came in around "
-                        "the new year and the road just... stopped mattering. "
-                        "It does that, up here."),
-                ("npc", "Three months is nothing to a town like this. Folk "
-                        "get comfortable. Warm bed, full larder, good company. "
-                        "You will too, give it time."),
-            ],
-        },
-        {
-            # The PI speaks only from his OWN experience -- his car died at
-            # the lodge steps the night he drove in. He does NOT yet know the
-            # fold kills every engine (that comes from Vane / Royce), so this
-            # exchange must not put town-wide car knowledge in his mouth.
-            # Sable's answer stays deniable hospitality (the Sheriff carries
-            # the plain truth; NARRATIVE §7).
+            # The PI asks the mundane question: his car died at the lodge
+            # steps the night he drove in, so is there a mechanic? He speaks
+            # only from his OWN experience and does NOT yet know the fold kills
+            # every engine (that comes from Vane / Royce), so this puts no
+            # town-wide car knowledge in his mouth. Sable's answer is deniable
+            # hospitality: "not broken" is the faint tell, and he lands on his
+            # own want -- keep the guest, keep him HERE (the Sheriff carries
+            # the plain truth; NARRATIVE §4/§7).
             "key": "car",
-            "q": "My car died at the lodge steps the night I drove in. "
-                 "Turns over and never catches.",
-            "label": "My car won't start.",
+            "q": "My car won't start. Turns over and won't catch. Is there "
+                 "anyone in town who could take a look at it?",
+            "label": "Is there a mechanic in town?",
             "beats": [
-                ("npc", "The roads are not going anywhere tonight. Neither "
-                        "are you. I would not fret over the car."),
-                ("pi", "I didn't ask about tonight. I asked what's wrong "
-                       "with it."),
-                ("npc", "Nothing a night's rest won't settle. It will keep "
-                        "till morning. Everything here does. Get some rest."),
+                ("npc", "A mechanic? No, nothing like that here now, and it "
+                        "would not help you if there were."),
+                ("npc", "The car is not broken, friend. I could not tell you "
+                        "what ails it, and I would not lose sleep on it."),
+                ("npc", "You have a good bed and a standing welcome. Stay as "
+                        "long as you need."),
             ],
         },
         # Unlocked by reading the cellar Ledger (evidence the_ledger): the
@@ -1311,24 +1298,6 @@ SABLE_CONVO = {
                 ("npc", "They will not have gone far. Nobody does. It is a "
                         "restful town, friend. People stay. It is the one "
                         "thing I can promise a guest."),
-            ],
-        },
-        # Unlocked by reading Mara's journal (evidence maras_journal). This
-        # is where the mask thins the most: "she is not lost" is as close as
-        # he comes to admitting he knows, and still no scheme is confessed.
-        {
-            "key": "her_state",
-            "label": "When did she change?",
-            "q": "Her journal reads like someone already halfway out a "
-                 "door. When did she change?",
-            "avail": lambda g: g.save.flag("evidence_maras_journal"),
-            "beats": [
-                ("npc", "(He sets his hands flat on the desk.) You keep "
-                        "telling me she is lost. I keep telling you she is "
-                        "not."),
-                ("npc", "She stopped fretting, toward the end. Folk do, "
-                        "here. It is a mercy, if you let it be. You will let "
-                        "it be too, in time."),
             ],
         },
         # The reproach: the PI puts the looping road to Sable once he has

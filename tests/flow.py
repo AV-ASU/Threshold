@@ -1346,16 +1346,23 @@ def main():
     check(gk3.player.inventory.count("rite_envelope") == 1,
           "drop: the desk handoff never gives a second Invitation")
 
-    # (8) THREE real starting questions the PI can open with (the user's
-    # brief): Mara, the cellar/register, and the sealed town. Plus the fact
-    # check: the seal is THREE months (mid-January to mid-April), not one.
+    # (8) The starting questions the PI can open with from his OWN knowledge:
+    # who he is looking for (Mara), and his own dead car. "Nothing leaves this
+    # town" was CUT (a knowledge leak -- he has only seen his own car die; the
+    # fold pressure now rides the gated "the_fold" exchange). The cellar
+    # question is gated on finding the cellar key (not an opener), and "when
+    # did she change" was CUT (Sable barely met Mara).
     _keys = {ex["key"] for ex in SABLE_CONVO["exchanges"] if "avail" not in ex}
-    check({"mara", "cellar", "sealed"} <= _keys,
-          "ask: Mara, the cellar, and the sealed town are all askable at once")
-    _sealed = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "sealed")
-    _stxt = (_sealed["q"] + " " + " ".join(b[1] for b in _sealed["beats"])).lower()
-    check("three months" in _stxt and "january" in _stxt,
-          "ask: the sealed-town beat is fact-correct (three months, since Jan)")
+    check({"mara", "car"} <= _keys,
+          "ask: the PI can open with Mara and his own dead car")
+    _skeys = {ex["key"] for ex in SABLE_CONVO["exchanges"]}
+    check("sealed" not in _skeys,
+          "ask: the ungated 'nothing leaves this town' knowledge leak is gone")
+    check("her_state" not in _skeys,
+          "ask: the 'when did she change' question is gone (Sable barely met Mara)")
+    _cellar = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "cellar")
+    check("avail" in _cellar,
+          "ask: the cellar question is gated on the cellar key, not an opener")
 
     # (9) The exit hook: the first time the PI tries to leave, Sable stops
     # him with a last word (planting the warped road); it fires once.
