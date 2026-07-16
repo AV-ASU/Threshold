@@ -31,7 +31,7 @@ priority order within each group.
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED 2026-07; principals + chorus all converted — still open: `_REVISIT_NUDGES` for Hettie/Toby/Crane as their case hooks land)*
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED 2026-07; principals + chorus all converted. The `_REVISIT_NUDGES` layer was CUT WHOLESALE by maintainer call in the Wave 6 review: the "I should go back and ask him" appends did the player's thinking for them. The dict is gone from `scenes/dialogue.py`; only the act-break `_ready_for_the_desk` pointer survives. Flow §17c/d guard the absence.)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -373,9 +373,9 @@ examine. The census (grouped) for the copy pass:
   `works_cistern_seen` / `the_doorframe` flavor `_evidence` (these write
   NOTHING to the book — caption only). Trim to a terse factual line (state
   the thing, cut the PI's spelled-out conclusion) or silence, so the player
-  draws the inference. **The revisit-nudges** (`_REVISIT_NUDGES`, the
-  "I should go back and ask him" appends) are the clearest "the game does the
-  thinking for you" — decide with the maintainer whether they go.
+  draws the inference. *(The revisit-nudges are RESOLVED: cut wholesale,
+  maintainer call, Wave 6 review — see #1. The payphone and empty-church
+  captions from this census were also cut in the same review.)*
 - **KEEP (not reactions-to-random-things):** the five CANONICAL_EVIDENCE
   beats, the descent-voice arc (`_DESCENT_VOICE`), the dream, the Mask
   temptation, Mara's calling-out, the fold notes, the threshold recognition,
