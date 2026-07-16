@@ -1308,7 +1308,7 @@ def main():
     # never confirm he knows her or where she is.
     _mtxt = " ".join(b[1].lower() for b in mara["beats"] if b[0] in ("npc", "pi"))
     _mb0 = mara["beats"][0][1].lower()
-    check("can't say" in _mb0 and "name" in _mb0,
+    check(("can't say" in _mb0 or "cannot say" in _mb0) and "name" in _mb0,
           "tone: Sable deflects the name instead of confirming it")
     check(not any(s in _mtxt for s in
                   ("that is her", "sat right where", "smiling, by the end",
@@ -1401,6 +1401,26 @@ def main():
     gr.save.set_flag("crossed_a_fold", True)
     check(q_fold["avail"](gr),
           "ask: learning the roads loop opens the reproach to Sable")
+
+    # (10b) The reproach is ANCHORED: the car exchange plants the warning
+    # inside the closing hospitality ("the roads are not going anywhere")
+    # and marks it heard (sable_car_asked); "I told you" fires only on that
+    # flag, so Sable never cites a conversation that didn't happen.
+    _qcar = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "car")
+    check(any(b[0] == "npc" and "roads are not going anywhere" in b[1]
+              for b in _qcar["beats"]),
+          "ask: the car answer plants the road warning inside hospitality")
+    check(callable(q_fold["beats"]),
+          "ask: the reproach reply is dynamic (anchored on the car ask)")
+    _ga1 = new_game()
+    _qcar["on_ask"](_ga1)
+    check(_ga1.save.flag("sable_car_asked"),
+          "ask: asking after the mechanic marks the warning heard")
+    check(any("I told you" in b[1] for b in q_fold["beats"](_ga1)),
+          "ask: with the warning heard, Sable quotes himself back")
+    _ga0 = new_game()
+    check(not any("I told you" in b[1] for b in q_fold["beats"](_ga0)),
+          "ask: without the car ask, Sable never claims a talk that wasn't")
 
     # (11) The readiness nudge: crossing 3 canonical evidence on the surface,
     # still without the rite, files a NOTE pointing the PI back to the desk

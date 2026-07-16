@@ -856,9 +856,11 @@ is gone, his witness account is photo-earned.)*
 
 - Narrator "vanished into the corn" (`scenes/villager_houses.py`) adopts
   Crane's drift-away impression as fact; canon is one night procession, and
-  §2 corrects the image for Mara ("not into the corn"). Crane's "more every
-  season" and Sable's "no end of those this past year... They come" keep
-  arrivals in the habitual present; arrivals ended before the seal.
+  §2 corrects the image for Mara ("not into the corn"). ~~Crane's "more every
+  season" and Sable's habitual-present arrivals~~ **DONE (2026-07 Fable tense
+  sweep):** every ended-arrivals line reads past now (Crane's greet + intro +
+  "They all stopped.", Sable's "faces came" + "went the same way", Vane's
+  "kept to their own"). The narrator corn line is this bullet's open half.
 - Descent interior voice wobbles POV (first-person notes vs second-person
   on-screen beats, `systems/game.py`).
 - ~~Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk
