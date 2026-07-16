@@ -679,6 +679,12 @@ it renders the procedural sprites to a labelled PNG strip.
      locked apex can't be outrun but CAN be hidden from); pursuit rules, apex spawn
      placement (never on the player's exit tile), and monster visibility/design must
      preserve dread rather than expose it. Re-derive the ratios whenever you touch a speed.
+     **The world's overall speed is ONE knob: `PACE` (`systems/config.py`, 2026-07
+     playtest buff).** It multiplies every mover once at its consumption site (player,
+     every NPC incl. the King and hollow Sheriff, Enemy cultists, projectiles, moths)
+     plus the walk-time-coupled clocks (`NOISE_WALK_SPEED`, `BLEED_DELAY_*`,
+     `KING_HOP_INTERVAL`, `SUS_FILL_RATE`), so ratios are PACE-invariant by
+     construction. Feels too fast/slow in playtest: tune `PACE`, never one actor.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §4)
 

@@ -6,7 +6,7 @@ import random
 import pygame
 from rendering.sprites import draw_npc_sprite
 from rendering.transform import draw_vessel_bloom
-from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
+from systems.config import PACE, SUS_NOTICE, SUS_SCORE_HOLD
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
                              react_hold, errand_step, errand_drop)
@@ -72,8 +72,8 @@ class Projectile:
         if self.lifespan <= 0:
             self.alive = False
             return
-        new_x = self.x + self.dx * self.speed * dt
-        new_y = self.y + self.dy * self.speed * dt
+        new_x = self.x + self.dx * self.speed * dt * PACE
+        new_y = self.y + self.dy * self.speed * dt * PACE
         if scene.is_solid_at(new_x, new_y):
             self.alive = False
             return
@@ -299,13 +299,13 @@ class Enemy:
 
         if self.ai == "flee":
             if d < self.aggro:
-                step_x = -(dx / d) * self.speed * 60 * dt
-                step_y = -(dy / d) * self.speed * 60 * dt
+                step_x = -(dx / d) * self.speed * 60 * dt * PACE
+                step_y = -(dy / d) * self.speed * 60 * dt * PACE
                 self.facing = (-dx / d, -dy / d)
             else:
                 fx, fy = self.flee_dir
-                step_x = fx * self.drift_speed * 60 * dt
-                step_y = fy * self.drift_speed * 60 * dt
+                step_x = fx * self.drift_speed * 60 * dt * PACE
+                step_y = fy * self.drift_speed * 60 * dt * PACE
                 self.facing = (fx, fy)
             if not scene.is_solid_at(self.x + step_x, self.y):
                 self.x += step_x
@@ -372,8 +372,8 @@ class Enemy:
                     player.take_damage(int(self.atk * self.charge_mult))
                     self.attack_timer = self.charge_cd
             if d > self.atk_range:
-                step_x = (dx / d) * self.speed * speed_mult * 60 * dt
-                step_y = (dy / d) * self.speed * speed_mult * 60 * dt
+                step_x = (dx / d) * self.speed * speed_mult * 60 * dt * PACE
+                step_y = (dy / d) * self.speed * speed_mult * 60 * dt * PACE
                 if not scene.is_solid_at(self.x + step_x, self.y):
                     self.x += step_x
                 if not scene.is_solid_at(self.x, self.y + step_y):
@@ -396,8 +396,8 @@ class Enemy:
             ddx = tx - self.x; ddy = ty - self.y
             dd = math.hypot(ddx, ddy)
             if dd > 2:
-                step_x = (ddx / dd) * self.speed * 30 * dt
-                step_y = (ddy / dd) * self.speed * 30 * dt
+                step_x = (ddx / dd) * self.speed * 30 * dt * PACE
+                step_y = (ddy / dd) * self.speed * 30 * dt * PACE
                 if not scene.is_solid_at(self.x + step_x, self.y):
                     self.x += step_x
                 if not scene.is_solid_at(self.x, self.y + step_y):
@@ -419,8 +419,8 @@ class Enemy:
         d = math.hypot(dx, dy)
         if d < 0.5:
             return False
-        step_x = (dx / d) * self.speed * speed_mult * 60 * dt
-        step_y = (dy / d) * self.speed * speed_mult * 60 * dt
+        step_x = (dx / d) * self.speed * speed_mult * 60 * dt * PACE
+        step_y = (dy / d) * self.speed * speed_mult * 60 * dt * PACE
         moved = False
         if not scene.is_solid_at(self.x + step_x, self.y):
             self.x += step_x

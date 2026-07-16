@@ -7,6 +7,22 @@ does `from systems.config import *`, so every bare-name reference there and
 every external `from systems.game import <CONST>` keeps resolving unchanged.
 """
 
+# ---- GLOBAL PACE (2026-07 playtest: "everyone needs a speed buff, and
+# everything should react in proportion") -------------------------------------
+# ONE knob scales every mover's locomotion together: the player
+# (game.py update_player), every NPC incl. the King and the hollow
+# Sheriff (entities/npc.py step sites), the underground Enemy cultists +
+# projectiles (entities/enemy.py), and the moths (MOTH_SPEED below). The
+# walk-time-coupled clocks scale WITH it so reactions stay proportional:
+# NOISE_WALK_SPEED (the investigator's walk budget), BLEED_DELAY_* (the
+# next-room arrival is a walk), KING_HOP_INTERVAL (his off-screen touring
+# keeps pace with the world), and SUS_FILL_RATE (detection races
+# traversal: faster legs cross a sight cone quicker, so the fill keeps
+# the same crossing gamble). Everything here preserves the intentional
+# RATIOS (sprint < King; error class 9, CLAUDE.md): tune the pace by
+# THIS number only, never one actor's speed alone.
+PACE = 1.4
+
 # THRESHOLD: scene sets keyed to the cult fiction. The cult sites
 # (cult_chamber, the burn clearing) bypass the standard fade --
 # crossing into them is meant to feel like a snap, not a door.
@@ -180,7 +196,7 @@ MOTH_SEEK2_LO = 120.0        # ev2 seeker interval (s), rolled per spawn
 MOTH_SEEK2_HI = 180.0
 MOTH_SEEK3_LO = 300.0        # ev3+ seeker interval (s)
 MOTH_SEEK3_HI = 360.0
-MOTH_SPEED = 26.0            # drift speed px/s
+MOTH_SPEED = 26.0 * PACE     # drift speed px/s (rides the global PACE)
 MOTH_SEEK_BIAS = 0.35        # chance a fresh waypoint aims near the player
 MOTH_RADIUS = 96.0           # trigger radius around the player
 MOTH_KINDLE = 0.8            # seconds of kindle before the flare
@@ -322,7 +338,9 @@ KING_ROAM_SCENES = (SEAMLESS_WORLD_SCENES - {"clearing"}) - SAFE_SCENES
 # room he can enter is a room his shed pair can attend.
 MOTH_SCENES = set(KING_ROAM_SCENES)
 KING_ROAM_START = "arrival_road"   # idle home: the looping road W of the Lodge
-KING_HOP_INTERVAL = 6.0      # s between adjacent-scene hops while off-camera
+KING_HOP_INTERVAL = 6.0 / PACE  # s between adjacent-scene hops while
+                             # off-camera (rides PACE: his touring keeps
+                             # step with the faster world)
 KING_HOP_TOWARD = 0.55       # chance a search hop steps toward the player (lucky,
                              # not omniscient -- the rest is a random drift)
 KING_SEARCH_TIME = 120.0     # s searching after losing you before he loosens to
@@ -330,15 +348,17 @@ KING_SEARCH_TIME = 120.0     # s searching after losing you before he loosens to
 KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
 KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
-KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
-                             # ~117 px/s, just above the player's ~105 px/s
-                             # sprint so a locked King always closes the gap
-                             # (play-notes rebalance)
+KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update,
+                             # x PACE at the step site); ~117 x PACE px/s,
+                             # just above the player's sprint (~105 x PACE)
+                             # so a locked King always closes the gap
+                             # (play-notes rebalance; ratio PACE-invariant)
 # Player sprint = PLAYER_SPRINT_MULT x the base walk (entities/player.py
-# speed). With the walk doubled (play-notes), sprint is a modest gear-up
-# that still lands ~0.9x the King above: you can never outrun the apex,
-# only hide (TODO #5 is the human tuning loop; raising this needs the King
-# raised too, or you outrun him).
+# speed, x PACE at the consumption site in game.py). Sprint is a modest
+# gear-up that still lands ~0.9x the King above at ANY pace: you can never
+# outrun the apex, only hide (TODO #5 is the human tuning loop; raising
+# this needs the King raised too, or you outrun him -- tune the world's
+# speed with PACE, never this ratio).
 PLAYER_SPRINT_MULT = 1.25
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 
@@ -449,7 +469,10 @@ GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
 # that reaches the hide CHECKS it -> the struggle). Apex pursuers
 # (_force_chase: the King, the hollow Sheriff) bypass all of this.
 SUS_NOTICE = 0.45             # alert threshold: turn toward you, the "?" tell
-SUS_FILL_RATE = 2.6           # /s at score 1.0 -> point-blank open lock ~0.4s
+SUS_FILL_RATE = 2.6 * PACE    # /s at score 1.0 -> point-blank open lock still
+                              # ~0.4s in WALK-time (rides PACE: detection races
+                              # traversal, so the cross-the-gap gamble keeps
+                              # the same odds at the faster pace)
 SUS_DECAY = 0.55              # /s drain while the score is broken
 SUS_SCORE_HOLD = 0.12         # min score that sustains an active CHASE
 SUS_NEAR = 44.0               # px: inside this, facing no longer matters
@@ -503,10 +526,11 @@ NOISE_HEAR_MIN = 0.7          # min loudness that turns a scout's head
 NOISE_FRESH = 0.4             # s an event stays audible
 NOISE_REACT_PAUSE = 0.45      # the face-the-sound beat before walking
 NOISE_SEARCH_PULL = 0.9       # loudness that diverts a searcher
-NOISE_WALK_SPEED = 55.0       # px/s travel estimate that sizes an
+NOISE_WALK_SPEED = 55.0 * PACE  # px/s travel estimate that sizes an
                               # investigator's walk budget by distance,
                               # so a far pull (the bell) isn't abandoned
-                              # halfway across the field
+                              # halfway across the field (rides PACE:
+                              # faster legs, same budget in walk-time)
 
 # ---- The church bell (the town's one dominant noise source) ---------------
 # Rung from the bell tower (E on the pull, scenes/threshold_extras.py).
@@ -554,8 +578,8 @@ WADE_SPLASH_REACH = 260.0     # and carries further than an ordinary footfall
 # a time, a long cooldown between visits, never in safe rooms/refuges,
 # and never into a room already crowded with cult.
 BLEED_LOUD = 0.9              # min loudness that carries next door
-BLEED_DELAY_LO = 3.0          # walk-time before he appears
-BLEED_DELAY_HI = 6.0
+BLEED_DELAY_LO = 3.0 / PACE   # walk-time before he appears (rides PACE:
+BLEED_DELAY_HI = 6.0 / PACE   # the walk next door is faster now)
 BLEED_CD = 45.0               # s between visits
 BLEED_CAP = 3                 # no visit if this many cult already here
 BLEED_LINGER = 20.0           # hard cap on the look-around before leaving

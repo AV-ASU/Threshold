@@ -545,6 +545,16 @@ deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
 under tilt already carries the information function) and an
 exit-takes-a-beat vulnerability window on enclosed hides.
 
+- **Global PACE landed (2026-07 playtest: "everyone needs a speed buff,
+  everything in proportion").** `PACE = 1.4` in `systems/config.py`
+  scales all locomotion at the consumption sites (player / every NPC
+  incl. King + hollow Sheriff / Enemy cultists / projectiles / moths)
+  plus the walk-time clocks (`NOISE_WALK_SPEED`, `BLEED_DELAY_*`,
+  `KING_HOP_INTERVAL`, `SUS_FILL_RATE`). Measured live: walk 117.6 px/s,
+  sprint 147, King 163.8; sprint/King = 0.897, byte-identical to the
+  pre-buff ratio. **The 1.4 value itself is this tuning loop's to
+  judge** at the keys; adjust the one knob, never a single actor.
+
 ### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 
 Not bugs; deliberate choices worth confirming rather than leaving by default:
