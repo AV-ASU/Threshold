@@ -280,6 +280,37 @@ the cult's dug mine at the grove, reached by the rite); all exits/locals/cult st
 in player-facing text call it a bounded fog-edge / void-ringed town, never
 "island."
 
+### 4b. **[Opus]** Brimley river-centered rebuild, both banks  *(concept APPROVED 2026-07 from a top-down layout test; a scoped build, not yet done)*
+
+A top-down look at the current 60x60 Brimley (a markup test in the session
+scratchpad) confirmed the walk-sim is REAL: 6 of the 7 buildings sit on the
+WEST bank, the whole east half is empty (one lone building + a stranded well),
+and the central river is a spine the town does not use. The approved fix is a
+**building REDISTRIBUTION** (not a shape/boundary change, so it does NOT
+contradict #4's "stays one square"): cluster the 7 buildings tight on BOTH
+banks around the central river + bridge so the dead crossings go and the
+fog/forest periphery reads as dread, not filler.
+
+- **Flow, from the real topology (do not re-break it):** the player wakes at
+  the Arcadia (OFF-MAP, reached via the EAST lodge road, rows 24-26) and enters
+  Brimley from the EAST. So the near (east) bank is the first-contact town
+  (Shop/Hettie, barn, Toby's house), and the SHERIFF sits on the FAR (west)
+  bank, so "Vane is not the first NPC" and "cross the river to reach the law"
+  both fall out of geography with no gate. The well stays in the eastern lodge
+  square by the entry; the cult camp stays SE; the surface altar (the standing
+  stones, #17) reads on the riverbank over the Threshold point.
+- **Acceptance test (the maintainer's constraint): everything fits IN SCALE on
+  the 60x60 map** at REAL building footprints (not markup boxes), with the cover
+  lanes (sightline -> cover -> sightline per bank), NPC/King nav across the
+  torus wrap, the fold-road E-W loop, the homebody door anchors, and every
+  exit/spawn reconciled, and reachability re-checked with smoke's flood-fill.
+- **Reconciles #4/#8:** Brimley STILL stays one square with the torus wrap +
+  fog rim (do not split, do not move the boundary); this is a redistribution
+  like the #18 pass, NOT the parked round-shape reshape (#8). Verify each
+  rebuilt building with VISION four-facing captures.
+- Its own build, scoped to run AFTER the conversation/tableau work so two big
+  changes are never in the air at once.
+
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
 Brimley **STAYS** northern MN; the corn is town identity — stubborn 1894
