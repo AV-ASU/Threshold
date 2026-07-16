@@ -375,24 +375,50 @@ def check_no_dead_labels():
     return errors
 
 
+def check_no_raw_furniture_tiles():
+    """No scene's FINAL object map may carry a raw furniture tile
+    (t/b/c/k/f: table, bed, chair, stove, fireplace). The tilt render's
+    occluder scan collects only wall/door/window/billboard/counter/rack
+    chars, so a raw furniture tile is an INVISIBLE solid under the only
+    shipping camera -- a phantom collision block the player bumps, with
+    any [E] cue or tabletop prop floating over bare floor (2026-07 audit:
+    13 such tiles across 7 scenes, incl. the lodge fireplace and the
+    Scriptorium's evidence desks). Place furniture with add_furniture
+    (a real projected volume + an 'x'/'X' footprint) instead."""
+    from scenes import SCENE_BUILDERS, load_scene
+    errors = 0
+    for key in SCENE_BUILDERS:
+        sc = load_scene(key)
+        for ty, row in enumerate(sc.objects):
+            rr = row if isinstance(row, str) else "".join(row)
+            for tx, ch in enumerate(rr):
+                if ch in "tbckf":
+                    errors += fail(
+                        f"{key}: raw furniture tile '{ch}' at ({tx},{ty}) "
+                        f"-- invisible under tilt; use add_furniture")
+    return errors
+
+
 def main():
     failures = 0
-    print("[1/8] scene builders ...")
+    print("[1/9] scene builders ...")
     failures += check_scene_builds()
-    print("[2/8] spawn walkability + non-overlapping with exits ...")
+    print("[2/9] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/8] exits resolve to target spawns ...")
+    print("[3/9] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/8] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/9] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/8] canonical evidence beats wired to scenes ...")
+    print("[5/9] canonical evidence beats wired to scenes ...")
     failures += check_canonical_evidence_wired()
-    print("[6/8] per-run state reset coverage ...")
+    print("[6/9] per-run state reset coverage ...")
     failures += check_reset_coverage()
-    print("[7/8] sprite-seed variant coverage (all 6 cultist masks) ...")
+    print("[7/9] sprite-seed variant coverage (all 6 cultist masks) ...")
     failures += check_sprite_seed_variants()
-    print("[8/8] no dead movement-mode / sprite-kind labels ...")
+    print("[8/9] no dead movement-mode / sprite-kind labels ...")
     failures += check_no_dead_labels()
+    print("[9/9] no raw furniture tiles (invisible under tilt) ...")
+    failures += check_no_raw_furniture_tiles()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

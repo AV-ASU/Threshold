@@ -213,8 +213,11 @@ def build_lodge_yard():
     sc.add_decoration(Decoration(9 * TILE + 20, 6 * TILE + 8,
                                  "town_sign", text="ARCADIA"))
     # Atmosphere -- chimney smoke from the house, a couple of crows,
-    # scattered grass. No patrol NPC. No enemy spawn.
-    sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE - 6, "smoke"))
+    # scattered grass. No patrol NPC. No enemy spawn. The smoke sits over
+    # the roof's baked chimney at the BACK-EAST corner of the ridge
+    # (2026-07 audit fix: the rebuild widened the roof and the plume was
+    # left stranded at the west end, rising from nothing).
+    sc.add_decoration(Decoration(9 * TILE + 8, 2 * TILE - 8, "smoke"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE - 4, "lantern"))
     sc.add_decoration(Decoration(2 * TILE + 8, 0 * TILE + 22, "crow"))
     sc.add_decoration(Decoration(20 * TILE + 8, 16 * TILE + 22, "crow"))

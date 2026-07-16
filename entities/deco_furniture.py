@@ -52,6 +52,22 @@ class DecoFurnitureMixin:
         pygame.draw.line(surf, (62, 32, 36), (x, by + 2), (x, iy + ih - 2), 1)  # fold
         pygame.draw.rect(surf, (58, 38, 30), (ix + iw // 2, by + ih // 4, 7, 6))  # stain
 
+    def _draw_sheeted_bed(self, surf, x, y):
+        """Flat (pitch-0) fallback for the sheeted_bed volume: the guest bed
+        shut up under a pale dust sheet, fold lines where it drapes."""
+        w = int(self.kwargs.get("w", 56)); h = int(self.kwargs.get("h", 64))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (40, 29, 19), (rx, ry, w, h))              # frame
+        pygame.draw.rect(surf, (22, 15, 9), (rx, ry, w, h), 1)
+        ix, iy, iw, ih = rx + 2, ry + 2, w - 4, h - 4
+        pygame.draw.rect(surf, (168, 164, 152), (ix, iy, iw, ih))         # the sheet
+        pygame.draw.rect(surf, (188, 184, 172), (ix, iy, iw, 2))          # lit top
+        for fy in (iy + ih // 4, iy + ih // 2, iy + 3 * ih // 4):         # folds
+            pygame.draw.line(surf, (140, 136, 124), (ix + 2, fy),
+                             (ix + iw - 2, fy + 3), 1)
+        pygame.draw.line(surf, (108, 104, 94), (ix + iw // 3, iy + 2),
+                         (ix + iw // 3 - 3, iy + ih - 2), 1)              # hang line
+
     def _draw_table(self, surf, x, y):
         w = int(self.kwargs.get("w", 54)); h = int(self.kwargs.get("h", 38))
         rx, ry = x - w // 2, y - h // 2

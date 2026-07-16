@@ -574,10 +574,15 @@ def build_works_scriptorium():
     _bevel(objs, 2)
     objs[4][0] = "F"          # west -> back to the sorting hall
     objs[4][13] = "E"         # east -> the sign chamber
-    for tx, ty in [(4, 2), (8, 2), (6, 5)]:   # copying desks
-        objs[ty][tx] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_scriptorium", floor, objects, music="basement")
+    # The three copying desks as real furniture volumes (2026-07 audit fix:
+    # they were raw 't' object tiles, which no tilt set draws -- the desks
+    # were invisible collision blocks, the Calling/Mara [E] cues floated
+    # over bare floor, and the "under the centre desk" hide crouched under
+    # nothing). School desks the commune carried down, so small.
+    for dtx, dty in [(4, 2), (8, 2), (6, 5)]:   # copying desks
+        sc.add_furniture("table", [(dtx, dty)], w=30, h=26)
     sc.add_exit("F", "works_sorting", "from_below")
     sc.add_exit("E", "works_sign", "from_above")
     sc.set_spawn("default",    7, 4)

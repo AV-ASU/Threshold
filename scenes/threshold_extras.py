@@ -377,20 +377,42 @@ def build_graveyard():
     Hide spots: behind the larger headstones, in the gardener's
     shed at the back.
     """
-    floor = ["g" * 14 for _ in range(10)]
+    # Trodden dirt runs from the gate up through the plot, and the ground
+    # around the stones is turned earth, not lawn (2026-07 audit: uniform
+    # green grass read as a mown yard, not a neglected burial plot).
+    floor_l = [list("g" * 14) for _ in range(10)]
+    for py in (6, 7, 8):                    # the gate path, worn in
+        floor_l[py][8] = "d"
+    floor_l[5][8] = "d"
+    for px, py in [(3, 2), (6, 2), (9, 2), (3, 4), (6, 4), (9, 4),
+                   (3, 6), (6, 6), (9, 6), (4, 4), (7, 6)]:
+        floor_l[py][px] = "d"               # turned earth at the graves
+    floor = ["".join(r) for r in floor_l]
     objects = [
         "TTTTTTTTTTTTTT",   # 0  trees behind the fence
         "T............T",   # 1
-        "T..R..R..R...T",   # 2  headstones (rocks)
+        "T............T",   # 2  (the headstones are real props now, below)
         "T............T",   # 3
-        "T..R..R..R...T",   # 4
+        "T............T",   # 4
         "T............T",   # 5
-        "T..R..R..R...T",   # 6
+        "T............T",   # 6
         "T............T",   # 7
         "T............T",   # 8
         "TTTTTTTTHTTTTT",   # 9  H = exit south back to town
     ]
     sc = Scene("graveyard", floor, objects, music="village")
+    # The graves: real carved headstone volumes (2026-07 audit fix: they
+    # were 'R' ROCK tiles -- nine natural boulders standing in for the
+    # scene's core identity object, on a perfect 3x3 lattice). Each stone
+    # keeps its tile for collision but is jittered off the grid centre
+    # and seeded so the slabs lean and vary; no two are colinear. The
+    # worn stone (3,2) stays dead on its anchor: the candle, dead crow,
+    # and the readable examine all key to that point.
+    _stone_jit = [((3, 2), 0, 0, 3), ((6, 2), 9, -6, 11), ((9, 2), -7, 5, 4),
+                  ((3, 4), 6, 7, 8), ((6, 4), -9, -4, 15), ((9, 4), 5, 9, 2),
+                  ((3, 6), -6, -8, 9), ((6, 6), 8, 3, 6), ((9, 6), -4, -9, 13)]
+    for (gtx, gty), jx, jy, gseed in _stone_jit:
+        sc.add_furniture("headstone", [(gtx, gty)], dx=jx, dy=jy, seed=gseed)
     # Exit back into the church (the gate is in the back of the
     # parsonage). Routes to church, which has spawn
     # 'from_graveyard' set up.
@@ -614,9 +636,19 @@ def build_backwoods_cabin():
     sc.add_decoration(Decoration(7 * TILE + 8, 3 * TILE + 16, "crow"))
     sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 22,
                                  "dead_crow"))
-    # Cordwood stack behind the cabin (west of door).
-    sc.objects[8][3] = "t"
-    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "lantern"))
+    # Cordwood stack behind the cabin (west of door) -- a real firewood
+    # volume (2026-07 audit fix: it was a raw 't' object tile, which no
+    # tilt set draws and whose kind is TABLE anyway -- an invisible solid
+    # that would have read as a dining table in a forest clearing).
+    sc.add_furniture("firewood", [(3, 8)], w=44, h=22)
+    # A hunter lived here: his antler rack stands against the cabin's
+    # south face, west of the door (the docstring always promised hunter
+    # tells; the yard read as any-shack without one).
+    sc.add_furniture("antler_rack", [(5, 8)], w=22, h=46)
+    # The lantern stands by the stump so the notepad (the one clue here)
+    # sits inside its light pool in the real graded view (2026-07 audit
+    # fix: the only light was clear across the yard from the only clue).
+    sc.add_decoration(Decoration(9 * TILE + 20, 9 * TILE + 10, "lantern"))
     # Notepad on a stump out front.
     notepad_x = 10 * TILE + 16
     notepad_y = 9 * TILE + 16
@@ -654,7 +686,7 @@ def build_backwoods_cabin_interior():
         "WWWWWWWWWWWW",   # 0
         "W.....W....W",   # 1  main room (cols 1-5) | back nook (cols 7-10)
         "W..........W",   # 2  doorway gap in the partition (col 6)
-        "W..t..W....W",   # 3  table
+        "W.....W....W",   # 3  (the table is real furniture now, below)
         "WWWWWWW....W",   # 4  nook sealed off below
         "W..........W",   # 5
         "W..........W",   # 6
@@ -665,6 +697,16 @@ def build_backwoods_cabin_interior():
     sc.add_exit("D", "backwoods_cabin", "from_interior")
     sc.set_spawn("default",     4, 5)
     sc.set_spawn("from_outside", 4, 6)
+    # The table as a real furniture volume (2026-07 audit fix: it was a
+    # raw 't' object tile, which no tilt set draws -- the room's one
+    # furniture piece was an invisible collision block and the candle
+    # floated on bare boards). The candle seats on its top.
+    sc.add_furniture("table", [(3, 3)], w=30, h=26)
+    # A home, before it wasn't: the stove that heated it and the cot in
+    # the back nook (2026-07 audit: without them the room read as a bare
+    # wood box with crime-scene props, not a lived-in cabin).
+    sc.add_furniture("stove", [(5, 1)], w=30, h=40)
+    sc.add_furniture("cot", [(8, 3)], w=30, h=16)
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 6, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16,
                                  "overturned_chair"))
@@ -705,8 +747,8 @@ def build_bell_tower():
         "W..........W",    # 1
         "W..........W",    # 2
         "i..........i",    # 3  east/west window slits
-        "W....tt....W",    # 4  the bell housing (solid) at centre
-        "W....tt....W",    # 5
+        "W..........W",    # 4  (the bell housing is real furniture now, below)
+        "W..........W",    # 5
         "W..........W",    # 6
         "W..........W",    # 7
         "W..........W",    # 8
@@ -716,6 +758,11 @@ def build_bell_tower():
     sc.add_exit("L", "church", "from_bell_tower")
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
+    # The 2x2 bell-stock at centre as a real timber platform volume (a
+    # scaled-up table box; 2026-07 audit fix: it was four raw 't' object
+    # tiles, which no tilt set draws -- the column the player circles was
+    # an invisible collision block and the bell hung off nothing).
+    sc.add_furniture("table", [(5, 4), (6, 4), (5, 5), (6, 5)], scale=2.0)
     # The bell hangs off the housing's south face (drawn upward from its
     # lip, so under tilt it reads in front of the solid housing box),
     # with the pull rope dropping to hand height below it. E on the

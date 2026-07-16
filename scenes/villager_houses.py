@@ -221,6 +221,11 @@ def build_sheriff_office():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
+    # A candle on the records-room filing table (2026-07 audit fix: every
+    # light lived in the main room, so the case board and the booking slip
+    # sat unreadable in the dark in the real player view). Vane works his
+    # files by candlelight; seat_tabletop_props stands it on the table.
+    sc.add_decoration(Decoration(12 * TILE + 8, 4 * TILE + 8, "candle"))
     # Sheriff Vane's office made specific to the man, with the worst of it
     # tucked into the back room the public never sees: the case board of the
     # disappeared he can't file on (polaroid wall), the Blaine girl's MISSING
@@ -325,7 +330,9 @@ def build_abandoned_farmhouse():
                                  "bloodstain"))
     # What the family left when they went: a preserves shelf nobody came
     # back for, and a birdcage standing open in all that bare floor.
-    sc.add_decoration(Decoration(3 * TILE + 24, 0 * TILE + 22,
+    # (Shelf at col 1, 2026-07 audit fix: it hung centred over the col-3
+    # exit door -- a cupboard drawn across the only way out.)
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 22,
                                  "preserve_shelf", seed=23))
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "birdcage"))
     for mx, my in [(3, 2), (4, 6), (8, 7)]:

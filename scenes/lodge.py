@@ -312,7 +312,7 @@ def build_lodge():
         "W................W",
         "W................W",
         "W.tt...5.........W",
-        "W.cc...5....f....W",
+        "W.cc...5.........W",
         "W.k....5.........W",
         "W.55...5.........W",
         "W................W",
@@ -379,13 +379,18 @@ def build_lodge():
     sc.add_furniture("chair", [(3, 4)], w=22, h=28)
     # Against the west wall -- the oven door faces east, into the kitchen.
     sc.add_furniture("stove", [(2, 5)], w=30, h=40, wall="W")
+    # The sitting-room FIREPLACE: a real stone furniture volume (2026-07
+    # audit fix: it was a raw 'f' object tile, which no tilt set draws, so
+    # the hearth was an invisible collision block; the candle "on the
+    # fireplace" floated over bare floor).
+    sc.add_furniture("fireplace", [(12, 4)], w=34, h=30)
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
     sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 22, "meat"))
     sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 14, "candle"))  # on table
-    sc.add_decoration(Decoration(0 * TILE + 24, 5 * TILE + 16, "banner",
-                                 color=(140, 60, 70)))
+    # (The old west-wall banner was CUT, 2026-07 audit: E/W wall faces are
+    # edge-on to the tilt, so it was invisible from every reachable angle.)
     sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
@@ -416,7 +421,8 @@ def build_lodge():
     # sees OVER -- Sable, behind it, shows head + torso above the top.
     sc.add_furniture("counter", [(8, 2)], see_over=True)
     sc.add_furniture("counter", [(9, 2)], see_over=True)
-    sc.add_decoration(Decoration(9 * TILE, 2 * TILE + 4, "candle"))  # on the desktop
+    sc.add_decoration(Decoration(9 * TILE, 2 * TILE + 4, "candle",
+                                 z=14))  # on the desktop, same lift as the register
     # The open guest register itself, lying flat ON the desktop (z = counter
     # height) at the interact anchor, so the [E] prompt lands on the visible
     # book and it reads as resting on the desk, not floating or facing you.
@@ -687,9 +693,11 @@ def _build_guest_room(key, *, mirrored, shut, seed):
     rug_col = (70, 44, 46) if not shut else (60, 56, 52)
     sc.add_decoration(Decoration(mx(6) * TILE, 5 * TILE + 8, "rug",
                                  w=150, h=96, color=rug_col, seed=seed))
-    # The template pieces. Bed in the back corner under the window, nightstand
-    # beside it, a table + chair across the room.
-    sc.add_furniture("bed", [(mx(2), 2), (mx(3), 2), (mx(2), 3), (mx(3), 3)],
+    # The template pieces. Bed in the back corner under the window (the
+    # shut room's is under a dust sheet), nightstand beside it, a table +
+    # chair across the room.
+    sc.add_furniture("sheeted_bed" if shut else "bed",
+                     [(mx(2), 2), (mx(3), 2), (mx(2), 3), (mx(3), 3)],
                      w=56, h=56)
     sc.add_furniture("nightstand", [(mx(4), 2)], w=26, h=30)
     sc.add_furniture("table", [(mx(9), 6), (mx(10), 6)], w=54, h=32)

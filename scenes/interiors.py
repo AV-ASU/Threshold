@@ -62,13 +62,15 @@ def build_clearing():
     # Transition tree at the south threshold. Visually identical to
     # a tree, walking onto it sends the player back to cornfield_path.
     objects_l[13][9] = "j"
-    # Cordwood stacks (decorative -- solid table tile). Two stacks
-    # so the clearing reads as a tended ritual site, not a one-prop
-    # display.
-    objects_l[6][2] = "t"
-    objects_l[6][15] = "t"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("clearing", floor, objects, music="wrong")
+    # Cordwood stacks flanking the burn (fuel for the communal fire). Real
+    # firewood volumes (2026-07 audit fix: they were raw 't' object tiles,
+    # which no tilt set draws -- invisible collision blocks, and the hide
+    # spots crouched beside nothing). Two stacks so the clearing reads as
+    # a tended ritual site, not a one-prop display.
+    sc.add_furniture("firewood", [(2, 6)], w=44, h=24)
+    sc.add_furniture("firewood", [(15, 6)], w=44, h=24)
     # The clearing's south threshold leads back to the brimley river
     # bank (where the entrance is).
     sc.add_exit("j", "brimley", "from_clearing")
@@ -202,7 +204,12 @@ def build_shop():
     sc.add_furniture("butcher_counter", [(9, 9)], see_over=True)
     sc.add_furniture("butcher_counter", [(10, 9)], see_over=True)
     sc.add_furniture("chair", [(10, 8)], w=22, h=28)
-    sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=4)
+    # Her storeroom stock: crates + a barrel (2026-07 audit fix: this was
+    # a 'bookshelf' case, which renders with colored BOOK SPINES -- a
+    # library bookcase in a grocer's overstock room).
+    sc.add_furniture("crate", [(1, 1)], seed=4)
+    sc.add_furniture("crate", [(2, 1)], seed=5)
+    sc.add_furniture("barrel", [(1, 2)])
     sc.add_furniture("table", [(4, 2)], w=30, h=30)
     sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2, "candle"))
     # A low goods shelf finishes the north-wall run, and the wrong radio
@@ -294,10 +301,12 @@ def build_barn():
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
 
-    # Sized furniture: stacked hay-bale shelves out front and the workbench
-    # in the back stall.
-    sc.add_furniture("bookshelf", [(2, 2), (3, 2)], w=54, h=18, seed=9)
-    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=54, h=18, seed=10)
+    # Sized furniture: racked gear runs out front (the diggers' stowed kit;
+    # 2026-07 audit fix: these were 'bookshelf' cases, which render with
+    # colored BOOK SPINES -- a library bookcase in a barn, the classic
+    # place-a-kind-by-its-name trap) and the workbench in the back stall.
+    sc.add_furniture("gear_shelf", [(2, 2), (3, 2)], w=54, h=18, seed=9)
+    sc.add_furniture("gear_shelf", [(5, 2), (6, 2)], w=54, h=18, seed=10)
     sc.add_furniture("table", [(11, 2), (12, 2)], w=54, h=36)
     sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 24, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
@@ -338,9 +347,12 @@ def build_barn():
                                  seed=8))
     # The well-passage tunnel hatch -- a proper cellar_hatch sprite,
     # NOT a chest. Drawn as a wooden floor hatch with iron pull-ring;
-    # the player presses E adjacent to descend. In the back stall.
+    # the player presses E adjacent. In the back stall, row 4 (2026-07
+    # audit fix: at row 5 it sat against the stall's south wall and the
+    # wall mass fully occluded it under the tilt -- an invisible prop
+    # with a live [E] cue).
     hatch_x = 12 * TILE + 16
-    hatch_y = 5 * TILE + 16
+    hatch_y = 4 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
