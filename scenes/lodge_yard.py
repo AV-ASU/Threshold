@@ -56,10 +56,10 @@ def build_lodge_yard():
     objects = [
         "........................",   # 0
         "........................",   # 1
-        "...WWWWW................",   # 2  Clerk's house north wall
-        "...WrrrW................",   # 3  roof
-        "...WrrrW................",   # 4  roof
-        "...WWHWW................",   # 5  H = back door of the Clerk's house
+        "..WWWWWWWW..............",   # 2  the Arcadia -- a two-storey hotel now
+        "..WrrrrrrW..............",   # 3  roof (loft dormer stands over it)
+        "..WrrrrrrW..............",   # 4  roof
+        "..WiWHWWiW..............",   # 5  south face: door H (col5), lit windows
         "a......................e",   # 6  west passage (river path)
         "a......................e",   # 7  east passage (cornfield_path)
         "a......................e",   # 8
@@ -109,8 +109,9 @@ def build_lodge_yard():
         # West + east passage corridors (rows 6-8 deep into the band).
         if 6 <= ty <= 8:
             return True
-        # Lodge structure footprint + porch approach.
-        if 2 <= tx <= 7 and 2 <= ty <= 6:
+        # Lodge structure footprint + porch approach (widened 2026-07 -- the
+        # Arcadia is a two-storey hotel now, cols 2-9).
+        if 2 <= tx <= 9 and 2 <= ty <= 6:
             return True
         # The pocket clearing behind the Lodge (a protected pocket; the
         # old 'M' arrival fold that stood here was cut). The band still crowds
@@ -202,9 +203,21 @@ def build_lodge_yard():
     # [E] cue on the shed door.
     sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 44)
 
+    # The LOFT DORMER standing over the roof -- the tell that the Arcadia is
+    # two storeys (its lit window is Sable's loft). Like the church steeple,
+    # rise lifts it onto the roofline and a depth_bias sorts it above the
+    # building's own opaque roof so it isn't buried.
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 6, "lodge_gable",
+                                 rise=26, depth_bias=140))
+    # A hanging ARCADIA board by the porch -- the hotel's name.
+    sc.add_decoration(Decoration(9 * TILE + 20, 6 * TILE + 8,
+                                 "town_sign", text="ARCADIA"))
     # Atmosphere -- chimney smoke from the house, a couple of crows,
-    # scattered grass. No patrol NPC. No enemy spawn.
-    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE - 6, "smoke"))
+    # scattered grass. No patrol NPC. No enemy spawn. The smoke sits over
+    # the roof's baked chimney at the BACK-EAST corner of the ridge
+    # (2026-07 audit fix: the rebuild widened the roof and the plume was
+    # left stranded at the west end, rising from nothing).
+    sc.add_decoration(Decoration(9 * TILE + 8, 2 * TILE - 8, "smoke"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE - 4, "lantern"))
     sc.add_decoration(Decoration(2 * TILE + 8, 0 * TILE + 22, "crow"))
     sc.add_decoration(Decoration(20 * TILE + 8, 16 * TILE + 22, "crow"))

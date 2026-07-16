@@ -122,7 +122,7 @@ it renders the procedural sprites to a labelled PNG strip.
     across a table (Mara, the cult Talk). Player-facing text is in
     `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
-  (`scenes/__init__.py`, ~44 scenes). A scene has spawns, exits,
+  (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
   - `scenes/base.py` — the `Scene` class + scene-builder helpers
@@ -582,7 +582,13 @@ it renders the procedural sprites to a labelled PNG strip.
 - Sprites are 100% procedural — no art assets to edit.
 - **Adding a new decoration/prop kind under the tilt** (the dispatch map from
   the retired HANDCRAFT_BACKLOG): register it in exactly ONE set or it renders
-  as a flat stain on the floor. `FURNITURE` / `SOLID_PROPS` = a real projected
+  as a flat stain on the floor. **And never place furniture as a raw OBJECT
+  tile** (`t`/`b`/`c`/`k`/`f`): the tilt occluder scan only draws
+  wall/door/window/billboard/counter/rack chars, so a raw furniture tile is an
+  INVISIBLE solid under the only shipping camera (2026-07 audit: 13 such
+  phantom blocks, incl. the lodge fireplace and the Scriptorium's evidence
+  desks). Use `add_furniture` (a real volume + footprint); smoke [9/9] now
+  fails any scene that ships one. `FURNITURE` / `SOLID_PROPS` = a real projected
   volume; `_STANDEE_KINDS` (`props.py`, `scenes/terrain.py _tilt_standee`) = a flat
   card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
   `_SURFACE_DECAL_KINDS` = warped flat onto the floor/surface plane;

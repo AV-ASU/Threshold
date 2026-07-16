@@ -670,6 +670,50 @@ class DecoStructureMixin:
         pygame.draw.circle(surf, (180, 180, 200), (x, y + 2), 4, 2)
         pygame.draw.circle(surf, (90, 90, 110), (x, y + 2), 4, 1)
 
+    def _draw_wall_cross(self, surf, x, y):
+        """A plain wooden cross hung on the wall above the church altar (a
+        `_WALL_DECO` billboard). Two dark beams with a lit near edge and a
+        soft grain seam. Deliberately austere: a poor country parish, not a
+        gilded one."""
+        wood = (78, 58, 38)
+        lit = (116, 90, 58)
+        dk = (44, 32, 20)
+        vw, vh = 6, 40            # vertical beam
+        hw, hh = 26, 6           # horizontal beam, crossing near the top third
+        cy = y - vh // 2 + 13    # the crossing height
+        # vertical beam
+        pygame.draw.rect(surf, wood, (x - vw // 2, y - vh // 2, vw, vh))
+        pygame.draw.rect(surf, lit, (x - vw // 2, y - vh // 2, 2, vh))       # lit left edge
+        pygame.draw.rect(surf, dk, (x - vw // 2, y - vh // 2, vw, vh), 1)
+        # horizontal beam
+        pygame.draw.rect(surf, wood, (x - hw // 2, cy - hh // 2, hw, hh))
+        pygame.draw.rect(surf, lit, (x - hw // 2, cy - hh // 2, hw, 2))      # lit top edge
+        pygame.draw.rect(surf, dk, (x - hw // 2, cy - hh // 2, hw, hh), 1)
+        # a faint grain seam down the vertical beam
+        pygame.draw.line(surf, dk, (x, y - vh // 2 + 2), (x, y + vh // 2 - 2), 1)
+
+    def _draw_lodge_gable(self, surf, x, y):
+        """Flat (pitch-0) fallback for the loft dormer gable: a small gabled
+        block with a lit window (the tilt view draws it as a volume rising over
+        the roofline via rendering/props.py)."""
+        pygame.draw.rect(surf, (60, 46, 33), (x - 17, y - 8, 34, 16))     # upper wall
+        pygame.draw.rect(surf, (198, 150, 74), (x - 6, y - 4, 12, 10))    # lit window
+        pygame.draw.rect(surf, (46, 34, 22), (x - 6, y - 4, 12, 10), 1)
+        pygame.draw.polygon(surf, (56, 43, 33),                           # gable roof
+                            [(x - 19, y - 8), (x + 19, y - 8), (x, y - 20)])
+
+    def _draw_staircase(self, surf, x, y):
+        """A flight of stairs climbing to the loft (flat pitch-0 fallback; the
+        tilt view draws it as stacked tread boxes via rendering/props.py). Drawn
+        top-down as a run of receding tread bands, darker toward the top."""
+        for i in range(6):
+            ty = y + 18 - i * 6
+            shade = 108 - i * 10
+            pygame.draw.rect(surf, (shade, max(30, shade - 26), max(18, shade - 54)),
+                             (x - 15, ty - 3, 30, 6))
+            pygame.draw.rect(surf, (52, 36, 22), (x - 15, ty - 3, 30, 6), 1)
+        pygame.draw.rect(surf, (10, 8, 12), (x - 8, y - 20, 16, 5))   # loft mouth
+
     def _draw_shaft_ladder(self, surf, x, y):
         """The way up from the shaft floor: a single rope hanging from a hatch
         overhead (flat pitch-0 fallback; the tilt view draws it as a real 3D rope

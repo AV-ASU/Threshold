@@ -489,6 +489,46 @@ class DecoHorrorMixin:
             py = max(0, min(surf.get_height() - 1, y + rng.randint(-h // 2, h // 2)))
             surf.set_at((px, py), faint)
 
+    def _draw_chalk_door_wall(self, surf, x, y):
+        """The chalk door drawn on a WALL instead of the floor (the same cult
+        compulsion, hung as a life-size doorway on a `_WALL_DECO` billboard).
+        Taller than the floor decal ('a door is tall, not a small plaque',
+        scenes/terrain.py); worn chalk strokes with skips, a faint dark mouth,
+        a knob that opens nothing. (Was missing, so it rendered as the magenta
+        _draw_unknown square, 2026-07.)"""
+        rng = random.Random(self.seed * 7 + 11)
+        chalk = (196, 192, 180)
+        faint = (134, 131, 121)
+        w, h = 26, 48
+        L, R, T, B = x - w // 2, x + w // 2, y - h // 2, y + h // 2
+        # the faint dark "way through" behind the drawn frame
+        mouth = pygame.Surface((w - 4, h - 4), pygame.SRCALPHA)
+        mouth.fill((6, 6, 9, 70))
+        surf.blit(mouth, (L + 2, T + 2))
+
+        def hand(x0, y0, x1, y1, col, wdt=1):
+            skip = rng.randint(0, 2)
+            for i in range(3):
+                if i == skip and rng.random() < 0.7:
+                    continue
+                fx0 = x0 + (x1 - x0) * i / 3.0
+                fy0 = y0 + (y1 - y0) * i / 3.0
+                fx1 = x0 + (x1 - x0) * (i + 1) / 3.0
+                fy1 = y0 + (y1 - y0) * (i + 1) / 3.0
+                pygame.draw.line(surf, col,
+                                 (fx0 + rng.randint(-1, 1), fy0 + rng.randint(-1, 1)),
+                                 (fx1 + rng.randint(-1, 1), fy1 + rng.randint(-1, 1)),
+                                 wdt)
+        hand(L, B, L, T, chalk, 2)           # left jamb
+        hand(R, B, R, T, chalk, 2)           # right jamb
+        hand(L, T, R, T, chalk, 2)           # lintel
+        hand(L + 3, y, R - 3, y, faint, 1)   # a cross-rail, panelled door
+        pygame.draw.circle(surf, chalk, (R - 4, y + 4), 1)   # the knob
+        for _ in range(5):                                   # chalk dust
+            px = max(0, min(surf.get_width() - 1, x + rng.randint(-w // 2, w // 2)))
+            py = max(0, min(surf.get_height() - 1, y + rng.randint(-h // 2, h // 2)))
+            surf.set_at((px, py), faint)
+
     def _draw_chalkboard(self, surf, x, y):
         """A WIDE schoolroom chalkboard on the wall (spans 4-5 tiles): the
         children's faded lesson ghosted under the cult's compulsion -- a doorway

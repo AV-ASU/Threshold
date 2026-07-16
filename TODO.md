@@ -704,6 +704,7 @@ the riverbank; #17 remains its own narrative-dressing ticket.
   direction changes.
 - **[Opus]** **Mine retrofit tail cleanups** *(2026-07 code review; none player-visible)* — (a) cache the `_tilt_rack_box` extrusion per (tile, yaw-bucket) like the wall cards (well_passage re-projects ~280 points/frame live); (b) fold `_RACK_CHARS` into the shared wall-scan char-set plumbing instead of a third parallel set; (c) the cave `door_style` key list in `scenes/__init__.py` duplicates the `UNDERGROUND_SCENES` gating idea — derive from one source; (d) `husk_bundle` + `pillar` are registered kinds with no placements (keep as reusable art or cut). Verify: `tools/capture_world.py` tilt capture byte-diff + full gate.
 - **[Fable + Opus]** **The barn reads lived-in by several people** *(scene dressing; `scenes/interiors.py`)* — the barn is where Mara went, and it carries her journal (the `maras_journal` trail beat), but it currently reads as one person's spot. Dress it so it looks inhabited by MORE than one: multiple bedrolls/pallets, several sets of belongings, more than one place set. Decoration only, no canon or lore change (the journal beat + descent hook stay exactly as they are). Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
+- **[Opus]** **Redecoration-audit deferred polish** *(2026-07 17-scene visual audit; every MEDIUM+ finding was fixed, these LOW items were deliberately deferred)* — (a) bell tower: a bespoke timber bell-stock frame (A-frame uprights + yoke) instead of the scaled table platform, and louvered belfry openings instead of glazed cottage windows (reconcile the stale `build_bell_tower` docstring while there); (b) schoolhouse: jitter the 12 grid-locked cots a few px so the dormitory reads crammed, not installed; (c) hanging_figure legibility: the sprite reads as a standing hooded blob among trees, not a suspended body (graveyard, clearing, backwoods_cabin) — verify/redraw the hang; (d) lodge: cluster the missing-flyer/polaroid "wall of the vanished" above the reception desk instead of interleaving with trophies; (e) lodge_hall: bump the side-table footprint and re-home the corner-crammed sampler; (f) guest_room_a: nudge the buck trophy toward a light source; (g) farmhouse: the "phantom marks on the walls" comment vs floor-decal render (stale comment or wall kind swap). All are polish; each needs a capture per VISION.md when it lands.
 
 ---
 
@@ -820,8 +821,9 @@ is gone, his witness account is photo-earned.)*
   any unmapped slug still falls back to Title Case, so add authored titles
   there as new beats land.
 - HUD fall-through labels: "Dark" (the Hive!), "Depths Antechamber", "Effigy
-  Grove", "Threshold" (`scenes/base.py` fallback), plus `"lodge": "the Inn"`
-  against "Arcadia Lodge" everywhere else.
+  Grove", "Threshold" (`scenes/base.py` fallback). *(The `"lodge": "the Inn"`
+  mismatch is FIXED 2026-07 with the Lodge expansion: `lodge` now reads
+  "Arcadia Lodge".)*
 - NPC object names "Clerk"/"Sheriff"/"Preacher" leak on generic paths
   (corpse examine: "Clerk. Face-down where the round put them.").
 - Placeholder texts on cued interactions: "Some old tools." (the beat's

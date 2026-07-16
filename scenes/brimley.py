@@ -975,9 +975,12 @@ def build_brimley():
     for cx in (52, 53, 54, 55):
         if 0 <= cx < sc.w:
             objects_list[30][cx] = "X"
-    # Mrs. Calder's outdoor table (solid), her settings drawn on top.
-    objects_list[42][42] = "t"
     sc.objects = objects_list
+    # Mrs. Calder's outdoor supper table as a real furniture volume, her
+    # two place settings + candle seated on its top (2026-07 audit fix: it
+    # was a raw 't' object tile, which no tilt set draws -- the settings
+    # and candle sat on bare ground over an invisible collision block).
+    sc.add_furniture("table", [(42, 42)], w=30, h=26)
 
     # ---- The cult camp footprint + the cultist spawn pool ----
     # The camp sits in the SE corn. At 0 evidence it is just a stand of corn

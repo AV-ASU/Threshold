@@ -6,7 +6,8 @@ Reused scenes keep the same key when the geometry is reused.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .lodge import (build_bedroom, build_lodge, build_lodge_cellar,
-                    build_clerk_room)
+                    build_clerk_room, build_lodge_hall,
+                    build_guest_room_a, build_guest_room_b)
 from .lodge_yard import (build_lodge_yard, build_woodshed,
                          build_arrival_road)
 from .cornfield_path import build_cornfield_path
@@ -60,10 +61,13 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   schoolhouse        -> NEW: empty since the town's children vanished
 #   graveyard          -> NEW: behind the church
 SCENE_BUILDERS = {
-    # The Arcadia Lodge (your room, the ground floor, the Clerk's room)
+    # The Arcadia Lodge (your room, the common room, the guest wing, the loft)
     "bedroom":            build_bedroom,            # the player's room
-    "lodge":              build_lodge,              # the ground floor
-    "clerk_room":         build_clerk_room,         # the Clerk's room
+    "lodge":              build_lodge,              # the common room + intake
+    "lodge_hall":         build_lodge_hall,         # the guest-wing hallway
+    "guest_room_a":       build_guest_room_a,       # a guest room, kept ready
+    "guest_room_b":       build_guest_room_b,       # a guest room, shut up
+    "clerk_room":         build_clerk_room,         # the Clerk's loft
     "lodge_cellar":       build_lodge_cellar,       # the Arcadia cellar
     "lodge_yard":         build_lodge_yard,         # the yard (dead car removed -> arrival_road)
     "arrival_road":       build_arrival_road,       # -> the looping road W of the lodge (the SPREAD car)

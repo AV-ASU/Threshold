@@ -228,6 +228,40 @@ def _tp(tc, u, v):
     return _lerp(far, near, v)
 
 
+def _d_chair_up(surf, pal, tc, deco=None):
+    """A tipped-over chair's LEGS sticking up from the toppled box (2026-07
+    audit: the plain low box read as a crate in every room that used it).
+    Four stub legs rise from the top face, plus the seat's cross rail."""
+    up = 7                                   # screen-px leg rise off the top
+    for u, v in ((0.2, 0.25), (0.8, 0.25), (0.2, 0.75), (0.8, 0.75)):
+        bx, by = _tp(tc, u, v)
+        pygame.draw.line(surf, _shade(pal["dark"], 0.9),
+                         (int(bx), int(by)), (int(bx), int(by) - up), 2)
+        pygame.draw.circle(surf, _shade(pal["top"], 1.15),
+                           (int(bx), int(by) - up), 1)
+    a, b = _tp(tc, 0.2, 0.5), _tp(tc, 0.8, 0.5)    # the seat rail between
+    pygame.draw.line(surf, _shade(pal["dark"], 0.7),
+                     (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+
+
+_SHEET = {"top": (168, 164, 152), "side": (140, 136, 124),
+          "dark": (108, 104, 94)}
+
+
+def _d_sheet_folds(surf, pal, c):
+    # a dust sheet draped to the floor: hanging fold lines down the near
+    # face and a slightly wavering hem shadow at its foot
+    fold = _shade(pal["dark"], 0.85)
+    for fx in (0.18, 0.38, 0.57, 0.79):
+        a, b = _fp(c, fx, 0.04), _fp(c, fx + 0.04, 0.92)
+        pygame.draw.line(surf, fold, (int(a[0]), int(a[1])),
+                         (int(b[0]), int(b[1])), 1)
+    hem = _shade(pal["dark"], 0.65)
+    for fx in (0.1, 0.3, 0.5, 0.7, 0.9):
+        p = _fp(c, fx, 0.06 + (0.03 if int(fx * 10) % 2 else 0.0))
+        pygame.draw.circle(surf, hem, (int(p[0]), int(p[1])), 1)
+
+
 def _d_desk_top(surf, pal, tc, deco=None):
     """Objects lying FLAT on the writing desk's top, drawn in the top plane
     so they foreshorten with the tilt (no billboarding): an open case file
@@ -277,9 +311,31 @@ def _d_desk_drawer(surf, pal, c):
     pygame.draw.circle(surf, (38, 30, 20), (int(k[0]), int(k[1])), 2)
 
 
+def _d_nightstand(surf, pal, c):
+    # a bedside end table: one drawer set HIGH on the near face with a
+    # small brass knob, and a dark open shelf recess below it. The two
+    # bands read the piece as a stand you'd keep by a bed (a plain box
+    # otherwise reads as a crate under the tilt).
+    drawer = [_fp(c, 0.14, 0.56), _fp(c, 0.86, 0.56),
+              _fp(c, 0.86, 0.86), _fp(c, 0.14, 0.86)]
+    pts = [(int(x), int(y)) for x, y in drawer]
+    pygame.draw.polygon(surf, _shade(pal["side"], 1.04), pts)
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.66), pts, 1)
+    k = _fp(c, 0.5, 0.71)
+    pygame.draw.circle(surf, (206, 182, 118), (int(k[0]), int(k[1])), 2)   # brass knob
+    # the open shelf beneath the drawer -- a shadowed cubby
+    shelf = [_fp(c, 0.20, 0.12), _fp(c, 0.80, 0.12),
+             _fp(c, 0.80, 0.46), _fp(c, 0.20, 0.46)]
+    pts2 = [(int(x), int(y)) for x, y in shelf]
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.5), pts2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
+    # a small bedside end table (the guest-room template piece): a squat
+    # box, drawer high + open shelf below. Short enough to see over.
+    "nightstand": (16, 14, 16, _WOOD_MID, _d_nightstand),
     # the PI's writing desk (spare room): a WIDE table-height box (fills its
     # 2-tile footprint so the wood shows around the props) with a drawer
     # front, so the case file + revolver seated on its top read as sitting
@@ -287,6 +343,9 @@ FURNITURE = {
     "writing_desk": (54, 40, 13, _WOOD_MID, _d_desk_drawer, _d_desk_top),
     "chair":     (13, 13, 16, _WOOD_DK, None),
     "bed":       (30, 46, 9,  _CLOTH,   _d_mattress),
+    # a bed shut up under a dust sheet (the closed guest rooms): the same
+    # box under a pale draped cover, folds down the near face
+    "sheeted_bed": (30, 46, 10, _SHEET, _d_sheet_folds),
     "bookshelf": (28, 13, 23, _WOOD_DK, _d_shelves),
     "shelf":     (26, 10, 22, _WOOD_DK, _d_shelves),
     # the general store's emptied goods run (food scarcity, DESIGN.md §4):
@@ -315,7 +374,9 @@ FURNITURE = {
     # to float as flat top-down sprites under tilt).
     "chest":            (24, 18, 13, _WOOD_MID, _d_chest_lid),
     "small_chair":      (11, 11, 13, _WOOD_DK,  None),
-    "overturned_chair": (16, 13, 8,  _WOOD_DK,  None),   # low box -> toppled
+    # toppled: a low box with its LEGS in the air (the top detail), so it
+    # reads as a knocked-over chair instead of a crate
+    "overturned_chair": (16, 13, 8,  _WOOD_DK,  None, _d_chair_up),
     "terminal":         (16, 15, 22, _IRON,     _d_screen),
     "computer":         (20, 17, 16, _IRON,     _d_screen),
     # Tier-2 roadside + graveyard uprights.

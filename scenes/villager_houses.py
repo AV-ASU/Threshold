@@ -12,13 +12,15 @@ from .dialogue import (
 
 
 def build_church():
-    """THRESHOLD: the church and parsonage. A long nave with a partitioned
-    back VESTRY reached through an interior doorway -- the dividing wall blocks
-    line of sight, so the vestry is a real indoor blind spot (you can't see who
-    or what is back there until you come around to the doorway and look in).
-    Door 'm' on the south wall back to the town crossroads; door '?' on the
-    north wall to the graveyard behind the church; stairs 'U' up the bell
-    tower from the vestry."""
+    """THRESHOLD: the church and parsonage. A long nave lined with PEWS
+    (2026-07 redecoration -- it read as a bare room without them) leading to
+    an altar at the head: a plain wooden CROSS on the wall, candles on the
+    altar table. A partitioned back VESTRY (the parsonage: the preacher's cot,
+    a mounted buck, the bell-tower stairs) is reached through an interior
+    doorway -- the dividing wall blocks line of sight, so the vestry is a real
+    indoor blind spot. Door 'm' on the south wall back to the town crossroads;
+    door '?' on the north wall to the graveyard behind the church; stairs 'U'
+    up the bell tower from the vestry."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
         "WWWWWWWWWW?WWWWW",   # 0  ? = graveyard gate (north, over the nave)
@@ -67,8 +69,8 @@ def build_church():
         rev.stations = [
             {"x": 8 * TILE + 16, "y": 2 * TILE + 16,
              "dwell": (8.0, 14.0), "face": (0, 1)},      # the lectern
-            {"x": 9 * TILE + 16, "y": 8 * TILE + 16,
-             "dwell": (3.0, 6.0), "face": (0, 1)},       # the empty nave
+            {"x": 8 * TILE + 16, "y": 8 * TILE + 16,
+             "dwell": (3.0, 6.0), "face": (0, 1)},       # the empty nave (center aisle)
             {"x": 4 * TILE + 16, "y": 4 * TILE + 16,
              "dwell": (3.0, 6.0), "face": (-1, 0)},      # the vestry cot
         ]
@@ -81,16 +83,30 @@ def build_church():
     sc.add_furniture("chair", [(9, 2)], w=22, h=28)
     sc.add_furniture("bed", [(1, 4), (1, 5)], w=34, h=56)
 
+    # PEWS down the nave (2026-07 redecoration -- the church read as a bare
+    # room without them). Single-tile pews abut into benches: two benches per
+    # row, left + right of a narrow center aisle (cols 7-8, aligned with the
+    # south door and the altar). Three rows in the lower nave; the front is
+    # left open (a country church with more pews than flock). The west margin
+    # (cols 1-3) stays clear so the vestry doorway at (3, 6) is reachable.
+    for r in (7, 8, 9):
+        for c in (4, 5, 6):          # left bench
+            sc.add_furniture("pew", [(c, r)])
+        for c in (9, 10, 11):        # right bench
+            sc.add_furniture("pew", [(c, r)])
+
+    # The altar dressing (2026-07): a plain wooden CROSS on the wall above the
+    # altar, and two candles standing ON the altar table (seated by
+    # seat_tabletop_props). Austere, a poor country parish, not gilded.
+    sc.add_decoration(Decoration(8 * TILE + 24, 0 * TILE + 16, "wall_cross"))
+    sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 8, "candle"))
+    sc.add_decoration(Decoration(9 * TILE + 20, 1 * TILE + 8, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "candle"))
-    # The Preacher's parsonage in rural hunting country: a mounted buck
-    # + trophy walleye on the north wall (replacing the old banner and
-    # stray photo), a cobweb in the vestry corner, and a kerosene lamp on
-    # the desk.
-    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "buck_head",
+    # The parsonage's hunting-country dressing lives in the VESTRY (the
+    # preacher's living quarters), not over the altar: a mounted buck on the
+    # vestry's north wall. (The cobweb + desk lamp are added below.)
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 2,
@@ -205,6 +221,11 @@ def build_sheriff_office():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
+    # A candle on the records-room filing table (2026-07 audit fix: every
+    # light lived in the main room, so the case board and the booking slip
+    # sat unreadable in the dark in the real player view). Vane works his
+    # files by candlelight; seat_tabletop_props stands it on the table.
+    sc.add_decoration(Decoration(12 * TILE + 8, 4 * TILE + 8, "candle"))
     # Sheriff Vane's office made specific to the man, with the worst of it
     # tucked into the back room the public never sees: the case board of the
     # disappeared he can't file on (polaroid wall), the Blaine girl's MISSING
@@ -309,7 +330,9 @@ def build_abandoned_farmhouse():
                                  "bloodstain"))
     # What the family left when they went: a preserves shelf nobody came
     # back for, and a birdcage standing open in all that bare floor.
-    sc.add_decoration(Decoration(3 * TILE + 24, 0 * TILE + 22,
+    # (Shelf at col 1, 2026-07 audit fix: it hung centred over the col-3
+    # exit door -- a cupboard drawn across the only way out.)
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 22,
                                  "preserve_shelf", seed=23))
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "birdcage"))
     for mx, my in [(3, 2), (4, 6), (8, 7)]:

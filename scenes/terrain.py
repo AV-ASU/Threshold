@@ -989,8 +989,11 @@ def floor_step_sound(ch):
 # from this dict falls back to titlecase(key.replace('_', ' ')).
 DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
-    "lodge":                "the Inn",
-    "clerk_room":              "the Clerk's Room",
+    "lodge":                "Arcadia Lodge",
+    "lodge_hall":           "the Guest Hall",
+    "guest_room_a":         "a Guest Room",
+    "guest_room_b":         "a Guest Room",
+    "clerk_room":              "the Clerk's Loft",
     "maras_room":           "Mara's Room",
     "lodge_cellar":             "the Cellar",
     "lodge_yard":       "the Yard",
@@ -3116,7 +3119,7 @@ _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
-    "chalk_door_wall", "chalkboard",
+    "chalk_door_wall", "chalkboard", "wall_cross",
     # Framed needlework, a varnish-dark portrait, and a larder shelf of
     # preserves: all HANG on the wall face.
     "sampler", "oil_portrait", "preserve_shelf",
