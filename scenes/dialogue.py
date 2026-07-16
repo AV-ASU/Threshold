@@ -868,6 +868,71 @@ def _vane_how_told(game):
     ])
 
 
+def _vane_town_beats(game):
+    """The 'what happened to this town' answer, built to Vane's lived arc: a
+    dying quiet town, the summer influx of unplaceable newcomers, then the
+    exits closing. The reveal that no one has left in MONTHS lands as a horror
+    RECOIL the first time (before the PI has learned the seal) and as an
+    assertive 'then how' from a PI who already knows -- and either way Vane,
+    the last man still asking, has no how to give. Marks the fold heard on the
+    first-time branch, chosen BEFORE the mark so it never skips its own recoil
+    (the play-notes recoil-once rule: subsequent tellings are flat restatement,
+    no fresh shock)."""
+    knew = (game.save.flag("voice_fold_heard")
+            or game.save.flag("crossed_a_fold"))
+    beats = [
+        ("npc", "Brimley was dying before any of this. Half the town gone "
+                "south for work, storefronts boarded up. Some weeks the phone "
+                "never rang once."),
+        ("npc", "Then last summer the strangers started coming up the north "
+                "road, and they didn't stop. More than we had beds for. "
+                "Polite, every one. Kept to their own. Not one could tell me "
+                "where they'd driven in from, or why they'd want a dead town "
+                "like this."),
+        ("npc", "I kept waiting on the trouble strangers bring. It never came. "
+                "Something quieter did. The trucks stopped running. The mail "
+                "stopped. And the road out stopped taking anybody anywhere."),
+        ("npc", "You need to get out of here. We all do. No one has been able "
+                "to leave in months."),
+    ]
+    if knew:
+        beats += [
+            ("pi", "Then you tell me how, Sheriff. Every road out, every "
+                   "engine, a whole town that can't leave. It's not right. "
+                   "How?"),
+            ("npc", "You think I haven't stood right where you're standing "
+                    "and asked that, every night for a year? I don't have a "
+                    "how for you. Just this badge, and a list of folks I "
+                    "can't help."),
+        ]
+    else:
+        beats += [
+            ("pi", "Wait. What are you saying, Sheriff? No one has left?"),
+            ("npc", "Not a soul, not since the winter. They try. I tried, "
+                    "more times than I'll admit to a stranger. Every road out "
+                    "of Brimley turns you around and sets you back at that "
+                    "well."),
+            ("npc", "You'll learn that yourself soon enough. Everybody does."),
+        ]
+        if hasattr(game, "_fold_mentioned"):
+            game._fold_mentioned("Sheriff Vane", reflect=False)
+    return beats
+
+
+def _vane_give_cache(game):
+    """Vane hands over the office gun cabinet -- the best ammo in town, and
+    EARNED, not free (DESIGN.md §2). The lawman with no deputies and no law
+    left arms the one fellow investigator who brought him the truth. Sets the
+    flag the office on_enter reads, and drops the cache live so the PI can
+    take it while he is standing there (the gun is not required to finish, so
+    gating it soft-locks nothing -- it exists to fail; DESIGN.md §1)."""
+    game.save.set_flag("vane_gave_cache", True)
+    scene = getattr(game, "scene", None)
+    if scene is not None:
+        from scenes.base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
+
+
 def vane_on_leave(game):
     """A last word the first time the PI walks out of the office. The
     holdout's hope, said sideways. Fires once."""
@@ -944,17 +1009,16 @@ VANE_CONVO = {
             ],
         },
         {
+            # Vane tells the town's fall as he lived it: a dying quiet town,
+            # the summer influx of unplaceable newcomers, the exits closing.
+            # The "no one has left in months" reveal RECOILS the first time and
+            # goes assertive-investigator once the PI already knows the seal
+            # (dynamic beats, _vane_town_beats). Either way Vane has no HOW for
+            # the seal (distinct from his gated recruitment "how" below).
             "key": "town",
             "q": "What happened to this town, Sheriff?",
             "label": "What happened to this town?",
-            "beats": [
-                ("npc", "I was born here. So was my dad."),
-                ("npc", "They started showing up in the summer. The new "
-                        "ones. Polite folks. After a while the road "
-                        "stopped going anywhere."),
-                ("npc", "I tell people to leave. I haven't been "
-                        "able to in months."),
-            ],
+            "beats": _vane_town_beats,
         },
         # The SHARES (DESIGN.md §2): the PI bringing a real discovery to the
         # one other investigator in town. Each opens as its find lands,
@@ -1087,7 +1151,45 @@ VANE_CONVO = {
                         "want most in this world, and come with him, and "
                         "it would be waiting. I put him out. He thanked "
                         "me for my time and he left smiling."),
-                ("npc", "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it. What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."),
+                ("npc", "You don't talk a hundred strangers onto one road. "
+                        "They weren't tricked. Every one of them was going "
+                        "toward something, and glad of it."),
+                ("npc", "What it was, who was holding it out, I never got "
+                        "closer than that chair. That's the piece that keeps "
+                        "my lights on at night."),
+            ],
+        },
+        # The office gun cabinet -- the best ammo in town, and EARNED (the
+        # trust-gated LEAD, DESIGN.md §2). Opens like the "how" (intro + at
+        # least one shared discovery), spends once, and hands the cache over:
+        # the lawman with no deputies and no law left arms the one fellow
+        # investigator who brought him the truth, knowing full well it will
+        # not help against what took Brimley (the gun exists to fail,
+        # DESIGN.md §1). _vane_give_cache drops it live and gates the office
+        # on_enter drop on the flag.
+        {
+            "key": "cache",
+            "q": "If this goes the way it's been going, I'll be out there "
+                 "alone. Is there anything you can put in my hand, Sheriff?",
+            "label": "Am I on my own out there?",
+            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
+                                and int(g.save.arg("vane_informed", 0)) >= 1
+                                and not g.save.flag("vane_gave_cache")),
+            "once": True,
+            "on_ask": _vane_give_cache,
+            "beats": [
+                ("npc", "Protection. That is a thing this office used to hand "
+                        "out."),
+                ("npc", "I have got no deputies, no cell that holds, and a "
+                        "law nobody up here answers to anymore. What I have "
+                        "got is a cabinet in the back. Shells, and a spare "
+                        "piece I kept oiled for no reason I could name."),
+                ("npc", "Take what you need. It will not help you against "
+                        "what took this town. But it will make you feel like "
+                        "it might, and some nights that is the whole of the "
+                        "job."),
+                ("pi", "[c=dim]He unlocks the cabinet and steps back. The "
+                       "last thing the law here has to give.[/c]"),
             ],
         },
     ],

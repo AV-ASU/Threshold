@@ -1599,6 +1599,40 @@ def main():
                                           "king", "door")),
           "canon: Vane keeps his knowledge boundary (no destination)")
 
+    # (Vane town) The 'what happened' answer RECOILS once: the first telling
+    # (before the PI knows the seal) lands the horror at "no one has left", and
+    # marks the fold heard; once he's learned it (any source) the reaction goes
+    # assertive-investigator ("it's not right. How?") with no fresh shock.
+    _town = next(ex for ex in _VC["exchanges"] if ex["key"] == "town")
+    check(callable(_town["beats"]), "vane: the town answer is dynamic")
+    gtn = new_game()
+    _tb_first = _town["beats"](gtn)
+    check(any(b[0] == "pi" and "No one has left" in b[1] for b in _tb_first),
+          "vane: the first telling recoils at 'no one has left'")
+    check(gtn.save.flag("voice_fold_heard"),
+          "vane: the first telling marks the fold heard (recoil fires once)")
+    _tb_again = _town["beats"](gtn)          # knew is True now
+    check(any(b[0] == "pi" and "It's not right. How?" in b[1]
+              for b in _tb_again),
+          "vane: once he knows the seal, the reaction is the assertive 'how'")
+    check(not any("Wait. What are you saying" in b[1] for b in _tb_again),
+          "vane: no fresh recoil on a restatement")
+
+    # (Vane cache) The office gun cabinet is EARNED: trust-gated like the how,
+    # spent once, and granting it arms the office ammo drop (vane_gave_cache).
+    _cache = next(ex for ex in _VC["exchanges"] if ex["key"] == "cache")
+    check(_cache.get("once"), "vane: the cabinet is handed over once")
+    gca = new_game()
+    check(not _cache["avail"](gca), "vane: the cabinet waits before trust")
+    gca.save.set_flag("convo_vane_intro_asked", True)
+    gca.save.set_arg("vane_informed", 1)
+    check(_cache["avail"](gca), "vane: intro plus a shared find opens the cabinet")
+    _cache["on_ask"](gca)
+    check(gca.save.flag("vane_gave_cache"),
+          "vane: taking the cabinet arms the office ammo drop")
+    check(not _cache["avail"](gca),
+          "vane: the cabinet does not re-offer once given")
+
     # The flow polish: once an exchange finishes, the menu only reopens
     # while both parties are still AT the talk -- the partner walking off
     # (or the player) ends it quietly instead of a modal yank.
