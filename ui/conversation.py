@@ -49,7 +49,9 @@ An EXCHANGE (one askable question):
                                        # reopening the menu (a walk-away
                                        # beat -- Mara's father card)
       "on_ask": lambda g: ...,         # optional side effect when picked
-      "beats":  [ beat, ... ],         # what follows the PI's question
+      "beats":  [ beat, ... ],         # what follows the PI's question;
+                                       # may be a callable(game) -> [beat...]
+                                       # to vary the reply on game state
     }
 
 A BEAT is one of:
@@ -164,8 +166,13 @@ class Conversation:
             on_ask = ex.get("on_ask")
             if on_ask:
                 on_ask(self.game)
-            # The PI SPEAKS his question first, then the exchange plays.
-            self.queue = [("pi", ex["q"])] + list(ex["beats"])
+            # The PI SPEAKS his question first, then the exchange plays. An
+            # exchange's `beats` may be a callable(game) -> [beat...] so the
+            # reply can vary on game state (e.g. Sable hints the cellar key
+            # only when the PI does not already carry it).
+            raw = ex["beats"]
+            beats = raw(self.game) if callable(raw) else raw
+            self.queue = [("pi", ex["q"])] + list(beats)
             self._step()
 
         self.game.dialog.show_choice(

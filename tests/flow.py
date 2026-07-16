@@ -1307,14 +1307,15 @@ def main():
     # at the "unfriendly" locals (the trap the game punishes). He must
     # never confirm he knows her or where she is.
     _mtxt = " ".join(b[1].lower() for b in mara["beats"] if b[0] in ("npc", "pi"))
-    check("can't say the name" in mara["beats"][0][1].lower(),
+    _mb0 = mara["beats"][0][1].lower()
+    check("can't say" in _mb0 and "name" in _mb0,
           "tone: Sable deflects the name instead of confirming it")
     check(not any(s in _mtxt for s in
                   ("that is her", "sat right where", "smiling, by the end",
                    "i will know her")),
           "tone: Sable never confirms he knows the girl or where she is")
     check("new folk" in _mtxt
-          and any(s in _mtxt for s in ("cold as a root cellar", "unfriendly",
+          and any(s in _mtxt for s in ("cold as our root cellar", "unfriendly",
                                        "not everyone")),
           "tone: the opener sets the newcomer/hostile-local split for the town")
 
@@ -1347,22 +1348,34 @@ def main():
           "drop: the desk handoff never gives a second Invitation")
 
     # (8) The starting questions the PI can open with from his OWN knowledge:
-    # who he is looking for (Mara), and his own dead car. "Nothing leaves this
-    # town" was CUT (a knowledge leak -- he has only seen his own car die; the
-    # fold pressure now rides the gated "the_fold" exchange). The cellar
-    # question is gated on finding the cellar key (not an opener), and "when
-    # did she change" was CUT (Sable barely met Mara).
+    # who he is looking for (Mara), his own dead car, and the cellar of the
+    # lodge he is staying in. "Nothing leaves this town" was CUT (a knowledge
+    # leak -- he has only seen his own car die; the fold pressure now rides
+    # the gated "the_fold" exchange), and "when did she change" was CUT (Sable
+    # barely met Mara). The cellar question LEADS to the key: it hints the lost
+    # key only while the PI lacks it (callable beats), and asking it lets Sable
+    # down to the Ledger (sable_cellar_permission colours that find).
     _keys = {ex["key"] for ex in SABLE_CONVO["exchanges"] if "avail" not in ex}
-    check({"mara", "car"} <= _keys,
-          "ask: the PI can open with Mara and his own dead car")
+    check({"mara", "car", "cellar"} <= _keys,
+          "ask: the PI can open with Mara, his dead car, and the cellar")
     _skeys = {ex["key"] for ex in SABLE_CONVO["exchanges"]}
     check("sealed" not in _skeys,
           "ask: the ungated 'nothing leaves this town' knowledge leak is gone")
     check("her_state" not in _skeys,
           "ask: the 'when did she change' question is gone (Sable barely met Mara)")
     _cellar = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "cellar")
-    check("avail" in _cellar,
-          "ask: the cellar question is gated on the cellar key, not an opener")
+    check(callable(_cellar["beats"]),
+          "ask: the cellar exchange builds its reply dynamically")
+    _gc0 = new_game()
+    check(any("misplaced" in b[1] for b in _cellar["beats"](_gc0)),
+          "ask: Sable hints the lost cellar key when the PI lacks it")
+    _gc1 = new_game()
+    _gc1.player.inventory.add("cellar_key", 1)
+    check(not any("misplaced" in b[1] for b in _cellar["beats"](_gc1)),
+          "ask: no key hint once the PI already carries the key")
+    _cellar["on_ask"](_gc0)
+    check(_gc0.save.flag("sable_cellar_permission"),
+          "ask: asking about the cellar records Sable's permission for the Ledger")
 
     # (9) The exit hook: the first time the PI tries to leave, Sable stops
     # him with a last word (planting the warped road); it fires once.
@@ -1436,7 +1449,10 @@ def main():
             check(len(_lb) <= 44,
                   f"ask: {_cv['id']}/{_ex['key']} menu label fits the "
                   f"choice box ({len(_lb)} chars)")
-            for _b in _ex["beats"]:
+            _bt = _ex["beats"]
+            if callable(_bt):
+                continue                 # dynamic beats carry no inline asks
+            for _b in _bt:
                 if _b[0] != "ask":
                     continue
                 for _opt in _b[2]:

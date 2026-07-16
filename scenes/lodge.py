@@ -1005,6 +1005,18 @@ def basement_interact(game):
         # Real, and wrong, but not Mara -- she was never at the lodge -- so
         # it files as a town NOTE, never case-evidence (NARRATIVE §6,
         # DESIGN.md §9). note=True keeps it in the notebook off the gate.
+        # If the PI asked Sable about the cellar first, Sable let him down
+        # here freely (sable_cellar_permission). The closing reflection reads
+        # that openness back -- the host handed you his own damning book
+        # without a blink -- instead of the neutral "a clerk got lazy" shrug.
+        _closer = ("[c=dim]He let me down here without a blink. A year of "
+                   "guests, and the clean book upstairs starts right where "
+                   "these leave off. I'll keep it in mind.[/c]"
+                   if game.save.flag("sable_cellar_permission") else
+                   "[c=dim]Probably nothing. A clerk who got lazy, dropped "
+                   "the habit. ...Still. A year of guests, and the clean "
+                   "book upstairs starts right where these leave off. I'll "
+                   "keep it in mind.[/c]")
         _evidence(game, "the_ledger", [
             "Boxes of the Lodge's old registers, years deep, carried down "
             "here as each book filled. You lift the top one out and start "
@@ -1013,10 +1025,7 @@ def basement_interact(game):
             "one where they settled up and left. Then those dates just... "
             "stop. The last anyone signed out was a year back. Every name "
             "since signs in and never out.",
-            "[c=dim]Probably nothing. A clerk who got lazy, dropped the "
-            "habit. ...Still. A year of guests, and the clean book "
-            "upstairs starts right where these leave off. I'll keep it "
-            "in mind.[/c]",
+            _closer,
         ], note=True)
         return
     # The workbench chest -- holds the woodshed key (gate to the axe

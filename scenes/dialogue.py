@@ -1205,12 +1205,14 @@ SABLE_CONVO = {
         {
             "key": "mara",
             "label": "I'm looking for someone.",
-            "q": "I'm looking for a woman. Mara Blaine. She'd have come "
-                 "through here.",
+            "q": "I'm looking for a woman named Mara Blaine. Is that a name "
+                 "you know, Mr. Sable?",
             "beats": [
-                ("npc", "Blaine. No, I can't say the name lands anywhere. We "
-                        "get a great many faces through that door."),
-                ("npc", "You'll mean one of the new folk, though. We had no "
+                ("npc", "Mara. No, I can't say I know the name. But I have had "
+                        "the pleasure of hosting a great many guests these "
+                        "past months. You are welcome to look over the "
+                        "register any time you like."),
+                ("npc", "You'll mean one of the new folk, I expect. We had no "
                         "end of those this past year. They came like they had "
                         "heard something worth the drive."),
                 ("npc", "And I was glad of every one. This town was drying up "
@@ -1218,17 +1220,18 @@ SABLE_CONVO = {
                         "have seen this house with every window lit."),
                 ("pi", "And the rest of Brimley feels the same?"),
                 ("npc", "Ah. There you have it. Not everyone's been so warm. "
-                        "Some of the old families have gone cold as a root "
-                        "cellar about the newcomers."),
+                        "Some of the old families have gone as cold as our "
+                        "root cellar about the newcomers."),
                 ("npc", "I would mind who you take your questions to, friend. "
                         "Not everyone here wishes a stranger well. I do. You "
                         "remember that."),
                 ("ask", "Show him her photograph?", [
                     ("Slide the photo across the desk.", [
                         ("pi", "(You lay her photo on the register.)"),
-                        ("npc", "(He looks at it a good while, smiling.) "
-                                "Pretty thing. No, I couldn't say. She'll "
-                                "have found her feet by now. They all do."),
+                        ("npc", "(He looks at it a good while, then hands it "
+                                "back.) No. A pretty thing, but no. I could "
+                                "not put a name or a room to her. So many "
+                                "faces come through that door."),
                     ], _sable_showed_photo),
                     ("Keep it in your coat.", [
                         ("pi", "(You leave it where it is.)"),
@@ -1239,43 +1242,58 @@ SABLE_CONVO = {
                 ]),
             ],
         },
-        # Gated on finding the cellar key (on the nail behind the house): the
-        # PI will not reference "that cellar of yours" before he knows there
-        # is one. Seeds the Ledger -- he points you at the desk register (a
-        # lead) and shrugs off the padlocked cellar where the old books went.
+        # An early question that LEADS to the key: the guest asks after the
+        # cellar, and Sable gives free permission (he is hiding nothing -- the
+        # host is the lucky one, not a conspirator) plus a hint that the key
+        # is lost about the place, IF the PI does not already carry it (the
+        # callable beats). Asking sets `sable_cellar_permission`, which colours
+        # the Ledger find below (the host let you down to his own damning
+        # book). Seeds the descent to the Ledger without gating on it.
         {
             "key": "cellar",
-            "label": "About that cellar of yours.",
-            "q": "A lot of doors in this town stay locked. You keep a cellar "
-                 "under this place?",
-            "avail": lambda g: (g.save.flag("cellar_key_taken")
-                                or g.player.inventory.has("cellar_key")),
-            "beats": [
-                ("npc", "Storage, mostly. The key is about somewhere. Nothing "
-                        "down there worth the dust, I promise you."),
-                ("npc", "If it is names you want, sign-in register is right "
-                        "here on the desk. Guest and date, all the way back. "
-                        "Read it as long as you like."),
-            ],
+            "label": "What's in your cellar?",
+            "q": "What do you keep down in that cellar of yours? Mind if I "
+                 "take a look?",
+            "on_ask": lambda g: g.save.set_flag("sable_cellar_permission", True),
+            "beats": lambda g: (
+                [("npc", "The cellar? Storage, mostly. Old registers, a broken "
+                         "chair or two. Nothing down there worth hiding from a "
+                         "guest.")]
+                + ([] if (g.save.flag("cellar_key_taken")
+                          or g.player.inventory.has("cellar_key"))
+                   else [("npc", "Shoot. I seem to have misplaced the key. If "
+                                 "you find it, you are welcome to take a look, "
+                                 "and take what you need.")])
+            ),
         },
         {
             # The PI asks the mundane question: his car died at the lodge
             # steps the night he drove in, so is there a mechanic? He speaks
             # only from his OWN experience and does NOT yet know the fold kills
             # every engine (that comes from Vane / Royce), so this puts no
-            # town-wide car knowledge in his mouth. Sable's answer is deniable
-            # hospitality: "not broken" is the faint tell, and he lands on his
-            # own want -- keep the guest, keep him HERE (the Sheriff carries
-            # the plain truth; NARRATIVE §4/§7).
+            # town-wide car knowledge in his mouth. When pressed, Sable does
+            # not stonewall -- he gives his own LIVED EXPERIENCE (he has seen
+            # guests' cars go the same way and never one put right; he stopped
+            # asking why). That is a local's SURRENDER, distinct from Vane's
+            # plain-truth register: Sable names no mechanism and no pattern,
+            # only what he has watched and given up on, and lands on his own
+            # want -- keep the guest HERE (NARRATIVE §4/§7).
             "key": "car",
             "q": "My car won't start. Turns over and won't catch. Is there "
                  "anyone in town who could take a look at it?",
             "label": "Is there a mechanic in town?",
             "beats": [
-                ("npc", "A mechanic? No, nothing like that here now, and it "
-                        "would not help you if there were."),
-                ("npc", "The car is not broken, friend. I could not tell you "
-                        "what ails it, and I would not lose sleep on it."),
+                ("npc", "A mechanic? No, nothing like that in Brimley now, "
+                        "and it would do you no good if there were."),
+                ("npc", "The car is not broken, friend."),
+                ("pi", "What do you mean, not broken? It turns over and dies "
+                       "at the step."),
+                ("npc", "Only that I have seen it before. Now and then a "
+                        "guest's car goes the same way, and never once have I "
+                        "seen one put right."),
+                ("npc", "A man quits asking why, after a time. I am long past "
+                        "it, and it is no trouble to me. Needn't be to you "
+                        "either."),
                 ("npc", "You have a good bed and a standing welcome. Stay as "
                         "long as you need."),
             ],
