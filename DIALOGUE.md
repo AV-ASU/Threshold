@@ -178,7 +178,6 @@ the words.
   - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look.)"
   - (npc) "The new folk came in numbers and they keep to their own. She'd have been one of them."
   - (npc) "They filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction."
-  - (pi) "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"
 - **Exchange `car`** — "My car died the night I drove in." (files the fold note, no chained reflection)
   - (npc) "Won't start. Won't ever. Nothing with an engine leaves Brimley."
   - (pi) "Engines don't all quit at once. Somebody got to it."

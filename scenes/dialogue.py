@@ -985,7 +985,6 @@ VANE_CONVO = {
             ("npc", "They filled the school, the barn, the lodge. Then one "
                     "night those rooms were empty, all at once. Wherever "
                     "your girl is, that's the direction."),
-            ("pi", "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"),
         ],
     ) + [
         {
