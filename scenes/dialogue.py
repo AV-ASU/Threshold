@@ -980,13 +980,11 @@ VANE_CONVO = {
         photo_beats=[
             ("npc", "(He takes it to the window light and works it corner "
                     "to corner, a lawman's look.)"),
-            ("npc", "I can't put a day or a door to her. The new folk came "
-                    "in numbers and they keep to their own. She'd have "
-                    "been one of them."),
+            ("npc", "The new folk came in numbers and they keep to their "
+                    "own. She'd have been one of them."),
             ("npc", "They filled the school, the barn, the lodge. Then one "
                     "night those rooms were empty, all at once. Wherever "
-                    "your girl is, that's the direction. I can't tell you "
-                    "where it GOES."),
+                    "your girl is, that's the direction."),
             ("pi", "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"),
         ],
     ) + [
