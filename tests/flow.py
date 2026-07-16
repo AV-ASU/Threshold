@@ -1420,6 +1420,44 @@ def main():
     check(gn._evidence_count() == 3,
           "ask: the readiness nudge is a NOTE, never evidence")
 
+    # (12) Sable's talk is PRESENTED as a frozen close-up TABLEAU (#2b): the
+    # world holds and SABLE_CONVO renders inside the close-up (its beats as the
+    # caption, its menu as the option panel) instead of floating over the desk.
+    import inspect as _insp_t
+    check("_open_sable_tableau" in _insp_t.getsource(clerk_dialogue),
+          "ask: talking to Sable opens the close-up tableau (not float speech)")
+    gt = new_game()
+    gt.dialog.active = False
+    gt._open_sable_tableau(_npc_stub(gt))
+    check(getattr(gt, "_tableau", None) is not None
+          and gt._tableau["kind"] == "sable",
+          "ask: the Sable close-up tableau opens (kind 'sable')")
+    check(gt._convo is not None and gt._convo.tableau is True,
+          "ask: the conversation runs in tableau presentation mode")
+    # The greeting lands as the tableau CAPTION, not a floating line / modal band.
+    check(gt._tableau.get("caption") is not None
+          and not gt.float_speech.active and not gt.dialog.active,
+          "ask: the greeting renders as the tableau caption, not float speech")
+    # Advancing the caption (its on_complete) opens the question menu IN the
+    # tableau -- the PI's own lines, plus a leave option.
+    gt._tableau["caption"]["cb"]()
+    _tm = gt._tableau.get("menu")
+    check(_tm is not None and gt._tableau.get("caption") is None
+          and not gt.dialog.active,
+          "ask: advancing the greeting opens the question menu in the tableau")
+    _base_ex = [ex for ex in SABLE_CONVO["exchanges"] if "avail" not in ex]
+    _first_label = _base_ex[0].get("label", _base_ex[0]["q"])
+    check(_first_label in _tm["labels"]
+          and SABLE_CONVO.get("leave", "Leave.") in _tm["labels"],
+          "ask: the tableau menu carries the PI's questions plus a leave")
+    # Escape ends the talk and closes the close-up.
+    class _EscKey:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    gt._tableau_input(_EscKey())
+    check(gt._tableau is None and gt._convo.active is False,
+          "ask: Escape closes the tableau and ends the talk")
+
     # --- 17d. The ask verb EXPANDED to the principals (TODO #1) ----------
     # Vane, Hettie, Toby, and Crane each carry their own conversation, and
     # every principal's menu leads with the two guaranteed openers: the PI

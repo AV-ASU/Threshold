@@ -185,9 +185,26 @@ live (take the gun off the desk, read the case file) and can open readable text
 everything; `_tableau_input` owns input). **PILOT LANDED:** the bedroom writing
 desk (pistol + case file) replaced the old linear "E takes gun, next E reads
 notes." Guarded by `tests/flow.py` §14; player-facing text in `DIALOGUE.md`
-Part B. **Still open (the maintainer greenlights each):** reuse the system for
-a **pedestal** (the Mask on the altar) and the **"face across a table"** beats
-(Mara's confrontation, the cult Talk). Art refinement per beat, then wire.
+Part B.
+
+- **FACE-ACROSS-A-TABLE landed on Mr. Sable (2026-07).** The first principal
+  DIALOGUE presented as a tableau: `clerk_dialogue` opens `SABLE_CONVO` inside a
+  frozen reception-desk close-up (`_open_sable_tableau`; the conversation runs
+  in `ui/conversation` `tableau=True` mode, so its spoken beats render as the
+  tableau caption and its question menu as the option panel, `_tableau_caption`
+  / `_tableau_choices`) instead of floating over the desk. The close-up is
+  reactive: the photograph appears on the register once shown
+  (`sable_showed_photo`) and the sealed Invitation once handed over
+  (`rite_envelope_given`). Bespoke Sable art (`draw_sable_tableau`, his
+  clerk-sprite face given a gloomy pass, dark coat + red tie, key wall, stopped
+  clock, register, ceiling-fan shadow). Guarded by `tests/flow.py` §17c (12);
+  text in `DIALOGUE.md` Part A (the words) + Part B (the presentation).
+
+  **Still open (the maintainer greenlights each):** the same treatment for the
+  other principals (Vane's office, Hettie's counter, Crane's church, Toby), the
+  **pedestal** (the Mask on the altar), and Mara's confrontation / the cult
+  Talk. Each is its own bespoke environment + art pass, then wire. Art
+  refinement per beat, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

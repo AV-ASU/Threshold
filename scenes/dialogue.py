@@ -194,8 +194,8 @@ def _ready_for_the_desk(game, name):
 # locals), so nobody knows who the PI is or what he wants until he says
 # it -- greets never assume the case is known; the PI initiates.
 
-_INTRO_Q = ("I'm a private investigator, out of Minneapolis. A family "
-            "hired me to find their daughter. She was last heard from "
+_INTRO_Q = ("I'm a private investigator, out of Minneapolis. I was hired "
+            "to find a woman named Mara Blaine. She was last heard from "
             "headed to Brimley.")
 _PHOTO_Q = "I want you to look at a photograph. Have you seen this woman?"
 
@@ -1239,6 +1239,8 @@ def sheriff_dialogue(game, npc):
 # ui/conversation.Conversation.
 
 def _sable_showed_photo(game):
+    # The tableau art reads this flag to lay the photo on the register.
+    game.save.set_flag("sable_showed_photo", True)
     _log_note(game, "showed_the_clerk", [
         "I put her face on his desk. He looked at it a long while, smiling "
         "the whole time, and told me nothing at all.",
@@ -1517,15 +1519,15 @@ def clerk_dialogue(game, npc):
     hands it over like a room key. Somebody has to keep the desk.
     State-gated on what the PI knows -- never farmable by repeat visits."""
     _cult_tell(game, "clerk")
-    # The organic conversation. His welcome floats once (the greet in
-    # SABLE_CONVO), then the menu is the PI's own questions -- each picked
-    # line is spoken, Sable answers in turn over the desk, the world keeps
-    # running, and new questions surface as the case grows. The Invitation
-    # is no longer an auto-handoff the moment you hit 3 evidence: it is an
-    # explicit ASK ("the_way_down" exchange, gated on readiness), and a case
-    # NOTE nudges the PI back to the desk when he is ready (see _evidence).
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, SABLE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b):
+    # the world holds, his host face animates, and SABLE_CONVO renders its
+    # beats as the tableau caption and its menu as the option panel. His
+    # welcome plays once (the greet), then the menu is the PI's own questions
+    # -- each picked line is spoken, Sable answers over the desk, and new
+    # questions surface as the case grows. The Invitation is an explicit ASK
+    # ("the_way_down", gated on readiness); the photo + envelope appear on the
+    # register live as the talk earns them (the art reads the save flags).
+    game._open_sable_tableau(npc)
 
 
 # ---- The Brimley chorus ----

@@ -66,10 +66,15 @@ option is chosen; its sub-beats splice in ahead of the rest.
 
 
 class Conversation:
-    def __init__(self, game, npc, convo):
+    def __init__(self, game, npc, convo, tableau=False):
         self.game = game
         self.npc = npc
         self.convo = convo
+        # When True, the talk is PRESENTED inside a frozen close-up tableau:
+        # spoken beats render as the tableau's caption and the menu as the
+        # tableau's option panel (game._tableau_caption / _tableau_choices),
+        # instead of floating over heads. The state machine is identical.
+        self.tableau = tableau
         self.queue = []          # pending beats in the current exchange
         self.current = None      # key of the exchange being played
         self._closing = False    # a leave-hook is playing; do not reopen
@@ -118,6 +123,9 @@ class Conversation:
         self.active = False
         if getattr(self.game, "_convo", None) is self:
             self.game._convo = None
+        # A tableau-hosted talk closes its close-up when the talk ends.
+        if self.tableau and hasattr(self.game, "_close_tableau"):
+            self.game._close_tableau()
 
     # ---- the question menu ---------------------------------------------
     def _offered(self, ex):
@@ -175,9 +183,12 @@ class Conversation:
             self.queue = [("pi", ex["q"])] + list(beats)
             self._step()
 
-        self.game.dialog.show_choice(
-            prompt, labels, _pick,
-            speaker="", voice="blip_soft", portrait="narrator")
+        if self.tableau:
+            self.game._tableau_choices(prompt, labels, _pick)
+        else:
+            self.game.dialog.show_choice(
+                prompt, labels, _pick,
+                speaker="", voice="blip_soft", portrait="narrator")
 
     # ---- beat playback --------------------------------------------------
     def _speaker(self, who):
@@ -185,6 +196,11 @@ class Conversation:
 
     def _float(self, who, text):
         name = "" if who == "pi" else self.convo.get("name", "")
+        if self.tableau:
+            # In the tableau the line is a caption over the close-up; E
+            # advances it, which fires _step (the next beat).
+            self.game._tableau_caption(who, name, text, self._step)
+            return
         voice = (self.convo.get("pi_voice", "blip_soft") if who == "pi"
                  else self.convo.get("voice", "blip_mid"))
         # float_speech takes the speaker object directly and fires
@@ -240,9 +256,12 @@ class Conversation:
                 on_pick(self.game)
             self.queue[0:0] = list(sub)      # splice the branch in ahead
             self._step()
-        self.game.dialog.show_choice(
-            prompt, [o[0] for o in options], _pick,
-            speaker="", voice="blip_soft", portrait="narrator")
+        if self.tableau:
+            self.game._tableau_choices(prompt, [o[0] for o in options], _pick)
+        else:
+            self.game.dialog.show_choice(
+                prompt, [o[0] for o in options], _pick,
+                speaker="", voice="blip_soft", portrait="narrator")
 
     def _find(self, key):
         for ex in self.convo["exchanges"]:
@@ -251,14 +270,17 @@ class Conversation:
         return None
 
 
-def open_conversation(game, npc, convo):
+def open_conversation(game, npc, convo, tableau=False):
     """Start (or restart) an organic conversation with `npc`. Held on
     `game._convo` so it survives the interact call; the callback chain
     keeps it alive regardless. A replaced conversation (walked from one
     talker to another mid-beat) is deactivated first so its pending
-    float callback goes inert instead of clobbering the new talk."""
+    float callback goes inert instead of clobbering the new talk.
+
+    `tableau=True` presents the talk inside a frozen close-up (the opener
+    must already have set `game._tableau`); the beats + menu render there."""
     old = getattr(game, "_convo", None)
     if old is not None:
         old.active = False
-    game._convo = Conversation(game, npc, convo)
+    game._convo = Conversation(game, npc, convo, tableau=tableau)
     game._convo.start()

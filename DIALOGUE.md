@@ -114,6 +114,19 @@ Consolidated from the canon. A new or edited line must pass all of these.
 The whole speaking cast. Character facts live in `NARRATIVE.md §4`; this is
 the words.
 
+## The shared openers — the PI initiates
+Every principal's menu leads with the same two PI lines (`_opener_exchanges`
+in `scenes/dialogue.py`; `_INTRO_Q` / `_PHOTO_Q`). The PI introduces himself
+and names the case cold: news does not spread in a sealed town, so nobody
+knows who he is or what he wants until he says it. The NPC's per-character
+answers follow each and are quoted under that character below ("Opener
+intro:" / "Opener photo:").
+- **Intro** (menu label "I'm a private investigator."):
+  - (pi) "I'm a private investigator, out of Minneapolis. I was hired to find a woman named Mara Blaine. She was last heard from headed to Brimley."
+- **Photo** (menu label "Have you seen this woman?"):
+  - (pi) "I want you to look at a photograph. Have you seen this woman?"
+  - (pi) "(You hold her photograph out.)"
+
 ## Mr. Sable — the Lodge clerk
 - **Voice:** `blip_low`. **Code:** `scenes/dialogue.py` `SABLE_CONVO`,
   `sable_on_death`, `clerk_dialogue`. **Who:** local, the most-attuned of
@@ -121,6 +134,12 @@ the words.
   gives the girl up; points suspicion at the "unfriendly" old families (the
   trap). He checked the PI in the night before, so every exchange resumes an
   acquaintance. Framing carries the PI four-tier weather (`_pi_framing`).
+- **Presentation (2026-07):** `clerk_dialogue` opens `SABLE_CONVO` inside a
+  frozen close-up **tableau** (`_open_sable_tableau`, `tableau=True`), not as
+  float-speech over the desk. The world holds; the spoken beats render as the
+  tableau caption and the menu as its option panel. The words are identical
+  either way (below); only the presentation changed. See Part B "The close-up
+  examine tableaux."
 - **Greet** (`sable_greeted`):
   - (npc) "Up early. You came in late off the north road. I put you down in the book as staying a while."
 - **Exchange `mara`** — "I'm looking for someone." / "I'm looking for a woman named Mara Blaine. Is that a name you know, Mr. Sable?"
@@ -515,7 +534,17 @@ spatial fold only (looping roads), never the door or the cosmology.
 ## The close-up examine tableaux
 Diegetic close-up "look at the thing" modals (art in `ui/tableau.py`, state in
 `systems/tableau_mixin.py`): press `[E]` on a tagged prop and the world pauses
-on an animated close-up with a menu that mutates it live. Player-facing text:
+on an animated close-up with a menu that mutates it live. The same frame also
+hosts a **conversation** with a principal (the pilot: Sable). Player-facing
+text:
+- **Mr. Sable's reception desk** (`_open_sable_tableau`, opened from
+  `clerk_dialogue`). The talk itself IS the tableau: `SABLE_CONVO` runs in
+  `tableau=True` mode, so its spoken beats are the caption ([E] advances) and
+  its question menu is the option panel. All of its words are quoted under
+  **Mr. Sable** in Part A. The close-up reacts to the talk: the photograph
+  appears on the register once he has been shown it (`sable_showed_photo`),
+  and the sealed Invitation appears once he has handed it over
+  (`rite_envelope_given`). Escape (or walking the talk out) closes it.
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".
