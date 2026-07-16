@@ -31,7 +31,7 @@ priority order within each group.
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED 2026-07; principals + chorus all converted — still open: `_REVISIT_NUDGES` for Hettie/Toby/Crane as their case hooks land)*
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED 2026-07; principals + chorus all converted. The `_REVISIT_NUDGES` layer was CUT WHOLESALE by maintainer call in the Wave 6 review: the "I should go back and ask him" appends did the player's thinking for them. The dict is gone from `scenes/dialogue.py`; only the act-break `_ready_for_the_desk` pointer survives. Flow §17c/d guard the absence.)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -174,20 +174,45 @@ full economy table is still to be drafted).
   (nothing stops the PI but himself); **existing verbs only** (give via E /
   dialog).
 
-### 2b. **[Opus + Fable]** Close-up examine tableaux  *(play-notes feature; PILOT LANDED 2026-07)*
+### 2b. **[Opus + Fable]** Dialogue-as-tableau ENCOUNTERS  *(play-notes feature; pilot landed 2026-07; DIRECTION EXPANDED by the maintainer 2026-07 — this is now the dialogue presentation end-state)*
 
-The diegetic "look at the thing" modal: press `[E]` on a tagged prop and the
-world pauses on an animated procedural close-up with a **menu** that mutates it
-live (take the gun off the desk, read the case file) and can open readable text
-(walking away interrupts). Art in `ui/tableau.py`, state machine in
+The diegetic close-up modal: art in `ui/tableau.py`, state machine in
 `systems/tableau_mixin.py` (a `Game` mixin), wired like the flashback cutscene
 (`_tableau is not None` freezes the world; `_draw_tableau` paints over
 everything; `_tableau_input` owns input). **PILOT LANDED:** the bedroom writing
-desk (pistol + case file) replaced the old linear "E takes gun, next E reads
-notes." Guarded by `tests/flow.py` §14; player-facing text in `DIALOGUE.md`
-Part B. **Still open (the maintainer greenlights each):** reuse the system for
-a **pedestal** (the Mask on the altar) and the **"face across a table"** beats
-(Mara's confrontation, the cult Talk). Art refinement per beat, then wire.
+desk (pistol + case file), guarded by `tests/flow.py` §14; text in
+`DIALOGUE.md` Part B.
+
+**THE EXPANDED DIRECTION (maintainer, verbatim intent):** ALL dialogue becomes
+tableaux — each "a realistic depiction of the character and environmental
+beats as necessary." Named beats: the **Mask altar** (obviously), **every step
+of the school ritual** (incense, the chalk door). And the beats become
+**ENCOUNTERS**: at the end of a dialogue, or on certain choices, an NPC can
+**LOCK YOU OUT** — they don't want to talk to you anymore, and close out in
+the live game space "saying go away, effectively." This gives beats like the
+Talk real weight — e.g. a **"reach for gun" option** — and "gives us better
+control on what happens in these situations and conveys our narrative."
+
+Build notes for the scoping pass (not yet settled with the maintainer):
+- Per-character close-up art is the big lift: a procedural face/torso per
+  principal (Sable at the register, Vane across his desk, Hettie over the
+  counter, Toby looking up, Mara in the rank, the cultist of the Talk),
+  animated, mutating with the exchange (the desk pilot is the model).
+- The lockout is a real state: a per-NPC flag the conversation engine
+  checks; a locked NPC gives the in-world brush-off (a float line, no menu)
+  from then on. Choices that can burn a bridge must telegraph enough that
+  the lockout reads as consequence, not a bug.
+- "Reach for gun" class options sit inside the tableau menu next to the
+  spoken lines; some end the encounter into live play (the Talk breaking
+  into a chase, an NPC fleeing/locking out).
+- Integration tension to resolve on purpose: the shipped conversation verb
+  deliberately keeps the WORLD RUNNING (float speech, DESIGN.md dialog
+  channels); the tableau freezes it. The maintainer's call is that the
+  control/weight is worth it for these beats — decide at scoping whether
+  ALL exchanges freeze, or the tableau reserves itself for the principals'
+  exchanges while ambient chorus lines stay floats.
+- Sequencing (maintainer): the narrator copy pass (#13b/#15) finishes FIRST;
+  then this. Each tableau needs its art previewed per VISION.md before wiring.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
@@ -279,6 +304,89 @@ roads lines; the well as dread set-dressing (NOT the way down: the descent is
 the cult's dug mine at the grove, reached by the rite); all exits/locals/cult stations;
 in player-facing text call it a bounded fog-edge / void-ringed town, never
 "island."
+
+### 23. **[Opus + Fable]** Liminal transition spaces — the fold made walkable  *(user direction 2026-07; blessed: lodge escalation + the seamless forest)*
+
+The fold is the game's spine (NARRATIVE §1/§2), and the tech is already built
+(`cross_fold` = same-scene relocation with the screen position preserved; the
+torus wrap; the in-maze relocations). This ticket extends the **SILENT fold**
+(DESIGN §7, "the fold you don't see" — no frame, the lie is the world itself)
+into a set of authored liminal spaces.
+
+**Canon amendment it carries:** DESIGN §7 currently says architecture is the
+one honest, non-folding thing (doors = the player-only escape). This makes
+SOME architecture lie, so the DESIGN §7 edit lands WITH the build — bounded
+authored beats only, never "all doors."
+
+**Guardrails (every liminal space obeys):**
+- **Silent fold, no frame** — a seamless `cross_fold` crossing, no fade or
+  sting; the player never sees the seam (DESIGN §7, the fold you don't see).
+- **Bounded, with a FINDABLE exit** — "seems infinite until you get out."
+  Never a global property, never a softlock: one space loops, and it has a way
+  out (the `cornfield_maze` model).
+- **Still the one impossible thing** — the door's containment fold, never a new
+  mechanic, never explained (NARRATIVE §2, impossible count = 1).
+- **Off-limits:** the underground stealth gauntlet (breaks nav + stealth
+  reading), `SAFE_SCENES` (the refuge contract), and all-doors-lie (kills the
+  honest-door relief that makes the folded one land).
+
+- **23a. The Arcadia's endless wing (blessed).** Sable's want is a full house
+  (NARRATIVE §4); the wing is "mostly-locked rooms kept ready for guests who
+  won't come." Make the guest hall (`lodge_hall`) fold, and **scale it on the
+  evidence ladder = world-rot for SPACE** (DESIGN §2, the veil thinning for the
+  PI): ev0 a normal short hall; ev1-2 the hall runs too long, a shut door
+  stands open; ev3+ it LOOPS (walk deeper and the wing repeats, the same shut
+  doors). The building is not changing; the PI is finally perceiving the fold
+  ("underneath, they were always His"). **Escape = retreat:** the wing loops
+  walking AWAY from the common room (deeper = the want pulling him in); turning
+  back always works (mirrors DESIGN §1, "the road grows between you"). **The
+  reused rooms** = the Ledger made physical (NARRATIVE §4, "signs in, nobody
+  signs out"): open any locked door → the SAME guest room (reuse
+  `guest_room_a/b`), same abandoned case, over and over, every room one guest
+  who never left. **Atmosphere only, never evidence** (Mara was never at the
+  lodge).
+- **23b. The Threshold approach = the dream, awake.** NARRATIVE §2's dream is
+  "step after step toward the frame, and the distance never closes"; NARRATIVE
+  §7 calls the real approach "the dream that never closed in sleep." Make the
+  final walk (`depths_stair → threshold`) LOOP — walk at the doorframe and it
+  will not come closer — for a few passes, then release into the frame. Pays
+  off the existing "You have stood here before. In sleep." Bounded (N passes,
+  then the frame is there); the one place the never-closing corridor is
+  canon-locked.
+- **23c. The forest that swallows you (new, user 2026-07).** At Brimley's edge,
+  passing a fold drops the player — seamlessly, with no notice — into a large
+  liminal FOREST space: a dedicated endless-woods scene (torus `wrap_x` /
+  `wrap_y`, sparse near-identical trees, long sightlines broken by trunks and
+  fog). The player just keeps walking until they realize they are lost
+  somewhere they do not recognize, with no memory of leaving town. The woods
+  twin of `cornfield_maze` (NARRATIVE §1, "you walk through the woods only to
+  be spit out where you walked in"); the forest is already the wrap's
+  camouflage (DESIGN §7, the permeable forest border). Reached from a specific
+  edge fold, or a rare one (the dread of an edge that sometimes takes you
+  elsewhere). **Exit:** a findable rule (a road/landmark, a consistent bearing,
+  or a state gate) so it reads lost, not softlocked.
+
+**Tech:** almost all built — `cross_fold`, the torus, `scatter_forest_band`,
+the sight-gating + fog. This is authoring + one new forest scene + relocation
+exits + the evidence-scaled hall, not engine work. Preview each space per
+VISION.md (render + look) before wiring.
+
+### 24. **[Opus]** Docs redundancy pass — one fact, one home (the other five)  *(user direction 2026-07; follows the CLAUDE.md rewrite)*
+
+`CLAUDE.md` was rewritten 787 → 156 lines by **re-homing**: a fact lives in one
+place, a doc points rather than transcribes, and a gotcha that can be a guard
+becomes one. Apply the same pass to the other five, targeting **cross-doc
+duplication** (a fact stated in both NARRATIVE and DESIGN, etc.) and within-doc
+restatement.
+
+**Surgical, not a gut.** NARRATIVE and DIALOGUE are the SOLE home of their
+facts (they mirror no code), so the pass there consolidates cross-references
+and repeated restatement, never cuts the only copy. **DIALOGUE is
+contract-bound and flow-guarded** (guards assert exact wordings) — touch it
+last and carefully. Method per doc: find a fact that appears in two docs, keep
+it in the one that OWNS it (per the CLAUDE.md ownership table), replace the
+other with a one-line pointer (`→ NARRATIVE §n`). Run `python tests/run_all.py`
+green after each doc; every cut keeps the canon-guards passing.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
@@ -373,9 +481,9 @@ examine. The census (grouped) for the copy pass:
   `works_cistern_seen` / `the_doorframe` flavor `_evidence` (these write
   NOTHING to the book — caption only). Trim to a terse factual line (state
   the thing, cut the PI's spelled-out conclusion) or silence, so the player
-  draws the inference. **The revisit-nudges** (`_REVISIT_NUDGES`, the
-  "I should go back and ask him" appends) are the clearest "the game does the
-  thinking for you" — decide with the maintainer whether they go.
+  draws the inference. *(The revisit-nudges are RESOLVED: cut wholesale,
+  maintainer call, Wave 6 review — see #1. The payphone and empty-church
+  captions from this census were also cut in the same review.)*
 - **KEEP (not reactions-to-random-things):** the five CANONICAL_EVIDENCE
   beats, the descent-voice arc (`_DESCENT_VOICE`), the dream, the Mask
   temptation, Mara's calling-out, the fold notes, the threshold recognition,
@@ -544,6 +652,16 @@ factors, the sweep budget, and the struggle window/presses. Also
 deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
 under tilt already carries the information function) and an
 exit-takes-a-beat vulnerability window on enclosed hides.
+
+- **Global PACE landed (2026-07 playtest: "everyone needs a speed buff,
+  everything in proportion").** `PACE = 1.4` in `systems/config.py`
+  scales all locomotion at the consumption sites (player / every NPC
+  incl. King + hollow Sheriff / Enemy cultists / projectiles / moths)
+  plus the walk-time clocks (`NOISE_WALK_SPEED`, `BLEED_DELAY_*`,
+  `KING_HOP_INTERVAL`, `SUS_FILL_RATE`). Measured live: walk 117.6 px/s,
+  sprint 147, King 163.8; sprint/King = 0.897, byte-identical to the
+  pre-buff ratio. **The 1.4 value itself is this tuning loop's to
+  judge** at the keys; adjust the one knob, never a single actor.
 
 ### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 

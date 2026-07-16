@@ -1168,7 +1168,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if bt > 0.0:
             self.player._burst_t = max(0.0, bt - dt)
             sprint_mult = max(sprint_mult, STRUGGLE_BURST_MULT)
-        effective_speed = self.player.speed * comp_mult * sprint_mult
+        # PACE is the global locomotion knob (config): every mover scales by
+        # it once at its own consumption site, so the ratios never drift.
+        effective_speed = self.player.speed * comp_mult * sprint_mult * PACE
         # Deep water drags: wading a flooded `~` tile halves your speed on top
         # of everything else, so you cannot sprint clear of it (WADE_*).
         if self._wading():

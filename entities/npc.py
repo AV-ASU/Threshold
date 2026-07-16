@@ -3,7 +3,7 @@ import math
 import random
 
 from constants import C_WHITE
-from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD,
+from systems.config import (PACE, SUS_NOTICE, SUS_SCORE_HOLD,
                             KING_LUNGE_RANGE, KING_LUNGE_TELE,
                             KING_LUNGE_DUR, KING_LUNGE_MULT,
                             KING_LUNGE_GATHER, KING_LUNGE_CD_LO,
@@ -506,7 +506,7 @@ class NPC:
             mult = KING_LUNGE_MULT
         else:                                      # ease the mouth shut
             self._gape = max(0.0, getattr(self, "_gape", 0.0) - dt * 3.0)
-        step = self.speed * 60 * dt * mult
+        step = self.speed * 60 * dt * mult * PACE   # global pace knob
         if self._yk_last_pos is None:
             self._yk_last_pos = (self.x, self.y)
         moved = math.hypot(self.x - self._yk_last_pos[0],
@@ -557,8 +557,8 @@ class NPC:
         dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
         if d < 1: return
-        step_x = (dx / d) * self.speed * 60 * dt
-        step_y = (dy / d) * self.speed * 60 * dt
+        step_x = (dx / d) * self.speed * 60 * dt * PACE   # global pace knob
+        step_y = (dy / d) * self.speed * 60 * dt * PACE
         # Per-axis slide: if the full diagonal is blocked, still move
         # along whichever axis is clear so the chaser hugs walls and
         # corners instead of freezing dead against them (matches the
