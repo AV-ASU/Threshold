@@ -23,10 +23,16 @@ every change:
 
 The design, story, and text live in five docs, each with one job. They are the
 source of truth, and **your memory of them is stale by default** — they change,
-and canon has been broken by answering from a half-remembered version. So:
-**before you touch or answer about an area, read the doc that owns it, and
-trust the doc over your memory.** One fact lives in ONE home; a detail true in
-one doc and stale in another is rot, reconciled on sight.
+and canon has been broken by answering from a half-remembered version. Two
+rules govern them:
+
+- **Rule 0 — read what you touch.** Before you change or answer about an area,
+  read the doc that owns it, and trust the doc over your memory. Not all six
+  every turn; the one (or two) your task actually touches.
+- **Rule 1 — a change isn't done until the docs match it.** Reflecting a change
+  in the doc it affects is part of the change, in the SAME commit, and it ranks
+  above declaring the work finished. One fact lives in ONE home; a detail true
+  in one doc and stale in another is rot, reconciled on sight.
 
 | Doc | Owns |
 |---|---|
@@ -138,12 +144,11 @@ before placing a single detail.
 - **NEVER use `AskUserQuestion`** — it errors out every time and burns a turn.
   When you need the maintainer to choose or clarify, ask in plain text (a short
   numbered list with your recommendation) and stop for the answer.
-- **Docs are part of the change, in the SAME commit — not a follow-up.** Touch a
-  system → update DESIGN; a canon fact → NARRATIVE; open/landed work → TODO; the
-  look or the capture flow → VISION; the layout or a convention → this file. And
-  **any player-facing line changes the code AND `DIALOGUE.md` together** (the
-  contract). A change isn't done until its docs match it. Before you commit, ask
-  which of the docs your diff just made stale, and fix them in the same breath.
+- **Rule 1 in practice — which doc for what.** Touch a system → DESIGN; a canon
+  fact → NARRATIVE; open/landed work → TODO; the look or the capture flow →
+  VISION; the layout or a convention → this file. And **any player-facing line
+  changes the code AND `DIALOGUE.md` together** (the contract). Before you
+  commit, ask which docs your diff made stale, and fix them in the same breath.
 - **"Push to main" means MERGE to main** — open the PR and merge it in the same
   action, no second confirmation.
 - **Verify before you commit** — compile + `python tests/run_all.py` green
