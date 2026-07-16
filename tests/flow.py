@@ -1307,14 +1307,15 @@ def main():
     # at the "unfriendly" locals (the trap the game punishes). He must
     # never confirm he knows her or where she is.
     _mtxt = " ".join(b[1].lower() for b in mara["beats"] if b[0] in ("npc", "pi"))
-    check("can't say the name" in mara["beats"][0][1].lower(),
+    _mb0 = mara["beats"][0][1].lower()
+    check("can't say" in _mb0 and "name" in _mb0,
           "tone: Sable deflects the name instead of confirming it")
     check(not any(s in _mtxt for s in
                   ("that is her", "sat right where", "smiling, by the end",
                    "i will know her")),
           "tone: Sable never confirms he knows the girl or where she is")
     check("new folk" in _mtxt
-          and any(s in _mtxt for s in ("cold as a root cellar", "unfriendly",
+          and any(s in _mtxt for s in ("cold as our root cellar", "unfriendly",
                                        "not everyone")),
           "tone: the opener sets the newcomer/hostile-local split for the town")
 
@@ -1346,16 +1347,35 @@ def main():
     check(gk3.player.inventory.count("rite_envelope") == 1,
           "drop: the desk handoff never gives a second Invitation")
 
-    # (8) THREE real starting questions the PI can open with (the user's
-    # brief): Mara, the cellar/register, and the sealed town. Plus the fact
-    # check: the seal is THREE months (mid-January to mid-April), not one.
+    # (8) The starting questions the PI can open with from his OWN knowledge:
+    # who he is looking for (Mara), his own dead car, and the cellar of the
+    # lodge he is staying in. "Nothing leaves this town" was CUT (a knowledge
+    # leak -- he has only seen his own car die; the fold pressure now rides
+    # the gated "the_fold" exchange), and "when did she change" was CUT (Sable
+    # barely met Mara). The cellar question LEADS to the key: it hints the lost
+    # key only while the PI lacks it (callable beats), and asking it lets Sable
+    # down to the Ledger (sable_cellar_permission colours that find).
     _keys = {ex["key"] for ex in SABLE_CONVO["exchanges"] if "avail" not in ex}
-    check({"mara", "cellar", "sealed"} <= _keys,
-          "ask: Mara, the cellar, and the sealed town are all askable at once")
-    _sealed = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "sealed")
-    _stxt = (_sealed["q"] + " " + " ".join(b[1] for b in _sealed["beats"])).lower()
-    check("three months" in _stxt and "january" in _stxt,
-          "ask: the sealed-town beat is fact-correct (three months, since Jan)")
+    check({"mara", "car", "cellar"} <= _keys,
+          "ask: the PI can open with Mara, his dead car, and the cellar")
+    _skeys = {ex["key"] for ex in SABLE_CONVO["exchanges"]}
+    check("sealed" not in _skeys,
+          "ask: the ungated 'nothing leaves this town' knowledge leak is gone")
+    check("her_state" not in _skeys,
+          "ask: the 'when did she change' question is gone (Sable barely met Mara)")
+    _cellar = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "cellar")
+    check(callable(_cellar["beats"]),
+          "ask: the cellar exchange builds its reply dynamically")
+    _gc0 = new_game()
+    check(any("misplaced" in b[1] for b in _cellar["beats"](_gc0)),
+          "ask: Sable hints the lost cellar key when the PI lacks it")
+    _gc1 = new_game()
+    _gc1.player.inventory.add("cellar_key", 1)
+    check(not any("misplaced" in b[1] for b in _cellar["beats"](_gc1)),
+          "ask: no key hint once the PI already carries the key")
+    _cellar["on_ask"](_gc0)
+    check(_gc0.save.flag("sable_cellar_permission"),
+          "ask: asking about the cellar records Sable's permission for the Ledger")
 
     # (9) The exit hook: the first time the PI tries to leave, Sable stops
     # him with a last word (planting the warped road); it fires once.
@@ -1400,6 +1420,44 @@ def main():
     check(gn._evidence_count() == 3,
           "ask: the readiness nudge is a NOTE, never evidence")
 
+    # (12) Sable's talk is PRESENTED as a frozen close-up TABLEAU (#2b): the
+    # world holds and SABLE_CONVO renders inside the close-up (its beats as the
+    # caption, its menu as the option panel) instead of floating over the desk.
+    import inspect as _insp_t
+    check("_open_sable_tableau" in _insp_t.getsource(clerk_dialogue),
+          "ask: talking to Sable opens the close-up tableau (not float speech)")
+    gt = new_game()
+    gt.dialog.active = False
+    gt._open_sable_tableau(_npc_stub(gt))
+    check(getattr(gt, "_tableau", None) is not None
+          and gt._tableau["kind"] == "sable",
+          "ask: the Sable close-up tableau opens (kind 'sable')")
+    check(gt._convo is not None and gt._convo.tableau is True,
+          "ask: the conversation runs in tableau presentation mode")
+    # The greeting lands as the tableau CAPTION, not a floating line / modal band.
+    check(gt._tableau.get("caption") is not None
+          and not gt.float_speech.active and not gt.dialog.active,
+          "ask: the greeting renders as the tableau caption, not float speech")
+    # Advancing the caption (its on_complete) opens the question menu IN the
+    # tableau -- the PI's own lines, plus a leave option.
+    gt._tableau["caption"]["cb"]()
+    _tm = gt._tableau.get("menu")
+    check(_tm is not None and gt._tableau.get("caption") is None
+          and not gt.dialog.active,
+          "ask: advancing the greeting opens the question menu in the tableau")
+    _base_ex = [ex for ex in SABLE_CONVO["exchanges"] if "avail" not in ex]
+    _first_label = _base_ex[0].get("label", _base_ex[0]["q"])
+    check(_first_label in _tm["labels"]
+          and SABLE_CONVO.get("leave", "Leave.") in _tm["labels"],
+          "ask: the tableau menu carries the PI's questions plus a leave")
+    # Escape ends the talk and closes the close-up.
+    class _EscKey:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    gt._tableau_input(_EscKey())
+    check(gt._tableau is None and gt._convo.active is False,
+          "ask: Escape closes the tableau and ends the talk")
+
     # --- 17d. The ask verb EXPANDED to the principals (TODO #1) ----------
     # Vane, Hettie, Toby, and Crane each carry their own conversation, and
     # every principal's menu leads with the two guaranteed openers: the PI
@@ -1429,7 +1487,10 @@ def main():
             check(len(_lb) <= 44,
                   f"ask: {_cv['id']}/{_ex['key']} menu label fits the "
                   f"choice box ({len(_lb)} chars)")
-            for _b in _ex["beats"]:
+            _bt = _ex["beats"]
+            if callable(_bt):
+                continue                 # dynamic beats carry no inline asks
+            for _b in _bt:
                 if _b[0] != "ask":
                     continue
                 for _opt in _b[2]:
@@ -1575,6 +1636,40 @@ def main():
     check(not any(w in _how_txt for w in ("below", "down there", "under the",
                                           "king", "door")),
           "canon: Vane keeps his knowledge boundary (no destination)")
+
+    # (Vane town) The 'what happened' answer RECOILS once: the first telling
+    # (before the PI knows the seal) lands the horror at "no one has left", and
+    # marks the fold heard; once he's learned it (any source) the reaction goes
+    # assertive-investigator ("it's not right. How?") with no fresh shock.
+    _town = next(ex for ex in _VC["exchanges"] if ex["key"] == "town")
+    check(callable(_town["beats"]), "vane: the town answer is dynamic")
+    gtn = new_game()
+    _tb_first = _town["beats"](gtn)
+    check(any(b[0] == "pi" and "No one has left" in b[1] for b in _tb_first),
+          "vane: the first telling recoils at 'no one has left'")
+    check(gtn.save.flag("voice_fold_heard"),
+          "vane: the first telling marks the fold heard (recoil fires once)")
+    _tb_again = _town["beats"](gtn)          # knew is True now
+    check(any(b[0] == "pi" and "It's not right. How?" in b[1]
+              for b in _tb_again),
+          "vane: once he knows the seal, the reaction is the assertive 'how'")
+    check(not any("Wait. What are you saying" in b[1] for b in _tb_again),
+          "vane: no fresh recoil on a restatement")
+
+    # (Vane cache) The office gun cabinet is EARNED: trust-gated like the how,
+    # spent once, and granting it arms the office ammo drop (vane_gave_cache).
+    _cache = next(ex for ex in _VC["exchanges"] if ex["key"] == "cache")
+    check(_cache.get("once"), "vane: the cabinet is handed over once")
+    gca = new_game()
+    check(not _cache["avail"](gca), "vane: the cabinet waits before trust")
+    gca.save.set_flag("convo_vane_intro_asked", True)
+    gca.save.set_arg("vane_informed", 1)
+    check(_cache["avail"](gca), "vane: intro plus a shared find opens the cabinet")
+    _cache["on_ask"](gca)
+    check(gca.save.flag("vane_gave_cache"),
+          "vane: taking the cabinet arms the office ammo drop")
+    check(not _cache["avail"](gca),
+          "vane: the cabinet does not re-offer once given")
 
     # The flow polish: once an exchange finishes, the menu only reopens
     # while both parties are still AT the talk -- the partner walking off

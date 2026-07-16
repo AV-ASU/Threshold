@@ -114,6 +114,19 @@ Consolidated from the canon. A new or edited line must pass all of these.
 The whole speaking cast. Character facts live in `NARRATIVE.md §4`; this is
 the words.
 
+## The shared openers — the PI initiates
+Every principal's menu leads with the same two PI lines (`_opener_exchanges`
+in `scenes/dialogue.py`; `_INTRO_Q` / `_PHOTO_Q`). The PI introduces himself
+and names the case cold: news does not spread in a sealed town, so nobody
+knows who he is or what he wants until he says it. The NPC's per-character
+answers follow each and are quoted under that character below ("Opener
+intro:" / "Opener photo:").
+- **Intro** (menu label "I'm a private investigator."):
+  - (pi) "I'm a private investigator, out of Minneapolis. I was hired to find a woman named Mara Blaine. She was last heard from headed to Brimley."
+- **Photo** (menu label "Have you seen this woman?"):
+  - (pi) "I want you to look at a photograph. Have you seen this woman?"
+  - (pi) "(You hold her photograph out.)"
+
 ## Mr. Sable — the Lodge clerk
 - **Voice:** `blip_low`. **Code:** `scenes/dialogue.py` `SABLE_CONVO`,
   `sable_on_death`, `clerk_dialogue`. **Who:** local, the most-attuned of
@@ -121,34 +134,37 @@ the words.
   gives the girl up; points suspicion at the "unfriendly" old families (the
   trap). He checked the PI in the night before, so every exchange resumes an
   acquaintance. Framing carries the PI four-tier weather (`_pi_framing`).
+- **Presentation (2026-07):** `clerk_dialogue` opens `SABLE_CONVO` inside a
+  frozen close-up **tableau** (`_open_sable_tableau`, `tableau=True`), not as
+  float-speech over the desk. The world holds; the spoken beats render as the
+  tableau caption and the menu as its option panel. The words are identical
+  either way (below); only the presentation changed. See Part B "The close-up
+  examine tableaux."
 - **Greet** (`sable_greeted`):
   - (npc) "Up early. You came in late off the north road. I put you down in the book as staying a while."
-- **Exchange `mara`** — "I'm looking for someone." / "I'm looking for a woman. Mara Blaine. She'd have come through here."
-  - (npc) "Blaine. No, I can't say the name lands anywhere. We get a great many faces through that door."
-  - (npc) "You'll mean one of the new folk, though. We had no end of those this past year. They came like they had heard something worth the drive."
+- **Exchange `mara`** — "I'm looking for someone." / "I'm looking for a woman named Mara Blaine. Is that a name you know, Mr. Sable?"
+  - (npc) "Mara. No, I can't say I know the name. But I have had the pleasure of hosting a great many guests these past months. You are welcome to look over the register any time you like."
+  - (npc) "You'll mean one of the new folk, I expect. We had no end of those this past year. They came like they had heard something worth the drive."
   - (npc) "And I was glad of every one. This town was drying up before they came. I had every room full. You should have seen this house with every window lit."
   - (pi) "And the rest of Brimley feels the same?"
-  - (npc) "Ah. There you have it. Not everyone's been so warm. Some of the old families have gone cold as a root cellar about the newcomers."
+  - (npc) "Ah. There you have it. Not everyone's been so warm. Some of the old families have gone as cold as our root cellar about the newcomers."
   - (npc) "I would mind who you take your questions to, friend. Not everyone here wishes a stranger well. I do. You remember that."
   - (ask) "Show him her photograph?"
-    - **Slide the photo across the desk** → (pi) "(You lay her photo on the register.)" / (npc) "(He looks at it a good while, smiling.) Pretty thing. No, I couldn't say. She'll have found her feet by now. They all do." *(sets `sable_showed_photo`)*
+    - **Slide the photo across the desk** → (pi) "(You lay her photo on the register.)" / (npc) "(He looks at it a good while, then hands it back.) No. A pretty thing, but no. I could not put a name or a room to her. So many faces come through that door." *(sets `sable_showed_photo`; confirms only that he does not know her)*
     - **Keep it in your coat** → (pi) "(You leave it where it is.)" / (npc) "No matter. Ask around, if you must. Start with the friendly ones. There are fewer of those than you would think."
-- **Exchange `cellar`** — "About that cellar of yours." / "A lot of doors in this town stay locked. You keep a cellar under this place?"
-  - (npc) "Storage, mostly. The key is about somewhere. Nothing down there worth the dust, I promise you."
-  - (npc) "If it is names you want, sign-in register is right here on the desk. Guest and date, all the way back. Read it as long as you like."
-- **Exchange `sealed`** — "Nothing leaves this town. Why?" / "Nothing leaves this town. No car, no truck, no mail since January. That's three months. What happened here?"
-  - (npc) "Happened? Nothing happened. The snows came in around the new year and the road just... stopped mattering. It does that, up here."
-  - (npc) "Three months is nothing to a town like this. Folk get comfortable. Warm bed, full larder, good company. You will too, give it time."
-- **Exchange `car`** — "My car won't start." / "My car died at the lodge steps the night I drove in. Turns over and never catches."
-  - (npc) "The roads are not going anywhere tonight. Neither are you. I would not fret over the car."
-  - (pi) "I didn't ask about tonight. I asked what's wrong with it."
-  - (npc) "Nothing a night's rest won't settle. It will keep till morning. Everything here does. Get some rest."
+- **Exchange `cellar`** — "What's in your cellar?" / "What do you keep down in that cellar of yours? Mind if I take a look?" *(sets `sable_cellar_permission`)*
+  - (npc) "The cellar? Storage, mostly. Old registers, a broken chair or two. Nothing down there worth hiding from a guest."
+  - (npc, only if the PI does not already have the cellar key) "Shoot. I seem to have misplaced the key. If you find it, you are welcome to take a look, and take what you need."
+- **Exchange `car`** — "Is there a mechanic in town?" / "My car won't start. Turns over and won't catch. Is there anyone in town who could take a look at it?"
+  - (npc) "A mechanic? No, nothing like that in Brimley now, and it would do you no good if there were."
+  - (npc) "The car is not broken, friend."
+  - (pi) "What do you mean, not broken? It turns over and dies at the step."
+  - (npc) "Only that I have seen it before. Now and then a guest's car goes the same way, and never once have I seen one put right."
+  - (npc) "A man quits asking why, after a time. I am long past it, and it is no trouble to me. Needn't be to you either."
+  - (npc) "You have a good bed and a standing welcome. Stay as long as you need."
 - **Exchange `checkouts`** (avail: read the Ledger) — "The checkouts stop a year back." / "I read your old registers. Guests used to settle up and leave. The dates stop a year back. Since then everyone signs in and nobody signs out."
   - (npc) "(The pleasant look does not shift.) Do they not? Fancy that. I never was much of a hand with the paperwork."
   - (npc) "They will not have gone far. Nobody does. It is a restful town, friend. People stay. It is the one thing I can promise a guest."
-- **Exchange `her_state`** (avail: read Mara's journal) — "When did she change?" / "Her journal reads like someone already halfway out a door. When did she change?"
-  - (npc) "(He sets his hands flat on the desk.) You keep telling me she is lost. I keep telling you she is not."
-  - (npc) "She stopped fretting, toward the end. Folk do, here. It is a mercy, if you let it be. You will let it be too, in time."
 - **Exchange `the_fold`** (avail: heard the fold named AND walked it) — "The road out brought me back." / "I walked the road out of town. Followed it two hours, due west. It set me back down past this window."
   - (npc) "I told you the roads were not going anywhere. You heard a man being hospitable. I meant it plainly."
   - (npc) "There is no call to be cross about it. You are safe here. Safer than out there."
@@ -179,19 +195,21 @@ the words.
   - (npc) "I'd head home if I were you. I'm supposed to say that."
 - **Opener photo:**
   - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look.)"
-  - (npc) "I can't put a day or a door to her. The new folk came in numbers and they keep to their own. She'd have been one of them."
-  - (npc) "They filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction. I can't tell you where it GOES."
-  - (pi) "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"
+  - (npc) "The new folk came in numbers and they keep to their own. She'd have been one of them."
+  - (npc) "They filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction."
 - **Exchange `car`** — "My car died the night I drove in." (files the fold note, no chained reflection)
   - (npc) "Won't start. Won't ever. Nothing with an engine leaves Brimley."
   - (pi) "Engines don't all quit at once. Somebody got to it."
   - (npc) "Nobody touched your car. I know how that sounds. I've watched men tear three trucks down to the block hunting the part that failed. There is no part."
   - (npc) "[c=dim]It's the town.[/c]"
   - (pi) "[c=dim]He said it flat. Like weather. So.[/c]"
-- **Exchange `town`** — "What happened to this town?"
-  - (npc) "I was born here. So was my dad."
-  - (npc) "They started showing up in the summer. The new ones. Polite folks. After a while the road stopped going anywhere."
-  - (npc) "I tell people to leave. I haven't been able to in months."
+- **Exchange `town`** — "What happened to this town?" (dynamic beats, `_vane_town_beats`: Vane's lived arc, then a reaction that branches on whether the PI already knows the seal)
+  - (npc) "Brimley was dying before any of this. Half the town gone south for work, storefronts boarded up. Some weeks the phone never rang once."
+  - (npc) "Then last summer the strangers started coming up the north road, and they didn't stop. More than we had beds for. Polite, every one. Kept to their own. Not one could tell me where they'd driven in from, or why they'd want a dead town like this."
+  - (npc) "I kept waiting on the trouble strangers bring. It never came. Something quieter did. The trucks stopped running. The mail stopped. And the road out stopped taking anybody anywhere."
+  - (npc) "You need to get out of here. We all do. No one has been able to leave in months."
+  - **first time** (has not learned the seal yet; marks the fold heard): (pi) "Wait. What are you saying, Sheriff? No one has left?" / (npc) "Not a soul, not since the winter. They try. I tried, more times than I'll admit to a stranger. Every road out of Brimley turns you around and sets you back at that well." / (npc) "You'll learn that yourself soon enough. Everybody does."
+  - **already knows** (heard the roads loop / walked one / re-asking): (pi) "Then you tell me how, Sheriff. Every road out, every engine, a whole town that can't leave. It's not right. How?" / (npc) "You think I haven't stood right where you're standing and asked that, every night for a year? I don't have a how for you. Just this badge, and a list of folks I can't help."
 - **Exchange `share_journal`** (avail: intro asked + journal found; hope + trust) — "I found Mara's journal."
   - (npc) "Say the first part again. The same door. All of them."
   - (pi) "All of them. And she didn't write like a prisoner. She wrote like a woman nearly home."
@@ -219,7 +237,13 @@ the words.
   - (npc) "No name. I asked twice. He sat there lit up like a man warming his hands at a stove. Said the dream had promised him his eyes. Said when the work is finished he'll open them, and they'll work."
   - (pi) "He wasn't there to confess anything. He was there to fetch you."
   - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time and he left smiling."
-  - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it. What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
+  - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it."
+  - (npc) "What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
+- **Exchange `cache`** (avail: intro asked + at least one share, the trust gate; once; sets `vane_gave_cache` and drops the office ammo) — "Am I on my own out there?" / "If this goes the way it's been going, I'll be out there alone. Is there anything you can put in my hand, Sheriff?"
+  - (npc) "Protection. That is a thing this office used to hand out."
+  - (npc) "I have got no deputies, no cell that holds, and a law nobody up here answers to anymore. What I have got is a cabinet in the back. Shells, and a spare piece I kept oiled for no reason I could name."
+  - (npc) "Take what you need. It will not help you against what took this town. But it will make you feel like it might, and some nights that is the whole of the job."
+  - (pi) "[c=dim]He unlocks the cabinet and steps back. The last thing the law here has to give.[/c]"
 - **On leave** (`vane_on_leave`, once):
   - (npc) "Hey. If you do find her, don't bring her by the office. There's no report worth filing anymore."
   - (npc) "Just get her out. If you find a way that works, that is. And then you come tell me what it was."
@@ -510,7 +534,17 @@ spatial fold only (looping roads), never the door or the cosmology.
 ## The close-up examine tableaux
 Diegetic close-up "look at the thing" modals (art in `ui/tableau.py`, state in
 `systems/tableau_mixin.py`): press `[E]` on a tagged prop and the world pauses
-on an animated close-up with a menu that mutates it live. Player-facing text:
+on an animated close-up with a menu that mutates it live. The same frame also
+hosts a **conversation** with a principal (the pilot: Sable). Player-facing
+text:
+- **Mr. Sable's reception desk** (`_open_sable_tableau`, opened from
+  `clerk_dialogue`). The talk itself IS the tableau: `SABLE_CONVO` runs in
+  `tableau=True` mode, so its spoken beats are the caption ([E] advances) and
+  its question menu is the option panel. All of its words are quoted under
+  **Mr. Sable** in Part A. The close-up reacts to the talk: the photograph
+  appears on the register once he has been shown it (`sable_showed_photo`),
+  and the sealed Invitation appears once he has handed it over
+  (`rite_envelope_given`). Escape (or walking the talk out) closes it.
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".

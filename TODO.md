@@ -185,9 +185,26 @@ live (take the gun off the desk, read the case file) and can open readable text
 everything; `_tableau_input` owns input). **PILOT LANDED:** the bedroom writing
 desk (pistol + case file) replaced the old linear "E takes gun, next E reads
 notes." Guarded by `tests/flow.py` §14; player-facing text in `DIALOGUE.md`
-Part B. **Still open (the maintainer greenlights each):** reuse the system for
-a **pedestal** (the Mask on the altar) and the **"face across a table"** beats
-(Mara's confrontation, the cult Talk). Art refinement per beat, then wire.
+Part B.
+
+- **FACE-ACROSS-A-TABLE landed on Mr. Sable (2026-07).** The first principal
+  DIALOGUE presented as a tableau: `clerk_dialogue` opens `SABLE_CONVO` inside a
+  frozen reception-desk close-up (`_open_sable_tableau`; the conversation runs
+  in `ui/conversation` `tableau=True` mode, so its spoken beats render as the
+  tableau caption and its question menu as the option panel, `_tableau_caption`
+  / `_tableau_choices`) instead of floating over the desk. The close-up is
+  reactive: the photograph appears on the register once shown
+  (`sable_showed_photo`) and the sealed Invitation once handed over
+  (`rite_envelope_given`). Bespoke Sable art (`draw_sable_tableau`, his
+  clerk-sprite face given a gloomy pass, dark coat + red tie, key wall, stopped
+  clock, register, ceiling-fan shadow). Guarded by `tests/flow.py` §17c (12);
+  text in `DIALOGUE.md` Part A (the words) + Part B (the presentation).
+
+  **Still open (the maintainer greenlights each):** the same treatment for the
+  other principals (Vane's office, Hettie's counter, Crane's church, Toby), the
+  **pedestal** (the Mask on the altar), and Mara's confrontation / the cult
+  Talk. Each is its own bespoke environment + art pass, then wire. Art
+  refinement per beat, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
@@ -279,6 +296,37 @@ roads lines; the well as dread set-dressing (NOT the way down: the descent is
 the cult's dug mine at the grove, reached by the rite); all exits/locals/cult stations;
 in player-facing text call it a bounded fog-edge / void-ringed town, never
 "island."
+
+### 4b. **[Opus]** Brimley river-centered rebuild, both banks  *(concept APPROVED 2026-07 from a top-down layout test; a scoped build, not yet done)*
+
+A top-down look at the current 60x60 Brimley (a markup test in the session
+scratchpad) confirmed the walk-sim is REAL: 6 of the 7 buildings sit on the
+WEST bank, the whole east half is empty (one lone building + a stranded well),
+and the central river is a spine the town does not use. The approved fix is a
+**building REDISTRIBUTION** (not a shape/boundary change, so it does NOT
+contradict #4's "stays one square"): cluster the 7 buildings tight on BOTH
+banks around the central river + bridge so the dead crossings go and the
+fog/forest periphery reads as dread, not filler.
+
+- **Flow, from the real topology (do not re-break it):** the player wakes at
+  the Arcadia (OFF-MAP, reached via the EAST lodge road, rows 24-26) and enters
+  Brimley from the EAST. So the near (east) bank is the first-contact town
+  (Shop/Hettie, barn, Toby's house), and the SHERIFF sits on the FAR (west)
+  bank, so "Vane is not the first NPC" and "cross the river to reach the law"
+  both fall out of geography with no gate. The well stays in the eastern lodge
+  square by the entry; the cult camp stays SE; the surface altar (the standing
+  stones, #17) reads on the riverbank over the Threshold point.
+- **Acceptance test (the maintainer's constraint): everything fits IN SCALE on
+  the 60x60 map** at REAL building footprints (not markup boxes), with the cover
+  lanes (sightline -> cover -> sightline per bank), NPC/King nav across the
+  torus wrap, the fold-road E-W loop, the homebody door anchors, and every
+  exit/spawn reconciled, and reachability re-checked with smoke's flood-fill.
+- **Reconciles #4/#8:** Brimley STILL stays one square with the torus wrap +
+  fog rim (do not split, do not move the boundary); this is a redistribution
+  like the #18 pass, NOT the parked round-shape reshape (#8). Verify each
+  rebuilt building with VISION four-facing captures.
+- Its own build, scoped to run AFTER the conversation/tableau work so two big
+  changes are never in the air at once.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

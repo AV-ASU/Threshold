@@ -274,9 +274,14 @@ def build_sheriff_office():
 
     def _fc_on_enter(game, scene):
         # The lawman's cartridges -- the best ammo source in town (one-time),
-        # kept in the back records room.
-        from .base import drop_ammo_cache
-        drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
+        # kept in the back records room. EARNED, not free (DESIGN.md §2): the
+        # drop waits until Vane hands over the cabinet (the trust-gated "cache"
+        # exchange sets vane_gave_cache and also drops it live). Neglect him
+        # and the town's one weapon cache stays locked -- the gun is never
+        # required, so this soft-locks nothing.
+        if game.save.flag("vane_gave_cache"):
+            from .base import drop_ammo_cache
+            drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
     sc.on_enter_fn = _fc_on_enter
     return sc
 

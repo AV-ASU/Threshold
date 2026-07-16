@@ -194,8 +194,8 @@ def _ready_for_the_desk(game, name):
 # locals), so nobody knows who the PI is or what he wants until he says
 # it -- greets never assume the case is known; the PI initiates.
 
-_INTRO_Q = ("I'm a private investigator, out of Minneapolis. A family "
-            "hired me to find their daughter. She was last heard from "
+_INTRO_Q = ("I'm a private investigator, out of Minneapolis. I was hired "
+            "to find a woman named Mara Blaine. She was last heard from "
             "headed to Brimley.")
 _PHOTO_Q = "I want you to look at a photograph. Have you seen this woman?"
 
@@ -868,6 +868,71 @@ def _vane_how_told(game):
     ])
 
 
+def _vane_town_beats(game):
+    """The 'what happened to this town' answer, built to Vane's lived arc: a
+    dying quiet town, the summer influx of unplaceable newcomers, then the
+    exits closing. The reveal that no one has left in MONTHS lands as a horror
+    RECOIL the first time (before the PI has learned the seal) and as an
+    assertive 'then how' from a PI who already knows -- and either way Vane,
+    the last man still asking, has no how to give. Marks the fold heard on the
+    first-time branch, chosen BEFORE the mark so it never skips its own recoil
+    (the play-notes recoil-once rule: subsequent tellings are flat restatement,
+    no fresh shock)."""
+    knew = (game.save.flag("voice_fold_heard")
+            or game.save.flag("crossed_a_fold"))
+    beats = [
+        ("npc", "Brimley was dying before any of this. Half the town gone "
+                "south for work, storefronts boarded up. Some weeks the phone "
+                "never rang once."),
+        ("npc", "Then last summer the strangers started coming up the north "
+                "road, and they didn't stop. More than we had beds for. "
+                "Polite, every one. Kept to their own. Not one could tell me "
+                "where they'd driven in from, or why they'd want a dead town "
+                "like this."),
+        ("npc", "I kept waiting on the trouble strangers bring. It never came. "
+                "Something quieter did. The trucks stopped running. The mail "
+                "stopped. And the road out stopped taking anybody anywhere."),
+        ("npc", "You need to get out of here. We all do. No one has been able "
+                "to leave in months."),
+    ]
+    if knew:
+        beats += [
+            ("pi", "Then you tell me how, Sheriff. Every road out, every "
+                   "engine, a whole town that can't leave. It's not right. "
+                   "How?"),
+            ("npc", "You think I haven't stood right where you're standing "
+                    "and asked that, every night for a year? I don't have a "
+                    "how for you. Just this badge, and a list of folks I "
+                    "can't help."),
+        ]
+    else:
+        beats += [
+            ("pi", "Wait. What are you saying, Sheriff? No one has left?"),
+            ("npc", "Not a soul, not since the winter. They try. I tried, "
+                    "more times than I'll admit to a stranger. Every road out "
+                    "of Brimley turns you around and sets you back at that "
+                    "well."),
+            ("npc", "You'll learn that yourself soon enough. Everybody does."),
+        ]
+        if hasattr(game, "_fold_mentioned"):
+            game._fold_mentioned("Sheriff Vane", reflect=False)
+    return beats
+
+
+def _vane_give_cache(game):
+    """Vane hands over the office gun cabinet -- the best ammo in town, and
+    EARNED, not free (DESIGN.md §2). The lawman with no deputies and no law
+    left arms the one fellow investigator who brought him the truth. Sets the
+    flag the office on_enter reads, and drops the cache live so the PI can
+    take it while he is standing there (the gun is not required to finish, so
+    gating it soft-locks nothing -- it exists to fail; DESIGN.md §1)."""
+    game.save.set_flag("vane_gave_cache", True)
+    scene = getattr(game, "scene", None)
+    if scene is not None:
+        from scenes.base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
+
+
 def vane_on_leave(game):
     """A last word the first time the PI walks out of the office. The
     holdout's hope, said sideways. Fires once."""
@@ -915,14 +980,11 @@ VANE_CONVO = {
         photo_beats=[
             ("npc", "(He takes it to the window light and works it corner "
                     "to corner, a lawman's look.)"),
-            ("npc", "I can't put a day or a door to her. The new folk came "
-                    "in numbers and they keep to their own. She'd have "
-                    "been one of them."),
+            ("npc", "The new folk came in numbers and they keep to their "
+                    "own. She'd have been one of them."),
             ("npc", "They filled the school, the barn, the lodge. Then one "
                     "night those rooms were empty, all at once. Wherever "
-                    "your girl is, that's the direction. I can't tell you "
-                    "where it GOES."),
-            ("pi", "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"),
+                    "your girl is, that's the direction."),
         ],
     ) + [
         {
@@ -944,17 +1006,16 @@ VANE_CONVO = {
             ],
         },
         {
+            # Vane tells the town's fall as he lived it: a dying quiet town,
+            # the summer influx of unplaceable newcomers, the exits closing.
+            # The "no one has left in months" reveal RECOILS the first time and
+            # goes assertive-investigator once the PI already knows the seal
+            # (dynamic beats, _vane_town_beats). Either way Vane has no HOW for
+            # the seal (distinct from his gated recruitment "how" below).
             "key": "town",
             "q": "What happened to this town, Sheriff?",
             "label": "What happened to this town?",
-            "beats": [
-                ("npc", "I was born here. So was my dad."),
-                ("npc", "They started showing up in the summer. The new "
-                        "ones. Polite folks. After a while the road "
-                        "stopped going anywhere."),
-                ("npc", "I tell people to leave. I haven't been "
-                        "able to in months."),
-            ],
+            "beats": _vane_town_beats,
         },
         # The SHARES (DESIGN.md §2): the PI bringing a real discovery to the
         # one other investigator in town. Each opens as its find lands,
@@ -1087,7 +1148,45 @@ VANE_CONVO = {
                         "want most in this world, and come with him, and "
                         "it would be waiting. I put him out. He thanked "
                         "me for my time and he left smiling."),
-                ("npc", "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it. What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."),
+                ("npc", "You don't talk a hundred strangers onto one road. "
+                        "They weren't tricked. Every one of them was going "
+                        "toward something, and glad of it."),
+                ("npc", "What it was, who was holding it out, I never got "
+                        "closer than that chair. That's the piece that keeps "
+                        "my lights on at night."),
+            ],
+        },
+        # The office gun cabinet -- the best ammo in town, and EARNED (the
+        # trust-gated LEAD, DESIGN.md §2). Opens like the "how" (intro + at
+        # least one shared discovery), spends once, and hands the cache over:
+        # the lawman with no deputies and no law left arms the one fellow
+        # investigator who brought him the truth, knowing full well it will
+        # not help against what took Brimley (the gun exists to fail,
+        # DESIGN.md §1). _vane_give_cache drops it live and gates the office
+        # on_enter drop on the flag.
+        {
+            "key": "cache",
+            "q": "If this goes the way it's been going, I'll be out there "
+                 "alone. Is there anything you can put in my hand, Sheriff?",
+            "label": "Am I on my own out there?",
+            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
+                                and int(g.save.arg("vane_informed", 0)) >= 1
+                                and not g.save.flag("vane_gave_cache")),
+            "once": True,
+            "on_ask": _vane_give_cache,
+            "beats": [
+                ("npc", "Protection. That is a thing this office used to hand "
+                        "out."),
+                ("npc", "I have got no deputies, no cell that holds, and a "
+                        "law nobody up here answers to anymore. What I have "
+                        "got is a cabinet in the back. Shells, and a spare "
+                        "piece I kept oiled for no reason I could name."),
+                ("npc", "Take what you need. It will not help you against "
+                        "what took this town. But it will make you feel like "
+                        "it might, and some nights that is the whole of the "
+                        "job."),
+                ("pi", "[c=dim]He unlocks the cabinet and steps back. The "
+                       "last thing the law here has to give.[/c]"),
             ],
         },
     ],
@@ -1140,6 +1239,8 @@ def sheriff_dialogue(game, npc):
 # ui/conversation.Conversation.
 
 def _sable_showed_photo(game):
+    # The tableau art reads this flag to lay the photo on the register.
+    game.save.set_flag("sable_showed_photo", True)
     _log_note(game, "showed_the_clerk", [
         "I put her face on his desk. He looked at it a long while, smiling "
         "the whole time, and told me nothing at all.",
@@ -1205,12 +1306,14 @@ SABLE_CONVO = {
         {
             "key": "mara",
             "label": "I'm looking for someone.",
-            "q": "I'm looking for a woman. Mara Blaine. She'd have come "
-                 "through here.",
+            "q": "I'm looking for a woman named Mara Blaine. Is that a name "
+                 "you know, Mr. Sable?",
             "beats": [
-                ("npc", "Blaine. No, I can't say the name lands anywhere. We "
-                        "get a great many faces through that door."),
-                ("npc", "You'll mean one of the new folk, though. We had no "
+                ("npc", "Mara. No, I can't say I know the name. But I have had "
+                        "the pleasure of hosting a great many guests these "
+                        "past months. You are welcome to look over the "
+                        "register any time you like."),
+                ("npc", "You'll mean one of the new folk, I expect. We had no "
                         "end of those this past year. They came like they had "
                         "heard something worth the drive."),
                 ("npc", "And I was glad of every one. This town was drying up "
@@ -1218,17 +1321,18 @@ SABLE_CONVO = {
                         "have seen this house with every window lit."),
                 ("pi", "And the rest of Brimley feels the same?"),
                 ("npc", "Ah. There you have it. Not everyone's been so warm. "
-                        "Some of the old families have gone cold as a root "
-                        "cellar about the newcomers."),
+                        "Some of the old families have gone as cold as our "
+                        "root cellar about the newcomers."),
                 ("npc", "I would mind who you take your questions to, friend. "
                         "Not everyone here wishes a stranger well. I do. You "
                         "remember that."),
                 ("ask", "Show him her photograph?", [
                     ("Slide the photo across the desk.", [
                         ("pi", "(You lay her photo on the register.)"),
-                        ("npc", "(He looks at it a good while, smiling.) "
-                                "Pretty thing. No, I couldn't say. She'll "
-                                "have found her feet by now. They all do."),
+                        ("npc", "(He looks at it a good while, then hands it "
+                                "back.) No. A pretty thing, but no. I could "
+                                "not put a name or a room to her. So many "
+                                "faces come through that door."),
                     ], _sable_showed_photo),
                     ("Keep it in your coat.", [
                         ("pi", "(You leave it where it is.)"),
@@ -1239,58 +1343,60 @@ SABLE_CONVO = {
                 ]),
             ],
         },
-        # A STARTING question that seeds the Ledger: he points you at the
-        # register on the desk (a lead) and shrugs off the padlocked cellar
-        # where the old books really went.
+        # An early question that LEADS to the key: the guest asks after the
+        # cellar, and Sable gives free permission (he is hiding nothing -- the
+        # host is the lucky one, not a conspirator) plus a hint that the key
+        # is lost about the place, IF the PI does not already carry it (the
+        # callable beats). Asking sets `sable_cellar_permission`, which colours
+        # the Ledger find below (the host let you down to his own damning
+        # book). Seeds the descent to the Ledger without gating on it.
         {
             "key": "cellar",
-            "label": "About that cellar of yours.",
-            "q": "A lot of doors in this town stay locked. You keep a cellar "
-                 "under this place?",
-            "beats": [
-                ("npc", "Storage, mostly. The key is about somewhere. Nothing "
-                        "down there worth the dust, I promise you."),
-                ("npc", "If it is names you want, sign-in register is right "
-                        "here on the desk. Guest and date, all the way back. "
-                        "Read it as long as you like."),
-            ],
-        },
-        # A STARTING question: the town has been sealed since the mid-January
-        # rite (it is mid-April now -- THREE months; NARRATIVE §1). The PI has
-        # the dates from his own case; Sable downplays a supernatural seal as
-        # ordinary winter and never lets the word "trapped" near it.
-        {
-            "key": "sealed",
-            "label": "Nothing leaves this town. Why?",
-            "q": "Nothing leaves this town. No car, no truck, no mail since "
-                 "January. That's three months. What happened here?",
-            "beats": [
-                ("npc", "Happened? Nothing happened. The snows came in around "
-                        "the new year and the road just... stopped mattering. "
-                        "It does that, up here."),
-                ("npc", "Three months is nothing to a town like this. Folk "
-                        "get comfortable. Warm bed, full larder, good company. "
-                        "You will too, give it time."),
-            ],
+            "label": "What's in your cellar?",
+            "q": "What do you keep down in that cellar of yours? Mind if I "
+                 "take a look?",
+            "on_ask": lambda g: g.save.set_flag("sable_cellar_permission", True),
+            "beats": lambda g: (
+                [("npc", "The cellar? Storage, mostly. Old registers, a broken "
+                         "chair or two. Nothing down there worth hiding from a "
+                         "guest.")]
+                + ([] if (g.save.flag("cellar_key_taken")
+                          or g.player.inventory.has("cellar_key"))
+                   else [("npc", "Shoot. I seem to have misplaced the key. If "
+                                 "you find it, you are welcome to take a look, "
+                                 "and take what you need.")])
+            ),
         },
         {
-            # The PI speaks only from his OWN experience -- his car died at
-            # the lodge steps the night he drove in. He does NOT yet know the
-            # fold kills every engine (that comes from Vane / Royce), so this
-            # exchange must not put town-wide car knowledge in his mouth.
-            # Sable's answer stays deniable hospitality (the Sheriff carries
-            # the plain truth; NARRATIVE §7).
+            # The PI asks the mundane question: his car died at the lodge
+            # steps the night he drove in, so is there a mechanic? He speaks
+            # only from his OWN experience and does NOT yet know the fold kills
+            # every engine (that comes from Vane / Royce), so this puts no
+            # town-wide car knowledge in his mouth. When pressed, Sable does
+            # not stonewall -- he gives his own LIVED EXPERIENCE (he has seen
+            # guests' cars go the same way and never one put right; he stopped
+            # asking why). That is a local's SURRENDER, distinct from Vane's
+            # plain-truth register: Sable names no mechanism and no pattern,
+            # only what he has watched and given up on, and lands on his own
+            # want -- keep the guest HERE (NARRATIVE §4/§7).
             "key": "car",
-            "q": "My car died at the lodge steps the night I drove in. "
-                 "Turns over and never catches.",
-            "label": "My car won't start.",
+            "q": "My car won't start. Turns over and won't catch. Is there "
+                 "anyone in town who could take a look at it?",
+            "label": "Is there a mechanic in town?",
             "beats": [
-                ("npc", "The roads are not going anywhere tonight. Neither "
-                        "are you. I would not fret over the car."),
-                ("pi", "I didn't ask about tonight. I asked what's wrong "
-                       "with it."),
-                ("npc", "Nothing a night's rest won't settle. It will keep "
-                        "till morning. Everything here does. Get some rest."),
+                ("npc", "A mechanic? No, nothing like that in Brimley now, "
+                        "and it would do you no good if there were."),
+                ("npc", "The car is not broken, friend."),
+                ("pi", "What do you mean, not broken? It turns over and dies "
+                       "at the step."),
+                ("npc", "Only that I have seen it before. Now and then a "
+                        "guest's car goes the same way, and never once have I "
+                        "seen one put right."),
+                ("npc", "A man quits asking why, after a time. I am long past "
+                        "it, and it is no trouble to me. Needn't be to you "
+                        "either."),
+                ("npc", "You have a good bed and a standing welcome. Stay as "
+                        "long as you need."),
             ],
         },
         # Unlocked by reading the cellar Ledger (evidence the_ledger): the
@@ -1311,24 +1417,6 @@ SABLE_CONVO = {
                 ("npc", "They will not have gone far. Nobody does. It is a "
                         "restful town, friend. People stay. It is the one "
                         "thing I can promise a guest."),
-            ],
-        },
-        # Unlocked by reading Mara's journal (evidence maras_journal). This
-        # is where the mask thins the most: "she is not lost" is as close as
-        # he comes to admitting he knows, and still no scheme is confessed.
-        {
-            "key": "her_state",
-            "label": "When did she change?",
-            "q": "Her journal reads like someone already halfway out a "
-                 "door. When did she change?",
-            "avail": lambda g: g.save.flag("evidence_maras_journal"),
-            "beats": [
-                ("npc", "(He sets his hands flat on the desk.) You keep "
-                        "telling me she is lost. I keep telling you she is "
-                        "not."),
-                ("npc", "She stopped fretting, toward the end. Folk do, "
-                        "here. It is a mercy, if you let it be. You will let "
-                        "it be too, in time."),
             ],
         },
         # The reproach: the PI puts the looping road to Sable once he has
@@ -1431,15 +1519,15 @@ def clerk_dialogue(game, npc):
     hands it over like a room key. Somebody has to keep the desk.
     State-gated on what the PI knows -- never farmable by repeat visits."""
     _cult_tell(game, "clerk")
-    # The organic conversation. His welcome floats once (the greet in
-    # SABLE_CONVO), then the menu is the PI's own questions -- each picked
-    # line is spoken, Sable answers in turn over the desk, the world keeps
-    # running, and new questions surface as the case grows. The Invitation
-    # is no longer an auto-handoff the moment you hit 3 evidence: it is an
-    # explicit ASK ("the_way_down" exchange, gated on readiness), and a case
-    # NOTE nudges the PI back to the desk when he is ready (see _evidence).
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, SABLE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b):
+    # the world holds, his host face animates, and SABLE_CONVO renders its
+    # beats as the tableau caption and its menu as the option panel. His
+    # welcome plays once (the greet), then the menu is the PI's own questions
+    # -- each picked line is spoken, Sable answers over the desk, and new
+    # questions surface as the case grows. The Invitation is an explicit ASK
+    # ("the_way_down", gated on readiness); the photo + envelope appear on the
+    # register live as the talk earns them (the art reads the save flags).
+    game._open_sable_tableau(npc)
 
 
 # ---- The Brimley chorus ----

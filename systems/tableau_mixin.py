@@ -15,7 +15,7 @@ DIALOGUE.md Part B, per the contract.
 import re
 import pygame
 
-from ui.tableau import draw_desk_tableau
+from ui.tableau import draw_desk_tableau, draw_sable_tableau
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -39,6 +39,66 @@ class TableauMixin:
 
     def _close_tableau(self):
         self._tableau = None
+
+    # ---------------------------------------------------- Sable conversation
+    def _open_sable_tableau(self, npc):
+        """Mr. Sable's reception-desk talk, PRESENTED as a frozen close-up:
+        the world holds, his host face animates, and the ask-verb conversation
+        (SABLE_CONVO) renders its beats as the tableau's caption and its menu
+        as the option panel. The photo + the Invitation appear on the desk
+        live as the talk earns them (the art reads the save flags)."""
+        self._tableau = {
+            "kind": "sable", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import SABLE_CONVO
+        open_conversation(self, npc, SABLE_CONVO, tableau=True)
+
+    # The two presentation hooks the Conversation calls in tableau mode.
+    def _tableau_caption(self, who, name, text, on_complete):
+        tb = self._tableau
+        if tb is None:
+            return
+        tb["caption"] = {"who": who, "name": name, "text": text,
+                         "cb": on_complete}
+        tb["menu"] = None
+
+    def _tableau_choices(self, prompt, labels, pick):
+        tb = self._tableau
+        if tb is None:
+            return
+        tb["menu"] = {"prompt": prompt, "labels": list(labels),
+                      "pick": pick, "cursor": 0}
+        tb["caption"] = None
+
+    def _sable_tableau_input(self, ev, tb):
+        if ev.key == pygame.K_ESCAPE:
+            if getattr(self, "_convo", None) is not None:
+                self._convo.active = False
+            self._close_tableau()
+            return
+        cap, menu = tb.get("caption"), tb.get("menu")
+        if cap is not None:
+            if ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
+                cb = cap["cb"]
+                tb["caption"] = None
+                if cb:
+                    cb()
+            return
+        if menu is not None:
+            n = len(menu["labels"])
+            if ev.key in (pygame.K_UP, pygame.K_w):
+                menu["cursor"] = (menu["cursor"] - 1) % n
+                self.audio.play("blip_low", 0.3)
+            elif ev.key in (pygame.K_DOWN, pygame.K_s):
+                menu["cursor"] = (menu["cursor"] + 1) % n
+                self.audio.play("blip_low", 0.3)
+            elif ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
+                idx, pick = menu["cursor"], menu["pick"]
+                tb["menu"] = None
+                pick(idx)
 
     # --------------------------------------------------------------- options
     def _tableau_options(self):
@@ -95,6 +155,9 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
+        if tb["kind"] == "sable":
+            self._sable_tableau_input(ev, tb)
+            return
         if tb["reading"] is not None:
             # Reading the file: E/Enter goes back to the menu; anything else
             # (a movement key, Esc) is walking away -- it drops the whole
@@ -131,6 +194,9 @@ class TableauMixin:
             return
         surf = self.screen
         W, H = surf.get_width(), surf.get_height()
+        if tb["kind"] == "sable":
+            self._draw_sable_tableau(surf, tb)
+            return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])
 
@@ -172,6 +238,67 @@ class TableauMixin:
             y += 10
         surf.blit(fi.render("(walk away to close)", True, (150, 140, 118)),
                   (x0, y + 8))
+
+    # ------------------------------------------------ Sable close-up drawing
+    def _draw_sable_tableau(self, surf, tb):
+        state = {
+            "photo_present": self.save.flag("sable_showed_photo"),
+            "envelope_present": self.save.flag("rite_envelope_given"),
+        }
+        draw_sable_tableau(surf, tb["t"], state)
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_tableau_scrim(self, surf, top_frac):
+        """A gradient darkening from `top_frac` down, so text reads over the
+        counter without fully hiding Sable or the props."""
+        W, H = surf.get_width(), surf.get_height()
+        y0 = int(H * top_frac)
+        scrim = pygame.Surface((W, H - y0), pygame.SRCALPHA)
+        for yy in range(0, H - y0, 2):
+            a = min(206, 40 + int(200 * yy / max(1, H - y0)))
+            pygame.draw.rect(scrim, (6, 4, 3, a), (0, yy, W, 2))
+        surf.blit(scrim, (0, y0))
+
+    def _draw_tableau_caption(self, surf, cap):
+        W, H = surf.get_width(), surf.get_height()
+        self._draw_tableau_scrim(surf, 0.70)
+        f = self.fonts["serif_lg"]
+        fi = self.fonts["serif_it"]
+        x0, y = 48, int(H * 0.745)
+        dim = (cap["who"] == "pi") or ("[c=dim]" in cap["text"])
+        col = (176, 168, 150) if dim else (232, 220, 196)
+        if cap["name"]:
+            surf.blit(fi.render(cap["name"], True, (202, 170, 98)), (x0, y - 28))
+        for wln in _wrap(_plain(cap["text"]), f, int(W * 0.84)):
+            surf.blit(f.render(wln, True, col), (x0, y))
+            y += f.get_height() + 4
+        surf.blit(fi.render("[E]", True, (150, 140, 118)), (W - 64, H - 42))
+
+    def _draw_tableau_menu(self, surf, menu):
+        W, H = surf.get_width(), surf.get_height()
+        self._draw_tableau_scrim(surf, 0.50)
+        pf = self.fonts["serif_it"]
+        of = self.fonts["serif_lg"]
+        x0, y = 48, int(H * 0.52)
+        for pln in _wrap(_plain(menu["prompt"]), pf, int(W * 0.86)):
+            surf.blit(pf.render(pln, True, (198, 186, 160)), (x0, y))
+            y += pf.get_height() + 2
+        y += 12
+        cur = menu["cursor"]
+        last = len(menu["labels"]) - 1
+        for i, label in enumerate(menu["labels"]):
+            sel = (i == cur)
+            if sel:
+                pygame.draw.rect(surf, (200, 162, 84), (x0 - 16, y + 4, 6, 24))
+                col = (246, 230, 160)
+            else:
+                col = (150, 146, 132) if i == last else (176, 168, 146)
+            surf.blit(of.render(("  " if sel else "   ") + _plain(label),
+                                True, col), (x0, y))
+            y += 34
 
 
 def _wrap(text, font, maxw):
