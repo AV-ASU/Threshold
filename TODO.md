@@ -215,10 +215,24 @@ Part B.
   `tests/flow.py` (the Vane-tableau block after the cache guards); text in
   `DIALOGUE.md` Part A + Part B.
 
+- **HETTIE'S COUNTER landed (2026-07, the third seat).** `hettie_dialogue`
+  opens `HETTIE_CONVO` in the shop-counter close-up (`_open_hettie_tableau`;
+  art `draw_hettie_tableau`, derived from her sprite): the gutted shelves
+  with dust-ghosts and the one tin left, the empty till, and her ONE kept
+  bulb burning over the counter (the stoop line made light). Her sprite's
+  uncanny tell survives the close-up: black-filled spectacle lenses, the
+  glint on the same wrong side of both, her "blink" the glints going out.
+  Reactive: her idle glances at the door every few seconds (the framing
+  line made pose; time-driven in `_draw_hettie_tableau`), Mara's tab leaves
+  the spike once the receipt is taken, and the traded newspaper lies open
+  after the barter (`_hettie_tableau_state`). Guarded by `tests/flow.py`
+  (the Hettie-tableau block after her gate guards); text in `DIALOGUE.md`
+  Part A + Part B.
+
   **Still open (the maintainer greenlights each):** the same treatment for
-  Hettie's counter, Crane's church, and Toby, the **pedestal** (the Mask on
-  the altar), and Mara's confrontation / the cult Talk. Each is its own
-  bespoke environment + art pass, then wire.
+  Crane's church and Toby, the **pedestal** (the Mask on the altar), and
+  Mara's confrontation / the cult Talk. Each is its own bespoke
+  environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

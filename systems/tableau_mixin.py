@@ -20,7 +20,7 @@ import re
 import pygame
 
 from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
-                        draw_vane_tableau)
+                        draw_vane_tableau, draw_hettie_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -91,6 +91,33 @@ class TableauMixin:
             "mood": mood,
             "paper_present": self.save.flag("convo_vane_paper_asked"),
             "cache_open": self.save.flag("vane_gave_cache"),
+        }
+
+    # --------------------------------------------------- Hettie conversation
+    def _open_hettie_tableau(self, npc):
+        """Hettie's shop counter, PRESENTED as a frozen close-up: the gutted
+        shelves with their dust-ghosts and the one tin left, the till empty
+        since the new year, her ONE kept bulb burning over the counter. Her
+        idle keeps glancing at the door (the framing line made pose), and
+        the counter carries what the talk has earned: Mara's tab leaves the
+        spike when it is lifted, the traded newspaper lies open after."""
+        self._tableau = {
+            "kind": "hettie", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import HETTIE_CONVO
+        open_conversation(self, npc, HETTIE_CONVO, tableau=True)
+
+    def _hettie_tableau_state(self):
+        """The counter's live state: Mara's tab stays curled on the spike
+        until the receipt is taken (however it was earned), and the traded
+        newspaper lies open once the barter has happened. The door glance
+        is idle-driven and added at draw time, not state."""
+        return {
+            "tab_present": not self.save.flag("evidence_maras_receipt"),
+            "paper_present": self.save.flag("newspaper_traded"),
         }
 
     # The two presentation hooks the Conversation calls in tableau mode.
@@ -195,7 +222,7 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
-        if tb["kind"] in ("sable", "vane"):
+        if tb["kind"] in ("sable", "vane", "hettie"):
             self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
@@ -239,6 +266,9 @@ class TableauMixin:
             return
         if tb["kind"] == "vane":
             self._draw_vane_tableau(surf, tb)
+            return
+        if tb["kind"] == "hettie":
+            self._draw_hettie_tableau(surf, tb)
             return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])
@@ -296,6 +326,22 @@ class TableauMixin:
 
     def _draw_vane_tableau(self, surf, tb):
         draw_vane_tableau(surf, tb["t"], self._vane_tableau_state())
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_hettie_tableau(self, surf, tb):
+        # Her idle door-glance: every few seconds her head turns toward the
+        # shop door, holds a beat, and comes back. Time-driven, eased both
+        # ways; the rest of the state is the earned counter props.
+        ph = tb["t"] % 6.8
+        glance = 0.0
+        if 4.8 <= ph < 6.4:
+            glance = min(1.0, (ph - 4.8) / 0.35, (6.4 - ph) / 0.35)
+        st = self._hettie_tableau_state()
+        st["glance"] = glance
+        draw_hettie_tableau(surf, tb["t"], st)
         if tb.get("caption") is not None:
             self._draw_tableau_caption(surf, tb["caption"])
         elif tb.get("menu") is not None:

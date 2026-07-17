@@ -771,8 +771,15 @@ def hettie_dialogue(game, npc):
             "she'd given up on.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, HETTIE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the Sable/Vane precedent): the gutted shop behind her counter, her one
+    # kept bulb burning over it, and her idle glancing at the door (the
+    # framing line made pose). The counter carries what the talk earns:
+    # Mara's tab leaves the spike once the receipt is taken, the traded
+    # newspaper lies open after the barter. The one-shots above (the
+    # preacher, the memory, the trade) still volunteer as plain beats
+    # first; the next press opens the close-up.
+    game._open_hettie_tableau(npc)
 
 
 # ---- The Sheriff: Hollis Vane ----

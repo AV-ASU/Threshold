@@ -1546,6 +1546,35 @@ def main():
     check(not _hphoto["avail"](gg8) and _hothers["avail"](gg8),
           "gate: her memory retires the photo and opens the others")
 
+    # (Hettie tableau, #2b) Talking to Hettie opens the shop-counter
+    # close-up: the conversation runs in tableau presentation mode, and the
+    # counter carries what the talk earned (Mara's tab leaves the spike once
+    # the receipt is taken, the traded newspaper lies open after).
+    import inspect as _iht
+    from scenes.dialogue import hettie_dialogue as _htf
+    check("_open_hettie_tableau" in _iht.getsource(_htf),
+          "hettie: talking to her opens the shop-counter tableau")
+    ght = new_game()
+    ght.dialog.active = False
+    ght._open_hettie_tableau(None)
+    check(ght._tableau is not None and ght._tableau["kind"] == "hettie"
+          and ght._convo is not None and ght._convo.tableau is True,
+          "hettie: the counter tableau hosts the conversation")
+    _hst = ght._hettie_tableau_state()
+    check(_hst["tab_present"] and not _hst["paper_present"],
+          "hettie: fresh run, the tab curls on the spike and no paper lies out")
+    ght.save.set_flag("evidence_maras_receipt", True)
+    ght.save.set_flag("newspaper_traded", True)
+    _hst = ght._hettie_tableau_state()
+    check(not _hst["tab_present"] and _hst["paper_present"],
+          "hettie: the lifted tab leaves the spike; the traded paper lies open")
+    class _EscH:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    ght._tableau_input(_EscH())
+    check(ght._tableau is None and ght._convo.active is False,
+          "hettie: Escape closes the counter tableau and ends the talk")
+
     # The Crane fork (the ticket's pilot choice): the flock exchange ends
     # on a real two-way ask. Pressing him latches the doom and files the
     # PI's culpability as a NOTE (never evidence); holding him back leaves

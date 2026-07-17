@@ -265,6 +265,13 @@ intro:" / "Opener photo:").
 - **Voice:** `blip_high`. **Code:** `scenes/dialogue.py` `HETTIE_CONVO`,
   `hettie_dialogue`, `grant_receipt`. **Who:** local, quiet resister; her
   value is what she risks saying. Warm handover of Mara's store tab.
+- **Presentation (2026-07):** `hettie_dialogue` opens `HETTIE_CONVO` inside a
+  frozen close-up **tableau** (`_open_hettie_tableau`, `tableau=True`): the
+  gutted shop behind her counter, her one kept bulb burning over it, and her
+  idle glancing at the door (the framing line made pose). The one-shots (the
+  preacher, the Mara memory, the trade) still volunteer as plain beats
+  first. The words are identical either way (below). See Part B "The
+  close-up examine tableaux."
 - **Greet** (`hettie_greeted`):
   - (npc) "We're open. Lord knows why, but we're open."
   - (npc) "There's nothing on the shelves worth your money. If it's talk you want, keep your voice down. In here."
@@ -562,6 +569,18 @@ text:
   carries what the talk has earned: the **newspaper** stays spread flat once
   given (`convo_vane_paper_asked`), the **cabinet** stands open and emptied
   once he unlocks it (`vane_gave_cache`).
+- **Hettie's shop counter** (`_open_hettie_tableau`, opened from
+  `hettie_dialogue`; words under **Hettie** in Part A). The gutted shop:
+  bare shelves with dust-ghosts where the stock stood and one tin left, the
+  till empty since the new year, the shop door at her left, and her ONE
+  kept bulb burning over the counter, swaying just barely (the stoop line
+  made light). Her spectacles keep her sprite's tell: lenses filled black,
+  the glint on the same wrong side of both; her "blink" is the glints going
+  out. Reactive: her idle **glances at the door** every few seconds (the
+  framing line made pose), **Mara's tab** stays curled on the spike by the
+  till until the receipt is taken (`evidence_maras_receipt`), and the
+  **traded newspaper** lies open on the counter after the barter
+  (`newspaper_traded`).
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".
