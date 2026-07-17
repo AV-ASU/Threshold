@@ -302,12 +302,23 @@ def crane_on_leave(game):
     ]
 
 
+def _crane_prompt(game):
+    """The framing line reads the fork the way his tableau pose does: at
+    rest he waits, hands folded; once the press has latched
+    (preacher_doomed) he is done waiting. Composes the PI's four-tier
+    weather like every principal framing (_pi_framing)."""
+    base = ("Crane stands square at the lectern, done waiting."
+            if game.save.flag("preacher_doomed")
+            else "Crane waits, hands folded over the lectern.")
+    return base + _PI_WEATHER[_pi_tier(game)]
+
+
 CRANE_CONVO = {
     "id":    "crane",
     "name":  "Rev. Crane",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": _pi_framing("Crane waits, hands folded over the lectern."),
+    "prompt": _crane_prompt,
     "leave":  "That's all for now.",
     "greet": {
         "flag": "crane_greeted",
@@ -398,8 +409,13 @@ def preacher_dialogue(game, npc):
             "They heard it, though. Down that road, something always does.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, CRANE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the Sable/Vane/Hettie precedent): the chancel behind his lectern in
+    # candled dusk, and his HANDS reading the fork the way the framing line
+    # does (folded and waiting, or gripping the lectern once the press has
+    # latched). The bell one-shot above still volunteers as a plain beat
+    # first; the next press opens the close-up.
+    game._open_crane_tableau(npc)
 
 
 # ---- The Kid: Toby ----

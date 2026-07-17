@@ -314,7 +314,17 @@ intro:" / "Opener photo:").
 - **Voice:** `blip_low`. **Code:** `scenes/dialogue.py` `CRANE_CONVO`,
   `preacher_dialogue`, `_crane_provoked`. **Who:** local, innocent dissenter;
   names the cult from his pulpit. His doom is the player's choice (press or
-  hold).
+  hold). **Framing prompt** (`_crane_prompt`, reads the fork, never the
+  system): at rest → "Crane waits, hands folded over the lectern."; once
+  the press has latched (`preacher_doomed`) → "Crane stands square at the
+  lectern, done waiting."
+- **Presentation (2026-07):** `preacher_dialogue` opens `CRANE_CONVO` inside
+  a frozen close-up **tableau** (`_open_crane_tableau`, `tableau=True`): the
+  chancel behind his lectern in candled dusk, and his HANDS reading the fork
+  the way the framing line does (folded over the lectern, or gripping its
+  corners once pressed). The bell one-shot still volunteers as a plain beat
+  first. The words are identical either way (below). See Part B "The
+  close-up examine tableaux."
 - **Greet** (`crane_greeted`):
   - (npc) "Another new face. Strangers off the highway were all that came to Brimley this past year, more every season. And not one of them left."
 - **Opener intro:**
@@ -581,6 +591,15 @@ text:
   till until the receipt is taken (`evidence_maras_receipt`), and the
   **traded newspaper** lies open on the counter after the barter
   (`newspaper_traded`).
+- **Rev. Crane's lectern** (`_open_crane_tableau`, opened from
+  `preacher_dialogue`; words under **Rev. Asa Crane** in Part A). The
+  chancel in candled dusk: board walls, the plain wooden cross, the hymn
+  board whose numbers stopped with everything else, the tall arched window
+  with the day going out of it, the bell rope hanging dead at the frame's
+  edge, his candle stand the only light. Reactive: his **hands** read the
+  press fork exactly as the framing line does (`_crane_tableau_state`
+  mirrors `_crane_prompt`): folded over the lectern while he waits;
+  gripping its corners, head forward, once `preacher_doomed` latches.
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".

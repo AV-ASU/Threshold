@@ -120,15 +120,17 @@ it renders the procedural sprites to a labelled PNG strip.
     procedural close-ups) lives in `ui/tableau.py`; the pilot is the bedroom
     writing desk. The **face-across-a-table principal talks** ride the same
     frame (2026-07): `clerk_dialogue` / `sheriff_dialogue` / `hettie_dialogue`
-    open the talk as a tableau (`_open_sable_tableau` / `_open_vane_tableau` /
-    `_open_hettie_tableau` + `open_conversation(..., tableau=True)`), the
-    conversation's beats render as the caption and its menu as the option
-    panel (`_convo_tableau_input`), and the art reads save flags so the
-    close-up carries what the talk earned (Sable's photo/Invitation on the
-    register; Vane's pose reading his despair ledger, the given paper, the
-    opened cabinet; Hettie's door-glance idle, the tab leaving the spike, the
-    traded paper). Still to come: Crane, Toby, a pedestal (the Mask), Mara,
-    the cult Talk. Player-facing text is in `DIALOGUE.md` Part B.
+    / `preacher_dialogue` open the talk as a tableau (`_open_sable_tableau` /
+    `_open_vane_tableau` / `_open_hettie_tableau` / `_open_crane_tableau` +
+    `open_conversation(..., tableau=True)`), the conversation's beats render
+    as the caption and its menu as the option panel (`_convo_tableau_input`),
+    and the art reads save flags so the close-up carries what the talk earned
+    (Sable's photo/Invitation on the register; Vane's pose reading his
+    despair ledger, the given paper, the opened cabinet; Hettie's door-glance
+    idle, the tab leaving the spike, the traded paper; Crane's hands folding
+    or gripping the lectern on the press fork). Still to come: Toby, a
+    pedestal (the Mask), Mara, the cult Talk. Player-facing text is in
+    `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional

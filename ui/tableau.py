@@ -956,3 +956,297 @@ def draw_hettie_tableau(surf, t, state):
         a = max(0, int(132 * (1 - (r - inner) / (maxr - inner))))
         pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
     surf.blit(vig, (0, 0))
+
+
+# ---- Crane: his preacher sprite as a close-up at the lectern --------------
+# Gaunt, grey, half a ghost: the high balding brow with thin grey hair at
+# the sides, deep eye hollows, the black cassock swallowing everything below
+# the white collar band. `doomed` hardens him: brows angle in, the head
+# comes a notch forward, the mouth sets. (His hands live on the lectern and
+# are drawn by the tableau fn, over its top.)
+def _draw_crane(surf, cx, cy, blink, doomed):
+    import pygame
+    skin = (166, 166, 146); sk_hi = (190, 188, 166); sk_lo = (116, 116, 98)
+    sk_sh = (80, 80, 66)
+    cas = (32, 30, 36); cas_dk = (18, 17, 21); cas_lt = (48, 45, 53)
+    hair = (128, 128, 134); collar = (214, 214, 218); cross = (158, 152, 128)
+    fwd = 8 if doomed else 0                       # a notch forward
+    cy = cy + fwd
+    HW, HH = 48, 62                                # gaunt, tall-skulled
+    tt = cy + HH - 4
+
+    # -- the cassock: one black mass, a button line, the collar band --
+    pygame.draw.polygon(surf, cas, [(cx - 96, tt + 12), (cx + 96, tt + 12),
+                                    (cx + 84, tt + 300), (cx - 84, tt + 300)])
+    pygame.draw.ellipse(surf, cas, (cx - 102, tt - 8, 76, 50))      # narrow shoulders
+    pygame.draw.ellipse(surf, cas, (cx + 26, tt - 8, 76, 50))
+    pygame.draw.polygon(surf, cas_dk, [(cx + 20, tt + 12), (cx + 96, tt + 12),
+                                       (cx + 84, tt + 300), (cx + 22, tt + 300)])
+    pygame.draw.polygon(surf, cas_lt, [(cx - 96, tt + 12), (cx - 86, tt + 12),
+                                       (cx - 78, tt + 300), (cx - 96, tt + 300)])
+    pygame.draw.line(surf, cas_dk, (cx, tt + 26), (cx, tt + 300), 2)    # button line
+    for py_ in range(tt + 44, tt + 240, 34):
+        pygame.draw.circle(surf, (52, 49, 58), (cx, py_), 2)
+    # the white clerical collar, a clean band at the throat
+    pygame.draw.rect(surf, collar, (cx - 22, tt + 4, 44, 12), border_radius=5)
+    pygame.draw.rect(surf, (168, 168, 174), (cx - 22, tt + 12, 44, 4))
+    pygame.draw.rect(surf, cas, (cx - 7, tt + 4, 14, 12))               # the notch
+    # the small pale cross on its cord
+    pygame.draw.line(surf, (96, 92, 78), (cx - 14, tt + 16), (cx - 2, tt + 52), 1)
+    pygame.draw.line(surf, (96, 92, 78), (cx + 14, tt + 16), (cx + 2, tt + 52), 1)
+    pygame.draw.line(surf, cross, (cx, tt + 48), (cx, tt + 72), 4)
+    pygame.draw.line(surf, cross, (cx - 7, tt + 56), (cx + 7, tt + 56), 4)
+    pygame.draw.line(surf, (110, 104, 86), (cx + 1, tt + 48), (cx + 1, tt + 72), 1)
+
+    # -- neck + the gaunt head --
+    pygame.draw.rect(surf, sk_lo, (cx - 12, cy + HH - 22, 24, 36))
+    pygame.draw.ellipse(surf, skin, (cx - HW, cy - HH, HW * 2, HH * 2))
+    # hollow it: shadowed sides, sunken cheeks (the dim pass carries age)
+    dim = pygame.Surface((HW * 2 + 20, HH * 2 + 20), pygame.SRCALPHA)
+    pygame.draw.ellipse(dim, (*sk_sh, 96), (0, 12, HW - 4, HH * 2 - 16))
+    surf.blit(dim, (cx - HW, cy - HH))
+    lit = pygame.Surface((HW * 2 + 20, HH * 2 + 20), pygame.SRCALPHA)
+    pygame.draw.ellipse(lit, (*sk_hi, 112), (HW + 8, HH - 40, HW - 6, 74))
+    surf.blit(lit, (cx - HW, cy - HH))
+    pygame.draw.circle(surf, sk_lo, (cx - HW + 2, cy + 4), 8)           # ears
+    pygame.draw.circle(surf, skin, (cx + HW - 2, cy + 4), 8)
+
+    # -- the high balding brow: thin grey hair at the sides only --
+    pygame.draw.arc(surf, hair, (cx - HW - 2, cy - HH + 14, 22, 52), 1.4, 3.4, 5)
+    pygame.draw.arc(surf, hair, (cx + HW - 20, cy - HH + 14, 22, 52), 6.0, 8.0, 5)
+    pygame.draw.arc(surf, (100, 100, 106), (cx - HW, cy - HH + 22, 18, 36), 1.6, 3.1, 2)
+    for k in range(3):                                                  # strands combed over
+        pygame.draw.arc(surf, hair, (cx - 30 + k * 9, cy - HH - 2, 46, 26), 0.5, 2.2, 1)
+
+    # -- the face: deep hollows, hard grey brows, the named-them mouth --
+    tilt = 4 if doomed else 0
+    pygame.draw.line(surf, (88, 88, 92), (cx - 30, cy - 15), (cx - 8, cy - 13 + tilt), 4)
+    pygame.draw.line(surf, (88, 88, 92), (cx + 8, cy - 13 + tilt), (cx + 30, cy - 15), 4)
+    pygame.draw.line(surf, sk_lo, (cx - 3, cy - 16), (cx - 3, cy - 6), 2)   # sermon creases
+    pygame.draw.line(surf, sk_lo, (cx + 3, cy - 16), (cx + 3, cy - 6), 2)
+    for sgn in (-1, 1):
+        ex = cx + sgn * 19
+        ey = cy - 2
+        sock = pygame.Surface((30, 20), pygame.SRCALPHA)                 # soft deep socket
+        pygame.draw.ellipse(sock, (*sk_sh, 120), (0, 0, 30, 20))
+        surf.blit(sock, (ex - 15, ey - 10))
+        if blink:
+            pygame.draw.line(surf, sk_sh, (ex - 10, ey + 1), (ex + 10, ey + 1), 3)
+        else:
+            pygame.draw.ellipse(surf, (182, 180, 164), (ex - 9, ey - 4, 18, 9))
+            pygame.draw.circle(surf, (96, 100, 96), (ex, ey), 4)
+            pygame.draw.circle(surf, (20, 20, 18), (ex, ey), 2)
+            pygame.draw.circle(surf, (208, 206, 192), (ex - 2, ey - 1), 1)
+            pygame.draw.line(surf, sk_sh, (ex - 10, ey - 4), (ex + 9, ey - 5), 3)  # heavy lid
+        pygame.draw.arc(surf, sk_lo, (ex - 10, ey + 3, 20, 11), 3.5, 5.9, 2)  # hung under-eyes
+    # long thin nose, the sunken cheeks
+    pygame.draw.line(surf, sk_lo, (cx + 1, cy - 10), (cx - 1, cy + 16), 2)
+    pygame.draw.ellipse(surf, sk_lo, (cx - 5, cy + 13, 10, 6))
+    pygame.draw.arc(surf, sk_sh, (cx - 36, cy - 2, 20, 34), 0.6, 2.1, 3)      # HOLLOWS
+    pygame.draw.arc(surf, sk_sh, (cx + 16, cy - 2, 20, 34), 1.0, 2.5, 3)
+    # the mouth: thin, corners pinned down; set harder when he is done waiting
+    my = cy + 30
+    pygame.draw.line(surf, (104, 80, 74), (cx - 12, my), (cx + 12, my), 3 if doomed else 2)
+    pygame.draw.line(surf, sk_lo, (cx - 15, my + 3), (cx - 11, my), 2)   # the down corners
+    pygame.draw.line(surf, sk_lo, (cx + 11, my), (cx + 15, my + 3), 2)
+    pygame.draw.line(surf, sk_lo, (cx, my + 10), (cx, my + 16), 1)      # a thin chin crease
+    for sgn in (-1, 1):                                                 # deep age folds
+        pygame.draw.arc(surf, sk_lo, (cx + sgn * 14 - 7, my - 14, 14, 20),
+                        (1.2 if sgn > 0 else 0.4), (2.7 if sgn > 0 else 1.9), 2)
+
+
+def draw_crane_tableau(surf, t, state):
+    """The church chancel, across Crane's lectern. Candled dusk (his light is
+    the flames he keeps lit for nobody): board walls, the plain cross, the
+    stopped hymn board, the tall arched window going out, the bell rope dead
+    at the edge. `state["doomed"]`: pressed, his hands grip the lectern and
+    he is done waiting; else they stay folded over it."""
+    import pygame
+    W, H = surf.get_width(), surf.get_height()
+    doomed = state.get("doomed", False)
+
+    # -- board walls, dusk-dark; vertical planks --
+    top = (64, 54, 44); bot = (30, 26, 22)
+    for y in range(0, H, 2):
+        surf.fill(_lerp(top, bot, y / H), (0, y, W, 2))
+    for sx in range(0, W, 46):
+        pygame.draw.line(surf, (44, 37, 30), (sx, 0), (sx, H), 1)
+    pygame.draw.rect(surf, (38, 32, 26), (0, int(H * 0.78), W, int(H * 0.06)))  # rail shadow line
+
+    # -- the bell rope, hanging dead at the left edge; it barely drifts --
+    rx = int(W * 0.055) + int(2 * math.sin(t * 0.6))
+    pygame.draw.line(surf, (118, 106, 84), (int(W * 0.055), 0), (rx, int(H * 0.52)), 3)
+    pygame.draw.circle(surf, (100, 90, 70), (rx, int(H * 0.53)), 6)     # the knotted end
+    pygame.draw.line(surf, (84, 75, 58), (rx - 4, int(H * 0.50)), (rx + 4, int(H * 0.50)), 2)
+
+    # -- the hymn board: the numbers of a service nobody held since --
+    hbx, hby = int(W * 0.125), int(H * 0.10)
+    hbw, hbh = 118, 150
+    pygame.draw.rect(surf, (22, 19, 15), (hbx + 4, hby + 5, hbw, hbh))
+    pygame.draw.rect(surf, (52, 42, 30), (hbx, hby, hbw, hbh))
+    pygame.draw.rect(surf, (74, 60, 42), (hbx, hby, hbw, hbh), 4)
+    pygame.draw.rect(surf, (150, 140, 118), (hbx + 12, hby + 10, hbw - 24, 18))  # title strip
+    for i in range(3):
+        pygame.draw.line(surf, (96, 88, 72), (hbx + 18 + i * 30, hby + 15),
+                         (hbx + 34 + i * 30, hby + 23), 2)
+    seg = (196, 188, 164)
+    rnd0 = random.Random(3)
+    for r in range(3):                                                  # three hymn rows
+        ty = hby + 42 + r * 34
+        for c in range(3):
+            tx2 = hbx + 16 + c * 32
+            if r == 2 and c == 2:
+                continue                                                # one tile long fallen
+            pygame.draw.rect(surf, (30, 26, 21), (tx2, ty, 24, 24))
+            d = rnd0.randint(0, 9)
+            # crude seven-seg digit
+            if d not in (1, 4):
+                pygame.draw.line(surf, seg, (tx2 + 6, ty + 4), (tx2 + 18, ty + 4), 2)
+            if d not in (0, 1, 7):
+                pygame.draw.line(surf, seg, (tx2 + 6, ty + 12), (tx2 + 18, ty + 12), 2)
+            if d not in (1, 4, 7):
+                pygame.draw.line(surf, seg, (tx2 + 6, ty + 20), (tx2 + 18, ty + 20), 2)
+            if d in (0, 2, 6, 8):
+                pygame.draw.line(surf, seg, (tx2 + 6, ty + 12), (tx2 + 6, ty + 20), 2)
+            if d not in (2,):
+                pygame.draw.line(surf, seg, (tx2 + 18, ty + 4), (tx2 + 18, ty + 12), 2)
+            if d in (0, 1, 3, 4, 5, 6, 8, 9):
+                pygame.draw.line(surf, seg, (tx2 + 18, ty + 12), (tx2 + 18, ty + 20), 2)
+            if d in (0, 4, 8, 9):
+                pygame.draw.line(surf, seg, (tx2 + 6, ty + 4), (tx2 + 6, ty + 12), 2)
+
+    # -- the plain wooden cross, high on the chancel wall --
+    ccx, ccy = int(W * 0.565), int(H * 0.115)
+    pygame.draw.rect(surf, (20, 17, 13), (ccx - 7 + 4, ccy - 8 + 5, 18, 128))   # drop shadow
+    pygame.draw.rect(surf, (20, 17, 13), (ccx - 42 + 4, ccy + 24 + 5, 88, 16))
+    pygame.draw.rect(surf, (86, 66, 46), (ccx - 7, ccy - 8, 14, 124))
+    pygame.draw.rect(surf, (86, 66, 46), (ccx - 42, ccy + 24, 84, 13))
+    pygame.draw.line(surf, (112, 88, 62), (ccx - 5, ccy - 6, ), (ccx - 5, ccy + 112), 2)
+    pygame.draw.line(surf, (112, 88, 62), (ccx - 40, ccy + 26), (ccx + 38, ccy + 26), 2)
+    pygame.draw.line(surf, (56, 42, 30), (ccx - 2, ccy + 30), (ccx + 3, ccy + 34), 1)  # grain
+
+    # -- the tall arched window, the day going out of it --
+    wx, wy = int(W * 0.695), int(H * 0.07)
+    ww, wh = int(W * 0.185), int(H * 0.55)
+    pygame.draw.rect(surf, (34, 28, 22), (wx - 10, wy + ww // 2, ww + 20, wh - ww // 2 + 10))
+    pygame.draw.circle(surf, (34, 28, 22), (wx + ww // 2, wy + ww // 2), ww // 2 + 10)
+    glass_t = (150, 138, 112); glass_b = (96, 88, 72)                   # dusk, not day
+    for gy in range(wh):
+        c = _lerp(glass_t, glass_b, gy / wh)
+        if gy < ww // 2:                                                # arched top rows
+            half = int(math.sqrt(max(0, (ww // 2) ** 2 - (ww // 2 - gy) ** 2)))
+            surf.fill(c, (wx + ww // 2 - half, wy + gy, half * 2, 1))
+        else:
+            surf.fill(c, (wx, wy + gy, ww, 1))
+    pygame.draw.rect(surf, (120, 110, 88), (wx, wy + int(wh * 0.70), ww, int(wh * 0.10)))  # treeline
+    pygame.draw.rect(surf, (132, 120, 94), (wx, wy + int(wh * 0.80), ww, int(wh * 0.20)))  # corn band
+    for cxx in range(wx + 3, wx + ww, 9):
+        pygame.draw.line(surf, (112, 102, 78), (cxx, wy + int(wh * 0.82)), (cxx, wy + wh), 1)
+    pygame.draw.line(surf, (34, 28, 22), (wx + ww // 2, wy), (wx + ww // 2, wy + wh), 5)  # muntins
+    pygame.draw.line(surf, (34, 28, 22), (wx, wy + int(wh * 0.42)), (wx + ww, wy + int(wh * 0.42)), 5)
+    arc_r = ww // 2 + 10
+    pygame.draw.arc(surf, (58, 46, 34), (wx - 10, wy - 10 + 6, ww + 20, arc_r * 2),
+                    0.0, math.pi, 6)                                    # arch frame
+    pygame.draw.rect(surf, (58, 46, 34), (wx - 10, wy + arc_r - 4, ww + 20, wh - arc_r + 14), 4)
+
+    # -- the candle stand: his kept flames, the light of the room --
+    csx, csy = int(W * 0.845), int(H * 0.70)
+    pygame.draw.line(surf, (54, 48, 40), (csx, csy), (csx, csy - 96), 5)     # the standard
+    pygame.draw.ellipse(surf, (44, 39, 33), (csx - 26, csy - 4, 52, 12))     # the foot
+    pygame.draw.line(surf, (54, 48, 40), (csx - 30, csy - 96), (csx + 30, csy - 96), 4)
+    flames = []
+    for k, dx in enumerate((-30, 0, 30)):
+        chx = csx + dx
+        chy = csy - 96
+        pygame.draw.rect(surf, (204, 196, 172), (chx - 4, chy - 26, 8, 26))  # candles
+        fl = 1.0 + 0.22 * math.sin(t * 6.1 + k * 2.4) * math.sin(t * 2.3 + k)
+        pygame.draw.ellipse(surf, (255, 216, 130), (chx - 4, chy - 26 - int(14 * fl), 8, int(14 * fl)))
+        pygame.draw.ellipse(surf, (255, 244, 200), (chx - 2, chy - 26 - int(9 * fl), 4, int(8 * fl)))
+        flames.append((chx, chy - 30))
+    halo = pygame.Surface((W, H), pygame.SRCALPHA)                       # candle wash
+    fl0 = 0.92 + 0.08 * math.sin(t * 5.3) * math.sin(t * 1.9)
+    for r in range(int(H * 0.78), 0, -12):
+        a = int(84 * (1 - r / (H * 0.78)) * fl0)
+        pygame.draw.circle(halo, (255, 206, 130, a), (csx - 20, csy - 120), r)
+    surf.blit(halo, (0, 0))
+    rnd2 = random.Random(23)                                             # dust in the glow
+    for _ in range(36):
+        base = rnd2.randint(0, 700)
+        yy = int(H * 0.10 + (t * 6 + base) % (H * 0.58))
+        mx = int(W * 0.60) + int(90 * math.sin(t * 0.4 + base)) + rnd2.randint(-40, 40)
+        pygame.draw.circle(surf, (236, 220, 184), (mx, yy), 1)
+
+    # -- Crane at his lectern: breath, blink, the fork carried in his set --
+    bob = int(2 * math.sin(t * 1.05))
+    _draw_crane(surf, int(W * 0.395), int(H * 0.285) + bob, (t % 4.6) < 0.16, doomed)
+
+    # -- the lectern, rising into frame; the open book; his hands on it --
+    lx0, ly0 = int(W * 0.395), int(H * 0.70)
+    pygame.draw.polygon(surf, (46, 36, 25),                              # the shaft
+                        [(lx0 - 44, H), (lx0 + 44, H), (lx0 + 34, ly0 + 40), (lx0 - 34, ly0 + 40)])
+    pygame.draw.polygon(surf, (64, 50, 34),                              # the sloped top
+                        [(lx0 - 96, ly0 + 10), (lx0 + 96, ly0 + 10), (lx0 + 78, ly0 + 52),
+                         (lx0 - 78, ly0 + 52)])
+    pygame.draw.polygon(surf, (40, 31, 21),
+                        [(lx0 - 96, ly0 + 8), (lx0 + 96, ly0 + 8), (lx0 + 96, ly0 + 14),
+                         (lx0 - 96, ly0 + 14)])
+    pygame.draw.line(surf, (88, 70, 46), (lx0 - 96, ly0 + 10), (lx0 + 96, ly0 + 10), 2)
+    pygame.draw.line(surf, (30, 24, 17), (lx0 - 60, ly0 + 62), (lx0 + 60, ly0 + 62), 2)  # front cross rail
+    # the open book on the slope
+    pygame.draw.polygon(surf, (196, 190, 172),
+                        [(lx0 - 58, ly0 + 18), (lx0 - 4, ly0 + 14), (lx0 - 2, ly0 + 40),
+                         (lx0 - 52, ly0 + 46)])
+    pygame.draw.polygon(surf, (188, 182, 164),
+                        [(lx0 + 2, ly0 + 14), (lx0 + 56, ly0 + 18), (lx0 + 50, ly0 + 46),
+                         (lx0, ly0 + 40)])
+    pygame.draw.line(surf, (120, 112, 96), (lx0 - 2, ly0 + 14), (lx0, ly0 + 42), 2)  # the gutter
+    for i in range(4):                                                   # scripture lines
+        pygame.draw.line(surf, (128, 120, 104), (lx0 - 48, ly0 + 22 + i * 6),
+                         (lx0 - 10, ly0 + 19 + i * 6), 1)
+        pygame.draw.line(surf, (128, 120, 104), (lx0 + 8, ly0 + 19 + i * 6),
+                         (lx0 + 46, ly0 + 22 + i * 6), 1)
+    # his hands: folded at the slope's front edge at rest (the book stays
+    # readable above them); pressed, they GRIP the top corners, fingers
+    # wrapped over the front edge
+    skin = (172, 170, 150); sk_lo2 = (116, 116, 98)
+    if doomed:
+        for sgn in (-1, 1):
+            hx2 = lx0 + sgn * 82
+            pygame.draw.ellipse(surf, skin, (hx2 - 20, ly0 + 4, 40, 26))
+            pygame.draw.ellipse(surf, sk_lo2, (hx2 - 20, ly0 + 4, 40, 26), 2)
+            for fk in range(4):                                          # fingers over the edge
+                pygame.draw.line(surf, sk_lo2, (hx2 - 12 + fk * 8, ly0 + 8),
+                                 (hx2 - 13 + fk * 8, ly0 + 26), 3)
+            pygame.draw.line(surf, (222, 218, 202), (hx2 - 12, ly0 + 8),
+                             (hx2 + 12, ly0 + 6), 2)                     # white knuckle ridge
+    else:
+        fy0 = ly0 + 40
+        pygame.draw.ellipse(surf, skin, (lx0 - 30, fy0, 60, 24))         # the under hand
+        pygame.draw.ellipse(surf, sk_lo2, (lx0 - 30, fy0, 60, 24), 1)
+        pygame.draw.ellipse(surf, skin, (lx0 - 20, fy0 - 8, 46, 22))     # the over hand
+        pygame.draw.ellipse(surf, sk_lo2, (lx0 - 20, fy0 - 8, 46, 22), 1)
+        for fk in range(4):                                              # laced fingers
+            pygame.draw.line(surf, sk_lo2, (lx0 - 12 + fk * 9, fy0 - 2),
+                             (lx0 - 8 + fk * 9, fy0 + 12), 2)
+
+    # -- pew-back slivers at the bottom corners (the empty nave at our back) --
+    pygame.draw.polygon(surf, (40, 31, 21), [(0, int(H * 0.90)), (int(W * 0.22), int(H * 0.94)),
+                                             (int(W * 0.22), H), (0, H)])
+    pygame.draw.line(surf, (58, 45, 30), (0, int(H * 0.905)), (int(W * 0.22), int(H * 0.945)), 3)
+    pygame.draw.polygon(surf, (40, 31, 21), [(W, int(H * 0.90)), (int(W * 0.78), int(H * 0.94)),
+                                             (int(W * 0.78), H), (W, H)])
+    pygame.draw.line(surf, (58, 45, 30), (W, int(H * 0.905)), (int(W * 0.78), int(H * 0.945)), 3)
+
+    # -- the candle key on him; eased vignette --
+    key = pygame.Surface((W, H), pygame.SRCALPHA)
+    for r in range(int(H * 0.85), 0, -12):
+        a = int(70 * (1 - r / (H * 0.85)) * fl0)
+        pygame.draw.circle(key, (255, 210, 140, a), (int(W * 0.56), int(H * 0.38)), r)
+    surf.blit(key, (0, 0))
+    vig = pygame.Surface((W, H), pygame.SRCALPHA)
+    vcx, vcy = int(W * 0.45), int(H * 0.42)
+    maxr = int(math.hypot(W, H) * 0.66); inner = int(maxr * 0.58)
+    for r in range(maxr, inner, -10):
+        a = max(0, int(140 * (1 - (r - inner) / (maxr - inner))))
+        pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
+    surf.blit(vig, (0, 0))

@@ -20,7 +20,8 @@ import re
 import pygame
 
 from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
-                        draw_vane_tableau, draw_hettie_tableau)
+                        draw_vane_tableau, draw_hettie_tableau,
+                        draw_crane_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -119,6 +120,28 @@ class TableauMixin:
             "tab_present": not self.save.flag("evidence_maras_receipt"),
             "paper_present": self.save.flag("newspaper_traded"),
         }
+
+    # ---------------------------------------------------- Crane conversation
+    def _open_crane_tableau(self, npc):
+        """Rev. Crane at his lectern, PRESENTED as a frozen close-up: the
+        chancel in candled dusk, the plain cross, the stopped hymn board,
+        the bell rope dead at the frame's edge. His HANDS carry the fork
+        the way the framing line does: folded over the lectern while he
+        waits, gripping its corners once the press has latched."""
+        self._tableau = {
+            "kind": "crane", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import CRANE_CONVO
+        open_conversation(self, npc, CRANE_CONVO, tableau=True)
+
+    def _crane_tableau_state(self):
+        """The close-up's live state: the press fork, latched for good by
+        `preacher_doomed` (`_crane_provoked`). Mirrors `_crane_prompt` so
+        the pose and the framing line always tell the same story."""
+        return {"doomed": self.save.flag("preacher_doomed")}
 
     # The two presentation hooks the Conversation calls in tableau mode.
     def _tableau_caption(self, who, name, text, on_complete):
@@ -222,7 +245,7 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
-        if tb["kind"] in ("sable", "vane", "hettie"):
+        if tb["kind"] in ("sable", "vane", "hettie", "crane"):
             self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
@@ -269,6 +292,9 @@ class TableauMixin:
             return
         if tb["kind"] == "hettie":
             self._draw_hettie_tableau(surf, tb)
+            return
+        if tb["kind"] == "crane":
+            self._draw_crane_tableau(surf, tb)
             return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])
@@ -342,6 +368,13 @@ class TableauMixin:
         st = self._hettie_tableau_state()
         st["glance"] = glance
         draw_hettie_tableau(surf, tb["t"], st)
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_crane_tableau(self, surf, tb):
+        draw_crane_tableau(surf, tb["t"], self._crane_tableau_state())
         if tb.get("caption") is not None:
             self._draw_tableau_caption(surf, tb["caption"])
         elif tb.get("menu") is not None:

@@ -1607,6 +1607,35 @@ def main():
     check(not _flock["avail"](gcf),
           "crane: once doomed the flock question retires")
 
+    # (Crane tableau, #2b) Talking to Crane opens the lectern close-up: the
+    # conversation runs in tableau presentation mode, and his POSE reads the
+    # press fork exactly as the framing line does (waits with hands folded,
+    # or done waiting once preacher_doomed latches).
+    import inspect as _ict
+    from scenes.dialogue import (preacher_dialogue as _prf,
+                                 _crane_prompt as _cpr)
+    check("_open_crane_tableau" in _ict.getsource(_prf),
+          "crane: talking to him opens the lectern close-up tableau")
+    gct = new_game()
+    gct.dialog.active = False
+    gct._open_crane_tableau(None)
+    check(gct._tableau is not None and gct._tableau["kind"] == "crane"
+          and gct._convo is not None and gct._convo.tableau is True,
+          "crane: the lectern tableau hosts the conversation")
+    check(not gct._crane_tableau_state()["doomed"]
+          and "hands folded" in _cpr(gct),
+          "crane: at rest, pose and framing both wait at the lectern")
+    gct.save.set_flag("preacher_doomed", True)
+    check(gct._crane_tableau_state()["doomed"]
+          and "done waiting" in _cpr(gct),
+          "crane: the latched press hardens pose and framing together")
+    class _EscC:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    gct._tableau_input(_EscC())
+    check(gct._tableau is None and gct._convo.active is False,
+          "crane: Escape closes the lectern tableau and ends the talk")
+
     # The Crane-provoke stall-breaker (`_the_third_thread`) was REMOVED with
     # the evidence rework (NARRATIVE §6, DESIGN.md §9): the surface trail is
     # now three carryable pickups in three fixed places (the tab, the slip,
@@ -2747,20 +2776,22 @@ def main():
     # talkable-NPC line reached through the interact path FLOATS over
     # the speaker's head and leaves the world running; narrator lines,
     # choices, and scripted (on_complete) beats stay in the MODAL box.
+    # (Vehicle: Toby -- the principals whose talks became close-up
+    # tableaux (Sable/Vane/Hettie/Crane) no longer float their greets.)
     gfs = new_game()
-    gfs.load_scene_now("church", "default")
+    gfs.load_scene_now("toby_house", "default")
     for _ in range(20):
         gfs.state = "playing"
         gfs.step(1 / 30.0)
-    _crane = next(n for n in gfs.scene.npcs
-                  if getattr(n, "tag", "") == "preacher")
-    gfs.player.x, gfs.player.y = _crane.x, _crane.y + 30
-    gfs._speaking_npc = _crane
-    _crane.interact(gfs)
+    _toby = next(n for n in gfs.scene.npcs
+                 if getattr(n, "sprite_kind", "") == "toby")
+    gfs.player.x, gfs.player.y = _toby.x, _toby.y + 30
+    gfs._speaking_npc = _toby
+    _toby.interact(gfs)
     gfs._speaking_npc = None
     check(gfs.float_speech.active and not gfs.dialog.active,
           "float: an interact-path NPC line floats (not the modal box)")
-    check(gfs.float_speech.speaker is _crane,
+    check(gfs.float_speech.speaker is _toby,
           "float: the caption tracks the speaker")
     _wf = (gfs.dialog.active or gfs.inv_ui.open or gfs.notebook_ui.open
            or gfs.text_input.active or gfs._flashback_phase is not None)
@@ -2768,7 +2799,7 @@ def main():
     # A narrator line goes NON-MODAL too now -- the lower-third
     # narration caption (ui/narration.py), world still running.
     gfs.float_speech.active = False
-    gfs._speaking_npc = _crane
+    gfs._speaking_npc = _toby
     gfs.dialog.show(["A cold room."], speaker="", portrait="narrator")
     gfs._speaking_npc = None
     check(gfs.narration.active and not gfs.dialog.active,
@@ -2790,7 +2821,7 @@ def main():
           "narration: an on_complete narrator beat stays modal")
     gfs.dialog.active = False
     gfs.dialog.on_complete = None
-    gfs._speaking_npc = _crane
+    gfs._speaking_npc = _toby
     gfs.dialog.show_choice("Pick", ["a", "b"], lambda i: None,
                            speaker="Crane", portrait="preacher")
     gfs._speaking_npc = None

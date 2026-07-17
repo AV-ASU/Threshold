@@ -229,10 +229,23 @@ Part B.
   (the Hettie-tableau block after her gate guards); text in `DIALOGUE.md`
   Part A + Part B.
 
+- **CRANE'S LECTERN landed (2026-07, the fourth seat).** `preacher_dialogue`
+  opens `CRANE_CONVO` in the chancel close-up (`_open_crane_tableau`; art
+  `draw_crane_tableau`, derived from his preacher sprite: black cassock,
+  white clerical collar, the small pale cross, gaunt and half a ghost).
+  Candled dusk: the plain wall cross, the stopped hymn board (one tile long
+  fallen), the arched window going out, the bell rope dead at the edge, his
+  kept candle stand the only light. Reactive: his HANDS read the press fork
+  exactly as the framing line does (`_crane_tableau_state` mirrors the new
+  callable `_crane_prompt`): folded over the lectern while he waits;
+  gripping its corners, head forward, once `preacher_doomed` latches (the
+  new framing variant "done waiting" landed in DIALOGUE.md with it).
+  Guarded by `tests/flow.py` (the Crane-tableau block after the fork
+  guards); text in `DIALOGUE.md` Part A + Part B.
+
   **Still open (the maintainer greenlights each):** the same treatment for
-  Crane's church and Toby, the **pedestal** (the Mask on the altar), and
-  Mara's confrontation / the cult Talk. Each is its own bespoke
-  environment + art pass, then wire.
+  Toby, the **pedestal** (the Mask on the altar), and Mara's confrontation /
+  the cult Talk. Each is its own bespoke environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
