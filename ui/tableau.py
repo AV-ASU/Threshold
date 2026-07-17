@@ -3,8 +3,10 @@
 Press [E] on a tagged prop and the world pauses on a high-detail, animated
 close-up of that thing, with a menu of options that mutate the tableau live
 (take the gun -> it leaves the table) and can open readable text. One system,
-reused for the bedroom desk (the pilot) and the face-across-a-table principal
-talks (Sable's reception desk, Vane's office), and later a pedestal. Pure
+reused for the bedroom desk (the pilot), the face-across-a-table principal
+talks (Sable's reception desk, Vane's office, Hettie's counter, Crane's
+lectern, Toby's table), the Talk's grip, the pedestal, and Mara's
+confrontation (the unmask reveal). Pure
 procedural draw, no assets (the project ethos).
 
 The per-kind art fns live here; the state machine + menu + reading overlay
@@ -1859,3 +1861,456 @@ def draw_altar_tableau(surf, t, state):
         a = max(0, int(205 * (1 - (r - inner) / (maxr - inner))))
         pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
     surf.blit(vig, (0, 0))
+
+
+# ---- MARA: the confrontation, the last seat -- and the REVEAL ----
+# Every other seat opens on a face. This one opens on a HOOD: she stands out
+# of the rank one more carved mask among the congregation (the Talk's grammar,
+# slighter -- and NEW wood, the last one in, no graft), the rite still running
+# at her back (the Sign's daub-strokes on the apse wall, the altar candles,
+# the kneeling rank, the rite-holder who never pauses). Then she lifts the
+# mask away, and the face from the photograph is under it, gone thin. Her
+# hands are the dig's ledger: raw knuckles, dark nailbeds, bleeding palms.
+def _mara_ease(u):
+    return u * u * (3 - 2 * u)
+
+
+def _draw_mara_face(surf, hx, hy, t, turn, lucid, named):
+    """The face under the mask: hers. Young and gone thin -- hollowed
+    cheeks, dark-ringed eyes (sad around them, like Hettie said), cracked
+    lips, dirt along the jaw, matted hair pressed flat under the hood.
+    `turn` shifts the features (the glance back toward the rite)."""
+    import pygame
+    skin = (174, 162, 148); sk_hi = (200, 190, 176); sk_lo = (124, 114, 102)
+    sk_sh = (90, 84, 76)
+    fx = hx + int(turn)
+    # the face plate inside the hood: a narrow oval, jaw drawn to a point
+    pygame.draw.ellipse(surf, skin, (hx - 64, hy - 84, 128, 158))
+    pygame.draw.polygon(surf, skin, [(hx - 42, hy + 50), (hx + 42, hy + 50),
+                                     (fx + 12, hy + 92), (fx - 12, hy + 92)])
+    # the shadow side (the candles are behind her; the chamber's spill is
+    # what lights her) + a pale key from high front
+    sh = pygame.Surface((160, 200), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (*sk_sh, 46), (0, 20, 56 - int(turn * 0.5), 160))
+    pygame.draw.ellipse(sh, (*sk_sh, 46), (0, 34, 40 - int(turn * 0.5), 130))
+    surf.blit(sh, (hx - 64, hy - 84))
+    hi = pygame.Surface((160, 200), pygame.SRCALPHA)
+    pygame.draw.ellipse(hi, (206, 192, 172, 40), (76, 22, 60, 116))
+    pygame.draw.ellipse(hi, (206, 192, 172, 40), (86, 34, 42, 92))
+    surf.blit(hi, (hx - 64, hy - 84))
+    # cheeks hollowed, softly (a winter underground)
+    pygame.draw.arc(surf, sk_lo, (fx - 46, hy + 2, 22, 38), 0.7, 2.1, 2)
+    pygame.draw.arc(surf, sk_lo, (fx + 24, hy + 2, 22, 38), 1.0, 2.4, 2)
+    # matted hair: a pressed-flat mass filling the crown, uneven hairline,
+    # side falls tucked into the hood
+    hair = (58, 46, 38); hair_lo = (40, 32, 27)
+    pygame.draw.polygon(surf, hair, [
+        (hx - 62, hy - 40), (hx - 58, hy - 74), (hx - 34, hy - 88),
+        (hx + 2, hy - 92), (hx + 38, hy - 86), (hx + 58, hy - 70),
+        (hx + 62, hy - 38), (hx + 52, hy - 52), (hx + 30, hy - 62),
+        (fx + 12, hy - 56), (fx - 8, hy - 60), (hx - 30, hy - 64),
+        (hx - 50, hy - 54)])
+    rnd = random.Random(23)
+    for k in range(7):                                   # comb of strands
+        sx0 = hx - 44 + k * 15 + rnd.randint(-2, 2)
+        pygame.draw.arc(surf, hair_lo,
+                        (sx0, hy - 84 + rnd.randint(0, 6), 16, 30), 1.0, 2.4, 2)
+    pygame.draw.polygon(surf, hair, [(hx - 64, hy - 44), (hx - 52, hy - 56),
+                                     (hx - 46, hy + 26), (hx - 60, hy + 20)])
+    pygame.draw.polygon(surf, hair, [(hx + 64, hy - 44), (hx + 52, hy - 56),
+                                     (hx + 46, hy + 26), (hx + 60, hy + 20)])
+    # one loose strand stuck at the brow
+    pygame.draw.arc(surf, hair_lo, (fx - 22, hy - 58, 36, 26), 3.7, 5.1, 2)
+    # the eyes: large, dark-ringed. Certainty is a calm, steady rest;
+    # lucid opens them wide and drops them to her hands; named tears them
+    # wider still, brows driven in.
+    blink = 1.0
+    ph = t % 4.7
+    if 4.55 <= ph < 4.7 and not (lucid or named):
+        blink = max(0.15, abs((ph - 4.625) / 0.075))
+    ring = (106, 94, 92)
+    look_dn = 7 if lucid else 0
+    look_sd = int(turn * 0.6)
+    for sgn in (-1, 1):
+        ex = fx + sgn * 26
+        ey = hy - 18
+        pygame.draw.ellipse(surf, ring, (ex - 15, ey - 10, 30, 25))     # the dark ring
+        pygame.draw.ellipse(surf, sk_lo, (ex - 14, ey - 8, 28, 19))
+        eh = int((15 if (lucid or named) else 11) * blink)
+        pygame.draw.ellipse(surf, (192, 188, 180),
+                            (ex - 11, ey - eh // 2, 22, max(2, eh)))    # the white
+        if blink > 0.3:
+            pygame.draw.circle(surf, (66, 52, 44),
+                               (ex + look_sd, ey + look_dn // 2), 5)
+            pygame.draw.circle(surf, (24, 18, 16),
+                               (ex + look_sd, ey + look_dn // 2), 3)
+            pygame.draw.circle(surf, (222, 218, 210),
+                               (ex + look_sd - 2, ey + look_dn // 2 - 2), 1)
+        # lower-lid shadow: the long hunger
+        pygame.draw.arc(surf, ring, (ex - 12, ey + 3, 24, 15), 3.5, 6.0, 2)
+    # brows: soft, inner ends lifted (sad around the eyes); named drives
+    # them in hard, lucid raises them
+    for sgn in (-1, 1):
+        bx = fx + sgn * 26
+        by = hy - 36
+        if named:
+            pygame.draw.line(surf, (70, 58, 50), (bx - sgn * 14, by + 5),
+                             (bx + sgn * 12, by - 3), 4)
+        elif lucid:
+            pygame.draw.line(surf, (70, 58, 50), (bx - sgn * 14, by - 5),
+                             (bx + sgn * 12, by - 1), 4)
+        else:
+            pygame.draw.line(surf, (70, 58, 50), (bx - sgn * 14, by - 1),
+                             (bx + sgn * 12, by + 1), 3)
+    # the nose: thin, a shadow line
+    pygame.draw.line(surf, sk_lo, (fx + 1, hy - 12), (fx - 1, hy + 16), 3)
+    pygame.draw.ellipse(surf, sk_lo, (fx - 5, hy + 13, 10, 6))
+    # the mouth: pale, cracked. Calm-set at rest; parted at lucid; pulled
+    # open at named.
+    my = hy + 38
+    lip = (132, 94, 90)
+    if named:
+        pygame.draw.ellipse(surf, (54, 38, 36), (fx - 11, my - 4, 22, 12))
+        pygame.draw.line(surf, lip, (fx - 14, my - 3), (fx + 14, my - 3), 2)
+    elif lucid:
+        pygame.draw.ellipse(surf, (60, 44, 42), (fx - 8, my - 3, 16, 9))
+        pygame.draw.line(surf, lip, (fx - 11, my - 3), (fx + 11, my - 3), 2)
+    else:
+        pygame.draw.line(surf, lip, (fx - 12, my), (fx + 12, my), 3)
+        pygame.draw.line(surf, sk_lo, (fx - 15, my + 1), (fx - 11, my), 1)
+        pygame.draw.line(surf, sk_lo, (fx + 11, my), (fx + 15, my + 1), 1)
+    for k in range(2):                                                # cracked lips
+        pygame.draw.line(surf, sk_lo, (fx - 6 + k * 9, my - 3),
+                         (fx - 6 + k * 9, my + 3), 1)
+    # dirt: smudges along the jaw and one streak at the temple
+    dirt = (100, 86, 68)
+    pygame.draw.arc(surf, dirt, (fx - 34, hy + 48, 26, 16), 3.6, 5.4, 2)
+    pygame.draw.arc(surf, dirt, (fx + 10, hy + 54, 24, 14), 3.8, 5.6, 2)
+    pygame.draw.line(surf, dirt, (hx + 44, hy - 30), (hx + 48, hy - 8), 2)
+
+
+def _mara_carved_mask(surf, mx, my, tilt_deg, embers, t):
+    """Her carved mask: the congregation's grammar (a hewn oval, recessed
+    void sockets, no mouth) but NEW wood -- the last one in, the cleanest
+    cuts, no graft. `embers` 0..1: the gold far down in the sockets (it
+    dies as the wood comes off the face)."""
+    import pygame
+    S = 240
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    cx = cy = S // 2
+    mw, mh = 78, 102
+    rnd = random.Random(31)
+    pts = []
+    for k in range(14):
+        a = -math.pi / 2 + k * (math.pi * 2 / 14)
+        jr = 1.0 + rnd.uniform(-0.05, 0.05)
+        pts.append((cx + int(math.cos(a) * mw * jr),
+                    cy + int(math.sin(a) * mh * jr)))
+    pygame.draw.polygon(m, (172, 150, 114), pts)
+    pygame.draw.polygon(m, (112, 94, 68), pts, 4)
+    # fine straight grain: new wood, cleanly worked
+    for gx in range(-40, 44, 11):
+        pygame.draw.arc(m, (146, 124, 90),
+                        (cx + gx - 7, cy - mh + 14, 20, mh * 2 - 28), 1.3, 1.9, 1)
+    pygame.draw.line(m, (152, 130, 96), (cx - mw + 14, cy - 52), (cx - 9, cy - 72), 3)
+    pygame.draw.line(m, (152, 130, 96), (cx + 12, cy - 74), (cx + mw - 14, cy - 50), 3)
+    pygame.draw.line(m, (152, 130, 96), (cx - mw + 12, cy + 40), (cx - 8, cy + 62), 3)
+    # the carved void sockets, hand-cut a little unlevel
+    for sgn, ph in ((-1, 0.0), (1, 1.6)):
+        ex = cx + sgn * 29
+        ey = cy - 12 + (4 if sgn > 0 else 0)
+        pygame.draw.ellipse(m, (122, 102, 74), (ex - 21, ey - 18, 42, 38))
+        pygame.draw.ellipse(m, (36, 30, 24), (ex - 17, ey - 13, 34, 31))
+        pygame.draw.ellipse(m, (6, 5, 7), (ex - 13, ey - 8, 26, 24))
+        if embers > 0.02:
+            glow = (0.5 + 0.5 * math.sin(t * 1.1 + ph)) * embers
+            g = pygame.Surface((26, 24), pygame.SRCALPHA)
+            pygame.draw.circle(g, (230, 186, 48, int(34 * glow)), (13, 16), 9)
+            m.blit(g, (ex - 13, ey - 8), special_flags=pygame.BLEND_RGBA_ADD)
+            pygame.draw.circle(m, (150, 120, 50), (ex, ey + 8), 2)
+            if glow > 0.4:
+                pygame.draw.circle(m, (255, 218, 96), (ex - 1, ey + 7), 1)
+    # no mouth. the wood does not move.
+    if tilt_deg:
+        m = pygame.transform.rotate(m, tilt_deg)
+    surf.blit(m, m.get_rect(center=(int(mx), int(my))))
+
+
+def _mara_dig_hand(surf, x, y, ang_deg, scale=1.0, palm=False, mirror=False):
+    """A dig-ruined hand: thin, knuckles raw, nailbeds dark, dirt in the
+    creases. Drawn fingers-up at `ang_deg` 0; rotate for grips."""
+    import pygame
+    S = 130
+    h = pygame.Surface((S, S), pygame.SRCALPHA)
+    hx, hy = S // 2, S // 2 + 16
+    skin = (162, 152, 140); lo = (114, 104, 94)
+    raw = (126, 64, 54); nail = (66, 40, 34); dirt = (76, 66, 55)
+    pygame.draw.ellipse(h, skin, (hx - 24, hy - 14, 48, 40))          # the back
+    pygame.draw.ellipse(h, lo, (hx - 24, hy - 14, 48, 40), 2)
+    for fk in range(4):                                               # fingers, closed rank
+        fx = hx - 15 + fk * 10
+        fl = 32 + (3 if fk in (1, 2) else -2)
+        pygame.draw.line(h, skin, (fx, hy - 9), (fx + 1, hy - 9 - fl), 10)
+        if not palm:
+            pygame.draw.line(h, lo, (fx + 4, hy - 12), (fx + 5, hy - 6 - fl), 1)
+            pygame.draw.circle(h, raw, (fx, hy - 9 - fl + 5), 2)      # raw knuckle
+            pygame.draw.line(h, nail, (fx, hy - 9 - fl), (fx + 2, hy - 9 - fl), 2)
+    pygame.draw.line(h, skin, (hx - 24, hy + 4), (hx - 33, hy + 18),
+                     7 if palm else 10)                               # thumb
+    if palm:
+        # the dig, written on the palm: creases picked out in dirt, the
+        # fingers parted by faint seams, the heel scraped raw
+        for fk in range(3):
+            fxs = hx - 10 + fk * 10
+            pygame.draw.line(h, lo, (fxs, hy - 12), (fxs + 1, hy - 34), 1)
+        pygame.draw.arc(h, dirt, (hx - 16, hy - 8, 32, 22), 3.4, 5.9, 2)
+        pygame.draw.arc(h, dirt, (hx - 14, hy - 2, 26, 18), 3.5, 5.7, 1)
+        pygame.draw.ellipse(h, (110, 52, 44), (hx - 5, hy + 9, 13, 8))
+    else:
+        pygame.draw.circle(h, raw, (hx - 32, hy + 15), 2)
+        pygame.draw.line(h, dirt, (hx - 14, hy + 10), (hx + 12, hy + 12), 2)
+    if mirror:
+        h = pygame.transform.flip(h, True, False)
+    if scale != 1.0:
+        n = int(S * scale)
+        h = pygame.transform.smoothscale(h, (n, n))
+    if ang_deg:
+        h = pygame.transform.rotate(h, ang_deg)
+    surf.blit(h, h.get_rect(center=(int(x), int(y))))
+
+
+def draw_mara_tableau(surf, t, state):
+    import pygame
+    W, H = surf.get_width(), surf.get_height()
+    u = _mara_ease(max(0.0, min(1.0, state.get("unmask", 0.0))))
+    glance = state.get("glance", 0.0)
+    lucid = state.get("lucid", False)
+    named = state.get("named", False)
+
+    # -- the nave, cult-dark --
+    top = (20, 19, 23); bot = (7, 7, 9)
+    for y in range(0, H, 2):
+        surf.fill(_lerp(top, bot, y / H), (0, y, W, 2))
+    for i in range(5):                                               # stone seams
+        yy = int(H * (0.06 + 0.07 * i))
+        pygame.draw.line(surf, (30, 28, 33), (0, yy), (W, yy + 2), 1)
+
+    # -- the rite at her back: the Sign, the altar, the rite-holder --
+    sgx, sgy = int(W * 0.40), int(H * 0.015)
+    breath = 0.5 + 0.5 * math.sin(t * 0.7)
+    glow = pygame.Surface((W, H), pygame.SRCALPHA)
+    for r in range(150, 0, -6):
+        a = int(26 * (1 - r / 150) * (0.7 + 0.3 * breath))
+        pygame.draw.circle(glow, (196, 176, 70, a), (sgx, sgy), r)
+    surf.blit(glow, (0, 0))
+    _mara_sign_far(surf, sgx, sgy, 95, t)
+    # the altar: a low dark block under the Sign, two candle points
+    ax0, ay0 = sgx, int(H * 0.235)
+    pygame.draw.polygon(surf, (38, 34, 30), [(ax0 - 80, ay0), (ax0 + 80, ay0),
+                                             (ax0 + 96, ay0 + 24), (ax0 - 96, ay0 + 24)])
+    for dx in (-62, 62):
+        fl = 1.0 + 0.3 * math.sin(t * 7.1 + dx) * math.sin(t * 2.3)
+        pygame.draw.rect(surf, (130, 122, 104), (ax0 + dx - 2, ay0 - 13, 4, 13))
+        pygame.draw.ellipse(surf, (255, 214, 120),
+                            (ax0 + dx - 3, ay0 - 13 - int(9 * fl), 6, int(9 * fl)))
+        cg = pygame.Surface((160, 130), pygame.SRCALPHA)
+        for r in range(64, 0, -6):
+            k = 0.16 * (1 - r / 64)
+            pygame.draw.circle(cg, (int(255 * k), int(196 * k), int(108 * k), 255),
+                               (80, 65), r)
+        surf.blit(cg, (ax0 + dx - 80, ay0 - 78), special_flags=pygame.BLEND_RGB_ADD)
+    # the rite-holder, bowed at the altar's foot: the one that never pauses
+    pygame.draw.ellipse(surf, (30, 26, 30), (ax0 - 22, ay0 + 20, 44, 32))
+    pygame.draw.circle(surf, (38, 33, 37), (ax0, ay0 + 24), 11)
+
+    # -- the kneeling rank, seen from behind, backlit --
+    stir = 1.0 if named else 0.0
+    rnd = random.Random(41)
+    for row, (ry, rs, xs) in enumerate([(0.37, 0.66, (-3, -2, -1, 1, 2, 3)),
+                                        (0.47, 0.92, (-3, -2, 2, 3))]):
+        yy = int(H * ry)
+        for k in xs:
+            fx2 = int(W * 0.5 + k * W * 0.09 * (1 + row * 0.4)) + rnd.randint(-6, 6)
+            hump = int(56 * rs)
+            col = _lerp((22, 20, 24), (42, 37, 40), row)
+            lift = int(stir * (7 + (abs(k) % 3) * 4) * rs)
+            pygame.draw.ellipse(surf, col, (fx2 - int(26 * rs), yy - hump - lift,
+                                            int(52 * rs), hump + int(26 * rs)))
+            hdx = int(stir * (4 if k > 0 else -4))
+            pygame.draw.circle(surf, col, (fx2 + hdx, yy - hump - lift + int(7 * rs)),
+                               int(14 * rs))
+            pygame.draw.arc(surf, _lerp((52, 44, 32), (72, 60, 42), row),
+                            (fx2 - int(14 * rs) + hdx, yy - hump - lift - int(7 * rs),
+                             int(28 * rs), int(28 * rs)),
+                            0.9, 2.2, 2)                              # candle rim on the hood
+
+    # -- HER: the hood, the coat, the mask that comes away --
+    cx = int(W * 0.5)
+    cy = int(H * 0.40) + int(2 * math.sin(t * 0.8))
+    lean = int(6 * (1.0 if named else 0.0))
+    cy += lean
+    hood_r = 126
+    tt = cy + int(hood_r * 0.62)
+
+    # the hide coat: slighter than the Talk's mass; her shoulders slope
+    pygame.draw.polygon(surf, (58, 45, 32), [(cx - 200, tt + 82), (cx - 102, tt + 28),
+                                             (cx + 102, tt + 28), (cx + 200, tt + 82),
+                                             (cx + 262, H), (cx - 262, H)])
+    pygame.draw.polygon(surf, (44, 36, 30), [(cx + 8, tt + 32), (cx + 102, tt + 28),
+                                             (cx + 200, tt + 82), (cx + 262, H),
+                                             (cx + 22, H)])
+    pygame.draw.polygon(surf, (68, 53, 38), [(cx - 200, tt + 82), (cx - 102, tt + 28),
+                                             (cx - 64, tt + 48), (cx - 138, H),
+                                             (cx - 262, H)])
+    for i in range(6):                                               # bone-thread seam
+        sy0 = tt + 68 + i * 44
+        pygame.draw.line(surf, (150, 138, 112), (cx - 2, sy0), (cx + 2, sy0 + 8), 3)
+    for k in range(2):                                               # patch seams
+        for j in range(3):
+            sy0 = tt + 100 + k * 88 + j * 13
+            pygame.draw.line(surf, (150, 138, 112), (cx - 102 + k * 7, sy0),
+                             (cx - 94 + k * 7, sy0 + 8), 2)
+    # fur collar
+    for fx3 in range(cx - 110, cx + 112, 9):
+        fh = 12 + (fx3 % 13)
+        pygame.draw.line(surf, (112, 93, 64), (fx3, tt + 38), (fx3 + 2, tt + 38 - fh), 3)
+
+    # the deep fur hood
+    pygame.draw.ellipse(surf, (74, 61, 42), (cx - hood_r, cy - hood_r - 10,
+                                             hood_r * 2, hood_r * 2 + 36))
+    pygame.draw.ellipse(surf, (52, 42, 30), (cx - hood_r + 12, cy - hood_r + 2,
+                                             hood_r * 2 - 24, hood_r * 2 + 12))
+    rnd2 = random.Random(7)
+    for _ in range(140):                                             # fur ticks, short on top
+        a2 = rnd2.uniform(0, math.pi * 2)
+        rr = hood_r - rnd2.randint(0, 10)
+        fx4 = cx + int(math.cos(a2) * rr)
+        fy = cy + 6 + int(math.sin(a2) * (rr * 0.94))
+        ln = rnd2.randint(5, 11)
+        if math.sin(a2) < -0.3:
+            ln = max(3, ln - 5)
+        pygame.draw.line(surf, (112, 93, 64), (fx4, fy),
+                         (fx4 + int(math.cos(a2) * ln), fy + int(math.sin(a2) * ln)), 1)
+    # the opening: near-black, the face's frame
+    pygame.draw.ellipse(surf, (14, 12, 11), (cx - hood_r + 32, cy - hood_r + 24,
+                                             hood_r * 2 - 64, hood_r * 2 - 30))
+
+    # the face (revealed behind the lifting wood)
+    turn = -18 * glance
+    if u > 0.10:
+        _draw_mara_face(surf, cx, cy - 4, t, turn, lucid, named)
+
+    # the mask: worn -> pulled down off the face (her eyes come free
+    # first) -> carried out of the frame in her hand
+    if u < 0.55:
+        ph1 = u / 0.55
+        mmx = cx + int(8 * ph1)
+        mmy = cy - 4 + int(88 * _mara_ease(ph1))
+        tilt = -13 * ph1
+        embers = max(0.0, 1.0 - ph1 * 1.7)
+        _mara_carved_mask(surf, mmx, mmy, tilt, embers, t)
+        if u > 0.03:                                                 # her hands on its edges
+            grip = _mara_ease(min(1.0, u / 0.16))
+            _mara_dig_hand(surf, mmx - 64, mmy + 44 + int(20 * (1 - grip)), -28, 1.05)
+            _mara_dig_hand(surf, mmx + 64, mmy + 48 + int(20 * (1 - grip)), 28, 1.05,
+                      mirror=True)
+    elif u < 1.0:
+        ph2 = (u - 0.55) / 0.45
+        mmx = cx + int(8 + 250 * _mara_ease(ph2))
+        mmy = (cy + 84) + int((H + 130 - (cy + 84)) * _mara_ease(ph2))
+        tilt = -13 - 48 * ph2
+        _mara_carved_mask(surf, mmx, mmy, tilt, 0.0, t)
+        _mara_dig_hand(surf, mmx - 50, mmy + 12, -84 + int(26 * ph2), 1.1)
+
+    # lucid: both hands come up to her chest, palm-up, and she looks down
+    # at them ("My hands. Look at my hands.")
+    if lucid and u >= 1.0:
+        tr = int(1.5 * math.sin(t * 13.0))
+        hy0 = cy + 168
+        for sgn in (-1, 1):                              # hide sleeves under them
+            pygame.draw.polygon(surf, (66, 52, 37),
+                                [(cx + sgn * 170, H), (cx + sgn * 180, H - 60),
+                                 (cx + sgn * 68, hy0 + 26), (cx + sgn * 26, hy0 + 70),
+                                 (cx + sgn * 60, H)])
+            pygame.draw.line(surf, (108, 90, 62),
+                             (cx + sgn * 68, hy0 + 28), (cx + sgn * 40, hy0 + 62), 4)
+        _mara_dig_hand(surf, cx - 70, hy0 + tr, 168, 1.5, palm=True)
+        _mara_dig_hand(surf, cx + 70, hy0 + 6 - tr, -168, 1.5, palm=True, mirror=True)
+
+    # named: her fist closes on YOUR coat at the frame's corner
+    if named:
+        pygame.draw.polygon(surf, (44, 42, 46), [(0, H - 160), (int(W * 0.31), H - 100),
+                                                 (int(W * 0.35), H), (0, H)])
+        pygame.draw.line(surf, (86, 82, 88), (0, H - 156), (int(W * 0.30), H - 98), 5)
+        pygame.draw.line(surf, (28, 26, 28), (0, H - 146), (int(W * 0.29), H - 88), 2)
+        # her thin arm, hide-sleeved, from the coat mass to your lapel
+        pygame.draw.polygon(surf, (78, 61, 43),
+                            [(cx - 176, tt + 110), (cx - 76, tt + 48),
+                             (int(W * 0.25), H - 142), (int(W * 0.155), H - 64)])
+        pygame.draw.polygon(surf, (52, 42, 31),
+                            [(cx - 176, tt + 110), (cx - 136, tt + 80),
+                             (int(W * 0.20), H - 92), (int(W * 0.155), H - 64)])
+        pygame.draw.line(surf, (150, 138, 112),                      # a seam catches light
+                         (cx - 110, tt + 72), (int(W * 0.23), H - 122), 2)
+        for fr in range(3):                                          # fur cuff at the wrist
+            pygame.draw.line(surf, (108, 90, 62),
+                             (int(W * 0.225) - fr * 9, H - 138 + fr * 8),
+                             (int(W * 0.245) - fr * 9, H - 152 + fr * 8), 3)
+        fx5, fy5 = int(W * 0.205), H - 118
+        # the fold of your coat she has pulled up in her fist
+        pygame.draw.polygon(surf, (58, 55, 60), [(fx5 - 12, fy5 + 36), (fx5 + 5, fy5 - 22),
+                                                 (fx5 + 24, fy5 + 34)])
+        pygame.draw.ellipse(surf, (166, 154, 140), (fx5 - 26, fy5 - 17, 60, 40))
+        pygame.draw.ellipse(surf, (116, 106, 94), (fx5 - 26, fy5 - 17, 60, 40), 2)
+        for fk in range(4):                                          # fingers wrap the fold
+            kx = fx5 - 14 + fk * 13
+            pygame.draw.line(surf, (166, 154, 140), (kx, fy5 + 3),
+                             (kx - 3, fy5 + 32), 11)
+            pygame.draw.circle(surf, (198, 188, 172), (kx, fy5 + 3), 6)  # knuckles, white
+            pygame.draw.circle(surf, (128, 66, 54), (kx, fy5 + 3), 2)
+        pygame.draw.line(surf, (206, 196, 182), (fx5 - 22, fy5 - 12),
+                         (fx5 + 28, fy5 - 15), 2)
+
+    # -- the dark leans in --
+    vig = pygame.Surface((W, H), pygame.SRCALPHA)
+    vcx, vcy = cx, cy + 30
+    maxr = int(math.hypot(W, H) * 0.62); inner = int(maxr * 0.34)
+    for r in range(maxr, inner, -8):
+        a = min(235, int(235 * (r - inner) / (maxr - inner)))
+        pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
+    surf.blit(vig, (0, 0))
+
+
+def _mara_sign_far(surf, cx, cy, R, t):
+    """The Sign's presence on the far apse wall, at distance: broad broken
+    jaundiced daub-strokes and the runs off them, breathing in the glow.
+    Deliberately abstract (no oval, no sockets): at this size a full glyph
+    gestalts into a face, and the altar close-up owns the proper look."""
+    import pygame
+    rng = random.Random(3)
+    pulse = 1.0 + math.sin(t * 0.9) * 0.03
+    col = (142, 126, 50); dark = (76, 66, 26)
+    # two thin broken arc-strokes, the start of the glyph's sweep, cropped
+    for (ox, oy, w0, h0, spans, th) in (
+            (-R * 0.9, -R * 0.55, R * 1.8, R * 1.25,
+             ((3.4, 4.1), (4.4, 5.2)), 5),
+            (-R * 0.55, -R * 0.05, R * 1.3, R * 0.85,
+             ((3.7, 4.3), (4.7, 5.1)), 4)):
+        rect = (int(cx + ox), int(cy + oy),
+                int(w0 * pulse), int(h0 * pulse))
+        for a0, a1 in spans:
+            pygame.draw.arc(surf, dark, rect, a0, a1, th + 2)
+            pygame.draw.arc(surf, col, rect, a0 + 0.05, a1 - 0.05, th)
+    # short crossing slashes where the strokes were dragged
+    for k in range(3):
+        sx0 = cx + int(rng.uniform(-R * 0.8, R * 0.9))
+        sy0 = cy + int(rng.uniform(R * 0.1, R * 0.6))
+        pygame.draw.line(surf, dark, (sx0, sy0),
+                         (sx0 + rng.randint(14, 30), sy0 - rng.randint(6, 16)), 3)
+    # the paint runs, off the lowest stroke
+    for dx, fl in ((-R * 0.45, 1.0), (R * 0.05, 0.7), (R * 0.5, 0.5)):
+        rl = int(R * 0.8 * fl)
+        x0 = int(cx + dx); y0 = int(cy + R * 0.55)
+        pygame.draw.line(surf, dark, (x0, y0), (x0, y0 + rl), 2)
+        pygame.draw.line(surf, col, (x0, y0), (x0, y0 + rl), 1)
+

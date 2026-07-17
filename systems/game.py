@@ -872,11 +872,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # scene -- drop the caption on load. Narration goes too: an
         # examine line (and any chained callback) belongs to the room
         # it fired in. An organic conversation (ui/conversation) dies
-        # with its partner for the same reason.
+        # with its partner for the same reason, and so does a close-up
+        # tableau (its prop/partner was rebuilt with the scene).
         self.float_speech.active = False
         self.float_speech.speaker = None
         self.narration.clear()
         self._convo = None
+        self._tableau = None
         self._build_fold_cache()
         self._build_door_views()
         # Fold pursuit hand-off: if the player fled here through a fold with

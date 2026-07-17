@@ -59,6 +59,12 @@ A BEAT is one of:
     ("pi",  "text")               PI line, floats over the player
     ("ask", "prompt",             an inline branch (modal pick)
         [ (label, [beats], on_pick_or_None), ... ])
+    ("do",  fn)                   a silent side effect mid-chain: runs
+                                  fn(game) and steps straight on (Mara's
+                                  unmask reveal rides this)
+
+`name` may also be a callable(game) -> str, so the speaker's LISTING can
+change mid-talk (Mara reads as one of the congregation until the unmask).
 
 `on_pick(game)` runs a side effect (set a flag, file a note) when its
 option is chosen; its sub-beats splice in ahead of the rest.
@@ -196,6 +202,8 @@ class Conversation:
 
     def _float(self, who, text):
         name = "" if who == "pi" else self.convo.get("name", "")
+        if callable(name):
+            name = name(self.game)
         if self.tableau:
             # In the tableau the line is a caption over the close-up; E
             # advances it, which fires _step (the next beat).
@@ -246,6 +254,11 @@ class Conversation:
             self._float(kind, beat[1])
         elif kind == "ask":
             self._inline_choice(beat[1], beat[2])
+        elif kind == "do":
+            # a silent side effect between spoken beats (no caption of its
+            # own): run it and step straight on
+            beat[1](self.game)
+            self._step()
         else:
             self._step()
 

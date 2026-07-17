@@ -8,7 +8,10 @@ over everything, and `handle_event` routes input to `_tableau_input` while it
 is up. The pilot is the bedroom writing desk (the pistol + the case file);
 `ui/tableau.draw_desk_tableau` is its art. New tableaux add an art fn there and
 an opener here. The face-across-a-table principal talks (Sable's reception
-desk, Vane's office, Hettie's counter, Crane's lectern, Toby's little table)
+desk, Vane's office, Hettie's counter, Crane's lectern, Toby's little table,
+and Mara's confrontation at the Sign Chamber, the seat with the REVEAL: she
+opens as one more hooded mask of the congregation, listed as one of them,
+until the greet's reveal beat lifts the mask away)
 HOST a live Conversation instead of a fixed option list:
 `open_conversation(..., tableau=True)` routes its spoken beats to
 `_tableau_caption` and its question menu to `_tableau_choices`, and the art
@@ -23,7 +26,8 @@ import pygame
 from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
                         draw_vane_tableau, draw_hettie_tableau,
                         draw_crane_tableau, draw_toby_tableau,
-                        draw_talk_tableau, draw_altar_tableau)
+                        draw_talk_tableau, draw_altar_tableau,
+                        draw_mara_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -173,6 +177,46 @@ class TableauMixin:
             "believed": self.save.flag("convo_toby_holding_up_asked"),
         }
 
+    # ----------------------------------------------------- Mara conversation
+    def _open_mara_tableau(self, npc):
+        """Mara's confrontation (the last #2b seat), PRESENTED as a frozen
+        close-up with the rite still running at her back. She opens as ONE
+        OF THEM: the carved mask and hood of the congregation fill the
+        frame, and the caption lists her as one of them, until the greet's
+        reveal beat lifts the mask away (`_mara_unmask`) and the listing
+        turns to her name. The talk is MARA_CONVO in tableau mode; the
+        close-up reads the confrontation's turns live (`lucid` drops her
+        eyes to her ruined hands, `named` closes her fist on the PI's
+        coat and stirs the rank)."""
+        self._tableau = {
+            "kind": "mara", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None, "state": {"unmask_t": None},
+        }
+        from ui.conversation import open_conversation
+        from scenes.well import MARA_CONVO
+        open_conversation(self, npc, MARA_CONVO, tableau=True)
+
+    def _mara_unmask(self):
+        """The reveal beat (fired by MARA_CONVO's greet): she lifts the
+        carved mask away. Latches the run flag (the caption listing reads
+        it) and stamps the close-up's animation clock."""
+        self.save.set_flag("mara_unmasked", True)
+        tb = self._tableau
+        if tb is not None and tb.get("kind") == "mara":
+            tb["state"]["unmask_t"] = tb["t"]
+        self.audio.play("wood_creak", 0.32)
+
+    def _mara_tableau_state(self):
+        """The close-up's live state: the confrontation's turns, as save
+        flags. `lucid` is the father card's slip (her eyes drop to her
+        hands); `named` is the name-beat (her fist on your coat, the rank
+        stirring). The unmask progress is tableau-local (`unmask_t`)."""
+        return {
+            "unmasked": self.save.flag("mara_unmasked"),
+            "lucid": self.save.flag("mara_lucid"),
+            "named": self.save.flag("mara_named"),
+        }
+
     # ------------------------------------------------------------- THE TALK
     def _open_talk_tableau(self, on_done):
         """The first cult grab of a run, PRESENTED as the closest close-up
@@ -277,10 +321,16 @@ class TableauMixin:
     def _convo_tableau_input(self, ev, tb):
         """Input for any caption/menu tableau (the principal seats + the
         Talk): E advances the caption, up/down/E works the menu, Escape
-        ends a SEAT's talk and drops the close-up. THE TALK is the
-        exception: you do not walk out of the grip, so Escape pages like
-        E instead of aborting (its release must always run)."""
-        if ev.key == pygame.K_ESCAPE and tb["kind"] != "talk":
+        ends a SEAT's talk and drops the close-up. Two exceptions: THE
+        TALK never aborts (you do not walk out of the grip, so Escape
+        pages like E; its release must always run), and MARA's captions
+        page too (the calling-out is not walked out of mid-line, so the
+        greet's reveal always lands; her menu still takes Escape as
+        "Say nothing.")."""
+        esc_pages = (tb["kind"] == "talk"
+                     or (tb["kind"] == "mara"
+                         and tb.get("caption") is not None))
+        if ev.key == pygame.K_ESCAPE and not esc_pages:
             if getattr(self, "_convo", None) is not None:
                 self._convo.active = False
             self._close_tableau()
@@ -288,8 +338,7 @@ class TableauMixin:
         cap, menu = tb.get("caption"), tb.get("menu")
         adv = (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE)
         if cap is not None:
-            if ev.key in adv or (tb["kind"] == "talk"
-                                 and ev.key == pygame.K_ESCAPE):
+            if ev.key in adv or (esc_pages and ev.key == pygame.K_ESCAPE):
                 cb = cap["cb"]
                 tb["caption"] = None
                 if cb:
@@ -364,7 +413,7 @@ class TableauMixin:
             return
         tb = self._tableau
         if tb["kind"] in ("sable", "vane", "hettie", "crane", "toby",
-                          "talk", "altar"):
+                          "mara", "talk", "altar"):
             self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
@@ -417,6 +466,9 @@ class TableauMixin:
             return
         if tb["kind"] == "toby":
             self._draw_toby_tableau(surf, tb)
+            return
+        if tb["kind"] == "mara":
+            self._draw_mara_tableau(surf, tb)
             return
         if tb["kind"] == "talk":
             draw_talk_tableau(surf, tb["t"], tb["state"])
@@ -524,6 +576,33 @@ class TableauMixin:
         st = self._toby_tableau_state()
         st["watch"] = watch
         draw_toby_tableau(surf, tb["t"], st)
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_mara_tableau(self, surf, tb):
+        # The unmask animates from the reveal beat's stamp (worn until it
+        # fires; a re-opened talk after the reveal shows her bare-faced
+        # from the first frame). Her idle, once bare: the glance pulled
+        # back toward the rite behind her, eased both ways -- suspended
+        # while a turn of the talk holds her (lucid/named).
+        st = self._mara_tableau_state()
+        ut = tb["state"].get("unmask_t")
+        if not st.pop("unmasked"):
+            u = 0.0
+        elif ut is None:
+            u = 1.0
+        else:
+            u = min(1.0, (tb["t"] - ut) / 1.6)
+        st["unmask"] = u
+        glance = 0.0
+        if u >= 1.0 and not (st["lucid"] or st["named"]):
+            ph = tb["t"] % 7.8
+            if 5.6 <= ph < 7.3:
+                glance = min(1.0, (ph - 5.6) / 0.4, (7.3 - ph) / 0.4)
+        st["glance"] = glance
+        draw_mara_tableau(surf, tb["t"], st)
         if tb.get("caption") is not None:
             self._draw_tableau_caption(surf, tb["caption"])
         elif tb.get("menu") is not None:

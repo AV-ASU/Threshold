@@ -420,8 +420,19 @@ intro:" / "Opener photo:").
   **Who:** the quarry, already turned; proof, not a counted beat. She never
   says the boy's name (invariant, flow §28c). The calling-out fires on first
   entry; the exchange opens whatever the player asks.
-- **Greet** (`mara_confront_greeted`):
-  - (npc) "My father sent you. Of course he did. He never could let a thing stay lost."
+- **Presentation (2026-07):** `_mara_voice` opens `MARA_CONVO` inside a
+  frozen close-up **tableau** (`_open_mara_tableau`, `tableau=True`), the
+  last of the seats, with the REVEAL: she opens as ONE OF THEM (the carved
+  mask and hood of the congregation fill the frame) and the caption **LISTS
+  her as "One of them"** until the greet's unmask beat lifts the mask away;
+  from then on the listing reads "Mara". Her first line lands from behind
+  the wood. Escape PAGES her captions (the reveal cannot be walked out of
+  mid-line); only her menu takes Escape as "Say nothing." The words are
+  identical either way (below). See Part B "The close-up examine tableaux."
+- **Greet** (`mara_confront_greeted`; the second beat is the reveal's stage
+  caption, landed as the mask comes away):
+  - (npc, listed "One of them") "My father sent you. Of course he did. He never could let a thing stay lost."
+  - (npc, the listing turns "Mara") "[c=dim]She lifts the mask away. The face from the photograph, gone thin.[/c]"
   - (npc) "Tell him what I told him at the start. I'm not lost. I've never been this close."
   - (npc) "[c=dim]I was not taken. I was answered, and I went to it gladly.[/c]"
 - **Exchange `leave`** — "Come with me.":
@@ -632,6 +643,24 @@ text:
   once he has told what he saw (`toby_told`), and his worried **brows
   level out** once the PI has made the promise
   (`convo_toby_holding_up_asked`).
+- **Mara's confrontation** (`_open_mara_tableau`, opened from `_mara_voice`
+  at the calling-out; words under **Mara** in Part A). The last seat, and
+  the REVEAL: she stands out of the rank one more hood of the congregation,
+  the carved mask (the Talk's grammar, slighter, NEW wood: the last one in,
+  the cleanest cuts, no graft) with the gold embers far down in the
+  sockets, the rite still running at her back (the Sign's daub-strokes on
+  the apse wall, the altar candles, the kneeling rank, the rite-holder who
+  never pauses). The caption LISTS her as "One of them" until the greet's
+  reveal beat: her hands come up (the dig's ledger: raw knuckles, dark
+  nailbeds), pull the mask down off her face (her eyes come free first, the
+  embers dying as the wood leaves the flesh), and carry it out of the frame;
+  the face from the photograph is under it, gone thin, and the listing turns
+  to her name. Reactive: her idle glances back toward the rite behind her
+  (the pull, made pose); the father card (`mara_lucid`) drops her eyes to
+  her raised, bleeding palms ("My hands. Look at my hands."); the name-beat
+  (`mara_named`) closes her fist on YOUR coat at the frame's corner and the
+  rank behind stirs, heads lifting. Escape pages her captions (the reveal
+  always lands); her menu takes it as "Say nothing."
 - **THE TALK's grip** (`_open_talk_tableau`, opened from `_cult_talk` on the
   first cult grab of a run; the beats are quoted under **The cult (THE
   TALK)** in Part A). The tone inversion of the five seats: no room (near

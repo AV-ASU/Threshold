@@ -2559,9 +2559,34 @@ def main():
                   if getattr(n, "name", "") == "Mara"), None)
     if _mara is not None:
         _evm = evidence_count(gm)
+        gm.player.x, gm.player.y = _mara.x, _mara.y + 40
         _mara.dialogue_fn(gm, _mara)
-        check(getattr(gm, "_convo", None) is not None and gm._convo.active,
-              "mara: the confrontation opens as a live conversation")
+        check(getattr(gm, "_convo", None) is not None and gm._convo.active
+              and gm._convo.tableau is True
+              and getattr(gm, "_tableau", None) is not None
+              and gm._tableau["kind"] == "mara",
+              "mara: the confrontation opens inside the close-up tableau")
+        # THE REVEAL (2026-07): she is LISTED as one of the congregation
+        # (the caption name) until the greet's unmask beat lifts the mask
+        # away; then the listing turns to her name.
+        _mcap = gm._tableau.get("caption")
+        check(_mcap is not None and _mcap["name"] == "One of them"
+              and not gm.save.flag("mara_unmasked"),
+              "mara: she opens masked, listed as one of the congregation")
+        _mcap["cb"]()                    # advance -> the reveal beat fires
+        _mcap2 = gm._tableau.get("caption")
+        check(gm.save.flag("mara_unmasked") and _mcap2 is not None
+              and _mcap2["name"] == "Mara"
+              and "mask" in _mcap2["text"].lower(),
+              "mara: the greet unmasks her and the listing turns to her name")
+        # Escape PAGES her captions (the reveal cannot be walked out of
+        # mid-line); only her menu takes it as leaving.
+        class _MEsc:
+            type = pygame.KEYDOWN
+            key = pygame.K_ESCAPE
+        gm._tableau_input(_MEsc())
+        check(gm._tableau is not None and gm._convo.active,
+              "mara: Escape pages her captions instead of aborting the greet")
         check(evidence_count(gm) == _evm
               and any(isinstance(e, dict) and e.get("name") == "the_congregation"
                       for e in gm.save.arg("notes", [])),
@@ -2608,13 +2633,14 @@ def main():
         b[1].lower() for ex in _MCV["exchanges"] for b in ex["beats"]
         if b[0] == "npc")
     _mara_mouth += " " + " ".join(
-        b[1].lower() for b in _MCV["greet"]["beats"])
+        b[1].lower() for b in _MCV["greet"]["beats"] if b[0] == "npc")
     check(not _re.search(r"\b(son|baby|boy|child|children|pregnant)\b",
                          _mara_mouth),
           "mara: the withheld noun holds (her mouth never names the boy)")
     _all_beats = ([b[1] for ex in _MCV["exchanges"] for b in ex["beats"]
                    if b[0] in ("npc", "pi")]
-                  + [b[1] for b in _MCV["greet"]["beats"]]
+                  + [b[1] for b in _MCV["greet"]["beats"]
+                     if b[0] in ("npc", "pi")]
                   + [ex["q"] for ex in _MCV["exchanges"]])
     check(not any(("—" in t) or ("–" in t) or ("--" in t)
                   for t in _all_beats),
@@ -3057,26 +3083,52 @@ def main():
     gs2.player.x, gs2.player.y = 6 * _T28 + 16, 6 * _T28 + 16
     for _ in range(1200):
         gs2.step(1 / 20.0)
-        if gs2.dialog.active and gs2.dialog.choices is not None:
+        if getattr(gs2, "_tableau", None) is not None:
             break
     check(gs2.save.flag("mara_called"),
           "staging: entering the nave starts the calling-out")
     check(any(getattr(k, "pose", "kneel") is None for k in _sc2._kneelers),
           "staging: the kneelers rise")
-    check(getattr(gs2, "_convo", None) is not None and gs2._convo.active
-          and gs2.dialog.choices is not None,
-          "staging: Mara comes to you and the ask menu opens")
+    check(getattr(gs2, "_tableau", None) is not None
+          and gs2._tableau["kind"] == "mara"
+          and getattr(gs2, "_convo", None) is not None and gs2._convo.active,
+          "staging: Mara comes to you and the close-up tableau opens")
     check(gs2.save.flag("hive_seen")
           and not has_evidence(gs2, "the_congregation"),
           "staging: the calling-out fires, but Mara is PROOF, not a filed beat")
-    # Play the father card (the player's own ask) and let the talk run
-    # its length: the slip, the stall, the lucid turn-back.
-    _fidx = next(i for i, l in enumerate(gs2.dialog.choices)
+    # Page the greet (masked -> the reveal -> her name) through to the
+    # tableau's ask menu, then play the father card (the player's own
+    # ask): the slip, the stall, the lucid turn-back.
+    for _ in range(12):
+        _c28 = gs2._tableau.get("caption")
+        if _c28 is None:
+            break
+        _cb28 = _c28["cb"]
+        gs2._tableau["caption"] = None
+        _cb28()
+    check(gs2.save.flag("mara_unmasked"),
+          "staging: the greet lifts the mask (the reveal lands)")
+    _m28 = gs2._tableau.get("menu")
+    check(_m28 is not None,
+          "staging: the ask menu opens in the tableau")
+    _fidx = next(i for i, l in enumerate(_m28["labels"])
                  if "father" in l.lower())
-    gs2.dialog.choice_idx = _fidx
-    gs2.dialog.advance()
+    _pick28 = _m28["pick"]
+    gs2._tableau["menu"] = None
+    _pick28(_fidx)
     check(gs2.save.flag("mara_lucid"),
           "staging: the father card breaks her certainty (mara_lucid)")
+    for _ in range(40):                     # the card plays out, the talk ends
+        if gs2._tableau is None:
+            break
+        _c28 = gs2._tableau.get("caption")
+        if _c28 is None:
+            break
+        _cb28 = _c28["cb"]
+        gs2._tableau["caption"] = None
+        _cb28()
+    check(gs2._tableau is None,
+          "staging: the father card ends the talk and drops the close-up")
     for _ in range(4000):
         gs2.step(1 / 20.0)
         if (getattr(gs2, "_mara_stage", None) is None

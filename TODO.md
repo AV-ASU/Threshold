@@ -174,7 +174,7 @@ full economy table is still to be drafted).
   (nothing stops the PI but himself); **existing verbs only** (give via E /
   dialog).
 
-### 2b. **[Opus + Fable]** Close-up examine tableaux  *(play-notes feature; PILOT LANDED 2026-07)*
+### 2b. **[Opus + Fable]** Close-up examine tableaux  *(play-notes feature; COMPLETE 2026-07 -- all six seats + the Talk + the pedestal)*
 
 The diegetic "look at the thing" modal: press `[E]` on a tagged prop and the
 world pauses on an animated procedural close-up with a **menu** that mutates it
@@ -291,8 +291,29 @@ Part B.
   the rest now). Guarded by `tests/flow.py` §3 (+ the §31 tempt guard
   re-pointed at the tableau); text in `DIALOGUE.md` Part B.
 
-  **Still open (the last #2b beat):** Mara's confrontation. Its own bespoke
-  environment + art pass, then wire.
+- **MARA'S CONFRONTATION landed (2026-07, the last #2b beat -- the REVEAL).**
+  `_mara_voice` opens `MARA_CONVO` in the Sign Chamber close-up
+  (`_open_mara_tableau`; art `draw_mara_tableau`): she stands out of the
+  rank ONE OF THEM (the congregation's carved mask + hood, the Talk's
+  grammar but slighter and NEW wood, no graft: the last one in), the rite
+  still running at her back (the Sign's daub-strokes, the altar candles,
+  the kneeling rank, the rite-holder), and the caption LISTS her as "One
+  of them" (`MARA_CONVO["name"]` is a callable listing) until the greet's
+  reveal beat (`("do", ...)` -> `_mara_unmask`) pulls the mask down off
+  her face and the listing turns to her name: the face from the
+  photograph, gone thin. Engine growth shipped with it: conversation
+  beats support `("do", fn)` silent side effects and `name` may be a
+  callable(game); a scene load now drops a stale tableau alongside the
+  convo. Reactive: her idle glances back toward the rite; `mara_lucid`
+  raises her bleeding palms; `mara_named` seizes the PI's coat and stirs
+  the rank. Escape pages her captions (the reveal cannot be skipped);
+  her menu takes it as "Say nothing." Guarded by the reworked flow §24b +
+  §28b (the listing flip, the unmask, Escape-pages, the staging end to
+  end); text in `DIALOGUE.md` Part A + Part B.
+
+  **#2b is COMPLETE: all six principal seats (Sable / Vane / Hettie /
+  Crane / Toby / Mara), the Talk's grip, and the pedestal ship as
+  tableaux.**
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
