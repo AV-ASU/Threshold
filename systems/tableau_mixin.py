@@ -7,7 +7,11 @@ world (`world_frozen`), `_tick_tableau` animates it, `_draw_tableau` paints it
 over everything, and `handle_event` routes input to `_tableau_input` while it
 is up. The pilot is the bedroom writing desk (the pistol + the case file);
 `ui/tableau.draw_desk_tableau` is its art. New tableaux add an art fn there and
-an opener here.
+an opener here. The face-across-a-table principal talks (Sable's reception
+desk, Vane's office) HOST a live Conversation instead of a fixed option list:
+`open_conversation(..., tableau=True)` routes its spoken beats to
+`_tableau_caption` and its question menu to `_tableau_choices`, and the art
+reads the save flags so the close-up carries what the talk has earned.
 
 Player-facing text (the menu labels + the case-file lines) is mirrored in
 DIALOGUE.md Part B, per the contract.
@@ -15,7 +19,8 @@ DIALOGUE.md Part B, per the contract.
 import re
 import pygame
 
-from ui.tableau import draw_desk_tableau, draw_sable_tableau
+from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
+                        draw_vane_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -56,6 +61,38 @@ class TableauMixin:
         from scenes.dialogue import SABLE_CONVO
         open_conversation(self, npc, SABLE_CONVO, tableau=True)
 
+    # ----------------------------------------------------- Vane conversation
+    def _open_vane_tableau(self, npc):
+        """Sheriff Vane's office talk, PRESENTED as a frozen close-up: cold
+        window daylight, the JAN 15 calendar, the cell-bars sliver, the gun
+        cabinet in the back. His POSE reads the hidden despair ledger the
+        same way the menu's framing line does (mood, never a number), and
+        the desk carries what the talk has earned (the newspaper he was
+        given, the cabinet he opened)."""
+        self._tableau = {
+            "kind": "vane", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import VANE_CONVO
+        open_conversation(self, npc, VANE_CONVO, tableau=True)
+
+    def _vane_tableau_state(self):
+        """The close-up's live state. The mood thresholds MIRROR the menu
+        framing (`_vane_prompt`, scenes/dialogue.py): despair at net >= 2
+        (he is looking at the window, not at you), hope at net <= -1 (the
+        hooked-out chair), else he waits you out. Props are the earned
+        flags: the paper exchange's once-flag, the opened cabinet."""
+        net = int(self.save.arg("vane_despair", 0) or 0)
+        mood = ("despair" if net >= 2
+                else "hope" if net <= -1 else "neutral")
+        return {
+            "mood": mood,
+            "paper_present": self.save.flag("convo_vane_paper_asked"),
+            "cache_open": self.save.flag("vane_gave_cache"),
+        }
+
     # The two presentation hooks the Conversation calls in tableau mode.
     def _tableau_caption(self, who, name, text, on_complete):
         tb = self._tableau
@@ -73,7 +110,10 @@ class TableauMixin:
                       "pick": pick, "cursor": 0}
         tb["caption"] = None
 
-    def _sable_tableau_input(self, ev, tb):
+    def _convo_tableau_input(self, ev, tb):
+        """Input for any conversation-hosting tableau (Sable, Vane): E
+        advances the caption, up/down/E works the menu, Escape ends the
+        talk and drops the close-up."""
         if ev.key == pygame.K_ESCAPE:
             if getattr(self, "_convo", None) is not None:
                 self._convo.active = False
@@ -155,8 +195,8 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
-        if tb["kind"] == "sable":
-            self._sable_tableau_input(ev, tb)
+        if tb["kind"] in ("sable", "vane"):
+            self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
             # Reading the file: E/Enter goes back to the menu; anything else
@@ -196,6 +236,9 @@ class TableauMixin:
         W, H = surf.get_width(), surf.get_height()
         if tb["kind"] == "sable":
             self._draw_sable_tableau(surf, tb)
+            return
+        if tb["kind"] == "vane":
+            self._draw_vane_tableau(surf, tb)
             return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])
@@ -246,6 +289,13 @@ class TableauMixin:
             "envelope_present": self.save.flag("rite_envelope_given"),
         }
         draw_sable_tableau(surf, tb["t"], state)
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_vane_tableau(self, surf, tb):
+        draw_vane_tableau(surf, tb["t"], self._vane_tableau_state())
         if tb.get("caption") is not None:
             self._draw_tableau_caption(surf, tb["caption"])
         elif tb.get("menu") is not None:

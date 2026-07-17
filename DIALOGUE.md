@@ -185,6 +185,13 @@ intro:" / "Opener photo:").
   moment to come back."; hope ≤ -1 → "Vane hooks a chair out with his boot
   and nods at it. As close to a welcome as this office gets."; else → "Vane
   waits you out, thumbs in his belt."
+- **Presentation (2026-07):** `sheriff_dialogue` opens `VANE_CONVO` inside a
+  frozen close-up **tableau** (`_open_vane_tableau`, `tableau=True`): his
+  office in cold window light, and his POSE reads the same ledger the mood
+  prompt does (neutral squares up; despair turns his head to the window;
+  hope leans him in, a forearm on the desk). The preacher one-shot still
+  volunteers itself as a plain beat first. The words are identical either
+  way (below). See Part B "The close-up examine tableaux."
 - **Greet** (`vane_greeted`):
   - (npc) "Sheriff Vane. That's the whole welcome I've got left."
   - (npc) "Nobody comes up that north road anymore. Then you. So you'll forgive me if I look at you a while before I decide anything."
@@ -546,6 +553,15 @@ text:
   appears on the register once he has been shown it (`sable_showed_photo`),
   and the sealed Invitation appears once he has handed it over
   (`rite_envelope_given`). Escape (or walking the talk out) closes it.
+- **Sheriff Vane's office** (`_open_vane_tableau`, opened from
+  `sheriff_dialogue`; words under **Sheriff Hollis Vane** in Part A). Cold
+  window daylight, the stopped JAN 15 calendar, the cell bars at the frame's
+  edge, the gun cabinet in the back. Reactive on two axes: his **pose** reads
+  the despair ledger exactly as the mood prompt does (`_vane_tableau_state`
+  mirrors `_vane_prompt`'s thresholds; mood, never a number), and the desk
+  carries what the talk has earned: the **newspaper** stays spread flat once
+  given (`convo_vane_paper_asked`), the **cabinet** stands open and emptied
+  once he unlocks it (`vane_gave_cache`).
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".

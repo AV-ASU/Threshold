@@ -200,11 +200,25 @@ Part B.
   clock, register, ceiling-fan shadow). Guarded by `tests/flow.py` §17c (12);
   text in `DIALOGUE.md` Part A (the words) + Part B (the presentation).
 
-  **Still open (the maintainer greenlights each):** the same treatment for the
-  other principals (Vane's office, Hettie's counter, Crane's church, Toby), the
-  **pedestal** (the Mask on the altar), and Mara's confrontation / the cult
-  Talk. Each is its own bespoke environment + art pass, then wire. Art
-  refinement per beat, then wire.
+- **VANE'S OFFICE landed (2026-07, the second face-across-a-table).**
+  `sheriff_dialogue` opens `VANE_CONVO` in the office close-up
+  (`_open_vane_tableau`; art `draw_vane_tableau`, derived from his sheriff
+  sprite): cold window daylight (Sable's lodge is the warm one), the stopped
+  JAN 15 calendar, the cell-bars sliver, the gun cabinet in the back.
+  Reactive on TWO axes: his **pose reads the hidden despair ledger** exactly
+  as the mood framing line does (`_vane_tableau_state` mirrors
+  `_vane_prompt`'s thresholds: neutral squares up, despair turns his head to
+  the window, hope leans him in with a forearm on the desk; mood, never a
+  number), and the desk carries what the talk earned (the given newspaper
+  spread flat, the opened cabinet). The generic conversation-tableau input
+  moved to `_convo_tableau_input` (shared by Sable + Vane). Guarded by
+  `tests/flow.py` (the Vane-tableau block after the cache guards); text in
+  `DIALOGUE.md` Part A + Part B.
+
+  **Still open (the maintainer greenlights each):** the same treatment for
+  Hettie's counter, Crane's church, and Toby, the **pedestal** (the Mask on
+  the altar), and Mara's confrontation / the cult Talk. Each is its own
+  bespoke environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

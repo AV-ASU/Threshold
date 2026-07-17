@@ -3,8 +3,9 @@
 Press [E] on a tagged prop and the world pauses on a high-detail, animated
 close-up of that thing, with a menu of options that mutate the tableau live
 (take the gun -> it leaves the table) and can open readable text. One system,
-reused for the bedroom desk (the pilot), and later a pedestal / a face across
-a table. Pure procedural draw, no assets (the project ethos).
+reused for the bedroom desk (the pilot) and the face-across-a-table principal
+talks (Sable's reception desk, Vane's office), and later a pedestal. Pure
+procedural draw, no assets (the project ethos).
 
 The per-kind art fns live here; the state machine + menu + reading overlay
 live on Game (`systems/tableau_mixin.py`). An art fn takes (surf, t, state)
@@ -330,4 +331,365 @@ def draw_sable_tableau(surf, t, state):
     maxr = int(math.hypot(W, H) * 0.66); inner = int(maxr * 0.56)
     for r in range(maxr, inner, -10):
         pygame.draw.circle(vig, (0, 0, 0, max(0, int(150 * (1 - (r - inner) / (maxr - inner))))), (vcx, vcy), r)
+    surf.blit(vig, (0, 0))
+
+
+# ---- Vane: his sheriff sprite as a close-up lawman behind the office desk --
+# The human+grit register (the Sable precedent): a broad, square-jawed face
+# under the brimmed hat, tired eyes inside the brim's shadow, stubble, a set
+# flat mouth. Poses read the hidden ledger as body language: neutral squares
+# up and waits you out; despair turns his head toward the window (he is not
+# looking at you); hope leans him in, a forearm on the desk.
+def _draw_vane(surf, cx, cy, blink, mood):
+    import pygame
+    skin = (170, 160, 132); sk_hi = (198, 186, 156); sk_lo = (118, 111, 89)
+    sk_sh = (82, 77, 62); stub = (100, 96, 79)
+    shirt = (110, 97, 67); shirt_dk = (70, 61, 43); shirt_lt = (134, 119, 84)
+    hc = (66, 51, 36); hc_hi = (98, 79, 54); hb = (48, 36, 24); hb_lo = (30, 22, 15)
+    star = (158, 148, 90); star_dk = (100, 92, 52)
+    turn = 22 if mood == "despair" else 0          # head toward the window
+    lean = 6 if mood == "hope" else 0              # leaning in, a notch lower
+    cy = cy + lean
+    HW, HH = 58, 64                                # broad, squarer than Sable
+    tt = cy + HH - 2
+
+    # -- torso: the tan duty shirt on a wide frame --
+    pygame.draw.polygon(surf, shirt, [(cx - 124, tt + 8), (cx + 124, tt + 8),
+                                      (cx + 106, tt + 300), (cx - 106, tt + 300)])
+    pygame.draw.ellipse(surf, shirt, (cx - 130, tt - 16, 100, 58))   # shoulders
+    pygame.draw.ellipse(surf, shirt, (cx + 30, tt - 16, 100, 58))
+    pygame.draw.polygon(surf, shirt_dk, [(cx - 124, tt + 8), (cx - 110, tt + 8),
+                                         (cx - 100, tt + 300), (cx - 106, tt + 300)])
+    pygame.draw.polygon(surf, shirt_lt, [(cx + 106, tt + 8), (cx + 124, tt + 8),
+                                         (cx + 106, tt + 300), (cx + 92, tt + 300)])
+    pygame.draw.line(surf, shirt_dk, (cx, tt + 30), (cx, tt + 300), 2)   # placket
+    for py_ in (tt + 60, tt + 104):                                      # buttons
+        pygame.draw.circle(surf, (60, 52, 36), (cx, py_), 3)
+    # collar: open one button over a dark undershirt notch
+    pygame.draw.polygon(surf, shirt_lt, [(cx - 44, tt + 6), (cx - 4, tt + 28),
+                                         (cx - 32, tt + 52)])
+    pygame.draw.polygon(surf, shirt, [(cx + 44, tt + 6), (cx + 4, tt + 28),
+                                      (cx + 32, tt + 52)])
+    pygame.draw.polygon(surf, (32, 28, 22), [(cx - 9, tt + 24), (cx + 9, tt + 24),
+                                             (cx, tt + 44)])
+    # breast pockets with flaps; the tin star above the viewer-left pocket
+    for sgn in (-1, 1):
+        px_ = cx + sgn * 62
+        pygame.draw.rect(surf, shirt_dk, (px_ - 21, tt + 78, 42, 34), 2)
+        pygame.draw.polygon(surf, shirt_dk, [(px_ - 21, tt + 78), (px_ + 21, tt + 78),
+                                             (px_, tt + 89)])
+    scx, scy = cx - 62, tt + 58                                          # the star
+    pts = []
+    for k in range(10):
+        ang = -math.pi / 2 + k * math.pi / 5
+        r = 17 if k % 2 == 0 else 7
+        pts.append((scx + int(r * math.cos(ang)), scy + int(r * math.sin(ang))))
+    pygame.draw.polygon(surf, star, pts)
+    pygame.draw.polygon(surf, star_dk, pts, 2)
+    pygame.draw.circle(surf, star_dk, (scx, scy), 4, 1)
+
+    # -- neck + head --
+    pygame.draw.rect(surf, sk_lo, (cx - 17 + turn // 2, cy + HH - 22, 34, 40))
+    pygame.draw.ellipse(surf, sk_sh, (cx - 24 + turn // 2, cy + HH - 6, 48, 16))
+    hx = cx + turn                                  # feature centre (turned head)
+    pygame.draw.ellipse(surf, skin, (cx - HW, cy - HH, HW * 2, HH * 2))
+    # square the skull into the heavy jaw (the sprite's box); follows the turn
+    pygame.draw.polygon(surf, skin, [(cx - HW + 12, cy + 12), (cx + HW - 8 + turn // 2, cy + 12),
+                                     (cx + HW - 14 + turn // 2, cy + HH + 2),
+                                     (hx + 18, cy + HH + 16), (hx - 18, cy + HH + 16),
+                                     (cx - HW + 20, cy + HH + 2)])
+    # lit toward the window (viewer-right), shadowed left
+    dim = pygame.Surface((HW * 2 + 24, HH * 2 + 24), pygame.SRCALPHA)
+    pygame.draw.ellipse(dim, (*sk_sh, 110), (0, 12, HW - 2 - turn, HH * 2 - 14))
+    surf.blit(dim, (cx - HW, cy - HH))
+    lit = pygame.Surface((HW * 2 + 24, HH * 2 + 24), pygame.SRCALPHA)
+    pygame.draw.ellipse(lit, (*sk_hi, 120), (HW + 10, HH - 42, HW - 6, 82))
+    surf.blit(lit, (cx - HW, cy - HH))
+    pygame.draw.circle(surf, sk_lo, (cx - HW + 2, cy + 6), 9)            # ears
+    pygame.draw.circle(surf, skin, (cx + HW - 2, cy + 6), 9)
+
+    # -- the hat, worn low but CLEAR of the eyes: brim at brow height --
+    bw = HW + 36
+    pygame.draw.ellipse(surf, hb, (cx - bw, cy - 56, bw * 2, 36))        # brim
+    pygame.draw.ellipse(surf, hb_lo, (cx - bw + 6, cy - 46, bw * 2 - 12, 22))  # underside
+    pygame.draw.ellipse(surf, hc, (cx - HW + 2, cy - HH - 34, HW * 2 - 4, 66))  # crown
+    pygame.draw.ellipse(surf, hc_hi, (cx - HW + 14, cy - HH - 30, HW + 6, 20))  # crown light
+    pygame.draw.line(surf, (24, 18, 12), (cx - 22, cy - HH - 26), (cx + 2, cy - HH - 6), 2)  # dent
+    pygame.draw.rect(surf, hb_lo, (cx - HW + 6, cy - 60, HW * 2 - 12, 9))       # hat band
+    # the brim's soft shadow across the brow (the sprite's dark band, gentled)
+    band = pygame.Surface((HW * 2, 26), pygame.SRCALPHA)
+    for i in range(26):
+        band.fill((30, 26, 20, max(0, 84 - i * 4)), (0, i, HW * 2, 1))
+    surf.blit(band, (cx - HW, cy - 34))
+
+    # -- face: heavy brows, tired eyes, blunt nose, set mouth, stubble --
+    blift = 3 if mood == "hope" else 0             # the brows come up a notch
+    pygame.draw.line(surf, (58, 50, 38), (hx - 34, cy - 16 - blift), (hx - 8, cy - 19 - blift), 5)
+    pygame.draw.line(surf, (58, 50, 38), (hx + 8, cy - 19 - blift), (hx + 34, cy - 16 - blift), 5)
+    for sgn in (-1, 1):
+        ex = hx + sgn * 22
+        ey = cy - 4
+        if blink:
+            pygame.draw.line(surf, sk_sh, (ex - 12, ey + 1), (ex + 12, ey + 1), 3)
+        else:
+            pygame.draw.ellipse(surf, (206, 200, 182), (ex - 13, ey - 6, 26, 13))
+            ix = ex + (7 if mood == "despair" else 0)                    # eyes off you
+            iy = ey + (0 if mood == "despair" else 1)
+            pygame.draw.circle(surf, (74, 60, 42), (ix, iy), 5)
+            pygame.draw.circle(surf, (22, 18, 14), (ix, iy), 2)
+            pygame.draw.circle(surf, (222, 218, 202), (ix - 2, iy - 2), 1)
+            pygame.draw.line(surf, sk_sh, (ex - 13, ey - 6), (ex + 12, ey - 7), 3)  # heavy lid
+        pygame.draw.arc(surf, sk_lo, (ex - 12, ey + 4, 24, 12), 3.5, 5.9, 2)  # the bags
+        pygame.draw.arc(surf, sk_lo, (ex - 9, ey + 8, 18, 9), 3.5, 5.9, 1)
+    # nose: blunt, sun-worn
+    pygame.draw.line(surf, sk_lo, (hx + 2, cy - 10), (hx - 2, cy + 16), 3)
+    pygame.draw.line(surf, sk_hi, (hx - 5, cy - 10), (hx - 7, cy + 12), 1)
+    pygame.draw.ellipse(surf, sk_lo, (hx - 7, cy + 12, 14, 9))
+    # drawn cheek lines
+    pygame.draw.arc(surf, sk_lo, (hx - 38, cy + 4, 22, 30), 0.6, 2.0, 2)
+    pygame.draw.arc(surf, sk_lo, (hx + 16, cy + 4, 22, 30), 1.1, 2.5, 2)
+    # the set mouth: flat, a hair down at the corners; no host smile in here
+    my = cy + 31
+    pygame.draw.lines(surf, (92, 68, 60), False,
+                      [(hx - 20, my + 3), (hx - 9, my), (hx + 9, my), (hx + 20, my + 3)], 4)
+    pygame.draw.line(surf, sk_lo, (hx, my + 12), (hx, my + 19), 2)       # cleft chin
+    rnd = random.Random(11)                                              # stubble
+    for _ in range(64):
+        sx2 = hx + rnd.randint(-32, 32)
+        sy2 = my + rnd.randint(4, 24) + abs(sx2 - hx) // 4
+        surf.set_at((sx2, sy2), stub)
+        surf.set_at((sx2 + 1, sy2), stub) if rnd.random() < 0.3 else None
+
+    # (the hope forearm lands on the desk TOP and is drawn by the tableau fn
+    # after the desk slab, or the slab would swallow it)
+
+
+def draw_vane_tableau(surf, t, state):
+    """The sheriff's office close-up, across Vane's desk. Cold window daylight
+    (his office; Sable's lodge is the warm one). `state`: the ledger MOOD as
+    his pose, the given newspaper flat on the desk, the opened gun cabinet."""
+    import pygame
+    W, H = surf.get_width(), surf.get_height()
+    mood = state.get("mood", "neutral")
+    paper = state.get("paper_present", False)
+    cache = state.get("cache_open", False)
+
+    # -- plaster wall, cold and institutional; dark wainscot below --
+    top = (76, 76, 63); bot = (40, 40, 33)
+    for y in range(0, H, 2):
+        surf.fill(_lerp(top, bot, y / H), (0, y, W, 2))
+    wains = int(H * 0.58)
+    pygame.draw.rect(surf, (44, 37, 27), (0, wains, W, H - wains))
+    pygame.draw.rect(surf, (28, 23, 17), (0, wains, W, 6))
+    for sx in range(0, W, 52):
+        pygame.draw.line(surf, (36, 30, 22), (sx, wains + 6), (sx, H), 1)
+    pygame.draw.lines(surf, (58, 58, 48), False,                          # plaster crack
+                      [(int(W * 0.50), 0), (int(W * 0.52), int(H * 0.09)),
+                       (int(W * 0.505), int(H * 0.17))], 1)
+
+    # -- the cell, a sliver at the left edge: bars over dark, door ajar --
+    pygame.draw.rect(surf, (18, 16, 12), (0, 0, int(W * 0.07), wains))
+    for bx in range(8, int(W * 0.07), 12):
+        pygame.draw.line(surf, (64, 61, 55), (bx, 0), (bx, wains), 3)
+    pygame.draw.line(surf, (74, 70, 62), (int(W * 0.07), 0), (int(W * 0.07), wains), 4)
+
+    # -- the JAN 15 calendar (every calendar in town stops there) --
+    cx_, cy_ = int(W * 0.145), int(H * 0.12)
+    cw, ch = 88, 104
+    pygame.draw.rect(surf, (24, 21, 16), (cx_ + 4, cy_ + 5, cw, ch))      # drop shadow
+    pygame.draw.rect(surf, (202, 194, 174), (cx_, cy_, cw, ch))
+    pygame.draw.rect(surf, (126, 42, 36), (cx_, cy_, cw, 24))             # month band
+    pygame.draw.circle(surf, (74, 66, 50), (cx_ + cw // 2, cy_ + 6), 3)   # the pin
+    ink = (222, 212, 192)                                                 # J A N
+    jx, jy = cx_ + 26, cy_ + 7
+    pygame.draw.line(surf, ink, (jx - 4, jy), (jx + 4, jy), 2)
+    pygame.draw.line(surf, ink, (jx + 2, jy), (jx + 2, jy + 9), 2)
+    pygame.draw.line(surf, ink, (jx + 2, jy + 9), (jx - 3, jy + 9), 2)
+    ax = cx_ + 42
+    pygame.draw.line(surf, ink, (ax - 4, jy + 10), (ax, jy), 2)
+    pygame.draw.line(surf, ink, (ax, jy), (ax + 4, jy + 10), 2)
+    pygame.draw.line(surf, ink, (ax - 2, jy + 6), (ax + 2, jy + 6), 1)
+    nx_ = cx_ + 58
+    pygame.draw.line(surf, ink, (nx_ - 3, jy + 10), (nx_ - 3, jy), 2)
+    pygame.draw.line(surf, ink, (nx_ - 3, jy), (nx_ + 3, jy + 10), 2)
+    pygame.draw.line(surf, ink, (nx_ + 3, jy + 10), (nx_ + 3, jy), 2)
+    seg = (56, 50, 42)                                                    # big 15
+    ox, oy = cx_ + 20, cy_ + 38
+    pygame.draw.line(surf, seg, (ox + 8, oy), (ox + 8, oy + 46), 8)
+    pygame.draw.line(surf, seg, (ox, oy + 9), (ox + 8, oy), 6)
+    ox = cx_ + 42
+    pygame.draw.line(surf, seg, (ox, oy), (ox + 26, oy), 7)
+    pygame.draw.line(surf, seg, (ox + 3, oy), (ox + 3, oy + 20), 7)
+    pygame.draw.line(surf, seg, (ox, oy + 20), (ox + 22, oy + 20), 7)
+    pygame.draw.line(surf, seg, (ox + 22, oy + 20), (ox + 22, oy + 46), 7)
+    pygame.draw.line(surf, seg, (ox, oy + 46), (ox + 24, oy + 46), 7)
+    pygame.draw.polygon(surf, (176, 168, 148),                            # curled corner
+                        [(cx_ + cw - 16, cy_ + ch), (cx_ + cw, cy_ + ch), (cx_ + cw, cy_ + ch - 16)])
+
+    # -- a pinned list beside the calendar: names, some struck through --
+    lx_, ly_ = int(W * 0.265), int(H * 0.15)
+    pygame.draw.rect(surf, (24, 21, 16), (lx_ + 3, ly_ + 4, 54, 86))
+    pygame.draw.rect(surf, (188, 180, 160), (lx_, ly_, 54, 86))
+    pygame.draw.circle(surf, (74, 66, 50), (lx_ + 27, ly_ + 4), 2)
+    for i in range(7):
+        yy = ly_ + 15 + i * 10
+        pygame.draw.line(surf, (98, 92, 77), (lx_ + 7, yy), (lx_ + 46, yy), 2)
+        if i in (1, 3, 4):
+            pygame.draw.line(surf, (74, 55, 46), (lx_ + 5, yy), (lx_ + 48, yy - 2), 1)
+
+    # -- the window: sallow overcast daylight, the light of the whole room --
+    wx, wy = int(W * 0.60), int(H * 0.05)
+    ww, wh = int(W * 0.235), int(H * 0.46)
+    pygame.draw.rect(surf, (30, 25, 19), (wx - 10, wy - 10, ww + 20, wh + 20))
+    glass_t = (222, 214, 180); glass_b = (184, 174, 138)
+    for gy in range(wh):
+        surf.fill(_lerp(glass_t, glass_b, gy / wh), (wx, wy + gy, ww, 1))
+    pygame.draw.rect(surf, (146, 138, 108), (wx, wy + int(wh * 0.62), ww, int(wh * 0.12)))  # treeline
+    pygame.draw.rect(surf, (166, 156, 122), (wx, wy + int(wh * 0.74), ww, int(wh * 0.26)))  # dead corn
+    for cxx in range(wx + 4, wx + ww, 9):
+        pygame.draw.line(surf, (142, 132, 100), (cxx, wy + int(wh * 0.76)), (cxx, wy + wh), 1)
+    pygame.draw.line(surf, (30, 25, 19), (wx + ww // 2, wy), (wx + ww // 2, wy + wh), 6)  # muntins
+    pygame.draw.line(surf, (30, 25, 19), (wx, wy + wh // 2), (wx + ww, wy + wh // 2), 6)
+    pygame.draw.rect(surf, (54, 45, 33), (wx - 10, wy - 10, ww + 20, wh + 20), 4)
+    pygame.draw.rect(surf, (54, 45, 33), (wx - 16, wy + wh + 10, ww + 32, 10))            # sill
+
+    # the light shaft, angling down-left onto the desk; dust hanging in it
+    shaft = pygame.Surface((W, H), pygame.SRCALPHA)
+    pygame.draw.polygon(shaft, (230, 218, 176, 34),
+                        [(wx, wy + 8), (wx + ww, wy), (int(W * 0.48), int(H * 0.88)),
+                         (int(W * 0.20), int(H * 0.88))])
+    surf.blit(shaft, (0, 0))
+    rnd = random.Random(9)
+    for _ in range(52):
+        base = rnd.randint(0, 1000)
+        fr = ((t * 7 + base) % 460) / 460.0
+        mx = int(wx + ww * 0.5 + (int(W * 0.33) - wx - ww * 0.5) * fr + 14 * math.sin(t * 0.7 + base))
+        my_ = int(wy + 30 + (int(H * 0.80) - wy - 30) * fr)
+        pygame.draw.circle(surf, (238, 228, 192), (mx, my_), 1)
+
+    # -- the gun cabinet at the right edge (the back of the office) --
+    gx_, gy_ = int(W * 0.875), int(H * 0.09)
+    gw, gh = int(W * 0.115), int(H * 0.62)
+    pygame.draw.rect(surf, (40, 32, 22), (gx_, gy_, gw, gh))
+    pygame.draw.rect(surf, (62, 49, 34), (gx_, gy_, gw, gh), 4)
+    if cache:
+        pygame.draw.rect(surf, (14, 12, 9), (gx_ + 6, gy_ + 8, gw - 12, gh - 16))
+        for py_ in range(gy_ + 30, gy_ + gh - 40, 36):                   # empty shelves
+            pygame.draw.line(surf, (52, 46, 38), (gx_ + 10, py_), (gx_ + gw - 10, py_), 3)
+        pygame.draw.rect(surf, (156, 138, 96), (gx_ + 14, gy_ + gh - 60, 32, 17))  # one carton left
+        pygame.draw.line(surf, (110, 96, 64), (gx_ + 14, gy_ + gh - 52, ), (gx_ + 46, gy_ + gh - 52), 1)
+        pygame.draw.polygon(surf, (68, 55, 38),                          # the swung door
+                            [(gx_ + 2, gy_ + 4), (gx_ - 30, gy_ + 18), (gx_ - 30, gy_ + gh + 8),
+                             (gx_ + 2, gy_ + gh - 4)])
+        pygame.draw.polygon(surf, (38, 30, 20),
+                            [(gx_ + 2, gy_ + 4), (gx_ - 30, gy_ + 18), (gx_ - 30, gy_ + gh + 8),
+                             (gx_ + 2, gy_ + gh - 4)], 2)
+        pygame.draw.circle(surf, (94, 88, 72), (gx_ - 22, gy_ + gh // 2), 4)      # its handle
+    else:
+        pygame.draw.line(surf, (62, 49, 34), (gx_ + gw // 2, gy_), (gx_ + gw // 2, gy_ + gh), 3)
+        for py_ in (gy_ + int(gh * 0.3), gy_ + int(gh * 0.7)):           # door panels
+            pygame.draw.rect(surf, (52, 42, 28), (gx_ + 8, py_ - 22, gw // 2 - 14, 44), 2)
+            pygame.draw.rect(surf, (52, 42, 28), (gx_ + gw // 2 + 6, py_ - 22, gw // 2 - 14, 44), 2)
+        # the hasp strap across both doors + the padlock hung from it
+        pygame.draw.rect(surf, (78, 72, 58), (gx_ + gw // 2 - 22, gy_ + int(gh * 0.46), 44, 9))
+        pygame.draw.rect(surf, (58, 54, 44), (gx_ + gw // 2 - 22, gy_ + int(gh * 0.46), 44, 9), 1)
+        pygame.draw.arc(surf, (72, 68, 56), (gx_ + gw // 2 - 7, gy_ + int(gh * 0.46) + 8, 14, 12), 0.0, 3.4, 3)
+        pygame.draw.rect(surf, (84, 78, 62), (gx_ + gw // 2 - 9, gy_ + int(gh * 0.46) + 16, 18, 16))
+    # cornice + plinth feet so it reads FURNITURE, never a door
+    pygame.draw.rect(surf, (74, 59, 41), (gx_ - 8, gy_ - 10, gw + 16, 12))
+    pygame.draw.rect(surf, (52, 41, 28), (gx_ - 4, gy_ + gh, 12, 14))
+    pygame.draw.rect(surf, (52, 41, 28), (gx_ + gw - 8, gy_ + gh, 12, 14))
+
+    # -- Vane, behind his desk: breath bob, tired blink, the ledger pose --
+    bob = int(2 * math.sin(t * 1.1))
+    _draw_vane(surf, int(W * 0.385), int(H * 0.30) + bob, (t % 3.7) < 0.18, mood)
+
+    # -- the desk slab --
+    dtop = int(H * 0.655)
+    pygame.draw.polygon(surf, (36, 27, 17), [(0, dtop), (W, dtop), (W, H), (0, H)])
+    pygame.draw.polygon(surf, (60, 47, 31),
+                        [(int(W * 0.03), dtop - 26), (int(W * 0.97), dtop - 26), (W, dtop), (0, dtop)])
+    pygame.draw.line(surf, (84, 66, 44), (0, dtop), (W, dtop), 2)
+    for gxx in range(0, W, 130):
+        pygame.draw.line(surf, (26, 20, 13), (gxx, dtop + 8), (gxx - 12, H), 1)
+
+    # -- hope: his forearm comes over the desk edge, hand flat on the top --
+    if mood == "hope":
+        vcx_ = int(W * 0.385)
+        pygame.draw.polygon(surf, (110, 97, 67),
+                            [(vcx_ + 76, dtop - 76), (vcx_ + 138, dtop - 60),
+                             (vcx_ + 132, dtop + 20), (vcx_ + 64, dtop + 10)])
+        pygame.draw.polygon(surf, (70, 61, 43),
+                            [(vcx_ + 76, dtop - 76), (vcx_ + 92, dtop - 72),
+                             (vcx_ + 78, dtop + 12), (vcx_ + 64, dtop + 10)])
+        pygame.draw.line(surf, (70, 61, 43), (vcx_ + 70, dtop - 6),      # cuff seam
+                         (vcx_ + 132, dtop + 4), 4)
+        pygame.draw.ellipse(surf, (170, 160, 132), (vcx_ + 92, dtop - 2, 62, 32))  # the hand
+        pygame.draw.ellipse(surf, (118, 111, 89), (vcx_ + 92, dtop - 2, 62, 32), 1)
+        for fk in range(4):                                              # fingers
+            pygame.draw.line(surf, (118, 111, 89), (vcx_ + 116 + fk * 10, dtop + 4),
+                             (vcx_ + 126 + fk * 10, dtop + 26), 3)
+
+    # -- the desk phone (1994, corded, black; it does not ring) --
+    phx, phy = int(W * 0.105), dtop - 10
+    pygame.draw.polygon(surf, (44, 44, 50), [(phx, phy), (phx + 100, phy - 8), (phx + 108, phy + 24),
+                                             (phx + 10, phy + 32)])
+    pygame.draw.polygon(surf, (62, 62, 70), [(phx + 4, phy - 2), (phx + 96, phy - 9), (phx + 100, phy + 3),
+                                             (phx + 8, phy + 10)])
+    pygame.draw.rect(surf, (54, 54, 62), (phx + 18, phy - 28, 66, 17), border_radius=8)  # handset
+    pygame.draw.rect(surf, (72, 72, 82), (phx + 24, phy - 26, 54, 5), border_radius=3)
+    pygame.draw.circle(surf, (54, 54, 62), (phx + 23, phy - 19), 11)
+    pygame.draw.circle(surf, (54, 54, 62), (phx + 79, phy - 19), 11)
+    for k in range(4):                                                    # the cord, hanging dead
+        pygame.draw.circle(surf, (46, 46, 53), (phx + 104 + (k % 2) * 5, phy + 28 + k * 7), 4, 2)
+
+    # -- the files + booking box --
+    fx_, fy_ = int(W * 0.225), dtop - 6
+    pygame.draw.polygon(surf, (82, 71, 50), [(fx_, fy_), (fx_ + 124, fy_ - 12), (fx_ + 136, fy_ + 10),
+                                             (fx_ + 14, fy_ + 22)])
+    pygame.draw.polygon(surf, (108, 97, 70), [(fx_ + 4, fy_ - 5), (fx_ + 120, fy_ - 16), (fx_ + 126, fy_ - 7),
+                                              (fx_ + 10, fy_ + 4)])
+    pygame.draw.line(surf, (60, 52, 36), (fx_ + 8, fy_ + 3), (fx_ + 122, fy_ - 9), 1)
+
+    # -- the coffee, going cold slower than the town --
+    cux, cuy = int(W * 0.585), dtop - 8
+    pygame.draw.ellipse(surf, (22, 17, 11), (cux - 6, cuy + 16, 54, 10))
+    pygame.draw.rect(surf, (158, 154, 144), (cux, cuy - 16, 40, 34), border_radius=4)
+    pygame.draw.ellipse(surf, (118, 114, 106), (cux, cuy - 23, 40, 13))
+    pygame.draw.ellipse(surf, (48, 33, 22), (cux + 5, cuy - 20, 30, 8))
+    pygame.draw.arc(surf, (158, 154, 144), (cux + 34, cuy - 12, 18, 22), 4.6, 1.6, 3)
+    for w_ in range(2):                                                   # steam, barely
+        sxx = cux + 13 + w_ * 13
+        pts = [(sxx + int(5 * math.sin(t * 1.9 + w_ * 2.1 + k * 0.9)), cuy - 28 - k * 9)
+               for k in range(4)]
+        pygame.draw.lines(surf, (132, 128, 118), False, pts, 1)
+
+    # -- the newspaper, spread flat where he left it (once given) --
+    if paper:
+        nx, ny = int(W * 0.40), dtop - 2
+        quad = [(nx, ny), (nx + 176, ny - 14), (nx + 192, ny + 28), (nx + 16, ny + 42)]
+        pygame.draw.polygon(surf, (16, 13, 10), [(x + 4, y + 5) for x, y in quad])
+        pygame.draw.polygon(surf, (196, 190, 172), quad)
+        pygame.draw.polygon(surf, (152, 146, 128), quad, 2)
+        pygame.draw.line(surf, (152, 146, 128), (nx + 88, ny - 7), (nx + 104, ny + 35), 1)  # fold
+        pygame.draw.line(surf, (62, 58, 50), (nx + 12, ny), (nx + 78, ny - 7), 6)           # masthead
+        for i in range(3):                                                                  # columns
+            yy = ny + 8 + i * 8
+            pygame.draw.line(surf, (116, 110, 95), (nx + 16, yy + 2), (nx + 80, yy - 4), 2)
+        pygame.draw.rect(surf, (98, 94, 83), (nx + 106, ny - 6, 44, 28))                    # front-page photo
+        pygame.draw.ellipse(surf, (74, 70, 61), (nx + 117, ny - 1, 20, 17))
+
+    # -- cold key light from the window; eased vignette --
+    key = pygame.Surface((W, H), pygame.SRCALPHA)
+    kx, ky = int(W * 0.60), int(H * 0.30)
+    for r in range(int(H * 0.95), 0, -12):
+        a = int(80 * (1 - r / (H * 0.95)))
+        pygame.draw.circle(key, (226, 216, 180, a), (kx, ky), r)
+    surf.blit(key, (0, 0))
+    vig = pygame.Surface((W, H), pygame.SRCALPHA)
+    vcx, vcy = int(W * 0.44), int(H * 0.42)
+    maxr = int(math.hypot(W, H) * 0.66); inner = int(maxr * 0.58)
+    for r in range(maxr, inner, -10):
+        a = max(0, int(140 * (1 - (r - inner) / (maxr - inner))))
+        pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
     surf.blit(vig, (0, 0))

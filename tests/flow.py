@@ -1691,6 +1691,40 @@ def main():
     check(not _cache["avail"](gca),
           "vane: the cabinet does not re-offer once given")
 
+    # (Vane tableau, #2b) Talking to Vane opens the office close-up: the
+    # conversation runs in tableau presentation mode, the close-up's POSE
+    # mirrors the mood prompt's thresholds exactly (mood, never a number),
+    # and the desk carries what the talk earned (paper given, cabinet open).
+    import inspect as _ivt
+    from scenes.dialogue import (sheriff_dialogue as _shf,
+                                 _vane_prompt as _vpr)
+    check("_open_vane_tableau" in _ivt.getsource(_shf),
+          "vane: talking to him opens the office close-up tableau")
+    gvt2 = new_game()
+    gvt2.dialog.active = False
+    gvt2._open_vane_tableau(None)
+    check(gvt2._tableau is not None and gvt2._tableau["kind"] == "vane"
+          and gvt2._convo is not None and gvt2._convo.tableau is True,
+          "vane: the office tableau hosts the conversation")
+    for _net, _mood, _tell in ((0, "neutral", "thumbs"),
+                               (2, "despair", "window"),
+                               (-1, "hope", "chair")):
+        gvt2.save.set_arg("vane_despair", _net)
+        check(gvt2._vane_tableau_state()["mood"] == _mood
+              and _tell in _vpr(gvt2),
+              f"vane: pose and framing line agree at net {_net} ({_mood})")
+    gvt2.save.set_flag("convo_vane_paper_asked", True)
+    gvt2.save.set_flag("vane_gave_cache", True)
+    _vst = gvt2._vane_tableau_state()
+    check(_vst["paper_present"] and _vst["cache_open"],
+          "vane: the close-up carries what the talk earned (paper, cabinet)")
+    class _EscV:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    gvt2._tableau_input(_EscV())
+    check(gvt2._tableau is None and gvt2._convo.active is False,
+          "vane: Escape closes the office tableau and ends the talk")
+
     # The flow polish: once an exchange finishes, the menu only reopens
     # while both parties are still AT the talk -- the partner walking off
     # (or the player) ends it quietly instead of a modal yank.

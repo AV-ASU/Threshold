@@ -1219,8 +1219,14 @@ def sheriff_dialogue(game, npc):
             "[c=dim]He doesn't say the Reverend's name. Nobody in town has.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, VANE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the Sable precedent): his office in cold window light, and his POSE
+    # reading the despair ledger the way the framing line does (mood, never
+    # a number). The desk carries what the talk earns: the newspaper he was
+    # given stays spread flat, the gun cabinet stands open once he unlocks
+    # it. The preacher one-shot above still volunteers itself as a plain
+    # beat first; the next press opens the close-up.
+    game._open_vane_tableau(npc)
 
 
 # ---- The Clerk: Mr. Sable ----
