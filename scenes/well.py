@@ -694,7 +694,13 @@ def build_works_scriptorium():
 # ---- Room 6: the Sign Chamber (key: works_sign) ----
 
 # THE CONFRONTATION (2026-07, NARRATIVE §4/§6). The calling-out walks
-# her to you; this is the exchange it opens. She cannot be argued home:
+# her to you; this is the exchange it opens, presented as the last of the
+# close-up tableaux (`_open_mara_tableau`). THE REVEAL (2026-07): she
+# opens as ONE OF THEM -- the carved mask and hood of the congregation,
+# and the caption LISTS her as one of them -- and her first line lands
+# from behind the wood. Then the greet's "do" beat lifts the mask away
+# (the face from the photograph, gone thin) and the listing turns to her
+# name. She cannot be argued home:
 # asked to come away, no one leaves; asked the way out, there is none.
 # The father card is the PLAYER'S OWN ASK, never automatic -- it breaks
 # her certainty (the slip), she sees what is actually in front of her,
@@ -705,7 +711,9 @@ def build_works_scriptorium():
 # does) -- and full lucidity changes nothing. No exchange is a rescue.
 MARA_CONVO = {
     "id":    "mara_confront",
-    "name":  "Mara",
+    # The LISTING: one of the congregation until the unmask, then hers.
+    "name":  lambda g: ("Mara" if g.save.flag("mara_unmasked")
+                        else "One of them"),
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
     "prompt": "She stands out of the rank, waiting.",
@@ -715,6 +723,10 @@ MARA_CONVO = {
         "beats": [
             ("npc", "My father sent you. Of course he did. He never could "
                     "let a thing stay lost."),
+            # the reveal: the mask comes away, and the listing turns
+            ("do",  lambda g: g._mara_unmask()),
+            ("npc", "[c=dim]She lifts the mask away. The face from the "
+                    "photograph, gone thin.[/c]"),
             ("npc", "Tell him what I told him at the start. I'm not lost. "
                     "I've never been this close."),
             ("npc", "[c=dim]I was not taken. I was answered, and I went to it gladly.[/c]"),
@@ -837,7 +849,10 @@ MARA_CONVO = {
 def _mara_voice(game, npc):
     """Mara's confrontation -- the #6 payoff (NARRATIVE §4). The case was
     never a rescue; the calling-out walks her to you and this opens the
-    exchange (MARA_CONVO above). Mara is proof, not a counted beat; the calling-out fires the moment it opens,
+    exchange (MARA_CONVO above) as the last close-up tableau
+    (`_open_mara_tableau`: one more hood out of the rank until the
+    greet's reveal beat unmasks her). Mara is proof, not a counted beat;
+    the calling-out fires the moment it opens,
     whatever the player asks. Full lucidity changes nothing: the father
     card breaks her certainty and she still turns back to the dig. After
     it, she has gone back to the kneeling. (A shot Mara forfeits #6: the
@@ -863,13 +878,13 @@ def _mara_voice(game, npc):
     game._log_note("the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never anyone to bring back.",
     ])
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, MARA_CONVO)
+    game._open_mara_tableau(npc)
     # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence: never
     # stated, no chain named; the PI starts the thought and declines to
-    # finish it). A caption under her greeting, only for a player who
-    # lived the dream (flashback_seen); for anyone else her lines stand
-    # alone.
+    # finish it). A caption under her greeting (queued behind the frozen
+    # close-up, it lands as the tableau drops and the PI walks away), only
+    # for a player who lived the dream (flashback_seen); for anyone else
+    # her lines stand alone.
     if game.save.flag("flashback_seen"):
         game.dialog.show([
             "[c=dim](A door in your sleep, a year back. Then a grief job "
@@ -1044,10 +1059,10 @@ def build_works_sign():
                 _face(mn, p.x, p.y)
                 _mara_voice(game, mn)
         elif st["step"] == 3:
-            # Her confrontation runs LIVE (floats + the ask menu; the
-            # world keeps moving). The rank folds back once the talk
-            # ends: the father card ("ends"), the player picking "Say
-            # nothing.", or walking out of earshot.
+            # Her confrontation runs as the frozen close-up tableau (the
+            # world holds while it is up, so this step only ticks again
+            # once it drops). The rank folds back once the talk ends: the
+            # father card ("ends"), the name-beat, or "Say nothing."
             cv = getattr(game, "_convo", None)
             if cv is None or not cv.active:
                 st["step"] = 4
@@ -1135,16 +1150,15 @@ def build_works_sign():
         # the rite is the only lid on Him, and breaking it before the source
         # (the Threshold) is sealed lets His influence out uncontained. It is
         # always pre-seal here, so this is always the catastrophe.
-        def _pick(idx):
-            if idx == 0:
-                _take_mask(game)
-            elif idx == 1:
-                game._play_ending("rite_broken")
-        game.dialog.show_choice(
-            "The mask on the altar. The Sign daubed above it. The kneeling "
-            "at your back. The whole machine of it, here in reach.",
-            ["Lift the mask.", "Tear it down. End this."],
-            _pick, speaker="", voice="blip_soft", portrait="narrator")
+        # PRESENTED as the altar close-up tableau (#2b): His face on the hewn
+        # stone under the daubed Sign, the kneeling behind. The two instincts
+        # ride on as the tableau menu -- LIFT (the keystone, the Spread/Seal
+        # fork) or TEAR IT DOWN (BREAK, the trap: the rite is the only lid, so
+        # breaking it before the source is sealed floods Him out uncontained;
+        # always pre-seal here, so always the catastrophe -> rite_broken).
+        game._open_altar_tableau(
+            on_lift=lambda: _take_mask(game),
+            on_break=lambda: game._play_ending("rite_broken"))
 
     def _sign_on_enter(game, scene):
         # C14c: once the Mask is lifted, _interact early-returns, so drop

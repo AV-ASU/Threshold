@@ -119,9 +119,10 @@ it renders the procedural sprites to a labelled PNG strip.
     desk, read the case file), the world frozen while it is up. Art (the
     procedural close-ups) lives in `ui/tableau.py`; the pilot is the bedroom
     writing desk. The **face-across-a-table principal talks** ride the same
-    frame (2026-07, all five principals): `clerk_dialogue` /
+    frame (2026-07, all six principal seats): `clerk_dialogue` /
     `sheriff_dialogue` / `hettie_dialogue` / `preacher_dialogue` /
-    `toby_dialogue` open the talk as a tableau (the `_open_*_tableau`
+    `toby_dialogue` / `_mara_voice` open the talk as a tableau (the
+    `_open_*_tableau`
     openers + `open_conversation(..., tableau=True)`), the conversation's
     beats render as the caption and its menu as the option panel
     (`_convo_tableau_input`), and the art reads save flags so the close-up
@@ -130,12 +131,26 @@ it renders the procedural sprites to a labelled PNG strip.
     cabinet; Hettie's door-glance idle, the tab leaving the spike, the
     traded paper; Crane's hands folding or gripping the lectern on the press
     fork; Toby's corn-line watch, the procession drawing, the brows the
-    promise levels). The chorus still floats its talk (the `tests/flow.py`
+    promise levels). **MARA is the last seat and carries the REVEAL**
+    (2026-07): the calling-out confrontation opens with her masked and
+    hooded, one of the congregation, the caption LISTING her "One of them"
+    (`MARA_CONVO["name"]` is a callable), until the greet's `("do", ...)`
+    beat (`_mara_unmask`) pulls the carved mask off — the face from the
+    photograph, gone thin — and the listing turns to her name; her captions
+    page on Escape (the reveal can't be skipped), and the art reads
+    `mara_lucid` (raised bleeding palms) / `mara_named` (her fist on the
+    PI's coat, the rank stirring). The conversation engine grew `("do",
+    fn)` beats + callable `name` for it, and `load_scene_now` now drops a
+    stale tableau alongside the convo. The chorus still floats its talk
+    (the `tests/flow.py`
     §26 float guards ride Royce). **THE TALK rides the frame too** (the tone
     inversion: `_cult_talk` → `_open_talk_tableau`, a scripted caption chain,
     not a Conversation — the grip close-up, the one reach-for-the-revolver
-    choice, Escape pages instead of aborting). Still to come: a pedestal
-    (the Mask), Mara. Player-facing text is in `DIALOGUE.md` Part B.
+    choice, Escape pages instead of aborting). **THE PEDESTAL** (the Sign
+    Chamber altar, `_open_altar_tableau`) is the OBJECT close-up of His face
+    on the stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN
+    (BREAK → `_play_ending("rite_broken")`), Escape backs out. All #2b
+    seats ship. Player-facing text is in `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
