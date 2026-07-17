@@ -1636,6 +1636,31 @@ def main():
     check(gct._tableau is None and gct._convo.active is False,
           "crane: Escape closes the lectern tableau and ends the talk")
 
+    # (Toby tableau, #2b, the last principal seat) Talking to Toby opens
+    # the little-table close-up: the conversation runs in tableau mode, and
+    # the room carries what the talk earned (the procession drawing once he
+    # has told it, the levelled brows once the PI has promised).
+    from scenes.dialogue import toby_dialogue as _tbf
+    check("_open_toby_tableau" in _ict.getsource(_tbf),
+          "toby: talking to him opens the little-table tableau")
+    gtt = new_game()
+    gtt.dialog.active = False
+    gtt._open_toby_tableau(None)
+    check(gtt._tableau is not None and gtt._tableau["kind"] == "toby"
+          and gtt._convo is not None and gtt._convo.tableau is True,
+          "toby: the little-table tableau hosts the conversation")
+    _tst = gtt._toby_tableau_state()
+    check(not _tst["drawing_present"] and not _tst["believed"],
+          "toby: fresh run, no procession drawing and the brows stay worried")
+    gtt.save.set_flag("toby_told", True)
+    gtt.save.set_flag("convo_toby_holding_up_asked", True)
+    _tst = gtt._toby_tableau_state()
+    check(_tst["drawing_present"] and _tst["believed"],
+          "toby: telling it hangs the drawing; the promise levels his brows")
+    gtt._tableau_input(_EscC())
+    check(gtt._tableau is None and gtt._convo.active is False,
+          "toby: Escape closes the little-table tableau and ends the talk")
+
     # The Crane-provoke stall-breaker (`_the_third_thread`) was REMOVED with
     # the evidence rework (NARRATIVE §6, DESIGN.md §9): the surface trail is
     # now three carryable pickups in three fixed places (the tab, the slip,
@@ -2776,22 +2801,24 @@ def main():
     # talkable-NPC line reached through the interact path FLOATS over
     # the speaker's head and leaves the world running; narrator lines,
     # choices, and scripted (on_complete) beats stay in the MODAL box.
-    # (Vehicle: Toby -- the principals whose talks became close-up
-    # tableaux (Sable/Vane/Hettie/Crane) no longer float their greets.)
+    # (Vehicle: Royce, a chorus local -- every PRINCIPAL's talk is a
+    # close-up tableau now and no longer floats its greet. His one
+    # reactive stoop beat gates on 2+ evidence, so a fresh game goes
+    # straight to the conversation.)
     gfs = new_game()
-    gfs.load_scene_now("toby_house", "default")
+    gfs.load_scene_now("brimley", "default")
     for _ in range(20):
         gfs.state = "playing"
         gfs.step(1 / 30.0)
-    _toby = next(n for n in gfs.scene.npcs
-                 if getattr(n, "sprite_kind", "") == "toby")
-    gfs.player.x, gfs.player.y = _toby.x, _toby.y + 30
-    gfs._speaking_npc = _toby
-    _toby.interact(gfs)
+    _royce = next(n for n in gfs.scene.npcs
+                  if getattr(n, "sprite_kind", "") == "royce")
+    gfs.player.x, gfs.player.y = _royce.x, _royce.y + 30
+    gfs._speaking_npc = _royce
+    _royce.interact(gfs)
     gfs._speaking_npc = None
     check(gfs.float_speech.active and not gfs.dialog.active,
           "float: an interact-path NPC line floats (not the modal box)")
-    check(gfs.float_speech.speaker is _toby,
+    check(gfs.float_speech.speaker is _royce,
           "float: the caption tracks the speaker")
     _wf = (gfs.dialog.active or gfs.inv_ui.open or gfs.notebook_ui.open
            or gfs.text_input.active or gfs._flashback_phase is not None)
@@ -2799,7 +2826,7 @@ def main():
     # A narrator line goes NON-MODAL too now -- the lower-third
     # narration caption (ui/narration.py), world still running.
     gfs.float_speech.active = False
-    gfs._speaking_npc = _toby
+    gfs._speaking_npc = _royce
     gfs.dialog.show(["A cold room."], speaker="", portrait="narrator")
     gfs._speaking_npc = None
     check(gfs.narration.active and not gfs.dialog.active,
@@ -2821,7 +2848,7 @@ def main():
           "narration: an on_complete narrator beat stays modal")
     gfs.dialog.active = False
     gfs.dialog.on_complete = None
-    gfs._speaking_npc = _toby
+    gfs._speaking_npc = _royce
     gfs.dialog.show_choice("Pick", ["a", "b"], lambda i: None,
                            speaker="Crane", portrait="preacher")
     gfs._speaking_npc = None

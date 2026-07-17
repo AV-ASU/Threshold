@@ -243,9 +243,25 @@ Part B.
   Guarded by `tests/flow.py` (the Crane-tableau block after the fork
   guards); text in `DIALOGUE.md` Part A + Part B.
 
-  **Still open (the maintainer greenlights each):** the same treatment for
-  Toby, the **pedestal** (the Mask on the altar), and Mara's confrontation /
-  the cult Talk. Each is its own bespoke environment + art pass, then wire.
+- **TOBY'S LITTLE TABLE landed (2026-07, the fifth and last principal
+  seat).** `toby_dialogue` opens `TOBY_CONVO` in the close-up
+  (`_open_toby_tableau`; art `draw_toby_tableau`, derived from his kid
+  sprite: the yellow tunic, the low brown mop, the cheek marks that read as
+  old tear-streaks on the second look; child proportions, so the same frame
+  holds a smaller person). The one almost-normal room in Brimley: plain
+  daylight, crayon drawings taped crooked, the closet door's drawing (C14),
+  the toy radio, crayons and his fidgeting hands on the table. Reactive:
+  his idle watches the corn line out the window (the framing line made
+  pose), the dark procession drawing hangs among the cheerful ones once
+  toby_told, and the worried brow slant levels once the PI's promise lands
+  (`_toby_tableau_state`). The §26 float guards moved their vehicle to
+  Royce (all five principals host tableaux now; the chorus still floats).
+  Guarded by `tests/flow.py` (the Toby-tableau block after Crane's); text
+  in `DIALOGUE.md` Part A + Part B.
+
+  **Still open (the maintainer greenlights each):** the **pedestal** (the
+  Mask on the altar) and Mara's confrontation / the cult Talk. Each is its
+  own bespoke environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

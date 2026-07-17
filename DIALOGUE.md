@@ -352,6 +352,12 @@ intro:" / "Opener photo:").
 - **Voice:** `blip_kid`. **Code:** `scenes/dialogue.py` `TOBY_CONVO`,
   `toby_dialogue`. **Who:** local child; the sole witness of where the
   procession went. Witness EARNED on the photo. Lends the bear.
+- **Presentation (2026-07):** `toby_dialogue` opens `TOBY_CONVO` inside a
+  frozen close-up **tableau** (`_open_toby_tableau`, `tableau=True`): his
+  room across the little table, the one almost-normal room in Brimley, his
+  idle watching the corn line out the window (the framing line made pose).
+  The bear one-shot still volunteers as a plain beat first. The words are
+  identical either way (below). See Part B "The close-up examine tableaux."
 - **Greet** (`toby_greeted`):
   - (npc) "You're not from here. I'd have seen you before."
   - (npc) "What are you doing, mister?"
@@ -599,6 +605,18 @@ text:
   press fork exactly as the framing line does (`_crane_tableau_state`
   mirrors `_crane_prompt`): folded over the lectern while he waits;
   gripping its corners, head forward, once `preacher_doomed` latches.
+- **Toby's little table** (`_open_toby_tableau`, opened from
+  `toby_dialogue`; words under **Toby** in Part A). The one almost-normal
+  room in Brimley, and that is its dread: plain daylight, his crayon
+  drawings taped up crooked, the closet door with its own drawing, the toy
+  radio on its shelf, crayons and a half-drawn sheet on the table, his
+  small hands (one fidgeting a crayon). His sprite's tell survives: the
+  cheek marks that read as old tear-streaks on the second look. Reactive:
+  his idle **watches the corn line** out the window (the framing line made
+  pose), the dark **procession drawing** hangs among the cheerful ones
+  once he has told what he saw (`toby_told`), and his worried **brows
+  level out** once the PI has made the promise
+  (`convo_toby_holding_up_asked`).
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".

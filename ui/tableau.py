@@ -1213,3 +1213,261 @@ def draw_crane_tableau(surf, t, state):
         a = max(0, int(140 * (1 - (r - inner) / (maxr - inner))))
         pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
     surf.blit(vig, (0, 0))
+
+
+# ---- Toby: his kid sprite as a close-up across the little table -----------
+# Child proportions, big worried eyes under the mop fringe, the tear-streak
+# cheek marks kept from the sprite. `watch` turns his head toward the window
+# (viewer-right, the corn line); `believed` levels the worried brow slant
+# after the PI's promise ("Okay. I believe you.").
+def _draw_toby(surf, cx, cy, blink, watch, believed):
+    import pygame
+    skin = (178, 172, 144); sk_hi = (200, 194, 164); sk_lo = (124, 120, 99)
+    sk_sh = (84, 81, 66); streak = (128, 124, 104)
+    tunic = (150, 138, 64); tunic_dk = (104, 95, 42); tunic_lt = (172, 160, 82)
+    hair = (66, 46, 28); hair_dk = (44, 30, 18)
+    turn = int(12 * watch)                          # toward the window, right
+    HW, HH = 40, 48                                 # a kid's head, small
+    tt = cy + HH - 2
+
+    # -- the tunic: narrow kid shoulders, a patched elbow out of frame --
+    pygame.draw.polygon(surf, tunic, [(cx - 62, tt + 10), (cx + 62, tt + 10),
+                                      (cx + 54, tt + 220), (cx - 54, tt + 220)])
+    pygame.draw.ellipse(surf, tunic, (cx - 68, tt - 4, 50, 36))
+    pygame.draw.ellipse(surf, tunic, (cx + 18, tt - 4, 50, 36))
+    pygame.draw.polygon(surf, tunic_dk, [(cx + 20, tt + 10), (cx + 62, tt + 10),
+                                         (cx + 54, tt + 220), (cx + 20, tt + 220)])
+    pygame.draw.polygon(surf, tunic_lt, [(cx - 62, tt + 10), (cx - 54, tt + 10),
+                                         (cx - 48, tt + 220), (cx - 62, tt + 220)])
+    # the collar: a plain crew-neck band
+    pygame.draw.arc(surf, tunic_dk, (cx - 15, tt, 30, 16), 3.3, 6.1, 4)
+
+    # -- neck + head --
+    pygame.draw.rect(surf, sk_lo, (cx - 9 + turn // 2, cy + HH - 16, 18, 26))
+    hx = cx + turn
+    pygame.draw.ellipse(surf, skin, (cx - HW, cy - HH, HW * 2, HH * 2))
+    # round kid cheeks: a soft jaw, no squaring
+    dim = pygame.Surface((HW * 2 + 16, HH * 2 + 16), pygame.SRCALPHA)
+    pygame.draw.ellipse(dim, (*sk_sh, 62), (0, 10, HW - 2 - turn, HH * 2 - 12))
+    surf.blit(dim, (cx - HW, cy - HH))
+    lit = pygame.Surface((HW * 2 + 16, HH * 2 + 16), pygame.SRCALPHA)
+    pygame.draw.ellipse(lit, (*sk_hi, 110), (HW + 6, HH - 32, HW - 4, 58))
+    surf.blit(lit, (cx - HW, cy - HH))
+    pygame.draw.circle(surf, sk_lo, (cx - HW + 2, cy + 4), 6)           # ears
+    pygame.draw.circle(surf, skin, (cx + HW - 2, cy + 4), 6)
+
+    # -- the mop: one brown mass to just over the brow, ragged tips at the
+    # brow line, side falls past the ears, the cowlick on top --
+    pygame.draw.ellipse(surf, hair, (cx - HW - 3, cy - HH - 8, HW * 2 + 6, 46))
+    for k in range(7):                                                  # ragged ends at the brow
+        fx2 = cx - 34 + k * 11
+        pygame.draw.polygon(surf, hair, [(fx2, cy - 26), (fx2 + 11, cy - 28),
+                                         (fx2 + 5, cy - 13)])
+    pygame.draw.rect(surf, hair, (cx - HW - 2, cy - 26, 8, 32))         # side falls
+    pygame.draw.rect(surf, hair, (cx + HW - 6, cy - 26, 8, 32))
+    pygame.draw.line(surf, hair_dk, (cx + 8, cy - HH - 6), (cx + 13, cy - HH - 15), 3)  # cowlick
+    pygame.draw.line(surf, hair_dk, (cx + 13, cy - HH - 15), (cx + 18, cy - HH - 7), 2)
+
+    # -- the face: big kid eyes, the worried slant that levels, the streaks --
+    slant = 0 if believed else 3                    # worried up-slant, inner ends high
+    pygame.draw.line(surf, (52, 38, 26), (hx - 24, cy - 10), (hx - 8, cy - 13 - slant), 3)
+    pygame.draw.line(surf, (52, 38, 26), (hx + 8, cy - 13 - slant), (hx + 24, cy - 10), 3)
+    for sgn in (-1, 1):
+        ex = hx + sgn * 17
+        ey = cy - 1
+        if blink:
+            pygame.draw.line(surf, sk_sh, (ex - 9, ey + 1), (ex + 9, ey + 1), 2)
+        else:
+            pygame.draw.ellipse(surf, (218, 214, 198), (ex - 9, ey - 6, 18, 13))  # big kid eyes
+            pygame.draw.circle(surf, (74, 56, 36), (ex + (3 if watch > 0.5 else 0), ey + 1), 5)
+            pygame.draw.circle(surf, (20, 16, 12), (ex + (3 if watch > 0.5 else 0), ey + 1), 2)
+            pygame.draw.circle(surf, (232, 228, 214), (ex - 2 + (3 if watch > 0.5 else 0), ey - 1), 1)
+            pygame.draw.line(surf, sk_lo, (ex - 9, ey - 6), (ex + 9, ey - 7), 1)
+    # the small nose, the round cheeks
+    pygame.draw.line(surf, sk_lo, (hx, cy + 2), (hx - 1, cy + 12), 2)
+    pygame.draw.ellipse(surf, sk_lo, (hx - 4, cy + 10, 8, 5))
+    # THE TELL: the cheek marks, slightly low, asymmetric; old tear-streaks
+    pygame.draw.line(surf, streak, (hx - 13, cy + 12), (hx - 13, cy + 20), 2)
+    pygame.draw.line(surf, (118, 112, 94), (hx + 12, cy + 15), (hx + 12, cy + 22), 2)
+    # a kid's mouth: small, held shut ("I keep biting my tongue. To check.")
+    my = cy + 24
+    pygame.draw.line(surf, (124, 92, 84), (hx - 8, my), (hx + 8, my), 2)
+    pygame.draw.line(surf, sk_lo, (hx - 10, my + 1), (hx - 8, my), 1)
+    pygame.draw.line(surf, sk_lo, (hx + 8, my), (hx + 10, my + 1), 1)
+
+
+def draw_toby_tableau(surf, t, state):
+    """Toby's room, across the little table: the one almost-normal room in
+    Brimley. Plain daylight, his crayon drawings taped up, the closet door
+    with its own drawing, the toy radio, crayons and paper on the table. The
+    window gives onto the corn line he watches. `state`: the idle-driven
+    watch, the procession drawing once he has told it, the levelled brows
+    once the PI has promised."""
+    import pygame
+    W, H = surf.get_width(), surf.get_height()
+    watch = state.get("watch", 0.0)
+    drawing = state.get("drawing_present", False)
+    believed = state.get("believed", False)
+
+    # -- a plain plastered kid's room, DAYLIT: the normal one --
+    top = (108, 98, 82); bot = (56, 50, 42)
+    for y in range(0, H, 2):
+        surf.fill(_lerp(top, bot, y / H), (0, y, W, 2))
+    pygame.draw.rect(surf, (66, 54, 40), (0, int(H * 0.60), W, 8))      # picture rail line
+
+    # -- the closet door, far left, its own drawing taped on (C14) --
+    cdx, cdw = 0, int(W * 0.115)
+    pygame.draw.rect(surf, (74, 58, 40), (cdx, int(H * 0.04), cdw, int(H * 0.66)))
+    pygame.draw.rect(surf, (52, 41, 28), (cdx, int(H * 0.04), cdw, int(H * 0.66)), 4)
+    pygame.draw.rect(surf, (60, 47, 32), (cdx + 12, int(H * 0.10), cdw - 24, int(H * 0.24)), 2)
+    pygame.draw.rect(surf, (60, 47, 32), (cdx + 12, int(H * 0.40), cdw - 24, int(H * 0.24)), 2)
+    pygame.draw.circle(surf, (108, 100, 84), (cdx + cdw - 14, int(H * 0.38)), 4)
+    # the taped drawing on the closet: a door, drawn tall, kid-crooked
+    ddx, ddy = cdx + 22, int(H * 0.14)
+    pygame.draw.rect(surf, (196, 190, 172), (ddx, ddy, 52, 64))
+    pygame.draw.rect(surf, (170, 164, 146), (ddx, ddy, 52, 64), 1)
+    pygame.draw.rect(surf, (150, 146, 128), (ddx + 20, ddy - 4, 12, 8))  # tape
+    pygame.draw.rect(surf, (96, 74, 52), (ddx + 14, ddy + 12, 24, 42), 2)
+    pygame.draw.circle(surf, (96, 74, 52), (ddx + 34, ddy + 34), 2)
+
+    # -- the drawings wall: taped crayon sheets, slightly crooked --
+    rnd = random.Random(41)
+    sheets = [(int(W * 0.16), int(H * 0.09), -4), (int(W * 0.255), int(H * 0.13), 3),
+              (int(W * 0.175), int(H * 0.33), 2), (int(W * 0.27), int(H * 0.36), -3)]
+    for i, (sx_, sy_, ang) in enumerate(sheets):
+        sheet = pygame.Surface((78, 60), pygame.SRCALPHA)
+        sheet.fill((200, 194, 176))
+        pygame.draw.rect(sheet, (172, 166, 148), (0, 0, 78, 60), 1)
+        if i == 0:                                                      # the house
+            pygame.draw.rect(sheet, (140, 96, 72), (22, 26, 32, 24), 2)
+            pygame.draw.polygon(sheet, (140, 96, 72), [(18, 28), (38, 12), (58, 28)], 2)
+            pygame.draw.line(sheet, (110, 106, 92), (48, 14), (48, 6), 2)
+        elif i == 1:                                                    # the family
+            for k in range(4):
+                fx3 = 14 + k * 16
+                hh2 = 14 if k < 2 else 9
+                pygame.draw.circle(sheet, (104, 88, 120), (fx3, 24), 5, 2)
+                pygame.draw.line(sheet, (104, 88, 120), (fx3, 29), (fx3, 29 + hh2), 2)
+        elif i == 2:                                                    # the corn
+            for k in range(6):
+                cx3 = 10 + k * 12
+                pygame.draw.line(sheet, (128, 118, 64), (cx3, 48), (cx3, 18), 2)
+                pygame.draw.line(sheet, (128, 118, 64), (cx3, 26), (cx3 + 6, 20), 1)
+        else:                                                           # the sun, half-page
+            pygame.draw.circle(sheet, (168, 148, 84), (58, 14), 9, 2)
+            for k in range(5):
+                a2 = k * 0.7 + 0.4
+                pygame.draw.line(sheet, (168, 148, 84),
+                                 (58 + int(11 * math.cos(a2)), 14 + int(11 * math.sin(a2))),
+                                 (58 + int(16 * math.cos(a2)), 14 + int(16 * math.sin(a2))), 1)
+        sheet = pygame.transform.rotate(sheet, ang)
+        surf.blit(sheet, (sx_, sy_))
+        pygame.draw.rect(surf, (150, 146, 128), (sx_ + 30, sy_ - 2, 14, 7))     # tape
+
+    # -- the procession drawing, up once he has told it: the dark one --
+    if drawing:
+        pdx, pdy = int(W * 0.355), int(H * 0.14)
+        psheet = pygame.Surface((92, 70), pygame.SRCALPHA)
+        psheet.fill((198, 192, 174))
+        pygame.draw.rect(psheet, (170, 164, 146), (0, 0, 92, 70), 1)
+        pygame.draw.line(psheet, (90, 102, 116), (6, 52), (86, 46), 2)   # the river, wavy
+        pygame.draw.line(psheet, (90, 102, 116), (10, 55), (82, 50), 1)
+        for k in range(7):                                               # the line of them
+            fx3 = 12 + k * 10
+            fy3 = 30 - k
+            pygame.draw.circle(psheet, (48, 44, 42), (fx3, fy3), 3, 1)
+            pygame.draw.line(psheet, (48, 44, 42), (fx3, fy3 + 3), (fx3, fy3 + 12), 2)
+        pygame.draw.ellipse(psheet, (30, 27, 25), (72, 20, 16, 10))      # the hole they went in
+        psheet = pygame.transform.rotate(psheet, -2)
+        surf.blit(psheet, (pdx, pdy))
+        pygame.draw.rect(surf, (150, 146, 128), (pdx + 36, pdy - 3, 14, 7))
+        pygame.draw.rect(surf, (150, 146, 128), (pdx + 8, pdy + 62, 12, 6))  # taped twice, careful
+
+    # -- the window, viewer-right: plain day over the corn line he watches --
+    wx, wy = int(W * 0.60), int(H * 0.08)
+    ww, wh = int(W * 0.22), int(H * 0.42)
+    pygame.draw.rect(surf, (66, 52, 36), (wx - 10, wy - 10, ww + 20, wh + 20))
+    glass_t = (196, 190, 168); glass_b = (162, 154, 128)
+    for gy in range(wh):
+        surf.fill(_lerp(glass_t, glass_b, gy / wh), (wx, wy + gy, ww, 1))
+    pygame.draw.rect(surf, (150, 142, 112), (wx, wy + int(wh * 0.56), ww, int(wh * 0.10)))  # treeline
+    pygame.draw.rect(surf, (170, 158, 118), (wx, wy + int(wh * 0.66), ww, int(wh * 0.34)))  # THE CORN LINE
+    for cxx in range(wx + 4, wx + ww, 8):
+        pygame.draw.line(surf, (146, 134, 96), (cxx, wy + int(wh * 0.70)), (cxx, wy + wh), 1)
+    pygame.draw.line(surf, (66, 52, 36), (wx + ww // 2, wy), (wx + ww // 2, wy + wh), 5)
+    pygame.draw.line(surf, (66, 52, 36), (wx, wy + wh // 2), (wx + ww, wy + wh // 2), 5)
+    pygame.draw.rect(surf, (84, 66, 44), (wx - 10, wy - 10, ww + 20, wh + 20), 4)
+    pygame.draw.rect(surf, (84, 66, 44), (wx - 16, wy + wh + 10, ww + 32, 10))   # sill
+    # a soft day shaft into the room
+    shaft = pygame.Surface((W, H), pygame.SRCALPHA)
+    pygame.draw.polygon(shaft, (226, 216, 184, 30),
+                        [(wx, wy + 10), (wx + ww, wy), (int(W * 0.50), int(H * 0.90)),
+                         (int(W * 0.26), int(H * 0.90))])
+    surf.blit(shaft, (0, 0))
+
+    # -- the toy radio on its shelf corner, right of the window --
+    trx, try_ = int(W * 0.875), int(H * 0.47)
+    pygame.draw.rect(surf, (66, 52, 36), (trx - 12, try_ + 22, int(W * 0.11), 8))  # its shelf
+    pygame.draw.rect(surf, (118, 74, 56), (trx, try_ - 10, 66, 34), border_radius=6)
+    pygame.draw.rect(surf, (86, 52, 40), (trx, try_ - 10, 66, 34), 2, border_radius=6)
+    pygame.draw.circle(surf, (188, 178, 156), (trx + 16, try_ + 7), 8)
+    pygame.draw.circle(surf, (86, 52, 40), (trx + 16, try_ + 7), 8, 2)
+    pygame.draw.line(surf, (86, 52, 40), (trx + 16, try_ + 7), (trx + 20, try_ + 2), 2)
+    for k in range(4):                                                   # the speaker slots
+        pygame.draw.line(surf, (86, 52, 40), (trx + 34, try_ - 2 + k * 6),
+                         (trx + 58, try_ - 2 + k * 6), 2)
+    pygame.draw.line(surf, (86, 52, 40), (trx + 58, try_ - 10), (trx + 70, try_ - 26), 2)  # antenna
+    pygame.draw.circle(surf, (86, 52, 40), (trx + 70, try_ - 27), 2)
+
+    # -- Toby across the little table: small, low in the frame --
+    bob = int(3 * math.sin(t * 1.6))                                     # a kid never quite still
+    _draw_toby(surf, int(W * 0.415), int(H * 0.375) + bob, (t % 3.1) < 0.14,
+               watch, believed)
+
+    # -- the little table: crayons, paper, his hands --
+    dtop = int(H * 0.685)
+    pygame.draw.polygon(surf, (58, 44, 28), [(0, dtop), (W, dtop), (W, H), (0, H)])
+    pygame.draw.polygon(surf, (92, 72, 46),
+                        [(int(W * 0.02), dtop - 22), (int(W * 0.98), dtop - 22), (W, dtop), (0, dtop)])
+    pygame.draw.line(surf, (118, 94, 60), (0, dtop), (W, dtop), 2)
+    for gxx in range(0, W, 110):
+        pygame.draw.line(surf, (48, 36, 22), (gxx, dtop + 8), (gxx - 8, H), 1)
+    # a half-drawn sheet + scattered crayons
+    shx, shy = int(W * 0.17), dtop - 6
+    quad = [(shx, shy), (shx + 92, shy - 8), (shx + 102, shy + 18), (shx + 12, shy + 26)]
+    pygame.draw.polygon(surf, (14, 12, 10), [(x + 3, y + 3) for x, y in quad])
+    pygame.draw.polygon(surf, (202, 196, 178), quad)
+    pygame.draw.arc(surf, (110, 96, 118), (shx + 20, shy - 4, 40, 22), 0.4, 2.6, 2)
+    pygame.draw.line(surf, (110, 96, 118), (shx + 30, shy + 10), (shx + 52, shy + 6), 2)
+    crayons = [((0.32, 8), (150, 90, 74)), ((0.55, -4), (96, 108, 88)),
+               ((0.60, 10), (104, 88, 120)), ((0.64, 2), (168, 148, 84))]
+    for (fx4, dy4), col in crayons:
+        cx4, cy4 = int(W * fx4), dtop + dy4
+        pygame.draw.line(surf, col, (cx4, cy4), (cx4 + 26, cy4 - 5), 5)
+        pygame.draw.polygon(surf, col, [(cx4 + 26, cy4 - 8), (cx4 + 32, cy4 - 6), (cx4 + 26, cy4 - 2)])
+    # his hands on the table edge: one flat, one fisted round a crayon
+    tcx = int(W * 0.415)
+    skin2 = (168, 163, 136); sk_lo2 = (118, 114, 94)
+    pygame.draw.ellipse(surf, skin2, (tcx - 58, dtop - 12, 36, 20))      # flat hand
+    pygame.draw.ellipse(surf, sk_lo2, (tcx - 58, dtop - 12, 36, 20), 1)
+    for fk in range(3):
+        pygame.draw.line(surf, sk_lo2, (tcx - 50 + fk * 8, dtop - 10),
+                         (tcx - 52 + fk * 8, dtop + 4), 1)
+    fisty = dtop - 10 + int(2 * math.sin(t * 2.3))                       # the fidget
+    pygame.draw.ellipse(surf, skin2, (tcx + 22, fisty, 30, 22))          # the fist
+    pygame.draw.ellipse(surf, sk_lo2, (tcx + 22, fisty, 30, 22), 1)
+    pygame.draw.line(surf, (150, 90, 74), (tcx + 30, fisty - 10), (tcx + 36, fisty + 4), 5)  # the crayon in it
+
+    # -- soft daylight key; the mildest vignette of the five --
+    key = pygame.Surface((W, H), pygame.SRCALPHA)
+    for r in range(int(H * 0.9), 0, -12):
+        a = int(52 * (1 - r / (H * 0.9)))
+        pygame.draw.circle(key, (238, 228, 196, a), (int(W * 0.62), int(H * 0.34)), r)
+    surf.blit(key, (0, 0))
+    vig = pygame.Surface((W, H), pygame.SRCALPHA)
+    vcx, vcy = int(W * 0.45), int(H * 0.44)
+    maxr = int(math.hypot(W, H) * 0.68); inner = int(maxr * 0.62)
+    for r in range(maxr, inner, -10):
+        a = max(0, int(118 * (1 - (r - inner) / (maxr - inner))))
+        pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
+    surf.blit(vig, (0, 0))

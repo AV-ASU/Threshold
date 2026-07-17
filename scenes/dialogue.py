@@ -467,8 +467,14 @@ def toby_dialogue(game, npc):
             "not let yourself read the name on the tag. Not yet.)[/c]",
         ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, TOBY_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the last principal seat): the one almost-normal room in Brimley, his
+    # drawings taped up, the window on the corn line he watches (the framing
+    # line made pose). The room carries what the talk earns: the procession
+    # drawing goes up once he has told what he saw, and his worried brows
+    # level once the PI has promised. The bear one-shot above still
+    # volunteers as a plain beat first; the next press opens the close-up.
+    game._open_toby_tableau(npc)
 
 
 # Ask-verb conversation: Toby volunteers nothing cold (a kid can't know the

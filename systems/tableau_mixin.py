@@ -8,7 +8,8 @@ over everything, and `handle_event` routes input to `_tableau_input` while it
 is up. The pilot is the bedroom writing desk (the pistol + the case file);
 `ui/tableau.draw_desk_tableau` is its art. New tableaux add an art fn there and
 an opener here. The face-across-a-table principal talks (Sable's reception
-desk, Vane's office) HOST a live Conversation instead of a fixed option list:
+desk, Vane's office, Hettie's counter, Crane's lectern, Toby's little table)
+HOST a live Conversation instead of a fixed option list:
 `open_conversation(..., tableau=True)` routes its spoken beats to
 `_tableau_caption` and its question menu to `_tableau_choices`, and the art
 reads the save flags so the close-up carries what the talk has earned.
@@ -21,7 +22,7 @@ import pygame
 
 from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
                         draw_vane_tableau, draw_hettie_tableau,
-                        draw_crane_tableau)
+                        draw_crane_tableau, draw_toby_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -143,6 +144,34 @@ class TableauMixin:
         the pose and the framing line always tell the same story."""
         return {"doomed": self.save.flag("preacher_doomed")}
 
+    # ----------------------------------------------------- Toby conversation
+    def _open_toby_tableau(self, npc):
+        """Toby across the little table, PRESENTED as a frozen close-up: the
+        one almost-normal room in Brimley. Plain daylight, his drawings
+        taped to the wall, the closet door with its own drawing, the toy
+        radio, crayons on the table. His idle watches the corn line out the
+        window (the framing line made pose); the procession drawing goes up
+        once he has told what he saw, and his worried brows level out once
+        the PI has made the promise."""
+        self._tableau = {
+            "kind": "toby", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import TOBY_CONVO
+        open_conversation(self, npc, TOBY_CONVO, tableau=True)
+
+    def _toby_tableau_state(self):
+        """The room's live state: the procession drawing hangs once he has
+        told it (toby_told, the photo exchange), and the worried brow slant
+        levels once the PI has promised (the holding_up exchange). The
+        window-watch is idle-driven and added at draw time."""
+        return {
+            "drawing_present": self.save.flag("toby_told"),
+            "believed": self.save.flag("convo_toby_holding_up_asked"),
+        }
+
     # The two presentation hooks the Conversation calls in tableau mode.
     def _tableau_caption(self, who, name, text, on_complete):
         tb = self._tableau
@@ -245,7 +274,7 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
-        if tb["kind"] in ("sable", "vane", "hettie", "crane"):
+        if tb["kind"] in ("sable", "vane", "hettie", "crane", "toby"):
             self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
@@ -295,6 +324,9 @@ class TableauMixin:
             return
         if tb["kind"] == "crane":
             self._draw_crane_tableau(surf, tb)
+            return
+        if tb["kind"] == "toby":
+            self._draw_toby_tableau(surf, tb)
             return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])
@@ -375,6 +407,21 @@ class TableauMixin:
 
     def _draw_crane_tableau(self, surf, tb):
         draw_crane_tableau(surf, tb["t"], self._crane_tableau_state())
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_toby_tableau(self, surf, tb):
+        # His idle watch of the corn line: every few seconds his eyes go to
+        # the window, hold, and come back. Time-driven, eased both ways.
+        ph = tb["t"] % 7.4
+        watch = 0.0
+        if 5.0 <= ph < 6.8:
+            watch = min(1.0, (ph - 5.0) / 0.4, (6.8 - ph) / 0.4)
+        st = self._toby_tableau_state()
+        st["watch"] = watch
+        draw_toby_tableau(surf, tb["t"], st)
         if tb.get("caption") is not None:
             self._draw_tableau_caption(surf, tb["caption"])
         elif tb.get("menu") is not None:
