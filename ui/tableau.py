@@ -1058,8 +1058,7 @@ def _draw_crane(surf, cx, cy, blink, doomed):
 def draw_crane_tableau(surf, t, state):
     """The church chancel, across Crane's lectern. Candled dusk (his light is
     the flames he keeps lit for nobody): board walls, the plain cross, the
-    stopped hymn board, the tall arched window going out, the bell rope dead
-    at the edge. `state["doomed"]`: pressed, his hands grip the lectern and
+    tall arched window going out, the bell rope dead at the edge. `state["doomed"]`: pressed, his hands grip the lectern and
     he is done waiting; else they stay folded over it."""
     import pygame
     W, H = surf.get_width(), surf.get_height()
@@ -1078,42 +1077,6 @@ def draw_crane_tableau(surf, t, state):
     pygame.draw.line(surf, (118, 106, 84), (int(W * 0.055), 0), (rx, int(H * 0.52)), 3)
     pygame.draw.circle(surf, (100, 90, 70), (rx, int(H * 0.53)), 6)     # the knotted end
     pygame.draw.line(surf, (84, 75, 58), (rx - 4, int(H * 0.50)), (rx + 4, int(H * 0.50)), 2)
-
-    # -- the hymn board: the numbers of a service nobody held since --
-    hbx, hby = int(W * 0.125), int(H * 0.10)
-    hbw, hbh = 118, 150
-    pygame.draw.rect(surf, (22, 19, 15), (hbx + 4, hby + 5, hbw, hbh))
-    pygame.draw.rect(surf, (52, 42, 30), (hbx, hby, hbw, hbh))
-    pygame.draw.rect(surf, (74, 60, 42), (hbx, hby, hbw, hbh), 4)
-    pygame.draw.rect(surf, (150, 140, 118), (hbx + 12, hby + 10, hbw - 24, 18))  # title strip
-    for i in range(3):
-        pygame.draw.line(surf, (96, 88, 72), (hbx + 18 + i * 30, hby + 15),
-                         (hbx + 34 + i * 30, hby + 23), 2)
-    seg = (196, 188, 164)
-    rnd0 = random.Random(3)
-    for r in range(3):                                                  # three hymn rows
-        ty = hby + 42 + r * 34
-        for c in range(3):
-            tx2 = hbx + 16 + c * 32
-            if r == 2 and c == 2:
-                continue                                                # one tile long fallen
-            pygame.draw.rect(surf, (30, 26, 21), (tx2, ty, 24, 24))
-            d = rnd0.randint(0, 9)
-            # crude seven-seg digit
-            if d not in (1, 4):
-                pygame.draw.line(surf, seg, (tx2 + 6, ty + 4), (tx2 + 18, ty + 4), 2)
-            if d not in (0, 1, 7):
-                pygame.draw.line(surf, seg, (tx2 + 6, ty + 12), (tx2 + 18, ty + 12), 2)
-            if d not in (1, 4, 7):
-                pygame.draw.line(surf, seg, (tx2 + 6, ty + 20), (tx2 + 18, ty + 20), 2)
-            if d in (0, 2, 6, 8):
-                pygame.draw.line(surf, seg, (tx2 + 6, ty + 12), (tx2 + 6, ty + 20), 2)
-            if d not in (2,):
-                pygame.draw.line(surf, seg, (tx2 + 18, ty + 4), (tx2 + 18, ty + 12), 2)
-            if d in (0, 1, 3, 4, 5, 6, 8, 9):
-                pygame.draw.line(surf, seg, (tx2 + 18, ty + 12), (tx2 + 18, ty + 20), 2)
-            if d in (0, 4, 8, 9):
-                pygame.draw.line(surf, seg, (tx2 + 6, ty + 4), (tx2 + 6, ty + 12), 2)
 
     # -- the plain wooden cross, high on the chancel wall --
     ccx, ccy = int(W * 0.565), int(H * 0.115)

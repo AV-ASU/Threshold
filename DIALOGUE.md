@@ -593,10 +593,9 @@ text:
   (`newspaper_traded`).
 - **Rev. Crane's lectern** (`_open_crane_tableau`, opened from
   `preacher_dialogue`; words under **Rev. Asa Crane** in Part A). The
-  chancel in candled dusk: board walls, the plain wooden cross, the hymn
-  board whose numbers stopped with everything else, the tall arched window
-  with the day going out of it, the bell rope hanging dead at the frame's
-  edge, his candle stand the only light. Reactive: his **hands** read the
+  chancel in candled dusk: board walls, the plain wooden cross, the tall
+  arched window with the day going out of it, the bell rope hanging dead at
+  the frame's edge, his candle stand the only light. Reactive: his **hands** read the
   press fork exactly as the framing line does (`_crane_tableau_state`
   mirrors `_crane_prompt`): folded over the lectern while he waits;
   gripping its corners, head forward, once `preacher_doomed` latches.

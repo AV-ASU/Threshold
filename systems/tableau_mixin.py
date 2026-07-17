@@ -124,8 +124,8 @@ class TableauMixin:
     # ---------------------------------------------------- Crane conversation
     def _open_crane_tableau(self, npc):
         """Rev. Crane at his lectern, PRESENTED as a frozen close-up: the
-        chancel in candled dusk, the plain cross, the stopped hymn board,
-        the bell rope dead at the frame's edge. His HANDS carry the fork
+        chancel in candled dusk, the plain cross, the arched window, the
+        bell rope dead at the frame's edge. His HANDS carry the fork
         the way the framing line does: folded over the lectern while he
         waits, gripping its corners once the press has latched."""
         self._tableau = {

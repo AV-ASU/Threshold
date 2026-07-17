@@ -233,9 +233,9 @@ Part B.
   opens `CRANE_CONVO` in the chancel close-up (`_open_crane_tableau`; art
   `draw_crane_tableau`, derived from his preacher sprite: black cassock,
   white clerical collar, the small pale cross, gaunt and half a ghost).
-  Candled dusk: the plain wall cross, the stopped hymn board (one tile long
-  fallen), the arched window going out, the bell rope dead at the edge, his
-  kept candle stand the only light. Reactive: his HANDS read the press fork
+  Candled dusk: the plain wall cross, the arched window going out, the
+  bell rope dead at the edge, his kept candle stand the only light (the
+  hymn board was cut on the maintainer's look). Reactive: his HANDS read the press fork
   exactly as the framing line does (`_crane_tableau_state` mirrors the new
   callable `_crane_prompt`): folded over the lectern while he waits;
   gripping its corners, head forward, once `preacher_doomed` latches (the
