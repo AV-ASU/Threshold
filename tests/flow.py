@@ -2958,12 +2958,18 @@ def main():
     check(gt2._death_kind is None,
           "talk: the first grab does NOT capture (the freebie)")
     check(gt2.save.flag("cult_talk_given"), "talk: the freebie is spent")
-    check(gt2.dialog.active, "talk: the warning is a modal beat")
+    # The warning is the grip CLOSE-UP now (#2b): the tableau holds the
+    # world; the locked lines land as its captions. A fresh run carries no
+    # revolver, so there is no choice: pure captions, then the release.
+    check(gt2._tableau is not None and gt2._tableau["kind"] == "talk",
+          "talk: the warning is the grip close-up (the world held)")
+    _tseen = []
     for _ in range(20):
-        if not gt2.dialog.active:
+        if gt2._tableau is None or gt2._tableau.get("caption") is None:
             break
-        gt2.dialog.advance()
-    check(not gt2.dialog.active, "talk: the warning closes cleanly")
+        _tseen.append(gt2._tableau["caption"]["text"])
+        gt2._tableau["caption"]["cb"]()
+    check(gt2._tableau is None, "talk: the warning closes cleanly")
     check(gt2.player.invuln > 0,
           "talk: release grants a re-grab grace window")
     check(any(isinstance(e, dict) and e.get("name") == "the_talk"
@@ -2972,13 +2978,46 @@ def main():
     check(not has_evidence(gt2, "the_talk"),
           "talk: the note never inflates evidence")
     check(not any(("—" in s) or ("–" in s) or ("--" in s)
-                  for s in _tshown),
+                  for s in _tseen + _tshown),
           "talk: no dashes in the warning")
-    _tblob = " ".join(_tshown).lower()
+    _tblob = " ".join(_tseen + _tshown).lower()
     check("hotel room" in _tblob and "run." in _tblob,
           "talk: the warning is the locked line (hotel room, then run)")
     check("midwestern welcome" in _tblob,
           "talk: the PI's reaction lands after the release")
+    # (28+) The reach: a PI CARRYING the revolver gets the one choice, and
+    # reaching only teaches how far ahead of him the other hand already is.
+    # Escape never aborts the grip (it pages), so the release always runs.
+    gt4 = new_game()
+    gt4.player.inventory.add("pistol", 1)
+    gt4.dialog.active = False
+    gt4._trigger_death("cultist")
+    class _EscT:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    for _ in range(6):
+        if gt4._tableau.get("menu") is not None:
+            break
+        gt4._tableau_input(_EscT())     # Escape PAGES the grip, never exits
+    _tm4 = gt4._tableau.get("menu")
+    check(_tm4 is not None and "Reach for the revolver." in _tm4["labels"],
+          "talk: carrying the revolver offers the reach")
+    _tm4["pick"](_tm4["labels"].index("Reach for the revolver."))
+    check(gt4._tableau["state"]["reaching"],
+          "talk: reaching puts his other hand on your wrist in the close-up")
+    _rseen = []
+    for _ in range(10):
+        if gt4._tableau is None or gt4._tableau.get("caption") is None:
+            break
+        _rseen.append(gt4._tableau["caption"]["text"])
+        gt4._tableau["caption"]["cb"]()
+    check(any("only talking" in s.lower() for s in _rseen),
+          "talk: the reach is answered, courteous and absolute")
+    check(gt4._tableau is None and gt4._death_kind is None
+          and gt4.player.invuln > 0,
+          "talk: the reach never escalates the freebie; the release still runs")
+    check(not any(("—" in s) or ("–" in s) or ("--" in s) for s in _rseen),
+          "talk: no dashes in the reach beats")
     # After the Talk, the grab is TWO-TOUCH (play-notes): the first grab of an
     # encounter shoves the PI free, only the second is the capture.
     gt2._trigger_death("cultist")

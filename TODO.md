@@ -259,9 +259,24 @@ Part B.
   Guarded by `tests/flow.py` (the Toby-tableau block after Crane's); text
   in `DIALOGUE.md` Part A + Part B.
 
+- **THE TALK landed as the grip close-up (2026-07, the tone inversion).**
+  `_cult_talk` opens `_open_talk_tableau` (art `draw_talk_tableau`) instead
+  of the modal box: no room, no table, no face. The carved mask of his
+  sprite fills the frame (hewn irregular oval, the door-dream grammar:
+  recessed void sockets with a gold ember far down, the Sign scratched on
+  the brow, the graft seam, no mouth), the fur hood, the stitched hide
+  coat, and his hand on YOUR shoulder at the frame's corner. He leans in,
+  very slowly, the whole time. NOT a Conversation: a scripted caption
+  chain (the locked warning lines unchanged) with ONE choice when the PI
+  carries the revolver: hold still, or reach for it and find his other
+  hand already resting on the wrist ("None of that, now. We're only
+  talking."). Escape pages, never aborts (the release, stand-down, grace,
+  and note run on every path). Guarded by the reworked flow §28 block +
+  the new reach guards; text in `DIALOGUE.md` Part A + Part B.
+
   **Still open (the maintainer greenlights each):** the **pedestal** (the
-  Mask on the altar) and Mara's confrontation / the cult Talk. Each is its
-  own bespoke environment + art pass, then wire.
+  Mask on the altar) and Mara's confrontation. Each is its own bespoke
+  environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

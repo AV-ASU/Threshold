@@ -205,6 +205,10 @@ def main():
               "struggle: overshoot presses do not re-enter the hide")
 
     g, n, struggled = hide_and_get_checked()
+    # The FIRST grab of a run is always the Talk (the grip close-up now),
+    # struggle losses included -- so spend the freebie to test the real
+    # CAPTURED end of an ignored window, not the one-time warning.
+    g.save.set_flag("cult_talk_given", True)
     if struggled:
         for _ in range(120):                 # let the window expire
             tick(g, 1)

@@ -22,7 +22,8 @@ import pygame
 
 from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
                         draw_vane_tableau, draw_hettie_tableau,
-                        draw_crane_tableau, draw_toby_tableau)
+                        draw_crane_tableau, draw_toby_tableau,
+                        draw_talk_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -172,6 +173,67 @@ class TableauMixin:
             "believed": self.save.flag("convo_toby_holding_up_asked"),
         }
 
+    # ------------------------------------------------------------- THE TALK
+    def _open_talk_tableau(self, on_done):
+        """The first cult grab of a run, PRESENTED as the closest close-up
+        in the game: the carved mask fills the frame, his hand is on your
+        shoulder at the corner, and he leans in the whole time. NOT a
+        Conversation: a scripted caption chain (the locked warning lines)
+        with ONE choice when the PI carries the revolver: hold still, or
+        reach for it and learn his other hand is already there. Escape
+        never aborts it (you do not walk out of the grip; it pages).
+        `on_done` is _cult_talk's release: the stand-down, the grace, the
+        note, the reaction caption. It ALWAYS runs, on every path."""
+        tb = {
+            "kind": "talk", "t": 0.0, "npc": None,
+            "caption": None, "menu": None, "state": {"reaching": False},
+        }
+        self._tableau = tb
+        has_gun = (self.player is not None
+                   and self.player.inventory.has("pistol"))
+
+        def _fin():
+            self._close_tableau()
+            on_done()
+
+        def _run_line():
+            self._tableau_caption("npc", "", "\"Run.\"", _fin)
+
+        def _hold():
+            self._tableau_caption("pi", "", "(You hold still.)", _run_line)
+
+        def _reach():
+            tb["state"]["reaching"] = True
+            self._tableau_caption(
+                "pi", "",
+                "(Your hand starts for your coat. His other hand is "
+                "already on your wrist. Resting there. That is all it "
+                "does.)",
+                lambda: self._tableau_caption(
+                    "npc", "", "None of that, now. We're only talking.",
+                    _run_line))
+
+        def _choice():
+            if not has_gun:
+                _run_line()
+                return
+            self._tableau_choices(
+                "He waits, hand where it landed.",
+                ["Hold still.", "Reach for the revolver."],
+                lambda i: (_hold if i == 0 else _reach)())
+
+        def _warn():
+            self._tableau_caption(
+                "npc", "",
+                "\"Hey. You go back to your hotel room if you know what's "
+                "good for you.\"", _choice)
+
+        self._tableau_caption(
+            "pi", "",
+            "[c=dim]The hand lands on your shoulder before you hear him "
+            "coming. The grip is friendly. Nothing else about it is.[/c]",
+            _warn)
+
     # The two presentation hooks the Conversation calls in tableau mode.
     def _tableau_caption(self, who, name, text, on_complete):
         tb = self._tableau
@@ -190,17 +252,21 @@ class TableauMixin:
         tb["caption"] = None
 
     def _convo_tableau_input(self, ev, tb):
-        """Input for any conversation-hosting tableau (Sable, Vane): E
-        advances the caption, up/down/E works the menu, Escape ends the
-        talk and drops the close-up."""
-        if ev.key == pygame.K_ESCAPE:
+        """Input for any caption/menu tableau (the principal seats + the
+        Talk): E advances the caption, up/down/E works the menu, Escape
+        ends a SEAT's talk and drops the close-up. THE TALK is the
+        exception: you do not walk out of the grip, so Escape pages like
+        E instead of aborting (its release must always run)."""
+        if ev.key == pygame.K_ESCAPE and tb["kind"] != "talk":
             if getattr(self, "_convo", None) is not None:
                 self._convo.active = False
             self._close_tableau()
             return
         cap, menu = tb.get("caption"), tb.get("menu")
+        adv = (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE)
         if cap is not None:
-            if ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
+            if ev.key in adv or (tb["kind"] == "talk"
+                                 and ev.key == pygame.K_ESCAPE):
                 cb = cap["cb"]
                 tb["caption"] = None
                 if cb:
@@ -274,7 +340,8 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
-        if tb["kind"] in ("sable", "vane", "hettie", "crane", "toby"):
+        if tb["kind"] in ("sable", "vane", "hettie", "crane", "toby",
+                          "talk"):
             self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
@@ -327,6 +394,13 @@ class TableauMixin:
             return
         if tb["kind"] == "toby":
             self._draw_toby_tableau(surf, tb)
+            return
+        if tb["kind"] == "talk":
+            draw_talk_tableau(surf, tb["t"], tb["state"])
+            if tb.get("caption") is not None:
+                self._draw_tableau_caption(surf, tb["caption"])
+            elif tb.get("menu") is not None:
+                self._draw_tableau_menu(surf, tb["menu"])
             return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])

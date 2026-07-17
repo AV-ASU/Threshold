@@ -131,8 +131,11 @@ it renders the procedural sprites to a labelled PNG strip.
     traded paper; Crane's hands folding or gripping the lectern on the press
     fork; Toby's corn-line watch, the procession drawing, the brows the
     promise levels). The chorus still floats its talk (the `tests/flow.py`
-    §26 float guards ride Royce). Still to come: a pedestal (the Mask),
-    Mara, the cult Talk. Player-facing text is in `DIALOGUE.md` Part B.
+    §26 float guards ride Royce). **THE TALK rides the frame too** (the tone
+    inversion: `_cult_talk` → `_open_talk_tableau`, a scripted caption chain,
+    not a Conversation — the grip close-up, the one reach-for-the-revolver
+    choice, Escape pages instead of aborting). Still to come: a pedestal
+    (the Mask), Mara. Player-facing text is in `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
@@ -508,9 +511,12 @@ it renders the procedural sprites to a labelled PNG strip.
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`). **THE TALK (2026-07): the
   FIRST cult grab of a run is a warning, not a capture** — `_cult_talk`
-  (threat_mixin) plays the courteous one-liner, stands the room down,
-  grants a short re-grab grace, and files a NOTE (flag `cult_talk_given`;
-  gates every grab site, struggle losses included). After the Talk, the
+  (threat_mixin) plays the courteous warning as the **grip close-up
+  tableau** (`_open_talk_tableau`, art `ui/tableau.draw_talk_tableau`;
+  one reach-for-the-revolver choice if the PI carries it, Escape pages
+  instead of aborting), stands the room down, grants a short re-grab
+  grace, and files a NOTE (flag `cult_talk_given`; gates every grab
+  site, struggle losses included). After the Talk, the
   cult grab is **TWO-TOUCH** (play-notes): the FIRST grab of an encounter
   shoves the PI free (`_cult_shrug_off` — grabbers stagger `STRUGGLE_STUN`,
   he tears loose on a `STRUGGLE_BURST_T` burst with `CULT_SHRUG_INVULN`

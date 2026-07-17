@@ -1471,3 +1471,188 @@ def draw_toby_tableau(surf, t, state):
         a = max(0, int(118 * (1 - (r - inner) / (maxr - inner))))
         pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
     surf.blit(vig, (0, 0))
+
+
+# ---- THE TALK: the first cult grab, made the closest frame in the game ----
+# Every principal seat is a room with furniture between you; the Talk is the
+# inversion: no room (near-nothing behind him), no table (his arm crosses the
+# frame to YOUR shoulder in the corner), and no face (the carved wooden mask
+# of his sprite, grafted in, void sockets with a gold ember far down, no
+# mouth: the courteous words come from behind wood that does not move). He
+# leans in, very slowly, the whole time.
+def draw_talk_tableau(surf, t, state):
+    """The grip close-up. Sprite-true: stitched hide coat with bone-thread
+    seams, deep fur hood, the carved mask (an irregular hewn oval, the
+    door-dream grammar: recessed sockets, no mouth) with the Sign scratched
+    faint on the brow and the graft seam where wood meets flesh. His hand
+    is on your shoulder at the bottom corner; `reaching` rests his other
+    hand on your wrist. The only motion: the embers, the fingers, the lean."""
+    import pygame
+    W, H = surf.get_width(), surf.get_height()
+    reaching = state.get("reaching", False)
+
+    # -- nowhere: near-dark, the faintest corn suggestion at the edges --
+    top = (26, 23, 19); bot = (8, 7, 7)
+    for y in range(0, H, 2):
+        surf.fill(_lerp(top, bot, y / H), (0, y, W, 2))
+    rnd = random.Random(13)
+    for _ in range(26):                                              # stalk ghosts
+        sx = rnd.choice([rnd.randint(0, int(W * 0.14)),
+                         rnd.randint(int(W * 0.82), W - 1)])
+        sh = rnd.randint(int(H * 0.2), int(H * 0.6))
+        pygame.draw.line(surf, (38, 34, 24), (sx, H), (sx + rnd.randint(-6, 6), H - sh), 1)
+
+    # -- the lean: he is closer than he was. Slowly. --
+    lean = min(16.0, t * 0.5)
+    cx = int(W * 0.47)
+    cy = int(H * 0.34) + int(lean * 0.7) + int(2 * math.sin(t * 0.9))
+    hood_r = int(150 + lean)
+
+    # -- the hide coat: the pelt mass owns the lower frame, edge to edge --
+    tt = cy + int(hood_r * 0.72)
+    pygame.draw.polygon(surf, (52, 40, 29), [(cx - 320, tt + 70), (cx + 320, tt + 70),
+                                             (cx + 430, H), (cx - 430, H)])
+    pygame.draw.polygon(surf, (40, 33, 28), [(cx - 20, tt + 62), (cx + 320, tt + 70),
+                                             (cx + 430, H), (cx + 30, H)])
+    pygame.draw.polygon(surf, (64, 50, 36), [(cx - 320, tt + 72), (cx - 130, tt + 64),
+                                             (cx - 190, H), (cx - 430, H)])
+    pygame.draw.polygon(surf, (46, 37, 27), [(cx - 130, tt + 64), (cx - 20, tt + 62),
+                                             (cx - 40, H), (cx - 190, H)])
+    for k in range(3):                                               # bone-thread seams
+        for j in range(3):
+            sy0 = tt + 100 + k * 74 + j * 13
+            pygame.draw.line(surf, (150, 138, 112), (cx - 130 + k * 3, sy0),
+                             (cx - 121 + k * 3, sy0 + 8), 3)
+            pygame.draw.line(surf, (150, 138, 112), (cx + 150 - k * 3, sy0 + 30),
+                             (cx + 159 - k * 3, sy0 + 38), 3)
+
+    # -- the fur hood: a deep ring, the opening near-black --
+    pygame.draw.ellipse(surf, (70, 58, 40), (cx - hood_r, cy - hood_r - 12,
+                                             hood_r * 2, hood_r * 2 + 44))
+    pygame.draw.ellipse(surf, (48, 39, 28), (cx - hood_r + 14, cy - hood_r + 2,
+                                             hood_r * 2 - 28, hood_r * 2 + 16))
+    rnd2 = random.Random(5)
+    for _ in range(150):                                             # fur ticks on the rim
+        a2 = rnd2.uniform(0, math.pi * 2)
+        rr = hood_r - rnd2.randint(0, 12)
+        fx = cx + int(math.cos(a2) * rr)
+        fy = cy + 8 + int(math.sin(a2) * (rr * 0.94))
+        ln = rnd2.randint(6, 13)
+        pygame.draw.line(surf, (108, 90, 62), (fx, fy),
+                         (fx + int(math.cos(a2) * ln), fy + int(math.sin(a2) * ln)), 1)
+    pygame.draw.ellipse(surf, (13, 11, 10), (cx - hood_r + 34, cy - hood_r + 26,
+                                             hood_r * 2 - 68, hood_r * 2 - 30))
+
+    # -- the flesh the mask grafts into: a margin, hood-shadowed --
+    pygame.draw.ellipse(surf, (88, 76, 66), (cx - 96, cy - 112, 192, 236))
+
+    # -- the carved mask: an irregular HEWN oval (the door-dream grammar) --
+    mw, mh = 80, 106
+    rnd3 = random.Random(9)
+    mask = []
+    for k in range(16):                                              # jagged blob edge
+        a3 = -math.pi / 2 + k * (math.pi * 2 / 16)
+        jr = 1.0 + rnd3.uniform(-0.07, 0.07)
+        mask.append((cx + int(math.cos(a3) * mw * jr),
+                     cy + int(math.sin(a3) * mh * jr)))
+    pygame.draw.polygon(surf, (150, 128, 96), mask)
+    pygame.draw.polygon(surf, (96, 80, 58), mask, 4)
+    # long vertical grain + adze facets (hewn, not sawn)
+    pygame.draw.arc(surf, (118, 100, 74), (cx - 54, cy - mh + 10, 44, mh * 2 - 24), 1.2, 2.1, 2)
+    pygame.draw.arc(surf, (118, 100, 74), (cx + 8, cy - mh + 14, 48, mh * 2 - 30), 1.1, 1.9, 2)
+    pygame.draw.line(surf, (128, 108, 80), (cx - mw + 16, cy - 58), (cx - 16, cy - 84), 3)
+    pygame.draw.line(surf, (128, 108, 80), (cx + 22, cy - 88), (cx + mw - 18, cy - 52), 3)
+    pygame.draw.line(surf, (128, 108, 80), (cx - mw + 14, cy + 44), (cx - 10, cy + 72), 3)
+    pygame.draw.lines(surf, (54, 44, 32), False,                     # a long dry crack
+                      [(cx + 38, cy - mh + 6), (cx + 30, cy - 34), (cx + 42, cy + 14),
+                       (cx + 34, cy + 52)], 3)
+    # the Sign, scratched faint on the brow
+    sgx, sgy = cx - 4, cy - mh + 46
+    pygame.draw.line(surf, (122, 106, 46), (sgx, sgy - 18), (sgx, sgy + 15), 3)
+    pygame.draw.line(surf, (122, 106, 46), (sgx - 16, sgy - 6), (sgx + 13, sgy - 13), 3)
+    pygame.draw.line(surf, (122, 106, 46), (sgx - 13, sgy + 10), (sgx + 16, sgy + 4), 3)
+
+    # -- the carved void sockets: recessed, and the gold far DOWN in them --
+    for sgn, ph in ((-1, 0.0), (1, 1.7)):
+        ex = cx + sgn * 36
+        ey = cy - 12 + (4 if sgn > 0 else 0)        # carved by hand, not level
+        pygame.draw.ellipse(surf, (74, 62, 46), (ex - 26, ey - 22, 52, 46))   # carved recess
+        pygame.draw.ellipse(surf, (36, 30, 24), (ex - 22, ey - 15, 42, 38))
+        pygame.draw.ellipse(surf, (6, 5, 7), (ex - 17, ey - 9, 32, 30))       # the pit, low
+        glow = 0.5 + 0.5 * math.sin(t * 1.1 + ph)
+        g = pygame.Surface((32, 30), pygame.SRCALPHA)
+        pygame.draw.circle(g, (230, 186, 48, int(34 * glow)), (15, 20), 10)
+        surf.blit(g, (ex - 17, ey - 9), special_flags=pygame.BLEND_RGBA_ADD)
+        pygame.draw.circle(surf, (150, 120, 50), (ex - 1, ey + 10), 3)        # the ember, far down
+        pygame.draw.circle(surf, (255, 218, 96), (ex - 2, ey + 9), 1)
+    # no mouth. the wood does not move.
+
+    # -- the graft seam: where the wood meets the flesh, it goes IN --
+    pygame.draw.lines(surf, (74, 28, 26), False,
+                      [(cx + mw - 4, cy - 26), (cx + mw + 4, cy + 10), (cx + mw - 8, cy + 52)], 4)
+    pygame.draw.lines(surf, (46, 18, 17), False,
+                      [(cx + mw - 1, cy - 8), (cx + mw + 2, cy + 22)], 2)
+    pygame.draw.lines(surf, (74, 28, 26), False,
+                      [(cx - mw + 6, cy + 56), (cx - mw - 2, cy + 76)], 3)
+
+    # -- fur collar spikes over the coat line --
+    for fx in range(cx - 150, cx + 152, 11):
+        fh = 14 + (fx % 17)
+        pygame.draw.line(surf, (108, 90, 62), (fx, tt + 74), (fx + 3, tt + 74 - fh), 3)
+
+    # -- YOUR shoulder, bottom-left; his arm across the frame; the GRIP --
+    grip = int(3 * math.sin(t * 0.7))                                # the fingers, slowly
+    pygame.draw.polygon(surf, (36, 34, 37), [(0, H - 190), (int(W * 0.34), H - 118),
+                                             (int(W * 0.38), H), (0, H)])   # your coat shoulder
+    pygame.draw.line(surf, (66, 63, 68), (0, H - 186), (int(W * 0.33), H - 116), 5)
+    pygame.draw.line(surf, (24, 22, 24), (0, H - 178), (int(W * 0.32), H - 108), 2)
+    pygame.draw.polygon(surf, (58, 45, 32),                          # his sleeve, crossing
+                        [(cx - 230, tt + 96), (cx - 130, tt + 70),
+                         (int(W * 0.245), H - 148), (int(W * 0.135), H - 84)])
+    pygame.draw.polygon(surf, (44, 34, 25),
+                        [(cx - 230, tt + 96), (cx - 196, tt + 86),
+                         (int(W * 0.175), H - 108), (int(W * 0.135), H - 84)])
+    for k in range(5):                                               # fur cuff
+        pygame.draw.line(surf, (108, 90, 62), (int(W * 0.16) + k * 10, H - 122 + k * 7),
+                         (int(W * 0.148) + k * 10, H - 142 + k * 7), 3)
+    hx0, hy0 = int(W * 0.185), H - 132                               # the hand: big, weathered
+    pygame.draw.ellipse(surf, (158, 138, 114), (hx0 - 18, hy0 - 8, 88, 50))
+    pygame.draw.ellipse(surf, (104, 88, 70), (hx0 - 18, hy0 - 8, 88, 50), 3)
+    for fk in range(4):                                              # fingers WRAP the crest
+        fx3 = hx0 + 4 + fk * 18
+        pygame.draw.line(surf, (158, 138, 114), (fx3, hy0 + 24),
+                         (fx3 - 5, hy0 + 56 + grip + (fk % 2) * 2), 12)
+        pygame.draw.circle(surf, (170, 150, 124), (fx3, hy0 + 22), 7)        # knuckles
+        pygame.draw.line(surf, (104, 88, 70), (fx3 - 3, hy0 + 40 + grip // 2),
+                         (fx3 - 4, hy0 + 48 + grip // 2), 3)
+    pygame.draw.ellipse(surf, (158, 138, 114), (hx0 - 36, hy0 + 14, 26, 38))  # the thumb
+    pygame.draw.line(surf, (206, 196, 182), (hx0 + 2, hy0 + 4), (hx0 + 58, hy0 - 1), 2)
+
+    # -- reaching: the other hand is already on your wrist, resting --
+    if reaching:
+        pygame.draw.polygon(surf, (30, 28, 30),                      # your forearm, mid-reach
+                            [(int(W * 0.60), H), (int(W * 0.70), H - 100),
+                             (int(W * 0.80), H - 84), (int(W * 0.80), H)])
+        pygame.draw.line(surf, (48, 46, 50), (int(W * 0.70), H - 98),
+                         (int(W * 0.795), H - 84), 3)
+        pygame.draw.polygon(surf, (58, 45, 32),                      # his sleeve, from the dark
+                            [(cx + 230, tt + 90), (cx + 140, tt + 68),
+                             (int(W * 0.685), H - 128), (int(W * 0.79), H - 100)])
+        wx0, wy0 = int(W * 0.70), H - 118
+        pygame.draw.ellipse(surf, (158, 138, 114), (wx0 - 12, wy0 - 6, 76, 44))
+        pygame.draw.ellipse(surf, (104, 88, 70), (wx0 - 12, wy0 - 6, 76, 44), 3)
+        for fk in range(4):                                          # fingers curled, not closed
+            fx4 = wx0 + 4 + fk * 15
+            pygame.draw.line(surf, (158, 138, 114), (fx4, wy0 + 18),
+                             (fx4 + 3, wy0 + 44), 10)
+            pygame.draw.circle(surf, (170, 150, 124), (fx4, wy0 + 17), 6)
+        pygame.draw.line(surf, (206, 196, 182), (wx0, wy0 + 2), (wx0 + 50, wy0 - 2), 2)
+
+    # -- the dark presses in: the heaviest vignette of any close-up --
+    vig = pygame.Surface((W, H), pygame.SRCALPHA)
+    vcx, vcy = cx, cy + 40
+    maxr = int(math.hypot(W, H) * 0.62); inner = int(maxr * 0.42)
+    for r in range(maxr, inner, -8):
+        a = max(0, int(210 * (1 - (r - inner) / (maxr - inner))))
+        pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
+    surf.blit(vig, (0, 0))

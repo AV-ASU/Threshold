@@ -459,12 +459,27 @@ intro:" / "Opener photo:").
   - (npc) "[c=dim]She lets go of your coat, turns, and kneels back into the rank. The chamber settles, as though nothing rose.[/c]"
 
 ## The cult (THE TALK) & the hollow Sheriff
-- **THE TALK** (`systems/threat_mixin.py` `_cult_talk`, the first grab of a
-  run): grab caption "[c=dim]The hand lands on your shoulder before you hear
-  him coming. The grip is friendly. Nothing else about it is.[/c]"; the
-  cult's warning lines (white); PI reaction "[c=dim]Well shit, this town
-  really doesn't have a midwestern welcome at all.[/c]" and the filed note
-  `the_talk`.
+- **THE TALK** (`systems/threat_mixin.py` `_cult_talk` +
+  `_open_talk_tableau`, the first grab of a run). **Presented as the grip
+  close-up tableau (2026-07)**: the carved mask fills the frame and the
+  beats land as its captions; Escape pages, it never aborts (you do not
+  walk out of the grip). The beats, in order:
+  - (stage) "[c=dim]The hand lands on your shoulder before you hear him
+    coming. The grip is friendly. Nothing else about it is.[/c]"
+  - (npc) "\"Hey. You go back to your hotel room if you know what's good
+    for you.\""
+  - **the one choice** (only if the PI carries the revolver; otherwise the
+    beats run straight through). Prompt: "He waits, hand where it landed."
+    - **Hold still.** → (pi) "(You hold still.)"
+    - **Reach for the revolver.** → (pi) "(Your hand starts for your coat.
+      His other hand is already on your wrist. Resting there. That is all
+      it does.)" / (npc) "None of that, now. We're only talking." *(the
+      close-up shows the second hand on the wrist)*
+  - (npc) "\"Run.\""
+  - Then the release (the room stands down, the grace window, the filed
+    note `the_talk`) and the PI's reaction as the world resumes:
+    "[c=dim]Well shit, this town really doesn't have a midwestern welcome
+    at all.[/c]"
 - **Hollow Vane** (`systems/rot_mixin.py` `_spawn_hunting_sheriff`, once per
   run): notice + "Sheriff Vane stands. \"I'm supposed to tell you to leave,
   son. I can't...\"" (the line he can no longer finish).
@@ -617,6 +632,17 @@ text:
   once he has told what he saw (`toby_told`), and his worried **brows
   level out** once the PI has made the promise
   (`convo_toby_holding_up_asked`).
+- **THE TALK's grip** (`_open_talk_tableau`, opened from `_cult_talk` on the
+  first cult grab of a run; the beats are quoted under **The cult (THE
+  TALK)** in Part A). The tone inversion of the five seats: no room (near
+  nothing behind him), no table (his arm crosses the frame to YOUR shoulder
+  at the corner), no face (the carved wooden mask of his sprite, grafted in
+  at the gore seam, void sockets with a gold ember far down, no mouth: the
+  courteous words come from behind wood that does not move). The closest
+  frame in the game, and it gets closer: he leans in, very slowly, the
+  whole time; the only other motion is the embers and the fingers. The one
+  reactive state: `reaching` rests his other hand on the PI's wrist.
+  Escape pages instead of aborting, so the release always runs.
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".
