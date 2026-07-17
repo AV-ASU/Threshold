@@ -315,6 +315,22 @@ Part B.
   Crane / Toby / Mara), the Talk's grip, and the pedestal ship as
   tableaux.**
 
+- **The #2b SOUND PASS landed (2026-07, maintainer call).** The
+  world-freeze had left every close-up in dead air (the scene's scheduled
+  ambients freeze with the sim): every tableau now opens on `lean_in`
+  (the world holding its breath; the old `blip_low` open was a character
+  voice blip spent on a cinematic beat) and carries a per-seat ROOM TONE
+  looped on the ambient channel while it is up (`Audio.room_tone`,
+  `_TABLEAU_TONES`): Sable's fan, Vane's window wind, Hettie's bulb,
+  Crane's nave, Toby's corn line, the Talk's breathing behind the wood,
+  the pedestal's tritone pressure. Mara's seat stays SILENT by design
+  (the authored force_silence; silence is a move). Menu motion borrows
+  the dialog band's `cursor`/`confirm`; the unmask gains a quiet
+  `low_pulse` under its `wood_creak`. All levels sit under the caption
+  blips; loops are seam-crossfaded. Full spec in `DESIGN.md` §11;
+  flow-guarded (`_room_tone` set/cleared, the Mara silence). **Needs a
+  LISTEN from the maintainer** (levels tuned by waveform, not by ear).
+
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
 **PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /
@@ -759,6 +775,21 @@ parked.
   torus wrap + fog rim it wanted to keep "underneath" are already the shipped
   substrate. The one salvaged win (a smaller grid, the actual FPS lever) is split
   out to Optional polish.
+
+### 20. **[Opus + Fable]** Endings redraw with the close-up techniques  *(maintainer thought, 2026-07 — parked, NOT scoped)*
+
+A passing maintainer note after #2b landed: the ending presentations (the
+King-catch furnace, SEAL's lines-on-black tableau, SPREAD's drive-out,
+BREAK's mask-yank + blast) predate the close-up tableau art pass and could
+be redrawn with those techniques (the bespoke portrait register, reactive
+state, the corrected edge-dark vignette — note the older seats' shared
+vignette loop actually darkens the CENTER; their art was tuned to
+compensate, so any redraw should use the corrected ramp from Mara's
+frame). Parked on purpose: the endings are approved, flow-guarded
+set-pieces (their lines + palettes are canon, NARRATIVE §5/§8), so this is
+a re-presentation question, not a gap. Do not start without a fresh
+maintainer decision, and land each ending only through a look pass
+(VISION.md; `tests/render_smoke.py` drives every ending).
 
 ### 16. **[Opus]** Ship track — packaging  *(was GAME_CHANGES §25)*
 

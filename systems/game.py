@@ -536,6 +536,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._flashback_phase = None
         self._flashback_t = 0.0
         self._tableau = None
+        self.audio.room_tone(None)   # a quit mid-close-up drops its bed
         self._flashback_masks = []
         self._flashback_pool = None
         self._flashback_spawn_acc = 0.0
@@ -879,6 +880,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.narration.clear()
         self._convo = None
         self._tableau = None
+        self.audio.room_tone(None)
         self._build_fold_cache()
         self._build_door_views()
         # Fold pursuit hand-off: if the player fled here through a fold with

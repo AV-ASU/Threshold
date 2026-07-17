@@ -36,8 +36,38 @@ def _plain(s):
     return _STRIP.sub("", s)
 
 
+# Each close-up's ROOM TONE (the #2b sound pass, 2026-07): a quiet bed
+# looped on the ambient channel while the tableau is up, because the
+# world-freeze also freezes the scene's scheduled ambients and every
+# close-up sat in dead air. (cue_name, volume); a kind with no entry is
+# SILENT ON PURPOSE -- Mara's confrontation plays in the force_silence
+# _mara_voice lays down (silence is a move), and the desk pilot stays
+# plain utilitarian.
+_TABLEAU_TONES = {
+    "sable":  ("fan_air", 0.9),       # the ceiling fan's warm push
+    "vane":   ("window_wind", 0.9),   # thin cold wind at the glass
+    "hettie": ("bulb_hum", 0.9),      # her one kept bulb, wavering
+    "crane":  ("nave_air", 0.9),      # the empty church's volume
+    "toby":   ("corn_hiss", 0.9),     # the dead stalks past his window
+    "talk":   ("talk_breath", 1.0),   # his breathing, behind the wood
+    "altar":  ("altar_air", 1.0),     # the tritone pressure of the room
+}
+
+
 class TableauMixin:
     # ------------------------------------------------------------------ open
+    def _tableau_open_audio(self, kind):
+        """The close-up's soundscape: `lean_in` (the world holding its
+        breath as the frame closes) for the seats + the desk, and the
+        kind's room tone. THE TALK skips the intake (the grab's own cues
+        just fired; his breathing is the whole event) and THE PEDESTAL
+        keeps its low_pulse in place of it."""
+        if kind not in ("talk", "altar"):
+            self.audio.play("lean_in", 0.55)
+        tone = _TABLEAU_TONES.get(kind)
+        if tone is not None:
+            self.audio.room_tone(tone[0], tone[1])
+
     def _open_desk_tableau(self):
         """The spare-room writing desk: pistol + case file under the lamp."""
         self._tableau = {
@@ -47,10 +77,11 @@ class TableauMixin:
             "reading": None,
             "state": {"gun_present": not self.save.flag("desk_pistol_taken")},
         }
-        self.audio.play("blip_low", 0.4)
+        self._tableau_open_audio("desk")
 
     def _close_tableau(self):
         self._tableau = None
+        self.audio.room_tone(None)
 
     # ---------------------------------------------------- Sable conversation
     def _open_sable_tableau(self, npc):
@@ -63,7 +94,7 @@ class TableauMixin:
             "kind": "sable", "t": 0.0, "npc": npc,
             "caption": None, "menu": None,
         }
-        self.audio.play("blip_low", 0.4)
+        self._tableau_open_audio("sable")
         from ui.conversation import open_conversation
         from scenes.dialogue import SABLE_CONVO
         open_conversation(self, npc, SABLE_CONVO, tableau=True)
@@ -80,7 +111,7 @@ class TableauMixin:
             "kind": "vane", "t": 0.0, "npc": npc,
             "caption": None, "menu": None,
         }
-        self.audio.play("blip_low", 0.4)
+        self._tableau_open_audio("vane")
         from ui.conversation import open_conversation
         from scenes.dialogue import VANE_CONVO
         open_conversation(self, npc, VANE_CONVO, tableau=True)
@@ -112,7 +143,7 @@ class TableauMixin:
             "kind": "hettie", "t": 0.0, "npc": npc,
             "caption": None, "menu": None,
         }
-        self.audio.play("blip_low", 0.4)
+        self._tableau_open_audio("hettie")
         from ui.conversation import open_conversation
         from scenes.dialogue import HETTIE_CONVO
         open_conversation(self, npc, HETTIE_CONVO, tableau=True)
@@ -138,7 +169,7 @@ class TableauMixin:
             "kind": "crane", "t": 0.0, "npc": npc,
             "caption": None, "menu": None,
         }
-        self.audio.play("blip_low", 0.4)
+        self._tableau_open_audio("crane")
         from ui.conversation import open_conversation
         from scenes.dialogue import CRANE_CONVO
         open_conversation(self, npc, CRANE_CONVO, tableau=True)
@@ -162,7 +193,7 @@ class TableauMixin:
             "kind": "toby", "t": 0.0, "npc": npc,
             "caption": None, "menu": None,
         }
-        self.audio.play("blip_low", 0.4)
+        self._tableau_open_audio("toby")
         from ui.conversation import open_conversation
         from scenes.dialogue import TOBY_CONVO
         open_conversation(self, npc, TOBY_CONVO, tableau=True)
@@ -192,6 +223,8 @@ class TableauMixin:
             "kind": "mara", "t": 0.0, "npc": npc,
             "caption": None, "menu": None, "state": {"unmask_t": None},
         }
+        # No lean_in, no room tone: _mara_voice just force-silenced the
+        # room, and her confrontation plays inside that silence.
         from ui.conversation import open_conversation
         from scenes.well import MARA_CONVO
         open_conversation(self, npc, MARA_CONVO, tableau=True)
@@ -205,6 +238,7 @@ class TableauMixin:
         if tb is not None and tb.get("kind") == "mara":
             tb["state"]["unmask_t"] = tb["t"]
         self.audio.play("wood_creak", 0.32)
+        self.audio.play("low_pulse", 0.3)
 
     def _mara_tableau_state(self):
         """The close-up's live state: the confrontation's turns, as save
@@ -233,6 +267,7 @@ class TableauMixin:
             "caption": None, "menu": None, "state": {"reaching": False},
         }
         self._tableau = tb
+        self._tableau_open_audio("talk")
         has_gun = (self.player is not None
                    and self.player.inventory.has("pistol"))
 
@@ -292,6 +327,7 @@ class TableauMixin:
             "caption": None, "menu": None, "state": {},
         }
         self.audio.play("low_pulse", 0.5)
+        self._tableau_open_audio("altar")
 
         def _pick(idx):
             self._close_tableau()
@@ -348,11 +384,12 @@ class TableauMixin:
             n = len(menu["labels"])
             if ev.key in (pygame.K_UP, pygame.K_w):
                 menu["cursor"] = (menu["cursor"] - 1) % n
-                self.audio.play("blip_low", 0.3)
+                self.audio.play("cursor", 0.45)
             elif ev.key in (pygame.K_DOWN, pygame.K_s):
                 menu["cursor"] = (menu["cursor"] + 1) % n
-                self.audio.play("blip_low", 0.3)
+                self.audio.play("cursor", 0.45)
             elif ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
+                self.audio.play("confirm", 0.45)
                 idx, pick = menu["cursor"], menu["pick"]
                 tb["menu"] = None
                 pick(idx)
@@ -431,10 +468,10 @@ class TableauMixin:
             return
         if ev.key in (pygame.K_UP, pygame.K_w):
             tb["cursor"] = (tb["cursor"] - 1) % len(opts)
-            self.audio.play("blip_low", 0.3)
+            self.audio.play("cursor", 0.45)
         elif ev.key in (pygame.K_DOWN, pygame.K_s):
             tb["cursor"] = (tb["cursor"] + 1) % len(opts)
-            self.audio.play("blip_low", 0.3)
+            self.audio.play("cursor", 0.45)
         elif ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
             opts[min(tb["cursor"], len(opts) - 1)][1]()
         elif ev.key == pygame.K_ESCAPE:

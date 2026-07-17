@@ -56,6 +56,10 @@ class Audio:                        #Starting screen needs music, something simp
         # at build time per profile; play_in_scene picks the one
         # matching the active scene and falls back to dry.
         self._scene_reverb = None
+        # The active tableau room tone's cue name (Audio.room_tone), or
+        # None. Tracked outside the channel so headless harnesses can
+        # assert the soundscape without a real audio device.
+        self._room_tone = None
         if self.enabled:
             global _LIBRARY_CACHE
             if _LIBRARY_CACHE is None:
@@ -298,6 +302,28 @@ class Audio:                        #Starting screen needs music, something simp
                                    decay_ms=70, noise_mix=0.35)
         self.sfx["drip"]       = self._build_drip()
         self.sfx["flies"]      = self._build_flies()
+        # ---- The close-up tableaux (the #2b sound pass, 2026-07) -----
+        # A tableau freezes the world sim, which also froze the scene's
+        # scheduled ambients -- every close-up sat in dead air under the
+        # music drone. Two additions, both in the anti-melodic language:
+        # `lean_in` is the shared OPEN cue (a soft intake as the frame
+        # closes in -- the breath family, never a stinger; it replaces
+        # the old blip_low, a dialogue voice blip spent on a cinematic
+        # beat), and each seat carries a quiet ROOM TONE looped on the
+        # ambient channel while its close-up is up (Audio.room_tone; the
+        # kind->tone map lives in systems/tableau_mixin.py). Every tone
+        # is mixed to sit UNDER the caption blips, loop-seam crossfaded,
+        # and modulated on whole cycles so nothing pops at the wrap.
+        # Mara's seat gets NO tone on purpose: _mara_voice force-silences
+        # the room, and silence is a move (we do not fill it).
+        self.sfx["lean_in"]     = self._build_lean_in()
+        self.sfx["fan_air"]     = self._tone_fan_air()      # Sable: the fan
+        self.sfx["window_wind"] = self._tone_window_wind()  # Vane: the glass
+        self.sfx["bulb_hum"]    = self._tone_bulb_hum()     # Hettie: her bulb
+        self.sfx["nave_air"]    = self._tone_nave_air()     # Crane: the nave
+        self.sfx["corn_hiss"]   = self._tone_corn_hiss()    # Toby: the stalks
+        self.sfx["talk_breath"] = self._tone_talk_breath()  # the Talk: him
+        self.sfx["altar_air"]   = self._tone_altar_air()    # the pedestal
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -1789,6 +1815,236 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    # ---- Tableau room tones (the #2b sound pass) ---------------------
+    # Shared conventions: mono float arrays -> to_sound (centered beds
+    # under a frozen close-up need no stereo width); every modulator runs
+    # a WHOLE number of cycles per loop and _loop_seam crossfades the
+    # noise tail into the head, so loops=-1 never clicks; all levels are
+    # baked low (these live UNDER the caption voice blips).
+
+    def _loop_seam(self, arr, ms=90):
+        """Crossfade a float array's tail into its head and drop the
+        tail, so a loops=-1 play wraps without a seam click."""
+        import numpy as _np
+        k = int(22050 * ms / 1000)
+        if len(arr) <= k * 2:
+            return arr
+        head = arr[:k].copy()
+        tail = arr[-k:]
+        ramp = _np.linspace(0.0, 1.0, k, dtype=_np.float32)
+        arr = arr[:-k].copy()
+        arr[:k] = head * ramp + tail * (1.0 - ramp)
+        return arr
+
+    def _smoothed_noise(self, n, coef, rng):
+        """One-pole smoothed noise -- the body of every air bed."""
+        from scipy import signal as _sig
+        import numpy as _np
+        raw = rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+        return _sig.lfilter([1 - coef], [1, -coef], raw).astype(_np.float32)
+
+    def _build_lean_in(self, duration_ms=420, vol=0.26):
+        """The tableau-open cue: the world holding its breath as the frame
+        closes in. A soft intake -- filtered noise swelling under a low
+        58 Hz body with a 232 Hz partial (the laptop rule) -- that CUTS
+        rather than resolves (the breath family, DESIGN.md 11)."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(11)
+        air = self._smoothed_noise(n, 0.90, rng)
+        body = (_np.sin(2 * _np.pi * 58.0 * t) * 0.55
+                + _np.sin(2 * _np.pi * 232.0 * t) * 0.18)
+        # the swell: slow rise over ~70% of the length, then the cut
+        rise = _np.minimum(1.0, t / (0.70 * duration_ms / 1000.0)) ** 1.6
+        cut = _np.minimum(1.0, (n - _np.arange(n)) / (0.045 * sr))
+        env = rise * cut
+        sig = (air * 0.55 + body * 0.5) * env * vol
+        return dsp.to_sound(_np.clip(sig, -1.0, 1.0))
+
+    def _tone_fan_air(self, duration_ms=3600, vol=0.15):
+        """Sable's reception desk: the ceiling fan's slow push of warm
+        air. Dark smoothed noise swept by exactly three fan passes per
+        loop, over a faint 55 Hz warmth (the lodge is the WARM seat)."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(21)
+        air = self._smoothed_noise(n, 0.955, rng)
+        sweep = 0.62 + 0.38 * _np.sin(2 * _np.pi * (3.0 / 3.6) * t)
+        warmth = _np.sin(2 * _np.pi * 55.0 * t) * 0.10
+        sig = (air * 0.9 * sweep + warmth) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_window_wind(self, duration_ms=6000, vol=0.13):
+        """Vane's office: thin wind at the glass. A cold high band of
+        air (the warm body filtered OUT -- Sable's lodge keeps the warm
+        one), two fixed gusts a loop, almost nothing between them."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(31)
+        thin = self._smoothed_noise(n, 0.62, rng)
+        thin = dsp.highpass(thin, 480, order=2)
+        gust = _np.zeros(n, dtype=_np.float32)
+        for gs, gd, gp in ((0.8, 2.0, 1.0), (3.6, 1.7, 0.7)):
+            m = (t >= gs) & (t < gs + gd)
+            loc = (t - gs) / gd
+            gust = _np.maximum(gust, _np.where(
+                m, _np.where(loc < 0.35, loc / 0.35,
+                             _np.maximum(0.0, 1.0 - (loc - 0.35) / 0.65))
+                * gp, 0.0))
+        sig = thin * (0.16 + 0.84 * gust) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_bulb_hum(self, duration_ms=2400, vol=0.11):
+        """Hettie's counter: her ONE kept bulb. A bare mains hum (120 Hz
+        + its octave) that SAGS twice a loop -- the filament wavering,
+        the way her hanging light sways -- over a dust-dry hiss."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(41)
+        hum = (_np.sin(2 * _np.pi * 120.0 * t) * 0.62
+               + _np.sin(2 * _np.pi * 240.0 * t) * 0.30)
+        sag = _np.ones(n, dtype=_np.float32)
+        for ss in (0.9, 1.7):
+            m = (t >= ss) & (t < ss + 0.07)
+            loc = (t - ss) / 0.07
+            sag = _np.minimum(sag, _np.where(
+                m, 1.0 - 0.4 * _np.sin(_np.pi * loc), 1.0))
+        dust = self._smoothed_noise(n, 0.55, rng) * 0.05
+        sig = (hum * sag + dust) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_nave_air(self, duration_ms=6000, vol=0.14):
+        """Crane's chancel: the volume of an empty church. Very dark air
+        with the room's low body (49 Hz + its 4th harmonic so laptops
+        carry it), one soft timber settle baked mid-loop -- a building
+        with nobody left in it but him."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(51)
+        air = self._smoothed_noise(n, 0.975, rng)
+        body = (_np.sin(2 * _np.pi * 49.0 * t) * 0.14
+                + _np.sin(2 * _np.pi * 196.0 * t) * 0.05)
+        swell = 0.75 + 0.25 * _np.sin(2 * _np.pi * (2.0 / 6.0) * t)
+        sig = (air * 0.85 * swell + body)
+        # the settle: one soft wood complaint at 3.4 s, low and brief
+        s0, sd = int(3.4 * sr), int(0.11 * sr)
+        creak = self._smoothed_noise(sd, 0.80, rng) * _np.hanning(sd) * 0.5
+        sig[s0:s0 + sd] += dsp.lowpass(creak, 700, order=2)
+        sig *= vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_corn_hiss(self, duration_ms=5200, vol=0.10):
+        """Toby's room: the dead stalks outside his window, at a
+        distance. Two soft rustle gusts a loop, lowpassed far away --
+        the quietest tone of the set (his room is the one almost-normal
+        room in Brimley; the wrongness stays outside the glass)."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(61)
+        rustle = self._smoothed_noise(n, 0.72, rng)
+        gust = _np.zeros(n, dtype=_np.float32)
+        for gs, gd, gp in ((0.6, 1.9, 0.9), (3.1, 1.6, 0.65)):
+            m = (t >= gs) & (t < gs + gd)
+            loc = (t - gs) / gd
+            gust = _np.maximum(gust, _np.where(
+                m, _np.where(loc < 0.30, loc / 0.30,
+                             _np.maximum(0.0, 1.0 - (loc - 0.30) / 0.70))
+                * gp, 0.0))
+        sig = dsp.lowpass(rustle * (0.12 + 0.88 * gust), 2600, order=2) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_talk_breath(self, duration_ms=6400, vol=0.16):
+        """THE TALK: his breathing, behind wood that does not move. Two
+        slow breath cycles a loop -- heavily muffled noise swells that
+        start and end at nothing -- over the faintest 65 Hz presence.
+        The mask has no mouth; you hear him anyway."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(71)
+        breath = _np.zeros(n, dtype=_np.float32)
+        # (start, dur, peak): in / out, twice; every phase lands on zero
+        for bs, bd, bp in ((0.2, 1.3, 1.0), (1.9, 1.5, 0.8),
+                           (3.4, 1.3, 1.0), (5.1, 1.2, 0.75)):
+            m = (t >= bs) & (t < bs + bd)
+            loc = _np.clip((t - bs) / bd, 0.0, 1.0)
+            hump = _np.maximum(0.0, _np.sin(_np.pi * loc))   # f32 pi wobble
+            breath += _np.where(m, hump ** 1.5 * bp, 0.0)
+        muffled = dsp.lowpass(self._smoothed_noise(n, 0.94, rng), 900,
+                              order=2)
+        presence = _np.sin(2 * _np.pi * 65.0 * t) * 0.07
+        sig = (muffled * breath * 0.9 + presence) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_altar_air(self, duration_ms=9000, vol=0.15):
+        """THE PEDESTAL: the pressure of the room His face rests in. The
+        house tritone (41 + 58 Hz, the threshold_drone pair) at whisper
+        level with a 164 Hz partial for small speakers, breathing ONCE
+        per loop on the same slow period as the daubed Sign's painted
+        pulse, under near-still dark air. 9 s of frequency-exact cycles,
+        so the wrap is seamless."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(81)
+        drone = (_np.sin(2 * _np.pi * 41.0 * t) * 0.42
+                 + _np.sin(2 * _np.pi * 58.0 * t) * 0.34
+                 + _np.sin(2 * _np.pi * 164.0 * t) * 0.10)
+        breathe = 0.55 + 0.45 * _np.sin(2 * _np.pi * (1.0 / 9.0) * t)
+        airbed = self._smoothed_noise(n, 0.985, rng) * 0.18
+        sig = (drone * breathe + airbed) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def room_tone(self, name, volume=0.9):
+        """Loop / stop a quiet bed on the ambient channel while a
+        close-up tableau is up (None stops). Same channel + pattern as
+        flashback_air -- a tableau and the door-dream both freeze the
+        world, so the two can never contend for it. `_room_tone` holds
+        the active cue name (the harnesses assert on it; the dummy audio
+        driver plays silently but keeps channel state honest)."""
+        if not self.enabled or self.ambient_channel is None:
+            self._room_tone = name if name else None
+            return
+        if name and name in self.sfx:
+            self.ambient_channel.play(self.sfx[name], loops=-1)
+            self.ambient_channel.set_volume(
+                max(0.0, min(1.0, volume)) * self._sfx_gain())
+            self._room_tone = name
+        else:
+            if getattr(self, "_room_tone", None):
+                self.ambient_channel.fadeout(420)
+            self._room_tone = None
 
     def flashback_air(self, on, volume=0.9):
         """Loop / stop the falling-air bed on the ambient channel for the

@@ -381,6 +381,12 @@ Only display names and fiction change.
   `_tick_gaze_bind` / `GAZE_BIND_*` trigger is retired. Notices read as **His
   eye reaching into the plane** ("An eye has opened on you"), never a
   side-cult's spell. Internal names (`_cursed`, `_apply_curse`) stay plumbing.
+  **The gaze only OPENS under the open sky or in the deep (2026-07 ruling,
+  `WATCHER_OPEN_SCENES`): no Watcher ever manifests inside a surface
+  building.** Step through any interior door and the wave clears; step back
+  out and the grace runs before it re-forms. A fold into a surface interior
+  binds nothing (`_roll_fold_watcher` exempts non-open destinations).
+  Guarded by `tests/stealth.py` §11.
 - ~~**Gun = false-power threshold (§1).**~~ **DONE + flow-guarded.** The
   mechanic matches canon and `tests/flow.py` locks all four facts:
   **< 3 evidence kills cultists**, **3+ only staggers**, the **King and
@@ -1204,7 +1210,7 @@ and the game still runs. The library is built **once per process**
 | ch | owner | content |
 |----|-------|---------|
 | 0 | `music_channel` | the looping scene drone (`play_music`) |
-| 1 | `ambient_channel` | `falling_air` bed for the door-dream (`flashback_air`) |
+| 1 | `ambient_channel` | `falling_air` bed for the door-dream (`flashback_air`), and the tableau room tones (`room_tone`; a tableau and the dream both freeze the world, so the two never contend) |
 | 2 | `king_channel` | `yk_tone` loop while the King is on screen (`king_tone`) |
 | 3-5 | drive channels | opening drive: engine / radio / static (`start_drive` … `stop_drive`) |
 | rest | dynamic | one-shots; `play(pan=…)` grabs a free channel for L/R bias |
@@ -1242,6 +1248,50 @@ soft/kid/gruff`), `"__silence__"` for the things that shouldn't have a
 voice. **Deferred (dormant, not dead):** `Enemy.shoot_sfx` is plumbed
 (`game.py` plays it panned/attenuated) but no enemy sets it; the wiring is
 ready if a shooting enemy is ever added.
+
+### The close-up tableaux (the #2b sound pass, 2026-07)
+
+A tableau freezes the world sim, which also froze the scene's scheduled
+ambients -- every close-up sat in dead air under the music drone. Two
+additions, both inside the design language above (breath, not stinger; no
+tunes; silence is a move):
+
+- **`lean_in`** -- the shared OPEN cue: a soft intake (filtered noise
+  swelling under a 58 Hz body with a 232 Hz partial, the laptop rule)
+  that CUTS rather than resolves -- the world holding its breath as the
+  frame closes in. It replaces the old `blip_low` open (a character
+  voice blip spent on a cinematic beat). THE TALK skips it (the grab's
+  own cues just fired; his breathing is the whole event) and THE
+  PEDESTAL keeps its `low_pulse` in its place.
+- **Room tones** (`Audio.room_tone`, looped on the ambient channel while
+  the close-up is up; the kind→tone map is `_TABLEAU_TONES` in
+  `systems/tableau_mixin.py`): Sable **`fan_air`** (the ceiling fan's
+  warm push, three sweeps a loop -- the lodge is the warm seat), Vane
+  **`window_wind`** (thin cold wind at the glass, the warmth filtered
+  out), Hettie **`bulb_hum`** (her one kept bulb: bare mains hum that
+  sags twice a loop, the filament wavering), Crane **`nave_air`** (the
+  volume of an empty church, one soft timber settle mid-loop), Toby
+  **`corn_hiss`** (the dead stalks past his window at a distance -- the
+  quietest of the set; his room is the almost-normal one), the Talk
+  **`talk_breath`** (two slow breath cycles behind wood that does not
+  move), the pedestal **`altar_air`** (the house tritone, 41 + 58 Hz, at
+  whisper level, breathing once per loop on the daubed Sign's painted
+  period). Every tone is mixed UNDER the caption voice blips (peaks
+  0.05-0.13), loop-seam crossfaded, and modulated on whole cycles so
+  `loops=-1` never clicks. **Mara's seat carries NO tone on purpose:**
+  `_mara_voice` force-silences the room, and her confrontation plays
+  inside that silence. The tone stops on tableau close, on scene load,
+  and on run reset (`room_tone(None)`); `Audio._room_tone` tracks the
+  active cue name for the headless harnesses (flow guards it).
+
+Smaller redesigns in the same pass: a conversation caption in a tableau
+now speaks **one voice blip at line start** (`ui/conversation._float`,
+tableau branch -- the seats had been mute per-beat while every other
+dialogue channel voices its lines; the Talk's scripted captions stay
+wordless as authored, the words come from behind wood), tableau menu
+motion borrows the dialog band's `cursor`/`confirm` pair instead of
+spending a voice blip on UI movement, and Mara's unmask carries a quiet
+`low_pulse` under its `wood_creak` (the reveal's weight).
 
 ---
 

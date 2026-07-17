@@ -459,10 +459,13 @@ class ThreatMixin:
         the destination's _tick_watchers then manifests the seed Watcher on
         arrival and begins cloning it. Never fires when the player already
         carries WATCHER_MAX -- that's the ceiling a fold can't push past. A
-        SAFE destination is exempt (Watchers are only suppressed there)."""
+        SAFE destination is exempt (Watchers are only suppressed there), and
+        so is any destination outside WATCHER_OPEN_SCENES (a fold into a
+        surface interior binds nothing -- His gaze does not open indoors)."""
         if not self._exit_is_fold(exit_data):
             return
-        if exit_data[0] in SAFE_SCENES:
+        if (exit_data[0] in SAFE_SCENES
+                or exit_data[0] not in WATCHER_OPEN_SCENES):
             return
         if len(self._watchers) >= WATCHER_MAX:   # already at the ceiling -- no +1
             return
@@ -786,15 +789,21 @@ class ThreatMixin:
         rest. Each live Watcher HOLDS the exposed player -- driving visibility
         up in _tick_visibility (`_watcher_gaze`), so ignoring them SNOWBALLS.
         Cover pauses the timer and drops the hold; safe rooms suppress them;
-        clearing them all (gaze / axe / shot, _dispel_watcher) sets the grace."""
+        clearing them all (gaze / axe / shot, _dispel_watcher) sets the grace.
+        And the gaze only opens under the open sky or in the deep
+        (WATCHER_OPEN_SCENES, 2026-07 ruling): no Watcher ever manifests
+        inside a surface building -- step through a door and the wave clears,
+        step back out and the grace runs before it re-forms."""
         if self.scene is None or self.player is None:
             return
         # Drop any swept on load/death.
         self._watchers = [w for w in self._watchers if w in self.scene.npcs]
         key = self.scene.key
         # The domain watches once the thread is pulled -- never in a safe /
-        # King-free room, never before the first evidence.
+        # King-free room, never inside a surface building, never before the
+        # first evidence.
         watching = (key not in KING_FREE_SCENES
+                    and key in WATCHER_OPEN_SCENES
                     and self._evidence_count() >= WATCHER_WAKE_EV)
         if not watching:
             if self._watchers:

@@ -1461,6 +1461,17 @@ def main():
     check(getattr(gt, "_tableau", None) is not None
           and gt._tableau["kind"] == "sable",
           "ask: the Sable close-up tableau opens (kind 'sable')")
+    # The #2b sound pass: every close-up carries its room tone on the
+    # ambient channel (the world-freeze froze the scene's scheduled
+    # ambients, so the beds keep the room breathing), and the cue set is
+    # built into the library.
+    check(not gt.audio.enabled
+          or all(k in gt.audio.sfx for k in
+                 ("lean_in", "fan_air", "window_wind", "bulb_hum",
+                  "nave_air", "corn_hiss", "talk_breath", "altar_air")),
+          "audio: the tableau cue set is built")
+    check(gt.audio._room_tone == "fan_air",
+          "audio: Sable's close-up starts its room tone (the fan)")
     check(gt._convo is not None and gt._convo.tableau is True,
           "ask: the conversation runs in tableau presentation mode")
     # The greeting lands as the tableau CAPTION, not a floating line / modal band.
@@ -1486,6 +1497,8 @@ def main():
     gt._tableau_input(_EscKey())
     check(gt._tableau is None and gt._convo.active is False,
           "ask: Escape closes the tableau and ends the talk")
+    check(gt.audio._room_tone is None,
+          "audio: closing the tableau drops its room tone")
 
     # --- 17d. The ask verb EXPANDED to the principals (TODO #1) ----------
     # Vane, Hettie, Toby, and Crane each carry their own conversation, and
@@ -2566,6 +2579,9 @@ def main():
               and getattr(gm, "_tableau", None) is not None
               and gm._tableau["kind"] == "mara",
               "mara: the confrontation opens inside the close-up tableau")
+        check(gm.audio._room_tone is None,
+              "mara: her close-up plays in the authored silence (no room "
+              "tone; silence is a move)")
         # THE REVEAL (2026-07): she is LISTED as one of the congregation
         # (the caption name) until the greet's unmask beat lifts the mask
         # away; then the listing turns to her name.
