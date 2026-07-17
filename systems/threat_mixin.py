@@ -1094,14 +1094,13 @@ class ThreatMixin:
                 "[c=dim]Well shit, this town really doesn't have a "
                 "midwestern welcome at all.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
-        self.dialog.show([
-            "[c=dim]The hand lands on your shoulder before you hear him "
-            "coming. The grip is friendly. Nothing else about it is.[/c]",
-            "\"Hey. You go back to your hotel room if you know what's "
-            "good for you.\"",
-            "\"Run.\"",
-        ], speaker="", voice="blip_soft", portrait="narrator",
-            on_complete=_release)
+        # THE TALK is a close-up TABLEAU (#2b, the tone inversion of the
+        # principal seats): the carved mask fills the frame, his hand is on
+        # your shoulder, and the locked warning lines land as captions. A PI
+        # carrying the revolver can reach for it, and learn how far ahead of
+        # him the other hand already is. The release above fires when the
+        # close-up lets go, on every path.
+        self._open_talk_tableau(_release)
 
     def _tick_death(self, dt):
         """Hold the death screen, then resolve -- both END the run.

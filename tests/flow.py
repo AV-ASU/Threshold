@@ -1308,7 +1308,7 @@ def main():
     # never confirm he knows her or where she is.
     _mtxt = " ".join(b[1].lower() for b in mara["beats"] if b[0] in ("npc", "pi"))
     _mb0 = mara["beats"][0][1].lower()
-    check("can't say" in _mb0 and "name" in _mb0,
+    check(("can't say" in _mb0 or "cannot say" in _mb0) and "name" in _mb0,
           "tone: Sable deflects the name instead of confirming it")
     check(not any(s in _mtxt for s in
                   ("that is her", "sat right where", "smiling, by the end",
@@ -1401,6 +1401,26 @@ def main():
     gr.save.set_flag("crossed_a_fold", True)
     check(q_fold["avail"](gr),
           "ask: learning the roads loop opens the reproach to Sable")
+
+    # (10b) The reproach is ANCHORED: the car exchange plants the warning
+    # inside the closing hospitality ("the roads are not going anywhere")
+    # and marks it heard (sable_car_asked); "I told you" fires only on that
+    # flag, so Sable never cites a conversation that didn't happen.
+    _qcar = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "car")
+    check(any(b[0] == "npc" and "roads are not going anywhere" in b[1]
+              for b in _qcar["beats"]),
+          "ask: the car answer plants the road warning inside hospitality")
+    check(callable(q_fold["beats"]),
+          "ask: the reproach reply is dynamic (anchored on the car ask)")
+    _ga1 = new_game()
+    _qcar["on_ask"](_ga1)
+    check(_ga1.save.flag("sable_car_asked"),
+          "ask: asking after the mechanic marks the warning heard")
+    check(any("I told you" in b[1] for b in q_fold["beats"](_ga1)),
+          "ask: with the warning heard, Sable quotes himself back")
+    _ga0 = new_game()
+    check(not any("I told you" in b[1] for b in q_fold["beats"](_ga0)),
+          "ask: without the car ask, Sable never claims a talk that wasn't")
 
     # (11) The readiness nudge: crossing 3 canonical evidence on the surface,
     # still without the rite, files a NOTE pointing the PI back to the desk
@@ -1526,6 +1546,35 @@ def main():
     check(not _hphoto["avail"](gg8) and _hothers["avail"](gg8),
           "gate: her memory retires the photo and opens the others")
 
+    # (Hettie tableau, #2b) Talking to Hettie opens the shop-counter
+    # close-up: the conversation runs in tableau presentation mode, and the
+    # counter carries what the talk earned (Mara's tab leaves the spike once
+    # the receipt is taken, the traded newspaper lies open after).
+    import inspect as _iht
+    from scenes.dialogue import hettie_dialogue as _htf
+    check("_open_hettie_tableau" in _iht.getsource(_htf),
+          "hettie: talking to her opens the shop-counter tableau")
+    ght = new_game()
+    ght.dialog.active = False
+    ght._open_hettie_tableau(None)
+    check(ght._tableau is not None and ght._tableau["kind"] == "hettie"
+          and ght._convo is not None and ght._convo.tableau is True,
+          "hettie: the counter tableau hosts the conversation")
+    _hst = ght._hettie_tableau_state()
+    check(_hst["tab_present"] and not _hst["paper_present"],
+          "hettie: fresh run, the tab curls on the spike and no paper lies out")
+    ght.save.set_flag("evidence_maras_receipt", True)
+    ght.save.set_flag("newspaper_traded", True)
+    _hst = ght._hettie_tableau_state()
+    check(not _hst["tab_present"] and _hst["paper_present"],
+          "hettie: the lifted tab leaves the spike; the traded paper lies open")
+    class _EscH:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    ght._tableau_input(_EscH())
+    check(ght._tableau is None and ght._convo.active is False,
+          "hettie: Escape closes the counter tableau and ends the talk")
+
     # The Crane fork (the ticket's pilot choice): the flock exchange ends
     # on a real two-way ask. Pressing him latches the doom and files the
     # PI's culpability as a NOTE (never evidence); holding him back leaves
@@ -1557,6 +1606,60 @@ def main():
           "crane: the provocation never inflates the evidence count")
     check(not _flock["avail"](gcf),
           "crane: once doomed the flock question retires")
+
+    # (Crane tableau, #2b) Talking to Crane opens the lectern close-up: the
+    # conversation runs in tableau presentation mode, and his POSE reads the
+    # press fork exactly as the framing line does (waits with hands folded,
+    # or done waiting once preacher_doomed latches).
+    import inspect as _ict
+    from scenes.dialogue import (preacher_dialogue as _prf,
+                                 _crane_prompt as _cpr)
+    check("_open_crane_tableau" in _ict.getsource(_prf),
+          "crane: talking to him opens the lectern close-up tableau")
+    gct = new_game()
+    gct.dialog.active = False
+    gct._open_crane_tableau(None)
+    check(gct._tableau is not None and gct._tableau["kind"] == "crane"
+          and gct._convo is not None and gct._convo.tableau is True,
+          "crane: the lectern tableau hosts the conversation")
+    check(not gct._crane_tableau_state()["doomed"]
+          and "hands folded" in _cpr(gct),
+          "crane: at rest, pose and framing both wait at the lectern")
+    gct.save.set_flag("preacher_doomed", True)
+    check(gct._crane_tableau_state()["doomed"]
+          and "done waiting" in _cpr(gct),
+          "crane: the latched press hardens pose and framing together")
+    class _EscC:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    gct._tableau_input(_EscC())
+    check(gct._tableau is None and gct._convo.active is False,
+          "crane: Escape closes the lectern tableau and ends the talk")
+
+    # (Toby tableau, #2b, the last principal seat) Talking to Toby opens
+    # the little-table close-up: the conversation runs in tableau mode, and
+    # the room carries what the talk earned (the procession drawing once he
+    # has told it, the levelled brows once the PI has promised).
+    from scenes.dialogue import toby_dialogue as _tbf
+    check("_open_toby_tableau" in _ict.getsource(_tbf),
+          "toby: talking to him opens the little-table tableau")
+    gtt = new_game()
+    gtt.dialog.active = False
+    gtt._open_toby_tableau(None)
+    check(gtt._tableau is not None and gtt._tableau["kind"] == "toby"
+          and gtt._convo is not None and gtt._convo.tableau is True,
+          "toby: the little-table tableau hosts the conversation")
+    _tst = gtt._toby_tableau_state()
+    check(not _tst["drawing_present"] and not _tst["believed"],
+          "toby: fresh run, no procession drawing and the brows stay worried")
+    gtt.save.set_flag("toby_told", True)
+    gtt.save.set_flag("convo_toby_holding_up_asked", True)
+    _tst = gtt._toby_tableau_state()
+    check(_tst["drawing_present"] and _tst["believed"],
+          "toby: telling it hangs the drawing; the promise levels his brows")
+    gtt._tableau_input(_EscC())
+    check(gtt._tableau is None and gtt._convo.active is False,
+          "toby: Escape closes the little-table tableau and ends the talk")
 
     # The Crane-provoke stall-breaker (`_the_third_thread`) was REMOVED with
     # the evidence rework (NARRATIVE §6, DESIGN.md §9): the surface trail is
@@ -1670,6 +1773,40 @@ def main():
           "vane: taking the cabinet arms the office ammo drop")
     check(not _cache["avail"](gca),
           "vane: the cabinet does not re-offer once given")
+
+    # (Vane tableau, #2b) Talking to Vane opens the office close-up: the
+    # conversation runs in tableau presentation mode, the close-up's POSE
+    # mirrors the mood prompt's thresholds exactly (mood, never a number),
+    # and the desk carries what the talk earned (paper given, cabinet open).
+    import inspect as _ivt
+    from scenes.dialogue import (sheriff_dialogue as _shf,
+                                 _vane_prompt as _vpr)
+    check("_open_vane_tableau" in _ivt.getsource(_shf),
+          "vane: talking to him opens the office close-up tableau")
+    gvt2 = new_game()
+    gvt2.dialog.active = False
+    gvt2._open_vane_tableau(None)
+    check(gvt2._tableau is not None and gvt2._tableau["kind"] == "vane"
+          and gvt2._convo is not None and gvt2._convo.tableau is True,
+          "vane: the office tableau hosts the conversation")
+    for _net, _mood, _tell in ((0, "neutral", "thumbs"),
+                               (2, "despair", "window"),
+                               (-1, "hope", "chair")):
+        gvt2.save.set_arg("vane_despair", _net)
+        check(gvt2._vane_tableau_state()["mood"] == _mood
+              and _tell in _vpr(gvt2),
+              f"vane: pose and framing line agree at net {_net} ({_mood})")
+    gvt2.save.set_flag("convo_vane_paper_asked", True)
+    gvt2.save.set_flag("vane_gave_cache", True)
+    _vst = gvt2._vane_tableau_state()
+    check(_vst["paper_present"] and _vst["cache_open"],
+          "vane: the close-up carries what the talk earned (paper, cabinet)")
+    class _EscV:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    gvt2._tableau_input(_EscV())
+    check(gvt2._tableau is None and gvt2._convo.active is False,
+          "vane: Escape closes the office tableau and ends the talk")
 
     # The flow polish: once an exchange finishes, the menu only reopens
     # while both parties are still AT the talk -- the partner walking off
@@ -2664,20 +2801,24 @@ def main():
     # talkable-NPC line reached through the interact path FLOATS over
     # the speaker's head and leaves the world running; narrator lines,
     # choices, and scripted (on_complete) beats stay in the MODAL box.
+    # (Vehicle: Royce, a chorus local -- every PRINCIPAL's talk is a
+    # close-up tableau now and no longer floats its greet. His one
+    # reactive stoop beat gates on 2+ evidence, so a fresh game goes
+    # straight to the conversation.)
     gfs = new_game()
-    gfs.load_scene_now("church", "default")
+    gfs.load_scene_now("brimley", "default")
     for _ in range(20):
         gfs.state = "playing"
         gfs.step(1 / 30.0)
-    _crane = next(n for n in gfs.scene.npcs
-                  if getattr(n, "tag", "") == "preacher")
-    gfs.player.x, gfs.player.y = _crane.x, _crane.y + 30
-    gfs._speaking_npc = _crane
-    _crane.interact(gfs)
+    _royce = next(n for n in gfs.scene.npcs
+                  if getattr(n, "sprite_kind", "") == "royce")
+    gfs.player.x, gfs.player.y = _royce.x, _royce.y + 30
+    gfs._speaking_npc = _royce
+    _royce.interact(gfs)
     gfs._speaking_npc = None
     check(gfs.float_speech.active and not gfs.dialog.active,
           "float: an interact-path NPC line floats (not the modal box)")
-    check(gfs.float_speech.speaker is _crane,
+    check(gfs.float_speech.speaker is _royce,
           "float: the caption tracks the speaker")
     _wf = (gfs.dialog.active or gfs.inv_ui.open or gfs.notebook_ui.open
            or gfs.text_input.active or gfs._flashback_phase is not None)
@@ -2685,7 +2826,7 @@ def main():
     # A narrator line goes NON-MODAL too now -- the lower-third
     # narration caption (ui/narration.py), world still running.
     gfs.float_speech.active = False
-    gfs._speaking_npc = _crane
+    gfs._speaking_npc = _royce
     gfs.dialog.show(["A cold room."], speaker="", portrait="narrator")
     gfs._speaking_npc = None
     check(gfs.narration.active and not gfs.dialog.active,
@@ -2707,7 +2848,7 @@ def main():
           "narration: an on_complete narrator beat stays modal")
     gfs.dialog.active = False
     gfs.dialog.on_complete = None
-    gfs._speaking_npc = _crane
+    gfs._speaking_npc = _royce
     gfs.dialog.show_choice("Pick", ["a", "b"], lambda i: None,
                            speaker="Crane", portrait="preacher")
     gfs._speaking_npc = None
@@ -2817,12 +2958,18 @@ def main():
     check(gt2._death_kind is None,
           "talk: the first grab does NOT capture (the freebie)")
     check(gt2.save.flag("cult_talk_given"), "talk: the freebie is spent")
-    check(gt2.dialog.active, "talk: the warning is a modal beat")
+    # The warning is the grip CLOSE-UP now (#2b): the tableau holds the
+    # world; the locked lines land as its captions. A fresh run carries no
+    # revolver, so there is no choice: pure captions, then the release.
+    check(gt2._tableau is not None and gt2._tableau["kind"] == "talk",
+          "talk: the warning is the grip close-up (the world held)")
+    _tseen = []
     for _ in range(20):
-        if not gt2.dialog.active:
+        if gt2._tableau is None or gt2._tableau.get("caption") is None:
             break
-        gt2.dialog.advance()
-    check(not gt2.dialog.active, "talk: the warning closes cleanly")
+        _tseen.append(gt2._tableau["caption"]["text"])
+        gt2._tableau["caption"]["cb"]()
+    check(gt2._tableau is None, "talk: the warning closes cleanly")
     check(gt2.player.invuln > 0,
           "talk: release grants a re-grab grace window")
     check(any(isinstance(e, dict) and e.get("name") == "the_talk"
@@ -2831,13 +2978,46 @@ def main():
     check(not has_evidence(gt2, "the_talk"),
           "talk: the note never inflates evidence")
     check(not any(("—" in s) or ("–" in s) or ("--" in s)
-                  for s in _tshown),
+                  for s in _tseen + _tshown),
           "talk: no dashes in the warning")
-    _tblob = " ".join(_tshown).lower()
+    _tblob = " ".join(_tseen + _tshown).lower()
     check("hotel room" in _tblob and "run." in _tblob,
           "talk: the warning is the locked line (hotel room, then run)")
     check("midwestern welcome" in _tblob,
           "talk: the PI's reaction lands after the release")
+    # (28+) The reach: a PI CARRYING the revolver gets the one choice, and
+    # reaching only teaches how far ahead of him the other hand already is.
+    # Escape never aborts the grip (it pages), so the release always runs.
+    gt4 = new_game()
+    gt4.player.inventory.add("pistol", 1)
+    gt4.dialog.active = False
+    gt4._trigger_death("cultist")
+    class _EscT:
+        type = pygame.KEYDOWN
+        key = pygame.K_ESCAPE
+    for _ in range(6):
+        if gt4._tableau.get("menu") is not None:
+            break
+        gt4._tableau_input(_EscT())     # Escape PAGES the grip, never exits
+    _tm4 = gt4._tableau.get("menu")
+    check(_tm4 is not None and "Reach for the revolver." in _tm4["labels"],
+          "talk: carrying the revolver offers the reach")
+    _tm4["pick"](_tm4["labels"].index("Reach for the revolver."))
+    check(gt4._tableau["state"]["reaching"],
+          "talk: reaching puts his other hand on your wrist in the close-up")
+    _rseen = []
+    for _ in range(10):
+        if gt4._tableau is None or gt4._tableau.get("caption") is None:
+            break
+        _rseen.append(gt4._tableau["caption"]["text"])
+        gt4._tableau["caption"]["cb"]()
+    check(any("only talking" in s.lower() for s in _rseen),
+          "talk: the reach is answered, courteous and absolute")
+    check(gt4._tableau is None and gt4._death_kind is None
+          and gt4.player.invuln > 0,
+          "talk: the reach never escalates the freebie; the release still runs")
+    check(not any(("—" in s) or ("–" in s) or ("--" in s) for s in _rseen),
+          "talk: no dashes in the reach beats")
     # After the Talk, the grab is TWO-TOUCH (play-notes): the first grab of an
     # encounter shoves the PI free, only the second is the capture.
     gt2._trigger_death("cultist")

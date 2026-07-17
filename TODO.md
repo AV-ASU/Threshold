@@ -200,11 +200,83 @@ Part B.
   clock, register, ceiling-fan shadow). Guarded by `tests/flow.py` §17c (12);
   text in `DIALOGUE.md` Part A (the words) + Part B (the presentation).
 
-  **Still open (the maintainer greenlights each):** the same treatment for the
-  other principals (Vane's office, Hettie's counter, Crane's church, Toby), the
-  **pedestal** (the Mask on the altar), and Mara's confrontation / the cult
-  Talk. Each is its own bespoke environment + art pass, then wire. Art
-  refinement per beat, then wire.
+- **VANE'S OFFICE landed (2026-07, the second face-across-a-table).**
+  `sheriff_dialogue` opens `VANE_CONVO` in the office close-up
+  (`_open_vane_tableau`; art `draw_vane_tableau`, derived from his sheriff
+  sprite): cold window daylight (Sable's lodge is the warm one), the stopped
+  JAN 15 calendar, the cell-bars sliver, the gun cabinet in the back.
+  Reactive on TWO axes: his **pose reads the hidden despair ledger** exactly
+  as the mood framing line does (`_vane_tableau_state` mirrors
+  `_vane_prompt`'s thresholds: neutral squares up, despair turns his head to
+  the window, hope leans him in with a forearm on the desk; mood, never a
+  number), and the desk carries what the talk earned (the given newspaper
+  spread flat, the opened cabinet). The generic conversation-tableau input
+  moved to `_convo_tableau_input` (shared by Sable + Vane). Guarded by
+  `tests/flow.py` (the Vane-tableau block after the cache guards); text in
+  `DIALOGUE.md` Part A + Part B.
+
+- **HETTIE'S COUNTER landed (2026-07, the third seat).** `hettie_dialogue`
+  opens `HETTIE_CONVO` in the shop-counter close-up (`_open_hettie_tableau`;
+  art `draw_hettie_tableau`, derived from her sprite): the gutted shelves
+  with dust-ghosts and the one tin left, the empty till, and her ONE kept
+  bulb burning over the counter (the stoop line made light). Her sprite's
+  uncanny tell survives the close-up: black-filled spectacle lenses, the
+  glint on the same wrong side of both, her "blink" the glints going out.
+  Reactive: her idle glances at the door every few seconds (the framing
+  line made pose; time-driven in `_draw_hettie_tableau`), Mara's tab leaves
+  the spike once the receipt is taken, and the traded newspaper lies open
+  after the barter (`_hettie_tableau_state`). Guarded by `tests/flow.py`
+  (the Hettie-tableau block after her gate guards); text in `DIALOGUE.md`
+  Part A + Part B.
+
+- **CRANE'S LECTERN landed (2026-07, the fourth seat).** `preacher_dialogue`
+  opens `CRANE_CONVO` in the chancel close-up (`_open_crane_tableau`; art
+  `draw_crane_tableau`, derived from his preacher sprite: black cassock,
+  white clerical collar, the small pale cross, gaunt and half a ghost).
+  Candled dusk: the plain wall cross, the arched window going out, the
+  bell rope dead at the edge, his kept candle stand the only light (the
+  hymn board was cut on the maintainer's look). Reactive: his HANDS read the press fork
+  exactly as the framing line does (`_crane_tableau_state` mirrors the new
+  callable `_crane_prompt`): folded over the lectern while he waits;
+  gripping its corners, head forward, once `preacher_doomed` latches (the
+  new framing variant "done waiting" landed in DIALOGUE.md with it).
+  Guarded by `tests/flow.py` (the Crane-tableau block after the fork
+  guards); text in `DIALOGUE.md` Part A + Part B.
+
+- **TOBY'S LITTLE TABLE landed (2026-07, the fifth and last principal
+  seat).** `toby_dialogue` opens `TOBY_CONVO` in the close-up
+  (`_open_toby_tableau`; art `draw_toby_tableau`, derived from his kid
+  sprite: the yellow tunic, the low brown mop, the cheek marks that read as
+  old tear-streaks on the second look; child proportions, so the same frame
+  holds a smaller person). The one almost-normal room in Brimley: plain
+  daylight, crayon drawings taped crooked, the closet door's drawing (C14),
+  the toy radio, crayons and his fidgeting hands on the table. Reactive:
+  his idle watches the corn line out the window (the framing line made
+  pose), the dark procession drawing hangs among the cheerful ones once
+  toby_told, and the worried brow slant levels once the PI's promise lands
+  (`_toby_tableau_state`). The §26 float guards moved their vehicle to
+  Royce (all five principals host tableaux now; the chorus still floats).
+  Guarded by `tests/flow.py` (the Toby-tableau block after Crane's); text
+  in `DIALOGUE.md` Part A + Part B.
+
+- **THE TALK landed as the grip close-up (2026-07, the tone inversion).**
+  `_cult_talk` opens `_open_talk_tableau` (art `draw_talk_tableau`) instead
+  of the modal box: no room, no table, no face. The carved mask of his
+  sprite fills the frame (hewn irregular oval, the door-dream grammar:
+  recessed void sockets with a gold ember far down, the Sign scratched on
+  the brow, the graft seam, no mouth), the fur hood, the stitched hide
+  coat, and his hand on YOUR shoulder at the frame's corner. He leans in,
+  very slowly, the whole time. NOT a Conversation: a scripted caption
+  chain (the locked warning lines unchanged) with ONE choice when the PI
+  carries the revolver: hold still, or reach for it and find his other
+  hand already resting on the wrist ("None of that, now. We're only
+  talking."). Escape pages, never aborts (the release, stand-down, grace,
+  and note run on every path). Guarded by the reworked flow §28 block +
+  the new reach guards; text in `DIALOGUE.md` Part A + Part B.
+
+  **Still open (the maintainer greenlights each):** the **pedestal** (the
+  Mask on the altar) and Mara's confrontation. Each is its own bespoke
+  environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
@@ -856,9 +928,11 @@ is gone, his witness account is photo-earned.)*
 
 - Narrator "vanished into the corn" (`scenes/villager_houses.py`) adopts
   Crane's drift-away impression as fact; canon is one night procession, and
-  §2 corrects the image for Mara ("not into the corn"). Crane's "more every
-  season" and Sable's "no end of those this past year... They come" keep
-  arrivals in the habitual present; arrivals ended before the seal.
+  §2 corrects the image for Mara ("not into the corn"). ~~Crane's "more every
+  season" and Sable's habitual-present arrivals~~ **DONE (2026-07 Fable tense
+  sweep):** every ended-arrivals line reads past now (Crane's greet + intro +
+  "They all stopped.", Sable's "faces came" + "went the same way", Vane's
+  "kept to their own"). The narrator corn line is this bullet's open half.
 - Descent interior voice wobbles POV (first-person notes vs second-person
   on-screen beats, `systems/game.py`).
 - ~~Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk

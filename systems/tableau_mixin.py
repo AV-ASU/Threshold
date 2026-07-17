@@ -7,7 +7,12 @@ world (`world_frozen`), `_tick_tableau` animates it, `_draw_tableau` paints it
 over everything, and `handle_event` routes input to `_tableau_input` while it
 is up. The pilot is the bedroom writing desk (the pistol + the case file);
 `ui/tableau.draw_desk_tableau` is its art. New tableaux add an art fn there and
-an opener here.
+an opener here. The face-across-a-table principal talks (Sable's reception
+desk, Vane's office, Hettie's counter, Crane's lectern, Toby's little table)
+HOST a live Conversation instead of a fixed option list:
+`open_conversation(..., tableau=True)` routes its spoken beats to
+`_tableau_caption` and its question menu to `_tableau_choices`, and the art
+reads the save flags so the close-up carries what the talk has earned.
 
 Player-facing text (the menu labels + the case-file lines) is mirrored in
 DIALOGUE.md Part B, per the contract.
@@ -15,7 +20,10 @@ DIALOGUE.md Part B, per the contract.
 import re
 import pygame
 
-from ui.tableau import draw_desk_tableau, draw_sable_tableau
+from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
+                        draw_vane_tableau, draw_hettie_tableau,
+                        draw_crane_tableau, draw_toby_tableau,
+                        draw_talk_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -56,6 +64,176 @@ class TableauMixin:
         from scenes.dialogue import SABLE_CONVO
         open_conversation(self, npc, SABLE_CONVO, tableau=True)
 
+    # ----------------------------------------------------- Vane conversation
+    def _open_vane_tableau(self, npc):
+        """Sheriff Vane's office talk, PRESENTED as a frozen close-up: cold
+        window daylight, the JAN 15 calendar, the cell-bars sliver, the gun
+        cabinet in the back. His POSE reads the hidden despair ledger the
+        same way the menu's framing line does (mood, never a number), and
+        the desk carries what the talk has earned (the newspaper he was
+        given, the cabinet he opened)."""
+        self._tableau = {
+            "kind": "vane", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import VANE_CONVO
+        open_conversation(self, npc, VANE_CONVO, tableau=True)
+
+    def _vane_tableau_state(self):
+        """The close-up's live state. The mood thresholds MIRROR the menu
+        framing (`_vane_prompt`, scenes/dialogue.py): despair at net >= 2
+        (he is looking at the window, not at you), hope at net <= -1 (the
+        hooked-out chair), else he waits you out. Props are the earned
+        flags: the paper exchange's once-flag, the opened cabinet."""
+        net = int(self.save.arg("vane_despair", 0) or 0)
+        mood = ("despair" if net >= 2
+                else "hope" if net <= -1 else "neutral")
+        return {
+            "mood": mood,
+            "paper_present": self.save.flag("convo_vane_paper_asked"),
+            "cache_open": self.save.flag("vane_gave_cache"),
+        }
+
+    # --------------------------------------------------- Hettie conversation
+    def _open_hettie_tableau(self, npc):
+        """Hettie's shop counter, PRESENTED as a frozen close-up: the gutted
+        shelves with their dust-ghosts and the one tin left, the till empty
+        since the new year, her ONE kept bulb burning over the counter. Her
+        idle keeps glancing at the door (the framing line made pose), and
+        the counter carries what the talk has earned: Mara's tab leaves the
+        spike when it is lifted, the traded newspaper lies open after."""
+        self._tableau = {
+            "kind": "hettie", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import HETTIE_CONVO
+        open_conversation(self, npc, HETTIE_CONVO, tableau=True)
+
+    def _hettie_tableau_state(self):
+        """The counter's live state: Mara's tab stays curled on the spike
+        until the receipt is taken (however it was earned), and the traded
+        newspaper lies open once the barter has happened. The door glance
+        is idle-driven and added at draw time, not state."""
+        return {
+            "tab_present": not self.save.flag("evidence_maras_receipt"),
+            "paper_present": self.save.flag("newspaper_traded"),
+        }
+
+    # ---------------------------------------------------- Crane conversation
+    def _open_crane_tableau(self, npc):
+        """Rev. Crane at his lectern, PRESENTED as a frozen close-up: the
+        chancel in candled dusk, the plain cross, the arched window, the
+        bell rope dead at the frame's edge. His HANDS carry the fork
+        the way the framing line does: folded over the lectern while he
+        waits, gripping its corners once the press has latched."""
+        self._tableau = {
+            "kind": "crane", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import CRANE_CONVO
+        open_conversation(self, npc, CRANE_CONVO, tableau=True)
+
+    def _crane_tableau_state(self):
+        """The close-up's live state: the press fork, latched for good by
+        `preacher_doomed` (`_crane_provoked`). Mirrors `_crane_prompt` so
+        the pose and the framing line always tell the same story."""
+        return {"doomed": self.save.flag("preacher_doomed")}
+
+    # ----------------------------------------------------- Toby conversation
+    def _open_toby_tableau(self, npc):
+        """Toby across the little table, PRESENTED as a frozen close-up: the
+        one almost-normal room in Brimley. Plain daylight, his drawings
+        taped to the wall, the closet door with its own drawing, the toy
+        radio, crayons on the table. His idle watches the corn line out the
+        window (the framing line made pose); the procession drawing goes up
+        once he has told what he saw, and his worried brows level out once
+        the PI has made the promise."""
+        self._tableau = {
+            "kind": "toby", "t": 0.0, "npc": npc,
+            "caption": None, "menu": None,
+        }
+        self.audio.play("blip_low", 0.4)
+        from ui.conversation import open_conversation
+        from scenes.dialogue import TOBY_CONVO
+        open_conversation(self, npc, TOBY_CONVO, tableau=True)
+
+    def _toby_tableau_state(self):
+        """The room's live state: the procession drawing hangs once he has
+        told it (toby_told, the photo exchange), and the worried brow slant
+        levels once the PI has promised (the holding_up exchange). The
+        window-watch is idle-driven and added at draw time."""
+        return {
+            "drawing_present": self.save.flag("toby_told"),
+            "believed": self.save.flag("convo_toby_holding_up_asked"),
+        }
+
+    # ------------------------------------------------------------- THE TALK
+    def _open_talk_tableau(self, on_done):
+        """The first cult grab of a run, PRESENTED as the closest close-up
+        in the game: the carved mask fills the frame, his hand is on your
+        shoulder at the corner, and he leans in the whole time. NOT a
+        Conversation: a scripted caption chain (the locked warning lines)
+        with ONE choice when the PI carries the revolver: hold still, or
+        reach for it and learn his other hand is already there. Escape
+        never aborts it (you do not walk out of the grip; it pages).
+        `on_done` is _cult_talk's release: the stand-down, the grace, the
+        note, the reaction caption. It ALWAYS runs, on every path."""
+        tb = {
+            "kind": "talk", "t": 0.0, "npc": None,
+            "caption": None, "menu": None, "state": {"reaching": False},
+        }
+        self._tableau = tb
+        has_gun = (self.player is not None
+                   and self.player.inventory.has("pistol"))
+
+        def _fin():
+            self._close_tableau()
+            on_done()
+
+        def _run_line():
+            self._tableau_caption("npc", "", "\"Run.\"", _fin)
+
+        def _hold():
+            self._tableau_caption("pi", "", "(You hold still.)", _run_line)
+
+        def _reach():
+            tb["state"]["reaching"] = True
+            self._tableau_caption(
+                "pi", "",
+                "(Your hand starts for your coat. His other hand is "
+                "already on your wrist. Resting there. That is all it "
+                "does.)",
+                lambda: self._tableau_caption(
+                    "npc", "", "None of that, now. We're only talking.",
+                    _run_line))
+
+        def _choice():
+            if not has_gun:
+                _run_line()
+                return
+            self._tableau_choices(
+                "He waits, hand where it landed.",
+                ["Hold still.", "Reach for the revolver."],
+                lambda i: (_hold if i == 0 else _reach)())
+
+        def _warn():
+            self._tableau_caption(
+                "npc", "",
+                "\"Hey. You go back to your hotel room if you know what's "
+                "good for you.\"", _choice)
+
+        self._tableau_caption(
+            "pi", "",
+            "[c=dim]The hand lands on your shoulder before you hear him "
+            "coming. The grip is friendly. Nothing else about it is.[/c]",
+            _warn)
+
     # The two presentation hooks the Conversation calls in tableau mode.
     def _tableau_caption(self, who, name, text, on_complete):
         tb = self._tableau
@@ -73,15 +251,22 @@ class TableauMixin:
                       "pick": pick, "cursor": 0}
         tb["caption"] = None
 
-    def _sable_tableau_input(self, ev, tb):
-        if ev.key == pygame.K_ESCAPE:
+    def _convo_tableau_input(self, ev, tb):
+        """Input for any caption/menu tableau (the principal seats + the
+        Talk): E advances the caption, up/down/E works the menu, Escape
+        ends a SEAT's talk and drops the close-up. THE TALK is the
+        exception: you do not walk out of the grip, so Escape pages like
+        E instead of aborting (its release must always run)."""
+        if ev.key == pygame.K_ESCAPE and tb["kind"] != "talk":
             if getattr(self, "_convo", None) is not None:
                 self._convo.active = False
             self._close_tableau()
             return
         cap, menu = tb.get("caption"), tb.get("menu")
+        adv = (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE)
         if cap is not None:
-            if ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
+            if ev.key in adv or (tb["kind"] == "talk"
+                                 and ev.key == pygame.K_ESCAPE):
                 cb = cap["cb"]
                 tb["caption"] = None
                 if cb:
@@ -155,8 +340,9 @@ class TableauMixin:
         if ev.type != pygame.KEYDOWN or self._tableau is None:
             return
         tb = self._tableau
-        if tb["kind"] == "sable":
-            self._sable_tableau_input(ev, tb)
+        if tb["kind"] in ("sable", "vane", "hettie", "crane", "toby",
+                          "talk"):
+            self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
             # Reading the file: E/Enter goes back to the menu; anything else
@@ -196,6 +382,25 @@ class TableauMixin:
         W, H = surf.get_width(), surf.get_height()
         if tb["kind"] == "sable":
             self._draw_sable_tableau(surf, tb)
+            return
+        if tb["kind"] == "vane":
+            self._draw_vane_tableau(surf, tb)
+            return
+        if tb["kind"] == "hettie":
+            self._draw_hettie_tableau(surf, tb)
+            return
+        if tb["kind"] == "crane":
+            self._draw_crane_tableau(surf, tb)
+            return
+        if tb["kind"] == "toby":
+            self._draw_toby_tableau(surf, tb)
+            return
+        if tb["kind"] == "talk":
+            draw_talk_tableau(surf, tb["t"], tb["state"])
+            if tb.get("caption") is not None:
+                self._draw_tableau_caption(surf, tb["caption"])
+            elif tb.get("menu") is not None:
+                self._draw_tableau_menu(surf, tb["menu"])
             return
         if tb["kind"] == "desk":
             draw_desk_tableau(surf, tb["t"], tb["state"])
@@ -246,6 +451,51 @@ class TableauMixin:
             "envelope_present": self.save.flag("rite_envelope_given"),
         }
         draw_sable_tableau(surf, tb["t"], state)
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_vane_tableau(self, surf, tb):
+        draw_vane_tableau(surf, tb["t"], self._vane_tableau_state())
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_hettie_tableau(self, surf, tb):
+        # Her idle door-glance: every few seconds her head turns toward the
+        # shop door, holds a beat, and comes back. Time-driven, eased both
+        # ways; the rest of the state is the earned counter props.
+        ph = tb["t"] % 6.8
+        glance = 0.0
+        if 4.8 <= ph < 6.4:
+            glance = min(1.0, (ph - 4.8) / 0.35, (6.4 - ph) / 0.35)
+        st = self._hettie_tableau_state()
+        st["glance"] = glance
+        draw_hettie_tableau(surf, tb["t"], st)
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_crane_tableau(self, surf, tb):
+        draw_crane_tableau(surf, tb["t"], self._crane_tableau_state())
+        if tb.get("caption") is not None:
+            self._draw_tableau_caption(surf, tb["caption"])
+        elif tb.get("menu") is not None:
+            self._draw_tableau_menu(surf, tb["menu"])
+
+    def _draw_toby_tableau(self, surf, tb):
+        # His idle watch of the corn line: every few seconds his eyes go to
+        # the window, hold, and come back. Time-driven, eased both ways.
+        ph = tb["t"] % 7.4
+        watch = 0.0
+        if 5.0 <= ph < 6.8:
+            watch = min(1.0, (ph - 5.0) / 0.4, (6.8 - ph) / 0.4)
+        st = self._toby_tableau_state()
+        st["watch"] = watch
+        draw_toby_tableau(surf, tb["t"], st)
         if tb.get("caption") is not None:
             self._draw_tableau_caption(surf, tb["caption"])
         elif tb.get("menu") is not None:

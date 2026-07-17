@@ -197,7 +197,9 @@ What rises with the stage:
   NARRATIVE §4). The world rot never turns him on its own; a hidden
   **despair/hope ledger** decides his fate (`vane_despair`, the `VANE_*`
   config block; surfaced only as his **mood** — the conversation's
-  framing line and the beats — never a number). **Hope has one
+  framing line, the beats, and (2026-07) his **pose in the office
+  tableau** (`_vane_tableau_state` mirrors `_vane_prompt`'s thresholds:
+  despair turns him to the window, hope leans him in) — never a number). **Hope has one
   currency:** the PI **sharing a real discovery** with him (the
   `share_*` exchanges in `VANE_CONVO`, `_vane_share`) — the same act is
   the **trust** that opens his investigation thread (the blind-cultist

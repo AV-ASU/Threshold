@@ -118,9 +118,24 @@ it renders the procedural sprites to a labelled PNG strip.
     close-up of a prop with a menu that mutates it live (take the gun off the
     desk, read the case file), the world frozen while it is up. Art (the
     procedural close-ups) lives in `ui/tableau.py`; the pilot is the bedroom
-    writing desk, and the system is meant to be reused for a pedestal / a face
-    across a table (Mara, the cult Talk). Player-facing text is in
-    `DIALOGUE.md` Part B.
+    writing desk. The **face-across-a-table principal talks** ride the same
+    frame (2026-07, all five principals): `clerk_dialogue` /
+    `sheriff_dialogue` / `hettie_dialogue` / `preacher_dialogue` /
+    `toby_dialogue` open the talk as a tableau (the `_open_*_tableau`
+    openers + `open_conversation(..., tableau=True)`), the conversation's
+    beats render as the caption and its menu as the option panel
+    (`_convo_tableau_input`), and the art reads save flags so the close-up
+    carries what the talk earned (Sable's photo/Invitation on the register;
+    Vane's pose reading his despair ledger, the given paper, the opened
+    cabinet; Hettie's door-glance idle, the tab leaving the spike, the
+    traded paper; Crane's hands folding or gripping the lectern on the press
+    fork; Toby's corn-line watch, the procession drawing, the brows the
+    promise levels). The chorus still floats its talk (the `tests/flow.py`
+    §26 float guards ride Royce). **THE TALK rides the frame too** (the tone
+    inversion: `_cult_talk` → `_open_talk_tableau`, a scripted caption chain,
+    not a Conversation — the grip close-up, the one reach-for-the-revolver
+    choice, Escape pages instead of aborting). Still to come: a pedestal
+    (the Mask), Mara. Player-facing text is in `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
@@ -496,9 +511,12 @@ it renders the procedural sprites to a labelled PNG strip.
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`). **THE TALK (2026-07): the
   FIRST cult grab of a run is a warning, not a capture** — `_cult_talk`
-  (threat_mixin) plays the courteous one-liner, stands the room down,
-  grants a short re-grab grace, and files a NOTE (flag `cult_talk_given`;
-  gates every grab site, struggle losses included). After the Talk, the
+  (threat_mixin) plays the courteous warning as the **grip close-up
+  tableau** (`_open_talk_tableau`, art `ui/tableau.draw_talk_tableau`;
+  one reach-for-the-revolver choice if the PI carries it, Escape pages
+  instead of aborting), stands the room down, grants a short re-grab
+  grace, and files a NOTE (flag `cult_talk_given`; gates every grab
+  site, struggle losses included). After the Talk, the
   cult grab is **TWO-TOUCH** (play-notes): the FIRST grab of an encounter
   shoves the PI free (`_cult_shrug_off` — grabbers stagger `STRUGGLE_STUN`,
   he tears loose on a `STRUGGLE_BURST_T` burst with `CULT_SHRUG_INVULN`

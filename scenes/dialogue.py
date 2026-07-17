@@ -302,27 +302,38 @@ def crane_on_leave(game):
     ]
 
 
+def _crane_prompt(game):
+    """The framing line reads the fork the way his tableau pose does: at
+    rest he waits, hands folded; once the press has latched
+    (preacher_doomed) he is done waiting. Composes the PI's four-tier
+    weather like every principal framing (_pi_framing)."""
+    base = ("Crane stands square at the lectern, done waiting."
+            if game.save.flag("preacher_doomed")
+            else "Crane waits, hands folded over the lectern.")
+    return base + _PI_WEATHER[_pi_tier(game)]
+
+
 CRANE_CONVO = {
     "id":    "crane",
     "name":  "Rev. Crane",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": _pi_framing("Crane waits, hands folded over the lectern."),
+    "prompt": _crane_prompt,
     "leave":  "That's all for now.",
     "greet": {
         "flag": "crane_greeted",
         "beats": [
-            ("npc", "Another new face. That's all that comes to Brimley "
-                    "anymore, strangers off the highway, more every "
-                    "season. And not one of them leaves."),
+            ("npc", "Another new face. Strangers off the highway were all "
+                    "that came to Brimley this past year, more every "
+                    "season. And not one of them left."),
         ],
     },
     "on_leave": crane_on_leave,
     "exchanges": _opener_exchanges(
         intro_beats=[
-            ("npc", "I don't trust it. They arrive too easy, like "
-                    "something held the door. Then they go quiet, drift "
-                    "out to the corn, and they don't come back."),
+            ("npc", "I never trusted it. They arrived too easy, like "
+                    "something held the door. Then they went quiet, "
+                    "drifted out to the corn, and they didn't come back."),
             ("npc", "A young woman came through in the fall. Bright "
                     "thing, full of questions, like you. She's one of "
                     "them now, whatever they are. That who you're after?"),
@@ -332,10 +343,10 @@ CRANE_CONVO = {
             ("npc", "I know her. She sat my pews twice, early on, right "
                     "at the back. I remember thinking, there's one with "
                     "her eyes still open."),
-            ("npc", "[c=dim]Then she stopped coming. They all stop.[/c]"),
+            ("npc", "[c=dim]Then she stopped coming. They all stopped.[/c]"),
         ],
     ) + [
-        # Earned by the intro: his "they arrive too easy" answer is what
+        # Earned by the intro: his "they arrived too easy" answer is what
         # the PI is following up on.
         {
             "key": "flock",
@@ -398,8 +409,13 @@ def preacher_dialogue(game, npc):
             "They heard it, though. Down that road, something always does.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, CRANE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the Sable/Vane/Hettie precedent): the chancel behind his lectern in
+    # candled dusk, and his HANDS reading the fork the way the framing line
+    # does (folded and waiting, or gripping the lectern once the press has
+    # latched). The bell one-shot above still volunteers as a plain beat
+    # first; the next press opens the close-up.
+    game._open_crane_tableau(npc)
 
 
 # ---- The Kid: Toby ----
@@ -451,8 +467,14 @@ def toby_dialogue(game, npc):
             "not let yourself read the name on the tag. Not yet.)[/c]",
         ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, TOBY_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the last principal seat): the one almost-normal room in Brimley, his
+    # drawings taped up, the window on the corn line he watches (the framing
+    # line made pose). The room carries what the talk earns: the procession
+    # drawing goes up once he has told what he saw, and his worried brows
+    # level once the PI has promised. The bear one-shot above still
+    # volunteers as a plain beat first; the next press opens the close-up.
+    game._open_toby_tableau(npc)
 
 
 # Ask-verb conversation: Toby volunteers nothing cold (a kid can't know the
@@ -771,8 +793,15 @@ def hettie_dialogue(game, npc):
             "she'd given up on.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, HETTIE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the Sable/Vane precedent): the gutted shop behind her counter, her one
+    # kept bulb burning over it, and her idle glancing at the door (the
+    # framing line made pose). The counter carries what the talk earns:
+    # Mara's tab leaves the spike once the receipt is taken, the traded
+    # newspaper lies open after the barter. The one-shots above (the
+    # preacher, the memory, the trade) still volunteer as plain beats
+    # first; the next press opens the close-up.
+    game._open_hettie_tableau(npc)
 
 
 # ---- The Sheriff: Hollis Vane ----
@@ -980,7 +1009,7 @@ VANE_CONVO = {
         photo_beats=[
             ("npc", "(He takes it to the window light and works it corner "
                     "to corner, a lawman's look.)"),
-            ("npc", "The new folk came in numbers and they keep to their "
+            ("npc", "The new folk came in numbers and they kept to their "
                     "own. She'd have been one of them."),
             ("npc", "They filled the school, the barn, the lodge. Then one "
                     "night those rooms were empty, all at once. Wherever "
@@ -1002,7 +1031,7 @@ VANE_CONVO = {
                         "block hunting the part that failed. There is no "
                         "part."),
                 ("npc", "[c=dim]It's the town.[/c]"),
-                ("pi", "[c=dim]He said it flat. Like weather. So.[/c]"),
+                ("pi", "[c=dim]He said it flat.[/c]"),
             ],
         },
         {
@@ -1175,15 +1204,15 @@ VANE_CONVO = {
             "once": True,
             "on_ask": _vane_give_cache,
             "beats": [
-                ("npc", "Protection. That is a thing this office used to hand "
+                ("npc", "Protection. That's a thing this office used to hand "
                         "out."),
-                ("npc", "I have got no deputies, no cell that holds, and a "
-                        "law nobody up here answers to anymore. What I have "
-                        "got is a cabinet in the back. Shells, and a spare "
-                        "piece I kept oiled for no reason I could name."),
-                ("npc", "Take what you need. It will not help you against "
-                        "what took this town. But it will make you feel like "
-                        "it might, and some nights that is the whole of the "
+                ("npc", "I've got no deputies, no cell that holds, and a law "
+                        "nobody up here answers to anymore. What I've got is "
+                        "a cabinet in the back. Shells, and a spare piece I "
+                        "kept oiled for no reason I could name."),
+                ("npc", "Take what you need. It won't help you against what "
+                        "took this town. But it'll make you feel like it "
+                        "might, and some nights that's the whole of the "
                         "job."),
                 ("pi", "[c=dim]He unlocks the cabinet and steps back. The "
                        "last thing the law here has to give.[/c]"),
@@ -1219,8 +1248,14 @@ def sheriff_dialogue(game, npc):
             "[c=dim]He doesn't say the Reverend's name. Nobody in town has.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
         return
-    from ui.conversation import open_conversation
-    open_conversation(game, npc, VANE_CONVO)
+    # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
+    # the Sable precedent): his office in cold window light, and his POSE
+    # reading the despair ledger the way the framing line does (mood, never
+    # a number). The desk carries what the talk earns: the newspaper he was
+    # given stays spread flat, the gun cabinet stands open once he unlocks
+    # it. The preacher one-shot above still volunteers itself as a plain
+    # beat first; the next press opens the close-up.
+    game._open_vane_tableau(npc)
 
 
 # ---- The Clerk: Mr. Sable ----
@@ -1309,18 +1344,18 @@ SABLE_CONVO = {
             "q": "I'm looking for a woman named Mara Blaine. Is that a name "
                  "you know, Mr. Sable?",
             "beats": [
-                ("npc", "Mara. No, I can't say I know the name. But I have had "
+                ("npc", "Mara. No, I cannot say I know the name. But I have had "
                         "the pleasure of hosting a great many guests these "
                         "past months. You are welcome to look over the "
                         "register any time you like."),
-                ("npc", "You'll mean one of the new folk, I expect. We had no "
+                ("npc", "You will mean one of the new folk, I expect. We had no "
                         "end of those this past year. They came like they had "
                         "heard something worth the drive."),
                 ("npc", "And I was glad of every one. This town was drying up "
                         "before they came. I had every room full. You should "
                         "have seen this house with every window lit."),
                 ("pi", "And the rest of Brimley feels the same?"),
-                ("npc", "Ah. There you have it. Not everyone's been so warm. "
+                ("npc", "Ah. There you have it. Not everyone has been so warm. "
                         "Some of the old families have gone as cold as our "
                         "root cellar about the newcomers."),
                 ("npc", "I would mind who you take your questions to, friend. "
@@ -1332,7 +1367,7 @@ SABLE_CONVO = {
                         ("npc", "(He looks at it a good while, then hands it "
                                 "back.) No. A pretty thing, but no. I could "
                                 "not put a name or a room to her. So many "
-                                "faces come through that door."),
+                                "faces came through that door."),
                     ], _sable_showed_photo),
                     ("Keep it in your coat.", [
                         ("pi", "(You leave it where it is.)"),
@@ -1363,8 +1398,8 @@ SABLE_CONVO = {
                 + ([] if (g.save.flag("cellar_key_taken")
                           or g.player.inventory.has("cellar_key"))
                    else [("npc", "Shoot. I seem to have misplaced the key. If "
-                                 "you find it, you are welcome to take a look, "
-                                 "and take what you need.")])
+                                 "you find it, you are welcome to take a "
+                                 "look.")])
             ),
         },
         {
@@ -1383,6 +1418,10 @@ SABLE_CONVO = {
             "q": "My car won't start. Turns over and won't catch. Is there "
                  "anyone in town who could take a look at it?",
             "label": "Is there a mechanic in town?",
+            # The ask is REMEMBERED (sable_car_asked): his closing hospitality
+            # plants the road warning in plain sight, and the_fold's reproach
+            # quotes it back only if he actually said it.
+            "on_ask": lambda g: g.save.set_flag("sable_car_asked", True),
             "beats": [
                 ("npc", "A mechanic? No, nothing like that in Brimley now, "
                         "and it would do you no good if there were."),
@@ -1390,13 +1429,14 @@ SABLE_CONVO = {
                 ("pi", "What do you mean, not broken? It turns over and dies "
                        "at the step."),
                 ("npc", "Only that I have seen it before. Now and then a "
-                        "guest's car goes the same way, and never once have I "
+                        "guest's car went the same way, and never once have I "
                         "seen one put right."),
                 ("npc", "A man quits asking why, after a time. I am long past "
                         "it, and it is no trouble to me. Needn't be to you "
                         "either."),
-                ("npc", "You have a good bed and a standing welcome. Stay as "
-                        "long as you need."),
+                ("npc", "You have a good bed and a standing welcome. The "
+                        "roads are not going anywhere. Stay as long as you "
+                        "need."),
             ],
         },
         # Unlocked by reading the cellar Ledger (evidence the_ledger): the
@@ -1422,8 +1462,12 @@ SABLE_CONVO = {
         # The reproach: the PI puts the looping road to Sable once he has
         # both HEARD a local name it (the_fold_told note) AND actually
         # walked it himself (crossed_a_fold, C13) -- so the first-person
-        # "it set me back down" is never a lie. Sable deflects by pointing
-        # out he DID say it, plainly, and the PI simply heard hospitality.
+        # "it set me back down" is never a lie. The detonation is ANCHORED:
+        # the car exchange planted "the roads are not going anywhere" inside
+        # his closing hospitality (sable_car_asked), so "I meant it plainly"
+        # quotes his own words back and the kindness rereads as the warning
+        # it always was. A PI who never asked after the mechanic gets the
+        # same truth fresh, with no false "I told you" claim.
         {
             "key": "the_fold",
             "label": "The road out brought me back.",
@@ -1432,9 +1476,13 @@ SABLE_CONVO = {
             "avail": lambda g: g.save.flag("crossed_a_fold") and any(
                 isinstance(e, dict) and e.get("name") == "the_fold_told"
                 for e in (g.save.arg("notes", []) or [])),
-            "beats": [
+            "beats": lambda g: ([
                 ("npc", "I told you the roads were not going anywhere. You "
                         "heard a man being hospitable. I meant it plainly."),
+            ] if g.save.flag("sable_car_asked") else [
+                ("npc", "So you walked it. The roads are not going anywhere, "
+                        "friend. They never were."),
+            ]) + [
                 ("npc", "There is no call to be cross about it. You are safe "
                         "here. Safer than out there."),
             ],
