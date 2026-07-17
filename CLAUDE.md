@@ -134,8 +134,11 @@ it renders the procedural sprites to a labelled PNG strip.
     §26 float guards ride Royce). **THE TALK rides the frame too** (the tone
     inversion: `_cult_talk` → `_open_talk_tableau`, a scripted caption chain,
     not a Conversation — the grip close-up, the one reach-for-the-revolver
-    choice, Escape pages instead of aborting). Still to come: a pedestal
-    (the Mask), Mara. Player-facing text is in `DIALOGUE.md` Part B.
+    choice, Escape pages instead of aborting). **THE PEDESTAL** (the Sign
+    Chamber altar, `_open_altar_tableau`) is the OBJECT close-up of His face
+    on the stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN
+    (BREAK → `_play_ending("rite_broken")`), Escape backs out. Still to come:
+    Mara. Player-facing text is in `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional

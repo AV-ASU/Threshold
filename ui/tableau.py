@@ -1656,3 +1656,206 @@ def draw_talk_tableau(surf, t, state):
         a = max(0, int(210 * (1 - (r - inner) / (maxr - inner))))
         pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
     surf.blit(vig, (0, 0))
+
+
+# ---- THE PEDESTAL: the Sign Chamber altar, made a close-up ----
+# The one place the Pallid Mask is lifted, and the one place BREAK is chosen.
+# Not a person -- an OBJECT close-up, but the object is His face: the whole
+# machine of it here in reach. The Mask rests on the hewn stone ("pale as a
+# drowned face, the eyeholes black") and warm (a gold ember far down in each
+# socket, because it knows your hands); the daubed Yellow Sign (its own 2D
+# brand) breathes on the apse wall above; the kneeling congregation is at
+# your back in the cult-dark, two candles the only light. The lift/tear
+# choice rides on top as the tableau menu.
+def _sign_daub(surf, cx, cy, R, t):
+    """The Yellow Sign -- His face daubed in paint (NARRATIVE 6a): the crude
+    mask the cult paints, a broken jaundiced oval outline with two off-centre
+    thumb-press sockets and NO mouth, paint runs off the chin. Matches the
+    canonical wall daub (entities/deco_horror _draw_yellow_sign), scaled up on
+    the apse wall and breathing."""
+    import pygame
+    rng = random.Random(3)
+    pulse = 1.0 + math.sin(t * 0.9) * 0.06
+    col = (176, 158, 60); dark = (86, 74, 26); sock = (5, 4, 3)
+    rx, ry = R * 0.72 * pulse, R * 1.04 * pulse
+    n = 22
+    pts = [(cx + math.cos(i / n * math.tau) * (rx + rng.uniform(-5, 5)),
+            cy + math.sin(i / n * math.tau) * (ry + rng.uniform(-5, 5)))
+           for i in range(n)]
+    for i in range(n):                                          # broken outline
+        if rng.random() < 0.80:
+            a, b = pts[i], pts[(i + 1) % n]
+            pygame.draw.line(surf, dark, a, b, 8)
+            pygame.draw.line(surf, col, a, b, 4)
+    for fx, fy, fr in ((-0.40, -0.25, 0.22), (0.43, -0.18, 0.25)):  # sockets, no mouth
+        sxp, syp = int(cx + rx * fx), int(cy + ry * fy)
+        pygame.draw.circle(surf, sock, (sxp, syp), max(3, int(R * fr)))
+    for dx, fl in ((-R * 0.2, 1.0), (R * 0.12, 0.7)):           # paint runs off the chin
+        rl = int(R * 0.7 * fl * (1.0 + 0.25 * math.sin(t * 0.13)))
+        x0 = int(cx + dx); y0 = int(cy + ry * 0.9)
+        pygame.draw.line(surf, dark, (x0, y0), (x0, y0 + rl), 4)
+        pygame.draw.line(surf, col, (x0, y0), (x0, y0 + rl), 2)
+
+
+def _pallid_mask(surf, cx, cy, r, ember, tilt=0.0):
+    """The Pallid Mask resting on the stone: a pale half-face, drowned-white,
+    the eyeholes carved black with a gold ember far down in them. A vertical
+    seam down the centre (His half-mask). Warm underglow. `ember` 0..1 pulses
+    the gold; `tilt` leans it up toward the viewer."""
+    import pygame
+    pale = (224, 226, 228); pale_hi = (244, 245, 246); pale_lo = (150, 156, 162)
+    seam = (120, 126, 134)
+    S = int(r * 3)
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    mx = my = S // 2
+    # warm halo behind (it is warm, it knows your hands)
+    for rr in range(int(r * 1.5), 0, -3):
+        a = int(30 * (1 - rr / (r * 1.5)) * (0.6 + 0.4 * ember))
+        pygame.draw.circle(m, (210, 150, 70, a), (mx, my), rr)
+    # the pale plate: a tall drowned-face oval, upper face fuller than the jaw
+    face = []
+    rng = random.Random(7)
+    for k in range(20):
+        a = -math.pi / 2 + k * (math.pi * 2 / 20)
+        rx = r * (0.82 + 0.05 * rng.random())
+        ry = r * (1.02 + (0.10 if math.sin(a) > 0 else 0.0) + 0.04 * rng.random())
+        face.append((mx + int(math.cos(a) * rx), my + int(math.sin(a) * ry)))
+    pygame.draw.polygon(m, pale, face)
+    pygame.draw.polygon(m, pale_lo, face, 2)
+    # left side lit, right side falls to shadow (the candles are low-left)
+    sh = pygame.Surface((S, S), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (54, 58, 66, 70), (mx + int(r * 0.35), my - r, int(r * 0.8), r * 2))
+    m.blit(sh, (0, 0))
+    hi = pygame.Surface((S, S), pygame.SRCALPHA)
+    pygame.draw.ellipse(hi, (*pale_hi, 150), (mx - r + 4, my - int(r * 0.7),
+                                              int(r * 0.8), int(r * 1.4)))
+    m.blit(hi, (0, 0))
+    # the vertical seam of the half-mask
+    pygame.draw.line(m, seam, (mx, my - int(r * 0.96)), (mx, my + int(r * 0.98)), 2)
+    # the brow ridge + the long nose
+    pygame.draw.arc(m, pale_lo, (mx - int(r * 0.6), my - int(r * 0.5),
+                                 int(r * 1.2), int(r * 0.5)), 3.4, 6.0, 2)
+    pygame.draw.line(m, pale_lo, (mx, my - int(r * 0.2)), (mx - 2, my + int(r * 0.4)), 2)
+    pygame.draw.line(m, pale_hi, (mx - 3, my - int(r * 0.2)), (mx - 5, my + int(r * 0.34)), 1)
+    # the carved black eye-voids + the gold ember far down
+    for sgn in (-1, 1):
+        ex = mx + sgn * int(r * 0.4)
+        ey = my - int(r * 0.14)
+        pygame.draw.ellipse(m, (150, 154, 160), (ex - int(r * 0.24), ey - int(r * 0.17),
+                                                 int(r * 0.48), int(r * 0.34)))  # carved rim
+        pygame.draw.ellipse(m, (6, 6, 9), (ex - int(r * 0.19), ey - int(r * 0.13),
+                                           int(r * 0.38), int(r * 0.28)))        # the void
+        g = pygame.Surface((int(r * 0.5), int(r * 0.5)), pygame.SRCALPHA)
+        gr = g.get_width() // 2
+        pygame.draw.circle(g, (235, 190, 70, int(90 * (0.4 + 0.6 * ember))),
+                           (gr, gr + int(r * 0.06)), max(2, int(r * 0.11)))
+        m.blit(g, (ex - gr, ey - gr), special_flags=pygame.BLEND_RGBA_ADD)
+        pygame.draw.circle(m, (150, 120, 50), (ex, ey + int(r * 0.07)), max(1, int(r * 0.05)))
+    # the closed, lipless mouth-line low on the plate (a half-mask barely has one)
+    pygame.draw.line(m, pale_lo, (mx - int(r * 0.24), my + int(r * 0.6)),
+                     (mx + int(r * 0.24), my + int(r * 0.6)), 2)
+    if tilt:
+        m = pygame.transform.rotate(m, tilt)
+    surf.blit(m, m.get_rect(center=(int(cx), int(cy))))
+
+
+def draw_altar_tableau(surf, t, state):
+    """The Sign Chamber altar close-up: the Pallid Mask on the hewn stone
+    under the daubed Sign, the kneeling congregation behind, two low candles
+    the only light. His face pulses warm. The lift/tear choice rides on top
+    as the tableau menu."""
+    import pygame
+    W, H = surf.get_width(), surf.get_height()
+
+    # -- the cult-dark: near-black, cold stone above, the apse curve behind --
+    top = (18, 17, 21); bot = (6, 6, 8)
+    for y in range(0, H, 2):
+        surf.fill(_lerp(top, bot, y / H), (0, y, W, 2))
+    for i in range(6):                                              # stone seams
+        yy = int(H * (0.10 + 0.085 * i))
+        pygame.draw.line(surf, (26, 24, 29), (0, yy), (W, yy + 3), 1)
+
+    # -- the kneeling congregation at your back: dark humps in rows, unmoving --
+    rnd = random.Random(19)
+    for row, (ry, rs, n) in enumerate([(0.30, 0.7, 7), (0.37, 0.85, 6),
+                                       (0.45, 1.0, 5)]):
+        yy = int(H * ry)
+        for k in range(n):
+            fx = int(W * (0.12 + (0.76 * (k + 0.5) / n)) + rnd.randint(-10, 10))
+            hump = int(46 * rs)
+            col = _lerp((14, 13, 16), (30, 27, 32), row / 2)
+            pygame.draw.ellipse(surf, col, (fx - int(20 * rs), yy - hump,
+                                            int(40 * rs), hump + int(20 * rs)))
+            pygame.draw.circle(surf, col, (fx, yy - hump + int(8 * rs)), int(11 * rs))
+
+    # -- the daubed Yellow Sign, breathing on the apse wall above the altar --
+    sgy = int(H * 0.235)
+    breath = 0.5 + 0.5 * math.sin(t * 0.7)
+    glow = pygame.Surface((W, H), pygame.SRCALPHA)                   # sickly light pool
+    for r in range(150, 0, -6):
+        a = int(30 * (1 - r / 150) * (0.7 + 0.3 * breath))
+        pygame.draw.circle(glow, (196, 176, 70, a), (W // 2, sgy), r)
+    surf.blit(glow, (0, 0))
+    _sign_daub(surf, W // 2, sgy, 96, t)
+
+    # -- the altar: a hewn stone block, wax-run, two guttering candles --
+    axc, ayt = W // 2, int(H * 0.64)
+    pygame.draw.polygon(surf, (34, 31, 27),                          # the block top
+                        [(axc - 150, ayt), (axc + 150, ayt),
+                         (axc + 178, ayt + 40), (axc - 178, ayt + 40)])
+    pygame.draw.polygon(surf, (24, 22, 19),                          # the front face
+                        [(axc - 178, ayt + 40), (axc + 178, ayt + 40),
+                         (axc + 200, H), (axc - 200, H)])
+    pygame.draw.line(surf, (52, 47, 40), (axc - 150, ayt), (axc + 150, ayt), 2)
+    for gx in range(axc - 150, axc + 160, 60):                       # chisel seams
+        pygame.draw.line(surf, (18, 16, 14), (gx, ayt + 42), (gx - 8, H), 1)
+    # wax runs down the front
+    for wx in (axc - 96, axc + 70, axc + 120):
+        pygame.draw.line(surf, (60, 56, 46), (wx, ayt + 40), (wx + 3, ayt + 120), 3)
+    # two low candles flanking the mask, the only light
+    flames = []
+    for dx in (-118, 118):
+        chx, chy = axc + dx, ayt + 6
+        pygame.draw.rect(surf, (150, 142, 120), (chx - 4, chy - 30, 8, 30))
+        pygame.draw.ellipse(surf, (44, 40, 33), (chx - 8, chy + 26, 16, 8))
+        fl = 1.0 + 0.28 * math.sin(t * 7.3 + dx) * math.sin(t * 2.1)
+        pygame.draw.ellipse(surf, (255, 214, 120),
+                            (chx - 4, chy - 30 - int(15 * fl), 8, int(15 * fl)))
+        pygame.draw.ellipse(surf, (255, 246, 206),
+                            (chx - 2, chy - 30 - int(9 * fl), 4, int(9 * fl)))
+        flames.append((chx, chy - 34))
+    # the candle wash pooling up onto the mask
+    wash = pygame.Surface((W, H), pygame.SRCALPHA)
+    fl0 = 0.9 + 0.1 * math.sin(t * 5.1) * math.sin(t * 1.7)
+    for r in range(int(H * 0.5), 0, -10):
+        a = int(84 * (1 - r / (H * 0.5)) * fl0)
+        pygame.draw.circle(wash, (255, 196, 108, a), (axc, ayt - 20), r)
+    surf.blit(wash, (0, 0))
+
+    # -- the socket the mask sits in, and the Mask itself, warm and gazing --
+    pygame.draw.ellipse(surf, (8, 8, 11), (axc - 64, ayt - 18, 128, 46))
+    ember = 0.5 + 0.5 * (0.5 + 0.5 * math.sin(t * 1.15))
+    key = pygame.Surface((W, H), pygame.SRCALPHA)
+    for r in range(160, 0, -8):
+        a = int(46 * (1 - r / 160) * fl0)
+        pygame.draw.circle(key, (240, 210, 150, a), (axc, ayt - 44), r)
+    surf.blit(key, (0, 0))
+    bob = 1.0 * math.sin(t * 0.8)
+    _pallid_mask(surf, axc, ayt - 52 + bob, 68, ember, tilt=0.0)
+
+    # motes drifting up through the candlelight
+    rnd2 = random.Random(11)
+    for _ in range(30):
+        base = rnd2.randint(0, 600)
+        yy = int(H * 0.30 + (t * 6 + base) % (H * 0.5))
+        mx = axc + int(120 * math.sin(t * 0.4 + base)) + rnd2.randint(-30, 30)
+        pygame.draw.circle(surf, (230, 200, 150), (mx, yy), 1)
+
+    # -- the heaviest vignette; the dark leans in on the one lit thing --
+    vig = pygame.Surface((W, H), pygame.SRCALPHA)
+    vcx, vcy = axc, ayt - 30
+    maxr = int(math.hypot(W, H) * 0.60); inner = int(maxr * 0.40)
+    for r in range(maxr, inner, -8):
+        a = max(0, int(205 * (1 - (r - inner) / (maxr - inner))))
+        pygame.draw.circle(vig, (0, 0, 0, a), (vcx, vcy), r)
+    surf.blit(vig, (0, 0))

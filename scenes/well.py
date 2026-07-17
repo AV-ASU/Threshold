@@ -1135,16 +1135,15 @@ def build_works_sign():
         # the rite is the only lid on Him, and breaking it before the source
         # (the Threshold) is sealed lets His influence out uncontained. It is
         # always pre-seal here, so this is always the catastrophe.
-        def _pick(idx):
-            if idx == 0:
-                _take_mask(game)
-            elif idx == 1:
-                game._play_ending("rite_broken")
-        game.dialog.show_choice(
-            "The mask on the altar. The Sign daubed above it. The kneeling "
-            "at your back. The whole machine of it, here in reach.",
-            ["Lift the mask.", "Tear it down. End this."],
-            _pick, speaker="", voice="blip_soft", portrait="narrator")
+        # PRESENTED as the altar close-up tableau (#2b): His face on the hewn
+        # stone under the daubed Sign, the kneeling behind. The two instincts
+        # ride on as the tableau menu -- LIFT (the keystone, the Spread/Seal
+        # fork) or TEAR IT DOWN (BREAK, the trap: the rite is the only lid, so
+        # breaking it before the source is sealed floods Him out uncontained;
+        # always pre-seal here, so always the catastrophe -> rite_broken).
+        game._open_altar_tableau(
+            on_lift=lambda: _take_mask(game),
+            on_break=lambda: game._play_ending("rite_broken"))
 
     def _sign_on_enter(game, scene):
         # C14c: once the Mask is lifted, _interact early-returns, so drop

@@ -274,8 +274,24 @@ Part B.
   and note run on every path). Guarded by the reworked flow §28 block +
   the new reach guards; text in `DIALOGUE.md` Part A + Part B.
 
-  **Still open (the maintainer greenlights each):** the **pedestal** (the
-  Mask on the altar) and Mara's confrontation. Each is its own bespoke
+- **THE PEDESTAL landed (2026-07).** The Sign Chamber altar interact
+  (`scenes/well.py`) opens the altar close-up (`_open_altar_tableau`; art
+  `draw_altar_tableau`) instead of a modal choice: an OBJECT close-up (the
+  desk-tableau family, not a person), but the object is His face. The Pallid
+  Mask on the hewn stone (pale drowned-face, black eyeholes, a warm gold
+  ember far down in each because it knows your hands), the daubed Yellow Sign
+  (the canonical crude-mask brand, matching `_draw_yellow_sign`) breathing on
+  the apse wall, the kneeling congregation behind in the cult-dark, two
+  candles the only light. The two instincts ride on as the menu, and **BREAK
+  is preserved through the close-up**: "Tear it down. End this." →
+  `_play_ending("rite_broken")` (the trap, the axe mask-yank + Carcosa
+  blast); "Lift the mask." → `_take_mask` (the keystone + the `descent_mask`
+  temptation); Escape backs out (the mask stays, re-interactable). Prompt
+  trimmed to "The whole machine of it, here in reach." (the close-up shows
+  the rest now). Guarded by `tests/flow.py` §3 (+ the §31 tempt guard
+  re-pointed at the tableau); text in `DIALOGUE.md` Part B.
+
+  **Still open (the last #2b beat):** Mara's confrontation. Its own bespoke
   environment + art pass, then wire.
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*

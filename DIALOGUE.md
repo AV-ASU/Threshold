@@ -643,6 +643,22 @@ text:
   whole time; the only other motion is the embers and the fingers. The one
   reactive state: `reaching` rests his other hand on the PI's wrist.
   Escape pages instead of aborting, so the release always runs.
+- **THE PEDESTAL** (`_open_altar_tableau`, opened from the Sign Chamber altar
+  interact, `scenes/well.py`). An OBJECT close-up, not a person: the Pallid
+  Mask on the hewn stone ("pale as a drowned face, the eyeholes black") and
+  warm (a gold ember far down in each socket, because it knows the PI's
+  hands), the daubed Yellow Sign (its own 2D brand) breathing on the apse
+  wall above, the kneeling congregation at the PI's back in the cult-dark,
+  two candles the only light. The two instincts (NARRATIVE §8) ride on as the
+  menu. Prompt: **"The whole machine of it, here in reach."** (trimmed from
+  the old modal wording now that the close-up shows the mask/Sign/kneeling).
+  - **Lift the mask.** → `_take_mask`: the Mask is the keystone item, and the
+    `descent_mask` temptation lands (the Spread/Seal fork opens).
+  - **Tear it down. End this.** → BREAK (`_play_ending("rite_broken")`): the
+    trap. The rite is the only lid on Him; broken before the source is
+    sealed, His influence floods out uncontained. Wordless by design (the
+    axe mask-yank, then the Carcosa blast). Escape backs out (the mask stays
+    on the altar, re-interactable).
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
   Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
   file"**, **"Step back"**. Reading hint: "(walk away to close)".

@@ -23,7 +23,7 @@ import pygame
 from ui.tableau import (draw_desk_tableau, draw_sable_tableau,
                         draw_vane_tableau, draw_hettie_tableau,
                         draw_crane_tableau, draw_toby_tableau,
-                        draw_talk_tableau)
+                        draw_talk_tableau, draw_altar_tableau)
 
 _STRIP = re.compile(r"\[/?c(=\w+)?\]")
 
@@ -234,6 +234,29 @@ class TableauMixin:
             "coming. The grip is friendly. Nothing else about it is.[/c]",
             _warn)
 
+    # ---------------------------------------------------- THE PEDESTAL (altar)
+    def _open_altar_tableau(self, on_lift, on_break):
+        """The Sign Chamber altar, PRESENTED as an object close-up: the
+        Pallid Mask on the hewn stone under the daubed Sign, the kneeling
+        congregation behind, His face warm and gazing. The two instincts
+        (NARRATIVE §8) ride on top as the tableau menu: LIFT the mask (the
+        keystone, the Spread/Seal fork) or TEAR IT DOWN (BREAK -- the trap,
+        the rite is the only lid; `on_break` runs `_play_ending`). Backing
+        out (Escape) leaves the mask on the altar, re-interactable."""
+        self._tableau = {
+            "kind": "altar", "t": 0.0, "npc": None,
+            "caption": None, "menu": None, "state": {},
+        }
+        self.audio.play("low_pulse", 0.5)
+
+        def _pick(idx):
+            self._close_tableau()
+            (on_lift if idx == 0 else on_break)()
+
+        self._tableau_choices(
+            "The whole machine of it, here in reach.",
+            ["Lift the mask.", "Tear it down. End this."], _pick)
+
     # The two presentation hooks the Conversation calls in tableau mode.
     def _tableau_caption(self, who, name, text, on_complete):
         tb = self._tableau
@@ -341,7 +364,7 @@ class TableauMixin:
             return
         tb = self._tableau
         if tb["kind"] in ("sable", "vane", "hettie", "crane", "toby",
-                          "talk"):
+                          "talk", "altar"):
             self._convo_tableau_input(ev, tb)
             return
         if tb["reading"] is not None:
@@ -400,6 +423,11 @@ class TableauMixin:
             if tb.get("caption") is not None:
                 self._draw_tableau_caption(surf, tb["caption"])
             elif tb.get("menu") is not None:
+                self._draw_tableau_menu(surf, tb["menu"])
+            return
+        if tb["kind"] == "altar":
+            draw_altar_tableau(surf, tb["t"], tb["state"])
+            if tb.get("menu") is not None:
                 self._draw_tableau_menu(surf, tb["menu"])
             return
         if tb["kind"] == "desk":

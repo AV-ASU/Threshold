@@ -354,19 +354,28 @@ def main():
           "scriptorium: the testimony is lore, never inflates evidence")
 
     # --- 3. The Pallid Mask (Sign Chamber, the keystone item) -- LIFT the mask ---
+    # The altar is the PEDESTAL close-up tableau now (#2b): His face on the
+    # stone, the two instincts as its menu. Firing the interact opens the
+    # close-up; picking drives the same two outcomes.
     fire(g, "works_sign", "_sign_pos")
-    g.dialog.choice_idx = 0
-    g.dialog.advance()                          # "Lift the mask."
+    check(g._tableau is not None and g._tableau["kind"] == "altar"
+          and g._tableau["menu"]["labels"][0] == "Lift the mask.",
+          "sign chamber: the altar opens the pedestal close-up tableau")
+    g._tableau["menu"]["pick"](0)               # "Lift the mask."
+    check(g._tableau is None,
+          "sign chamber: lifting closes the close-up back into play")
     check(g.player.inventory.has("pallid_mask"),
           "sign chamber: lifting the mask grants it (the ONLY source)")
     check(not has_evidence(g, "the_sign"),
           "sign chamber: the Mask is the keystone ITEM, never case-evidence")
     # THE TRAP (NARRATIVE §8): tearing the rite down here -- before sealing
-    # the source -- is a game over, not a victory.
+    # the source -- is a game over, not a victory. BREAK rides through from
+    # the pedestal: "Tear it down" -> _play_ending("rite_broken").
     gt = new_game()
     fire(gt, "works_sign", "_sign_pos")
-    gt.dialog.choice_idx = 1
-    gt.dialog.advance()                         # "Tear it down -- end this."
+    gt._tableau["menu"]["pick"](1)              # "Tear it down. End this."
+    check(gt._tableau is None,
+          "sign chamber: choosing BREAK closes the close-up into the ending")
     check(gt._ending_active == "rite_broken",
           "sign chamber: tearing the rite down fires the rite_broken game over")
     check("rite_broken" in g._ENDING_SCRIPTS,
@@ -3263,9 +3272,8 @@ def main():
     _msx, _msy = gmt.scene._sign_pos
     gmt.player.x, gmt.player.y = _msx, _msy + 20
     gmt.scene.on_interact_fn(gmt)
-    if gmt.dialog.choices:
-        gmt.dialog.choice_idx = 0
-        gmt.dialog.advance()                  # "Lift the mask."
+    if getattr(gmt, "_tableau", None) is not None:   # the pedestal close-up
+        gmt._tableau["menu"]["pick"](0)              # "Lift the mask."
     for _ in range(6000):
         if gmt.narration.active:
             gmt.narration.update(0.1)
