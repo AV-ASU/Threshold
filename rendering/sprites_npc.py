@@ -82,17 +82,30 @@ def _grim_body(surf, x, y, base, w=14, h=19, ragged=True, grime=True, view="fron
 
 
 def _gaunt_head(surf, x, y, skin, hy=-12, narrow=5, tall=15, blink=False,
-                glint=_GLINT_COLD, mouth=True, view="front"):
-    """A sallow, gaunt head: a tall narrow skull, brow shadow, cheek gouges and
-    deep sunken eye-sockets with a dim glint (oversized void pits on blink).
-    Returns the head-centre y so callers can hang hats/hair off it.
+                glint=_GLINT_COLD, mouth=True, view="front",
+                brows=None, creases=False, corners=False, kid_eyes=False):
+    """A sallow, gaunt head: a tall narrow skull, cheek gouges, and the
+    tableau eye grammar at pixel scale (2026-07, replacing the old hard
+    full-width brow-shadow band): a soft shadow SOCKET around each eye,
+    a heavy lid line, an under-eye bag, and the deep dark pit with its dim
+    glint inside (oversized void pits on blink). Returns the head-centre y
+    so callers can hang hats/hair off it.
 
-    `view` poses the head for the oblique camera: 'front' is unchanged; 'back'
-    is the bare skull with no face (the hair/hat cap goes on over it); the
-    profiles show one sunken eye on the leading side, a brow, a jaw gouge and a
-    small nose bump off the leading edge."""
+    Per-kind touches ride optional params, each pulled from that
+    character's tableau: `brows` ("heavy" for Vane, "thin" for Sable),
+    `creases=True` (Crane's sermon creases between the brows),
+    `corners=True` (mouth corners pinned down), `kid_eyes=True` (Toby's
+    bigger worried eyes with a warmer glint).
+
+    `view` poses the head for the oblique camera: 'front' is the full
+    face; 'back' is the bare skull with no face (the hair/hat cap goes on
+    over it); the profiles carry the same socket treatment on the one
+    leading eye, plus the jaw gouge and nose bump."""
     cy = y + hy
     sk_lo = tuple(int(c * 0.42) for c in skin)
+    sock = tuple(int(c * 0.30) for c in skin)
+    lid = tuple(int(c * 0.50) for c in skin)
+    bag = tuple(int(c * 0.55) for c in skin)
     pygame.draw.ellipse(surf, skin, (x - narrow, cy - 7, narrow * 2, tall))
     pygame.draw.ellipse(surf, sk_lo, (x - narrow, cy - 7, narrow * 2, tall), 1)
     if view == "back":
@@ -105,39 +118,75 @@ def _gaunt_head(surf, x, y, skin, hy=-12, narrow=5, tall=15, blink=False,
     if view in ("left", "right"):
         s = 1 if view == "right" else -1                 # leading direction
         pygame.draw.line(surf, sk_lo, (x - 2 * s, cy + 1), (x + 2 * s, cy + 5), 2)  # jaw
-        pygame.draw.rect(surf, tuple(int(c * 0.3) for c in skin),
-                         (x - narrow + 1, cy - 2, narrow * 2 - 2, 4))   # brow shadow
+        ex = x + s * 2                                   # the leading eye
         pygame.draw.line(surf, sk_lo, (x + (narrow - 1) * s, cy - 1),   # nose bump
                          (x + (narrow + 1) * s, cy + 1), 1)
         if blink:
             pygame.draw.rect(surf, (4, 3, 5), (x + s - 2, cy - 2, 4, 4))
         else:
-            pygame.draw.rect(surf, (8, 6, 8), (x + s * 2 - 1, cy - 1, 3, 3))
+            pygame.draw.ellipse(surf, sock, (ex - 2, cy - 3, 5, 6))     # the socket
+            pygame.draw.line(surf, lid, (ex - 2, cy - 2), (ex + 2, cy - 2), 1)  # heavy lid
+            pygame.draw.line(surf, bag, (ex - 1, cy + 3), (ex + 1, cy + 3), 1)  # the bag
+            if kid_eyes:
+                pygame.draw.rect(surf, (8, 6, 8), (ex - 1, cy - 1, 4, 3))
+                gl = (150, 150, 140)
+            else:
+                pygame.draw.rect(surf, (8, 6, 8), (ex - 1, cy - 1, 3, 3))
+                gl = glint
             try:
-                surf.set_at((x + s * 2, cy), glint)
+                surf.set_at((ex, cy), gl)
             except (IndexError, ValueError):
                 pass
+            if brows == "heavy":
+                pygame.draw.line(surf, (58, 50, 38), (ex - 2, cy - 4), (ex + 3, cy - 4), 2)
+            elif brows == "thin":
+                pygame.draw.line(surf, (52, 45, 40), (ex - 2, cy - 4), (ex + 3, cy - 4), 1)
         if mouth:
             pygame.draw.line(surf, tuple(int(c * 0.4) for c in skin),
                              (x + s, cy + 7), (x + s * 3, cy + 7), 1)
         return cy
     pygame.draw.line(surf, sk_lo, (x - narrow + 1, cy + 1), (x - 2, cy + 5), 2)
     pygame.draw.line(surf, sk_lo, (x + narrow - 1, cy + 1), (x + 2, cy + 5), 2)
-    pygame.draw.rect(surf, tuple(int(c * 0.3) for c in skin),
-                     (x - narrow + 1, cy - 2, narrow * 2 - 2, 4))   # brow shadow
     if blink:
         pygame.draw.rect(surf, (4, 3, 5), (x - 4, cy - 2, 4, 4))
         pygame.draw.rect(surf, (4, 3, 5), (x + 1, cy - 2, 4, 4))
     else:
-        pygame.draw.rect(surf, (8, 6, 8), (x - 4, cy - 1, 3, 3))
-        pygame.draw.rect(surf, (8, 6, 8), (x + 2, cy - 1, 3, 3))
+        pygame.draw.ellipse(surf, sock, (x - 5, cy - 3, 5, 6))          # the sockets
+        pygame.draw.ellipse(surf, sock, (x + 1, cy - 3, 5, 6))
+        pygame.draw.line(surf, lid, (x - 5, cy - 2), (x - 2, cy - 2), 1)  # heavy lids
+        pygame.draw.line(surf, lid, (x + 2, cy - 2), (x + 5, cy - 2), 1)
+        pygame.draw.line(surf, bag, (x - 4, cy + 3), (x - 2, cy + 3), 1)  # under-eye bags
+        pygame.draw.line(surf, bag, (x + 2, cy + 3), (x + 4, cy + 3), 1)
+        if kid_eyes:
+            pygame.draw.rect(surf, (8, 6, 8), (x - 5, cy - 1, 4, 3))
+            pygame.draw.rect(surf, (8, 6, 8), (x + 2, cy - 1, 4, 3))
+            gl = (150, 150, 140)
+        else:
+            pygame.draw.rect(surf, (8, 6, 8), (x - 4, cy - 1, 3, 3))
+            pygame.draw.rect(surf, (8, 6, 8), (x + 2, cy - 1, 3, 3))
+            gl = glint
         try:
-            surf.set_at((x - 3, cy), glint); surf.set_at((x + 3, cy), glint)
+            surf.set_at((x - 3, cy), gl); surf.set_at((x + 3, cy), gl)
         except (IndexError, ValueError):
             pass
+        if brows == "heavy":
+            pygame.draw.line(surf, (58, 50, 38), (x - 5, cy - 4), (x - 1, cy - 4), 2)
+            pygame.draw.line(surf, (58, 50, 38), (x + 1, cy - 4), (x + 5, cy - 4), 2)
+        elif brows == "thin":
+            pygame.draw.line(surf, (52, 45, 40), (x - 5, cy - 4), (x - 2, cy - 4), 1)
+            pygame.draw.line(surf, (52, 45, 40), (x + 2, cy - 4), (x + 5, cy - 4), 1)
+        if creases:
+            pygame.draw.line(surf, sk_lo, (x - 1, cy - 5), (x - 1, cy - 3), 1)  # sermon creases
+            pygame.draw.line(surf, sk_lo, (x + 1, cy - 5), (x + 1, cy - 3), 1)
     if mouth:
         pygame.draw.line(surf, tuple(int(c * 0.4) for c in skin),
                          (x - 2, cy + 7), (x + 2, cy + 7), 1)   # thin grim set
+        if corners and not blink:
+            try:
+                surf.set_at((x - 3, cy + 8), sk_lo)             # pinned corners
+                surf.set_at((x + 3, cy + 8), sk_lo)
+            except (IndexError, ValueError):
+                pass
     return cy
 
 
@@ -378,7 +427,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         elif view in ("left", "right"):
             s = 1 if view == "right" else -1
             _grim_body(surf, x, y + 2, tunic, w=13, h=14, view=view)
-            _gaunt_head(surf, x, y, skin, hy=-8, narrow=HN, tall=HT, blink=blink, view=view)
+            _gaunt_head(surf, x, y, skin, hy=-8, narrow=HN, tall=HT, blink=blink,
+                        kid_eyes=True, view=view)
             pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 6))       # mop over crown
             pygame.draw.rect(surf, hair, (x - HN if s < 0 else x + HN - 3, hcy - 7, 3, 5))  # back fall
             pygame.draw.line(surf, (40, 28, 16), (x + s, hcy - 8), (x + 3 * s, hcy - 11), 2)  # cowlick
@@ -386,7 +436,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         else:
             _grim_body(surf, x, y + 2, tunic, w=13, h=14, view=view)
             pygame.draw.arc(surf, (104, 95, 42), (x - 4, y - 1, 8, 5), 3.3, 6.1, 2)  # crew-neck band
-            _gaunt_head(surf, x, y, skin, hy=-8, narrow=HN, tall=HT, blink=blink, view=view)
+            _gaunt_head(surf, x, y, skin, hy=-8, narrow=HN, tall=HT, blink=blink,
+                        kid_eyes=True, view=view)
             pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 6))       # hair mop
             pygame.draw.rect(surf, hair, (x - 5, hcy - 3, 10, 2))              # low fringe over brow
             for fx2 in (x - 5, x, x + 5):                                      # ragged fringe tips
@@ -397,8 +448,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
     elif kind == "sheriff":
         # Sheriff Hollis Vane -- a local, born here, broken. A tan duty
         # shirt, a brown brimmed hat (not a city cop's peaked cap), a tin
-        # star going dull on the chest. The hat brim keeps the eyes in a
-        # permanent dark band; stubble along the jaw; a man who hasn't
+        # star going dull on the chest. Heavy tableau brows over sunken
+        # sockets under the brim; stubble along the jaw; a man who hasn't
         # slept since the road stopped going anywhere. Void blink.
         # HANDCRAFTED per camera view -- no head-cap trick.
         shirt = (104, 90, 62); skin = (148, 142, 116); sk_lo = (62, 60, 49)
@@ -441,7 +492,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             bulge = (x + 1, y + 2, 6, 7) if s > 0 else (x - 7, y + 2, 6, 7)
             pygame.draw.ellipse(surf, shirt, bulge)                            # forward chest bulge
             pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 10, 14, 4))       # belt
-            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink,
+                        brows="heavy", view=view)
             # strong forward GigaChad jaw in profile -- the chin JUTS forward
             pygame.draw.polygon(surf, skin, [(x - 3 * s, y - 10), (x + 6 * s, y - 9),
                                              (x + 8 * s, y - 6), (x + 5 * s, y - 3),
@@ -462,7 +514,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.rect(surf, shirt_drk, (x + 3, y + 1, 5, 2))
             pygame.draw.rect(surf, (62, 54, 38), (x - 9, y + 10, 18, 4))       # belt
             pygame.draw.rect(surf, (96, 84, 52), (x - 2, y + 10, 4, 4), 1)     # buckle
-            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink,
+                        brows="heavy", view=view)
             # heavy GigaChad jaw -- square the gaunt skull off into a broad,
             # cleft-chinned jaw
             jpts = [(x - 6, y - 10), (x + 6, y - 10), (x + 5, y - 5),
@@ -542,7 +595,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                 pygame.draw.circle(surf, (52, 49, 58), (x, by), 1)             # buttons below the cross
             pygame.draw.rect(surf, (210, 210, 214), (x - 3, y - 2, 6, 3))      # clerical collar
             pygame.draw.rect(surf, cassock, (x - 1, y - 2, 2, 3))              # the collar notch
-            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink,
+                        creases=True, corners=True, view=view)
             pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 6))       # thin grey hair
             pygame.draw.ellipse(surf, skin, (x - 3, y - 21, 6, 4))            # high balding brow
             pygame.draw.line(surf, (96, 92, 78), (x - 3, y + 1), (x, y + 5), 1)  # the cord
@@ -574,7 +628,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             _grim_body(surf, x, y, vest, view=view)
             pygame.draw.rect(surf, (198, 196, 194), (x - 2, y - 2, 4, 16))     # shirt-front edge
             pygame.draw.line(surf, (120, 30, 36), (x + s, y - 2), (x + s, y + 4), 1)  # tie
-            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, mouth=False, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink,
+                        mouth=False, brows="thin", view=view)
             pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 7))       # neat hair crown
             bfx = (x - HN) if s < 0 else (x + HN - 3)
             pygame.draw.rect(surf, hair, (bfx, hcy - 6, 3, 7))                  # back fall
@@ -587,7 +642,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.line(surf, (22, 20, 25), (x + 3, y - 2), (x + 2, y + 1), 2)
             pygame.draw.rect(surf, (120, 30, 36), (x - 1, y - 1, 2, 6))        # short red tie
             pygame.draw.rect(surf, (94, 22, 28), (x - 1, y - 1, 2, 2))         # the knot
-            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, mouth=False, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink,
+                        mouth=False, brows="thin", view=view)
             pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 7))       # neat dark hair
             pygame.draw.line(surf, part, (x + 2, y - 20), (x + 2, y - 15), 1)  # side part
             pygame.draw.line(surf, grey, (x - HN + 1, y - 16), (x - HN + 1, y - 15), 1)  # grey temples
