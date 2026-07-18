@@ -422,6 +422,27 @@ class RenderMixin:
         fc["scene"] = self.scene
         self.screen.blit(fog, (0, 0))
 
+    def _draw_bridge_dust(self):
+        """A faint dust-fall from the deck overhead while the town crosses
+        the bridge above the under-bridge hide (TODO #5). Screen-space,
+        keyed to _bridge_dust (set by _tick_bridge_knocks) -- a few pale
+        motes sifting down the middle of the frame, so the knocks have a
+        visible partner. Pure dressing; nothing gameplay reads it."""
+        d = getattr(self, "_bridge_dust", 0.0)
+        if d <= 0.02:
+            return
+        t = pygame.time.get_ticks() / 1000.0
+        w, h = self.screen.get_width(), self.screen.get_height()
+        rng = random.Random(7)
+        for _ in range(int(26 * d)):
+            bx = rng.randint(int(w * 0.28), int(w * 0.72))
+            fall = (t * 60 + rng.randint(0, 400)) % (h * 0.5)
+            yy = int(h * 0.16 + fall)
+            a = int(120 * d * (0.4 + 0.6 * rng.random()))
+            self.screen.fill((150, 140, 120),
+                             (bx, yy, 1, 2), special_flags=0)
+            pygame.draw.circle(self.screen, (120, 112, 96), (bx, yy), 1)
+
     def _draw_hidden_overlay(self):
         """While player.hidden is set, render a dark vignette
         around the player so the screen FEELS cramped -- the player
@@ -1629,6 +1650,7 @@ class RenderMixin:
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
+        self._draw_bridge_dust()
         # Film grade over the whole world layer (desaturate, cool tint,
         # vignette, animated grain) -- fuses the frame into one grimy
         # image. Applied before the HUD so UI text stays crisp.

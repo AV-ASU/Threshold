@@ -1154,11 +1154,14 @@ def main():
     gs.player.inventory.add("stone", 1)
     gs._throw_stone()
     for _ in range(60):
+        n.x, n.y = npin                         # pin the searcher in earshot
         tick(gs, 1)
         n.x, n.y = npin
         if not gs._stones:
             break
-    tick(gs, 2)
+    for _ in range(8):                          # settle: let the ear read it
+        n.x, n.y = npin
+        tick(gs, 1)
     check((wx_, wy_) in getattr(gs.scene, "_broken_windows", set()),
           "glass: the pane breaks and joins the scene's broken set")
     led = gs.save.arg("broken_windows", {}) or {}
@@ -1192,6 +1195,34 @@ def main():
             break
     check(m._cult_state == "investigate",
           "well: the shaft's rattle turns a scout across the square")
+
+    # The under-bridge hide: a real enclosed hide, and a cultist crossing
+    # the deck overhead knocks (dressing only -- it must NEVER route the
+    # searcher to the player below).
+    gb = new_game()
+    gb.load_scene_now("brimley", "default")
+    tick(gb, 10)
+    clear_cult(gb)
+    check(getattr(gb.scene, "_bridge_hide_px", None) is not None
+          and gb.scene._bridge_hide_px in [(h[0], h[1])
+                                           for h in gb.scene.hide_spots],
+          "bridge: the under-bridge hide is a registered enclosed hide")
+    bhx, bhy = gb.scene._bridge_hide_px
+    gb.player.x, gb.player.y = bhx, bhy
+    gb.player.hidden = "under"
+    x0, x1, y0, y1 = gb.scene._bridge_deck_px
+    b = plant(gb, 40)
+    b._cult_state = "scout"
+    b._suspicion = 0.0
+    b.x, b.y = (x0 + x1) / 2, (y0 + y1) / 2          # up on the deck
+    gb._bridge_dust = 0.0
+    for _ in range(40):
+        tick(gb, 1)
+        b.x, b.y = (x0 + x1) / 2, (y0 + y1) / 2
+    check(gb._bridge_dust > 0.0,
+          "bridge: a tread on the deck raises the dust/knock tell")
+    check(b._cult_state == "scout",
+          "bridge: the crosser never routes to the hidden player below")
 
     print()
     if FAILS:

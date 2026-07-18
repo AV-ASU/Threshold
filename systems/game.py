@@ -285,6 +285,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
         self._stones = []              # thrown river stones in flight (TODO #5)
         self._echoes = []              # delayed knocks (the well drop)
+        self._bridge_dust = 0.0        # under-bridge deck-knock tell (TODO #5)
+        self._bridge_knock_t = 0.0
         self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
@@ -512,6 +514,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watcher_gaze = 0.0
         self._stones = []
         self._echoes = []
+        self._bridge_dust = 0.0
+        self._bridge_knock_t = 0.0
         self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
@@ -1121,6 +1125,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # to drain even when the player is standing still.
         self._tick_sprint(dt, keys)
         self._tick_stones(dt)          # thrown stones fly on the same clock
+        self._tick_bridge_knocks(dt)   # treads on the planks overhead
         # Hide is a STRATEGIC verb: while hidden the player is safe
         # from patrol spotting AND the proximity ramp slows to a
         # crawl (only the halved passive rate -- no stillness
@@ -2152,6 +2157,46 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             else:
                 keep.append(st)
         self._stones = keep
+
+    def _tick_bridge_knocks(self, dt):
+        """While the player is in the under-bridge hide, anything walking
+        the deck overhead knocks on the planks (TODO #5, the maintainer's
+        bridge pick). Pure DRESSING: an audio + a faint dust tell, no
+        threat wiring at all -- the searchers up top neither know you are
+        below nor react to the footfalls. The dread is that you HEAR the
+        town cross over your head while you wait it out."""
+        scn = self.scene
+        deck = getattr(scn, "_bridge_deck_px", None)
+        hide = getattr(scn, "_bridge_hide_px", None)
+        if deck is None or hide is None or self.player is None:
+            self._bridge_dust = 0.0
+            return
+        # only while actually tucked under the span
+        if (getattr(self.player, "hidden", None) != "under"
+                or math.hypot(self.player.x - hide[0],
+                              self.player.y - hide[1]) > 20):
+            self._bridge_dust = max(0.0, getattr(self, "_bridge_dust", 0.0) - dt)
+            return
+        x0, x1, y0, y1 = deck
+        crossing = False
+        for grp in (scn.npcs, scn.enemies):
+            for a in grp:
+                if not getattr(a, "alive", True) or getattr(a, "_is_corpse", False):
+                    continue
+                if x0 <= a.x <= x1 and y0 <= a.y <= y1:
+                    crossing = True
+                    break
+            if crossing:
+                break
+        self._bridge_dust = getattr(self, "_bridge_dust", 0.0)
+        if crossing:
+            self._bridge_dust = min(1.0, self._bridge_dust + dt * 3.0)
+            self._bridge_knock_t = getattr(self, "_bridge_knock_t", 0.0) - dt
+            if self._bridge_knock_t <= 0.0:
+                self._bridge_knock_t = random.uniform(0.34, 0.6)
+                self.audio.play("wood_creak", 0.5)
+        else:
+            self._bridge_dust = max(0.0, self._bridge_dust - dt * 2.0)
 
     def _stone_smash_window(self, nx, ny):
         """A stone striking an intact WINDOW tile smashes it: the glass

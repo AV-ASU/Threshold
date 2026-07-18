@@ -1474,6 +1474,17 @@ against it (`tests/stealth.py` §13 guards the contract):
     never a search-breaker), and **no bottom ever sounds** -- wordless
     by design; the missing landing is the beat, and the well stays the
     bottomless dread it is (NARRATIVE §5).
+- **The under-bridge hide** (`Game._tick_bridge_knocks`,
+  `scene._bridge_hide_px` / `_bridge_deck_px`): a rooted enclosed hide
+  on the mud shelf at the Brimley bridge's foot, the town's exact
+  centre that everything crosses. While you are tucked under it,
+  anything walking the deck overhead KNOCKS on the planks (a
+  `wood_creak` pulse + a faint screen-space dust-fall,
+  `_draw_bridge_dust`). Pure DRESSING: the crossers neither know you are
+  below nor react to the footfalls -- the dread is hearing the town pass
+  over your head while you wait. Guarded by `tests/stealth.py` §14 (the
+  hide is registered; a crosser raises the tell but never routes to the
+  player below).
 
 ### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
 

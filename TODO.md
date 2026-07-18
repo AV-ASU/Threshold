@@ -777,10 +777,12 @@ and its status note). **The first human playtest (2026-07) found four
 faults and a batch landed against them** (guarded by stealth §13):
 1. *"Hiding spots as objects are too rare"* -- CONFIRMED (23 enclosed
    hides in the game, ~all underground; seven of the eight surface
-   patrol scenes had zero). Landed: +6 surface hides on EXISTING props
+   patrol scenes had zero). Landed: +7 surface hides on EXISTING props
    (under the rust wagon + dead sedan on cornfield_path, under the
    lodge-yard pickup, in the backwoods cordwood stack, under Calder's
-   supper table + the dead pickup in brimley). **Still open:** the
+   supper table + the dead pickup in brimley, and UNDER THE BRIDGE at
+   the town's centre -- the crossers knock on the planks overhead,
+   `Game._tick_bridge_knocks`, dressing only). **Still open:** the
    scenes with no honest anchor (graveyard, country_lane,
    gravel_road_north) need a bespoke crawlable prop each, placed via the
    SCENE-DRESSING PROCESS; the cornfield_maze stays hide-free on purpose

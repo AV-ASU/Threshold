@@ -986,6 +986,25 @@ def build_brimley():
         (42 * TILE + 16, 43 * TILE + 16, "under"),
     ]
 
+    # UNDER THE BRIDGE (TODO #5, maintainer pick): the mud shelf at the
+    # span's east foot, tucked beneath the deck head. Everything in
+    # Brimley crosses that bridge sooner or later; while you are under
+    # it, whatever crosses knocks on the planks over your head
+    # (Game._tick_bridge_knocks reads the deck band stored here).
+    _deck_cols = [c for c in range(sc.w) if sc.objects[25][c] == "$"]
+    if _deck_cols:
+        _bc = max(_deck_cols) + 1
+        if sc.floor[27][_bc] not in ("~", "@"):
+            _bhx, _bhy = _bc * TILE + 16, 27 * TILE + 16
+        else:
+            _bc = min(_deck_cols) - 1
+            _bhx, _bhy = _bc * TILE + 16, 27 * TILE + 16
+        sc.hide_spots.append((_bhx, _bhy, "under"))
+        sc._bridge_hide_px = (_bhx, _bhy)
+        sc._bridge_deck_px = (min(_deck_cols) * TILE,
+                              (max(_deck_cols) + 1) * TILE,
+                              24 * TILE, 27 * TILE)
+
     # River stones scattered along both banks (TODO #5, the distraction
     # verb): the river gives stones. Placed by scan because the water
     # meanders; one per row, alternating banks, skipping the bridge rows.
