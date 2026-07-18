@@ -55,7 +55,7 @@ class ThreatMixin:
                 if getattr(n, "_stun_t", 0) > 0:
                     continue                 # shoved: blind + can't grab
                 d = math.hypot(n.x - self.player.x, n.y - self.player.y)
-                if (d < 22 and self.player.invuln <= 0
+                if (d < CULT_GRAB_REACH and self.player.invuln <= 0
                         and _grab_allowed(self.player,
                                           getattr(n, "_cult_state", "")
                                           == "chase")):
@@ -118,8 +118,10 @@ class ThreatMixin:
             # when the cultist has already locked (cover is not armor;
             # an enclosed hide is exempt: its threat is the CHECK/
             # struggle). One gate for every grab site:
-            # systems/stealth.py grab_allowed.
-            if (d < 22 and self.player.invuln <= 0
+            # systems/stealth.py grab_allowed. The reach is
+            # CULT_GRAB_REACH now (the stealth economy, TODO #5):
+            # brushing past an awake cultist risks the grab.
+            if (d < CULT_GRAB_REACH and self.player.invuln <= 0
                     and _grab_allowed(self.player,
                                       getattr(n, "_cult_state", "")
                                       == "chase")):

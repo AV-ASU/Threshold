@@ -1484,6 +1484,78 @@ def _tilt_corn_draw(surf, camera, scene, tx, ty, ch, far=False):
                 pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
 
 
+_GRASS_CARD_CACHE = {}
+_GRASS_CARD_ORDER = []
+_GRASS_CARD_CAP = 1200
+
+
+def _tilt_grass_solid(surf, camera, scene, tx, ty, far=False):
+    """A `:` cover-floor tile stood up as a TALL-GRASS tuft (the stealth
+    visibility fix, TODO #5: cover the player can hide in must READ as
+    something to wade into, not a floor tint). Same cached-card pattern as
+    the corn clusters; the blades are the concealment made visible and
+    change nothing about collision, sight, or the cover rules."""
+    bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
+    key = (tx, ty, far, round(camera.pitch, 2), round(camera.scale, 2))
+    entry = _GRASS_CARD_CACHE.get(key)
+    if entry is None:
+        entry = _build_grass_card(camera, scene, tx, ty, far)
+        _GRASS_CARD_CACHE[key] = entry
+        _GRASS_CARD_ORDER.append(key)
+        if len(_GRASS_CARD_ORDER) > _GRASS_CARD_CAP:
+            _GRASS_CARD_CACHE.pop(_GRASS_CARD_ORDER.pop(0), None)
+    card, ax, ay = entry
+    if card is not None:
+        surf.blit(card, (bx - ax, by - ay))
+
+
+def _build_grass_card(camera, scene, tx, ty, far):
+    """Cache-miss path: render one tuft to a tight SRCALPHA card via a
+    throwaway camera pinned at the tile centre (the corn-card recipe)."""
+    from rendering.camera import Camera
+    PADX, PADY, BASE = 26, 34, 14
+    tmp = pygame.Surface((PADX * 2, PADY + BASE), pygame.SRCALPHA)
+    anchor = (PADX, PADY)
+    tcam = Camera(cam_x=tx * TILE + 16, cam_y=ty * TILE + 16,
+                  pitch=camera.pitch, yaw=0.0,
+                  scale=camera.scale, origin=anchor)
+    _tilt_grass_draw(tmp, tcam, tx, ty, far)
+    rect = tmp.get_bounding_rect()
+    if rect.width == 0 or rect.height == 0:
+        return (None, 0, 0)
+    card = tmp.subsurface(rect).copy().convert_alpha()
+    return (card, anchor[0] - rect.x, anchor[1] - rect.y)
+
+
+def _tilt_grass_draw(surf, camera, tx, ty, far=False):
+    """One tuft: 5-7 waist-high blades as projected 3D lines, seeded
+    static lean, dead-straw accents (April canon: last year's growth,
+    never lush). Far LOD drops to 3 plain blades."""
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    wx0 = tx * TILE
+    wy0 = ty * TILE
+    n = 3 if far else 5 + (_vary(seed, 0) % 3)
+    g = _vary(seed, 1) % 8
+    blade_dk = (40 + g, 50 + g, 32 + g // 2)
+    blade_col = (54 + g, 66 + g, 42 + g // 2)
+    blade_hi = (68 + g, 80 + g, 50 + g)
+    straw = (96 + g, 90 + g, 54 + g // 2)
+    for si in range(n):
+        bx_off = 4 + (si * (TILE - 8)) / max(1, n - 1) + (_vary(seed, 30 + si) % 5) - 2
+        h = 10 + (_vary(seed, 20 + si) % 9)              # waist-high, uneven
+        lean = ((_vary(seed, 10 + si) % 9) - 4) * 0.9
+        gx = wx0 + bx_off
+        gy = wy0 + 10 + (_vary(seed, 40 + si) % 14)
+        p0 = camera.project(gx, gy, 0)
+        p1 = camera.project(gx + lean * 0.4, gy, h * 0.55)
+        p2 = camera.project(gx + lean, gy, h)
+        col = blade_col if si % 3 else blade_hi
+        if not far and (_vary(seed, 50 + si) % 4) == 0:
+            col = straw                                  # a dead-dry blade
+        pygame.draw.line(surf, blade_dk, p0[:2], p1[:2], 2)
+        pygame.draw.line(surf, col, p1[:2], p2[:2], 1 if far else 2)
+
+
 def _tilt_standee(surf, camera, scene, tx, ty, ch):
     """Stand a tree / cornstalk up as a WORLD-ANCHORED card whose base sits on
     the floor at the tile centre and whose horizontal axis tracks world-X. The
@@ -3428,6 +3500,13 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
     wty = scene.render_row(ty)
     ch = (scene.objects[wty][wtx]
           if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
+    if (ch in (".", " ") and 0 <= wty < scene.h and 0 <= wtx < scene.w
+            and scene.floor[wty][wtx] == ":"):
+        # A bare cover-floor tile: the tall-grass tuft (concealment made
+        # visible; mirrors the wall-scan's append condition exactly).
+        _tilt_grass_solid(surf, camera, scene, tx, ty,
+                          far=_tilt_lod_far(camera, tx, ty))
+        return
     if ch in _TILT_BILLBOARD_CHARS:
         kind = OBJECT_DEFS.get(ch, {}).get("kind")
         if kind == "tree":
@@ -3769,6 +3848,14 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                         if dx * dx + dy * dy > _TILT_BILLBOARD_CULL2:
                             continue        # far treeline -> lost in the fog
                     walls.append((tx, ty))
+                elif ch in (".", " ") and scene.floor[wty][wtx] == ":":
+                    # Bare cover floor: the tall-grass tuft joins the
+                    # depth-sorted set so the player wades INTO it (the
+                    # stealth visibility fix; _tilt_tile_box dispatches it).
+                    dx = (tx * TILE + 16) - camera.cam_x
+                    dy = (ty * TILE + 16) - camera.cam_y
+                    if dx * dx + dy * dy <= _TILT_BILLBOARD_CULL2:
+                        walls.append((tx, ty))
         _wc["key"] = wkey
         _wc["walls"] = walls
         _wc["scene"] = scene

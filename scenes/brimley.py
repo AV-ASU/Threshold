@@ -981,6 +981,9 @@ def build_brimley():
     # set-piece hide is the gap under the dead pickup's bed.
     sc.hide_spots = [
         (53 * TILE + 16, 31 * TILE + 8, "under"),
+        # The 2026-07 stealth pass (TODO #5): a second rooted hide on the
+        # east bank, under Mrs. Calder's outdoor supper table.
+        (42 * TILE + 16, 43 * TILE + 16, "under"),
     ]
 
     # The dead pickup is a big hulk -- solid tiles under its length so the

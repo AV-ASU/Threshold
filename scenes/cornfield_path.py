@@ -163,9 +163,14 @@ def build_cornfield_path():
     # (The secret-clearing branch dressing was removed when the
     # clearing entrance moved to the brimley river bank.)
 
-    # No hide spots: the player melts into the cornfield off either road
-    # shoulder (walkable corn cover) and breaks sight behind the trees.
-    sc.hide_spots = []
+    # Enclosed hides (the 2026-07 stealth pass, TODO #5: the surface was
+    # a hide desert): the gaps under the two dead vehicles already
+    # rusting on the shoulder. Corn cover off either road shoulder stays
+    # the mobile concealment.
+    sc.hide_spots = [
+        (24 * TILE + 16, 5 * TILE + 16, "under"),    # under the rust wagon
+        (41 * TILE + 16, 11 * TILE + 16, "under"),   # under the dead sedan
+    ]
 
     sc._fp_W = W
     sc._fp_H = H

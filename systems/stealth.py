@@ -43,7 +43,7 @@ from systems.config import (SUS_NEAR, SUS_CONE_HALF, SUS_CONE_FEATHER,
                             NOISE_WALK_SPEED,
                             CULT_SYNC_PERIOD, CULT_SYNC_HOLD,
                             CULT_HANDOFF_RANGE, CULT_HANDOFF_HOLD,
-                            CULT_HANDOFF_CD)
+                            CULT_HANDOFF_CD, SUS_SPRINT_MULT)
 
 # The two enclosed hide kinds ('behind' was removed with the old model;
 # kept out on purpose -- see CLAUDE.md).
@@ -119,7 +119,13 @@ def detection_score(scene, ex, ey, facing, player, sight_range,
         return 0.0
     if not scene.clear_sight_line(ex, ey, player.x, player.y):
         return 0.0
-    return fall * face * conceal
+    score = fall * face * conceal
+    # Sprint is CONSPICUOUS (the stealth economy, TODO #5): a running
+    # figure in the line of sight reads louder than a walking one, so
+    # blowing past a scout actually lights the bar.
+    if getattr(player, "sprint_active", False):
+        score = min(1.0, score * SUS_SPRINT_MULT)
+    return score
 
 
 def sweep_points(scene, cx, cy, radius):

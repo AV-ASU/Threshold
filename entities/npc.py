@@ -3,7 +3,7 @@ import math
 import random
 
 from constants import C_WHITE
-from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD,
+from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD, CULT_CHASE_MULT,
                             KING_LUNGE_RANGE, KING_LUNGE_TELE,
                             KING_LUNGE_DUR, KING_LUNGE_MULT,
                             KING_LUNGE_GATHER, KING_LUNGE_CD_LO,
@@ -303,7 +303,8 @@ class NPC:
                 self._last_seen_pos = (player.x, player.y)
                 target = (self._flank_target if self._flank_target
                           else (player.x, player.y))
-                self._step_toward(target, dt, scene, navigate=True)
+                self._step_toward(target, dt, scene, navigate=True,
+                                  speed_mult=CULT_CHASE_MULT)
                 return
             # Lost the line. Drop flank intent and fall into SEARCH --
             # and this searcher HUNTS: it will sweep the enclosed hides
@@ -331,7 +332,8 @@ class NPC:
                     self.morph_target = 0.0
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
-            self._step_toward(target, dt, scene, navigate=True)
+            self._step_toward(target, dt, scene, navigate=True,
+                              speed_mult=CULT_CHASE_MULT)
             return
         # NOTICE: a scout whose suspicion is climbing stops and turns
         # toward what it half-saw -- the telegraphed "have they spotted
@@ -555,11 +557,13 @@ class NPC:
         moving = 1.0 if moved > step * 0.5 else 0.0
         self._yk_lean += (moving - self._yk_lean) * min(1.0, dt * 4.0)
 
-    def _step_toward(self, target, dt, scene, navigate=False):
+    def _step_toward(self, target, dt, scene, navigate=False, speed_mult=1.0):
         tx, ty = target
         # Cover-aware routing (DESIGN.md §4): the cult states bend the target
         # around walls/props (and through folds) via scene.nav_toward. The
         # apex hunter (_force_chase) opts OUT -- it closes in a straight line.
+        # `speed_mult` is the chase gear (CULT_CHASE_MULT): a locked pursuer
+        # runs; everything else walks at base speed.
         if navigate:
             tx, ty = scene.nav_toward(self.x, self.y, tx, ty)
         # Wrap-aware so chasers take the shortest path through the fold.
@@ -567,8 +571,8 @@ class NPC:
         dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
         if d < 1: return
-        step_x = (dx / d) * self.speed * 60 * dt
-        step_y = (dy / d) * self.speed * 60 * dt
+        step_x = (dx / d) * self.speed * 60 * dt * speed_mult
+        step_y = (dy / d) * self.speed * 60 * dt * speed_mult
         # Per-axis slide: if the full diagonal is blocked, still move
         # along whichever axis is clear so the chaser hugs walls and
         # corners instead of freezing dead against them (matches the

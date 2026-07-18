@@ -492,6 +492,20 @@ STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
 # one-time Talk (cult_talk_given) is still the very first contact of a run.
 CULT_SHRUG_INVULN = 0.7       # s of grace after tearing free (no re-grab)
 CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
+# The stealth economy (TODO #5, tuned from the 2026-07 human playtest:
+# "running around the cultist beats hiding"). Three levers, re-derived
+# against the canonical speed ladder (King > player sprint 105 > chase >
+# player walk 84 > scout 57): a LOCKED cultist shifts into a chase gear
+# (85.5 px/s for the surface regular, 72-90 underground -- WALKING away
+# no longer works; sprint still escapes, but sprint drains and winds); the
+# cult's arm's reach widens so brushing past an awake cultist risks the
+# grab (all Talk/two-touch gates unchanged); and sprinting inside a
+# cultist's line of sight is CONSPICUOUS (the detection score
+# multiplies), so running is the loud, seen, stamina-priced option and
+# cover is the cheap one.
+CULT_CHASE_MULT = 1.5         # locked-chase speed gear over base speed
+CULT_GRAB_REACH = 30.0        # px: contact-grab reach (was a bare 22)
+SUS_SPRINT_MULT = 1.6         # detection-score multiplier while sprinting
 # Cult liveness (TODO #23a, the behavior pilot): dressing on the SCOUT
 # state only -- neither beat ever touches notice/chase/search/investigate,
 # and detection keeps scoring straight through both (threat unchanged).

@@ -61,6 +61,17 @@ def tick(g, n=1, dt=1 / 30.0):
         g.state = "playing"
         if g.dialog.active:
             g.dialog.active = False
+        # A stray reach-grab (CULT_GRAB_REACH) can open THE TALK -- the
+        # one-time first-contact tableau, a world-freeze. Page it through
+        # the way a player would (Escape pages, never aborts; the release
+        # and stand-down run on the last page) so fixtures that are not
+        # about the grab keep running.
+        for _pg in range(14):
+            tb = getattr(g, "_tableau", None)
+            if tb is None or tb.get("kind") != "talk":
+                break
+            g._tableau_input(pygame.event.Event(pygame.KEYDOWN,
+                                                key=pygame.K_ESCAPE))
         g.step(dt)
 
 
@@ -156,12 +167,14 @@ def main():
     tick(g, 30)
     clear_cult(g)
     open_field(g)
-    n = plant(g, 30)
+    n = plant(g, 34)
     locked = False
     for _ in range(300):
         aim(g, n)
         tick(g, 1)
-        n.x, n.y = g.player.x + 30, g.player.y
+        # Pinned just OUTSIDE the arm's reach (CULT_GRAB_REACH), inside
+        # the SUS_NEAR field: point-blank for the fill, no grab noise.
+        n.x, n.y = g.player.x + 34, g.player.y
         g.player.hidden = "corn"
         if n._cult_state == "chase":
             locked = True
@@ -1005,6 +1018,57 @@ def main():
               "hand-off: a chasing peer is never met")
     finally:
         pygame.time.get_ticks = real_ticks
+
+    # ---- §13: the stealth economy (TODO #5, 2026-07 playtest tuning) ----
+    # Running past the cult must not dominate hiding: the speed ladder
+    # holds (King > sprint > chase > walk > scout), sprint is conspicuous,
+    # and an awake cultist grabs at arm's reach.
+    print("[13] stealth economy: the ladder, sprint tell, arm's reach")
+    from systems.config import (CULT_CHASE_MULT, CULT_GRAB_REACH,
+                                SUS_SPRINT_MULT, PLAYER_SPRINT_MULT)
+    from systems.stealth import detection_score
+    ge = new_game()
+    ge.load_scene_now("brimley", "default")
+    tick(ge, 10)
+    clear_cult(ge)
+    open_field(ge)
+    walk = ge.player.speed
+    sprint = walk * PLAYER_SPRINT_MULT
+    chase = 0.95 * 60 * CULT_CHASE_MULT          # the surface regular
+    scout = 0.95 * 60
+    check(scout < walk < chase < sprint,
+          f"ladder: scout {scout:.0f} < walk {walk:.0f} < chase "
+          f"{chase:.1f} < sprint {sprint:.0f}")
+    check(1.0 * 60 * CULT_CHASE_MULT < sprint,
+          "ladder: the fastest underground chaser stays under sprint")
+    check(CULT_GRAB_REACH > 22,
+          "reach: the grab reaches past the old bare contact")
+    # Sprint is conspicuous: same geometry, higher score while sprinting.
+    ge.player.hidden = None
+    ge.player.sprint_active = False
+    n = plant(ge, 100)
+    n.facing = (1.0, 0.0)
+    ge.player.x, ge.player.y = n.x + 100, n.y
+    s_walk = detection_score(ge.scene, n.x, n.y, n.facing, ge.player, 180.0)
+    ge.player.sprint_active = True
+    s_run = detection_score(ge.scene, n.x, n.y, n.facing, ge.player, 180.0)
+    ge.player.sprint_active = False
+    check(s_walk > 0 and abs(s_run - min(1.0, s_walk * SUS_SPRINT_MULT))
+          < 1e-6, f"sprint tell: score {s_walk:.2f} -> {s_run:.2f} in LOS")
+    # An awake SCOUT at arm's reach grabs in the open: the first grab of
+    # the run is THE TALK (the tick helper pages it), which proves the
+    # reach fired without ending the run.
+    check(not ge.save.flag("cult_talk_given"), "reach: fresh run, no talk yet")
+    n._cult_state = "scout"
+    n._suspicion = 0.0
+    n.x, n.y = ge.player.x + 26, ge.player.y
+    for _ in range(6):
+        tick(ge, 1)
+        n.x, n.y = ge.player.x + 26, ge.player.y
+        if ge.save.flag("cult_talk_given"):
+            break
+    check(ge.save.flag("cult_talk_given"),
+          "reach: brushing an awake scout at 26px fires the grab (the Talk)")
 
     print()
     if FAILS:

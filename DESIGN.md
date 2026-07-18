@@ -1419,6 +1419,39 @@ an enclosed hide drops his hunt to searching, `tests/king_roam.py`); he is
 relentless in that he re-finds you and his catch is birth-gated, not in that
 cover fails against him.
 
+### The stealth economy (2026-07, the first human tuning pass)
+
+The playtest verdict was "the whole system is avoided because it is just
+better to run around the cultist," and the numbers agreed (cultists
+patrolled AND chased at 68% of the player's walk). The batch that landed
+against it (`tests/stealth.py` §13 guards the contract):
+
+- **The speed ladder is now a real ladder:** King > player sprint (105)
+  > locked chase (`CULT_CHASE_MULT`, 85.5 px/s for the surface regular)
+  > player walk (84) > scout (57). Walking away from a locked cultist no
+  longer works; sprint still escapes but drains and winds (the existing
+  stamina), and the King stays the one thing sprint never beats.
+- **Sprint is conspicuous** (`SUS_SPRINT_MULT`, in
+  `stealth.detection_score`): a running figure in the line of sight
+  multiplies the detection score, so blowing past a scout lights the
+  bar. Running is the loud, seen, stamina-priced option; cover is the
+  cheap one.
+- **The cult has an arm's reach** (`CULT_GRAB_REACH`, every grab site):
+  brushing past any AWAKE cultist risks the contact grab, not only a
+  locked chaser. All the grab gates hold (the Talk, two-touch,
+  grab_allowed: concealment yields only to a locked pursuer, an
+  enclosed hide never grabs, set-piece kneelers never grab).
+- **Cover is VISIBLE:** every bare `:` cover tile stands up as a
+  waist-high tall-grass tuft under the tilt (`_tilt_grass_solid`,
+  scenes/terrain.py -- dead-straw blades, depth-sorted with the corn so
+  the player wades IN). Draw only; collision, sight, and the cover rules
+  are untouched.
+- **Entering cover is WORDLESS:** the corn and shadow teach notices were
+  cut (playtest ruling; DIALOGUE.md reconciled). The `hide_enter` /
+  `hide_exit` cues and the visible cover are the only tells.
+- **The surface hide desert was watered:** +6 enclosed hides on existing
+  props (TODO #5 lists them and what is still open).
+
 ### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
 
 Two beats of body language on the SCOUT state alone, shared by both cult

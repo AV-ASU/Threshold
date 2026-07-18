@@ -379,7 +379,14 @@ it renders the procedural sprites to a labelled PNG strip.
   converges the room) or the window expires into the CAPTURED death.
   `_tick_visibility` reads the concealment-weighted gaze; only an
   enclosed hide keeps the strong `VIS_HIDE_BLEED` drain (corn gets idle
-  decay). The **hollow Sheriff** (`_force_chase`) is **exempt** — it bypasses
+  decay). **The stealth economy (2026-07 first human tuning pass,
+  DESIGN.md §12, stealth §13):** the speed ladder is King > sprint >
+  locked chase (`CULT_CHASE_MULT`) > walk > scout, sprint in LOS
+  multiplies the detection score (`SUS_SPRINT_MULT`), every grab site
+  reaches `CULT_GRAB_REACH`, cover entry is WORDLESS (the teach notices
+  are cut), and bare `:` cover tiles render as tall-grass tufts under
+  the tilt so concealment is visible. The **hollow Sheriff**
+  (`_force_chase`) is **exempt** — it bypasses
   suspicion and cover entirely. The roaming **King** honors `player.hidden`
   (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);
   he is relentless in re-finding you, not in seeing through cover. Guarded

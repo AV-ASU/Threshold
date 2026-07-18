@@ -769,16 +769,45 @@ keep their exemptions.
 These are BUILT and guarded; what remains cannot be settled from code
 inspection and needs a person playing the game.
 
-### 5. **[Opus]** Stealth rework — the TUNING loop
+### 5. **[Opus]** Stealth rework — the TUNING loop  *(FIRST HUMAN PASS LANDED 2026-07)*
 
 The mechanic AND the placement pass are built and guarded
 (`tests/stealth.py` + flow §25; see `DESIGN.md §12` for the design
-and its status note). What remains only proves out against a human
-player: the suspicion fill curve (`SUS_FILL_RATE`), the concealment
+and its status note). **The first human playtest (2026-07) found four
+faults and a batch landed against them** (guarded by stealth §13):
+1. *"Hiding spots as objects are too rare"* -- CONFIRMED (23 enclosed
+   hides in the game, ~all underground; seven of the eight surface
+   patrol scenes had zero). Landed: +6 surface hides on EXISTING props
+   (under the rust wagon + dead sedan on cornfield_path, under the
+   lodge-yard pickup, in the backwoods cordwood stack, under Calder's
+   supper table + the dead pickup in brimley). **Still open:** the
+   scenes with no honest anchor (graveyard, country_lane,
+   gravel_road_north) need a bespoke crawlable prop each, placed via the
+   SCENE-DRESSING PROCESS; the cornfield_maze stays hide-free on purpose
+   (its terror is exposure in corn).
+2. *"Corn / tall grass is invisible"* -- CONFIRMED (`:` cover rendered
+   as a flat floor tint). Landed: the tall-grass tuft layer
+   (`_tilt_grass_solid`, scenes/terrain.py): every bare `:` tile stands
+   up as waist-high dead-straw blades, depth-sorted with the corn so the
+   player wades IN. Draw only; collision/sight/cover rules untouched.
+3. *"No narrator boxes on stealth entry"* -- landed: both one-shot
+   teach notices (corn, shadow) CUT; `hide_enter`/`hide_exit` audio and
+   the visible cover are the only tells.
+4. *"Running around the cultist beats hiding"* -- CONFIRMED by the
+   numbers (cultists moved at 68% of WALK speed). Landed, the three
+   economy levers (`CULT_CHASE_MULT` / `CULT_GRAB_REACH` /
+   `SUS_SPRINT_MULT`): the locked-chase gear (ladder now King > sprint
+   105 > chase 85.5 > walk 84 > scout 57 -- walking away is dead, sprint
+   still escapes but drains and winds), the arm's-reach grab (brushing
+   an awake cultist fires the grab; Talk/two-touch gates unchanged), and
+   sprint-in-LOS multiplying the detection score.
+
+What remains proves out only against further play: the new constants'
+FEEL, the suspicion fill curve (`SUS_FILL_RATE`), the concealment
 factors, the sweep budget, and the struggle window/presses. Also
-deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
-under tilt already carries the information function) and an
-exit-takes-a-beat vulnerability window on enclosed hides.
+deferred on purpose: the Pillar-2 **peek** verb (free look under tilt
+already carries the information function) and an exit-takes-a-beat
+vulnerability window on enclosed hides.
 
 ### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 

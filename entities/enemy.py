@@ -484,7 +484,8 @@ class Enemy:
                 # chase (play-notes: the first-ever cultist stays human).
                 self._last_seen_pos = (player.x, player.y)
                 if d > self.atk_range:
-                    self._cult_step(player.x, player.y, dt, scene)
+                    self._cult_step(player.x, player.y, dt, scene,
+                                    speed_mult=CULT_CHASE_MULT)
                 return
             # Lost the line: SEARCH, and sweep the enclosed hides
             # around last-seen (Pillar 3 -- searchers hunt cover; the
@@ -508,7 +509,8 @@ class Enemy:
                 self.morph_target = 0.0
             self._last_seen_pos = (player.x, player.y)
             if d > self.atk_range:
-                self._cult_step(player.x, player.y, dt, scene)
+                self._cult_step(player.x, player.y, dt, scene,
+                                speed_mult=CULT_CHASE_MULT)
             return
         # NOTICE: a scouting cultist whose suspicion is climbing stops
         # and turns toward what it half-saw (the telegraph window).

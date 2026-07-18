@@ -1280,15 +1280,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self.player.x, self.player.y)
                 on_corn = (floor_ch_now == ":")
                 if on_corn and self.player.hidden is None:
+                    # Entering cover is WORDLESS (2026-07 playtest ruling:
+                    # no narrator box on stealth entry) -- the hide_enter
+                    # cue and the grass itself are the only tells.
                     self.player.hidden = "corn"
                     self.audio.play("hide_enter", 0.55)
-                    # One-shot teach (TODO #5): corn is CONCEALMENT, not
-                    # invisibility (the stealth rework's core rule).
-                    if self.save and not self.save.flag("teach_corn"):
-                        self.save.set_flag("teach_corn", True)
-                        self.show_notice("The stalks take you in. Distance "
-                                         "hides you. Close eyes still find "
-                                         "you.", duration=3.6)
                 elif (not on_corn) and self.player.hidden == "corn":
                     self.player.hidden = None
                     self.audio.play("hide_exit", 0.55)
@@ -1619,28 +1615,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                         m["x"], m["y"], p.x, p.y) < MOTH_LIGHT_R):
                     in_dark = False
                     break
-        was = getattr(p, "_in_dark", False)
+        # Entering shadow cover is WORDLESS (2026-07 playtest ruling: no
+        # narrator box on stealth entry; the old one-shot teach is cut).
         p._in_dark = in_dark
-        if (in_dark and not was
-                and not self.save.flag("teach_dark_seen")):
-            near = False
-            for grp in (self.scene.npcs, self.scene.enemies):
-                for a in grp:
-                    if not getattr(a, "alive", True):
-                        continue
-                    is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
-                               or getattr(a, "kind", "") == "cultist")
-                    if is_cult and self.scene.world_dist(
-                            a.x, a.y, p.x, p.y) < 260:
-                        near = True
-                        break
-                if near:
-                    break
-            if near:
-                self.save.set_flag("teach_dark_seen", True)
-                self.show_notice(
-                    "The dark takes the edge off their eyes. It will "
-                    "not save you up close.", duration=3.0)
 
     # ---- Animated doors + the one-hop noise bleed ----
     def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
@@ -2841,20 +2818,29 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # capture felt random ("some take me, some don't"). Enclosed
             # hides / invuln / mid-death are exempt, matching
             # _tick_cultists -- one gate for every grab site
-            # (systems/stealth.py grab_allowed; the loop below requires
-            # chase state, so concealment yields to a locked pursuer).
+            # (systems/stealth.py grab_allowed). The stealth economy
+            # (TODO #5): any AWAKE cultist grabs at arm's reach
+            # (CULT_GRAB_REACH), not only a locked chaser -- brushing past
+            # a scout is a risk now. The oblivious set-pieces (the Sign
+            # Chamber kneelers, the scribe: aggro 0 / lock_facing) still
+            # never grab, so sneaking past them to lift the Mask stays a
+            # designed beat; concealment still yields only to a LOCKED
+            # pursuer (grab_allowed, per-cultist below).
             if (not world_frozen and self._death_kind is None
-                    and _grab_ok(self.player, True)
                     and self.player.invuln <= 0):
                 for e in self.scene.enemies:
-                    # Only an AWARE cultist (actively chasing) takes you --
-                    # the oblivious kneelers at the Sign Chamber altar
-                    # (aggro 0) never enter "chase", so you can still sneak
-                    # past them to lift the Mask.
-                    if (e.alive and e.kind == "cultist"
-                            and getattr(e, "_cult_state", "") == "chase"
-                            and math.hypot(e.x - self.player.x,
-                                           e.y - self.player.y) < 22):
+                    if not (e.alive and e.kind == "cultist"):
+                        continue
+                    if getattr(e, "_stun_t", 0) > 0:
+                        continue        # staggered: no reach while reeling
+                    chasing = getattr(e, "_cult_state", "") == "chase"
+                    awake = (getattr(e, "aggro", 1) > 0
+                             and not getattr(e, "lock_facing", False))
+                    if not (chasing or awake):
+                        continue
+                    if (math.hypot(e.x - self.player.x,
+                                   e.y - self.player.y) < CULT_GRAB_REACH
+                            and _grab_ok(self.player, chasing)):
                         self._trigger_death("cultist")
                         break
             # Tick projectiles AFTER enemies so a brand-new shot doesn't
