@@ -551,7 +551,8 @@ examine. The census (grouped) for the copy pass:
   now. The rest of the sweep below is still open.
 - **Cut candidates (ROUTINE-REACTION, ~30 sites)** — prop examines that
   editorialize a conclusion: the lodge register/ledger recaps, the well /
-  news-rack / payphone / cellar-key monologues, headstone + candle
+  news-rack monologues (the payphone examine and the cellar-key dialog are
+  already gone: play-notes cut + C4), headstone + candle
   re-examines, `barrow_tools` / `scarecrow` / `backwoods_note` / `worn_stone`
   / `bell_tower` / `the_burning` / `the_fall` / `threshing_floor` /
   `works_cistern_seen` / `the_doorframe` flavor `_evidence` (these write
@@ -564,7 +565,7 @@ examine. The census (grouped) for the copy pass:
   beats, the descent-voice arc (`_DESCENT_VOICE`), the dream, the Mask
   temptation, Mara's calling-out, the fold notes, the threshold recognition,
   and the deliberate atmospheric one-shots that ARE the dread (the frozen
-  news rack, the payphone with your own voice, the empty church). Cutting
+  news rack, the empty church). Cutting
   these would hurt the game.
 - Each cut must keep the flow.py guards green (many assert on these
   captions/notes — §16, §17b/c/d, §24) and update the ones whose behavior
@@ -1005,13 +1006,13 @@ is gone, his witness account is photo-earned.)*
 
 ### D. Voice / polish (player-facing text — still open)
 
-- Narrator "vanished into the corn" (`scenes/villager_houses.py`) adopts
-  Crane's drift-away impression as fact; canon is one night procession, and
-  §2 corrects the image for Mara ("not into the corn"). ~~Crane's "more every
-  season" and Sable's habitual-present arrivals~~ **DONE (2026-07 Fable tense
-  sweep):** every ended-arrivals line reads past now (Crane's greet + intro +
-  "They all stopped.", Sable's "faces came" + "went the same way", Vane's
-  "kept to their own"). The narrator corn line is this bullet's open half.
+- ~~Narrator "vanished into the corn" + tense sweep~~ **DONE (both halves,
+  re-verified 2026-07 doc audit):** the narrator corn line no longer ships
+  anywhere (only Crane's own-voice "drifted out to the corn" remains, which
+  stays deliberately: his fallible impression, testimony in his own mouth);
+  and the Fable tense sweep fixed every ended-arrivals line (Crane's greet +
+  intro + "They all stopped.", Sable's "faces came" + "went the same way",
+  Vane's "kept to their own").
 - Descent interior voice wobbles POV (first-person notes vs second-person
   on-screen beats, `systems/game.py`).
 - ~~Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk
@@ -1027,22 +1028,23 @@ is gone, his witness account is photo-earned.)*
   "Arcadia Lodge".)*
 - NPC object names "Clerk"/"Sheriff"/"Preacher" leak on generic paths
   (corpse examine: "Clerk. Face-down where the round put them.").
-- Placeholder texts on cued interactions: "Some old tools." (the beat's
-  designed contradiction is lost), "A small stash.", "A weathered
+- Placeholder texts on cued interactions: "A small stash.", "A weathered
   headstone.", "A scarecrow.", "A key.", "An axe for chopping wood."
-- Small ones: payphone "your own voice, already mid-sentence" (make it
-  spatial); Sable's "last night"/"tonight" against elapsed play; the robe
+  *(2026-07 doc audit: "Some old tools." is already gone — the barrow reads
+  "Digging tools left in the barrow, rusted over. The edges are still
+  bright.", the designed contradiction kept.)*
+- Small ones: Sable's "last night"/"tonight" against elapsed play; the robe
   "hangs... pressed and folded"; the Invitation's "Sleep where we slept" with
-  no sleep verb at the school; Mara's "I have never been this close" vs the
-  letter's locked "I've never been this close"; the handoff's "the day they
-  were ready" (canon: HE was ready); burn-site "All of their things." vs the
-  Sorting Hall cataloguing everything; Mask desc "So, you suspect, does the
-  door in the deep" plants "the door can open"; threshold recognition + "A
+  no sleep verb at the school; threshold recognition + "A
   doorframe with no wall." fire at the cave mouth, 13 sight-gated rows before
   the frame is visible; lowercase hide notices; "waking the dark ." double
   space; "midwestern" casing; Garrick and hollow Vane both call the PI "son";
   two simultaneous Hetties (door + counter); duplicate candle decoration in
-  Toby's house.
+  Toby's house. *(Resolved and dropped from this list, re-verified 2026-07
+  doc audit: the payphone beat is cut outright; Mara now says "I've never
+  been this close", matching the letter; the handoff note reads "for the day
+  he was ready"; the Mask desc's "So, you suspect, does the door in the
+  deep" is gone; the burn-site's "All of their things." was rewritten.)*
 - Missing canon clincher: §4's ledger entry promises "your own name, signed
   in tonight, already among them" — the cellar text only gestures at it and
   the desk sign-in is optional; one clause conditioned on `register_signed`
