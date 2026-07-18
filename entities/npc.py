@@ -10,7 +10,8 @@ from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD,
                             KING_LUNGE_CD_HI)
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
-                             react_hold, errand_step, errand_drop)
+                             react_hold, errand_step, errand_drop,
+                             sync_pause, handoff_step)
 
 def sprite_seed_for(x, y):
     """A stable per-actor sprite seed from the spawn position. Draw
@@ -389,8 +390,17 @@ class NPC:
                 ang = (pygame.time.get_ticks() / 1000.0) % math.tau
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Default: SCOUT. Errands first -- the cult has JOBS (scenes
-        # declare stations); the random mill only where no work is set.
+        # Default: SCOUT. The liveness beats first (TODO #23a: the
+        # synchrony all-stop, then a crossing hand-off -- dressing only,
+        # detection already scored this tick above), then errands (the
+        # cult has JOBS; scenes declare stations), then the random mill.
+        if sync_pause(self):
+            return
+        peers = [n for n in getattr(scene, "npcs", [])
+                 if getattr(n, "movement", "") == "chaser"
+                 and getattr(n, "sprite_kind", "") == "cultist"]
+        if handoff_step(self, peers, scene, dt):
+            return
         if errand_step(self, scene, dt,
                        lambda ex, ey: self._step_toward(
                            (ex, ey), dt, scene, navigate=True)):

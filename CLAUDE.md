@@ -189,8 +189,13 @@ it renders the procedural sprites to a labelled PNG strip.
     `npc.stations` route — travel, dwell facing the work, next — on
     the cult's errand machinery (`stealth.errand_step`; Garrick,
     Royce, the store Hettie, Rev. Crane). `chaser` runs the cultist state
-    machine (`_cult_tick`: scout→chase→search→investigate). The
-    `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
+    machine (`_cult_tick`: scout→chase→search→investigate). SCOUT carries
+    the **cult-liveness beats** (TODO #23a; `systems/stealth.py`
+    `sync_pause`/`handoff_step`, `CULT_SYNC_*`/`CULT_HANDOFF_*` config):
+    the shared-clock synchrony all-stop and the crossing hand-off —
+    dressing that never touches the threat states (a frozen scout still
+    fills suspicion; `tests/stealth.py` §12 guards it; DESIGN.md §12).
+    The `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
     eruption ramp, 0→1 over ~1.2s, during which he cannot move).
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.

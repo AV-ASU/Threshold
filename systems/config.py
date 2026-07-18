@@ -492,6 +492,16 @@ STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
 # one-time Talk (cult_talk_given) is still the very first contact of a run.
 CULT_SHRUG_INVULN = 0.7       # s of grace after tearing free (no re-grab)
 CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
+# Cult liveness (TODO #23a, the behavior pilot): dressing on the SCOUT
+# state only -- neither beat ever touches notice/chase/search/investigate,
+# and detection keeps scoring straight through both (threat unchanged).
+CULT_SYNC_PERIOD = 21.0       # s between synchrony beats: every idle cult
+                              # scout in the room pauses mid-stride at the
+                              # same instant (one shared clock), one breath
+CULT_SYNC_HOLD = 0.8          # s the shared all-stop holds
+CULT_HANDOFF_RANGE = 30.0     # px: two crossing scouts stop and face
+CULT_HANDOFF_HOLD = 1.2       # s the silent meeting holds before they part
+CULT_HANDOFF_CD = 40.0        # s per actor before another meeting
 
 # ---- The noise core (2026-07 sound overhaul) ------------------------------
 # World noises broadcast through Scene.emit_noise; the cult hears them

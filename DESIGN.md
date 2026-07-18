@@ -1419,6 +1419,24 @@ an enclosed hide drops his hunt to searching, `tests/king_roam.py`); he is
 relentless in that he re-finds you and his catch is birth-gated, not in that
 cover fails against him.
 
+### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
+
+Two beats of body language on the SCOUT state alone, shared by both cult
+machines (`systems/stealth.py` `sync_pause` / `handoff_step`;
+`CULT_SYNC_*` / `CULT_HANDOFF_*` in config). The **synchrony beat**: on
+one shared slow clock, every idle cult scout in the room pauses
+mid-stride at the same instant for one breath, then resumes -- the
+claimed-as-one-body wrongness (the Sign Chamber rank's "stirs all at
+once") generalized into ambient, wordless behavior. The **hand-off**:
+two scouts whose rounds cross stop, face each other for a silent beat,
+and part on a long per-actor cooldown -- NARRATIVE §4's
+ordinary-people-with-bodies, staged in movement. Neither beat ever owns
+a tick outside scout: detection, hearing, and suspicion all score
+BEFORE the beats run, so a frozen scout still fills and still promotes,
+and notice/chase/search/investigate never pause (guarded by
+`tests/stealth.py` §12). Set-piece kneelers keep their scripted
+stillness. The rest of the approved behavior plan is `TODO.md` #23.
+
 ### Placement principles (the tuning-pass guide, `TODO.md` #5)
 
 Place enclosed hides **near patrol routes**, not in safe corners (a risky

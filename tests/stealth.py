@@ -930,6 +930,82 @@ def main():
     check(bool(g2._watchers),
           "watchers: the same exposure in the open still opens the wave")
 
+    # ---- §12: cult liveness stays OUT of the threat path (TODO #23a) ----
+    # The synchrony beat and the hand-off are scout-only dressing; a frozen
+    # scout still detects, and no threat state ever pauses.
+    print("[12] cult liveness: synchrony + hand-off never touch the threat")
+    from types import SimpleNamespace
+    from systems.stealth import sync_pause, handoff_step
+    from systems.config import (CULT_SYNC_PERIOD, CULT_SYNC_HOLD,
+                                CULT_HANDOFF_RANGE, CULT_HANDOFF_HOLD)
+    from entities.npc import NPC
+    gl = new_game()
+    gl.load_scene_now("brimley", "default")
+    clear_cult(gl)
+    scn = gl.scene
+    real_ticks = pygame.time.get_ticks
+    try:
+        # (a) the shared clock: a scout freezes inside the window, not outside.
+        frame_ms = [int(CULT_SYNC_PERIOD * 1000) + 100]   # inside the hold
+        pygame.time.get_ticks = lambda: frame_ms[0]
+        sc_actor = SimpleNamespace(_cult_state="scout", lock_facing=False,
+                                   aggro=1)
+        check(sync_pause(sc_actor) is True,
+              "sync: a scout holds during the shared beat")
+        frame_ms[0] = int((CULT_SYNC_PERIOD + CULT_SYNC_HOLD) * 1000) + 500
+        check(sync_pause(sc_actor) is False,
+              "sync: the beat releases after the hold")
+        # (b) threat states never pause, even inside the window.
+        frame_ms[0] = int(CULT_SYNC_PERIOD * 1000) + 100
+        held = [sync_pause(SimpleNamespace(_cult_state=st, lock_facing=False,
+                                           aggro=1))
+                for st in ("chase", "search", "investigate")]
+        check(not any(held),
+              "sync: chase/search/investigate never pause")
+        check(sync_pause(SimpleNamespace(_cult_state="scout",
+                                         lock_facing=True, aggro=0)) is False,
+              "sync: set-piece kneelers keep their scripted stillness")
+        # (c) detection scores straight through the freeze: a real cultist
+        # in the open, player in view, gains suspicion while standing still.
+        open_field(gl)
+        cx = gl.player.x
+        cy = gl.player.y - 3 * TILE
+        cult = NPC(cx, cy, "A cultist", "cultist", movement="chaser",
+                   tag="cult_test")
+        cult.facing = (0, 1)                      # looking at the player
+        for _ in range(6):
+            cult._cult_tick(1 / 30.0, scn, gl.player)
+        check(cult._suspicion > 0.0,
+              "sync: a frozen scout still fills suspicion")
+        check((cult.x, cult.y) == (cx, cy),
+              "sync: and has not moved while the beat holds")
+        # (d) the hand-off: two crossing scouts freeze, face, and part on
+        # a cooldown; a chasing peer is never met.
+        frame_ms[0] = int((CULT_SYNC_PERIOD + CULT_SYNC_HOLD) * 1000) + 500
+        a = NPC(cx, cy, "A", "cultist", movement="chaser", tag="cult_test")
+        b = NPC(cx + CULT_HANDOFF_RANGE - 4, cy, "B", "cultist",
+                movement="chaser", tag="cult_test")
+        met = handoff_step(a, [a, b], scn, 1 / 30.0)
+        check(met and a._handoff_t > 0 and b._handoff_t > 0,
+              "hand-off: crossing scouts stop together")
+        check(abs(a.facing[0] - 1.0) < 0.01,
+              "hand-off: and face each other")
+        for _ in range(int(CULT_HANDOFF_HOLD * 30) + 2):
+            handoff_step(a, [a, b], scn, 1 / 30.0)
+            handoff_step(b, [a, b], scn, 1 / 30.0)
+        check(a._handoff_t <= 0 and a._handoff_cd > 0,
+              "hand-off: the meeting ends and the cooldown holds")
+        check(handoff_step(a, [a, b], scn, 1 / 30.0) is False,
+              "hand-off: no immediate second meeting")
+        c = NPC(cx, cy, "C", "cultist", movement="chaser", tag="cult_test")
+        d = NPC(cx + 10, cy, "D", "cultist", movement="chaser",
+                tag="cult_test")
+        d._cult_state = "chase"
+        check(handoff_step(c, [c, d], scn, 1 / 30.0) is False,
+              "hand-off: a chasing peer is never met")
+    finally:
+        pygame.time.get_ticks = real_ticks
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

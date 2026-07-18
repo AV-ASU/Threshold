@@ -714,6 +714,56 @@ and the tests. Sequence it:
 
 **#22 is COMPLETE (22a + 22b + 22c all landed 2026-07).**
 
+### 23. **[Opus + Fable]** Complex behavior for cultists and locals  *(maintainer-approved plan 2026-07; built in pilots)*
+
+The cult AI and the town both deepen, inside hard fences: systemic not
+scripted; the people do NOT change (only the cult may act wrong, and only
+in cult ways; locals stay mundane and never signal the cosmology); nothing
+touches the pacing ratios, the SAFE_SCENES refuge, fold-only pursuit
+carry, or the Talk/two-touch gates; no new behavior ships with explanatory
+player-facing text (the behavior IS the tell); the King and hollow Sheriff
+keep their exemptions.
+
+- **23a. Cult liveness pilot. LANDED (2026-07) except station
+  authoring.** Two scout-only beats in `systems/stealth.py`, wired into
+  BOTH cult machines (`entities/npc.py` + `entities/enemy.py`); tuning in
+  the `CULT_SYNC_*` / `CULT_HANDOFF_*` config block. The **synchrony
+  beat** (`sync_pause`): on one shared clock every idle cult scout pauses
+  mid-stride at the same instant, one breath, then resumes (the
+  claimed-as-one-body wrongness, ambient). The **hand-off**
+  (`handoff_step`): two scouts whose rounds cross stop, face each other
+  for a silent beat, and part on a long per-actor cooldown. Both run
+  AFTER detection/hearing score the tick and never own any state but
+  scout: a frozen scout still fills suspicion and still promotes
+  (guarded end-to-end by `tests/stealth.py` §12); set-piece kneelers
+  keep their scripted stillness. **Still open in 23a:** job-station
+  authoring for the patrolled cult rooms that have none (works_sign's
+  lone patrol) -- place via the SCENE-DRESSING PROCESS (render first,
+  never by name).
+- **23b. The town half.** The **yield**: a local a cult patrol passes
+  steps off the lane, eyes down, waits, resumes; the cultist never
+  acknowledges them (the trapped-WITH-them split staged in pure
+  movement, no dialogue). **Mundane witness reactions**: a local who
+  sees the drawn gun, a sprint, or a moth axed flinches or hurries
+  indoors (rides homebody `_inside`); a kill nearby empties the street
+  for the visit. Strictly mundane reactions only, which strengthens
+  their ordinariness.
+- **23c. The mechanical pieces, sequenced for the #5 tuning pass.** The
+  SEARCH **sweep partition** (multiple searchers divide `sweep_points`,
+  no duplicate checks); **room posture** (a per-scene calm/uneasy/roused
+  int raised by flares, shots, struggles, and found bodies, decaying;
+  modulates walk speed, scan time, and sweep budget -- ship OFF-default
+  behind config until the human tuning pass absorbs it); the **flank
+  call** (a LOCKED chaser pulls at most ONE nearby patrol to a flank
+  point; same LOS and suspicion rules, normal search timer, never soft
+  omniscience); **object-state investigation** (a left-on noisemaker, an
+  opened door, a moth husk: pause at it, mark the room uneasy).
+- **23d. Content passes (anytime, Fable).** Fuller local **day-loops**
+  on the JOBS `stations` plumbing (Pell to the field edge he doesn't
+  look at, Calder to her gate, Royce circling his truck; door-anchor
+  honesty rules apply); **disposition framing** read off existing save
+  flags (mood, never a meter -- the TODO #2 fences).
+
 ## Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code
