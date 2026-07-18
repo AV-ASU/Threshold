@@ -385,7 +385,10 @@ it renders the procedural sprites to a labelled PNG strip.
   multiplies the detection score (`SUS_SPRINT_MULT`), every grab site
   reaches `CULT_GRAB_REACH`, cover entry is WORDLESS (the teach notices
   are cut), and bare `:` cover tiles render as tall-grass tufts under
-  the tilt so concealment is visible. The **hollow Sheriff**
+  the tilt so concealment is visible. **River stones** (`STONE_*`,
+  item `stone`, right-click) are the placed-noise distraction verb:
+  they turn idle scouts, never divert a sighting-born search
+  (stealth §14). The **hollow Sheriff**
   (`_force_chase`) is **exempt** — it bypasses
   suspicion and cover entirely. The roaming **King** honors `player.hidden`
   (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);

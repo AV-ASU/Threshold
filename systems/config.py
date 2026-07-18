@@ -506,6 +506,16 @@ CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
 CULT_CHASE_MULT = 1.5         # locked-chase speed gear over base speed
 CULT_GRAB_REACH = 30.0        # px: contact-grab reach (was a bare 22)
 SUS_SPRINT_MULT = 1.6         # detection-score multiplier while sprinting
+# River stones (TODO #5, the distraction verb): a thrown stone is a
+# placed noise event, nothing more -- it rides the existing ear
+# (stealth.hear_noise) untouched. Loudness sits between the scout
+# threshold (0.7) and the searcher pull (0.9) ON PURPOSE: a stone turns
+# an idle head but never breaks a sighting-born search, so it is a tool
+# for routing patrols, not for shaking a hunt.
+STONE_LOUD = 0.8              # lands between hear-min and search-pull
+STONE_REACH = 210.0           # px: how far the clatter carries
+STONE_RANGE = 170.0           # px: throw distance along the aim
+STONE_SPEED = 300.0           # px/s flight speed
 # Cult liveness (TODO #23a, the behavior pilot): dressing on the SCOUT
 # state only -- neither beat ever touches notice/chase/search/investigate,
 # and detection keeps scoring straight through both (threat unchanged).

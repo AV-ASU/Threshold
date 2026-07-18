@@ -802,6 +802,14 @@ faults and a batch landed against them** (guarded by stealth §13):
    an awake cultist fires the grab; Talk/two-touch gates unchanged), and
    sprint-in-LOS multiplying the detection score.
 
+Landed with the pass (2026-07, maintainer-approved): **river stones**,
+the proactive distraction verb -- finite walk-over pickups where the
+water runs, right-click lobs one, the landing is a placed noise event
+that turns idle scouts and never diverts a sighting-born search
+(`STONE_*` config; DESIGN.md §12; stealth §14). Spitballed and parked
+for a decision: the crouch stance (after the next playtest) and the
+window-vault prototype (one building, look-passed, last).
+
 What remains proves out only against further play: the new constants'
 FEEL, the suspicion fill curve (`SUS_FILL_RATE`), the concealment
 factors, the sweep budget, and the struggle window/presses. Also

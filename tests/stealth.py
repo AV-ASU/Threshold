@@ -1070,6 +1070,60 @@ def main():
     check(ge.save.flag("cult_talk_given"),
           "reach: brushing an awake scout at 26px fires the grab (the Talk)")
 
+    # ---- §14: river stones (TODO #5, the distraction verb) --------------
+    # A thrown stone is a placed noise event: it spends from the pocket,
+    # flies, lands, and its clatter turns an idle scout -- but it can
+    # never divert a sighting-born search (loud sits under the pull), and
+    # a rooted enclosed hide cannot throw at all.
+    print("[14] river stones: the clatter routes a scout, never a search")
+    from systems.config import NOISE_SEARCH_PULL
+    gs = new_game()
+    gs.load_scene_now("brimley", "default")
+    tick(gs, 10)
+    clear_cult(gs)
+    open_field(gs)
+    gs.player.inventory.add("stone", 2)
+    n = plant(gs, 150)
+    n._cult_state = "scout"
+    n._suspicion = 0.0
+    pin = (gs.player.x + 150, gs.player.y)      # earshot, out of reach
+    n.x, n.y = pin
+    gs.look.aim = 0.0                            # throw east, toward him
+    gs._throw_stone()
+    check(gs.player.inventory.count("stone") == 1,
+          "stones: the throw spends one")
+    check(len(gs._stones) == 1, "stones: it flies")
+    for _ in range(90):
+        tick(gs, 1)
+        n.x, n.y = pin
+        if n._cult_state == "investigate":
+            break
+    check(not gs._stones, "stones: it lands inside the range budget")
+    check(n._cult_state == "investigate",
+          "stones: the clatter turns the idle scout")
+    # A sighting-born search holds through a stone.
+    n._cult_state = "search"
+    n._cult_state_t = 8.0
+    n._last_seen_pos = pin
+    n._noise_loud = NOISE_SEARCH_PULL
+    n._sweep_list = []
+    gs._throw_stone()
+    for _ in range(60):
+        tick(gs, 1)
+        if not gs._stones:
+            break
+    tick(gs, 3)
+    check(n._cult_state == "search",
+          "stones: a sighting-born search is never diverted")
+    # A rooted enclosed hide cannot throw.
+    gs.player.hidden = "under"
+    gs.player.inventory.add("stone", 1)
+    k0 = gs.player.inventory.count("stone")
+    gs._throw_stone()
+    check(gs.player.inventory.count("stone") == k0 and not gs._stones,
+          "stones: a rooted enclosed hide cannot throw")
+    gs.player.hidden = None
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

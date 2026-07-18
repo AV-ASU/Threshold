@@ -1451,6 +1451,16 @@ against it (`tests/stealth.py` §13 guards the contract):
   `hide_exit` cues and the visible cover are the only tells.
 - **The surface hide desert was watered:** +6 enclosed hides on existing
   props (TODO #5 lists them and what is still open).
+- **River stones are the distraction verb** (`STONE_*` config; landed
+  with the pass): finite walk-over pickups scattered where the water
+  runs (both Brimley banks, the Cistern shores, the Sump ledge).
+  Right-click lobs one along the aim; the landing is a placed NOISE
+  EVENT and nothing else -- no damage, no stagger, riding the existing
+  ear untouched. Its loudness sits between the scout threshold and the
+  searcher pull ON PURPOSE: a stone turns an idle head but never breaks
+  a sighting-born search, so it routes patrols rather than shaking a
+  hunt. A rooted enclosed hide cannot throw; corn can. Guarded by
+  `tests/stealth.py` §14.
 
 ### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
 

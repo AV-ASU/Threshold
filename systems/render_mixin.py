@@ -1297,6 +1297,24 @@ class RenderMixin:
             _emit(self.camera.depth(p.x, p.y),
                   lambda p=p, psx=psx, psy=psy:
                   p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift)))
+        # Thrown river stones (TODO #5): a tiny pebble on a cosmetic arc
+        # (sine of flight progress) over its ground shadow. The player's
+        # own action, so never sight-gated -- like the pickups it must
+        # always READ.
+        for st in (getattr(self, "_stones", None) or []):
+            z = 12.0 + 30.0 * math.sin(math.pi * min(1.0, st["p"]))
+            ssx, ssy = self.camera.project(st["x"], st["y"], z)
+            gsx, gsy = self.camera.project(st["x"], st["y"], 0)
+
+            def _draw_stone(ssx=ssx, ssy=ssy, gsx=gsx, gsy=gsy):
+                sh = pygame.Surface((10, 4), pygame.SRCALPHA)
+                pygame.draw.ellipse(sh, (8, 7, 12, 70), (0, 0, 10, 4))
+                self.screen.blit(sh, (gsx - 5, gsy - actor_lift - 2))
+                pygame.draw.circle(self.screen, (112, 110, 104),
+                                   (int(ssx), int(ssy - actor_lift)), 2)
+                pygame.draw.circle(self.screen, (60, 58, 55),
+                                   (int(ssx), int(ssy - actor_lift)), 2, 1)
+            _emit(self.camera.depth(st["x"], st["y"]), _draw_stone)
         if self.player:
             psx, psy = self.camera.project(self.player.x, self.player.y)
             psy -= actor_lift             # stand on the floor under tilt

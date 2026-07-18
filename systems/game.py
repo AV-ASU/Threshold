@@ -283,6 +283,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []            # Watcher NPCs currently manifested
         self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
+        self._stones = []              # thrown river stones in flight (TODO #5)
         self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
@@ -508,6 +509,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []
         self._watcher_clone_t = WATCHER_GRACE
         self._watcher_gaze = 0.0
+        self._stones = []
         self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
@@ -812,6 +814,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # the new scene from the persistent curse. Clear the old set and
         # the per-scene cultist top-up timer so cultists re-populate.
         self._watchers = []
+        self._stones = []              # a stone mid-flight stays behind
         # Reaching a SAFE_SCENE resets the two-touch cult grab (play-notes):
         # you can't be mid-grab inside a refuge, so a fresh encounter after
         # starts the touch count over.
@@ -1109,6 +1112,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Tick the sprint timers regardless of input -- cooldown has
         # to drain even when the player is standing still.
         self._tick_sprint(dt, keys)
+        self._tick_stones(dt)          # thrown stones fly on the same clock
         # Hide is a STRATEGIC verb: while hidden the player is safe
         # from patrol spotting AND the proximity ramp slows to a
         # crawl (only the halved passive rate -- no stillness
@@ -2073,6 +2077,55 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.player_fire_gun()
         elif w == "lumber_axe":
             self.player_axe_swing()
+
+    def _throw_stone(self):
+        """Right-click: lob a river stone along the aim (the distraction
+        verb, TODO #5). The stone is a placed NOISE EVENT and nothing
+        else -- no damage, no stagger; it rides the existing cult ear
+        (stealth.hear_noise) untouched. A rooted enclosed hide cannot
+        throw (you are folded under furniture); corn can (mobile
+        concealment keeps your arms). Off-hand: works whatever weapon is
+        equipped."""
+        if self.player.inventory.count("stone") <= 0:
+            return
+        if _is_enclosed_hide(self.player):
+            self.audio.play("bump", 0.25)
+            return
+        heading = self.look.aim if self.look is not None else 0.0
+        self.player.inventory.remove("stone", 1)
+        self._stones.append({
+            "x": self.player.x, "y": self.player.y,
+            "hx": math.cos(heading), "hy": math.sin(heading),
+            "p": 0.0,
+        })
+        self.audio.play("bump", 0.2)
+
+    def _tick_stones(self, dt):
+        """Advance thrown stones; a landing (range spent, or a wall)
+        emits the clatter the cult's ear picks up. The arc is cosmetic
+        (the draw lifts by a sine of progress); the sim is a straight
+        line at STONE_SPEED."""
+        if not self._stones:
+            return
+        keep = []
+        for st in self._stones:
+            step = STONE_SPEED * dt
+            nx = st["x"] + st["hx"] * step
+            ny = st["y"] + st["hy"] * step
+            hit_wall = self.scene.is_solid_at(nx, ny)
+            if not hit_wall:
+                st["x"], st["y"] = nx, ny
+            st["p"] += step / STONE_RANGE
+            if st["p"] >= 1.0 or hit_wall:
+                self.scene.emit_noise(st["x"], st["y"], STONE_LOUD,
+                                      kind="stone", reach=STONE_REACH)
+                pan = self.audio.pan_for_world(st["x"], self.player.x)
+                dm = self.audio.distance_attenuation(
+                    st["x"], st["y"], self.player.x, self.player.y)
+                self.audio.play("bump", 0.5 * dm, pan=pan)
+            else:
+                keep.append(st)
+        self._stones = keep
 
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the kill counter (the
@@ -3159,9 +3212,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self.pause_choice = 0
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                # Left-click is the only action button: use whatever weapon
+                # Left-click is the action button: use whatever weapon
                 # is in hand -- fire the revolver or swing the axe.
                 self._use_weapon()
+            elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
+                # Right-click: lob a river stone along the aim -- the
+                # distraction verb (TODO #5). A placed noise event only.
+                self._throw_stone()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 

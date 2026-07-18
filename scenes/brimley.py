@@ -986,6 +986,20 @@ def build_brimley():
         (42 * TILE + 16, 43 * TILE + 16, "under"),
     ]
 
+    # River stones scattered along both banks (TODO #5, the distraction
+    # verb): the river gives stones. Placed by scan because the water
+    # meanders; one per row, alternating banks, skipping the bridge rows.
+    for _i, _row in enumerate((18, 28, 33, 41, 48)):
+        _water = [c for c in range(26, 36)
+                  if sc.floor[_row][c] in ("~", "@")]
+        if not _water:
+            continue
+        _c = (min(_water) - 1) if _i % 2 == 0 else (max(_water) + 1)
+        _wx, _wy = _c * TILE + 16, _row * TILE + 16
+        if (sc.floor[_row][_c] not in ("~", "@")
+                and not sc.is_solid_at(_wx, _wy)):
+            sc.add_item(_wx, _wy, "stone")
+
     # The dead pickup is a big hulk -- solid tiles under its length so the
     # player can't walk through it (decoration at tile 54,30).
     objects_list = [list(r) for r in sc.objects]

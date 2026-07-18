@@ -361,6 +361,13 @@ def build_works_cistern():
     sc.add_cult_station(7 * TILE + 16, 7 * TILE + 16, pose="chant",
                         face=(0, 1), dwell=(3.0, 6.0))
 
+    # River stones on the pool shores (TODO #5, the distraction verb):
+    # the dug-into river gives stones down here too.
+    for _tx, _ty in ((2, 4), (10, 6)):
+        _wx, _wy = _tx * TILE + 16, _ty * TILE + 16
+        if not sc.is_solid_at(_wx, _wy):
+            sc.add_item(_wx, _wy, "stone")
+
     def _vats_on_enter(game, scene):
         # First entry: the dig hit water. This is the river (NARRATIVE §2) --
         # the artery the cult followed down toward the door. Gated by the
@@ -1335,6 +1342,9 @@ def build_the_sump():
     sc.add_decoration(Decoration(7 * TILE + 26, 5 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = []
+    # A river stone on the pool shore (TODO #5, the distraction verb).
+    if not sc.is_solid_at(2 * TILE + 16, 5 * TILE + 16):
+        sc.add_item(2 * TILE + 16, 5 * TILE + 16, "stone")
     _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)
 
     def _on_enter(game, scene):

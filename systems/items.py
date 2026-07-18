@@ -40,6 +40,11 @@ ITEM_DEFS = {
                                "batteries, heavy for its size. Royce "
                                "hoarded them one drive at a time, for a "
                                "road that never opened."},
+    "stone":         {"name": "River Stone",
+                       "kind": "key",
+                       "desc": "A smooth grey stone off the riverbank, a "
+                               "good weight for the hand. Right click to "
+                               "put a sound somewhere you are not."},
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
                        "desc": "A heavy steel flashlight. Press [F] to "
