@@ -1123,51 +1123,79 @@ def main():
     check(gs.player.inventory.count("stone") == k0 and not gs._stones,
           "stones: a rooted enclosed hide cannot throw")
     gs.player.hidden = None
-    # A stone THROUGH A WINDOW: the loud tier. The pane breaks once,
-    # goes to the run ledger, and glass (over the searcher pull) is the
-    # one thrown sound that CAN divert a sighting-born search.
+    # A stone THROUGH A WINDOW: the loud tier. Two claims, each on its own
+    # FRESH game so a carried cultist can never scramble the beat.
+    # (1) the throw smashes the pane -> the run ledger + the broken set.
     from scenes.base import _WINDOW_CHARS
+    gg = new_game()
+    gg.load_scene_now("brimley", "default")
+    tick(gg, 10)
+    # Clear ALL npcs, not just the cult: a wandering homebody local is a
+    # solid body that can step into the throw's path and stop the stone
+    # short of the pane (is_solid_at counts solid NPCs) -- realistic, but
+    # it makes a mechanic test flaky. The throw mechanic needs no NPCs.
+    gg.scene.npcs = []
     win = None
-    for wy_ in range(gs.scene.h):
-        for wx_ in range(gs.scene.w):
-            if gs.scene.objects[wy_][wx_] not in _WINDOW_CHARS:
+    for wy_ in range(gg.scene.h):
+        for wx_ in range(gg.scene.w):
+            if gg.scene.objects[wy_][wx_] not in _WINDOW_CHARS:
                 continue
             bx_ = wx_ * TILE + 16
-            by_ = (wy_ + 2) * TILE + 16
-            if not gs.scene.is_solid_at(bx_, by_):
+            by_ = (wy_ + 2) * TILE + 16      # 2 south: the throw approach
+            if not gg.scene.is_solid_at(bx_, by_):
                 win = (wx_, wy_, bx_, by_)
                 break
         if win:
             break
     check(win is not None, "glass: brimley offers a window with a clear approach")
     wx_, wy_, bx_, by_ = win
-    gs.player.x, gs.player.y = bx_, by_
-    gs.player.hidden = None
-    n._cult_state = "search"
-    n._cult_state_t = 8.0
-    n._last_seen_pos = (bx_ + 60, by_)
-    n._noise_loud = NOISE_SEARCH_PULL
-    n._sweep_list = []
-    npin = (bx_ + 60, by_ + 40)
-    n.x, n.y = npin
-    gs.look.aim = -math.pi / 2                  # throw north, at the pane
-    gs.player.inventory.add("stone", 1)
-    gs._throw_stone()
+    gg.player.x, gg.player.y = bx_, by_
+    gg.player.hidden = None
+    gg.look.aim = -math.pi / 2               # throw north, at the pane
+    gg.player.inventory.add("stone", 1)
+    gg._throw_stone()
     for _ in range(60):
-        n.x, n.y = npin                         # pin the searcher in earshot
-        tick(gs, 1)
-        n.x, n.y = npin
-        if not gs._stones:
+        tick(gg, 1)
+        if not gg._stones:
             break
-    for _ in range(8):                          # settle: let the ear read it
-        n.x, n.y = npin
-        tick(gs, 1)
-    check((wx_, wy_) in getattr(gs.scene, "_broken_windows", set()),
+    check((wx_, wy_) in getattr(gg.scene, "_broken_windows", set()),
           "glass: the pane breaks and joins the scene's broken set")
-    led = gs.save.arg("broken_windows", {}) or {}
+    led = gg.save.arg("broken_windows", {}) or {}
     check([wx_, wy_] in led.get("brimley", []),
           "glass: the break is written to the run ledger")
-    check(n._cult_state == "investigate",
+    # (2) the loudness claim, tested straight on the noise bus (no throw,
+    # so no chase/grab in play): a GLASS_LOUD event over the searcher
+    # pull re-tasks a searcher that an ordinary stone (STONE_LOUD) could
+    # not divert.
+    from systems.config import GLASS_LOUD, GLASS_REACH, STONE_LOUD
+    check(STONE_LOUD <= NOISE_SEARCH_PULL < GLASS_LOUD,
+          "glass: only the glass tier clears the searcher-pull bar")
+    gg2 = new_game()
+    gg2.load_scene_now("brimley", "default")
+    tick(gg2, 10)
+    clear_cult(gg2)
+    open_field(gg2)
+    ng = plant(gg2, 90)
+    ng._cult_state = "search"
+    ng._cult_state_t = 20.0
+    src = (gg2.player.x + 120, gg2.player.y)
+    ng._last_seen_pos = src
+    ng._noise_loud = NOISE_SEARCH_PULL
+    ng._sweep_list = []
+    ng._sweep_i = 0
+    ng.x, ng.y = src
+    gg2.scene.emit_noise(src[0], src[1], STONE_LOUD, kind="stone")
+    for _ in range(4):
+        ng.x, ng.y = src
+        tick(gg2, 1)
+    check(ng._cult_state == "search",
+          "glass: an ordinary stone cannot divert the search")
+    gg2.scene.emit_noise(src[0], src[1], GLASS_LOUD, kind="glass",
+                         reach=GLASS_REACH)
+    for _ in range(4):
+        ng.x, ng.y = src
+        tick(gg2, 1)
+    check(ng._cult_state == "investigate",
           "glass: the smash diverts even a sighting-born search")
     # The dead well: a stone over the lip spends one and the shaft's
     # rattle turns a scout across the square. No landing ever sounds.

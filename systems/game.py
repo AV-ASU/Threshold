@@ -1124,8 +1124,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Tick the sprint timers regardless of input -- cooldown has
         # to drain even when the player is standing still.
         self._tick_sprint(dt, keys)
-        self._tick_stones(dt)          # thrown stones fly on the same clock
-        self._tick_bridge_knocks(dt)   # treads on the planks overhead
         # Hide is a STRATEGIC verb: while hidden the player is safe
         # from patrol spotting AND the proximity ramp slows to a
         # crawl (only the halved passive rate -- no stillness
@@ -2910,6 +2908,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self._evidence_count() >= KING_GATE_EVIDENCE)
                 self.scene._bloom_armed = self.save.flag("bloom_armed")
             if not world_frozen:
+                # Thrown stones + the under-bridge deck-knocks ride the
+                # world clock, NOT the player-can-move gate: a stone in
+                # flight keeps flying while the PI is pinned mid-struggle,
+                # emerging from a hide, or held by closure -- it only
+                # pauses when a modal freezes the whole sim (TODO #5; this
+                # decoupling also fixes a stealth-§14 flake where a
+                # carried-over struggle/emerge state stalled the throw).
+                self._tick_stones(dt)
+                self._tick_bridge_knocks(dt)
                 exit_data = self.scene.find_exit_at(
                     self.player.x, self.player.y,
                     facing=self.player.facing)
