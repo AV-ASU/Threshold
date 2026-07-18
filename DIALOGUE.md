@@ -169,6 +169,14 @@ intro:" / "Opener photo:").
   - **if he said it** (the car exchange planted the warning): (npc) "I told you the roads were not going anywhere. You heard a man being hospitable. I meant it plainly."
   - **if he never did** (the mechanic was never asked after): (npc) "So you walked it. The roads are not going anywhere, friend. They never were."
   - (npc) "There is no call to be cross about it. You are safe here. Safer than out there."
+- **Exchange `paper`** (avail: carries newspaper; TODO #2, the NULL door and the tell: no reward, the chill files as the note) — "I brought yesterday's newspaper." / "Yesterday's newspaper, Mr. Sable. First word from outside since the winter. It's the house's if you want it."
+  - (npc) "(He takes it in both hands and squares it on the desk, unopened, the fold lined up with the register's edge.)"
+  - (npc) "That is a kindness, friend. The Arcadia thanks you."
+  - (npc) "We will set it out in the common room. Guests do like having something to read."
+  - (pi) "You're not going to open it?"
+  - (npc) "Oh, I expect I will get to it. The news keeps, friend. It always has."
+  - (npc) "Now. Was there anything else?"
+  - (pi) "[c=dim]Half this town would give a finger for that page. He squared it to the desk like a coaster.[/c]"
 - **Exchange `the_way_down`** (avail: 3 evidence, no envelope yet) — "You've been holding something for me." / "You've kept something back from me since I walked in. I'll take it now."
   - (npc) "You are past pretending to be a guest now, I think. All right."
   - (npc) "(He lays a long envelope on the desk. Wax seal, the Sign pressed into it. He handles it like a room key.)"
@@ -300,13 +308,21 @@ intro:" / "Opener photo:").
   - "Then one day past the new year she set her basket down half filled and walked out smiling. Left the basket on the counter. I never saw her again."
   - "[c=dim]It was the smiling I minded.[/c]"
   - (if tab not yet lifted) "[c=dim]She works a curled slip off the spike by the till and sets it on the counter, turned toward you. Her tab for the girl. Matches, canned milk, week on week.[/c]"
-- **One-shot: the newspaper trade** (avail: met her, carries newspaper):
+- **One-shot: the newspaper OFFER** (avail: met her, carries newspaper;
+  TODO #2 rework: she notices and offers, but the trade is the PLAYER'S
+  call now -- one copy, six doors):
   - "[c=dim]Her eyes stop on the newspaper folded in your coat pocket. She goes very still.[/c]"
   - "What's the date on that. The date."
   - "[c=dim]You show her. April 14. Yesterday. You bought it before the drive north.[/c]"
   - "Yesterday's. We haven't had a paper through here since the trucks stopped."
   - "Leave it on the counter and take what's under it. The till's been empty since the new year. The shelf under it hasn't."
-  - "[c=dim]One load of cartridges across the counter. She's already reading yesterday's news like a letter from someone she'd given up on.[/c]"
+  - (ask) "The offer sits on the counter."
+    - **Trade the paper.** -> "[c=dim]One load of cartridges across the counter. She's already reading yesterday's news like a letter from someone she'd given up on.[/c]" *(the barter: `newspaper_traded`, one load of cartridges, the copy spent)*
+    - **Keep it. I've got somewhere for it.** -> "(She looks at your pocket a beat longer, then lets it go.) Suit yourself. The shelf keeps."
+- **Exchange `paper`** (avail: offered before, still carrying, not traded) — "About that trade." / "That trade you offered. The paper for what's under the till."
+  - (npc) "(Her hand is under the counter before you finish saying it.)"
+  - (npc) "Counter. Now. Before I think better of what I keep under here."
+  - (pi) "[c=dim]One load of cartridges across the counter. She's already reading the front page.[/c]"
 - **On leave** (`hettie_on_leave`, once):
   - (npc) "(She shakes her head, just slightly. She has said too much already.)"
 
@@ -387,6 +403,13 @@ intro:" / "Opener photo:").
   - (npc) "Am I gonna be okay?"
   - (pi) "You're gonna be okay. I promise. When I'm done, I'll come back for you."
   - (npc) "[c=dim]Okay. I believe you.[/c]"
+- **Exchange `paper`** (avail: intro asked + carries newspaper; TODO #2, mercy) — "I brought the funny pages." / "There's a fat run of funnies in yesterday's paper. You want them?"
+  - (npc) "The funnies? Whole ones?"
+  - (pi) "[c=dim](You fold the front page under and away, and hand him the back of the paper.)[/c]"
+  - (npc) "(He spreads it flat on the table with both hands, like a map of somewhere good.)"
+  - (npc) "Calvin's still in it. He didn't stop."
+  - (npc) "Can I keep it? Mom reads over my shoulder when I've got something. She doesn't hum when she's reading."
+  - (pi) "[c=dim]He gets the funnies. The front page stays out of this house.[/c]"
 - **One-shot: the bear** (`toby_dialogue`, avail: `toby_told` + reassured):
   - "[c=dim]He digs in his coat and holds something out with both hands. A stuffed bear, worn soft, a name stitched on the tag.[/c]"
   - "The lady gave it to me. The one in your picture. She said she couldn't keep it and she couldn't throw it out."
@@ -404,10 +427,13 @@ intro:" / "Opener photo:").
   - `how_in` (avail: roads asked) — "Something on your mind?": (npc) "You came IN. That's what's on my mind. That road only ever hands a man BACK, and it carried you in easy as Sunday." → ask:
     - **Tell him the truth** → (pi) "I drove up at night. Radio went to static past the county line, and the road just drove. There was nothing to it." / (npc) "(Something goes out of him.) Nothing to it. Every driver in this town tried that same drive till they quit. For you it just drove." / (npc) "[c=dim]Then it wanted you in, mister. I'd chew a while on what that means for getting out.[/c]"
     - **Give him nothing** → (pi) "Same as anybody drives anywhere. I wasn't paying attention." / (npc) "Wasn't paying attention. (He laughs, and there's no fun in it.) No. I don't suppose you were." / (npc) "[c=dim]Sure you weren't. (He looks back down the road.) Nobody drives that road easy. Nobody but you.[/c]"
+  - `paper` (avail: intro asked + carries newspaper; TODO #2, escape-hope: pays in his hoarded batteries + his best road, testimony filed as a note) — "I brought yesterday's newspaper." / "I carried yesterday's paper up with me. April 14, off a Cities rack. It's yours.": (npc) "(He checks the date before anything else on the page. Then he checks it again.)" / (npc) "Printed yesterday. Yesterday this page was OUTSIDE. Presses running. Trucks rolling. Some kid throwing this at a porch." / (npc) "I'd about talked myself out of all that still being there." / (npc) "Hold on. You're not walking off with nothing for it." / (npc) "[c=dim]He digs under his truck seat and comes back with a paper sack, heavy for its size. Flashlight batteries, loose, a careful winter's hoard.[/c]" / (npc) "And hear this, it's the only thing I own worth telling. River road, south. That one held longest before it handed me back. Two bends past the bridge. If any road out of here ever remembers where it goes, it'll be that one." / (pi) "[c=dim]He walked off with the box scores open. Lighter on his feet than I've seen him.[/c]"
 - **Garrick (blip_mid):** greet "Seen you already, son. Door to door, both banks. I sit this square most of the day. Everything in Brimley crosses it sooner or later." Intro tail: (npc) "[c=dim]The Sheriff will tell you to head on home. He knows you can't. He can't either.[/c]"
   - `roads` — "Any safe way around this town?": (npc) "Stay on the roads. People who go off the roads come out wrong-side of where they went in. I've watched it happen to better walkers than you." / (npc) "And don't put your faith in a road going where it went last week. Make for the county line and you'll be back at this well by supper." / (npc) "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]"
-- **Old Pell (grower, the corn pride + uncut-fields grief), Mrs. Calder (the plate for a guest she can't name):** their `PELL_CONVO` / `CALDER_CONVO` beats carry the shared opener + signature questions; their reactive stoop lines live in `scenes/brimley.py` (`beat_pell_coal`, `beat_calder_unlatched`, Calder greet). Key stoop beats:
-  - Pell: "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped."
+- **Old Pell (grower, the corn pride + uncut-fields grief), Mrs. Calder (the plate for a guest she can't name):** their `PELL_CONVO` / `CALDER_CONVO` beats carry the shared opener + signature questions; their reactive stoop lines live in `scenes/brimley.py` (`beat_pell_marked` / `beat_pell_coal`, `beat_calder_unlatched`, Calder greet). Key stoop beats:
+  - Pell: "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped." *(gated OFF once the paper has gone to him; the marked beat below replaces it)*
+  - Pell, after the paper (TODO #2 ripple, `beat_pell_marked`): "Wrote the date in this morning. April 15, plain as you like. First one since the winter." / "[c=dim]Can't say it did anything. Can't say it didn't. I'll write tomorrow in tomorrow.[/c]"
+  - Pell's `paper` exchange (avail: intro asked + carries newspaper; mercy, no item) — "I brought yesterday's newspaper." / "It's yesterday's paper, Mr. Pell. Out of the Cities. I'd like you to have it.": (npc) "(He doesn't reach for it. He reads the masthead where it sits in your hand, slow, like a man reading a headstone.)" / (npc) "April 14. Out there it got to April 14." / (npc) "I quit marking days, son. Nothing was coming that a marked day would bring any closer." / (npc) "(He takes it, folds it once, and tucks it under his arm the way you carry tools.)" / (npc) "There'll be a corn report in here somewhere. Prices. Somebody's weather. Somebody still growing, somewhere south of us." / (npc) "I believe I'll pencil today in when I get home. Just today. We'll see about the one after it." / (pi) "[c=dim]Nothing came back across for it. I wasn't waiting on anything to.[/c]"
   - Calder greet: "No. No, it couldn't be you. Forgive an old woman her hoping."
   - Calder: "I've started leaving the door unlatched at night. It seemed... polite."
   - Royce stoop: "I keep turning it over. Every road out of Brimley hands you back. Except the one that carried you in. If a door only opens the one way, mister, it isn't a door."
@@ -548,6 +574,24 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 - **`the_dream`** (`_log_dream_entry`, note; canon-guarded "a year", no
   recurrence): "I never reached it. One dream, a year ago, and it never came
   again. So why do I know this place."
+- **The newspaper allocations** (TODO #2, `_paper_given`; ONE fires per
+  run, whichever door the copy went through; all notes, never evidence):
+  - `paper_royce`: "Spent the paper on Royce. He paid in hoarded flashlight
+    batteries and the one road that held longest: river road south, two
+    bends past the bridge." / "His account, not mine. But he would know."
+  - `paper_pell`: "Gave Old Pell the paper. He said he'd pencil today into
+    his calendar. He'd stopped marking days at all." / "No trade. Didn't
+    want one."
+  - `paper_toby`: "Gave the kid the funny pages. His mother reads over his
+    shoulder, and she doesn't hum while she's reading." / "Best price I
+    got for it all day."
+  - `paper_sable`: "Left the paper with Sable. He squared it on the desk,
+    unopened, and thanked me for the house." / "The whole town is starving
+    for word from outside. He is not."
+  - `paper_hettie`: "Traded the paper across Hettie's counter for a load
+    of cartridges." / "She was reading it before I reached the door."
+  - `paper_vane`: "Gave the sheriff the paper. Kurt Cobain on the front
+    page." / "He didn't look up from it again."
 - *(The remaining evidence-beat and note excerpts live in the code and are
   transcribed here as Wave 6 lands; see Coverage.)*
 

@@ -98,6 +98,19 @@ def _newspaper(s):
         pygame.draw.line(s, _PAPER_DARK, (4, ly), (11, ly), 1)
 
 
+def _batteries(s):
+    # Royce's hoard: a creased paper sack, two loose cells spilled beside
+    # it (brass caps, steel bodies).
+    pygame.draw.polygon(s, _PAPER, [(2, 6), (8, 6), (9, 13), (1, 13)])
+    pygame.draw.polygon(s, _PAPER_DARK, [(2, 6), (8, 6), (9, 13), (1, 13)], 1)
+    pygame.draw.line(s, _PAPER_DARK, (3, 6), (4, 13), 1)     # sack crease
+    for bx, by in ((10, 8), (12, 10)):                       # loose cells
+        pygame.draw.rect(s, _STEEL, (bx, by, 3, 5))
+        pygame.draw.rect(s, _STEEL_DARK, (bx, by, 3, 5), 1)
+        pygame.draw.rect(s, _BRASS, (bx + 1, by - 1, 1, 1))  # the cap nub
+    return
+
+
 def _unknown(s):
     pygame.draw.line(s, _PAPER_DARK, (6, 5), (10, 5), 1)
     pygame.draw.line(s, _PAPER_DARK, (10, 5), (10, 8), 1)
@@ -170,6 +183,7 @@ _DISPATCH = {
     "mom_notebook":    _mom_notebook,
     "unsent_letter":   _letter,
     "newspaper":       _newspaper,
+    "batteries":       _batteries,
     "cult_calling":    _testimony,
     "cult_bargain":    _testimony,
     "cult_digging":    _testimony,

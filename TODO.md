@@ -131,27 +131,38 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   flow-guarded. The silently-filed journal beat (`show=False`) still lands
   its revisit nudges.
 
-### 2. **[Fable + Opus]** The newspaper choice — pilot for the favor economy  *(planned with the user 2026-07; the broader favor economy stays direction-stage)*
+### 2. **[Fable + Opus]** The newspaper choice — pilot for the favor economy  *(planned with the user 2026-07; the CHOICE LANDED 2026-07 — the broader favor economy stays direction-stage)*
 
-The PI starts with the **April 14, 1994 paper** (existing item; today only
-Hettie's one-shot cartridge trade). Make it a **choose-the-recipient gift**: a
-town cut off since January, starved for word of the outside, one copy — and who
-you give it to yields **different, incommensurable** payoffs, and the town
-**feels** the allocation. This is the concrete **pilot for the favor economy**
-(the action-choice half of the choices pillar, twin to #1's dialogue verb; the
-full economy table is still to be drafted).
+The PI starts with the **April 14, 1994 paper**. It is now a
+**choose-the-recipient gift**: a town cut off since January, starved for
+word of the outside, one copy — and who you give it to yields **different,
+incommensurable** payoffs, and the town **feels** the allocation. This is
+the concrete **pilot for the favor economy** (the action-choice half of the
+choices pillar, twin to #1's dialogue verb; the full economy table is still
+to be drafted).
 
-- **Recipients + payoffs (draft):** Hettie → cartridges (survival); Royce → his
-  hoarded flashlight batteries + the one road he got furthest on (escape-hope;
-  ties #12); Old Pell → he marks his calendar again, **no item** (mercy); Toby →
-  the funny pages (mercy).
-- **Sable → the null / eerie option (the tell).** Give the paper to the
-  lucky host and it lands nowhere: he takes it graciously and it means
-  **nothing** — no reward, no thanks that reads as real. The whole town
-  aches for word of the outside; his want was never the outside, it was
-  the rooms full (NARRATIVE §4), and a newspaper cannot touch it. The
-  anti-reward that characterizes what Sable *is*. Outcome is a `notes`
-  beat / a chill, never an item.
+- ~~**Recipients + payoffs.**~~ **ALL SIX DOORS LANDED (2026-07).** The
+  one-copy economy is the inventory itself (`_paper_given` in
+  `scenes/dialogue.py`: every `paper` exchange gates on still carrying
+  the copy, so the first give closes the rest; the recipient lands in
+  save arg `paper_given`, and every allocation files a case NOTE, never
+  evidence). The doors: **Hettie** → her offer is a real CHOICE now (the
+  volunteered notice ends on trade-or-keep; declining reopens as her
+  "About that trade." menu question) paying one load of cartridges;
+  **Royce** → his hoarded flashlight batteries (new item `batteries`,
+  icon + Tools tab) plus his best road (river road south, two bends past
+  the bridge — testimony, filed as a note; seeds #12); **Old Pell** →
+  no item, mercy: he pencils today back into his calendar, and his
+  stopped-calendar stoop beat SWAPS to the marked one
+  (`beat_pell_marked`, `scenes/brimley.py` — he would contradict
+  himself otherwise); **Toby** → the funny pages ("Calvin's still in
+  it. He didn't stop."; the front page stays out of his house);
+  **Sable** → the NULL and the tell (he squares it on the desk,
+  unopened; no reward, the chill files as the note); **Vane** → the
+  trap (shipped earlier; now records + notes through the same helper).
+  Guarded by flow §17g (the one-copy closure, the null, Pell's stoop
+  swap, Hettie's offer-not-auto-trade) + the adapted §17c menu count
+  and §23(a) trade drive; text in `DIALOGUE.md` Part A + Part B.
 - ~~**Vane is a recipient too — and his is a TRAP, not a gift.**~~ **DONE
   (2026-07, shipped with the Vane arc):** the `paper` exchange in
   `VANE_CONVO` (Kurt Cobain dead on the front page reads, to a man who
