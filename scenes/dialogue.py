@@ -482,6 +482,81 @@ def toby_dialogue(game, npc):
 # EARNED -- it rides the `photo` exchange, given when the PI holds Mara's
 # picture out. The menu is what the PI chooses to ask a child; the old
 # visit-ladder lines are now his answers.
+# ---- The newspaper choice (TODO #2): one copy, five doors ----
+# The PI carried in the April 14 paper, the first word from outside since
+# the mid-January seal, and there is ONE copy. Who he gives it to yields
+# different, incommensurable payoffs, and the town feels the allocation
+# (mood, never a meter). The one-copy economy is the inventory itself:
+# every paper exchange gates on still carrying it, so the first give
+# closes the rest. Every allocation files a case NOTE, never evidence
+# (the fences). Vane's give (the trap; _vane_paper_given below) rides
+# the same helper.
+
+
+def _paper_given(game, who, note_name, note_lines):
+    """Spend the one copy: remove it, record the recipient, file the
+    allocation note (the toast is the tell)."""
+    game.player.inventory.remove("newspaper", 1)
+    game.save.set_arg("paper_given", who)
+    game._log_note(note_name, note_lines)
+
+
+def _royce_paper_given(game):
+    """Royce: escape-hope. He pays in his hoarded flashlight batteries
+    and the one road that held longest (testimony, fallible)."""
+    game.player.inventory.add("batteries", 1)
+    game.audio.play("pickup", 0.6)
+    _paper_given(game, "royce", "paper_royce", [
+        "Spent the paper on Royce. He paid in hoarded flashlight "
+        "batteries and the one road that held longest: river road "
+        "south, two bends past the bridge.",
+        "His account, not mine. But he would know.",
+    ])
+
+
+def _pell_paper_given(game):
+    """Old Pell: mercy, no item. He starts marking days again."""
+    _paper_given(game, "pell", "paper_pell", [
+        "Gave Old Pell the paper. He said he'd pencil today into his "
+        "calendar. He'd stopped marking days at all.",
+        "No trade. Didn't want one.",
+    ])
+
+
+def _toby_paper_given(game):
+    """Toby: mercy. The funny pages; the front page stays out of his
+    house."""
+    _paper_given(game, "toby", "paper_toby", [
+        "Gave the kid the funny pages. His mother reads over his "
+        "shoulder, and she doesn't hum while she's reading.",
+        "Best price I got for it all day.",
+    ])
+
+
+def _sable_paper_given(game):
+    """Sable: the null, and the tell (NARRATIVE 4: his want was never
+    the outside). No reward. The chill is the payoff."""
+    _paper_given(game, "sable", "paper_sable", [
+        "Left the paper with Sable. He squared it on the desk, "
+        "unopened, and thanked me for the house.",
+        "The whole town is starving for word from outside. He is not.",
+    ])
+
+
+def _hettie_trade_quiet(game):
+    """Hettie's barter, mechanics only (the caller narrates: the
+    volunteered offer closes with a stage page, the menu exchange with
+    its own beats). One load of cartridges across the counter."""
+    game.save.set_flag("newspaper_traded", True)
+    game.player.inventory.add("pistol_ammo", 6)
+    game.audio.play("pickup_rare", 0.7)
+    _paper_given(game, "hettie", "paper_hettie", [
+        "Traded the paper across Hettie's counter for a load of "
+        "cartridges.",
+        "She was reading it before I reached the door.",
+    ])
+
+
 TOBY_CONVO = {
     "id":    "toby",
     "name":  "Toby",
@@ -574,6 +649,32 @@ TOBY_CONVO = {
                 ("pi", "You're gonna be okay. I promise. When I'm done, I'll "
                        "come back for you."),
                 ("npc", "[c=dim]Okay. I believe you.[/c]"),
+            ],
+        },
+        # The funny pages (TODO #2, mercy). One copy; giving a kid the
+        # comics spends the town's only word from outside, and that is
+        # the choice.
+        {
+            "key": "paper",
+            "q": "There's a fat run of funnies in yesterday's paper. You "
+                 "want them?",
+            "label": "I brought the funny pages.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("convo_toby_intro_asked")
+                                and g.player.inventory.has("newspaper")),
+            "on_ask": _toby_paper_given,
+            "beats": [
+                ("npc", "The funnies? Whole ones?"),
+                ("pi", "[c=dim](You fold the front page under and away, "
+                       "and hand him the back of the paper.)[/c]"),
+                ("npc", "(He spreads it flat on the table with both "
+                        "hands, like a map of somewhere good.)"),
+                ("npc", "Calvin's still in it. He didn't stop."),
+                ("npc", "Can I keep it? Mom reads over my shoulder when "
+                        "I've got something. She doesn't hum when she's "
+                        "reading."),
+                ("pi", "[c=dim]He gets the funnies. The front page stays "
+                       "out of this house.[/c]"),
             ],
         },
     ],
@@ -708,6 +809,28 @@ HETTIE_CONVO = {
                         "owe this town a goodbye. Just go."),
             ],
         },
+        # TODO #2: the trade she offered, reopenable while the copy is
+        # still in the coat (declining the counter offer is not a
+        # forever-no). Quiet mechanics; the beats narrate.
+        {
+            "key": "paper",
+            "q": "That trade you offered. The paper for what's under the "
+                 "till.",
+            "label": "About that trade.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("hettie_paper_offered")
+                                and not g.save.flag("newspaper_traded")
+                                and g.player.inventory.has("newspaper")),
+            "on_ask": _hettie_trade_quiet,
+            "beats": [
+                ("npc", "(Her hand is under the counter before you finish "
+                        "saying it.)"),
+                ("npc", "Counter. Now. Before I think better of what I "
+                        "keep under here."),
+                ("pi", "[c=dim]One load of cartridges across the counter. "
+                       "She's already reading the front page.[/c]"),
+            ],
+        },
     ],
 }
 
@@ -772,12 +895,38 @@ def hettie_dialogue(game, npc):
     # are. Fires once, after she's met you (her first conversation is
     # too wary for it).
     if (save.flag("hettie_greeted")
+            and not save.flag("hettie_paper_offered")
             and not save.flag("newspaper_traded")
             and game.player.inventory.has("newspaper")):
-        save.set_flag("newspaper_traded", True)
-        game.player.inventory.remove("newspaper", 1)
-        game.player.inventory.add("pistol_ammo", 6)
-        game.audio.play("pickup_rare", 0.7)
+        # TODO #2 rework: she still NOTICES and makes the offer the moment
+        # she sees the date, but the trade is the PLAYER'S call now (one
+        # copy, five doors). Declining keeps the offer open as a menu
+        # question (the `paper` exchange below) for as long as the copy
+        # is still in the coat.
+        save.set_flag("hettie_paper_offered", True)
+
+        def _offer():
+            def _pick(idx):
+                if idx == 0:
+                    _hettie_trade_quiet(game)
+                    game.dialog.show([
+                        "[c=dim]One load of cartridges across the "
+                        "counter. She's already reading yesterday's news "
+                        "like a letter from someone she'd given up "
+                        "on.[/c]",
+                    ], speaker="Hettie", voice="blip_high",
+                        portrait="hettie")
+                else:
+                    game.dialog.show([
+                        "(She looks at your pocket a beat longer, then "
+                        "lets it go.) Suit yourself. The shelf keeps.",
+                    ], speaker="Hettie", voice="blip_high",
+                        portrait="hettie")
+            game.dialog.show_choice(
+                "The offer sits on the counter.",
+                ["Trade the paper.",
+                 "Keep it. I've got somewhere for it."],
+                _pick, speaker="", voice="blip_soft", portrait="narrator")
         game.dialog.show([
             "[c=dim]Her eyes stop on the newspaper folded in your coat "
             "pocket. She goes very still.[/c]",
@@ -788,10 +937,8 @@ def hettie_dialogue(game, npc):
             "trucks stopped.",
             "Leave it on the counter and take what's under it. The till's "
             "been empty since the new year. The shelf under it hasn't.",
-            "[c=dim]One load of cartridges across the counter. She's "
-            "already reading yesterday's news like a letter from someone "
-            "she'd given up on.[/c]",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        ], speaker="Hettie", voice="blip_high", portrait="hettie",
+            on_complete=_offer)
         return
     # The organic conversation, PRESENTED as a frozen close-up TABLEAU (#2b,
     # the Sable/Vane precedent): the gutted shop behind her counter, her one
@@ -859,7 +1006,10 @@ def _vane_paper_given(game):
     north. One copy: giving it to him means everyone else goes without
     (Hettie's cartridge trade among them)."""
     from systems.config import VANE_PAPER_DESPAIR
-    game.player.inventory.remove("newspaper", 1)
+    _paper_given(game, "vane", "paper_vane", [
+        "Gave the sheriff the paper. Kurt Cobain on the front page.",
+        "He didn't look up from it again.",
+    ])
     _vane_ledger(game, VANE_PAPER_DESPAIR)
 
 
@@ -1487,6 +1637,37 @@ SABLE_CONVO = {
                         "here. Safer than out there."),
             ],
         },
+        # The newspaper (TODO #2): the NULL door, and the tell. To
+        # everyone else in Brimley the paper is the first word from
+        # outside in three months; to the lucky host it is a coaster.
+        # His want was never the outside (NARRATIVE 4). No reward on
+        # purpose; the chill files as the note.
+        {
+            "key": "paper",
+            "q": "Yesterday's newspaper, Mr. Sable. First word from "
+                 "outside since the winter. It's the house's if you "
+                 "want it.",
+            "label": "I brought yesterday's newspaper.",
+            "once": True,
+            "avail": lambda g: g.player.inventory.has("newspaper"),
+            "on_ask": _sable_paper_given,
+            "beats": [
+                ("npc", "(He takes it in both hands and squares it on the "
+                        "desk, unopened, the fold lined up with the "
+                        "register's edge.)"),
+                ("npc", "That is a kindness, friend. The Arcadia thanks "
+                        "you."),
+                ("npc", "We will set it out in the common room. Guests do "
+                        "like having something to read."),
+                ("pi", "You're not going to open it?"),
+                ("npc", "Oh, I expect I will get to it. The news keeps, "
+                        "friend. It always has."),
+                ("npc", "Now. Was there anything else?"),
+                ("pi", "[c=dim]Half this town would give a finger for "
+                       "that page. He squared it to the desk like a "
+                       "coaster.[/c]"),
+            ],
+        },
         # THE WAY DOWN (the act break, now an explicit ASK -- not a silent
         # auto-handoff). Offered once the PI is ready (3 evidence) and does
         # not already carry it; picking it fires _sable_give_invitation. A
@@ -1690,6 +1871,36 @@ PELL_CONVO = {
                         "anymore.[/c]"),
             ],
         },
+        # The newspaper (TODO #2): mercy, no item. An old man who
+        # stopped marking days picks the calendar back up. His stoop
+        # beat swaps to match (scenes/brimley.py).
+        {
+            "key": "paper",
+            "q": "It's yesterday's paper, Mr. Pell. Out of the Cities. "
+                 "I'd like you to have it.",
+            "label": "I brought yesterday's newspaper.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("convo_pell_intro_asked")
+                                and g.player.inventory.has("newspaper")),
+            "on_ask": _pell_paper_given,
+            "beats": [
+                ("npc", "(He doesn't reach for it. He reads the masthead "
+                        "where it sits in your hand, slow, like a man "
+                        "reading a headstone.)"),
+                ("npc", "April 14. Out there it got to April 14."),
+                ("npc", "I quit marking days, son. Nothing was coming "
+                        "that a marked day would bring any closer."),
+                ("npc", "(He takes it, folds it once, and tucks it under "
+                        "his arm the way you carry tools.)"),
+                ("npc", "There'll be a corn report in here somewhere. "
+                        "Prices. Somebody's weather. Somebody still "
+                        "growing, somewhere south of us."),
+                ("npc", "I believe I'll pencil today in when I get home. "
+                        "Just today. We'll see about the one after it."),
+                ("pi", "[c=dim]Nothing came back across for it. I wasn't "
+                       "waiting on anything to.[/c]"),
+            ],
+        },
     ],
 }
 
@@ -1840,6 +2051,42 @@ ROYCE_CONVO = {
                         ("npc", "[c=dim]Sure you weren't. (He looks back down the road.) Nobody drives that road easy. Nobody but you.[/c]"),
                     ], None),
                 ]),
+            ],
+        },
+        # The newspaper (TODO #2): escape-hope. Proof the outside is
+        # still running, paid for in the batteries he hoarded for a
+        # drive he quit believing in, and the one road that held
+        # longest (his account: testimony, fallible, filed as a note).
+        {
+            "key": "paper",
+            "q": "I carried yesterday's paper up with me. April 14, off "
+                 "a Cities rack. It's yours.",
+            "label": "I brought yesterday's newspaper.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("convo_royce_intro_asked")
+                                and g.player.inventory.has("newspaper")),
+            "on_ask": _royce_paper_given,
+            "beats": [
+                ("npc", "(He checks the date before anything else on the "
+                        "page. Then he checks it again.)"),
+                ("npc", "Printed yesterday. Yesterday this page was "
+                        "OUTSIDE. Presses running. Trucks rolling. Some "
+                        "kid throwing this at a porch."),
+                ("npc", "I'd about talked myself out of all that still "
+                        "being there."),
+                ("npc", "Hold on. You're not walking off with nothing "
+                        "for it."),
+                ("npc", "[c=dim]He digs under his truck seat and comes "
+                        "back with a paper sack, heavy for its size. "
+                        "Flashlight batteries, loose, a careful winter's "
+                        "hoard.[/c]"),
+                ("npc", "And hear this, it's the only thing I own worth "
+                        "telling. River road, south. That one held "
+                        "longest before it handed me back. Two bends "
+                        "past the bridge. If any road out of here ever "
+                        "remembers where it goes, it'll be that one."),
+                ("pi", "[c=dim]He walked off with the box scores open. "
+                       "Lighter on his feet than I've seen him.[/c]"),
             ],
         },
     ],

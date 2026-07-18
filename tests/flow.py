@@ -1270,8 +1270,11 @@ def main():
     check(ga.dialog.choices is not None,
           "ask: once greeted, the menu of the PI's questions opens")
 
-    # (2) The menu offers only AVAILABLE questions; base ones plus a leave.
-    base = [ex for ex in SABLE_CONVO["exchanges"] if "avail" not in ex]
+    # (2) The menu offers only AVAILABLE questions; open ones plus a leave
+    # (an avail-gated exchange whose gate holds on a fresh game -- the
+    # paper, carried in from the start -- counts as open).
+    base = [ex for ex in SABLE_CONVO["exchanges"]
+            if "avail" not in ex or ex["avail"](ga)]
     check(len(ga.dialog.choices) == len(base) + 1,
           "ask: the menu lists the open questions plus a leave option")
     # Every option is a first-person spoken line, not an abstract topic
@@ -1461,6 +1464,17 @@ def main():
     check(getattr(gt, "_tableau", None) is not None
           and gt._tableau["kind"] == "sable",
           "ask: the Sable close-up tableau opens (kind 'sable')")
+    # The #2b sound pass: every close-up carries its room tone on the
+    # ambient channel (the world-freeze froze the scene's scheduled
+    # ambients, so the beds keep the room breathing), and the cue set is
+    # built into the library.
+    check(not gt.audio.enabled
+          or all(k in gt.audio.sfx for k in
+                 ("lean_in", "fan_air", "window_wind", "bulb_hum",
+                  "nave_air", "corn_hiss", "talk_breath", "altar_air")),
+          "audio: the tableau cue set is built")
+    check(gt.audio._room_tone == "fan_air",
+          "audio: Sable's close-up starts its room tone (the fan)")
     check(gt._convo is not None and gt._convo.tableau is True,
           "ask: the conversation runs in tableau presentation mode")
     # The greeting lands as the tableau CAPTION, not a floating line / modal band.
@@ -1486,6 +1500,8 @@ def main():
     gt._tableau_input(_EscKey())
     check(gt._tableau is None and gt._convo.active is False,
           "ask: Escape closes the tableau and ends the talk")
+    check(gt.audio._room_tone is None,
+          "audio: closing the tableau drops its room tone")
 
     # --- 17d. The ask verb EXPANDED to the principals (TODO #1) ----------
     # Vane, Hettie, Toby, and Crane each carry their own conversation, and
@@ -2120,6 +2136,114 @@ def main():
                   and getattr(n, "alive", True) for n in gvo2.scene.npcs),
           "vane-arc: the tended holdout still stands at three evidence")
 
+    # --- 17g. The newspaper choice (TODO #2): one copy, six doors --------
+    # The April 14 paper is a choose-the-recipient gift: Hettie's trade,
+    # Vane's trap (17f above), Royce's batteries + best road, Pell's
+    # calendar (no item, mercy), Toby's funny pages, and Sable's NULL (the
+    # tell). One copy: any give closes every other door (the inventory IS
+    # the economy). Allocations file as NOTES, never evidence.
+    from scenes.dialogue import (ROYCE_CONVO as _RC7, PELL_CONVO as _PC7,
+                                 TOBY_CONVO as _TC7,
+                                 HETTIE_CONVO as _HC7,
+                                 SABLE_CONVO as _SC7,
+                                 _sable_paper_given, hettie_dialogue
+                                 as _het_fn7)
+    _pex = {}
+    for _cv7 in (_RC7, _PC7, _TC7, _HC7, _SC7):
+        _pe7 = next((ex for ex in _cv7["exchanges"]
+                     if ex["key"] == "paper"), None)
+        check(_pe7 is not None and _pe7.get("once"),
+              f"paper: {_cv7['id']} carries a once-only paper exchange")
+        _pex[_cv7["id"]] = _pe7
+    # Royce's door: the give spends the copy, pays in batteries + the
+    # road account, records the recipient, and never touches the count.
+    g7 = new_game()
+    g7.save.set_flag("convo_royce_intro_asked", True)
+    check(_pex["royce"]["avail"](g7),
+          "paper: introduced and carrying, Royce's door is open")
+    _ev7 = evidence_count(g7)
+    _pex["royce"]["on_ask"](g7)
+    check(not g7.player.inventory.has("newspaper")
+          and g7.player.inventory.has("batteries")
+          and g7.save.arg("paper_given") == "royce",
+          "paper: Royce pays in batteries and the copy is spent")
+    check(evidence_count(g7) == _ev7
+          and any(isinstance(e, dict) and e.get("name") == "paper_royce"
+                  for e in g7.save.arg("notes", [])),
+          "paper: the allocation files as a NOTE, never evidence")
+    # ...and every other door is now shut (the one-copy economy).
+    g7.save.set_flag("convo_pell_intro_asked", True)
+    g7.save.set_flag("convo_toby_intro_asked", True)
+    g7.save.set_flag("hettie_paper_offered", True)
+    g7.save.set_flag("convo_vane_intro_asked", True)
+    _vpe7 = next(ex for ex in _VC["exchanges"] if ex["key"] == "paper")
+    check(not any(_pex[k]["avail"](g7)
+                  for k in ("pell", "toby", "hettie", "sable"))
+          and not _vpe7["avail"](g7),
+          "paper: one copy -- the first give closes every other door")
+    # Sable's door is the NULL: nothing comes back but the chill.
+    g8 = new_game()
+    _inv8 = sorted(k for k, _q in g8.player.inventory.to_save()["items"])
+    _sable_paper_given(g8)
+    _inv8b = sorted(k for k, _q in g8.player.inventory.to_save()["items"])
+    check(g8.save.arg("paper_given") == "sable"
+          and _inv8b == [k for k in _inv8 if k != "newspaper"]
+          and any(isinstance(e, dict) and e.get("name") == "paper_sable"
+                  for e in g8.save.arg("notes", [])),
+          "paper: Sable's door is the null -- no reward, only the note")
+    # Pell's ripple: the stoop line flips from the stopped calendar to
+    # the marked one (he would contradict himself otherwise).
+    g9 = new_game()
+    g9.load_scene_now("brimley")
+    ready(g9)
+    _pell9 = next((n for n in g9.scene.npcs if n.name == "Old Pell"), None)
+    check(_pell9 is not None, "paper: Old Pell stands in Brimley")
+    if _pell9 is not None:
+        g9.save.set_arg("evidence", [{"name": "p9", "content": "x"}])
+        g9.save.set_arg("paper_given", "pell")
+        _p9_seen = []
+        _p9_orig = g9.dialog.show
+        g9.dialog.show = (lambda pages, *a, **k:
+                          (_p9_seen.extend([pages] if isinstance(pages, str)
+                                           else list(pages)),
+                           _p9_orig(pages, *a, **k))[-1])
+        _pell9.dialogue_fn(g9, _pell9)
+        _p9_txt = " ".join(_p9_seen)
+        check("Wrote the date in" in _p9_txt
+              and "Stopped" not in _p9_txt,
+              "paper: Pell's stoop swaps to the marked calendar")
+        g9.dialog.show = _p9_orig
+    # Hettie's counter: the offer is a CHOICE now, not an auto-trade;
+    # declining keeps the copy and reopens as her menu question.
+    g10 = new_game()
+    g10.save.set_flag("hettie_greeted", True)
+    class _Npc10:
+        name = "Hettie"
+        portrait = "hettie"
+        sprite_kind = "hettie"
+    _het_fn7(g10, _Npc10())
+    for _ in range(12):                     # page the notice to the offer
+        if g10.dialog.choices is not None:
+            break
+        g10.dialog.advance()
+    check(g10.dialog.choices is not None
+          and g10.player.inventory.has("newspaper")
+          and not g10.save.flag("newspaper_traded"),
+          "paper: Hettie OFFERS; nothing trades before the player picks")
+    g10.dialog.choice_idx = 1               # keep it
+    g10.dialog.advance()
+    check(g10.player.inventory.has("newspaper")
+          and g10.save.flag("hettie_paper_offered"),
+          "paper: declining keeps the copy in the coat")
+    check(_pex["hettie"]["avail"](g10),
+          "paper: the declined trade reopens as her menu question")
+    _pex["hettie"]["on_ask"](g10)
+    check(g10.save.flag("newspaper_traded")
+          and not g10.player.inventory.has("newspaper")
+          and g10.save.arg("paper_given") == "hettie"
+          and g10.player.inventory.count("pistol_ammo") >= 14,
+          "paper: the reopened trade still pays her cartridges")
+
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
     # once -- so the grove is left as the work without the worker, with no
@@ -2328,11 +2452,23 @@ def main():
     gp.save.set_flag("hettie_greeted", True)    # she has met you once
     _ammo0 = gp.player.inventory.count("pistol_ammo")
     hettie_dialogue(gp, None)
+    # TODO #2: she OFFERS now (the trade is the player's call); page the
+    # notice down to the counter choice and take it.
+    for _ in range(12):
+        if gp.dialog.choices is not None:
+            break
+        gp.dialog.advance()
+    check(gp.dialog.choices is not None
+          and not gp.save.flag("newspaper_traded"),
+          "paper: Hettie offers the trade; nothing moves till the pick")
+    gp.dialog.choice_idx = 0                    # trade it
+    gp.dialog.advance()
     check(gp.save.flag("newspaper_traded")
           and not gp.player.inventory.has("newspaper")
           and gp.player.inventory.count("pistol_ammo") == _ammo0 + 6,
           "paper: Hettie trades the paper for one load of cartridges")
     _ammo1 = gp.player.inventory.count("pistol_ammo")
+    gp.dialog.active = False                    # dismiss the closing page
     hettie_dialogue(gp, None)
     check(gp.player.inventory.count("pistol_ammo") == _ammo1,
           "paper: the trade fires exactly once (can't be farmed)")
@@ -2566,6 +2702,9 @@ def main():
               and getattr(gm, "_tableau", None) is not None
               and gm._tableau["kind"] == "mara",
               "mara: the confrontation opens inside the close-up tableau")
+        check(gm.audio._room_tone is None,
+              "mara: her close-up plays in the authored silence (no room "
+              "tone; silence is a move)")
         # THE REVEAL (2026-07): she is LISTED as one of the congregation
         # (the caption name) until the greet's unmask beat lifts the mask
         # away; then the listing turns to her name.

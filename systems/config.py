@@ -288,7 +288,10 @@ KING_THREAT_FAR = 340.0        # px: a dark void at/beyond this
 # top of a small residual WATCHER_FLOOR: ignore them and it SNOWBALLS. Clear
 # them all -- stare each down for WATCHER_GAZE_DISPEL s, or the axe / a round --
 # and the domain looks elsewhere for the grace. Cover pauses the timer and
-# drops the hold; safe rooms (KING_FREE_SCENES) suppress them entirely.
+# drops the hold; safe rooms (KING_FREE_SCENES) suppress them entirely; and
+# the gaze only OPENS under the open sky or in the deep (WATCHER_OPEN_SCENES,
+# defined after UNDERGROUND_SCENES below): no Watcher ever manifests inside a
+# surface building.
 WATCHER_WAKE_EV = 1            # evidence at which the domain starts watching
 WATCHER_MAX = 5               # the field caps here (survivable, just under King)
 WATCHER_GRACE = 6.0           # s of exposure before the first Watcher of a wave
@@ -669,6 +672,17 @@ UNDERGROUND_SCENES = {
     # its underground treatment (baseline rot + Enemy-cultist pursuit).
     "the_sump", "the_cells", "the_old_stores",
 }
+
+# Where His gaze can OPEN (2026-07 ruling: a Watcher never manifests inside
+# a surface building -- four walls and a roof are not His medium; He watches
+# under the open sky, and in His own deep). Derived from the outdoor +
+# underground sets plus the open-sky keys those sets don't carry, so a new
+# surface interior is excluded by default and a new outdoor scene should be
+# added to OUTDOOR_SCENES as usual. Read by _tick_watchers (the whole wave
+# machine gates on it) and _roll_fold_watcher (a fold into a surface
+# interior binds nothing). KING_FREE_SCENES still suppress on top.
+WATCHER_OPEN_SCENES = (OUTDOOR_SCENES | UNDERGROUND_SCENES
+                       | {"brimley", "effigy_grove"})
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure
 # of the vessel made visible -- His attention settling on you, not snow, not

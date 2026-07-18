@@ -204,13 +204,17 @@ class Conversation:
         name = "" if who == "pi" else self.convo.get("name", "")
         if callable(name):
             name = name(self.game)
-        if self.tableau:
-            # In the tableau the line is a caption over the close-up; E
-            # advances it, which fires _step (the next beat).
-            self.game._tableau_caption(who, name, text, self._step)
-            return
         voice = (self.convo.get("pi_voice", "blip_soft") if who == "pi"
                  else self.convo.get("voice", "blip_mid"))
+        if self.tableau:
+            # In the tableau the line is a caption over the close-up; E
+            # advances it, which fires _step (the next beat). The line
+            # still SPEAKS: one voice blip at line start (the seats sat
+            # mute per-beat before the #2b sound pass -- every other
+            # dialogue channel voices its lines).
+            self.game.audio.play(voice, 0.5)
+            self.game._tableau_caption(who, name, text, self._step)
+            return
         # float_speech takes the speaker object directly and fires
         # on_complete when the line finishes (auto after read-time, or E
         # near the speaker) -- which drives the next beat.

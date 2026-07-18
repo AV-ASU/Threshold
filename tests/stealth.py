@@ -880,6 +880,56 @@ def main():
         pygame.key.get_pressed = _orig_gp
     check(splashed, "wade: a wet footfall throws a splash noise event")
 
+    # --- 11. Watchers open under the open sky / in the deep, NEVER inside
+    # a surface building (WATCHER_OPEN_SCENES, 2026-07 ruling) -------------
+    from systems.config import (WATCHER_OPEN_SCENES, WATCHER_WAKE_EV,
+                                 WATCHER_GRACE, WATCHER_SPAWN_BASE,
+                                 KING_FREE_SCENES)
+    check("shop" not in WATCHER_OPEN_SCENES
+          and "church" not in WATCHER_OPEN_SCENES
+          and "sheriff_office" not in WATCHER_OPEN_SCENES
+          and "schoolhouse" not in WATCHER_OPEN_SCENES,
+          "watchers: surface interiors are outside the gaze's reach")
+    check("brimley" in WATCHER_OPEN_SCENES
+          and "effigy_grove" in WATCHER_OPEN_SCENES
+          and "works_sign" in WATCHER_OPEN_SCENES,
+          "watchers: the open sky and the deep stay in it")
+    # Inside the shop: exposed, evidence pulled, long past every timer --
+    # and no Watcher ever opens.
+    g = new_game()
+    g.load_scene_now("shop", "default")
+    tick(g, 30)
+    g.save.set_arg("evidence", [{"name": f"w{i}"}
+                                for i in range(WATCHER_WAKE_EV)])
+    g.player.hidden = None
+    for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
+        g._tick_watchers(1 / 30.0)
+        g.player.hidden = None
+    check(not g._watchers and not g._cursed,
+          "watchers: none ever manifests inside a surface building")
+    # A live wave clears at the door and the grace re-arms for the way out.
+    g._cursed = True
+    g._spawn_watcher()
+    g._tick_watchers(1 / 30.0)
+    check(not g._watchers and not g._cursed
+          and g._watcher_clone_t == WATCHER_GRACE,
+          "watchers: stepping indoors clears the wave and sets the grace")
+    # Same clock in the open: the wave DOES open (the mechanic still works).
+    g2 = new_game()
+    g2.load_scene_now("brimley", "default")
+    tick(g2, 30)
+    clear_cult(g2)
+    g2.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(WATCHER_WAKE_EV)])
+    assert "brimley" not in KING_FREE_SCENES
+    for _ in range(int((WATCHER_GRACE + 2) * 30)):
+        g2.player.hidden = None
+        g2._tick_watchers(1 / 30.0)
+        if g2._watchers:
+            break
+    check(bool(g2._watchers),
+          "watchers: the same exposure in the open still opens the wave")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

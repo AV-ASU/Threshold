@@ -676,12 +676,26 @@ def build_brimley():
     _resident(school_out[0] + 2, school_out[1], "Old Pell", "old_townsman",
               movement="homebody", radius=34, convo=PELL_CONVO,
               vanish=False,
-        beats=[("beat_pell_coal",
-                lambda g: g._evidence_count() >= 1, [
-            "You've been digging at it. I can tell. It's on you like "
-            "coal dust.",
-            "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped.",
-        ])])
+        beats=[
+            # The newspaper's ripple (TODO #2): once the PI has spent the
+            # one copy on him, the stopped-calendar stoop line would be a
+            # lie -- he picked the pencil back up. The marked beat fires
+            # first and the coal beat stands down for good.
+            ("beat_pell_marked",
+             lambda g: g.save.arg("paper_given") == "pell", [
+                 "Wrote the date in this morning. April 15, plain as "
+                 "you like. First one since the winter.",
+                 "[c=dim]Can't say it did anything. Can't say it "
+                 "didn't. I'll write tomorrow in tomorrow.[/c]",
+             ]),
+            ("beat_pell_coal",
+             lambda g: (g._evidence_count() >= 1
+                        and g.save.arg("paper_given") != "pell"), [
+                 "You've been digging at it. I can tell. It's on you like "
+                 "coal dust.",
+                 "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped.",
+             ]),
+        ])
     # Mrs. Calder -- by the east-bank square. She sets a place for a guest
     # she can't name. She watches the road. She does not wave.
     _resident(50, 22, "Mrs. Calder", "townswoman",

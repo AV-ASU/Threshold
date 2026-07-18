@@ -150,7 +150,13 @@ it renders the procedural sprites to a labelled PNG strip.
     Chamber altar, `_open_altar_tableau`) is the OBJECT close-up of His face
     on the stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN
     (BREAK → `_play_ending("rite_broken")`), Escape backs out. All #2b
-    seats ship. Player-facing text is in `DIALOGUE.md` Part B.
+    seats ship. **The #2b sound pass (2026-07)** gave every close-up its
+    soundscape: `lean_in` on open (the world holding its breath) + a
+    per-seat ROOM TONE looped while it is up (`_TABLEAU_TONES` here,
+    `Audio.room_tone`; the world-freeze had left the frames in dead
+    air). Mara's seat stays silent by design (`_mara_voice`
+    force-silences the room). See `DESIGN.md` §11. Player-facing text is
+    in `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
@@ -456,7 +462,11 @@ it renders the procedural sprites to a labelled PNG strip.
   (its eyes go dark, then it dissolves), or the **axe** / a **round**.
   **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
   `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
-  `FOLD_WATCHER_CHANCE` to open an extra. (The old GAZE_BIND high-visibility
+  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze only OPENS under the
+  open sky or in the deep (2026-07 ruling, `WATCHER_OPEN_SCENES`): no
+  Watcher ever manifests inside a surface building** — any interior door
+  clears the wave, and the grace runs before it re-forms outside
+  (`tests/stealth.py` §11). (The old GAZE_BIND high-visibility
   trigger is retired.) The gun and axe **share one weapon slot** (left-click
   to use; switch which is equipped from the inventory screen).
 - **Killing locals**: the gun is *not* cult-only. A clean round drops any
@@ -683,8 +693,9 @@ it renders the procedural sprites to a labelled PNG strip.
      actually read the thing). When you add a trigger, state the exact beat it fires on
      and verify it.
   3. **Mechanics in player-facing text.** No name/description/note/caption may state a
-     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", a moth
-     note that says "kill them quiet"). State the FICTION; never the system. (Companion to
+     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", the old
+     moth note's "kill them quiet" tail, cut in the 2026-07 dialogue audit). State the
+     FICTION; never the system. (Companion to
      the no-dashes HARD RULE: player-facing strings are held to a higher bar than code.)
   4. **Editorializing / over-written captions.** A narrator beat states the fact and
      stops; it never spells out the conclusion the player is meant to draw, and a routine

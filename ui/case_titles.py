@@ -17,6 +17,13 @@ NOTE_TITLES = {
     "case_timeline":           "Timeline",
     # The intake + the interior beats.
     "the_case":                "The Case",
+    # The newspaper choice (TODO #2): the one copy, wherever it went.
+    "paper_royce":             "Royce's Best Road",
+    "paper_pell":              "Pell's Calendar",
+    "paper_toby":              "The Funny Pages",
+    "paper_sable":             "The Unopened Paper",
+    "paper_hettie":            "The Counter Trade",
+    "paper_vane":              "The Front Page",
     "the_dream":               "The Dream, a Year Back",
     "the_rite":                "What I Did at the Fire",
     "saw_the_door":            "The Door in the Air",

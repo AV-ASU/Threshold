@@ -34,6 +34,12 @@ ITEM_DEFS = {
     "cellar_key":    {"name": "Lodge cellar key",
                        "kind": "key",
                        "desc": "A heavy iron key."},
+    "batteries":     {"name": "Flashlight Batteries",
+                       "kind": "key",
+                       "desc": "A paper sack of loose flashlight "
+                               "batteries, heavy for its size. Royce "
+                               "hoarded them one drive at a time, for a "
+                               "road that never opened."},
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
                        "desc": "A heavy steel flashlight. Press [F] to "
