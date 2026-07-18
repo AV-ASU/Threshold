@@ -120,7 +120,7 @@ A shot is **loud** — His gaze hears it. The flashlight, the splitting axe
 over them.
 
 **The cruelest truth of the gun: it only ever works on the victims.** A
-clean round drops any **local** instantly — Hettie, the Sheriff, the
+clean round drops any **local** instantly — Hettie, the Sheriff,
 Toby — *regardless* of the evidence gate (that gate only ever
 protected the cult). So the one thing your weapon reliably kills is the
 **claimed innocents you came to help and can't save** — your instrument of
@@ -332,20 +332,24 @@ Only display names and fiction change.
   **claiming** cult that renders no bodies (no cannibalism). The `works_cistern`
   is **the Cistern** (the dig hitting the river — *"the water runs on,
   downward, and does not echo back"*); `depths_threshing` is a literal grain
-  **tithe** (*"An offering. Not a stockpile."*); and the last tallow leak —
-  the basement lodge-candle callback (*"wax on your thumb… tasting it"*) — is
-  re-cut to candle **devotion** (*"the same guttering candles as the dark
-  below… the Lodge has been part of it the whole time"*). A flow.py guard
+  **tithe** (*"The town's whole harvest, carried down and never carried
+  back up."*); and the last tallow leak — the basement lodge-candle
+  callback (*"wax on your thumb… tasting it"*) — is re-cut to candle
+  **devotion** (*"the same guttering candles as the dark below, kept
+  burning up here too"* — its old "part of it the whole time" tail was
+  later cut in the #13b editorializing trim). A flow.py guard
   (§19) locks the fiction out of the scene source.
 - ~~**Scrub time-loop language (code ↔ NARRATIVE §2).**~~ **DONE.** The fold is
-  **spatial, not temporal**. Old Pell reads as **stasis** (*"where would I be
-  counting toward?"*); the road carries the **fold** (Royce: *"the corn just
-  hands you back where you started"*). No line says the days repeat / fold
-  back on themselves. Locked by the flow.py §19 guard.
+  **spatial, not temporal**. Old Pell reads as **stasis** (*"I've got the
+  calendar where I want it. Stopped."*); the road carries the **fold**
+  (Royce: *"The corn handed me back every time."*). No line says the days
+  repeat / fold back on themselves. Locked by the flow.py §19 guard.
 - ~~**Cut Toby's "dad" line.**~~ **DONE.** *"My dad went down too. He
   still comes home for dinner."* is gone (it leaked that claiming is
   *perceptible* + happens by *individual descent*, both forbidden by NARRATIVE §2). His
-  unnameable-wrongness lines stay (*"I keep biting my tongue. To check."*).
+  unnameable-wrongness register survives in his convo (*"I tried to lie
+  yesterday. My mouth wouldn't."*); the old tongue line lives on only as
+  his tableau's held-shut mouth (an art direction note, no longer spoken).
   Locked by the flow.py §19 guard.
 - **Seed the door's dream (DONE).** The origin (NARRATIVE §2) is now diegetic: reading
   Mara's journal through a third time triggers a wordless **door-dream
@@ -619,8 +623,8 @@ forest on the other side.
 Roads cut through the band as clean dirt corridors -- they're the only
 *predictable* navigation. Garrick (an old local at the well) drops the
 warning offhand: *"Stay on the roads. People who go off the roads
-come out wrong-side."* Locals don't theorise about the fold; they
-just know don't go off the path.
+come out wrong-side of where they went in."* Locals don't theorise
+about the fold; they just know don't go off the path.
 
 The helper (`scenes/base.scatter_forest_band`) is char-parameterised:
 the outdoor scenes get trees ('T' solid / 'p' passable); the
