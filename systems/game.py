@@ -3153,12 +3153,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 elif ev.key == pygame.K_f:
                     self._toggle_flashlight()
                 elif ev.key == pygame.K_F5:
-                    # The cot is the only save point. F5 used to
-                    # write a snapshot from anywhere; that lifted
-                    # the horror of the bed-as-typewriter rule.
-                    # Tell the player so the lesson lands once.
+                    # There is no save-by-hand: evidence pickup is the
+                    # ONLY writer of the one slot (2026-07 save rework;
+                    # the cot is pure rest). F5 answers with the truth
+                    # so the lesson lands once.
                     self.audio.play("bump", 0.4)
-                    self.show_notice("Sleep at the cot to save.",
+                    self.show_notice("The case keeps itself. Every find "
+                                     "writes it down.",
                                       duration=2.0)
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()

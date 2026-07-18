@@ -378,9 +378,11 @@ Only display names and fiction change.
   them SNOWBALLS toward the King line; the field caps at `WATCHER_MAX`. Clear
   them (gaze `WATCHER_GAZE_DISPEL` s / axe / round, `_dispel_watcher`); cover
   pauses the timer and drops the hold. The old high-visibility
-  `_tick_gaze_bind` / `GAZE_BIND_*` trigger is retired. Notices read as **His
-  eye reaching into the plane** ("An eye has opened on you"), never a
-  side-cult's spell. Internal names (`_cursed`, `_apply_curse`) stay plumbing.
+  `_tick_gaze_bind` / `GAZE_BIND_*` trigger is retired. A Watcher opening
+  carries **no narrator box at all** (play-notes cut): the void-sting and
+  the eye itself are the tell — any future text must read as **His eye
+  reaching into the plane**, never a side-cult's spell. Internal names
+  (`_cursed`, `_apply_curse`) stay plumbing.
   **The gaze only OPENS under the open sky or in the deep (2026-07 ruling,
   `WATCHER_OPEN_SCENES`): no Watcher ever manifests inside a surface
   building.** Step through any interior door and the wave clears; step back

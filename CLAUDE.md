@@ -693,8 +693,9 @@ it renders the procedural sprites to a labelled PNG strip.
      actually read the thing). When you add a trigger, state the exact beat it fires on
      and verify it.
   3. **Mechanics in player-facing text.** No name/description/note/caption may state a
-     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", a moth
-     note that says "kill them quiet"). State the FICTION; never the system. (Companion to
+     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", the old
+     moth note's "kill them quiet" tail, cut in the 2026-07 dialogue audit). State the
+     FICTION; never the system. (Companion to
      the no-dashes HARD RULE: player-facing strings are held to a higher bar than code.)
   4. **Editorializing / over-written captions.** A narrator beat states the fact and
      stops; it never spells out the conclusion the player is meant to draw, and a routine

@@ -333,7 +333,7 @@ class RotMixin:
                 "every hooded thing in earshot turned my way at once. Then "
                 "it was not there anymore.",
                 "A moth, then. A moth that works for whatever owns this "
-                "town. Keep clear of them or kill them quiet.",
+                "town.",
             ]})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
