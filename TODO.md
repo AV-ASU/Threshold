@@ -805,10 +805,16 @@ faults and a batch landed against them** (guarded by stealth §13):
 Landed with the pass (2026-07, maintainer-approved): **river stones**,
 the proactive distraction verb -- finite walk-over pickups where the
 water runs, right-click lobs one, the landing is a placed noise event
-that turns idle scouts and never diverts a sighting-born search
-(`STONE_*` config; DESIGN.md §12; stealth §14). Spitballed and parked
-for a decision: the crouch stance (after the next playtest) and the
-window-vault prototype (one building, look-passed, last).
+that turns idle scouts and never diverts a sighting-born search -- plus
+the two approved follow-ons on the same plumbing: **a stone through a
+window** (the loud tier: diverts even a search, breaks once, dark +
+shard-toothed for the run via the broken_windows ledger; draw only,
+never an entrance) and **a stone down the dead well** (the shaft's
+rattle routes the square; no bottom ever sounds, wordless). All in
+`STONE_*`/`GLASS_*`/`WELL_ECHO_*` config; DESIGN.md §12; stealth §14.
+Spitballed and parked for a decision: the crouch stance (after the next
+playtest) and the window-vault prototype (one building, look-passed,
+last).
 
 What remains proves out only against further play: the new constants'
 FEEL, the suspicion fill curve (`SUS_FILL_RATE`), the concealment

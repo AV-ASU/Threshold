@@ -3387,9 +3387,11 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
                   area=pygame.Rect(i, 0, 1, card.get_height()))
 
 
-def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
+def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False):
     """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
-    core and a muntin cross. `(ndx, ndy)` is the exposed face direction."""
+    core and a muntin cross. `(ndx, ndy)` is the exposed face direction.
+    `broken` (a thrown stone, TODO #5) swaps the lit glass for a dark hole
+    with shard teeth left in the frame -- the light is out for the run."""
     hw = TILE / 2
     pv = (-ndy, ndx)                 # along-wall axis on this face
     ph = hw * 0.60                   # half pane width
@@ -3401,10 +3403,20 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
                               wy + ndy * off + pv[1] * u, z)
     frame = [Q(-ph - 2, z0 - 2), Q(ph + 2, z0 - 2), Q(ph + 2, z1 + 2), Q(-ph - 2, z1 + 2)]
     glass = [Q(-ph, z0), Q(ph, z0), Q(ph, z1), Q(-ph, z1)]
-    core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
-            Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
     pygame.draw.polygon(surf, (96, 70, 50), frame)
     pygame.draw.polygon(surf, (60, 40, 25), frame, 1)
+    if broken:
+        pygame.draw.polygon(surf, (14, 12, 17), glass)             # the dark hole
+        for u0, u1, zt in ((-ph, -ph * 0.4, z1 - 4), (ph * 0.2, ph, z1 - 5),
+                           (-ph * 0.5, ph * 0.1, z0 + 4)):
+            pygame.draw.polygon(surf, (108, 96, 62),               # shard teeth
+                                [Q(u0, z1 if zt > (z0 + z1) / 2 else z0),
+                                 Q(u1, z1 if zt > (z0 + z1) / 2 else z0),
+                                 Q((u0 + u1) / 2, zt)])
+        pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
+        return
+    core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
+            Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
     pygame.draw.polygon(surf, (138, 104, 50), glass)
     pygame.draw.polygon(surf, (170, 138, 78), core)
     pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
@@ -3414,17 +3426,21 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
 
 def _tilt_window_box(surf, camera, scene, tx, ty):
     """A window is a SOLID wall tile, so it extrudes as a full wall box; a lit
-    pane is then set into each camera-facing exposed face."""
+    pane is then set into each camera-facing exposed face (dark + shard-toothed
+    once a thrown stone has broken it -- scene._broken_windows)."""
     _tilt_wall_box(surf, camera, scene, tx, ty)
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
+    wtx = tx % scene.w if scene.wrap_x else tx
+    wty = ty % scene.h if scene.wrap_y else ty
+    broken = (wtx, wty) in getattr(scene, "_broken_windows", ())
     cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
     for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
         if _is_wall(scene, tx + ndx, ty + ndy):
             continue                                     # buried face
         if camera.depth(wx + ndx * hw, wy + ndy * hw, _TILT_WALL_RISE / 2) <= cd:
             continue                                     # faces away from camera
-        _draw_window_pane(surf, camera, wx, wy, ndx, ndy)
+        _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken)
 
 
 _WALL_BOX_CACHE = {}

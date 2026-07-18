@@ -387,8 +387,11 @@ it renders the procedural sprites to a labelled PNG strip.
   are cut), and bare `:` cover tiles render as tall-grass tufts under
   the tilt so concealment is visible. **River stones** (`STONE_*`,
   item `stone`, right-click) are the placed-noise distraction verb:
-  they turn idle scouts, never divert a sighting-born search
-  (stealth §14). The **hollow Sheriff**
+  they turn idle scouts, never divert a sighting-born search -- except
+  through a WINDOW (`GLASS_*`: the smash diverts even a search, and the
+  pane stays broken for the run, the `broken_windows` ledger) -- and a
+  stone dropped down the dead well rattles the whole square with no
+  bottom ever sounding (`WELL_ECHO_*`; stealth §14). The **hollow Sheriff**
   (`_force_chase`) is **exempt** — it bypasses
   suspicion and cover entirely. The roaming **King** honors `player.hidden`
   (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);

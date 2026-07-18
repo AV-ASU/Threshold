@@ -516,6 +516,17 @@ STONE_LOUD = 0.8              # lands between hear-min and search-pull
 STONE_REACH = 210.0           # px: how far the clatter carries
 STONE_RANGE = 170.0           # px: throw distance along the aim
 STONE_SPEED = 300.0           # px/s flight speed
+# A stone THROUGH A WINDOW is the loud tier: glass is the one thrown
+# sound that sits over the searcher pull (a window breaks once, so the
+# bigger lever has a scarcity price), and the pane stays broken for the
+# RUN (the broken_windows save ledger, laid back down on every load).
+GLASS_LOUD = 0.95             # over NOISE_SEARCH_PULL: glass diverts a search
+GLASS_REACH = 300.0           # px: a smashed pane carries
+# A stone dropped down the DEAD WELL: the knocks fall away, the shaft's
+# rattle carries across the square, and no bottom ever sounds (the well
+# stays the bottomless dread it is -- this buys a wide lure, not a fact).
+WELL_ECHO_LOUD = 0.85         # scout-tier: routes the square, breaks no hunt
+WELL_ECHO_REACH = 340.0       # px: the rattle carries across the square
 # Cult liveness (TODO #23a, the behavior pilot): dressing on the SCOUT
 # state only -- neither beat ever touches notice/chase/search/investigate,
 # and detection keeps scoring straight through both (threat unchanged).

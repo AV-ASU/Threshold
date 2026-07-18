@@ -284,6 +284,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
         self._stones = []              # thrown river stones in flight (TODO #5)
+        self._echoes = []              # delayed knocks (the well drop)
         self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
@@ -510,6 +511,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watcher_clone_t = WATCHER_GRACE
         self._watcher_gaze = 0.0
         self._stones = []
+        self._echoes = []
         self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
@@ -815,6 +817,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # the per-scene cultist top-up timer so cultists re-populate.
         self._watchers = []
         self._stones = []              # a stone mid-flight stays behind
+        self._echoes = []
         # Reaching a SAFE_SCENE resets the two-touch cult grab (play-notes):
         # you can't be mid-grab inside a refuge, so a fresh encounter after
         # starts the touch count over.
@@ -952,6 +955,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # is never disturbed (rot skips _is_corpse). Nobody leaves
         # Brimley, not even by dying (NARRATIVE §5).
         self._apply_dead_locals()
+        # Broken windows stay broken for the RUN (TODO #5, the stone
+        # smash): lay the ledger back onto the rebuilt scene.
+        self.scene._broken_windows = {
+            tuple(p) for p in
+            (self.save.arg("broken_windows", {}) or {}).get(key, [])}
         # Re-derive the world rot for this scene from the evidence
         # count (rot decals, the ambient air, the stage-3 Sheriff).
         self._apply_rot()
@@ -2101,10 +2109,26 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.audio.play("bump", 0.2)
 
     def _tick_stones(self, dt):
-        """Advance thrown stones; a landing (range spent, or a wall)
-        emits the clatter the cult's ear picks up. The arc is cosmetic
-        (the draw lifts by a sine of progress); the sim is a straight
-        line at STONE_SPEED."""
+        """Advance thrown stones and the delayed knocks (the well drop).
+        A landing (range spent, or a wall) emits the clatter the cult's
+        ear picks up; a WINDOW in the way SMASHES instead -- the loud
+        tier (GLASS_LOUD sits over the searcher pull on purpose; a pane
+        breaks once, so the bigger lever has a scarcity price) and the
+        break is written to the run's broken_windows ledger. The arc is
+        cosmetic (the draw lifts by a sine of progress); the sim is a
+        straight line at STONE_SPEED."""
+        for ec in list(self._echoes):
+            ec["t"] -= dt
+            if ec["t"] > 0.0:
+                continue
+            self._echoes.remove(ec)
+            pan = self.audio.pan_for_world(ec["x"], self.player.x)
+            dm = self.audio.distance_attenuation(
+                ec["x"], ec["y"], self.player.x, self.player.y)
+            self.audio.play("bump", ec["vol"] * dm, pan=pan)
+            if ec.get("emit"):
+                self.scene.emit_noise(ec["x"], ec["y"], WELL_ECHO_LOUD,
+                                      kind="stone", reach=WELL_ECHO_REACH)
         if not self._stones:
             return
         keep = []
@@ -2117,6 +2141,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 st["x"], st["y"] = nx, ny
             st["p"] += step / STONE_RANGE
             if st["p"] >= 1.0 or hit_wall:
+                if hit_wall and self._stone_smash_window(nx, ny):
+                    continue
                 self.scene.emit_noise(st["x"], st["y"], STONE_LOUD,
                                       kind="stone", reach=STONE_REACH)
                 pan = self.audio.pan_for_world(st["x"], self.player.x)
@@ -2126,6 +2152,44 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             else:
                 keep.append(st)
         self._stones = keep
+
+    def _stone_smash_window(self, nx, ny):
+        """A stone striking an intact WINDOW tile smashes it: the glass
+        noise (the one thrown sound loud enough to divert a searcher),
+        the pane dark + shard-toothed for the rest of the run (the
+        broken_windows save ledger; load_scene_now lays it back down).
+        Returns True if a smash happened; an already-broken window is
+        just a frame, the ordinary clatter handles it."""
+        from scenes.base import _WINDOW_CHARS
+        T = TILE
+        twx = int(nx // T)
+        twy = int(ny // T)
+        if self.scene.wrap_x:
+            twx %= self.scene.w
+        if self.scene.wrap_y:
+            twy %= self.scene.h
+        if not (0 <= twx < self.scene.w and 0 <= twy < self.scene.h):
+            return False
+        if self.scene.objects[twy][twx] not in _WINDOW_CHARS:
+            return False
+        broken = getattr(self.scene, "_broken_windows", None)
+        if broken is None:
+            broken = self.scene._broken_windows = set()
+        if (twx, twy) in broken:
+            return False
+        broken.add((twx, twy))
+        led = self.save.arg("broken_windows", {}) or {}
+        led.setdefault(self.scene.key, []).append([twx, twy])
+        self.save.set_arg("broken_windows", led)
+        wx = twx * T + T // 2
+        wy = twy * T + T // 2
+        self.scene.emit_noise(wx, wy, GLASS_LOUD, kind="glass",
+                              reach=GLASS_REACH)
+        pan = self.audio.pan_for_world(wx, self.player.x)
+        dm = self.audio.distance_attenuation(wx, wy,
+                                             self.player.x, self.player.y)
+        self.audio.play("glass_crunch", 0.7 * dm, pan=pan)
+        return True
 
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the kill counter (the

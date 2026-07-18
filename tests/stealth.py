@@ -1123,6 +1123,75 @@ def main():
     check(gs.player.inventory.count("stone") == k0 and not gs._stones,
           "stones: a rooted enclosed hide cannot throw")
     gs.player.hidden = None
+    # A stone THROUGH A WINDOW: the loud tier. The pane breaks once,
+    # goes to the run ledger, and glass (over the searcher pull) is the
+    # one thrown sound that CAN divert a sighting-born search.
+    from scenes.base import _WINDOW_CHARS
+    win = None
+    for wy_ in range(gs.scene.h):
+        for wx_ in range(gs.scene.w):
+            if gs.scene.objects[wy_][wx_] not in _WINDOW_CHARS:
+                continue
+            bx_ = wx_ * TILE + 16
+            by_ = (wy_ + 2) * TILE + 16
+            if not gs.scene.is_solid_at(bx_, by_):
+                win = (wx_, wy_, bx_, by_)
+                break
+        if win:
+            break
+    check(win is not None, "glass: brimley offers a window with a clear approach")
+    wx_, wy_, bx_, by_ = win
+    gs.player.x, gs.player.y = bx_, by_
+    gs.player.hidden = None
+    n._cult_state = "search"
+    n._cult_state_t = 8.0
+    n._last_seen_pos = (bx_ + 60, by_)
+    n._noise_loud = NOISE_SEARCH_PULL
+    n._sweep_list = []
+    npin = (bx_ + 60, by_ + 40)
+    n.x, n.y = npin
+    gs.look.aim = -math.pi / 2                  # throw north, at the pane
+    gs.player.inventory.add("stone", 1)
+    gs._throw_stone()
+    for _ in range(60):
+        tick(gs, 1)
+        n.x, n.y = npin
+        if not gs._stones:
+            break
+    tick(gs, 2)
+    check((wx_, wy_) in getattr(gs.scene, "_broken_windows", set()),
+          "glass: the pane breaks and joins the scene's broken set")
+    led = gs.save.arg("broken_windows", {}) or {}
+    check([wx_, wy_] in led.get("brimley", []),
+          "glass: the break is written to the run ledger")
+    check(n._cult_state == "investigate",
+          "glass: the smash diverts even a sighting-born search")
+    # The dead well: a stone over the lip spends one and the shaft's
+    # rattle turns a scout across the square. No landing ever sounds.
+    gw = new_game()
+    gw.load_scene_now("brimley", "default")
+    tick(gw, 10)
+    clear_cult(gw)
+    gw.save.set_flag("well_examined", True)
+    wpx, wpy = gw.scene._well_pos
+    gw.player.x, gw.player.y = wpx, wpy + 20
+    gw.player.hidden = None
+    gw.player.inventory.add("stone", 1)
+    m = plant(gw, 200)
+    m._cult_state = "scout"
+    m._suspicion = 0.0
+    mpin = (wpx + 200, wpy)
+    m.x, m.y = mpin
+    press_e(gw)
+    check(gw.player.inventory.count("stone") == 0,
+          "well: the drop spends the stone")
+    for _ in range(60):
+        tick(gw, 1)
+        m.x, m.y = mpin
+        if m._cult_state == "investigate":
+            break
+    check(m._cult_state == "investigate",
+          "well: the shaft's rattle turns a scout across the square")
 
     print()
     if FAILS:

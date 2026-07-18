@@ -1460,7 +1460,20 @@ against it (`tests/stealth.py` §13 guards the contract):
   searcher pull ON PURPOSE: a stone turns an idle head but never breaks
   a sighting-born search, so it routes patrols rather than shaking a
   hunt. A rooted enclosed hide cannot throw; corn can. Guarded by
-  `tests/stealth.py` §14.
+  `tests/stealth.py` §14. Two follow-ons ride the same plumbing:
+  - **A stone through a WINDOW smashes it** (`GLASS_*`): the one thrown
+    sound loud enough to divert even a sighting-born search -- the
+    bigger lever priced by scarcity (a pane breaks once, stays dark and
+    shard-toothed for the RUN via the `broken_windows` save ledger,
+    laid back down on every load). The break changes draw only:
+    collision and sight are untouched, and it is never an entrance
+    (the window-vault idea stays parked).
+  - **A stone down the DEAD WELL** (`WELL_ECHO_*`, `_brimley_interact`):
+    E at the well with a stone in pocket drops it; the knocks fall
+    away, the shaft's rattle carries across the square (scout-tier,
+    never a search-breaker), and **no bottom ever sounds** -- wordless
+    by design; the missing landing is the beat, and the well stays the
+    bottomless dread it is (NARRATIVE §5).
 
 ### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
 

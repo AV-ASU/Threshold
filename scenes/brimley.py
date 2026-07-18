@@ -1044,6 +1044,22 @@ def build_brimley():
         # a dead, dry town well gone wrong -- ominous, going nowhere.
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
+            if (game.save.flag("well_examined")
+                    and game.player.inventory.count("stone") > 0):
+                # A stone over the lip (TODO #5, the distraction verb):
+                # the knocks fall away, the shaft's rattle carries across
+                # the square -- and no bottom ever sounds. WORDLESS by
+                # design (the missing landing IS the beat; the well stays
+                # the bottomless dread it is).
+                game.player.inventory.remove("stone", 1)
+                game.audio.play("bump", 0.5)
+                game._echoes.extend([
+                    {"t": 0.35, "x": wx, "y": wy, "vol": 0.34},
+                    {"t": 0.80, "x": wx, "y": wy, "vol": 0.22,
+                     "emit": True},
+                    {"t": 1.45, "x": wx, "y": wy, "vol": 0.12},
+                ])
+                return
             if not game.save.flag("well_examined"):
                 game.save.set_flag("well_examined", True)
                 game.audio.play("low_pulse", 0.4)
