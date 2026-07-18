@@ -311,43 +311,61 @@ class RenderMixin:
         return surfaces
 
     def _draw_apex_overlay(self):
-        """Apex-tier rendering: when visibility hits >= 0.95,
-        the world goes wrong. Heavy red wash across the whole screen
-        (interiors and exteriors alike); the screen edges crush in
-        with a hard black vignette so the player's view narrows;
-        the overlay pulses on a slow sine so the dread reads as
-        active, not static. Cheap: two SRCALPHA blits per frame."""
+        """Max-visibility rendering, in TWO tiers keyed to WHO has you
+        (2026-07 playtest fix: the apex wash was too intense when only
+        cultists were chasing -- a human threat wearing the cosmic
+        overlay).
+
+        - **The King is the threat** (his roam is armed, or his body is
+          in your room): the full APEX tier -- a heavy dried-blood red
+          wash + a hard edge-crush tunnel vignette. The world is wrong
+          and He is looking. Unchanged from before.
+        - **Only the cult has you** (below the gate, no King body): a
+          milder TOWN tier -- no red wash, just a cold desaturated
+          tighten at the edges. Reads as "seen, cornered, the town has
+          turned its head" rather than "the void is eating you." The
+          cult is human; it does not get His colour.
+
+        Fires at visibility >= 0.95; both pulse on a slow sine so the
+        dread reads as active. Cheap: <=2 SRCALPHA blits per frame."""
         if self.scene is None or self.player is None:
             return
         if self.visibility < 0.95:
             return
-        # Safe / dim-safe interiors break the apex wash. The Inn is
-        # the refuge. Standing inside it lifts the apex pressure --
-        # only stepping out re-engages it. Reads as a deliberate
-        # sanctuary mechanic rather than a hole in the horror.
+        # Safe / dim-safe interiors break the wash entirely. The Inn is
+        # the refuge; stepping inside lifts the pressure. Reads as a
+        # deliberate sanctuary rather than a hole in the horror.
         if (self.scene.key in KING_FREE_SCENES
                 or self.scene.key in DIM_SAFE_SCENES):
             return
         t = pygame.time.get_ticks() / 1000.0
         pulse = 0.85 + 0.15 * math.sin(t * 1.4)
-        # Red wash across the whole screen. Uses C_BLOOD (a desaturated
-        # dried-blood red) rather than primary red so the apex tone
-        # reads as "wrong" without going carnival-haunted. Wash alpha
-        # routed through _claim_dark so the combined-darkness budget
-        # caps stacked overlays.
-        wash_a = self._claim_dark(int(70 * pulse))
-        wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        wash.fill((C_BLOOD[0], C_BLOOD[1], C_BLOOD[2], wash_a))
-        self.screen.blit(wash, (0, 0))
-        # Edge-crush vignette: heavy black ring around the screen
-        # with a clear ~110-px disc around the player. Forces the
-        # player to feel tunnel-vision. Inner radius pulses with
-        # the wash so the disc breathes with the world.
-        edge_a = self._claim_dark(int(180 * pulse))
-        edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        edge.fill((0, 0, 0, edge_a))
         psx, psy = self._player_screen()
-        clear_r = int(110 + 6 * math.sin(t * 1.4))
+        king_threat = (self._roam_king["armed"] or self._king is not None)
+        if king_threat:
+            # APEX tier: the red wash + the hard tunnel crush (His gaze).
+            wash_a = self._claim_dark(int(70 * pulse))
+            wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            wash.fill((C_BLOOD[0], C_BLOOD[1], C_BLOOD[2], wash_a))
+            self.screen.blit(wash, (0, 0))
+            edge_a = self._claim_dark(int(180 * pulse))
+            edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            edge.fill((0, 0, 0, edge_a))
+            clear_r = int(110 + 6 * math.sin(t * 1.4))
+            pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
+            self.screen.blit(edge, (0, 0))
+            return
+        # TOWN tier: no red, a gentler cold tighten. A thin desaturated
+        # slate wash + a soft, WIDER edge vignette (a bigger clear disc,
+        # a lighter ring) so it reads as pressure, not suffocation.
+        wash_a = self._claim_dark(int(24 * pulse))
+        wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        wash.fill((30, 32, 40, wash_a))
+        self.screen.blit(wash, (0, 0))
+        edge_a = self._claim_dark(int(96 * pulse))
+        edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        edge.fill((6, 7, 10, edge_a))
+        clear_r = int(168 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
 

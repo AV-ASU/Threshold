@@ -20,6 +20,16 @@ below 3 evidence; cultist gaze adds on top. **Hiding** bleeds it back down
 (passive corn-cover tiles, plus the few crawl-**under**-furniture
 `hide_spots` via E). See the Watcher note in §4.
 
+**The max-visibility overlay is TWO tiers keyed to WHO has you**
+(`_draw_apex_overlay`, 2026-07 playtest fix: the wash was too intense
+when only cultists were chasing). At `visibility >= 0.95`, if the King
+is the threat (`_roam_king["armed"]`, or his body is in your room)
+the **apex tier** paints His dried-blood red wash + a hard edge-crush
+tunnel vignette; if only the cult has you (below the gate, no King
+body) the milder **town tier** drops the red for a cold desaturated
+tighten with a wider clear disc. The cult is human and does not get His
+colour. Safe / dim-safe interiors break both.
+
 > **The King is a verdict, not a monster** *(the design spine of the roaming
 > King; the mechanics + tuning live in `CLAUDE.md` and the `KING_*` config,
 > this is the canon behind them).* Internalize these or the mechanics land
