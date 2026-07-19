@@ -613,17 +613,33 @@ Built into the procedural draw layer (`scenes/base.py`,
     swiveling cards), verified in the 3D tilt.
   - **The shared light logic (the "carry it underground" foundation).**
     `_draw_dark` (`systems/render_mixin.py`) no longer special-cases
-    `wall_torch`: it iterates **`FIXTURE_POOLS`** (the visible-pool twin of
+    `wall_torch`: it iterates **`FIXTURE_POOLS`** (the visible-light twin of
     `Scene._LIGHT_KINDS`) across **every** light-emitting decoration in the
     room, so any real fixture -- a cult brazier, a Sign-Chamber candle, a
-    town yard light, a genset work-bulb -- punches its own colored,
-    navigable pool into the gloom. One table drives the surface (if it ever
-    darkens) and the deep, with no per-scene special-casing (`wall_torch`
-    keeps its exact legacy numbers, so torch-only rooms stay byte-identical).
-    The **deep still swallows the flashlight** (`CULT_DARK_SCENES`, DESIGN §1's
-    deliberate dread is preserved): the cult sites are lit by the cult's OWN
-    ritual fires now, not by your beam. Fully retiring the "special darkness"
-    beam-off is a separate dread decision (`TODO.md`), not folded in here.
+    town yard light, a genset work-bulb -- lights the dark it stands in. One
+    table drives the surface (if it ever darkens) and the deep, with no
+    per-scene special-casing. The **deep still swallows the flashlight**
+    (`CULT_DARK_SCENES`, DESIGN §1's deliberate dread is preserved): the cult
+    sites are lit by the cult's OWN ritual fires now, not by your beam. Fully
+    retiring the "special darkness" beam-off is a separate dread decision
+    (`TODO.md`), not folded in here.
+  - **The light is 3D, and it interacts (2026-07 light-model pass).** Each
+    emitter carries a real world SOURCE HEIGHT (`src_z`) and a screen-relative
+    gooseneck offset (`arm`): a yard-light head rides high on its pole, a
+    candle sits at the floor. `_draw_dark` casts each pool onto the ground
+    UNDER that 3D source as a **tilt-foreshortened ellipse** (not a flat
+    screen circle -- a floor disc squashes by `Camera.ground_squash()`), and
+    the pools blend **additively** (`BLEND_RGB_ADD`), so two lights SUM where
+    they overlap (warm + cold pool toward white) and every pool lifts the
+    walls / props / actors standing in it -- **light interacting with light,
+    and with objects.** On top, a **cast-shadow** pass throws a soft shadow
+    across the floor AWAY from each source for every solid caster in range
+    (player, NPCs, solid props): a LOW source (a candle) throws a long shadow,
+    a HIGH one (a yard-light head) a short one, and under several lights an
+    object throws several. The shadow **subtracts** the pool's glow
+    (`BLEND_RGB_SUB`, a cool-grey) rather than painting black over it -- black
+    over warm light reads as a brown STAIN, subtraction reads as dark floor.
+    Both the pool and the shadow are cached per shape (`_floor_pool_surf`).
 - **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
   jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
   Repeated at scale across the Scriptorium and Sign Chamber, faintly

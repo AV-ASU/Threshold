@@ -659,12 +659,16 @@ it renders the procedural sprites to a labelled PNG strip.
   **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
   `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius the
   stealth `lit_at`/shadow-cover gate reads) AND `FIXTURE_POOLS`
-  (`systems/render_mixin.py`, the VISIBLE pool `_draw_dark` punches into a
-  dark scene: radius, color, peak, lift, flicker, ring geometry). `_draw_dark`
-  iterates EVERY emitter through `FIXTURE_POOLS` (not just `wall_torch`), so a
-  fixture missing from it will read + gate as lit but cast no visible pool in
-  the dark. Cold electric (`yard_light`) vs warm fire is a colour choice in
-  that table (DESIGN §6).
+  (`systems/render_mixin.py`, the VISIBLE light `_draw_dark` casts in a dark
+  scene: `radius, color, peak, src_z, arm, flicker_amp, flicker_speed`).
+  `_draw_dark` iterates EVERY emitter through `FIXTURE_POOLS` (not just
+  `wall_torch`), so a fixture missing from it will read + gate as lit but cast
+  no visible light in the dark. `src_z` is the light source's real world
+  HEIGHT and `arm` its gooseneck offset: the pool is a tilt-squashed ELLIPSE
+  cast on the floor UNDER the 3D source, pools blend ADDITIVELY (they combine
+  + lift the objects they lie on), and solid casters throw SUBTRACTIVE cast
+  shadows away from each source (DESIGN §6, the 3D light-interaction model).
+  Cold electric (`yard_light`) vs warm fire is a colour choice in that table.
   **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
   MAN-MADE things** (they read as flat cards that swivel to face the camera
   otherwise; the sprite-depth-anchoring pass converted `standing_stone` /

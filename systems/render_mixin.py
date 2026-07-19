@@ -86,28 +86,61 @@ _PROP_STATIC_CACHE = {}
 _PROP_STATIC_ORDER = []
 _PROP_STATIC_CAP = 2000
 
-# The VISIBLE light-pool twin of Scene._LIGHT_KINDS (which carries only the
-# mechanical stealth radius). One row per light-emitting decoration kind, the
-# pool the fixture punches into a DARK scene's gloom:
-#   (visible_radius, color, peak_alpha, screen_z_lift,
-#    flicker_amp, flicker_speed, ring_base, ring_step, ring_n)
-# _draw_dark iterates EVERY scene emitter through this table -- not just
-# wall_torch -- so any real fixture (a cult brazier, a candle, a town yard
-# light) lights the dark it stands in. This is the shared light logic
-# (DESIGN.md §6): one table drives the surface (if it ever darkens) and the
-# underground, with no per-scene special-casing. wall_torch keeps its exact
-# legacy numbers, so torch-only rooms stay byte-identical.
+# The VISIBLE light model, the twin of Scene._LIGHT_KINDS (which carries only
+# the mechanical stealth radius). One row per light-emitting decoration kind:
+#   (radius, color, peak, src_z, arm, flicker_amp, flicker_speed)
+# `src_z` is the light SOURCE's real world HEIGHT (a yard-light head rides high
+# on its pole, a candle sits low) and `arm` is a screen-relative horizontal
+# offset (the yard light's gooseneck) -- so _draw_dark casts each pool onto the
+# floor UNDER the actual 3D source, foreshortened to a tilt ellipse, and adds
+# the pools together (DESIGN.md §6/§10: the light's direction is 3D, pools
+# combine and lift what they lie on). _draw_dark iterates EVERY emitter through
+# this table -- not just wall_torch -- so any real fixture (a cult brazier, a
+# candle, a town yard light) lights the dark it stands in (the shared light
+# logic: one table drives the surface if it ever darkens and the underground).
 FIXTURE_POOLS = {
-    #                radius  color            peak  lift  amp   spd   rb  rs  rn
-    "wall_torch":   (118,  (255, 168, 78),   82,   12,   0.18, 7.0,  26, 12, 7),
-    "brazier":      (110,  (255, 150, 56),   80,   6,    0.16, 6.0,  24, 12, 7),
-    "burn_barrel":  (100,  (255, 150, 56),   74,   8,    0.16, 6.0,  22, 11, 7),
-    "camp_fire":    (112,  (255, 158, 60),   80,   2,    0.18, 5.0,  24, 12, 7),
-    "lantern":      (72,   (255, 176, 84),   64,   6,    0.10, 3.0,  16,  8, 7),
-    "candle":       (46,   (255, 178, 92),   50,   2,    0.14, 9.0,  10,  5, 7),
-    "yard_light":   (104,  (202, 224, 255),  70,   2,    0.05, 2.0,  22, 11, 7),
-    "generator":    (52,   (255, 212, 152),  46,   4,    0.08, 5.0,  12,  6, 7),
+    #                radius  color            peak  src_z  arm  amp   spd
+    "wall_torch":   (102,  (255, 168, 78),   74,   24,    0,   0.18, 7.0),
+    "brazier":      (106,  (255, 150, 56),   76,   12,    0,   0.16, 6.0),
+    "burn_barrel":  (94,   (255, 150, 56),   68,   16,    0,   0.16, 6.0),
+    "camp_fire":    (106,  (255, 158, 60),   76,   4,     0,   0.18, 5.0),
+    "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
+    "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
+    "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
+    "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
 }
+
+# Additive floor light pools, cached per shape. A tilt-foreshortened ellipse
+# whose RGB carries color*falloff (blit with BLEND_RGB_ADD, so pools SUM where
+# they overlap and lift whatever they lie on -- lights interacting with each
+# other and with objects). Black adds nothing, so the surface needs no alpha.
+_FLOOR_POOL_CACHE = {}
+_FLOOR_POOL_ORDER = []
+
+
+def _floor_pool_surf(radius, squash, color, peak):
+    key = (radius, round(squash, 2), color, peak)
+    s = _FLOOR_POOL_CACHE.get(key)
+    if s is None:
+        w = max(2, radius * 2)
+        h = max(2, int(radius * 2 * squash))
+        s = pygame.Surface((w, h)).convert()
+        s.fill((0, 0, 0))
+        cx, cy = w // 2, h // 2
+        steps = 12
+        for k in range(steps, 0, -1):          # large dim ellipse first
+            rx = max(1, int(radius * k / steps))
+            ry = max(1, int(radius * squash * k / steps))
+            f = (1.0 - k / steps) ** 1.7 * (peak / 255.0)
+            col = (min(255, int(color[0] * f)),
+                   min(255, int(color[1] * f)),
+                   min(255, int(color[2] * f)))
+            pygame.draw.ellipse(s, col, (cx - rx, cy - ry, rx * 2, ry * 2))
+        _FLOOR_POOL_CACHE[key] = s
+        _FLOOR_POOL_ORDER.append(key)
+        if len(_FLOOR_POOL_ORDER) > 240:
+            _FLOOR_POOL_CACHE.pop(_FLOOR_POOL_ORDER.pop(0), None)
+    return s
 
 
 class RenderMixin:
@@ -547,36 +580,38 @@ class RenderMixin:
             return
         if self.scene.key not in DARK_SCENES:
             return
-        from scenes.base import _light_pool
         psx, psy = self._player_screen()
         lit = self._flashlight_lit()
-        # Diegetic wall-torch light: each torch punches its own warm, flickering
-        # pool into the gloom, so a torch-lit room reads without the flashlight.
         tnow = pygame.time.get_ticks() / 1000.0
-        # Every light-emitting fixture in the room punches its own pool into
-        # the gloom (FIXTURE_POOLS -- the shared light logic, DESIGN.md §6):
-        # not just wall_torch, but any brazier / candle / lantern / yard light
-        # / generator the scene stands. wall_torch keeps its exact legacy
-        # numbers, so a torch-only room is byte-identical.
+        squash = self.camera.ground_squash()
+        # The gooseneck arm is screen-relative to the yaw (matches the yard-
+        # light solid), so its pool lands under the HEAD, not the pole base.
+        ax = math.cos(self.camera.yaw + math.pi / 2)
+        ay = math.sin(self.camera.yaw + math.pi / 2)
+        # Each emitter casts its light from its real 3D SOURCE down onto the
+        # floor (DESIGN.md §6/§10): the pool is a tilt ellipse on the ground
+        # under the source, and the pools ADD (combine where they overlap and
+        # lift the walls/props/actors they lie on). FIXTURE_POOLS drives it --
+        # any fixture, not just wall_torch.
         fixtures = []
         for d in getattr(self.scene, "decorations", []):
             spec = FIXTURE_POOLS.get(getattr(d, "kind", None))
             if spec is None:
                 continue
-            fx, fy = self.camera.project(d.x, d.y)
-            fl = (1.0 - spec[4]) + spec[4] * math.sin(tnow * spec[5] + d.x * 0.25)
-            fixtures.append((int(fx), int(fy) - spec[3], spec, fl))
+            radius, color, peak, src_z, arm, famp, fspd = spec
+            cx, cy = self.camera.project(d.x + ax * arm, d.y + ay * arm, 0)
+            fl = (1.0 - famp) + famp * math.sin(tnow * fspd + d.x * 0.25)
+            fixtures.append((int(cx), int(cy), radius, color, peak, fl))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         # The far points are laid out in WORLD space around the player's feet
         # and projected through the camera, so the cone lies FLAT on the ground
         # -- under tilt it foreshortens with the floor instead of shooting off
-        # the screen into the void. (At pitch 0, scale 1.0, this projects to the
-        # same screen pixels the old screen-space math produced.)
+        # the screen into the void.
         cone = None
         if lit:
-            fx, fy = getattr(self.player, "facing", (0, 1)) or (0, 1)
-            flen = math.hypot(fx, fy) or 1.0
-            ang = math.atan2(fy / flen, fx / flen)
+            fxv, fyv = getattr(self.player, "facing", (0, 1)) or (0, 1)
+            flen = math.hypot(fxv, fyv) or 1.0
+            ang = math.atan2(fyv / flen, fxv / flen)
             reach, spread = 300, math.radians(30)
             pwx, pwy = self.player.x, self.player.y
 
@@ -587,30 +622,83 @@ class RenderMixin:
             left = _far(ang - spread)
             right = _far(ang + spread)
             cone = [(psx, psy), left, tip, right]
-        if lit:
-            # A warm held-light pool at the feet -- not eyes adjusting.
-            _light_pool(self.screen, psx, psy, 96, (240, 226, 165), 72)
-        else:
-            _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
-        for fx, fy, spec, fl in fixtures:
-            _light_pool(self.screen, fx, fy, int(spec[0] * fl), spec[1],
-                        int(spec[2] * fl))
+        # GLOOM: dim the whole room, then carve elliptical holes under the
+        # player + every pool so the objects standing in the light show
+        # through (the navigable read; the additive colour lands on top).
         gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
-        rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
-        for rr, aa in sorted(rings, key=lambda p: -p[0]):
-            pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
-        for fx, fy, spec, fl in fixtures:
-            rb, rs, rn = spec[6], spec[7], spec[8]
-            frings = [(int((rb + i * rs) * fl), int(gloom * i / rn))
-                      for i in range(rn)]
-            for rr, aa in sorted(frings, key=lambda p: -p[0]):
-                pygame.draw.circle(overlay, (0, 0, 0, aa), (fx, fy), rr)
+
+        def _carve(cx, cy, r):
+            n = 8
+            for i in range(n - 1, -1, -1):            # largest (dimmest) first
+                rr = r * (0.24 + 0.76 * i / (n - 1))
+                rx = int(rr)
+                ry = max(1, int(rr * squash))
+                aa = int(gloom * i / (n - 1))         # 0 centre -> gloom at rim
+                pygame.draw.ellipse(overlay, (0, 0, 0, aa),
+                                    (cx - rx, cy - ry, rx * 2, ry * 2))
+        _carve(psx, psy, 118)
+        for cx, cy, radius, color, peak, fl in fixtures:
+            _carve(cx, cy, int(radius * fl))
         if cone:
             # Carve the beam clear of the gloom (alpha 0 inside the cone).
             pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
         self.screen.blit(overlay, (0, 0))
+        # ADDITIVE light on top: the player's own pool + every fixture's, each
+        # a floor ellipse under its source. They SUM where they overlap and
+        # brighten the walls / props / actors they lie on.
+        pcol = (240, 226, 165) if lit else (120, 128, 156)
+        ppk, pr = (64 if lit else 70), 112
+        self.screen.blit(_floor_pool_surf(pr, squash, pcol, ppk),
+                         (psx - pr, psy - int(pr * squash)),
+                         special_flags=pygame.BLEND_RGB_ADD)
+        for cx, cy, radius, color, peak, fl in fixtures:
+            r = max(2, int(radius * fl))
+            self.screen.blit(_floor_pool_surf(r, squash, color,
+                                              int(peak * fl)),
+                             (cx - r, cy - int(r * squash)),
+                             special_flags=pygame.BLEND_RGB_ADD)
+        # CAST SHADOWS: every solid caster throws a soft shadow across the
+        # floor AWAY from each nearby source -- the light interacting with the
+        # object. A LOW source (a candle near the floor) throws a long shadow,
+        # a HIGH one (a yard-light head) a short one; under several lights an
+        # object throws several shadows, one per light.
+        from rendering.props import is_solid_prop
+        srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3])
+                for d in getattr(self.scene, "decorations", [])
+                for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),) if s]
+        if srcs:
+            casters = [(self.player.x, self.player.y, 8)]
+            for n in getattr(self.scene, "npcs", []):
+                if not getattr(n, "_inside", False):
+                    casters.append((n.x, n.y, 7))
+            for e in getattr(self.scene, "enemies", []):
+                casters.append((e.x, e.y, 7))
+            for d in getattr(self.scene, "decorations", []):
+                k = getattr(d, "kind", None)
+                if k not in FIXTURE_POOLS and is_solid_prop(k):
+                    casters.append((d.x, d.y, 8))
+            for ox, oy, foot in casters:
+                for sx, sy, radius, src_z in srcs:
+                    dx, dy = ox - sx, oy - sy
+                    dist = math.hypot(dx, dy)
+                    if dist < 2.0 or dist > radius:
+                        continue
+                    # A shadow is ABSENCE of light: SUBTRACT the pool's glow
+                    # where the object blocks it (a cool-grey sub), so it reads
+                    # as dark floor -- not a black-over-warm brown stain.
+                    a = int(74 * (1.0 - dist / radius))
+                    if a < 6:
+                        continue
+                    inv = (9.0 + 15.0 * (1.0 - min(1.0, src_z / 50.0))) / dist
+                    scx, scy = self.camera.project(ox + dx * inv,
+                                                   oy + dy * inv, 0)
+                    r = int(foot * 1.3)
+                    self.screen.blit(_floor_pool_surf(r, squash,
+                                                      (226, 224, 234), a),
+                                     (int(scx) - r, int(scy) - int(r * squash)),
+                                     special_flags=pygame.BLEND_RGB_SUB)
         if cone:
             # A faint warm wash inside the cone sells it as a light source.
             beam = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
