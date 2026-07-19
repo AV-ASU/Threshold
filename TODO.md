@@ -387,8 +387,25 @@ top draws the pistol + case file); it is the model.
   PROCESSION drawing joins the cheerful ones once `toby_told` (an on_enter that
   re-adds it each load). The toy radio + closet (with the King drawing) were
   already present.
-- **Still open (per the audit):** works_sign (the Pallid Mask visible on the
-  altar; verify the `yellow_sign` reads on the apse wall not the floor).
+- **works_sign (Mara / the pedestal) — LANDED (2026-07).** New `altar_mask`
+  SOLID_PROP -- the Pallid Mask resting on the altar cap, face-out, pale with a
+  warm gold ember in each black socket -- the focal object of both
+  `draw_altar_tableau` and `draw_mara_tableau`; the walkable altar was a bare
+  stone block. Gated off once taken (`_sign_on_enter` drops the deco). Added a
+  wall-mounted `wall_sign` (the crude-mask glyph as a `_WALL_DECO`) daubed on
+  the apse wall above the altar so the big Sign hangs on the vertical wall as
+  the tableau shows (the flanking `yellow_sign` floor daubs stay). The
+  rite-holder was moved off the dead-centre front and made a low `kneel` (it
+  was a standing `chant` that both occluded the Mask and contradicted the
+  "bowed at the altar's foot" fiction).
+
+**#2c is COMPLETE: all six tableau-bearing walkable scenes (Hettie's shop,
+Crane's church, Vane's office, Sable's lodge, Toby's house, the Sign Chamber)
+now carry their close-up's specific details; the bedroom desk already had full
+parity. New procedural kinds: `cash_register`, `bill_spike`, `service_bell`,
+`crayons`, `altar_mask`, `lectern`, `gun_cabinet` (FURNITURE), `key_rack` +
+`crayon_drawing` + `wall_sign` (`_WALL_DECO`). Deferred: Sable's ceiling fan
+(no overhead tilt path).**
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

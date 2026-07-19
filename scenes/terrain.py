@@ -3788,6 +3788,9 @@ _WALL_DECO_KINDS = frozenset((
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard", "wall_cross",
+    # the Yellow Sign daubed on a wall face (the Sign Chamber apse; the
+    # tableau-parity pass) -- the floor `yellow_sign` warps onto the ground.
+    "wall_sign",
     # Framed needlework, a varnish-dark portrait, and a larder shelf of
     # preserves: all HANG on the wall face.
     "sampler", "oil_portrait", "preserve_shelf",

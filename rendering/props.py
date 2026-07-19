@@ -2513,6 +2513,49 @@ def _draw_bill_spike_solid(surf, cam, deco):
                          (int(b[0]), int(b[1])), max(2, int(pw * 0.55 * s)))
 
 
+def _draw_altar_mask_solid(surf, cam, deco):
+    """The Pallid Mask resting on the cult's altar, face-out to the kneeling: a
+    pale drowned face, black eye sockets each holding a warm gold ember (it
+    knows your hands). A flat object shown to the congregation, so it faces
+    south by design (NARRATIVE 6a); a soft warm underglow. Lifts to kwargs['z']
+    (the pedestal cap); the scene drops it once the Mask is taken."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 18.0))
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0) or 0
+    hw, hh = 4.2 * s, 5.4 * s
+    fy = 5.5 * s                       # forward (south), the front of the cap
+    zc = z0 + hh + 1.5 * s             # mask centre height
+    gx, gy = cam.project(wx, wy + fy, zc)
+    gw = max(2, int(hw * cam.scale * 1.6)); gh = max(2, int(hh * cam.scale * 1.6))
+    glow = pygame.Surface((gw * 2 + 2, gh * 2 + 2), pygame.SRCALPHA)
+    pygame.draw.ellipse(glow, (150, 118, 66, 66), (1, 1, gw * 2, gh * 2))
+    surf.blit(glow, (int(gx) - gw - 1, int(gy) - gh - 1),
+              special_flags=pygame.BLEND_RGB_ADD)
+    pts = []
+    for i in range(16):
+        a = i / 16.0 * 2 * math.pi
+        pts.append(cam.project(wx + math.cos(a) * hw, wy + fy,
+                               zc + math.sin(a) * hh))
+    ipts = [(int(px), int(py)) for px, py in pts]
+    pygame.draw.polygon(surf, (204, 200, 192), ipts)
+    pygame.draw.polygon(surf, (150, 148, 142), ipts, 1)
+    n0 = cam.project(wx, wy + fy, zc + 1.0 * s)
+    n1 = cam.project(wx, wy + fy, zc - 2.2 * s)
+    pygame.draw.line(surf, (172, 168, 160), (int(n0[0]), int(n0[1])),
+                     (int(n1[0]), int(n1[1])), 1)
+    ember = 0.55 + 0.45 * math.sin(t * 1.6 + seed)
+    for ex in (-1.9 * s, 1.9 * s):
+        sk = cam.project(wx + ex, wy + fy, zc + 1.4 * s)
+        pygame.draw.circle(surf, (10, 9, 11), (int(sk[0]), int(sk[1])),
+                           max(1, int(1.4 * s * cam.scale)))
+        eg = cam.project(wx + ex, wy + fy, zc + 0.6 * s)
+        ec = (int(120 + 90 * ember), int(70 + 46 * ember), 30)
+        pygame.draw.circle(surf, ec, (int(eg[0]), int(eg[1])),
+                           max(1, int(0.7 * s * cam.scale)))
+
+
 def _draw_crayons_solid(surf, cam, deco):
     """A child's crayons and a half-drawn sheet on the table: a pale sheet with
     a couple of crude crayon strokes, and several short colored crayon sticks
@@ -2643,6 +2686,7 @@ SOLID_PROPS = {
     "bill_spike":     _draw_bill_spike_solid,
     "service_bell":   _draw_service_bell_solid,
     "crayons":        _draw_crayons_solid,
+    "altar_mask":     _draw_altar_mask_solid,
     "lectern":        _draw_lectern_solid,
     "church_bell":    _draw_church_bell_solid,
     "valve":          _draw_valve_solid,
