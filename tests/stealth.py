@@ -1287,6 +1287,40 @@ def main():
     check(b._cult_state == "scout",
           "bridge: the crosser never routes to the hidden player below")
 
+    # ---- §15: interior doors (2026-07) ---------------------------------
+    print("[15] interior doors: shut blocks body+sight, open sees through, "
+          "a shut door breaks the chase")
+    from scenes.base import Scene
+    # a wall dividing a top room from a bottom room, two door gaps in it
+    o = ["WWWWWW", "W....W", "W....W", "WW.W.W",
+         "W....W", "W....W", "WWWWWW"]
+    sd = Scene("doortest", ["=" * 6] * 7, o)
+    sd.add_inner_door(2, 3, "plank")
+    sd.add_inner_door(4, 3, "bars")
+    dx, dy = 2 * TILE + 16, 3 * TILE + 16
+    check(sd.is_solid_at(dx, dy) and sd.blocks_sight(dx, dy)
+          and not sd._nav_solid_at(dx, dy),
+          "doors: a shut plank door is solid + blocks sight, nav routes through")
+    sd._inner_doors[(2, 3)]["open"] = True
+    check(not sd.is_solid_at(dx, dy) and not sd.blocks_sight(dx, dy),
+          "doors: an open door passes the body and the sight cone")
+    check(sd.is_solid_at(4 * TILE + 16, 3 * TILE + 16)
+          and not sd.blocks_sight(4 * TILE + 16, 3 * TILE + 16),
+          "doors: a shut BARS door blocks the body but you see through it")
+    # the stealth payoff: shutting the plank door breaks the LOS across it
+    a0 = (2 * TILE + 16, 1 * TILE + 16)          # top room
+    a1 = (2 * TILE + 16, 5 * TILE + 16)          # bottom room, past the door
+    sd._inner_doors[(2, 3)]["open"] = True
+    open_los = sd.clear_sight_line(a0[0], a0[1], a1[0], a1[1])
+    sd._inner_doors[(2, 3)]["open"] = False
+    shut_los = sd.clear_sight_line(a0[0], a0[1], a1[0], a1[1])
+    check(open_los and not shut_los,
+          "doors: shutting the door breaks the line of sight across it")
+    was = sd._inner_doors[(2, 3)]["open"]
+    sd.toggle_nearest_inner_door(dx, dy)
+    check(sd._inner_doors[(2, 3)]["open"] != was,
+          "doors: the player E-toggle flips the nearest door")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

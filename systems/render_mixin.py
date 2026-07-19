@@ -1750,6 +1750,27 @@ class RenderMixin:
                           lambda d=d, ox=ox, oy=oy: draw_wall_deco(
                               self.screen, self.camera, self.scene, d,
                               _WALL_MOUNT_Z, woff=(ox, oy)))
+            # Interior doors (2026-07): each leaf depth-sorts with the walls +
+            # props and swings on its hinge; a SHUT one occludes and blocks the
+            # sight cone (Scene.blocks_sight), so the room beyond stays hidden
+            # until it is opened. State lives on Scene._inner_doors.
+            _idoors = getattr(self.scene, "_inner_doors", None)
+            if _idoors:
+                from rendering.props import draw_inner_door
+                from scenes.base import _WALL_CHARS
+                _iobj = self.scene.objects
+
+                def _iwall(xx, yy):
+                    return (not (0 <= yy < len(_iobj) and 0 <= xx < len(_iobj[yy]))
+                            or _iobj[yy][xx] in _WALL_CHARS)
+                for (tx, ty), dd in _idoors.items():
+                    cx, cy = tx * TILE + TILE // 2, ty * TILE + TILE // 2
+                    ew = _iwall(tx - 1, ty) and _iwall(tx + 1, ty)
+                    _emit(self.camera.depth(cx, cy, _TILT_WALL_RISE),
+                          lambda cx=cx, cy=cy, ew=ew, dd=dd:
+                          draw_inner_door(self.screen, self.camera, cx, cy,
+                                          ew, dd["swing"], dd["kind"],
+                                          dd["seed"]))
             # The portal + folds depth-sort with the trees/walls/actors (so a
             # tree in front of one occludes it and it occludes what is behind)
             # instead of always drawing on top -- they are real upright things

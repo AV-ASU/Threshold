@@ -1845,6 +1845,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.show_notice(verb, duration=1.8)
             self.audio.play("hide_enter", 0.7)
             return
+        # An interior door in reach: E opens or shuts it (2026-07). A shut
+        # door on a pursuer breaks the sightline (Scene.blocks_sight) and buys
+        # time; NPCs open their own way through (Scene.update).
+        if getattr(self.scene, "_inner_doors", None):
+            if self.scene.toggle_nearest_inner_door(
+                    self.player.x, self.player.y, game=self) is not None:
+                return
         # Splitting axe: if the player has the lumber_axe in their
         # inventory and is adjacent to a chop-eligible tile (`*`
         # debris OR `q` boarded panel), pressing E swings it. Combat

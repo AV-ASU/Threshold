@@ -636,6 +636,23 @@ it renders the procedural sprites to a labelled PNG strip.
   itself). One-way is the King's signature alone. See DESIGN.md §7 "One
   phenomenon, two presentations" + DESIGN.md §7 "Decisions landed". Live
   proof sheet: `tools/preview_rift_anchored.py`.
+- **Interior doors — the subroom divider (2026-07, DESIGN.md §7).** The
+  third door kind, and NOT a teleport: a swinging leaf on a floor GAP in a
+  wall line WITHIN one scene, the tool that splits a box building into
+  several subrooms. State on `Scene._inner_doors`; author with
+  `Scene.add_inner_door(tx, ty, kind, open=False)` on a floor tile inside a
+  wall run. A shut leaf behaves like a wall (hooked into `is_solid_at` +
+  `blocks_sight` — so it occludes AND breaks a pursuer's line of sight,
+  buying time; the same `blocks_sight` `clear_sight_line` runs, one hook for
+  render + cult AI), open passes both; `_nav_solid_at` never counts a door
+  tile so NPCs route AT it and open their own way through. `Scene.update`
+  runs the open/close (most start CLOSED; an NPC nearing a shut door opens
+  it, it swings shut a beat after the last actor leaves); the player toggles
+  the nearest with **E** (`toggle_nearest_inner_door`, last in
+  `try_interact`). Kinds: `plank` (opaque wood) / `bars` + `half`
+  (see-through, block the body but not the sight cone — `_SEE_THROUGH_DOOR_KINDS`)
+  / `curtain` (drape). Draw: `rendering.props.draw_inner_door`, emitted +
+  depth-sorted in `draw_world`'s tilt pass. Guard: `tests/stealth.py` §15.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`

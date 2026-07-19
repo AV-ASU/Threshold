@@ -2389,6 +2389,56 @@ def _draw_generator_solid(surf, cam, deco):
     pygame.draw.circle(surf, (255, 224, 170), (int(bl[0]), int(bl[1])), br)
 
 
+def draw_inner_door(surf, cam, wx, wy, ew, swing, kind="plank", seed=0):
+    """An interior door leaf between two subrooms, swinging on its hinge from
+    across-the-gap (swing 0, SHUT) to along-the-wall (swing 1, OPEN). `ew` =
+    the door sits in an E-W wall (its opening faces N-S). Kinds: plank / bars
+    (a see-through cell gate) / curtain (a drape) / half (a counter door).
+    The collision + sight state lives on Scene._inner_doors; this only draws."""
+    from scenes.base import _TILT_WALL_RISE
+    leaf = 28.0
+    thick = 4.0
+    height = _TILT_WALL_RISE * (0.55 if kind == "half" else 0.9)
+    if ew:                              # E-W wall: shut leaf lies along X
+        hx, hy = wx - leaf / 2.0, wy
+        ang = swing * (math.pi / 2.0)
+    else:                              # N-S wall: shut leaf lies along Y
+        hx, hy = wx, wy - leaf / 2.0
+        ang = math.pi / 2.0 - swing * (math.pi / 2.0)
+    ca, sa = math.cos(ang), math.sin(ang)
+    bx, by = hx + (leaf / 2.0) * ca, hy + (leaf / 2.0) * sa
+    if kind == "bars":
+        iron = (58, 58, 66)
+        # frame + a low rail, then vertical bars you see between
+        rail = {"top": (46, 46, 52), "side": (30, 30, 36), "dark": (16, 16, 20)}
+        draw_box(surf, cam, bx, by, leaf, thick, height * 0.12, rail, yaw=ang)
+        top_rail = cam.project(hx + leaf * ca, hy + leaf * sa, height * 0.92)
+        hinge_top = cam.project(hx, hy, height * 0.92)
+        pygame.draw.line(surf, iron, hinge_top, top_rail, 2)
+        for i in range(5):
+            f = (i + 0.5) / 5.0
+            gx, gy = hx + leaf * f * ca, hy + leaf * f * sa
+            pygame.draw.line(surf, iron, cam.project(gx, gy, 0),
+                             cam.project(gx, gy, height * 0.92), 2)
+        return
+    if kind == "curtain":
+        pal = {"top": (104, 62, 60), "side": (78, 44, 44), "dark": (46, 26, 26)}
+    else:
+        pal = {"top": (98, 76, 50), "side": (68, 52, 34), "dark": (40, 30, 20)}
+    draw_box(surf, cam, bx, by, leaf, thick, height, pal, yaw=ang)
+    if kind == "plank":               # a couple seams + a knob
+        for fz in (0.35, 0.68):
+            a = cam.project(hx + leaf * 0.12 * ca, hy + leaf * 0.12 * sa,
+                            height * fz)
+            b = cam.project(hx + leaf * 0.88 * ca, hy + leaf * 0.88 * sa,
+                            height * fz)
+            pygame.draw.line(surf, (52, 40, 26), a, b, 1)
+        knob = cam.project(hx + leaf * 0.82 * ca, hy + leaf * 0.82 * sa,
+                           height * 0.5)
+        pygame.draw.circle(surf, (156, 146, 96),
+                           (int(knob[0]), int(knob[1])), max(1, 2))
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,

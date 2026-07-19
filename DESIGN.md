@@ -902,6 +902,49 @@ just the old south default). This is what lets an overworld building FRONT the
 street it sits on -- Brimley's houses face east/west/north onto the central
 spine and their access road rather than all facing south (TODO #18 follow-up).
 
+### Interior doors -- dividing a building into subrooms (2026-07)
+
+The third door kind, distinct from the two above. A fade-door is a scene
+boundary; a see-through door shows a *different* scene's room through an
+opening. An **interior door** is neither: it is a swinging leaf on a floor
+GAP in a wall line **inside one scene**, the tool that turns a box building
+into several subrooms (the room-redesign lever -- buildings divided into
+several subrooms, not one open box).
+
+State lives on `Scene._inner_doors` (`(tx, ty) -> {open, kind, swing,
+close_t, seed}`); author with `Scene.add_inner_door(tx, ty, kind, open=False)`
+on a floor tile that sits in a wall run. It hooks the three existing
+predicates so a **shut** leaf behaves exactly like a wall and an **open** one
+like a gap, with no bespoke pathing:
+
+- `is_solid_at` -- a shut door blocks the body (a wall); open passes.
+- `blocks_sight` -- a shut door blocks the sight cone (so the room beyond
+  stays hidden until it is opened), **except** the see-through kinds
+  (`_SEE_THROUGH_DOOR_KINDS` = bars / half: they stop the body but you look
+  through them, the cell-gate / counter read). Open always passes. This is
+  the same `blocks_sight` that `clear_sight_line` runs, so ONE hook covers
+  both the render sight-gate AND the cult-AI line of sight -- **a shut door
+  breaks a pursuer's lock and buys time** (the design ask).
+- `_nav_solid_at` -- a door tile is never a nav wall, so NPCs route AT it and
+  open their own way through.
+
+**Most start closed.** `Scene.update` runs the open/close: an NPC within ~1.5
+tiles of a shut door opens it (a `wood_creak`), the door holds open while any
+actor is near, and it swings shut a beat (`close_t`) after the last one
+leaves. The player toggles the nearest door in reach with **E**
+(`toggle_nearest_inner_door`, wired last in `try_interact`). The `swing`
+value lerps toward the open/shut target each frame and drives only the draw.
+
+**Draw** (`rendering/props.draw_inner_door`, emitted in `draw_world`'s tilt
+pass, depth-sorted with the walls/props): the leaf swings on its hinge from
+across-the-gap (shut) to along-the-wall (open); `ew` (an E-W wall, read from
+the tile's wall neighbours) sets the hinge axis. Kinds carry their own look:
+**plank** (wood panel, seams + knob), **bars** (a see-through iron cell
+gate), **curtain** (a maroon drape), **half** (a low counter door you see
+over). Guarded by `tests/stealth.py` §15 (shut = solid + blocks sight + nav
+routes through; open passes both; a bars door is solid but see-through;
+shutting breaks the LOS across it; the E-toggle flips the nearest).
+
 ---
 
 ## 8. Desire, and how the fold strands it
