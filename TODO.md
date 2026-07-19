@@ -917,16 +917,19 @@ lit by the period-electric **`wall_lamp`** (genset bulkhead fixture) with the
 old candles/kerosene demoted to accent -- they read dim-lit-by-bulbs with dark
 corners (DESIGN §6). The refuge (`SAFE_SCENES`) is deliberately excluded and
 stays flat-lit + safe. This is pass 1 ("just fix interior lighting first"); the
-Watcher rework below is pass 2 ("no light = danger"), still to build:
+Watcher rework below is pass 2 ("no light = danger").
 
-- **Watchers in the dark, scoped (pass 2, the maintainer's "3 then 1").**
-  Rework Watchers so the non-refuge interiors (the `DIM_INTERIOR_SCENES` now
-  lit above) adopt "no light = danger": a Watcher can open in a dark room, and
-  the flashlight / standing deep in a light POOL (`Scene.lit_at`, already the
-  shadow-cover gate) burns it out. Keep the true refuges safe (bedroom,
-  toby_house). Add these interiors to `WATCHER_OPEN_SCENES` (today it excludes
-  all surface buildings, DESIGN §4) + wire the lit-pool defense. Couple with
-  the blackout below.
+- **Watchers in the dark, scoped. LANDED (2026-07, pass 2 of "3 then 1").**
+  The non-refuge interiors (`DIM_INTERIOR_SCENES`) now adopt "no light =
+  danger": `WATCHER_OPEN_SCENES` folds them in, and in those rooms
+  `_tick_watchers` treats being in the DARK as exposure -- a light POOL
+  (`Scene.lit_at`) or the flashlight is the cover, and a Watcher caught in a
+  pool / the beam BURNS out (`WATCHER_LIGHT_BURN`, `_tick_watcher_gaze`). The
+  true refuges stay gaze-free (`SAFE_SCENES` excluded + `KING_FREE`). Guarded
+  by `tests/stealth.py` §11 (rewritten); DESIGN §4/§6, CLAUDE.md reconciled.
+  **Still open here:** the "go further" variant (even the refuges lose their
+  light-safety) is deliberately NOT built (the refuge is load-bearing); and
+  the blackout below is what makes it a *storm*.
 - **The moth blackout.** A moth flare knocks out the lights (kill a genset
   node / drop the yard-light pools), the screen dims, and the cult camp
   forms a procession to the flash and fans out to search. Rides the shared

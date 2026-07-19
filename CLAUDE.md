@@ -480,12 +480,15 @@ it renders the procedural sprites to a labelled PNG strip.
   (its eyes go dark, then it dissolves), or the **axe** / a **round**.
   **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
   `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
-  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze only OPENS under the
-  open sky or in the deep (2026-07 ruling, `WATCHER_OPEN_SCENES`): no
-  Watcher ever manifests inside a surface building** — any interior door
-  clears the wave, and the grace runs before it re-forms outside
-  (`tests/stealth.py` §11). (The old GAZE_BIND high-visibility
-  trigger is retired.) The gun and axe **share one weapon slot** (left-click
+  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
+  in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
+  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
+  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
+  the flashlight is the cover, and a Watcher caught in a pool / the beam
+  **BURNS** out (`WATCHER_LIGHT_BURN`). The **true refuges stay gaze-free**
+  (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
+  sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
+  high-visibility trigger is retired.) The gun and axe **share one weapon slot** (left-click
   to use; switch which is equipped from the inventory screen).
 - **Killing locals**: the gun is *not* cult-only. A clean round drops any
   living **local** instantly (lethal regardless of the evidence stagger

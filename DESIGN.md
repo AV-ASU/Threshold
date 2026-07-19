@@ -397,12 +397,19 @@ Only display names and fiction change.
   the eye itself are the tell — any future text must read as **His eye
   reaching into the plane**, never a side-cult's spell. Internal names
   (`_cursed`, `_apply_curse`) stay plumbing.
-  **The gaze only OPENS under the open sky or in the deep (2026-07 ruling,
-  `WATCHER_OPEN_SCENES`): no Watcher ever manifests inside a surface
-  building.** Step through any interior door and the wave clears; step back
-  out and the grace runs before it re-forms. A fold into a surface interior
-  binds nothing (`_roll_fold_watcher` exempts non-open destinations).
-  Guarded by `tests/stealth.py` §11.
+  **The gaze opens under the open sky, in the deep, AND in a DARK non-refuge
+  interior (the "no light = danger" rework, TODO #21; `WATCHER_OPEN_SCENES`
+  now includes `DIM_INTERIOR_SCENES`).** In those dim rooms exposure is
+  **being in the DARK**: a light POOL (`Scene.lit_at`) or the flashlight is
+  the cover, so His gaze can't hold you in the light, and a Watcher caught in
+  a pool / the beam **BURNS** out fast (`WATCHER_LIGHT_BURN`,
+  `_tick_watcher_gaze`) -- the flashlight is how you clear them, and the
+  refuge here is the LIT room, not the building. The **true refuges stay
+  gaze-free**: `SAFE_SCENES` (the PI's room, `toby_house`) are excluded from
+  `WATCHER_OPEN_SCENES` AND `KING_FREE`, so no Watcher ever opens there, and a
+  plain interior outside both sets is gaze-free too. A fold into a non-open
+  destination binds nothing (`_roll_fold_watcher`). Guarded by
+  `tests/stealth.py` §11.
 - ~~**Gun = false-power threshold (§1).**~~ **DONE + flow-guarded.** The
   mechanic matches canon and `tests/flow.py` locks all four facts:
   **< 3 evidence kills cultists**, **3+ only staggers**, the **King and

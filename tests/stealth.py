@@ -893,40 +893,75 @@ def main():
         pygame.key.get_pressed = _orig_gp
     check(splashed, "wade: a wet footfall throws a splash noise event")
 
-    # --- 11. Watchers open under the open sky / in the deep, NEVER inside
-    # a surface building (WATCHER_OPEN_SCENES, 2026-07 ruling) -------------
+    # --- 11. "no light = danger" (TODO #21): the gaze opens under the open
+    # sky, in the deep, AND in a DARK non-refuge interior -- but there a light
+    # POOL / the flashlight is the cover, and BURNS them. The true refuges
+    # (SAFE_SCENES) stay gaze-free. -------------------------------------------
     from systems.config import (WATCHER_OPEN_SCENES, WATCHER_WAKE_EV,
                                  WATCHER_GRACE, WATCHER_SPAWN_BASE,
-                                 KING_FREE_SCENES)
-    check("shop" not in WATCHER_OPEN_SCENES
-          and "church" not in WATCHER_OPEN_SCENES
-          and "sheriff_office" not in WATCHER_OPEN_SCENES
-          and "schoolhouse" not in WATCHER_OPEN_SCENES,
-          "watchers: surface interiors are outside the gaze's reach")
+                                 WATCHER_GAZE_DISPEL, WATCHER_LIGHT_BURN,
+                                 DIM_INTERIOR_SCENES, KING_FREE_SCENES)
+    check(DIM_INTERIOR_SCENES <= WATCHER_OPEN_SCENES,
+          "watchers: the dark non-refuge interiors are now in the gaze's reach")
+    check("bedroom" not in WATCHER_OPEN_SCENES
+          and "toby_house" not in WATCHER_OPEN_SCENES,
+          "watchers: the true refuges (SAFE_SCENES) stay outside the gaze")
     check("brimley" in WATCHER_OPEN_SCENES
           and "effigy_grove" in WATCHER_OPEN_SCENES
           and "works_sign" in WATCHER_OPEN_SCENES,
           "watchers: the open sky and the deep stay in it")
-    # Inside the shop: exposed, evidence pulled, long past every timer --
-    # and no Watcher ever opens.
+    # Inside the shop, standing in the DARK (unlit, flashlight off): the gaze
+    # opens now.
     g = new_game()
     g.load_scene_now("shop", "default")
     tick(g, 30)
     g.save.set_arg("evidence", [{"name": f"w{i}"}
                                 for i in range(WATCHER_WAKE_EV)])
-    g.player.hidden = None
+    dark_x, dark_y = 2 * TILE + 16, 9 * TILE + 16     # far from every fixture
+    assert not g.scene.lit_at(dark_x, dark_y)
     for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
-        g._tick_watchers(1 / 30.0)
+        g.player.x, g.player.y = dark_x, dark_y
         g.player.hidden = None
-    check(not g._watchers and not g._cursed,
-          "watchers: none ever manifests inside a surface building")
-    # A live wave clears at the door and the grace re-arms for the way out.
+        g._tick_watchers(1 / 30.0)
+        if g._watchers:
+            break
+    check(bool(g._watchers),
+          "watchers: standing in the dark of a non-refuge interior opens one")
+    # Step into a light POOL: exposure drops, so the wave stops driving
+    # visibility (the hold releases).
+    lit_x, lit_y = 13 * TILE + 16, 8 * TILE + 16       # under the wall_lamp
+    assert g.scene.lit_at(lit_x, lit_y)
+    g.player.x, g.player.y = lit_x, lit_y
+    g.player.hidden = None
+    g._tick_watchers(1 / 30.0)
+    check(g._watcher_gaze == 0.0,
+          "watchers: standing in a light pool drops the gaze hold (cover)")
+    # Light BURNS a Watcher: one caught IN a pool dissolves fast.
     g._cursed = True
     g._spawn_watcher()
-    g._tick_watchers(1 / 30.0)
-    check(not g._watchers and not g._cursed
-          and g._watcher_clone_t == WATCHER_GRACE,
-          "watchers: stepping indoors clears the wave and sets the grace")
+    if g._watchers:
+        w = g._watchers[-1]
+        w.x, w.y = lit_x, lit_y
+        burned = False
+        for _ in range(int((WATCHER_GAZE_DISPEL / (1 + WATCHER_LIGHT_BURN)
+                            + 0.6) * 30)):
+            w.x, w.y = lit_x, lit_y
+            g._tick_watcher_gaze(1 / 30.0)
+            if w not in g._watchers:
+                burned = True
+                break
+        check(burned, "watchers: a Watcher caught in a light pool burns out")
+    # The true refuge stays gaze-free: inside toby_house, no Watcher ever opens.
+    gr = new_game()
+    gr.load_scene_now("toby_house", "default")
+    tick(gr, 30)
+    gr.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(WATCHER_WAKE_EV)])
+    for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
+        gr.player.hidden = None
+        gr._tick_watchers(1 / 30.0)
+    check(not gr._watchers and not gr._cursed,
+          "watchers: the true refuge never manifests one")
     # Same clock in the open: the wave DOES open (the mechanic still works).
     g2 = new_game()
     g2.load_scene_now("brimley", "default")

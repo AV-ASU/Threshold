@@ -816,7 +816,17 @@ class ThreatMixin:
             self._watcher_clone_t = WATCHER_GRACE
             self._watcher_gaze = 0.0
             return
-        exposed = self.player.hidden is None
+        if key in DIM_INTERIOR_SCENES:
+            # "no light = danger" (TODO #21): in these dark rooms the gaze
+            # opens where you stand in the DARK. A light POOL (Scene.lit_at,
+            # the same shadow-cover gate) or the flashlight is the cover -- the
+            # refuge here is the LIT room, not the building. An enclosed hide
+            # (under a desk) still counts as cover too.
+            lit = (self._flashlight_lit()
+                   or self.scene.lit_at(self.player.x, self.player.y))
+            exposed = (not lit) and self.player.hidden is None
+        else:
+            exposed = self.player.hidden is None
         # A wave carried in from a fold (or across a scene) re-forms its seed.
         if self._cursed and not self._watchers:
             self._spawn_watcher()
@@ -889,6 +899,8 @@ class ThreatMixin:
             blk = self.scene.blocks_sight
             cone = lambda w: visible_factor(p.x, p.y, aim, w.x, w.y, blk)
         fdx, fdy = p.facing
+        scene = self.scene
+        flit = self._flashlight_lit()
         for w in list(self._watchers):
             if cone is not None:
                 looking = cone(w) > 0.25
@@ -896,11 +908,17 @@ class ThreatMixin:
                 pdx, pdy = w.x - p.x, w.y - p.y
                 d = math.hypot(pdx, pdy) or 1.0
                 looking = ((pdx / d) * fdx + (pdy / d) * fdy) > 0.5 and d < 360
+            # LIGHT BURNS a Watcher (TODO #21 "no light = danger"): one standing
+            # in a light pool -- or caught in the flashlight beam -- dissolves
+            # fast, on top of any gaze. The flashlight is how you clear them,
+            # and a bright pool is a place His gaze cannot hold you OR them.
+            burn = ((scene is not None and scene.lit_at(w.x, w.y))
+                    or (flit and looking))
             gt = getattr(w, "_gaze_dispel_t", 0.0)
-            if looking:
-                gt += dt
+            if looking or burn:
+                gt += dt * (1.0 + (WATCHER_LIGHT_BURN if burn else 0.0))
                 if gt >= WATCHER_GAZE_DISPEL:
-                    self._dispel_watcher(w, reason="gaze")
+                    self._dispel_watcher(w, reason="light" if burn else "gaze")
                     continue
             else:
                 gt = max(0.0, gt - dt * 1.5)

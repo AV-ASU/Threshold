@@ -310,6 +310,10 @@ WATCHER_GAZE = 0.05           # visibility CLIMB per live Watcher per second
                               # while exposed -- the teeth of the mechanic
 WATCHER_FLOOR = 0.07          # residual visibility floor per live Watcher
 WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
+WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
+                              # in a light pool / the flashlight beam dissolves
+                              # this-much faster (on top of any gaze) -- light is
+                              # how you clear them in a dark interior
 # Walking through a rift FOLD has this chance to open an extra Watcher on the
 # far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
 FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal
@@ -726,15 +730,17 @@ UNDERGROUND_SCENES = {
     "the_sump", "the_cells", "the_old_stores",
 }
 
-# Where His gaze can OPEN (2026-07 ruling: a Watcher never manifests inside
-# a surface building -- four walls and a roof are not His medium; He watches
-# under the open sky, and in His own deep). Derived from the outdoor +
-# underground sets plus the open-sky keys those sets don't carry, so a new
-# surface interior is excluded by default and a new outdoor scene should be
-# added to OUTDOOR_SCENES as usual. Read by _tick_watchers (the whole wave
-# machine gates on it) and _roll_fold_watcher (a fold into a surface
-# interior binds nothing). KING_FREE_SCENES still suppress on top.
+# Where His gaze can OPEN. He watches under the open sky, in His own deep, and
+# -- since the "no light = danger" rework (TODO #21) -- inside the DARK
+# non-refuge interiors (`DIM_INTERIOR_SCENES`), where the light is the refuge
+# instead of the building: _tick_watchers treats being in the DARK there as
+# exposure, and a light pool / the flashlight is the cover (and burns them,
+# WATCHER_LIGHT_BURN). The true refuges (SAFE_SCENES) stay gaze-free by being
+# excluded here AND KING_FREE. A new plain surface interior is still excluded
+# by default. Read by _tick_watchers (the whole wave machine gates on it) and
+# _roll_fold_watcher.
 WATCHER_OPEN_SCENES = (OUTDOOR_SCENES | UNDERGROUND_SCENES
+                       | DIM_INTERIOR_SCENES
                        | {"brimley", "effigy_grove"})
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure
