@@ -374,12 +374,22 @@ def build_barn():
                                  "preserve_shelf", seed=21))
     # It read like one farmer's barn, but the newcomers bedded down here in
     # numbers (Toby: "They slept all over then. The barn.") -- dress it so it
-    # reads inhabited by MANY (TODO #691). Several bedrolls laid out across
-    # the main floor (staggered off the grid, clear of the spawn tile and the
-    # door approach), with a couple of gear crates for their belongings.
-    for (bx, by, ba) in [(2, 7, 0.0), (3, 9, 0.5), (6, 7, -0.4), (7, 9, 0.2)]:
+    # reads inhabited by MANY. Six bedrolls laid out across the main floor
+    # (staggered off the grid, clear of the spawn tile at (5,8), the col-5
+    # walk to the back stall, and the door approach), each with a pile of
+    # shed belongings beside a couple, plus gear crates -- a commune
+    # dormitory, not one farmer's cot.
+    for (bx, by, ba) in [(2, 7, 0.0), (3, 9, 0.5), (6, 7, -0.4), (7, 9, 0.2),
+                         (4, 7, 0.3), (8, 8, -0.2)]:
         sc.add_decoration(Decoration(bx * TILE + 14, by * TILE + 18,
                                      "bedroll", ang=ba, seed=bx * 7 + by))
+    # Their belongings, set down where the fold took them (the effects the
+    # Sorting Hall now catalogues, shed at the sleeping place): a folded
+    # bundle beside two of the rolls.
+    sc.add_decoration(Decoration(3 * TILE + 16, 8 * TILE + 16, "effects_pile",
+                                 seed=4))
+    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "effects_pile",
+                                 seed=9))
     sc.add_decoration(Decoration(2 * TILE + 18, 10 * TILE + 12, "crate",
                                  seed=3))
     sc.add_decoration(Decoration(7 * TILE + 14, 10 * TILE + 12, "crate",
