@@ -464,6 +464,36 @@ fog/forest periphery reads as dread, not filler.
 - Its own build, scoped to run AFTER the conversation/tableau work so two big
   changes are never in the air at once.
 
+### 4c. **[Opus]** Interior doors + the multi-subroom redesign  *(maintainer complaint 2026-07: "all rooms are either a box or that room with the side room"; MECHANIC + SHOP PILOT landed, rollout open)*
+
+The maintainer's grievance: every interior is one open box or a box with a
+single side room. The fix has two halves, and the first is done.
+
+- **The MECHANIC landed (2026-07).** A new **interior door** kind (DESIGN.md
+  §7 / CLAUDE.md): a swinging leaf on a floor GAP in a wall line WITHIN one
+  scene, the tool that splits a building into subrooms. `Scene._inner_doors` +
+  `add_inner_door(tx, ty, kind, open=False)`; a shut leaf is solid + blocks
+  the sight cone (so it hides the room beyond AND breaks a pursuer's line of
+  sight, buying time), open passes both, NPCs route AT it and open their own
+  way (`Scene.update`), the player toggles the nearest with E. Kinds: plank /
+  bars / half (see-through) / curtain. Draw `rendering.props.draw_inner_door`.
+  Guard `tests/stealth.py` §15. Reachability is safe: an inner door sits on a
+  `.` gap tile, so smoke's flood-fill routes through it.
+- **The SHOP PILOT landed (2026-07).** `build_shop` (`scenes/interiors.py`) is
+  rebuilt as a NESTED warren, not a divided box: an L-shaped public shop floor,
+  a plank door to a dry-goods STOCKROOM, a second plank door off the BACK of
+  the stockroom to a cold PANTRY (two doors deep, a true blind spot for the
+  cult tells), and a curtain nook for Hettie's office. Hettie's worker route
+  walks her through the stockroom door (the auto-open showcase). Verified live
+  (VISION four-facing + the blind-spot chain); full gate green.
+- **STILL OPEN: roll the pattern out** to the other box-or-side-room interiors,
+  one at a time, each verified live per VISION: the barn (currently the same
+  main-floor + one-back-stall pattern), the church, the sheriff's office, the
+  schoolhouse, Toby's house (a refuge, so keep it gentle), the Lodge interiors.
+  Each is its OWN build (never two big scene changes in the air at once, #4b);
+  provenance first (SCENE-DRESSING PROCESS), reachability re-checked with
+  smoke's flood-fill, doors mostly CLOSED, varieties that fit context.
+
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
 Brimley **STAYS** northern MN; the corn is town identity — stubborn 1894
