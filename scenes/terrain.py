@@ -3772,6 +3772,9 @@ _TABLETOP_PROP_KINDS = frozenset((
     "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
     "book", "photo", "photo_frame", "tankard", "teapot",
     "wrong_radio", "place_setting",
+    # the shop counter's till + its receipt spike (tableau-parity pass): both
+    # rest ON the counter, seated by seat_tabletop_props.
+    "cash_register", "bill_spike",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as

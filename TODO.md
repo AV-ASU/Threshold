@@ -342,6 +342,30 @@ Part B.
   flow-guarded (`_room_tone` set/cleared, the Mara silence). **Needs a
   LISTEN from the maintainer** (levels tuned by waveform, not by ear).
 
+### 2c. **[Opus + Fable]** Tableau ↔ scene environment parity  *(maintainer call 2026-07: "make sure the environment matches details in the tableaus"; IN PROGRESS)*
+
+Each close-up examine tableau (`ui/tableau.py`, described in `DIALOGUE.md` Part
+B) shows specific props the WALKABLE scene should also carry, so the room the
+player stands in reads as the room the close-up promised. A parity audit found
+the gaps; this pass dresses each walkable scene to match, one at a time, VISION-
+verified (four facings + dark), full gate + docs same commit. New man-made props
+are `SOLID_PROPS`/`FURNITURE` volumes or `_WALL_DECO` mounts (never standees,
+error class #7). The bedroom desk already has full parity (its `writing_desk`
+top draws the pistol + case file); it is the model.
+
+- **Hettie's shop — LANDED (2026-07).** New tabletop volumes `cash_register`
+  (the empty brass till, amount flag reading nothing) + `bill_spike` (Mara's tab
+  curled on the spike by the till), seated on the counter. Matches
+  `draw_hettie_tableau`. Bare shelves / one kept bulb / shop door were already
+  present.
+- **Still open (per the audit):** Vane's office (window + holding-cell bars +
+  gun cabinet), Crane's church (lectern + arched window + bell rope), Sable's
+  lodge (wall of room keys + service bell; ceiling fan is deferred, no overhead
+  tilt path), Toby's house (wall of crayon drawings + crayons on the table +
+  the `toby_told` procession drawing + window), works_sign (the Pallid Mask
+  visible on the altar; verify the `yellow_sign` reads on the apse wall not the
+  floor).
+
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
 **PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /

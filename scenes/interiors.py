@@ -237,6 +237,16 @@ def build_shop():
     # A kerosene lamp on the counter is the backup for when the gas runs low.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,
                                  "kerosene_lamp"))
+    # The old brass till on the counter -- empty since the new year, the amount
+    # flag reading nothing ("Till's been empty since the new year" made an
+    # object; the tableau-parity pass). Seated on the counter by
+    # seat_tabletop_props. Sits east of Hettie's till spot so it never masks her.
+    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 16, "cash_register",
+                                 scale=1.1))
+    # Mara's tab curled on the receipt spike by the till: the spike rises right
+    # at the tab (the world-persistent `papers` at _receipt_pos below), so the
+    # two read as one -- slips impaled by the till.
+    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 9, "bill_spike"))
     # Lodge dressing: a mounted buck + trophy walleye high on the back-shop
     # north wall, over the empty aisle.
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "buck_head",

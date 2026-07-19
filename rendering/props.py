@@ -2439,6 +2439,80 @@ def draw_inner_door(surf, cam, wx, wy, ew, swing, kind="plank", seed=0):
                            (int(knob[0]), int(knob[1])), max(1, 2))
 
 
+def _draw_cash_register_solid(surf, cam, deco):
+    """An old brass shop register: a shut cash drawer with a pull, a bank of
+    round keys on the near face, and a tall amount-flag housing standing off the
+    top with the pop-up number flags reading nothing behind its glass -- an
+    empty till. The housing carries its identity from above the counter (the
+    counter front hides the drawer/keys); lifts to `kwargs['z']` so it sits ON
+    the counter ("Till's been empty since the new year" made an object; the
+    walkable shop had none)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    body = {"top": (132, 110, 64), "side": (100, 82, 48), "dark": (66, 54, 32)}
+    draw = {"top": (90, 74, 42), "side": (68, 56, 32), "dark": (46, 38, 22)}
+    W, D, H = 18 * s, 13 * s, 11 * s
+    hD = D / 2
+    _vbox(surf, cam, wx, wy, W, D, z0, z0 + 4 * s, draw)                 # drawer
+    _vbox(surf, cam, wx, wy, W - 2 * s, D - 1.5 * s, z0 + 4 * s,
+          z0 + H, body)                                                  # body
+    P = _vframe(cam, wx, wy, 0.0)
+    # the cash-drawer pull, low on the near face
+    _lp(surf, P, (-4.5 * s, hD, z0 + 2 * s), (4.5 * s, hD, z0 + 2 * s),
+        (208, 184, 120), 2)
+    # the round key bank on the near face of the body (3 rows x 4)
+    for kz in (z0 + 5.3 * s, z0 + 7.0 * s, z0 + 8.7 * s):
+        for ci in range(4):
+            px, py = P((-5.2 + ci * 3.4) * s, hD - 0.8 * s, kz)
+            r = max(1, int(1.2 * s * cam.scale))
+            pygame.draw.circle(surf, (202, 180, 122), (int(px), int(py)), r)
+            pygame.draw.circle(surf, (72, 60, 36), (int(px), int(py)), r, 1)
+    # the amount-flag housing: a prominent box standing off the top, the read
+    # from above the counter. Sits at the back so the sloped keys front it.
+    fy = wy - (hD - 2.2 * s)
+    fz0, fz1 = z0 + H, z0 + H + 9 * s
+    _vbox(surf, cam, wx, fy, 14 * s, 4 * s, fz0, fz1, body)              # housing
+    Pf = _vframe(cam, wx, fy, 0.0)
+    fd = 2 * s
+    _qp(surf, Pf, [(-5.6 * s, fd, fz0 + 1.6 * s), (5.6 * s, fd, fz0 + 1.6 * s),
+                   (5.6 * s, fd, fz1 - 1.6 * s), (-5.6 * s, fd, fz1 - 1.6 * s)],
+        (24, 22, 20))                                                    # glass
+    # the pop-up number flags behind the glass, blank (an empty sale)
+    for dx in (-3.4 * s, -0.4 * s, 2.6 * s):
+        dp = Pf(dx, fd, fz0 + 4.6 * s)
+        pygame.draw.rect(surf, (156, 152, 138),
+                         (int(dp[0]) - 1, int(dp[1]) - 4,
+                          max(2, int(2.2 * s)), max(4, int(5 * s))))
+    # a brass crest bead along the top of the housing
+    _lp(surf, Pf, (-5.6 * s, fd, fz1 - 0.6 * s), (5.6 * s, fd, fz1 - 0.6 * s),
+        (196, 172, 112), max(1, int(1.4 * s)))
+
+
+def _draw_bill_spike_solid(surf, cam, deco):
+    """A receipt spike: a weighted base, a thin steel needle, and a fan of
+    impaled paper slips crowding the upper half (Mara's tab, the one Hettie
+    works off the spike). Lifts to `kwargs['z']` for the counter."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    base = {"top": (96, 96, 104), "side": (70, 70, 78), "dark": (48, 48, 56)}
+    _vbox(surf, cam, wx, wy, 7 * s, 6 * s, z0, z0 + 2 * s, base)         # base
+    P = _vframe(cam, wx, wy, 0.0)
+    tip = z0 + 13 * s
+    _lp(surf, P, (0, 0, z0 + 2 * s), (0, 0, tip), (176, 178, 188),
+        max(1, int(1.2 * s)))                                           # needle
+    # the impaled slips, a curling fan up the needle
+    for ox, oz, pw, col in ((-3.2 * s, tip - 6.5 * s, 6, (176, 168, 148)),
+                            (2.6 * s, tip - 5.0 * s, 5, (162, 154, 134)),
+                            (-2.4 * s, tip - 3.4 * s, 5, (178, 170, 150)),
+                            (1.6 * s, tip - 2.0 * s, 4, (166, 158, 138))):
+        a = P(ox, 0.4 * s, oz)
+        b = P(ox * 0.25, 0.4 * s, oz + 1.8 * s)
+        pygame.draw.line(surf, col, (int(a[0]), int(a[1])),
+                         (int(b[0]), int(b[1])), max(2, int(pw * 0.55 * s)))
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -2479,6 +2553,8 @@ SOLID_PROPS = {
     "lodge_gable":    _draw_lodge_gable_solid,
     "radio":          _draw_radio_solid,
     "wrong_radio":    _draw_wrong_radio_solid,
+    "cash_register":  _draw_cash_register_solid,
+    "bill_spike":     _draw_bill_spike_solid,
     "church_bell":    _draw_church_bell_solid,
     "valve":          _draw_valve_solid,
     "candle":        _draw_candle_solid,

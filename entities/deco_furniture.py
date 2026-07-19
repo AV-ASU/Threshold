@@ -387,6 +387,22 @@ class DecoFurnitureMixin:
         nx = x - 8 + int((math.sin(self.t * 0.6) + 1) * 6)
         pygame.draw.line(surf, (220, 60, 60), (nx, y - 2), (nx, y + 4), 1)
 
+    def _draw_cash_register(self, surf, x, y):
+        """Flat (pitch-0) fallback for the shop till; the tilt camera draws the
+        real volume (rendering.props._draw_cash_register_solid)."""
+        pygame.draw.rect(surf, (98, 80, 46), (x - 8, y - 3, 16, 11))
+        pygame.draw.rect(surf, (64, 52, 30), (x - 8, y - 3, 16, 11), 1)
+        pygame.draw.rect(surf, (128, 106, 62), (x - 5, y - 8, 10, 6))   # flag
+        for kx in range(-5, 6, 3):
+            pygame.draw.circle(surf, (200, 178, 120), (x + kx, y + 4), 1)
+
+    def _draw_bill_spike(self, surf, x, y):
+        """Flat (pitch-0) fallback for the receipt spike; the tilt camera draws
+        the real volume (rendering.props._draw_bill_spike_solid)."""
+        pygame.draw.line(surf, (170, 172, 182), (x, y + 4), (x, y - 8), 1)
+        pygame.draw.rect(surf, (68, 68, 76), (x - 3, y + 3, 6, 3))
+        pygame.draw.line(surf, (168, 160, 140), (x - 2, y - 5), (x + 2, y - 4), 2)
+
     def _draw_wrong_radio(self, surf, x, y):
         """A 1990s portable transistor radio sitting on a surface.
         Brown plastic body, chrome tuning dial, leather carry strap
