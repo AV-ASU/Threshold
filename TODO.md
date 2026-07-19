@@ -510,6 +510,29 @@ single side room. The fix has two halves, and the first is done.
   polish: tune `_BEVEL_INSET` (0.28·TILE) or subdivide to a 2-3 segment arc if
   the maintainer wants a rounder corner than the single 45° chamfer.)*
 
+- **Thin-SLAB walls landed on the shop (2026-07, maintainer "thin the walls /
+  walls are no longer tiles"; DESIGN.md §6, `scenes/terrain.py`).** The step past
+  the bevel, and unlike it, REAL geometry: a wall tile becomes a THIN SLAB
+  (`_SLAB_THICK` = 0.5·TILE) hugging the room face(s) it presents.
+  `_wall_slab(scene, tx, ty)` is the single source (per axis: wall/off-map
+  neighbour either side → FULL so runs/junctions/ends/shell stay continuous and
+  never notch; floor both sides → CENTRE; floor one side → HUG; else FULL), read
+  by BOTH draw layers (`_extrude_box` `foot` param + `_draw_wall_mass` clip) AND
+  the collision/sight/nav predicates (`scenes/base.py` `_obj_solid_here`, shared
+  by `is_solid_at`/`blocks_sight`/`_nav_solid_at`, inclusive bounds) — so the wall
+  the player bumps and the AI sees IS the thin wall drawn. SUPERSEDES the bevel in
+  a slab scene (`_bevel_corners` returns 0 there). Gated to `_SLAB_SCENES`
+  (pilot = shop); every other scene is byte-identical (capture_world --diff:
+  bedroom/brimley/sheriff_office/works_cistern/depths_hall unchanged). Full gate
+  green; the shop verified live (VISION four-facing + dark). **Still open:**
+  needs a maintainer LOOK (thickness/hug taste); then roll `_SLAB_SCENES` out to
+  the other interiors one at a time per VISION, and DECIDE the tunables — the
+  0.5·TILE thickness, whether to also thin the building SHELL (currently off-map
+  forces the shell full; flipping it would hug the interior and grow the rooms),
+  and whether convex-corner CAPS want the harder global interior-hug for a fully
+  thin corner (the local model leaves junction/end tiles full, which connects
+  cleanly but reads slightly fuller at the elbow).
+
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
 Brimley **STAYS** northern MN; the corn is town identity — stubborn 1894

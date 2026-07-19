@@ -611,6 +611,35 @@ Built into the procedural draw layer (`scenes/base.py`,
   the single shared inset for both layers; bump it or subdivide the chamfer
   into a 2-3 segment arc for rounder corners. Cache-safe (the bevel is a pure
   function of the tile + its 8 neighbour chars + the gate).
+- **Thin-SLAB walls -- the step past the bevel, and NOT draw-only (2026-07,
+  maintainer "thin the walls / walls are no longer tiles").** Where the bevel
+  only shaved a convex corner tip, a slab makes the whole wall tile a THIN
+  SLAB (`_SLAB_THICK` = 0.5·TILE) hugging the room face(s) it presents.
+  `_wall_slab(scene, tx, ty)` (`scenes/terrain.py`) returns a tile-local
+  footprint rect, decided per axis: a WALL or off-map neighbour on either side
+  keeps that axis FULL (the run continues, a junction, a run-end, or the
+  building shell -- what keeps the mass continuous and NEVER notches a run, the
+  same orthogonality that made the bevel byte-identical); floor '.' on BOTH
+  sides CENTRES the slab (a two-sided partition thins symmetrically); floor on
+  ONE side HUGS it (the face the room sees stays at the tile edge, the mass
+  thins toward the far, unseen side); floor on NEITHER stays full. The two draw
+  layers read it (`_extrude_box` grew a `foot` rect param that shrinks the 3D
+  box; `_draw_wall_mass` clips the flat near-black footprint to the same rect,
+  so the mass under the wall matches the thinned box and the room floor shows
+  through the thinned strip). **Unlike the bevel, the geometry is REAL:** the
+  collision / sight / nav predicates (`scenes/base.py` `_obj_solid_here`, shared
+  by `is_solid_at` / `blocks_sight` / `_nav_solid_at`) also read `_wall_slab`,
+  so the wall the player BUMPS and the AI's line of sight obey the wall the
+  player SEES (inclusive bounds, so collision sits a hair proud of the drawn
+  face and a hug slab's tile centre still reads solid -- the nav grid never
+  routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the pilot is the
+  shop); every other scene returns None -> full tile -> byte-identical (the
+  `--diff` gate confirms bedroom / brimley / sheriff_office / works_cistern /
+  depths_hall unchanged). The slab SUPERSEDES the bevel where both would apply
+  (`_bevel_corners` returns 0 for a `_SLAB_SCENES` scene). Cache-safe (a pure
+  function of the tile + its 4 orthogonal neighbour chars + the gate). Tune
+  `_SLAB_THICK`, and roll out one interior at a time per VISION (render + look,
+  all four facings + the dark).
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.

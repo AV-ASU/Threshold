@@ -1321,6 +1321,40 @@ def main():
     check(sd._inner_doors[(2, 3)]["open"] != was,
           "doors: the player E-toggle flips the nearest door")
 
+    # ---- §16: thin-slab walls (2026-07) --------------------------------
+    print("[16] thin-slab walls: the footprint thins two-sided partitions, "
+          "stays full at runs/junctions/shell, and collision+sight+nav agree")
+    import scenes.terrain as _terr
+    from scenes import load_scene
+    # synthetic scene: a vertical partition (col 2) between two rooms + a shell.
+    so = ["WWWWW", "W.W.W", "W.W.W", "W.W.W", "WWWWW"]
+    ss = Scene("slabtest", ["=" * 5] * 5, so)
+    _saved_slab = _terr._SLAB_SCENES
+    _terr._SLAB_SCENES = frozenset(_saved_slab | {"slabtest"})
+    try:
+        foot = _terr._wall_slab(ss, 2, 2)     # floor E+W, wall N+S -> centre X
+        check(foot is not None and foot[1] == 0.0 and foot[3] == TILE
+              and 0.0 < foot[0] and foot[2] < TILE,
+              "slab: a two-sided vertical partition centres (thin X, full Y)")
+        core = (2 * TILE + TILE // 2, 2 * TILE + TILE // 2)
+        gap = (2 * TILE + 2, 2 * TILE + TILE // 2)      # lx=2, in the W gap
+        check(ss.is_solid_at(*core) and ss.blocks_sight(*core),
+              "slab: the slab core is solid + blocks sight")
+        check(not ss.is_solid_at(*gap) and not ss.blocks_sight(*gap),
+              "slab: the thinned strip passes the body AND the sight cone")
+        check(not ss.nav_grid()[2][2],
+              "slab: the nav grid marks a slab tile solid (routes around)")
+        check(_terr._wall_slab(ss, 0, 2) is None,
+              "slab: the building shell (off-map side) stays full")
+    finally:
+        _terr._SLAB_SCENES = _saved_slab
+    check(load_scene("shop") and any(
+        _terr._wall_slab(load_scene("shop"), tx, ty) is not None
+        for ty in range(13) for tx in range(16)),
+          "slab: the shipped shop pilot thins at least one wall (wired e2e)")
+    check(_terr._wall_slab(sd, 0, 0) is None,
+          "slab: a non-_SLAB_SCENES scene returns None (byte-identical)")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

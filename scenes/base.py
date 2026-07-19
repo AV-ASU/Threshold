@@ -556,6 +556,31 @@ class Scene:
             return self.objects[ty][tx]
         return "#"
 
+    def _obj_solid_here(self, x_px, y_px):
+        """True where the OBJECT layer blocks at this pixel -- the single
+        source that collision (`is_solid_at`), sight (`blocks_sight`), and nav
+        (`_nav_solid_at`) all share. In a `_SLAB_SCENES` scene a WALL blocks
+        only where its THIN-SLAB footprint actually sits (the pixel is inside
+        `_wall_slab`'s rect); the thinned-away part of the tile passes -- so the
+        geometry the player bumps and the AI's line of sight obey the geometry
+        the player SEES (the 'walls are no longer tiles' contract), unlike the
+        draw-only bevel. Non-wall solid props are unchanged."""
+        ch = self.char_object_at(x_px, y_px)
+        if not (is_object_solid(ch) or ch in _WALL_CHARS):
+            return False
+        if ch in _WALL_CHARS and getattr(self, "key", None) in _terrain._SLAB_SCENES:
+            foot = _terrain._wall_slab(self, int(x_px // TILE), int(y_px // TILE))
+            if foot is not None:
+                lx, ly = x_px % TILE, y_px % TILE
+                # Inclusive bounds: collision/sight sit a hair PROUD of the
+                # drawn face (the player never clips inside the slab), and a
+                # tile CENTRE on a hug slab's exclusive edge still reads solid,
+                # so the nav grid (sampled at centres) never routes an NPC
+                # through a wall tile.
+                if not (foot[0] <= lx <= foot[2] and foot[1] <= ly <= foot[3]):
+                    return False               # in the thinned-away part
+        return True
+
     # --- Cover-aware navigation (cultist pursuit, DESIGN.md §4) ----------
     # The cult AI (entities/enemy.py + npc.py) routes AROUND the volumetric
     # cover now standing mid-floor (pillars, pews, cots, basins) via a
@@ -569,7 +594,7 @@ class Scene:
         stood. Wrap-aware via the char_*_at lookups."""
         if (int(x_px // self.TILE), int(y_px // self.TILE)) in self._inner_doors:
             return False               # NPCs route through doors, opening them
-        return (is_object_solid(self.char_object_at(x_px, y_px))
+        return (self._obj_solid_here(x_px, y_px)
                 or is_floor_solid(self.char_floor_at(x_px, y_px)))
 
     def nav_grid(self):
@@ -770,7 +795,7 @@ class Scene:
         od = OBJECT_DEFS.get(ch)
         if od and od.get("see_over"):
             return False           # low enough to see (and be seen) over
-        return ch in _WALL_CHARS or is_object_solid(ch)
+        return self._obj_solid_here(x_px, y_px)
 
     # Interior-door kinds you can SEE (or see over) even when shut: the cell
     # bars and the counter half-door block the body, never the line of sight.
@@ -819,7 +844,7 @@ class Scene:
         d = self._inner_door_at(x_px, y_px)
         if d is not None and not d["open"]:
             return True                        # a shut door blocks the body
-        if is_object_solid(self.char_object_at(x_px, y_px)): return True
+        if self._obj_solid_here(x_px, y_px): return True
         if is_floor_solid(self.char_floor_at(x_px, y_px)): return True
         for npc in self.npcs:
             if npc is ignore or not npc.solid: continue
