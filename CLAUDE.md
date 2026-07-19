@@ -688,8 +688,10 @@ it renders the procedural sprites to a labelled PNG strip.
   point-in-ANY-band, inclusive bounds so collision sits a hair proud of the drawn
   face and a nav-grid centre on a slab stays solid) — so what the player bumps
   and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (shop the
-  pilot; then the Wave A refuges + the three principal seats, church /
-  sheriff_office / lodge); off it, None → full tile → byte-identical
+  pilot; now EVERY above-ground building interior — the Wave A refuges, the
+  principal seats, and Wave 3's barn / schoolhouse / lodge_hall / lodge_cellar /
+  farmhouse — each with a per-material style; only the mine + outdoors stay
+  full-tile); off it, None → full tile → byte-identical
   (`capture_world --diff` confirms the non-slab scenes). SUPERSEDES the bevel
   where both apply (`_bevel_corners` returns 0 in a slab scene, so a slab
   scene's `_BEVEL_SCENES` membership is inert). Roll out one interior at a time

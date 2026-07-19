@@ -639,10 +639,13 @@ Built into the procedural draw layer (`scenes/base.py`,
   player SEES (inclusive bounds, so collision sits a hair proud of the drawn
   face and a hug band's tile centre still reads solid -- the nav grid never
   routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the shop was the
-  pilot; the Wave A refuges and the three principal-seat interiors -- church,
-  sheriff_office, lodge -- have since opted in); every NON-slab scene returns
-  None -> full tile -> byte-identical (the `--diff` gate confirms brimley /
-  works_cistern / depths_hall unchanged; the slab scenes legitimately differ).
+  pilot; EVERY above-ground building interior has since opted in -- the Wave A
+  refuges, the three principal seats, and Wave 3's barn / schoolhouse /
+  lodge_hall / lodge_cellar / abandoned_farmhouse -- each with a per-material
+  style; only the mine and outdoors stay full-tile); every NON-slab scene
+  returns None -> full tile -> byte-identical (the `--diff` gate confirms
+  brimley / works_cistern / depths_hall unchanged; the slab scenes legitimately
+  differ).
   The slab SUPERSEDES the bevel where both would apply
   (`_bevel_corners` returns 0 for a `_SLAB_SCENES` scene). Cache-safe (a pure
   function of the tile + its 4 orthogonal neighbour chars + the gate). Tune

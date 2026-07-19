@@ -642,13 +642,14 @@ that collision/sight/nav obey). Spend it in phases:
   simplest → richest: **A refuges** *(LANDED 2026-07: bedroom / clerk_room /
   guest_room_a+b = plaster, toby_house = plank; opted into `_SLAB_STYLE`, all
   four facings verified clean, no diagonal joins, gate green, every non-rolled
-  scene byte-identical)*, **B explorables** *(sheriff_office = plaster + church =
-  plank LANDED 2026-07 with the three principal seats below; barn + schoolhouse
-  still open -- the barn first, and the church's curved apse / arched-window
-  SHAPES were deferred to Phase 4, the style opt-in shipped without them)*,
-  **C the complex** *(lodge = timber LANDED 2026-07; lodge_hall, lodge_cellar,
-  abandoned_farmhouse still open)*. *(A/B/C SAFE_SCENES stay flat-lit + safe;
-  only geometry + colour change.)*
+  scene byte-identical)*, **B explorables** *(ALL LANDED 2026-07: sheriff_office =
+  plaster + church = plank with the three principal seats, then barn = timber +
+  schoolhouse = plank in Wave 3; the church's curved apse / arched-window SHAPES
+  were deferred to Phase 4, the style opt-in shipped without them)*, **C the
+  complex** *(ALL LANDED 2026-07: lodge = timber, then lodge_hall = plaster +
+  lodge_cellar = stone + abandoned_farmhouse = timber in Wave 3)*. **Phase 2 (all
+  above-ground interiors) is now COMPLETE.** *(A/B/C SAFE_SCENES stay flat-lit +
+  safe; only geometry + colour change.)*
 - **Phase 3 -- the mine reimagined (consumes 1b).** A `_ROCK_SCENES` set (Works
   + Depths): full-THICK but the rough-outline + prism, so hewn rock reads
   irregular/organic, not blocky boxes. Land with #14's side-dug chambers.
@@ -673,10 +674,19 @@ window/door seams checked), no diagonal joins (smoke [10/10]), full gate green.
 The bevel is auto-superseded for them (`_bevel_corners` returns 0 on a slab
 scene), so their `_BEVEL_SCENES` membership is now inert.
 
-**Still open:** the rest of Wave B (`barn`, `schoolhouse`) + Wave C
-(`lodge_hall`, `lodge_cellar`, `abandoned_farmhouse`); the deferred curved
-church shapes (Phase 4); Phase 3 (the mine, `_ROCK_SCENES`) + Phase 4 (freeform
-off-grid wall segments).
+**Wave 3 LANDED (2026-07, maintainer "keep going onto wave 3") -- Phase 2 done.**
+The rest of the above-ground interiors opted into `_SLAB_STYLE`: `barn` = timber,
+`schoolhouse` = plank, `lodge_hall` = plaster, `lodge_cellar` = **stone** (the
+first stone scene: rough cold-grey masonry, fitting a cellar), `abandoned_farmhouse`
+= timber. All had zero diagonal-only joins (smoke [10/10] clean, no geometry
+fixes needed); each verified live (VISION four-facing + the dark for the gloom
+scenes); full gate green. Every above-ground BUILDING interior now renders thin,
+material-coloured walls; only the mine (Phase 3) and outdoors stay full-tile.
+
+**Still open:** Phase 3 (the mine, a `_ROCK_SCENES` set -- full-thick but the
+rough-outline + prism, land with #14's side-dug chambers); Phase 4 (freeform
+off-grid wall segments, unlocking the deferred curved church apse / arched
+window); and the cross-cutting cover re-tune as styles land.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

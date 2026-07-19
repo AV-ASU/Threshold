@@ -1786,6 +1786,15 @@ _SLAB_STYLE = {
     "church": "plank",
     "sheriff_office": "plaster",
     "lodge": "timber",
+    # Wave 3 -- the rest of the above-ground interiors (finishes Phase 2): the
+    # barn's heavy timber, the schoolhouse's board plank, the Arcadia guest
+    # corridor's plaster (matching its rooms), the lodge cellar's rough STONE
+    # masonry (the first stone scene), the weathered farmhouse's timber.
+    "barn": "timber",
+    "schoolhouse": "plank",
+    "lodge_hall": "plaster",
+    "lodge_cellar": "stone",
+    "abandoned_farmhouse": "timber",
 }
 _SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render thin
 
