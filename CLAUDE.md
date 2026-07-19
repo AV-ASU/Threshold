@@ -671,21 +671,26 @@ it renders the procedural sprites to a labelled PNG strip.
   `_BEVEL_INSET` = 0.28·TILE tunes the chamfer. Cache-safe (pure function of
   tile + neighbours).
 - **Thin-SLAB walls — REAL geometry, not draw-only (2026-07, `scenes/terrain.py`,
-  DESIGN.md §6; maintainer "walls are no longer tiles").** The step past the
-  bevel: a wall tile becomes a THIN SLAB (`_SLAB_THICK` = 0.5·TILE) hugging the
-  room face(s) it presents. `_wall_slab(scene, tx, ty)` returns a tile-local
-  footprint rect (per axis: a wall/off-map neighbour either side → FULL, so runs
-  / junctions / run-ends / the shell stay continuous and never notch; floor both
-  sides → CENTRE; floor one side → HUG that face; else FULL). It is the SINGLE
-  SOURCE for both draw layers (`_extrude_box`'s `foot` rect + `_draw_wall_mass`'s
-  clip) AND the collision/sight/nav predicates (`scenes/base.py` `_obj_solid_here`,
-  shared by `is_solid_at` / `blocks_sight` / `_nav_solid_at`, inclusive bounds so
-  collision sits a hair proud of the drawn face and a nav-grid centre on a slab
-  stays solid) — so what the player bumps and the AI sees IS what the player
-  sees. Gated to `_SLAB_SCENES` (pilot = shop); off it, None → full tile →
-  byte-identical (`capture_world --diff` confirms). SUPERSEDES the bevel where
-  both apply (`_bevel_corners` returns 0 in a slab scene). Roll out one interior
-  at a time per VISION.
+  DESIGN.md §6; maintainer "walls are no longer tiles / connect them by smoothing
+  it out").** The step past the bevel: a wall tile becomes a THIN slab
+  (`_SLAB_THICK` = 0.5·TILE). To keep the thin walls CONNECTED + smooth (no fat
+  junction, no notch), `_wall_slab(scene, tx, ty)` returns the footprint as a
+  LIST of up to two BANDS — a VERTICAL band (wall neighbour N or S) and/or a
+  HORIZONTAL band (wall neighbour E or W). A run is one band; an L / T / cross is
+  the union of both, meeting flush; each band reaches the edge only where the run
+  continues, else stops at the crossbar (no stub into a room). Cross-thickness:
+  floor/wall both sides → CENTRE (two-sided partition); one flank off-map → the
+  SHELL, which hugs the EXTERIOR edge (outer face stays on the silhouette, no
+  floor lip, thins inward). It is the SINGLE SOURCE for both draw layers
+  (`_extrude_box`'s `foot` rect, looped per band + `_draw_wall_mass`'s union
+  clip) AND the collision/sight/nav predicates (`scenes/base.py`
+  `_obj_solid_here`, shared by `is_solid_at` / `blocks_sight` / `_nav_solid_at`,
+  point-in-ANY-band, inclusive bounds so collision sits a hair proud of the drawn
+  face and a nav-grid centre on a slab stays solid) — so what the player bumps
+  and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (pilot =
+  shop); off it, None → full tile → byte-identical (`capture_world --diff`
+  confirms). SUPERSEDES the bevel where both apply (`_bevel_corners` returns 0 in
+  a slab scene). Roll out one interior at a time per VISION.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`

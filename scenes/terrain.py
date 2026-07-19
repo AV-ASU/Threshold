@@ -1732,35 +1732,37 @@ def _bevel_poly_local(bevel, size, inset):
 
 
 # --- Thin-slab walls (2026-07, maintainer "walls are no longer tiles") -------
-# The step past the corner BEVEL: a wall tile stops being a full TILE box and
-# becomes a THIN SLAB hugging the room face(s) it presents. Per axis, read the
-# two orthogonal neighbours:
-#   - a WALL (or off-map) neighbour on either side -> that axis stays FULL: the
-#     run continues, or it is a junction / run-end / the building shell. This is
-#     what keeps the mass continuous and NEVER notches a run (a mid-run / tee /
-#     shell tile has a wall neighbour on its run axis, so it never thins along
-#     it) -- the same orthogonality that made the bevel byte-identical.
-#   - floor '.' on BOTH sides  -> CENTRE the slab (a two-sided partition thins
-#     symmetrically, half a tile of clearance split between the two rooms).
-#   - floor '.' on ONE side    -> HUG that side: the wall face the room sees
-#     stays at the tile edge (collision + the look are unchanged on the room
-#     side); the mass thins toward the far, unseen side.
-#   - floor on NEITHER (a free nub) -> FULL (nothing to thin toward).
-# Single-sourced: the two draw layers (_draw_wall_mass flat footprint +
-# _extrude_box 3D box) AND the collision / sight predicates (scenes/base.py) all
-# read _wall_slab, so the geometry the player SEES is the geometry they bump and
-# the AI's line of sight obeys -- unlike the draw-only bevel. Gated to
-# _SLAB_SCENES; every other scene is a strict no-op (returns None -> full tile).
+# A wall tile stops being a full TILE box and becomes a THIN SLAB. To keep the
+# thinned walls CONNECTED and smooth (the maintainer's second ask -- no fat
+# junction bulging out of thin runs, no notch), a tile's footprint is the UNION
+# of up to two BANDS:
+#   - a VERTICAL band (present when the tile has a wall neighbour N or S, i.e.
+#     it is part of a vertical run) and/or
+#   - a HORIZONTAL band (present when it has a wall neighbour E or W).
+# A straight run is ONE band; an L-corner / T / cross is the union of both, so
+# the thin walls meet flush. Each band is THIN across (its cross-thickness) and
+# reaches to the tile edge ONLY where the run continues (a wall neighbour), else
+# stops at the other band's crossbar -- so a corner/end never pokes a stub into
+# a room. The cross-thickness hugs by the neighbours' openness: floor/wall BOTH
+# sides -> CENTRE; open ONE side (the other off-map) -> HUG the open side (the
+# building SHELL thins toward the void, the room face unchanged); a lone pillar
+# with no wall neighbour stays FULL.
+# Single-sourced: both draw layers (_draw_wall_mass flat footprint + _extrude_box
+# 3D box, looped per band) AND the collision/sight/nav predicates
+# (scenes/base.py, point-in-ANY-band) read this, so the geometry the player SEES
+# is what they bump and the AI's line of sight obeys -- unlike the draw-only
+# bevel. Gated to _SLAB_SCENES; every other scene returns None -> full tile.
 _SLAB_SCENES = frozenset({"shop"})       # pilot; roll out one scene at a time
-_SLAB_THICK = TILE * 0.5                 # slab depth across a thinned axis
+_SLAB_THICK = TILE * 0.5                 # band thickness across a run
 
 
 def _wall_slab(scene, tx, ty):
-    """This wall tile's thin-slab FOOTPRINT as a tile-local rect
-    (x0, y0, x1, y1) in px within [0, TILE], or None for a FULL tile (non-slab
-    scene, non-wall tile, or a run / junction / shell / nub that keeps full
-    thickness). Pure function of the tile + its 4 orthogonal neighbour chars +
-    the scene gate, so the wall-box card cache and the nav grid stay valid."""
+    """This wall tile's thin-slab footprint as a LIST of tile-local rects
+    (x0, y0, x1, y1) px -- one per present band (1 for a run, 2 for a
+    corner/tee/cross) -- or None for a FULL tile (non-slab scene, non-wall tile,
+    or a lone pillar). Pure function of the tile + its 4 orthogonal neighbour
+    chars + the scene gate, so the wall-box card cache and the nav grid stay
+    valid."""
     if getattr(scene, "key", None) not in _SLAB_SCENES:
         return None
     W, H = scene.w, scene.h
@@ -1772,35 +1774,53 @@ def _wall_slab(scene, tx, ty):
             y %= H
         if 0 <= x < W and 0 <= y < H:
             return scene.objects[y][x]
-        return None                        # off-map: full-forcing (see span)
+        return None                        # off-map (the void beyond the map)
 
     if _c(tx, ty) not in _WALL_CHARS:
         return None
+    cN, cS = _c(tx, ty - 1), _c(tx, ty + 1)
+    cE, cW = _c(tx + 1, ty), _c(tx - 1, ty)
+    wN, wS = cN in _WALL_CHARS, cS in _WALL_CHARS      # a wall run continues
+    wE, wW = cE in _WALL_CHARS, cW in _WALL_CHARS
+    oN, oS = cN is not None, cS is not None            # "open" = not off-map
+    oE, oW = cE is not None, cW is not None
+    v_present = wN or wS                                # part of a vertical run
+    h_present = wE or wW                                # part of a horizontal run
+    if not (v_present or h_present):
+        return None                        # lone pillar / free nub: keep full
     T = TILE
-    pull = T - _SLAB_THICK
+    th = _SLAB_THICK
+    p = T - th
 
-    def span(neg, pos):
-        """(lo, hi) px for one axis from its (negative-side, positive-side)
-        neighbour chars. Off-map (None) forces FULL, so the building shell
-        never thins toward the void -- only true interior partitions do."""
-        nw = neg is None or neg in _WALL_CHARS
-        pw = pos is None or pos in _WALL_CHARS
-        if nw or pw:
-            return 0.0, T                          # run / junction / shell: full
-        nf, pf = neg == ".", pos == "."
-        if nf and pf:
-            return pull / 2.0, T - pull / 2.0      # two-sided partition: centre
-        if nf:
-            return 0.0, _SLAB_THICK                # hug the neg (room) side
-        if pf:
-            return pull, T                         # hug the pos (room) side
-        return 0.0, T                              # free nub: full
+    def cross(open_neg, open_pos):
+        """Thin cross-extent (lo, hi) of a band from its two flanks' openness
+        ('open' = the flank is on-map, i.e. interior). Both open (a partition
+        between two rooms) -> CENTRE. One flank off-map (the building SHELL) ->
+        hug the OFF-MAP edge: the outer face stays on the building silhouette
+        (no floor lip past the wall) and the wall thins INward, growing the
+        room a little. Both off-map (a rare spike) -> centre."""
+        if open_neg and open_pos:
+            return p / 2.0, T - p / 2.0
+        if not open_neg:
+            return 0.0, th                 # exterior on the neg side: hug it
+        if not open_pos:
+            return p, T                    # exterior on the pos side: hug it
+        return p / 2.0, T - p / 2.0
 
-    x0, x1 = span(_c(tx - 1, ty), _c(tx + 1, ty))
-    y0, y1 = span(_c(tx, ty - 1), _c(tx, ty + 1))
-    if x0 == 0.0 and y0 == 0.0 and x1 == T and y1 == T:
-        return None                                # full tile -> no slab
-    return (x0, y0, x1, y1)
+    vx0, vx1 = cross(oW, oE) if v_present else (0.0, T)     # V band X thinness
+    hy0, hy1 = cross(oN, oS) if h_present else (0.0, T)     # H band Y thinness
+    rects = []
+    if v_present:
+        # reach the N/S edge where the run continues (a wall), else stop at the
+        # crossbar (the H band) so a corner/end never overshoots into a room.
+        vy0 = 0.0 if wN else (hy0 if h_present else 0.0)
+        vy1 = T if wS else (hy1 if h_present else T)
+        rects.append((vx0, vy0, vx1, vy1))
+    if h_present:
+        hx0 = 0.0 if wW else (vx0 if v_present else 0.0)
+        hx1 = T if wE else (vx1 if v_present else T)
+        rects.append((hx0, hy0, hx1, hy1))
+    return rects
 
 
 def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
@@ -1823,15 +1843,15 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
             bv = _bevel_corners(scene, tx, ty)
             if foot is not None:
                 # Thin slab: render the tile's flat content into a scratch and
-                # clip it to the same footprint the 3D box uses, so the near-
-                # black mass under the wall matches the thinned box and the
+                # clip it to the UNION of the band rects the 3D box uses, so the
+                # near-black mass under the wall matches the thinned box and the
                 # room floor shows through where the wall was thinned away.
                 scratch = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
                 _wall_tile_flat(scratch, scene, tx, ty, 0, 0)
                 mask = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
-                fx0, fy0, fx1, fy1 = foot
-                pygame.draw.rect(mask, (255, 255, 255, 255),
-                                 (fx0, fy0, fx1 - fx0, fy1 - fy0))
+                for fx0, fy0, fx1, fy1 in foot:
+                    pygame.draw.rect(mask, (255, 255, 255, 255),
+                                     (fx0, fy0, fx1 - fx0, fy1 - fy0))
                 scratch.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
                 surf.blit(scratch, (rx, ry))
             elif bv:
@@ -3201,10 +3221,17 @@ def _tilt_wall_tint(scene, tx, ty):
 
 def _tilt_wall_box(surf, camera, scene, tx, ty):
     face_col, top_col = _tilt_wall_tint(scene, tx, ty)
-    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
-                 face_col=face_col, top_col=top_col,
-                 bevel=_bevel_corners(scene, tx, ty),
-                 foot=_wall_slab(scene, tx, ty))
+    foot = _wall_slab(scene, tx, ty)
+    if foot is None:
+        _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                     face_col=face_col, top_col=top_col,
+                     bevel=_bevel_corners(scene, tx, ty))
+    else:
+        # One box per band (a run is one, a corner/tee/cross two); they overlap
+        # in the tile centre and read as one connected near-black mass.
+        for r in foot:
+            _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                         face_col=face_col, top_col=top_col, foot=r)
 
 
 _COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall

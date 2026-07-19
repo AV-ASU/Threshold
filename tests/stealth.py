@@ -1322,8 +1322,8 @@ def main():
           "doors: the player E-toggle flips the nearest door")
 
     # ---- §16: thin-slab walls (2026-07) --------------------------------
-    print("[16] thin-slab walls: the footprint thins two-sided partitions, "
-          "stays full at runs/junctions/shell, and collision+sight+nav agree")
+    print("[16] thin-slab walls: bands thin two-sided partitions AND the shell, "
+          "connect flush at junctions, and collision+sight+nav agree")
     import scenes.terrain as _terr
     from scenes import load_scene
     # synthetic scene: a vertical partition (col 2) between two rooms + a shell.
@@ -1333,25 +1333,37 @@ def main():
     _terr._SLAB_SCENES = frozenset(_saved_slab | {"slabtest"})
     try:
         foot = _terr._wall_slab(ss, 2, 2)     # floor E+W, wall N+S -> centre X
-        check(foot is not None and foot[1] == 0.0 and foot[3] == TILE
-              and 0.0 < foot[0] and foot[2] < TILE,
-              "slab: a two-sided vertical partition centres (thin X, full Y)")
+        check(isinstance(foot, list) and len(foot) == 1
+              and foot[0][1] == 0.0 and foot[0][3] == TILE
+              and 0.0 < foot[0][0] and foot[0][2] < TILE,
+              "slab: a two-sided vertical partition is one centred band (thin X)")
         core = (2 * TILE + TILE // 2, 2 * TILE + TILE // 2)
         gap = (2 * TILE + 2, 2 * TILE + TILE // 2)      # lx=2, in the W gap
         check(ss.is_solid_at(*core) and ss.blocks_sight(*core),
-              "slab: the slab core is solid + blocks sight")
+              "slab: the band core is solid + blocks sight")
         check(not ss.is_solid_at(*gap) and not ss.blocks_sight(*gap),
               "slab: the thinned strip passes the body AND the sight cone")
         check(not ss.nav_grid()[2][2],
               "slab: the nav grid marks a slab tile solid (routes around)")
-        check(_terr._wall_slab(ss, 0, 2) is None,
-              "slab: the building shell (off-map side) stays full")
+        # the SHELL now thins too, hugging the EXTERIOR edge (outer face stays
+        # on the building silhouette, no floor lip; the wall thins inward): the
+        # void-side edge is solid, the interior side passes.
+        sfoot = _terr._wall_slab(ss, 0, 2)              # W shell, exterior is W
+        check(isinstance(sfoot, list)
+              and ss.is_solid_at(0 * TILE + 2, 2 * TILE + TILE // 2)
+              and not ss.is_solid_at(0 * TILE + TILE - 2, 2 * TILE + TILE // 2),
+              "slab: the shell hugs the exterior edge, thinning inward")
+        # a junction (col-2 partition meets the bottom shell) connects FLUSH to
+        # the run above -- the shared centreline pixel is solid on both sides.
+        yb = 4 * TILE                                   # boundary row3|row4
+        check(ss.is_solid_at(2 * TILE + TILE // 2, yb - 1)
+              and ss.is_solid_at(2 * TILE + TILE // 2, yb + 1),
+              "slab: a run connects flush across a junction (no notch)")
     finally:
         _terr._SLAB_SCENES = _saved_slab
-    check(load_scene("shop") and any(
-        _terr._wall_slab(load_scene("shop"), tx, ty) is not None
-        for ty in range(13) for tx in range(16)),
-          "slab: the shipped shop pilot thins at least one wall (wired e2e)")
+    check(any(_terr._wall_slab(load_scene("shop"), tx, ty)
+              for ty in range(13) for tx in range(16)),
+          "slab: the shipped shop pilot thins its walls (wired e2e)")
     check(_terr._wall_slab(sd, 0, 0) is None,
           "slab: a non-_SLAB_SCENES scene returns None (byte-identical)")
 

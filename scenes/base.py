@@ -572,12 +572,13 @@ class Scene:
             foot = _terrain._wall_slab(self, int(x_px // TILE), int(y_px // TILE))
             if foot is not None:
                 lx, ly = x_px % TILE, y_px % TILE
-                # Inclusive bounds: collision/sight sit a hair PROUD of the
-                # drawn face (the player never clips inside the slab), and a
-                # tile CENTRE on a hug slab's exclusive edge still reads solid,
-                # so the nav grid (sampled at centres) never routes an NPC
-                # through a wall tile.
-                if not (foot[0] <= lx <= foot[2] and foot[1] <= ly <= foot[3]):
+                # Solid where the pixel is inside ANY band. Inclusive bounds:
+                # collision/sight sit a hair PROUD of the drawn face (the player
+                # never clips inside the slab), and a tile CENTRE on a hug
+                # band's edge still reads solid, so the nav grid (sampled at
+                # centres) never routes an NPC through a wall tile.
+                if not any(r[0] <= lx <= r[2] and r[1] <= ly <= r[3]
+                           for r in foot):
                     return False               # in the thinned-away part
         return True
 

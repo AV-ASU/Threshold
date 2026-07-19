@@ -612,26 +612,32 @@ Built into the procedural draw layer (`scenes/base.py`,
   into a 2-3 segment arc for rounder corners. Cache-safe (the bevel is a pure
   function of the tile + its 8 neighbour chars + the gate).
 - **Thin-SLAB walls -- the step past the bevel, and NOT draw-only (2026-07,
-  maintainer "thin the walls / walls are no longer tiles").** Where the bevel
-  only shaved a convex corner tip, a slab makes the whole wall tile a THIN
-  SLAB (`_SLAB_THICK` = 0.5·TILE) hugging the room face(s) it presents.
-  `_wall_slab(scene, tx, ty)` (`scenes/terrain.py`) returns a tile-local
-  footprint rect, decided per axis: a WALL or off-map neighbour on either side
-  keeps that axis FULL (the run continues, a junction, a run-end, or the
-  building shell -- what keeps the mass continuous and NEVER notches a run, the
-  same orthogonality that made the bevel byte-identical); floor '.' on BOTH
-  sides CENTRES the slab (a two-sided partition thins symmetrically); floor on
-  ONE side HUGS it (the face the room sees stays at the tile edge, the mass
-  thins toward the far, unseen side); floor on NEITHER stays full. The two draw
-  layers read it (`_extrude_box` grew a `foot` rect param that shrinks the 3D
-  box; `_draw_wall_mass` clips the flat near-black footprint to the same rect,
-  so the mass under the wall matches the thinned box and the room floor shows
-  through the thinned strip). **Unlike the bevel, the geometry is REAL:** the
-  collision / sight / nav predicates (`scenes/base.py` `_obj_solid_here`, shared
-  by `is_solid_at` / `blocks_sight` / `_nav_solid_at`) also read `_wall_slab`,
+  maintainer "thin the walls / walls are no longer tiles / connect them by
+  smoothing it out").** Where the bevel only shaved a convex corner tip, a slab
+  makes the whole wall tile a THIN slab (`_SLAB_THICK` = 0.5·TILE). So the thin
+  walls stay CONNECTED and smooth -- no fat junction bulging out of a thin run,
+  no notch -- `_wall_slab(scene, tx, ty)` (`scenes/terrain.py`) returns the tile
+  footprint as the UNION of up to two BANDS: a VERTICAL band (present when the
+  tile has a wall neighbour N or S, i.e. it sits in a vertical run) and/or a
+  HORIZONTAL band (wall neighbour E or W). A straight run is ONE band; an
+  L-corner / T / cross is the union of both, so the thin walls meet flush. Each
+  band is thin across its run and reaches the tile edge ONLY where the run
+  continues (a wall neighbour), else stops at the other band's crossbar -- so a
+  corner or run-end never pokes a stub into a room. The cross-thickness reads
+  the flanks' openness (on-map = interior): floor/wall on BOTH sides CENTRES a
+  two-sided partition; ONE flank off-map is the building SHELL and it hugs the
+  OFF-MAP (exterior) edge, so the outer face stays on the building silhouette
+  (no floor lip past the wall) and the wall thins INward, growing the room a
+  little; a lone pillar with no wall neighbour stays full. Both draw layers read
+  it, looped per band (`_extrude_box` grew a `foot` rect param that shrinks the
+  3D box; `_draw_wall_mass` clips the flat near-black footprint to the union of
+  the band rects, so the mass matches the thinned boxes and the room floor shows
+  through). **Unlike the bevel, the geometry is REAL:** the collision / sight /
+  nav predicates (`scenes/base.py` `_obj_solid_here`, shared by `is_solid_at` /
+  `blocks_sight` / `_nav_solid_at`, point-in-ANY-band) also read `_wall_slab`,
   so the wall the player BUMPS and the AI's line of sight obey the wall the
   player SEES (inclusive bounds, so collision sits a hair proud of the drawn
-  face and a hug slab's tile centre still reads solid -- the nav grid never
+  face and a hug band's tile centre still reads solid -- the nav grid never
   routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the pilot is the
   shop); every other scene returns None -> full tile -> byte-identical (the
   `--diff` gate confirms bedroom / brimley / sheriff_office / works_cistern /
