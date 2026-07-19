@@ -86,6 +86,29 @@ _PROP_STATIC_CACHE = {}
 _PROP_STATIC_ORDER = []
 _PROP_STATIC_CAP = 2000
 
+# The VISIBLE light-pool twin of Scene._LIGHT_KINDS (which carries only the
+# mechanical stealth radius). One row per light-emitting decoration kind, the
+# pool the fixture punches into a DARK scene's gloom:
+#   (visible_radius, color, peak_alpha, screen_z_lift,
+#    flicker_amp, flicker_speed, ring_base, ring_step, ring_n)
+# _draw_dark iterates EVERY scene emitter through this table -- not just
+# wall_torch -- so any real fixture (a cult brazier, a candle, a town yard
+# light) lights the dark it stands in. This is the shared light logic
+# (DESIGN.md §6): one table drives the surface (if it ever darkens) and the
+# underground, with no per-scene special-casing. wall_torch keeps its exact
+# legacy numbers, so torch-only rooms stay byte-identical.
+FIXTURE_POOLS = {
+    #                radius  color            peak  lift  amp   spd   rb  rs  rn
+    "wall_torch":   (118,  (255, 168, 78),   82,   12,   0.18, 7.0,  26, 12, 7),
+    "brazier":      (110,  (255, 150, 56),   80,   6,    0.16, 6.0,  24, 12, 7),
+    "burn_barrel":  (100,  (255, 150, 56),   74,   8,    0.16, 6.0,  22, 11, 7),
+    "camp_fire":    (112,  (255, 158, 60),   80,   2,    0.18, 5.0,  24, 12, 7),
+    "lantern":      (72,   (255, 176, 84),   64,   6,    0.10, 3.0,  16,  8, 7),
+    "candle":       (46,   (255, 178, 92),   50,   2,    0.14, 9.0,  10,  5, 7),
+    "yard_light":   (104,  (202, 224, 255),  70,   2,    0.05, 2.0,  22, 11, 7),
+    "generator":    (52,   (255, 212, 152),  46,   4,    0.08, 5.0,  12,  6, 7),
+}
+
 
 class RenderMixin:
     def _draw_boot_screen(self):
@@ -530,12 +553,19 @@ class RenderMixin:
         # Diegetic wall-torch light: each torch punches its own warm, flickering
         # pool into the gloom, so a torch-lit room reads without the flashlight.
         tnow = pygame.time.get_ticks() / 1000.0
-        torches = []
+        # Every light-emitting fixture in the room punches its own pool into
+        # the gloom (FIXTURE_POOLS -- the shared light logic, DESIGN.md §6):
+        # not just wall_torch, but any brazier / candle / lantern / yard light
+        # / generator the scene stands. wall_torch keeps its exact legacy
+        # numbers, so a torch-only room is byte-identical.
+        fixtures = []
         for d in getattr(self.scene, "decorations", []):
-            if getattr(d, "kind", None) == "wall_torch":
-                tx, ty = self.camera.project(d.x, d.y)
-                fl = 0.82 + 0.18 * math.sin(tnow * 7.0 + d.x * 0.25)
-                torches.append((int(tx), int(ty) - 12, fl))
+            spec = FIXTURE_POOLS.get(getattr(d, "kind", None))
+            if spec is None:
+                continue
+            fx, fy = self.camera.project(d.x, d.y)
+            fl = (1.0 - spec[4]) + spec[4] * math.sin(tnow * spec[5] + d.x * 0.25)
+            fixtures.append((int(fx), int(fy) - spec[3], spec, fl))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         # The far points are laid out in WORLD space around the player's feet
         # and projected through the camera, so the cone lies FLAT on the ground
@@ -562,20 +592,21 @@ class RenderMixin:
             _light_pool(self.screen, psx, psy, 96, (240, 226, 165), 72)
         else:
             _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
-        for tx, ty, fl in torches:
-            _light_pool(self.screen, tx, ty, int(118 * fl), (255, 168, 78),
-                        int(82 * fl))
+        for fx, fy, spec, fl in fixtures:
+            _light_pool(self.screen, fx, fy, int(spec[0] * fl), spec[1],
+                        int(spec[2] * fl))
         gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
         rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
         for rr, aa in sorted(rings, key=lambda p: -p[0]):
             pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
-        for tx, ty, fl in torches:
-            trings = [(int((26 + i * 12) * fl), int(gloom * i / 7))
-                      for i in range(7)]
-            for rr, aa in sorted(trings, key=lambda p: -p[0]):
-                pygame.draw.circle(overlay, (0, 0, 0, aa), (tx, ty), rr)
+        for fx, fy, spec, fl in fixtures:
+            rb, rs, rn = spec[6], spec[7], spec[8]
+            frings = [(int((rb + i * rs) * fl), int(gloom * i / rn))
+                      for i in range(rn)]
+            for rr, aa in sorted(frings, key=lambda p: -p[0]):
+                pygame.draw.circle(overlay, (0, 0, 0, aa), (fx, fy), rr)
         if cone:
             # Carve the beam clear of the gloom (alpha 0 inside the cone).
             pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)

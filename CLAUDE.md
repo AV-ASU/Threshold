@@ -656,6 +656,15 @@ it renders the procedural sprites to a labelled PNG strip.
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+  **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
+  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius the
+  stealth `lit_at`/shadow-cover gate reads) AND `FIXTURE_POOLS`
+  (`systems/render_mixin.py`, the VISIBLE pool `_draw_dark` punches into a
+  dark scene: radius, color, peak, lift, flicker, ring geometry). `_draw_dark`
+  iterates EVERY emitter through `FIXTURE_POOLS` (not just `wall_torch`), so a
+  fixture missing from it will read + gate as lit but cast no visible pool in
+  the dark. Cold electric (`yard_light`) vs warm fire is a colour choice in
+  that table (DESIGN §6).
   **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
   MAN-MADE things** (they read as flat cards that swivel to face the camera
   otherwise; the sprite-depth-anchoring pass converted `standing_stone` /

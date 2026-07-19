@@ -132,6 +132,49 @@ class DecoLightingMixin:
                             [(x, y - 16 - int(fh * 0.6)),
                              (x - 2, y - 14), (x + 2, y - 14)])
 
+    def _draw_yard_light(self, surf, x, y):
+        # A dusk-to-dawn yard light on a pole: a cold mercury-vapor lamp under
+        # a galvanized hood. The town's period-correct main light (1994 rural
+        # Minnesota), not a lantern; the pool is COLD, unlike the warm fire.
+        _light_pool(surf, x, y + 4, 46, (200, 220, 255), 62)
+        ground_y = y + 22
+        top_y = y - 30
+        pygame.draw.line(surf, (74, 60, 44), (x, ground_y), (x, top_y), 3)   # pole
+        pygame.draw.line(surf, (104, 86, 62), (x - 1, ground_y), (x - 1, top_y), 1)
+        pygame.draw.line(surf, (120, 122, 130), (x, top_y), (x + 10, top_y + 2), 2)  # arm
+        pygame.draw.line(surf, (120, 122, 130), (x + 10, top_y + 2), (x + 10, top_y + 5), 2)
+        pygame.draw.polygon(surf, (120, 122, 130),                            # hood
+                            [(x + 5, top_y + 5), (x + 15, top_y + 5),
+                             (x + 13, top_y + 8), (x + 7, top_y + 8)])
+        pygame.draw.polygon(surf, (70, 72, 80),
+                            [(x + 7, top_y + 8), (x + 13, top_y + 8),
+                             (x + 12, top_y + 9), (x + 8, top_y + 9)])
+        f = 0.92 + 0.08 * math.sin(self.t * 4 + self.seed)
+        glow = pygame.Surface((16, 16), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (200, 224, 255, int(90 * f)), (8, 8), 7)
+        surf.blit(glow, (x + 10 - 8, top_y + 10 - 8))
+        pygame.draw.circle(surf, (232, 242, 255), (x + 10, top_y + 10), 2)
+
+    def _draw_generator(self, surf, x, y):
+        # A portable gas generator: the town runs its lights off gasoline now
+        # the fold cut the grid (NARRATIVE §1). A low steel frame, a fuel tank,
+        # a control panel, and a bare WARM work-bulb (the running tell). Sits
+        # OUTSIDE, fronting the doors.
+        _light_pool(surf, x + 8, y - 2, 30, (255, 210, 150), 44)
+        pygame.draw.rect(surf, (56, 54, 62), (x - 8, y - 2, 16, 9))          # frame
+        pygame.draw.rect(surf, (34, 33, 40), (x - 8, y - 2, 16, 9), 1)
+        pygame.draw.rect(surf, (86, 44, 32), (x - 6, y - 7, 12, 5))          # fuel tank
+        pygame.draw.rect(surf, (128, 66, 48), (x - 6, y - 7, 12, 2))
+        pygame.draw.rect(surf, (40, 40, 46), (x - 3, y + 1, 6, 4))           # panel
+        pygame.draw.circle(surf, (150, 150, 158), (x - 1, y + 3), 1)         # outlets
+        pygame.draw.circle(surf, (150, 150, 158), (x + 2, y + 3), 1)
+        pygame.draw.line(surf, (70, 68, 74), (x + 8, y - 2), (x + 11, y - 8), 1)  # stalk
+        f = 0.9 + 0.1 * math.sin(self.t * 5 + self.seed)
+        glow = pygame.Surface((10, 10), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (255, 210, 150, int(80 * f)), (5, 5), 4)
+        surf.blit(glow, (x + 11 - 5, y - 8 - 5))
+        pygame.draw.circle(surf, (255, 224, 170), (x + 11, y - 8), 2)
+
     def _draw_campfire(self, surf, x, y):
         """The cold remnants of a campfire built INSIDE -- a scorch scar burned
         into the floorboards, grey ash, charred crossed logs, a ring of stones,

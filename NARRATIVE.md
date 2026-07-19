@@ -258,7 +258,11 @@ never predation.
   well at the centre, the church, the store, the sheriff's office, the
   school, the barn, the kid's house, the named locals on their stoops,
   and the car at the edge. The well is a dead town shaft — dread
-  set-dressing, and the descent runs elsewhere.
+  set-dressing, and the descent runs elsewhere. The **grid died with the
+  seal** (the power lines run to the outside the fold no longer reaches,
+  §1), so the town keeps its lights on with **gasoline generators** now —
+  the same severed-supply logic as the stopped trucks and dead phones;
+  nobody sabotaged it, the fold did.
 - **The Arcadia Lodge.** The two-storey hotel the PI is staying at: the
   common room (Sable's reception desk keeps the clean sign-in book and the
   lead pointing down), a guest wing of mostly-locked rooms kept empty and

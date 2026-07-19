@@ -898,6 +898,42 @@ a re-presentation question, not a gap. Do not start without a fresh
 maintainer decision, and land each ending only through a look pass
 (VISION.md; `tests/render_smoke.py` drives every ending).
 
+### 21. **[Opus + Fable]** Light-driven dread — the blackout + watcher-in-dark storm  *(design sketch with the maintainer 2026-07; the LIGHTING FOUNDATION landed, the storm is parked)*
+
+**Foundation LANDED (2026-07 lighting pass).** Brimley's civic light is now
+period-correct **electric** (cold `yard_light` poles + gas `generator`s
+outside each building; the wrong-century civic lanterns are gone), and the
+light system is **shared**: `_draw_dark` iterates `FIXTURE_POOLS` across
+EVERY emitter (not just `wall_torch`), so any fixture lights the dark it
+stands in -- proven by the underground candles now casting real pools
+(DESIGN §6; NARRATIVE §5 grid-died-with-the-fold). This is the substrate the
+maintainer's blackout idea needs (killable light nodes + a real light
+system), teed up but NOT built:
+
+- **The moth blackout.** A moth flare knocks out the lights (kill a genset
+  node / drop the yard-light pools), the screen dims, and the cult camp
+  forms a procession to the flash and fans out to search. Rides the shared
+  light system + the existing moth flare (`rot_mixin`) + the procession
+  liveness (#23). Needs: a genset→fixtures power link (kill node = pools
+  die), a scene-level "blackout" state, and the procession staging.
+- **Watchers-in-the-dark.** Rework Watchers so they can open in ANY room
+  but only EXIST in the dark; the flashlight (or standing deep in a light
+  POOL) is what dispels them -- burn them out by getting lit. Couples with
+  the blackout (moths kill the lights → the dark → the Watchers) into "a
+  perfect storm." A real rework of `_tick_watchers` (DESIGN §1/§4), not a
+  tuning pass; keep the below-3 threat role.
+- **Retire the "special darkness" beam-off?** The deep (`CULT_DARK_SCENES`)
+  still swallows the flashlight by design (DESIGN §1). The lighting pass
+  did NOT change this (the deep is lit by its own ritual fires now, which
+  reads well); whether to fully retire the beam-off so light works
+  everywhere is the open dread decision here. Do not flip without a
+  maintainer call -- it softens a deliberate dread.
+
+All three are gated on a fresh maintainer go (per the 2026-07 discussion
+they were design-only). The **capture→King-unleashed** thread and the
+**procession-across-scenes** staging were sketched the same session and
+sit here too, unscoped.
+
 ### 16. **[Opus]** Ship track — packaging  *(was GAME_CHANGES §25)*
 
 Itch-ready build: pyinstaller (or equivalent) one-file win/linux builds,

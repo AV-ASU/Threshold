@@ -2249,6 +2249,111 @@ def _draw_valve_solid(surf, cam, deco):
                        cam.project(wx + 8 * s, wy + 5 * s, 0)], max(2, int(2 * s)))
 
 
+def _draw_yard_light_solid(surf, cam, deco):
+    """A rural dusk-to-dawn yard light: a tall wood pole, a downswept
+    gooseneck arm, a shallow galvanized reflector hood, and a cold mercury-
+    vapor lamp burning under it. The period-correct town light -- 1994
+    northern Minnesota ran on these, not lanterns -- and its glow is COLD
+    blue-white, the deliberate opposite of the warm fire the town huddles
+    at (burn barrels, braziers, candles). Runs off the generators now the
+    fold cut the grid (NARRATIVE §1)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    wood = (74, 60, 44)
+    wood_hi = (104, 86, 62)
+    galv = (120, 122, 130)
+    galv_lo = (70, 72, 80)
+    pole_h = 46 * s
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, pole_h)
+    pygame.draw.line(surf, wood, base, top, max(2, int(3 * s)))
+    pygame.draw.line(surf, wood_hi, base, top, max(1, int(1 * s)))
+    # a gooseneck arm: UP off the pole and OUT to one side (screen-relative to
+    # the yaw, so the head stays anchored off the pole from any facing, never a
+    # billboard), then a short drop to the lamp head
+    arm_len = 13 * s
+    ax = math.cos(cam.yaw + math.pi / 2)
+    ay = math.sin(cam.yaw + math.pi / 2)
+    hx = wx + ax * arm_len
+    hy = wy + ay * arm_len
+    hood_z = pole_h - 3 * s
+    knee = cam.project(wx + ax * arm_len * 0.55,
+                       wy + ay * arm_len * 0.55, pole_h + 2 * s)
+    head_top = cam.project(hx, hy, hood_z + 3 * s)
+    pygame.draw.line(surf, galv, top, knee, max(2, int(2 * s)))
+    pygame.draw.line(surf, galv, knee, head_top, max(2, int(2 * s)))
+    # the reflector hood: a taller galvanized DOME (a cone narrowing upward),
+    # opening downward over the lamp -- reads as a hood, not a flat ring
+    draw_solid(surf, cam, hx, hy,
+               [(hood_z, 4.8 * s, 4.8 * s),
+                (hood_z + 2.6 * s, 2.6 * s, 2.6 * s),
+                (hood_z + 4.0 * s, 0.8 * s, 0.8 * s)],
+               {"body": galv, "lo": galv_lo, "rim": (152, 154, 162)})
+    # a photocell nub perched on top of the dome
+    pc = cam.project(hx, hy, hood_z + 4.6 * s)
+    pygame.draw.circle(surf, galv_lo, (int(pc[0]), int(pc[1])),
+                       max(1, int(1.2 * s)))
+    # a faint cold spill on the ground under the head (always on, so the
+    # fixture reads as CASTING light even in daylight; the real navigable
+    # pool is punched by _draw_dark when the scene is dark)
+    _disc(surf, cam, hx, hy + 1.0 * s, 0.2 * s, 7.0 * s, 5.0 * s,
+          (150, 176, 210))
+    # the cold mercury-vapor lamp poking out the hood's lower FRONT lip
+    lamp = cam.project(hx, hy + 3.0 * s, hood_z - 1.6 * s)
+    lr = max(2, int(2.4 * s * cam.scale))
+    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (200, 224, 255, 60), (lr * 3, lr * 3), lr * 3)
+    pygame.draw.circle(glow, (216, 232, 255, 120), (lr * 3, lr * 3), lr * 2)
+    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+    pygame.draw.circle(surf, (232, 242, 255), (int(lamp[0]), int(lamp[1])), lr)
+    pygame.draw.circle(surf, (255, 255, 255), (int(lamp[0]), int(lamp[1])),
+                       max(1, lr // 2))
+
+
+def _draw_generator_solid(surf, cam, deco):
+    """A portable gas generator, tucked against a building's outside wall.
+    The fold cut Brimley off the grid with everything else (NARRATIVE §1),
+    so the town keeps its lights on off gasoline now: a low steel frame, a
+    fuel tank slung on top, a control panel of outlets, a stub muffler, and
+    a bare work-bulb clamped to the frame -- a small WARM light, the running
+    tell. A DETAIL, kept small (it must sit OUTSIDE, so it fronts the doors)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    steel = {"top": (86, 84, 92), "side": (56, 54, 62), "dark": (34, 33, 40)}
+    bw, bd, bh = 12 * s, 8 * s, 6 * s               # the engine frame
+    draw_box(surf, cam, wx, wy, bw, bd, bh, steel)
+    # fuel tank: a short upright canister on the frame's top
+    tank = {"body": (120, 62, 46), "lo": (66, 34, 26), "rim": (150, 92, 70)}
+    draw_solid(surf, cam, wx - 1.5 * s, wy,
+               [(bh, 3.0 * s, 3.0 * s), (bh + 3.4 * s, 3.0 * s, 3.0 * s)], tank)
+    # stub muffler canister on the frame's other end
+    draw_solid(surf, cam, wx + bw * 0.34, wy,
+               [(bh, 1.4 * s, 1.4 * s), (bh + 2.2 * s, 1.4 * s, 1.4 * s)],
+               {"body": (52, 50, 54), "lo": (30, 28, 32), "rim": (80, 78, 82)})
+    # control panel + two outlet dots on the near (south) face
+    panel = cam.project(wx, wy + bd * 0.5, bh * 0.5)
+    pw = max(2, int(3 * s * cam.scale))
+    ph = max(2, int(2 * s * cam.scale))
+    pygame.draw.rect(surf, (40, 40, 46),
+                     (int(panel[0] - pw), int(panel[1] - ph), pw * 2, ph * 2))
+    for ox in (-pw // 2, pw // 2):
+        pygame.draw.circle(surf, (150, 150, 158),
+                           (int(panel[0] + ox), int(panel[1])),
+                           max(1, int(1 * s)))
+    # a bare work-bulb clamped to the frame corner, warm, faintly wavering
+    stalk_base = cam.project(wx + bw * 0.5, wy - bd * 0.3, bh)
+    bl = cam.project(wx + bw * 0.5 + 1.5 * s, wy - bd * 0.3, bh + 2.4 * s)
+    pygame.draw.line(surf, (70, 68, 74), stalk_base, bl, max(1, int(1 * s)))
+    fl = 0.9 + 0.1 * math.sin(t * 5 + deco.seed)
+    br = max(2, int(2.0 * s * cam.scale))
+    glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (255, 210, 150, int(70 * fl)),
+                       (br * 3, br * 3), br * 3)
+    surf.blit(glow, (int(bl[0] - br * 3), int(bl[1] - br * 3)))
+    pygame.draw.circle(surf, (255, 224, 170), (int(bl[0]), int(bl[1])), br)
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -2294,6 +2399,8 @@ SOLID_PROPS = {
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,
     "lantern":       _draw_lantern_solid,
+    "yard_light":    _draw_yard_light_solid,
+    "generator":     _draw_generator_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
     "smoke":         _draw_smoke_solid,

@@ -593,9 +593,37 @@ Built into the procedural draw layer (`scenes/base.py`,
   a grid of identical cells. Cornstalks are jittered off the grid. No
   cheerful primaries — props aged/stained.
 - **Lighting is the mood.** Cheap cached primitives: soft **contact
-  shadows** under props, **wall-cast shadows** + lit wall faces, and warm
-  **light pools** with falloff from every emitter (candle, lantern,
-  fireplace). Light is the only relief in the dark.
+  shadows** under props, **wall-cast shadows** + lit wall faces, and
+  **light pools** with falloff from every emitter. Light is the only relief
+  in the dark.
+  - **Two light families, cold vs warm (2026-07 lighting pass).** The
+    town's **civic** light is period-correct **electric**: rural
+    dusk-to-dawn **yard lights** on poles (`yard_light`, mercury-vapor
+    **cold** blue-white) threading the roads, run off **gas generators**
+    (`generator`) tucked outside each building. Provenance: the fold cut
+    Brimley off the grid with everything else (NARRATIVE §1), so the town
+    keeps its lights on off gasoline; a genset MUST sit outdoors (exhaust),
+    so it fronts the doors. Against that cold institutional glow, all
+    **fire** stays **warm** and is the thing the town *huddles* at (burn
+    barrels, cult braziers, the intimate candles at Calder's table). The
+    cold-electric-vs-warm-fire split is the deliberate read; the civic
+    lanterns Brimley used to run on (a 19th-century lamppost) were the wrong
+    century and are gone (the bridge keeps one hung lantern as a personal
+    accent). Both prop kinds are anchored `SOLID_PROPS` volumes (never
+    swiveling cards), verified in the 3D tilt.
+  - **The shared light logic (the "carry it underground" foundation).**
+    `_draw_dark` (`systems/render_mixin.py`) no longer special-cases
+    `wall_torch`: it iterates **`FIXTURE_POOLS`** (the visible-pool twin of
+    `Scene._LIGHT_KINDS`) across **every** light-emitting decoration in the
+    room, so any real fixture -- a cult brazier, a Sign-Chamber candle, a
+    town yard light, a genset work-bulb -- punches its own colored,
+    navigable pool into the gloom. One table drives the surface (if it ever
+    darkens) and the deep, with no per-scene special-casing (`wall_torch`
+    keeps its exact legacy numbers, so torch-only rooms stay byte-identical).
+    The **deep still swallows the flashlight** (`CULT_DARK_SCENES`, DESIGN §1's
+    deliberate dread is preserved): the cult sites are lit by the cult's OWN
+    ritual fires now, not by your beam. Fully retiring the "special darkness"
+    beam-off is a separate dread decision (`TODO.md`), not folded in here.
 - **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
   jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
   Repeated at scale across the Scriptorium and Sign Chamber, faintly
