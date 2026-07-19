@@ -1773,6 +1773,12 @@ _WALL_STYLES = {
 }
 _SLAB_STYLE = {
     "shop": "plank",
+    # Wave A -- the small refuges (thin walls, gentle; SAFE_SCENES stay flat-lit)
+    "bedroom": "plaster",
+    "clerk_room": "plaster",
+    "guest_room_a": "plaster",
+    "guest_room_b": "plaster",
+    "toby_house": "plank",
 }
 _SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render thin
 

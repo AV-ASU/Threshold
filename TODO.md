@@ -573,10 +573,13 @@ that collision/sight/nav obey). Spend it in phases:
   (round PILLAR from a lone wall tile → a cylinder via the prism; ARCHED
   doorway head; ROUNDED counter/desk); re-tune cover for the thinner walls;
   VISION four-facing + dark; full gate + `--diff`; docs same commit. Waves,
-  simplest → richest: **A refuges** (bedroom, guest_room_a/b, clerk_room,
-  toby_house -- gentle), **B explorables** (sheriff_office, barn, schoolhouse,
+  simplest → richest: **A refuges** *(LANDED 2026-07: bedroom / clerk_room /
+  guest_room_a+b = plaster, toby_house = plank; opted into `_SLAB_STYLE`, all
+  four facings verified clean, no diagonal joins, gate green, every non-rolled
+  scene byte-identical)*, **B explorables** (sheriff_office, barn, schoolhouse,
   church -- the barn first, the church's columns/arches first), **C the complex**
-  (lodge, lodge_hall, lodge_cellar, abandoned_farmhouse).
+  (lodge, lodge_hall, lodge_cellar, abandoned_farmhouse). *(A/B/C SAFE_SCENES
+  stay flat-lit + safe; only geometry + colour change.)*
 - **Phase 3 -- the mine reimagined (consumes 1b).** A `_ROCK_SCENES` set (Works
   + Depths): full-THICK but the rough-outline + prism, so hewn rock reads
   irregular/organic, not blocky boxes. Land with #14's side-dug chambers.
