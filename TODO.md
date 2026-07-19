@@ -486,7 +486,7 @@ Optional polish below), ~~a proud local line~~ (LANDED
 pride and the uncut-fields grief), county-fair ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
 note 2 gets the identity + guardrail.
 
-### 12. **[Fable + Opus]** Royce the trucker + the rusting semi  *(was GAME_CHANGES §28)*
+### 12. **[Fable + Opus]** Royce the trucker + the rusting semi  *(was GAME_CHANGES §28; EXPANDED 2026-07 with the Hettie/Royce/Toby family redesign — direction-stage, drafted in chat, not yet built)*
 
 Promote Royce to the man who drove **Brimley's supply run** — the severed
 supply line made a person (Hettie's shelves are bare because *his* deliveries
@@ -495,6 +495,87 @@ Opus: place his **picked-clean semi rusting at the town edge** (the town ate
 its own last shipment; optional light scavenge, **never evidence**). Reconcile
 with his worker job-loop (pacing the road). Royce no longer converts (the
 rot-people layer was cut, TODO #22c); he stays an ordinary local.
+
+- **The family redesign (2026-07, direction-stage, not yet built).** Hettie
+  and Royce are married; Royce drove her shop's supply route before the fold
+  killed it (the brief above), and the marriage is their whole remaining
+  stability, leaned on unevenly — Hettie's want is grounded in it, Royce's
+  stays "the road" (`DESIGN.md` §8's roster is unchanged), so the marriage
+  reads on his side as duty and long habit, not the ache itself. **Toby is
+  their grandson**, left with them because his parents (mundane, offscreen,
+  never named or seen, the Walter Blaine precedent — keep the impossible
+  count at one) did not want him around. This resolves two things for free:
+  Hettie's existing "I've got a family. Look around" line (currently reads
+  generic) lands with real weight without a rewrite, and it gives Royce a
+  concrete reason to be tied to the shop beyond "chorus local." It also
+  requires retargeting three of Toby's existing exchanges, which currently
+  assume a present, unexplained mother:
+  - **Cut entirely:** the `home` exchange's "My mom hums a song that doesn't
+    stop. She doesn't know she's doing it." It assumed an unaccounted-for
+    mother and, separately, sat close to the retired "a person shows a
+    supernatural tell" rule (`NARRATIVE.md` §2, `TODO.md` #22c) — no
+    replacement needed to preserve that risk.
+  - **`home` exchange, new answer** (ties straight into the rusting semi
+    above): "Grandpa still gets up before light. Says he's got a run to
+    make. There isn't one. He goes and stands by the truck a while, then
+    comes back in for breakfast like nothing happened."
+  - **Opener intro:** "Don't tell my mom" → "Don't tell my grandma."
+  - **`paper` exchange, rewritten.** TODO #2's summary line for this
+    exchange ("Toby → the funny pages ('Calvin's still in it. He didn't
+    stop.'; the front page stays out of his house)") is now stale and needs
+    updating when this lands: the old "fold the front page under and away"
+    stage direction had the PI keeping part of the paper, which contradicts
+    the one-copy-fully-spent rule the whole newspaper mechanic runs on. Fix:
+    the WHOLE paper changes hands, and Toby's reaction is indifference to
+    the front page, not the PI protecting him from it. Also swaps the real
+    "Calvin" (Calvin and Hobbes, real copyrighted IP, a different kind of
+    reference than the real Cobain/Rwanda/Bosnia news facts already on the
+    page) for an invented strip:
+    > Toby: "(He spreads it flat on the table, smoothing the crease with both hands.)"
+    > Toby: "First new thing since the trucks stopped."
+    > Toby: "The Chestnut Comics. Chester's still trying. He didn't stop."
+    > Toby: "Can I keep it? Grandma reads over my shoulder when I've got something good."
+    > PI: "[c=dim]He never once looked at the front page. Didn't know who was on it. Didn't ask.[/c]"
+  - **New exchange `grandparents`** (avail: met both Hettie and Royce) —
+    states the relationship plainly, since nothing else does once the cuts
+    above land:
+    > Toby: "Hettie and Royce, are they..." / "Hettie at the shop. Royce with the truck. Are they your family?"
+    > Toby: "Grandma and Grandpa. I live with them now."
+    > Toby: "My mom and dad didn't want me around anymore. That's the whole reason, near as I can tell."
+    > Toby: "[c=dim]Grandma says there's more to it. She won't say what.[/c]"
+  - **New Crane exchange `married`** (avail: met both Hettie and Royce) — a
+    preacher who married them plausibly also knows why the grandson turned
+    up:
+    > Crane: "Nineteen years this June. Stood the two of them up front of a church that still had a full pew for it."
+    > Crane: "I told them for better or worse. I did not know what I was promising them to."
+    > Crane: "I put a hand on that boy's head myself when his folks left him here. Told them I'd look in on him."
+    > Crane: "[c=dim]I have not been much of that promise either.[/c]"
+  - **Hettie's preacher-death one-shot, extended:** "He married Royce and
+    me. Stood up front of us and said words I don't remember anymore. I
+    remember his hands shook. Even then."
+  - **Royce's preacher-death one-shot, new** (he currently has none, an
+    asymmetry against Hettie/Garrick/Vane all having one). Needs a call on
+    whether the marriage reads as remembered love or long duty, given his
+    "only still there because he's old now" shape:
+    > Royce: "Crane's dead." / "He put a ring on my hand once. Best years of my life, before any of this." / "[c=dim]A man who marries you ought to get old and boring about it. Ought to get to complain about his knees.[/c]" *(warmer)*
+    >
+    > Royce: "Crane's dead." / "He put a ring on my hand once. Different man then. Different me too." / "[c=dim]A man who marries you ought to get old and boring about it. Ought to get to complain about his knees.[/c]" *(colder)*
+
+- **Two NPC idle loops (2026-07, direction-stage), both reusing existing
+  movement modes (`entities/npc.py`), no new AI systems needed:**
+  - **Toby → the schoolyard.** He's currently a `homebody` at the
+    grandparents' house. Give him a second station at the schoolyard (not
+    the classroom interior, since he's already told the PI the commune
+    slept "in rows, right where we do our letters" there) using the same
+    `worker`-mode stations-list primitive already driving
+    Garrick/Royce/Hettie/Crane (`stealth.errand_step`), just re-flavored as
+    a play loop instead of an errand.
+  - **Royce → the road, and the semi.** A `patrol` back-and-forth down the
+    main road out to his own rusting semi (this ticket's existing prop) and
+    back, ending with a handoff into `homebody`'s enter-and-vanish at the
+    house. The one real engine gap, not just config: `patrol` and
+    `homebody` don't currently chain into each other, so this needs a small
+    addition (patrol N loops, then hand off to homebody's enter sequence).
 
 ### 13. **[Fable]** PI theory ladder — the notebook thinks  *(LANDED 2026-07; was GAME_CHANGES §20)*
 
