@@ -222,6 +222,11 @@ def build_shop():
     sc.add_furniture("butcher_counter", [(8, 9)], see_over=True)
     sc.add_furniture("butcher_counter", [(9, 9)], see_over=True)
     sc.add_furniture("chair", [(9, 8)], w=22, h=28)
+    # A potbelly stove fills the dead SW corner -- the general-store gathering
+    # spot, and the one warmth Hettie still feeds (the stoop line made a hearth:
+    # "I keep the lights on. So they know."). A split-wood stack sits beside it.
+    sc.add_furniture("stove", [(2, 10)], w=30, h=40, wall="W")
+    sc.add_furniture("firewood", [(3, 10)], w=44, h=24)
     # A butter churn parked against the east wall of the shop floor. The dairy
     # stopped coming before the trucks did.
     sc.add_decoration(Decoration(14 * TILE + 10, 10 * TILE + 8,
