@@ -94,10 +94,18 @@ def build_schoolhouse():
 
     # The commune: two banks of cots crammed against the long walls, a narrow
     # aisle down the middle. Where several people lived, in rows, for months.
+    # Each cot is nudged a few px off its tile and slightly canted (DRAW only
+    # -- the collision footprint stays tile-locked), so the banks read as beds
+    # shoved in by hand and crammed, not a grid of installed cots (error class
+    # 8: no perfect straight prop rows). Seeded per tile, so it never tiles.
     west = [(2, 3), (4, 3), (2, 5), (4, 5), (2, 7), (4, 7)]
     east = [(11, 3), (13, 3), (11, 5), (13, 5), (11, 7), (13, 7)]
     for (cx, cy) in west + east:
-        sc.add_furniture("cot", [(cx, cy)])
+        h = (cx * 73856093) ^ (cy * 19349663)
+        jx = ((h >> 3) % 9) - 4              # -4..+4 px
+        jy = ((h >> 7) % 7) - 3              # -3..+3 px
+        ja = (((h >> 11) % 13) - 6) * 0.02   # a slight per-cot cant
+        sc.add_furniture("cot", [(cx, cy)], dx=jx, dy=jy, ang=ja)
     # Their effects, still beside the beds -- bowls they ate from, candle stubs
     # burned down, a kerosene lamp, an old dark stain. People were here.
     for (bx, by) in ((3, 4), (12, 4), (3, 8), (12, 6), (5, 6)):
