@@ -2513,6 +2513,39 @@ def _draw_bill_spike_solid(surf, cam, deco):
                          (int(b[0]), int(b[1])), max(2, int(pw * 0.55 * s)))
 
 
+def _draw_lectern_solid(surf, cam, deco):
+    """A church reading lectern: a narrow dark-wood column on a foot, a small
+    brass cross on the front, and the open book on a board slanted toward the
+    nave (near edge low, far edge high, so the camera looks down onto the pale
+    pages). The preacher's whole seat, the centrepiece of his tableau -- the
+    walkable church had only a bare altar table."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    wood = {"top": (80, 60, 40), "side": (60, 44, 30), "dark": (40, 30, 20)}
+    _vbox(surf, cam, wx, wy, 12 * s, 11 * s, 0, 2.5 * s, wood)      # foot
+    _vbox(surf, cam, wx, wy, 7 * s, 7 * s, 2.5 * s, 16 * s, wood)   # column
+    P = _vframe(cam, wx, wy, 0.0)
+    # a small brass cross on the front (south) face of the column
+    cz = 9 * s
+    _lp(surf, P, (0, 3.5 * s, cz - 2.6 * s), (0, 3.5 * s, cz + 2.6 * s),
+        (178, 154, 98), max(1, int(1.5 * s)))
+    _lp(surf, P, (-1.9 * s, 3.5 * s, cz + 0.9 * s), (1.9 * s, 3.5 * s, cz + 0.9 * s),
+        (178, 154, 98), max(1, int(1.5 * s)))
+    # the slanted book board: near (south) edge low, far (north) edge high
+    zlo, zhi = 16 * s, 20.5 * s
+    _qp(surf, P, [(-7 * s, 5 * s, zlo), (7 * s, 5 * s, zlo),
+                  (7 * s, -5 * s, zhi), (-7 * s, -5 * s, zhi)], wood["dark"])
+    # the open book on the board: two pale pages, a dark gutter, faint text
+    _qp(surf, P, [(-6 * s, 4 * s, zlo + 0.5 * s), (6 * s, 4 * s, zlo + 0.5 * s),
+                  (6 * s, -4 * s, zhi - 0.5 * s), (-6 * s, -4 * s, zhi - 0.5 * s)],
+        (198, 190, 170))
+    _lp(surf, P, (0, 4 * s, zlo + 0.5 * s), (0, -4 * s, zhi - 0.5 * s),
+        (118, 110, 94), max(1, int(1.3 * s)))
+    for lx in (-3 * s, 3 * s):
+        _lp(surf, P, (lx, 2.6 * s, zlo + 1.5 * s), (lx, -2.6 * s, zhi - 1.5 * s),
+            (150, 142, 124), 1)
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -2555,6 +2588,7 @@ SOLID_PROPS = {
     "wrong_radio":    _draw_wrong_radio_solid,
     "cash_register":  _draw_cash_register_solid,
     "bill_spike":     _draw_bill_spike_solid,
+    "lectern":        _draw_lectern_solid,
     "church_bell":    _draw_church_bell_solid,
     "valve":          _draw_valve_solid,
     "candle":        _draw_candle_solid,

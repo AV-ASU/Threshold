@@ -23,7 +23,7 @@ def build_church():
     up the bell tower from the vestry."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWW?WWWWW",   # 0  ? = graveyard gate (north, over the nave)
+        "WWWWWWWWWW?iiWWW",   # 0  ? = graveyard gate; ii = tall chancel windows
         "W.U...W........W",   # 1  U = stairs up the bell tower (in the vestry)
         "W...C.W........W",   # 2  C = legacy terminal marker (cut, blanked below)
         "W.....W........W",   # 3   vestry (cols 1-5) | nave (cols 7-14)
@@ -95,6 +95,17 @@ def build_church():
         for c in (9, 10, 11):        # right bench
             sc.add_furniture("pew", [(c, r)])
 
+    # Crane's LECTERN, at the head of the nave just south of the preacher's
+    # spot -- his whole seat, the centrepiece of his close-up tableau
+    # (draw_crane_tableau): the open book on the slanted board, the cross on the
+    # front. The walkable church had only the bare altar table (tableau-parity
+    # pass). Decoration = no collision, so he stands behind it and reads over it.
+    sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 12, "lectern"))
+    # The bell rope, hanging dead at the west edge of the chancel where the
+    # tower drops through the ceiling (the tableau's left-edge rope; the bell
+    # has not swung in years).
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "rope",
+                                 seed=3, scale=1.2))
     # The altar dressing (2026-07): a plain wooden CROSS on the wall above the
     # altar, and two candles standing ON the altar table (seated by
     # seat_tabletop_props). Austere, a poor country parish, not gilded.

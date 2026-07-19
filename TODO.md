@@ -358,13 +358,18 @@ top draws the pistol + case file); it is the model.
   curled on the spike by the till), seated on the counter. Matches
   `draw_hettie_tableau`. Bare shelves / one kept bulb / shop door were already
   present.
+- **Crane's church — LANDED (2026-07).** New `lectern` SOLID_PROP (the open book
+  on a slanted board, brass cross on the column) at the head of the nave, in
+  front of the preacher's spot -- the centrepiece of `draw_crane_tableau`; the
+  church had only a bare altar table. Added a tall chancel WINDOW (terrain `'i'`
+  on the north wall) and the dead BELL ROPE (`rope`) hanging at the west edge.
+  Cross + candles + pews were already present.
 - **Still open (per the audit):** Vane's office (window + holding-cell bars +
-  gun cabinet), Crane's church (lectern + arched window + bell rope), Sable's
-  lodge (wall of room keys + service bell; ceiling fan is deferred, no overhead
-  tilt path), Toby's house (wall of crayon drawings + crayons on the table +
-  the `toby_told` procession drawing + window), works_sign (the Pallid Mask
-  visible on the altar; verify the `yellow_sign` reads on the apse wall not the
-  floor).
+  gun cabinet), Sable's lodge (wall of room keys + service bell; ceiling fan is
+  deferred, no overhead tilt path), Toby's house (wall of crayon drawings +
+  crayons on the table + the `toby_told` procession drawing + window),
+  works_sign (the Pallid Mask visible on the altar; verify the `yellow_sign`
+  reads on the apse wall not the floor).
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

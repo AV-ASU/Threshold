@@ -403,6 +403,18 @@ class DecoFurnitureMixin:
         pygame.draw.rect(surf, (68, 68, 76), (x - 3, y + 3, 6, 3))
         pygame.draw.line(surf, (168, 160, 140), (x - 2, y - 5), (x + 2, y - 4), 2)
 
+    def _draw_lectern(self, surf, x, y):
+        """Flat (pitch-0) fallback for the church lectern; the tilt camera draws
+        the real volume (rendering.props._draw_lectern_solid)."""
+        pygame.draw.rect(surf, (60, 44, 30), (x - 4, y - 4, 8, 12))       # column
+        pygame.draw.polygon(surf, (40, 30, 20),
+                            [(x - 7, y - 6), (x + 7, y - 6), (x + 6, y - 12),
+                             (x - 6, y - 12)])                            # board
+        pygame.draw.polygon(surf, (198, 190, 170),
+                            [(x - 6, y - 7), (x + 6, y - 7), (x + 5, y - 11),
+                             (x - 5, y - 11)])                            # pages
+        pygame.draw.line(surf, (178, 154, 98), (x, y - 2), (x, y + 4), 1) # cross
+
     def _draw_wrong_radio(self, surf, x, y):
         """A 1990s portable transistor radio sitting on a surface.
         Brown plastic body, chrome tuning dial, leather carry strap
