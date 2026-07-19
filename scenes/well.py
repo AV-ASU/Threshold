@@ -332,6 +332,14 @@ def build_works_cistern():
     # the through route W<->E is a dry corridor -- the water is a risk you
     # take on, not a wall (WADE_*).
     floor = _flood(floor, objs, _rect_tiles(4, 1, 8, 3) + _rect_tiles(4, 7, 8, 9))
+    # #14 -- a HALF-DUG niche clawed into the SW corner stone, off the DRY
+    # crossing (cut after the flood, and clear of the cols4-8 arms, so it
+    # stays dry): where the dig tried for the river through the corner and
+    # gave up, the central dig reaching it instead. Pick gouges, a cold
+    # seep, no light. One ADIT up to the crossing at row 6.
+    objs[8][1] = "."
+    objs[8][2] = "."
+    objs[7][2] = "."               # the adit, up to the crossing
     objects = ["".join(r) for r in objs]
     sc = Scene("works_cistern", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
@@ -355,6 +363,15 @@ def build_works_cistern():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
+    # The SW niche, dressed (#14): timber over the adit mouth, the clawed
+    # corner stone, a cold seep finding the low place. No light -- the dig
+    # gave this one up.
+    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 2, "shoring_frame",
+                                 seed=13, ang=0.0, span=64))
+    sc.add_decoration(Decoration(1 * TILE + 8, 8 * TILE + 14, "claw_marks",
+                                 scale=1.5))
+    sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE + 16, "water_trail",
+                                 pool=True, seed=8))
     # One enclosed hide (DESIGN.md §12): the dry lee under the SE
     # basin's lip -- inside the patrol's own arm, so it is a risky option
     # a searcher can sweep, not a panic room.

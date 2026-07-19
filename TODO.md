@@ -845,15 +845,25 @@ loot / testimony placement; most is just labor made visible.
   the tuned crossing / props / hides stay untouched; reuses the shipped mine
   kinds (no new procedural kinds); per room reachability is re-checked (smoke
   [4/10] flood-fill), VISION four-facing + dark verified, full gate green.
-  Landed so far (`scenes/well.py`): the **Timber Racks** (`well_passage`, the
-  pilot, into the two north blocks) and the **Sorting Hall** (`works_sorting`,
-  the overflow store + a half-dug niche cut clear of the tally + taxidermy
-  wall mounts). **Still open:** the remaining rooms one at a time per VISION
-  (a half-dug pocket off the Cistern or the procession drift, the octagonal
-  rooms' harder cut-in geometry -- Scriptorium / Deepest Face -- their
-  existing single-face dressing may already carry the read); and the
-  cave-mouth ADIT `door_style` for the scene-to-scene fade doors (a separate
-  render item).
+  Landed, the four box / cruciform rooms with spare wall blocks: the **Timber
+  Racks** (`well_passage`, the pilot, into the two north blocks), the **Sorting
+  Hall** (`works_sorting`, the overflow store + a half-dug niche cut clear of
+  the tally + taxidermy mounts), the **Kneeling Hall** (`depths_hall`, a
+  finished store into the big NW corner stone off the nave, west of the
+  crossing trigger), and the **Cistern** (`works_cistern`, a half-dug niche
+  clawed into the dry SW corner toward the river). Full gate green each,
+  including flow (the hall's kneel set-piece + crossing trigger hold) and
+  stealth. **Assessed and NOT cut (existing shape + dressing already carry the
+  read):** the octagonal / diamond / cavern rooms -- Shaft Floor (the haul
+  head: spoil, barrow, fallen shoring), Scriptorium, Deepest Face (the single
+  dead face, intentional), antechamber (the fall zone's old-workings props),
+  threshing (a raw bitten cavern, miners at the faces), Old Stores (already a
+  gear store), stair (empty by design) -- their `_bevel`/`_cavern` walls fight
+  clean rectangular cut-ins and each is already dressed as the dig, so forcing
+  a thin niche would be noise. The procession drift's 2-tile bands are too
+  shallow for an enclosed chamber (its open bays already exploit that).
+  **Still open:** the cave-mouth ADIT `door_style` for the scene-to-scene fade
+  doors (a separate render item, not a chamber).
 
 ### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
 

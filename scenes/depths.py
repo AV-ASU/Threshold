@@ -348,6 +348,15 @@ def build_depths_hall():
     _wall(objs, 1, 7, 7, 9)        # SW
     _wall(objs, 11, 7, 18, 9)      # SE
     objs[5][19] = "E"   # east to threshing floor (the iron door)
+    # #14 -- a FINISHED store cut into the big NW corner stone off the nave:
+    # the old workings kept gear by the basilica. Cols 4-6, 2 deep, one ADIT
+    # down at col 5 (a bench-free column). West of the crossing-trigger rect
+    # (cols 8-10) and clear of the bench rows, so the kneel set-piece, the
+    # nave run, and the hides are untouched.
+    for cx in (4, 5, 6):
+        objs[1][cx] = "."
+        objs[2][cx] = "."
+    objs[3][5] = "."               # the adit down to the nave
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_hall", floor, objects, music="basement")
     sc.add_exit("E", "depths_threshing", "from_hall")
@@ -381,6 +390,16 @@ def build_depths_hall():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
+    # The NW store, dressed (#14): crates of the old workings' gear squared
+    # into the corner, a kept candle, the count on the back wall, timber over
+    # the adit mouth.
+    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 30, "shoring_frame",
+                                 seed=21, ang=0.0, span=70))
+    sc.add_furniture("crate", [(4, 1)])
+    sc.add_furniture("crate", [(6, 1)])
+    sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 18, "tally_marks",
+                                 wall="N", seed=27))
     # Cover down the nave (2026-07 stealth pass): the benches are
     # see-over (knee-high planks hide nobody standing), which left the
     # aisle a 16-tile naked run once the room was lengthened. Three
