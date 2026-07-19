@@ -589,6 +589,25 @@ Built into the procedural draw layer (`scenes/base.py`,
   touch open floor, faint pitting/cracks. The seams vanish; a run reads
   as a single battered surface. Terrain rendering is shared through
   `draw_scene_terrain` (Scene.draw + the offline renderer use the same).
+- **Interior partition corners are BEVELED, not blocky (2026-07,
+  `scenes/terrain.py`).** The chunky 90° corner where an interior partition
+  wall juts into a room read as a box tip. `_bevel_corners(scene, tx, ty)`
+  returns a bitmask of a wall tile's exposed CONVEX corners — a corner where
+  BOTH adjacent tile faces (and the diagonal) are open interior floor (`.`) —
+  and both draw layers chamfer exactly those: the 3D box (`_extrude_box`, a
+  `bevel` param: shortened cardinal faces + a vertical chamfer quad per corner
+  + a beveled top cap) and the flat mass footprint (`_draw_wall_mass` clips
+  `_wall_tile_flat` to the same `_bevel_poly_local`, inset 1px more as motion
+  insurance). This is **provably orthogonal to the run MERGE**: a mid-run /
+  tee / shell tile has < 2 adjacent open sides → no convex corner → **byte
+  identical**, so runs stay a continuous full-thickness mass and only the juts
+  soften. **Draw-only** (collision + sight stay tile-based, like the inner-door
+  leaves). Gated to `_BEVEL_SCENES` (a module frozenset, prototype `{"shop"}`;
+  expand per interior building scene with a VISION look, never the mine —
+  hewn rock reads right thick — nor outdoors). `_BEVEL_INSET` (0.28·TILE) is
+  the single shared inset for both layers; bump it or subdivide the chamfer
+  into a 2-3 segment arc for rounder corners. Cache-safe (the bevel is a pure
+  function of the tile + its 8 neighbour chars + the gate).
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.

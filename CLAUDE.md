@@ -658,6 +658,16 @@ it renders the procedural sprites to a labelled PNG strip.
   building in E-W walls or the leaves all "face south" (error class #8); mix
   side-wall and E-W-wall doors by what the geometry wants (the shop does).
   Guard: `tests/stealth.py` §15.
+- **Interior partition corners are BEVELED (2026-07, `scenes/terrain.py`,
+  DESIGN.md §6).** A wall tile's exposed CONVEX corners (both adjacent faces +
+  the diagonal open to floor `.`) are chamfered in BOTH wall draw layers —
+  `_extrude_box` (a `bevel` bitmask param from `_bevel_corners`) and
+  `_draw_wall_mass` (clips `_wall_tile_flat` to `_bevel_poly_local`) — so the
+  chunky 90° jut softens while runs/tees/shell stay a full-thickness continuous
+  mass (byte-identical, no convex corner there). Draw-only; gated to
+  `_BEVEL_SCENES` (frozenset, currently `{"shop"}`; expand per interior
+  building scene with a VISION look, never the mine or outdoors). `_BEVEL_INSET`
+  = 0.28·TILE tunes the chamfer. Cache-safe (pure function of tile + neighbours).
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
