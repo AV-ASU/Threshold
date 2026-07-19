@@ -807,7 +807,7 @@ examine. The census (grouped) for the copy pass:
   captions/notes — §16, §17b/c/d, §24) and update the ones whose behavior
   legitimately changes.
 
-### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways  *(was GAME_CHANGES §21)*
+### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways  *(was GAME_CHANGES §21; fiction + dressing + level-design all substantially DONE 2026-07; octagonal-room chamber calls revisitable)*
 
 Make the Works read as a mining effort: timbered side-chambers dug off the
 halls (some finished, some half-dug, the deepest hand-clawed), spoil heaps,
@@ -862,8 +862,15 @@ loot / testimony placement; most is just labor made visible.
   clean rectangular cut-ins and each is already dressed as the dig, so forcing
   a thin niche would be noise. The procession drift's 2-tile bands are too
   shallow for an enclosed chamber (its open bays already exploit that).
-  **Still open:** the cave-mouth ADIT `door_style` for the scene-to-scene fade
-  doors (a separate render item, not a chamber).
+  The **cave-mouth ADIT door doors were already done** (`scenes/__init__.py`
+  applies `door_style = "cave"` to every `UNDERGROUND_SCENES` room, so every
+  mine exit renders as a jagged rock adit with timber shoring and no leaf,
+  `scenes/terrain.py`). So the LEVEL-design half of #14 is **substantially
+  complete**: the four cuttable rooms carry the "rooms cut off the dig" read,
+  the octagonal/cavern rooms carry it by shape + existing dressing, and the
+  scene doors are adits. The octagonal-room "not cut" calls are a judgment the
+  maintainer can override (force a hand-clawed niche into the Deepest Face,
+  etc.) if a stronger dug-everywhere read is wanted.
 
 ### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
 
