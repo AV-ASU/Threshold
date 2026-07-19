@@ -696,6 +696,15 @@ it renders the procedural sprites to a labelled PNG strip.
   stays sharp (so tiles still connect flush); it drives the flat mass + a 3D
   `_extrude_prism`. Collision/sight/nav keep the square bands (rounding sits
   inside the drawn face). `_ROUND_R` tunes the radius.
+- **No diagonal-only wall joins in a slab scene (2026-07, maintainer "add a rule
+  not to have walls like that").** Two walls that meet only at a DIAGONAL (the
+  shared corner tile missing) look fine as fat full tiles but render as
+  DISCONNECTED thin stubs under the slab. So a `_SLAB_SCENES` wall layout must
+  never have one: where two perpendicular walls turn a corner, the corner TILE
+  itself must be a wall (an orthogonal L), not a diagonal near-miss. Enforced by
+  `tests/smoke.py [10/10]` via `terrain.diagonal_wall_joins(scene)`; fix a
+  failure by adding the missing corner tile (on the non-room side) so the walls
+  connect. Applies as each interior opts into `_SLAB_SCENES`.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`

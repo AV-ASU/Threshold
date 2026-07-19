@@ -160,11 +160,11 @@ def build_shop():
         "W....W....W....W",   # 1  pantry(1-4) | shop-back(6-9) | office(11-14)
         "W....W.........W",   # 2  office door (col 10, a SIDE wall)
         "WW.WWW....W....W",   # 3  pantry<->stockroom door (col 2)
-        "W....W.....WWWWW",   # 4  stockroom | shop | office south wall
+        "W....W....WWWWWW",   # 4  stockroom | shop | office SW corner (col 10)
         "W..............W",   # 5  stockroom door (col 5, a SIDE wall)
         "W....W.........W",   # 6  stockroom | shop
         "W....W.........W",   # 7
-        "WWWWW..........W",   # 8  stockroom south wall; shop floor (rows 8-11)
+        "WWWWWW.........W",   # 8  stockroom S wall closes its SE corner (col 5)
         "W..............W",   # 9
         "W..............W",   # 10
         "W..............W",   # 11

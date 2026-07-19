@@ -399,26 +399,47 @@ def check_no_raw_furniture_tiles():
     return errors
 
 
+def check_no_diagonal_wall_joins():
+    """A _SLAB_SCENES scene renders its walls as THIN slabs, so two walls that
+    meet only at a DIAGONAL (the shared corner tile missing) end in disconnected
+    stubs instead of a connected corner (the maintainer's "no walls like that"
+    rule, 2026-07). Fail any slab scene with such a join -- close the corner by
+    making one of its open bridge tiles a wall so the walls connect
+    orthogonally into a clean (rounded) L."""
+    from scenes import load_scene
+    from scenes.terrain import _SLAB_SCENES, diagonal_wall_joins
+    errors = 0
+    for key in _SLAB_SCENES:
+        sc = load_scene(key)
+        for a, b in diagonal_wall_joins(sc):
+            errors += fail(
+                f"{key}: diagonal-only wall join {a}<->{b} -- thin walls meet "
+                f"at a point; add the missing corner tile to connect them")
+    return errors
+
+
 def main():
     failures = 0
-    print("[1/9] scene builders ...")
+    print("[1/10] scene builders ...")
     failures += check_scene_builds()
-    print("[2/9] spawn walkability + non-overlapping with exits ...")
+    print("[2/10] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/9] exits resolve to target spawns ...")
+    print("[3/10] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/9] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/10] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/9] canonical evidence beats wired to scenes ...")
+    print("[5/10] canonical evidence beats wired to scenes ...")
     failures += check_canonical_evidence_wired()
-    print("[6/9] per-run state reset coverage ...")
+    print("[6/10] per-run state reset coverage ...")
     failures += check_reset_coverage()
-    print("[7/9] sprite-seed variant coverage (all 6 cultist masks) ...")
+    print("[7/10] sprite-seed variant coverage (all 6 cultist masks) ...")
     failures += check_sprite_seed_variants()
-    print("[8/9] no dead movement-mode / sprite-kind labels ...")
+    print("[8/10] no dead movement-mode / sprite-kind labels ...")
     failures += check_no_dead_labels()
-    print("[9/9] no raw furniture tiles (invisible under tilt) ...")
+    print("[9/10] no raw furniture tiles (invisible under tilt) ...")
     failures += check_no_raw_furniture_tiles()
+    print("[10/10] no diagonal-only wall joins in slab scenes ...")
+    failures += check_no_diagonal_wall_joins()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

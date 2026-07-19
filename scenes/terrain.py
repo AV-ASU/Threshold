@@ -1962,6 +1962,36 @@ def _fillet(A, C, B, r):
              o[1] + r * _m.sin(a1 + (a2 - a1) * k / seg)) for k in range(seg + 1)]
 
 
+def diagonal_wall_joins(scene):
+    """List of ((x,y),(nx,ny)) DIAGONAL-ONLY wall joins: two diagonally adjacent
+    wall tiles whose BOTH orthogonal bridge tiles are open (floor/door), so the
+    walls connect only at a point. Under a full-tile render the fat blocks kiss
+    and it reads fine, but under the THIN-SLAB render the two thin walls end in
+    disconnected stubs (the maintainer's "walls like that"). The rule for a
+    _SLAB_SCENES scene: there must be NONE -- close the corner (make a bridge
+    tile a wall) so the walls connect orthogonally into a clean rounded L.
+    Guarded by tests/smoke.py."""
+    objs, W, H = scene.objects, scene.w, scene.h
+
+    def wall(x, y):
+        return 0 <= x < W and 0 <= y < H and objs[y][x] in _WALL_CHARS
+
+    def opn(x, y):
+        return 0 <= x < W and 0 <= y < H and objs[y][x] not in _WALL_CHARS
+    out, seen = [], set()
+    for y in range(H):
+        for x in range(W):
+            if not wall(x, y):
+                continue
+            for dx, dy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+                if wall(x + dx, y + dy) and opn(x + dx, y) and opn(x, y + dy):
+                    k = tuple(sorted(((x, y), (x + dx, y + dy))))
+                    if k not in seen:
+                        seen.add(k)
+                        out.append(k)
+    return out
+
+
 def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y

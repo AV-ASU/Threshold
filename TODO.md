@@ -538,9 +538,15 @@ single side room. The fix has two halves, and the first is done.
   flush; it drives the flat mass + a new 3D `_extrude_prism` (the rounded sibling
   of `_extrude_box`). Building outer corners + partition run-ends read rounded;
   collision/sight/nav keep the square bands (the rounding sits inside the drawn
-  face). Verified live all four facings + dark. **Still open:** a maintainer LOOK
-  (the `_SLAB_THICK` 0.5·TILE + `_ROUND_R` radius taste); then roll `_SLAB_SCENES`
-  out to the other interiors one at a time per VISION.
+  face). Verified live all four facings + dark. **No diagonal-only wall joins
+  (2026-07, maintainer "add a rule not to have walls like that"):** two walls
+  that met only at a diagonal (the corner tile missing) rendered as disconnected
+  thin stubs; the shop's stockroom-SE and office-SW corners were closed (a wall
+  added at the missing corner tile), and `terrain.diagonal_wall_joins` +
+  `tests/smoke.py [10/10]` now FAIL any slab scene with such a join. **Still
+  open:** a maintainer LOOK (the `_SLAB_THICK` 0.5·TILE + `_ROUND_R` radius
+  taste); then roll `_SLAB_SCENES` out to the other interiors one at a time per
+  VISION, each cleared of diagonal joins by the smoke rule first.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
