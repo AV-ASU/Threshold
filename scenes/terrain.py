@@ -1779,6 +1779,13 @@ _SLAB_STYLE = {
     "guest_room_a": "plaster",
     "guest_room_b": "plaster",
     "toby_house": "plank",
+    # Wave B/C -- the three principal-seat interiors (maintainer call): the
+    # church reads its BOARD walls (plank, matching draw_crane_tableau), the
+    # Sheriff's office a pale institutional plaster, the Arcadia common room its
+    # rustic timber (the antler/firewood/buck-head lodge dressing).
+    "church": "plank",
+    "sheriff_office": "plaster",
+    "lodge": "timber",
 }
 _SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render thin
 

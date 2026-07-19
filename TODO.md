@@ -591,9 +591,10 @@ single side room. The fix has two halves, and the first is done.
   `is_solid_at`/`blocks_sight`/`_nav_solid_at`, point-in-ANY-band, inclusive
   bounds) — so the wall the player bumps and the AI sees IS the thin wall drawn.
   SUPERSEDES the bevel in a slab scene (`_bevel_corners` returns 0 there). Gated
-  to `_SLAB_SCENES` (pilot = shop); every other scene is byte-identical
-  (capture_world --diff: bedroom/brimley/sheriff_office/works_cistern/depths_hall
-  unchanged). Guarded by `tests/stealth.py` §16 (bands thin, shell hugs the
+  to `_SLAB_SCENES` (shop was the pilot; Wave A + the three principal seats have
+  since opted in, below); every NON-slab scene stays byte-identical
+  (capture_world --diff: brimley/works_cistern/depths_hall unchanged -- the slab
+  scenes legitimately differ). Guarded by `tests/stealth.py` §16 (bands thin, shell hugs the
   exterior, junctions connect flush, collision+sight+nav agree); full gate green;
   the shop verified live (VISION four-facing + dark + a top-down footprint
   schematic). **Corners ROUNDED (2026-07, maintainer "rounded corners where the
@@ -641,10 +642,13 @@ that collision/sight/nav obey). Spend it in phases:
   simplest → richest: **A refuges** *(LANDED 2026-07: bedroom / clerk_room /
   guest_room_a+b = plaster, toby_house = plank; opted into `_SLAB_STYLE`, all
   four facings verified clean, no diagonal joins, gate green, every non-rolled
-  scene byte-identical)*, **B explorables** (sheriff_office, barn, schoolhouse,
-  church -- the barn first, the church's columns/arches first), **C the complex**
-  (lodge, lodge_hall, lodge_cellar, abandoned_farmhouse). *(A/B/C SAFE_SCENES
-  stay flat-lit + safe; only geometry + colour change.)*
+  scene byte-identical)*, **B explorables** *(sheriff_office = plaster + church =
+  plank LANDED 2026-07 with the three principal seats below; barn + schoolhouse
+  still open -- the barn first, and the church's curved apse / arched-window
+  SHAPES were deferred to Phase 4, the style opt-in shipped without them)*,
+  **C the complex** *(lodge = timber LANDED 2026-07; lodge_hall, lodge_cellar,
+  abandoned_farmhouse still open)*. *(A/B/C SAFE_SCENES stay flat-lit + safe;
+  only geometry + colour change.)*
 - **Phase 3 -- the mine reimagined (consumes 1b).** A `_ROCK_SCENES` set (Works
   + Depths): full-THICK but the rough-outline + prism, so hewn rock reads
   irregular/organic, not blocky boxes. Land with #14's side-dug chambers.
@@ -658,8 +662,21 @@ that collision/sight/nav obey). Spend it in phases:
   thickness), extend `tests/stealth.py §16` as styles/primitives land; VISION
   toward the Darkwood organic read; guards + docs in the same commit.
 
-**Still open:** a maintainer LOOK at the material range + 1b roughness taste;
-then Phase 1b, then Wave A.
+**The three principal seats LANDED (2026-07, maintainer "Cranes, Vanes, and
+Stables places should all be the thinner wall").** `church` = `plank` (its
+board walls, matching draw_crane_tableau), `sheriff_office` = `plaster` (pale
+institutional), `lodge` = `timber` (the rustic common room, its antler/firewood
+dressing). One `_SLAB_STYLE` line each; the new geometry each just gained (the
+church chancel windows, the office holding-cell bars + cabinet) reads clean
+under the thin walls. All three verified live (VISION four-facing + dark, the
+window/door seams checked), no diagonal joins (smoke [10/10]), full gate green.
+The bevel is auto-superseded for them (`_bevel_corners` returns 0 on a slab
+scene), so their `_BEVEL_SCENES` membership is now inert.
+
+**Still open:** the rest of Wave B (`barn`, `schoolhouse`) + Wave C
+(`lodge_hall`, `lodge_cellar`, `abandoned_farmhouse`); the deferred curved
+church shapes (Phase 4); Phase 3 (the mine, `_ROCK_SCENES`) + Phase 4 (freeform
+off-grid wall segments).
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

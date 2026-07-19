@@ -687,10 +687,13 @@ it renders the procedural sprites to a labelled PNG strip.
   `_obj_solid_here`, shared by `is_solid_at` / `blocks_sight` / `_nav_solid_at`,
   point-in-ANY-band, inclusive bounds so collision sits a hair proud of the drawn
   face and a nav-grid centre on a slab stays solid) — so what the player bumps
-  and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (pilot =
-  shop); off it, None → full tile → byte-identical (`capture_world --diff`
-  confirms). SUPERSEDES the bevel where both apply (`_bevel_corners` returns 0 in
-  a slab scene). Roll out one interior at a time per VISION. **Corners are
+  and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (shop the
+  pilot; then the Wave A refuges + the three principal seats, church /
+  sheriff_office / lodge); off it, None → full tile → byte-identical
+  (`capture_world --diff` confirms the non-slab scenes). SUPERSEDES the bevel
+  where both apply (`_bevel_corners` returns 0 in a slab scene, so a slab
+  scene's `_BEVEL_SCENES` membership is inert). Roll out one interior at a time
+  per VISION. **Corners are
   ROUNDED:** `_rounded_wall_poly` traces the band union to an outline and fillets
   each FREE corner (facing floor) into an arc while a wall-neighbour SEAM corner
   stays sharp (so tiles still connect flush); it drives the flat mass + a 3D

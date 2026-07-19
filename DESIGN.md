@@ -638,10 +638,12 @@ Built into the procedural draw layer (`scenes/base.py`,
   so the wall the player BUMPS and the AI's line of sight obey the wall the
   player SEES (inclusive bounds, so collision sits a hair proud of the drawn
   face and a hug band's tile centre still reads solid -- the nav grid never
-  routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the pilot is the
-  shop); every other scene returns None -> full tile -> byte-identical (the
-  `--diff` gate confirms bedroom / brimley / sheriff_office / works_cistern /
-  depths_hall unchanged). The slab SUPERSEDES the bevel where both would apply
+  routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the shop was the
+  pilot; the Wave A refuges and the three principal-seat interiors -- church,
+  sheriff_office, lodge -- have since opted in); every NON-slab scene returns
+  None -> full tile -> byte-identical (the `--diff` gate confirms brimley /
+  works_cistern / depths_hall unchanged; the slab scenes legitimately differ).
+  The slab SUPERSEDES the bevel where both would apply
   (`_bevel_corners` returns 0 for a `_SLAB_SCENES` scene). Cache-safe (a pure
   function of the tile + its 4 orthogonal neighbour chars + the gate). Tune
   `_SLAB_THICK`, and roll out one interior at a time per VISION (render + look,
