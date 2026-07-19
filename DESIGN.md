@@ -663,14 +663,20 @@ Built into the procedural draw layer (`scenes/base.py`,
   outline. Cached per (footprint, seams + the style's radius/rough); the
   wall-box card cache holds the projected prism per tile+angle.
 - **Wall MATERIAL styles (2026-07, the rollout foundation).** Thickness, corner
-  round, and surface roughness are no longer bare constants -- they live in
-  `_WALL_STYLES` (`scenes/terrain.py`), one record per material (`{thick`
-  frac-of-TILE, `round` frac-of-thick, `rough` px`}`), and a slab scene picks
-  one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is derived from it;
-  `_wall_style(scene)` is the single lookup that `_wall_slab` /
-  `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry:
-  `plank` (thin, smooth -- the shop), `plaster` (thin, crisp), `timber`
-  (heavier, hewn), `stone` (thick rough masonry). `rough > 0` runs `_roughen`:
+  round, surface roughness, and COLOUR are no longer bare constants -- they live
+  in `_WALL_STYLES` (`scenes/terrain.py`), one record per material (`{thick`
+  frac-of-TILE, `round` frac-of-thick, `rough` px, `tint` (dr,dg,db)`}`), and a
+  slab scene picks one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is
+  derived from it; `_wall_style(scene)` is the single lookup that `_wall_slab` /
+  `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry
+  AND the colour: `plank` (thin, smooth, warm pine -- the shop), `plaster` (thin,
+  pale warm grey), `timber` (heavier, hewn, dark red-brown), `brick` (fired-clay
+  rust), `stone` (thick rough masonry, cold blue-grey). **`tint`** is a delta
+  ADDED to the near-black wall palette (`_tint_col`), applied to BOTH draw layers
+  (`_wall_tile_flat`'s mass + `_extrude_prism`'s faces via `_tilt_wall_box`),
+  kept dark + muddy + desaturated (the Darkwood rule, no cheerful primaries) so
+  it reads only where the interior light pools land; a non-slab scene's tint is
+  (0,0,0) → byte-identical. `rough > 0` runs `_roughen`:
   it subdivides the FREE (drawn) outline edges and kicks their interior points
   along the edge normal by a seeded amount (PER TILE, so masonry doesn't tile),
   leaving SEAM edges and shared corners put -- **draw-only**, so collision /

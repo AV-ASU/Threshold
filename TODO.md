@@ -561,7 +561,11 @@ that collision/sight/nav obey). Spend it in phases:
   edges + shared corners kept put, so tiles still connect flush and corners stay
   rounded), draw-only so collision/sight/nav still read the square bands
   (`§16`). `timber`/`stone` now read rough-hewn, not just thicker -- the same
-  primitive the mine (Phase 3) reuses.
+  primitive the mine (Phase 3) reuses. *(1c LANDED 2026-07, maintainer "wider
+  variety of colors".)* each style carries a dark muddy `tint` (delta on the
+  near-black palette, both draw layers, Darkwood-safe) so a room reads its
+  material in COLOUR too: warm-pine plank, pale plaster, red-brown timber,
+  rust brick, cold blue-grey stone. Non-slab tint (0,0,0) → byte-identical.
 - **Phase 2 -- interior rollout, one scene per build (consumes Phase 1 + grows
   new shape primitives on demand).** Per-scene definition of done: assign a
   style; redesign to multi-subroom (#4c interior doors, varied walls) if it is a

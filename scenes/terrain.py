@@ -1760,11 +1760,16 @@ def _bevel_poly_local(bevel, size, inset):
 # thickness as a fraction of TILE; `round` the fillet radius as a fraction of
 # that thickness (0 = square); `rough` the outline jitter amplitude in px
 # (0 = smooth; Phase 1b). Adding a scene is one _SLAB_STYLE line.
+# `tint` is a (dr, dg, db) delta added to the near-black wall palette so each
+# material carries a COLOUR too (kept dark + muddy + desaturated, the Darkwood
+# rule -- no cheerful primaries): warm pine, cold stone, red-brown old timber,
+# pale plaster. It reads only where the interior light pools land.
 _WALL_STYLES = {
-    "plank":   {"thick": 0.50, "round": 0.50, "rough": 0.0},  # thin, smooth (shop)
-    "plaster": {"thick": 0.44, "round": 0.28, "rough": 0.0},  # thin, crisp render
-    "timber":  {"thick": 0.66, "round": 0.34, "rough": 1.4},  # heavier, hewn log
-    "stone":   {"thick": 0.80, "round": 0.30, "rough": 2.6},  # thick rough masonry
+    "plank":   {"thick": 0.50, "round": 0.50, "rough": 0.0, "tint": (30, 14, -6)},   # warm pine
+    "plaster": {"thick": 0.44, "round": 0.28, "rough": 0.0, "tint": (26, 22, 12)},   # pale warm grey
+    "timber":  {"thick": 0.66, "round": 0.34, "rough": 1.4, "tint": (34, 6, -16)},   # dark red-brown
+    "stone":   {"thick": 0.80, "round": 0.30, "rough": 2.6, "tint": (2, 14, 26)},    # cold blue-grey
+    "brick":   {"thick": 0.62, "round": 0.22, "rough": 1.0, "tint": (44, 2, -18)},   # dark fired clay
 }
 _SLAB_STYLE = {
     "shop": "plank",
@@ -1776,11 +1781,25 @@ def _wall_style(scene):
     """The wall material style dict for this scene, or None if it is not a slab
     scene (renders full-tile). Gates on _SLAB_SCENES membership (so a test that
     injects a scene there still resolves), defaulting to `plank`. Single source
-    for band thickness + corner round + roughness."""
+    for band thickness + corner round + roughness + colour tint."""
     key = getattr(scene, "key", None)
     if key not in _SLAB_SCENES:
         return None
     return _WALL_STYLES.get(_SLAB_STYLE.get(key, "plank"), _WALL_STYLES["plank"])
+
+
+def _tint_col(col, t):
+    """Apply a material tint delta to a palette colour, clamped to [0, 255]."""
+    return (max(0, min(255, col[0] + t[0])),
+            max(0, min(255, col[1] + t[1])),
+            max(0, min(255, col[2] + t[2])))
+
+
+def _wall_tint_for(scene):
+    """The material tint delta for this scene's walls, or (0,0,0) if none
+    (non-slab scene, or a slab scene whose style declares no tint)."""
+    style = _wall_style(scene)
+    return style.get("tint", (0, 0, 0)) if style else (0, 0, 0)
 
 
 def _wall_slab(scene, tx, ty):
@@ -2114,8 +2133,15 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
 def _wall_tile_flat(surf, scene, tx, ty, rx, ry):
     """One wall tile's flat near-black mass footprint + battered accents, drawn
     at (rx, ry). Extracted from _draw_wall_mass so the bevel path can render it
-    into a scratch and clip it; the non-beveled call is byte-identical."""
-    pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
+    into a scratch and clip it; the non-beveled call is byte-identical. The four
+    palette colours carry the material tint (a slab scene's `_WALL_STYLES`
+    colour); a non-slab scene's tint is (0,0,0) -> byte-identical."""
+    tint = _wall_tint_for(scene)
+    base = _tint_col(_WALL_BASE, tint)
+    face = _tint_col(_WALL_FACE, tint)
+    top = _tint_col(_WALL_TOP, tint)
+    foot = _tint_col(_WALL_FOOT, tint)
+    pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
     hsh = (tx * 73856093) ^ (ty * 19349663)
     if hsh % 5 == 0:                       # pitting / grime
         pygame.draw.rect(surf, (11, 10, 14),
@@ -2136,8 +2162,8 @@ def _wall_tile_flat(surf, scene, tx, ty, rx, ry):
                              (bx + k * 3, ry + 4), (bx + k * 3, ry + TILE - 4), 1)
     j = (hsh >> 3) & 1     # 1px edge jitter -> hand-drawn wobble
     if not _is_wall(scene, tx, ty - 1):     # room above: lit cap
-        pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
-        pygame.draw.line(surf, _WALL_FACE, (rx, ry + 2 + j),
+        pygame.draw.rect(surf, top, (rx, ry, TILE, 2))
+        pygame.draw.line(surf, face, (rx, ry + 2 + j),
                          (rx + TILE, ry + 2 + j), 1)
     if not _is_wall(scene, tx, ty + 1):     # room below: foot shadow
         # Damp band wicking up from the ground + a little moss,
@@ -2146,8 +2172,8 @@ def _wall_tile_flat(surf, scene, tx, ty, rx, ry):
         if hsh % 3 == 0:
             mx = rx + (hsh % (TILE - 6)) + 2
             pygame.draw.circle(surf, (44, 56, 40), (mx, ry + TILE - 3), 2)
-        pygame.draw.rect(surf, _WALL_FOOT, (rx, ry + TILE - 2, TILE, 2))
-        pygame.draw.line(surf, _WALL_FACE, (rx, ry + TILE - 3 - j),
+        pygame.draw.rect(surf, foot, (rx, ry + TILE - 2, TILE, 2))
+        pygame.draw.line(surf, face, (rx, ry + TILE - 3 - j),
                          (rx + TILE, ry + TILE - 3 - j), 1)
         if hsh % 4 == 0:    # rubble/grime spilling onto the floor,
             bx = rx + (hsh % 18) + 4   # crossing the tile boundary so
@@ -2155,10 +2181,10 @@ def _wall_tile_flat(surf, scene, tx, ty, rx, ry):
                              (bx, ry + TILE, 7, 3))     # a clean line
             pygame.draw.rect(surf, (15, 14, 18), (bx + 2, ry + TILE + 1, 3, 2))
     if not _is_wall(scene, tx - 1, ty):
-        pygame.draw.line(surf, _WALL_FACE, (rx + j, ry),
+        pygame.draw.line(surf, face, (rx + j, ry),
                          (rx + j, ry + TILE), 1)
     if not _is_wall(scene, tx + 1, ty):
-        pygame.draw.line(surf, _WALL_FACE, (rx + TILE - 1 - j, ry),
+        pygame.draw.line(surf, face, (rx + TILE - 1 - j, ry),
                          (rx + TILE - 1 - j, ry + TILE), 1)
 
 
@@ -3502,10 +3528,11 @@ def _tilt_wall_box(surf, camera, scene, tx, ty):
                      bevel=_bevel_corners(scene, tx, ty))
     else:
         pts, draw_edges = poly
+        tint = _wall_tint_for(scene)       # material colour, matching the mass
+        fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP, tint)
         _extrude_prism(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
-                       pts, draw_edges,
-                       face_col if face_col else _WALL_FACE,
-                       top_col if top_col else _WALL_TOP)
+                       pts, draw_edges, fc, tc)
 
 
 _COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall
