@@ -342,7 +342,7 @@ Part B.
   flow-guarded (`_room_tone` set/cleared, the Mara silence). **Needs a
   LISTEN from the maintainer** (levels tuned by waveform, not by ear).
 
-### 2c. **[Opus + Fable]** Tableau ↔ scene environment parity  *(maintainer call 2026-07: "make sure the environment matches details in the tableaus"; IN PROGRESS)*
+### 2c. **[Opus + Fable]** Tableau ↔ scene environment parity  *(maintainer call 2026-07: "make sure the environment matches details in the tableaus"; COMPLETE)*
 
 Each close-up examine tableau (`ui/tableau.py`, described in `DIALOGUE.md` Part
 B) shows specific props the WALKABLE scene should also carry, so the room the
