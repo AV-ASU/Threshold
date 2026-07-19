@@ -182,7 +182,7 @@ def build_sheriff_office():
     dividing wall makes the back room an indoor blind spot."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWWWWWWWW",   # 0
+        "WWWWWiiWWWWWWWWW",   # 0   ii = cold north windows behind the desk
         "W........W.....W",   # 1   main office (cols 1-8) | records (cols 10-14)
         "W........W.....W",   # 2
         "W..............W",   # 3   doorway gap in the partition (col 9)
@@ -191,8 +191,8 @@ def build_sheriff_office():
         "W........WWWWWWW",   # 6   records room sealed off below
         "W..............W",   # 7   the office opens out under the records room
         "W..............W",   # 8
-        "W..............W",   # 9
-        "W..............W",   # 10
+        "W...........WW.W",   # 9   holding-cell north wall; bars gate at col 14
+        "W...........W..W",   # 10  the holding cell (cols 13-14)
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
     sc = Scene("sheriff_office", floor, objects, music="home")
@@ -201,6 +201,12 @@ def build_sheriff_office():
     sc.add_exit("y", "brimley", "from_sheriff_office")
     sc.set_spawn("default", 4, 8)
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
+    # The holding cell (SE corner, cols 13-14 row 10): a barred gate on its
+    # north wall, the sliver of cell in Vane's tableau (draw_vane_tableau). It
+    # sits empty -- Mara was "released at dawn" (her booking slip is the
+    # evidence). The `bars` leaf blocks the body but you see through it into the
+    # empty cell (tableau-parity pass).
+    sc.add_inner_door(14, 9, "bars")
 
     pos = sc.consume_marker("Y")
     if pos:
@@ -221,6 +227,10 @@ def build_sheriff_office():
     sc.add_furniture("bed", [(1, 8), (2, 8), (1, 9), (2, 9)], w=54, h=54)
     sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     sc.add_furniture("table", [(11, 4), (12, 4)], w=54, h=36)
+    # The tall arms cabinet in the back records room -- the cache Vane unlocks
+    # (draw_vane_tableau's gun cabinet with the hasp + padlock; the shells drop
+    # from drop_ammo_cache when he hands it over). NE corner, against the wall.
+    sc.add_furniture("gun_cabinet", [(14, 1)], w=28, h=54)
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22, "candle"))
     # Sheriff's office in hunting country: a mounted buck + trophy
