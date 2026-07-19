@@ -198,6 +198,14 @@ MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
+# Dim ground-floor INTERIORS (2026-07 interior lighting pass): DARK scenes,
+# but a LIGHTER gloom than the deep -- they read "dim, lit by the genset's
+# bulbs + window spill, dark in the corners," not a pitch-black cellar. The
+# flashlight works (not cult-dark). This is the ground "no light = danger"
+# will stand on (TODO #21); the refuge (SAFE_SCENES) is deliberately excluded.
+DIM_INTERIOR_SCENES = {"shop", "church", "barn", "schoolhouse",
+                       "sheriff_office"}
+
 DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "works_cistern", "works_sorting", "maras_room",
                "works_scriptorium",
@@ -206,7 +214,7 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
                "the_sump", "the_cells", "the_old_stores",
-               "dark", "threshold"}
+               "dark", "threshold"} | DIM_INTERIOR_SCENES
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
 # mechanically disabled and the dread aperture closes regardless
@@ -302,6 +310,10 @@ WATCHER_GAZE = 0.05           # visibility CLIMB per live Watcher per second
                               # while exposed -- the teeth of the mechanic
 WATCHER_FLOOR = 0.07          # residual visibility floor per live Watcher
 WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
+WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
+                              # in a light pool / the flashlight beam dissolves
+                              # this-much faster (on top of any gaze) -- light is
+                              # how you clear them in a dark interior
 # Walking through a rift FOLD has this chance to open an extra Watcher on the
 # far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
 FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal
@@ -492,6 +504,51 @@ STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
 # one-time Talk (cult_talk_given) is still the very first contact of a run.
 CULT_SHRUG_INVULN = 0.7       # s of grace after tearing free (no re-grab)
 CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
+# The stealth economy (TODO #5, tuned from the 2026-07 human playtest:
+# "running around the cultist beats hiding"). Three levers, re-derived
+# against the canonical speed ladder (King > player sprint 105 > chase >
+# player walk 84 > scout 57): a LOCKED cultist shifts into a chase gear
+# (85.5 px/s for the surface regular, 72-90 underground -- WALKING away
+# no longer works; sprint still escapes, but sprint drains and winds); the
+# cult's arm's reach widens so brushing past an awake cultist risks the
+# grab (all Talk/two-touch gates unchanged); and sprinting inside a
+# cultist's line of sight is CONSPICUOUS (the detection score
+# multiplies), so running is the loud, seen, stamina-priced option and
+# cover is the cheap one.
+CULT_CHASE_MULT = 1.5         # locked-chase speed gear over base speed
+CULT_GRAB_REACH = 30.0        # px: contact-grab reach (was a bare 22)
+SUS_SPRINT_MULT = 1.6         # detection-score multiplier while sprinting
+# River stones (TODO #5, the distraction verb): a thrown stone is a
+# placed noise event, nothing more -- it rides the existing ear
+# (stealth.hear_noise) untouched. Loudness sits between the scout
+# threshold (0.7) and the searcher pull (0.9) ON PURPOSE: a stone turns
+# an idle head but never breaks a sighting-born search, so it is a tool
+# for routing patrols, not for shaking a hunt.
+STONE_LOUD = 0.8              # lands between hear-min and search-pull
+STONE_REACH = 210.0           # px: how far the clatter carries
+STONE_RANGE = 170.0           # px: throw distance along the aim
+STONE_SPEED = 300.0           # px/s flight speed
+# A stone THROUGH A WINDOW is the loud tier: glass is the one thrown
+# sound that sits over the searcher pull (a window breaks once, so the
+# bigger lever has a scarcity price), and the pane stays broken for the
+# RUN (the broken_windows save ledger, laid back down on every load).
+GLASS_LOUD = 0.95             # over NOISE_SEARCH_PULL: glass diverts a search
+GLASS_REACH = 300.0           # px: a smashed pane carries
+# A stone dropped down the DEAD WELL: the knocks fall away, the shaft's
+# rattle carries across the square, and no bottom ever sounds (the well
+# stays the bottomless dread it is -- this buys a wide lure, not a fact).
+WELL_ECHO_LOUD = 0.85         # scout-tier: routes the square, breaks no hunt
+WELL_ECHO_REACH = 340.0       # px: the rattle carries across the square
+# Cult liveness (TODO #23a, the behavior pilot): dressing on the SCOUT
+# state only -- neither beat ever touches notice/chase/search/investigate,
+# and detection keeps scoring straight through both (threat unchanged).
+CULT_SYNC_PERIOD = 21.0       # s between synchrony beats: every idle cult
+                              # scout in the room pauses mid-stride at the
+                              # same instant (one shared clock), one breath
+CULT_SYNC_HOLD = 0.8          # s the shared all-stop holds
+CULT_HANDOFF_RANGE = 30.0     # px: two crossing scouts stop and face
+CULT_HANDOFF_HOLD = 1.2       # s the silent meeting holds before they part
+CULT_HANDOFF_CD = 40.0        # s per actor before another meeting
 
 # ---- The noise core (2026-07 sound overhaul) ------------------------------
 # World noises broadcast through Scene.emit_noise; the cult hears them
@@ -673,15 +730,17 @@ UNDERGROUND_SCENES = {
     "the_sump", "the_cells", "the_old_stores",
 }
 
-# Where His gaze can OPEN (2026-07 ruling: a Watcher never manifests inside
-# a surface building -- four walls and a roof are not His medium; He watches
-# under the open sky, and in His own deep). Derived from the outdoor +
-# underground sets plus the open-sky keys those sets don't carry, so a new
-# surface interior is excluded by default and a new outdoor scene should be
-# added to OUTDOOR_SCENES as usual. Read by _tick_watchers (the whole wave
-# machine gates on it) and _roll_fold_watcher (a fold into a surface
-# interior binds nothing). KING_FREE_SCENES still suppress on top.
+# Where His gaze can OPEN. He watches under the open sky, in His own deep, and
+# -- since the "no light = danger" rework (TODO #21) -- inside the DARK
+# non-refuge interiors (`DIM_INTERIOR_SCENES`), where the light is the refuge
+# instead of the building: _tick_watchers treats being in the DARK there as
+# exposure, and a light pool / the flashlight is the cover (and burns them,
+# WATCHER_LIGHT_BURN). The true refuges (SAFE_SCENES) stay gaze-free by being
+# excluded here AND KING_FREE. A new plain surface interior is still excluded
+# by default. Read by _tick_watchers (the whole wave machine gates on it) and
+# _roll_fold_watcher.
 WATCHER_OPEN_SCENES = (OUTDOOR_SCENES | UNDERGROUND_SCENES
+                       | DIM_INTERIOR_SCENES
                        | {"brimley", "effigy_grove"})
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure

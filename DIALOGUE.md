@@ -1151,9 +1151,9 @@ mask-furnace cutscene. Card text is flow-guarded.
 ## Notices with story in them (one-line, `show_notice`)
 The one-line system notices that carry fiction rather than controls (the
 pure control/feedback layer stays indexed; see Coverage):
-- **Corn cover:** "The stalks take you in. Distance hides you. Close eyes
-  still find you." **Shadow cover:** "The dark takes the edge off their
-  eyes. It will not save you up close."
+- *(Entering cover is WORDLESS -- 2026-07 playtest ruling. The old corn
+  and shadow one-shot teach notices were CUT; the `hide_enter`/`hide_exit`
+  cues and the visible cover itself are the only tells.)*
 - **The gun at 3+ evidence:** "The shot barely staggers it now. You know
   too much. They won't die for you anymore." **The axe's first hit (the
   stun teach, once):** "You knock it back. It won't stay down. Run."

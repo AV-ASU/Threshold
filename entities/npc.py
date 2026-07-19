@@ -3,14 +3,15 @@ import math
 import random
 
 from constants import C_WHITE
-from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD,
+from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD, CULT_CHASE_MULT,
                             KING_LUNGE_RANGE, KING_LUNGE_TELE,
                             KING_LUNGE_DUR, KING_LUNGE_MULT,
                             KING_LUNGE_GATHER, KING_LUNGE_CD_LO,
                             KING_LUNGE_CD_HI)
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
-                             react_hold, errand_step, errand_drop)
+                             react_hold, errand_step, errand_drop,
+                             sync_pause, handoff_step)
 
 def sprite_seed_for(x, y):
     """A stable per-actor sprite seed from the spawn position. Draw
@@ -302,7 +303,8 @@ class NPC:
                 self._last_seen_pos = (player.x, player.y)
                 target = (self._flank_target if self._flank_target
                           else (player.x, player.y))
-                self._step_toward(target, dt, scene, navigate=True)
+                self._step_toward(target, dt, scene, navigate=True,
+                                  speed_mult=CULT_CHASE_MULT)
                 return
             # Lost the line. Drop flank intent and fall into SEARCH --
             # and this searcher HUNTS: it will sweep the enclosed hides
@@ -330,7 +332,8 @@ class NPC:
                     self.morph_target = 0.0
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
-            self._step_toward(target, dt, scene, navigate=True)
+            self._step_toward(target, dt, scene, navigate=True,
+                              speed_mult=CULT_CHASE_MULT)
             return
         # NOTICE: a scout whose suspicion is climbing stops and turns
         # toward what it half-saw -- the telegraphed "have they spotted
@@ -389,8 +392,17 @@ class NPC:
                 ang = (pygame.time.get_ticks() / 1000.0) % math.tau
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Default: SCOUT. Errands first -- the cult has JOBS (scenes
-        # declare stations); the random mill only where no work is set.
+        # Default: SCOUT. The liveness beats first (TODO #23a: the
+        # synchrony all-stop, then a crossing hand-off -- dressing only,
+        # detection already scored this tick above), then errands (the
+        # cult has JOBS; scenes declare stations), then the random mill.
+        if sync_pause(self):
+            return
+        peers = [n for n in getattr(scene, "npcs", [])
+                 if getattr(n, "movement", "") == "chaser"
+                 and getattr(n, "sprite_kind", "") == "cultist"]
+        if handoff_step(self, peers, scene, dt):
+            return
         if errand_step(self, scene, dt,
                        lambda ex, ey: self._step_toward(
                            (ex, ey), dt, scene, navigate=True)):
@@ -545,11 +557,13 @@ class NPC:
         moving = 1.0 if moved > step * 0.5 else 0.0
         self._yk_lean += (moving - self._yk_lean) * min(1.0, dt * 4.0)
 
-    def _step_toward(self, target, dt, scene, navigate=False):
+    def _step_toward(self, target, dt, scene, navigate=False, speed_mult=1.0):
         tx, ty = target
         # Cover-aware routing (DESIGN.md §4): the cult states bend the target
         # around walls/props (and through folds) via scene.nav_toward. The
         # apex hunter (_force_chase) opts OUT -- it closes in a straight line.
+        # `speed_mult` is the chase gear (CULT_CHASE_MULT): a locked pursuer
+        # runs; everything else walks at base speed.
         if navigate:
             tx, ty = scene.nav_toward(self.x, self.y, tx, ty)
         # Wrap-aware so chasers take the shortest path through the fold.
@@ -557,8 +571,8 @@ class NPC:
         dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
         if d < 1: return
-        step_x = (dx / d) * self.speed * 60 * dt
-        step_y = (dy / d) * self.speed * 60 * dt
+        step_x = (dx / d) * self.speed * 60 * dt * speed_mult
+        step_y = (dy / d) * self.speed * 60 * dt * speed_mult
         # Per-axis slide: if the full diagonal is blocked, still move
         # along whichever axis is clear so the chaser hugs walls and
         # corners instead of freezing dead against them (matches the

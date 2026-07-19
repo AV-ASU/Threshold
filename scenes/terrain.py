@@ -1484,6 +1484,78 @@ def _tilt_corn_draw(surf, camera, scene, tx, ty, ch, far=False):
                 pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
 
 
+_GRASS_CARD_CACHE = {}
+_GRASS_CARD_ORDER = []
+_GRASS_CARD_CAP = 1200
+
+
+def _tilt_grass_solid(surf, camera, scene, tx, ty, far=False):
+    """A `:` cover-floor tile stood up as a TALL-GRASS tuft (the stealth
+    visibility fix, TODO #5: cover the player can hide in must READ as
+    something to wade into, not a floor tint). Same cached-card pattern as
+    the corn clusters; the blades are the concealment made visible and
+    change nothing about collision, sight, or the cover rules."""
+    bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
+    key = (tx, ty, far, round(camera.pitch, 2), round(camera.scale, 2))
+    entry = _GRASS_CARD_CACHE.get(key)
+    if entry is None:
+        entry = _build_grass_card(camera, scene, tx, ty, far)
+        _GRASS_CARD_CACHE[key] = entry
+        _GRASS_CARD_ORDER.append(key)
+        if len(_GRASS_CARD_ORDER) > _GRASS_CARD_CAP:
+            _GRASS_CARD_CACHE.pop(_GRASS_CARD_ORDER.pop(0), None)
+    card, ax, ay = entry
+    if card is not None:
+        surf.blit(card, (bx - ax, by - ay))
+
+
+def _build_grass_card(camera, scene, tx, ty, far):
+    """Cache-miss path: render one tuft to a tight SRCALPHA card via a
+    throwaway camera pinned at the tile centre (the corn-card recipe)."""
+    from rendering.camera import Camera
+    PADX, PADY, BASE = 26, 34, 14
+    tmp = pygame.Surface((PADX * 2, PADY + BASE), pygame.SRCALPHA)
+    anchor = (PADX, PADY)
+    tcam = Camera(cam_x=tx * TILE + 16, cam_y=ty * TILE + 16,
+                  pitch=camera.pitch, yaw=0.0,
+                  scale=camera.scale, origin=anchor)
+    _tilt_grass_draw(tmp, tcam, tx, ty, far)
+    rect = tmp.get_bounding_rect()
+    if rect.width == 0 or rect.height == 0:
+        return (None, 0, 0)
+    card = tmp.subsurface(rect).copy().convert_alpha()
+    return (card, anchor[0] - rect.x, anchor[1] - rect.y)
+
+
+def _tilt_grass_draw(surf, camera, tx, ty, far=False):
+    """One tuft: 5-7 waist-high blades as projected 3D lines, seeded
+    static lean, dead-straw accents (April canon: last year's growth,
+    never lush). Far LOD drops to 3 plain blades."""
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    wx0 = tx * TILE
+    wy0 = ty * TILE
+    n = 3 if far else 5 + (_vary(seed, 0) % 3)
+    g = _vary(seed, 1) % 8
+    blade_dk = (40 + g, 50 + g, 32 + g // 2)
+    blade_col = (54 + g, 66 + g, 42 + g // 2)
+    blade_hi = (68 + g, 80 + g, 50 + g)
+    straw = (96 + g, 90 + g, 54 + g // 2)
+    for si in range(n):
+        bx_off = 4 + (si * (TILE - 8)) / max(1, n - 1) + (_vary(seed, 30 + si) % 5) - 2
+        h = 10 + (_vary(seed, 20 + si) % 9)              # waist-high, uneven
+        lean = ((_vary(seed, 10 + si) % 9) - 4) * 0.9
+        gx = wx0 + bx_off
+        gy = wy0 + 10 + (_vary(seed, 40 + si) % 14)
+        p0 = camera.project(gx, gy, 0)
+        p1 = camera.project(gx + lean * 0.4, gy, h * 0.55)
+        p2 = camera.project(gx + lean, gy, h)
+        col = blade_col if si % 3 else blade_hi
+        if not far and (_vary(seed, 50 + si) % 4) == 0:
+            col = straw                                  # a dead-dry blade
+        pygame.draw.line(surf, blade_dk, p0[:2], p1[:2], 2)
+        pygame.draw.line(surf, col, p1[:2], p2[:2], 1 if far else 2)
+
+
 def _tilt_standee(surf, camera, scene, tx, ty, ch):
     """Stand a tree / cornstalk up as a WORLD-ANCHORED card whose base sits on
     the floor at the tile centre and whose horizontal axis tracks world-X. The
@@ -1578,6 +1650,451 @@ def _is_wall(scene, tx, ty):
     return True   # off-map reads as wall so the mass closes at edges
 
 
+# --- Interior partition corner BEVEL (2026-07, DESIGN.md §6) -----------------
+# The blocky 90deg corner where an interior partition wall juts into a room
+# reads as a chunky box tip. BEVEL only the exposed CONVEX corners of a wall
+# tile: a convex corner exists ONLY where two ADJACENT tile faces are both open
+# to interior floor (and the diagonal too, so two masses that merely kiss at a
+# point don't open a peek gap). That makes it orthogonal to the wall-run MERGE
+# (DESIGN §6 continuous mass): a mid-run / tee / shell tile has < 2 adjacent
+# open sides -> no convex corner -> byte-identical. Draw-only (collision + sight
+# stay tile-based, like the interior-door leaves). Gated to _BEVEL_SCENES so
+# every other scene is a strict no-op.
+_BEVEL_INSET = TILE * 0.28              # pull-in along each meeting edge (~9px)
+# The above-ground BUILDING interiors (framed/plank walls): their partition
+# juts get chamfered. NOT the mine (hewn rock reads right thick) nor outdoors.
+_BEVEL_SCENES = frozenset({
+    "shop", "church", "barn", "schoolhouse", "sheriff_office",
+    "bedroom", "clerk_room", "guest_room_a", "guest_room_b",
+    "lodge", "lodge_hall", "toby_house",
+    "abandoned_farmhouse", "lodge_cellar",
+})
+_BV_NW, _BV_NE, _BV_SE, _BV_SW = 1, 2, 4, 8
+
+
+def _bevel_corners(scene, tx, ty):
+    """Bitmask of this wall tile's exposed convex corners to bevel (0 = none,
+    the verbatim square box). A corner is beveled iff BOTH its orthogonal
+    neighbours AND its diagonal are open interior floor ('.'). Pure function of
+    the tile + its 8 neighbour chars + the scene gate, so the wall-box card
+    cache stays valid (equal key -> identical geometry)."""
+    if getattr(scene, "key", None) not in _BEVEL_SCENES:
+        return 0
+    if getattr(scene, "key", None) in _SLAB_SCENES:
+        return 0                           # the slab supersedes the bevel here
+    W, H = scene.w, scene.h
+
+    def _c(x, y):
+        if scene.wrap_x:
+            x %= W
+        if scene.wrap_y:
+            y %= H
+        if 0 <= x < W and 0 <= y < H:
+            return scene.objects[y][x]
+        return None                    # off-map: not floor -> never bevels
+
+    if _c(tx, ty) not in _WALL_CHARS:
+        return 0
+
+    def f(x, y):
+        return _c(x, y) == "."         # strictly interior walkable floor
+
+    fN, fS = f(tx, ty - 1), f(tx, ty + 1)
+    fE, fW = f(tx + 1, ty), f(tx - 1, ty)
+    m = 0
+    if fN and fW and f(tx - 1, ty - 1):
+        m |= _BV_NW
+    if fN and fE and f(tx + 1, ty - 1):
+        m |= _BV_NE
+    if fS and fE and f(tx + 1, ty + 1):
+        m |= _BV_SE
+    if fS and fW and f(tx - 1, ty + 1):
+        m |= _BV_SW
+    return m
+
+
+def _bevel_poly_local(bevel, size, inset):
+    """The tile's flat-mass footprint polygon in LOCAL pixel coords (origin at
+    the tile's top-left, +x east / +y south), with each beveled corner's square
+    vertex replaced by two points pulled `inset` in along each edge. Order walks
+    the perimeter; a non-beveled corner emits its raw vertex twice (degenerate,
+    harmless)."""
+    s, b = size, inset
+    nw_n = (b, 0) if bevel & _BV_NW else (0, 0)
+    ne_n = (s - b, 0) if bevel & _BV_NE else (s, 0)
+    ne_e = (s, b) if bevel & _BV_NE else (s, 0)
+    se_e = (s, s - b) if bevel & _BV_SE else (s, s)
+    se_s = (s - b, s) if bevel & _BV_SE else (s, s)
+    sw_s = (b, s) if bevel & _BV_SW else (0, s)
+    sw_w = (0, s - b) if bevel & _BV_SW else (0, s)
+    nw_w = (0, b) if bevel & _BV_NW else (0, 0)
+    return [nw_n, ne_n, ne_e, se_e, se_s, sw_s, sw_w, nw_w]
+
+
+# --- Thin-slab walls (2026-07, maintainer "walls are no longer tiles") -------
+# A wall tile stops being a full TILE box and becomes a THIN SLAB. To keep the
+# thinned walls CONNECTED and smooth (the maintainer's second ask -- no fat
+# junction bulging out of thin runs, no notch), a tile's footprint is the UNION
+# of up to two BANDS:
+#   - a VERTICAL band (present when the tile has a wall neighbour N or S, i.e.
+#     it is part of a vertical run) and/or
+#   - a HORIZONTAL band (present when it has a wall neighbour E or W).
+# A straight run is ONE band; an L-corner / T / cross is the union of both, so
+# the thin walls meet flush. Each band is THIN across (its cross-thickness) and
+# reaches to the tile edge ONLY where the run continues (a wall neighbour), else
+# stops at the other band's crossbar -- so a corner/end never pokes a stub into
+# a room. The cross-thickness hugs by the neighbours' openness: floor/wall BOTH
+# sides -> CENTRE; open ONE side (the other off-map) -> HUG the open side (the
+# building SHELL thins toward the void, the room face unchanged); a lone pillar
+# with no wall neighbour stays FULL.
+# Single-sourced: both draw layers (_draw_wall_mass flat footprint + _extrude_box
+# 3D box, looped per band) AND the collision/sight/nav predicates
+# (scenes/base.py, point-in-ANY-band) read this, so the geometry the player SEES
+# is what they bump and the AI's line of sight obeys -- unlike the draw-only
+# bevel. Gated to _SLAB_SCENES; every other scene returns None -> full tile.
+#
+# MATERIAL STYLES (2026-07, the rollout foundation): a slab scene picks a
+# material from _WALL_STYLES via _SLAB_STYLE, so thickness + corner round + (1b)
+# surface roughness read the CONSTRUCTION -- a thin smooth plank partition vs a
+# fat rough stone wall vs a heavy timber -- from one table. `thick` is the band
+# thickness as a fraction of TILE; `round` the fillet radius as a fraction of
+# that thickness (0 = square); `rough` the outline jitter amplitude in px
+# (0 = smooth; Phase 1b). Adding a scene is one _SLAB_STYLE line.
+# `tint` is a (dr, dg, db) delta added to the near-black wall palette so each
+# material carries a COLOUR too (kept dark + muddy + desaturated, the Darkwood
+# rule -- no cheerful primaries): warm pine, cold stone, red-brown old timber,
+# pale plaster. It reads only where the interior light pools land.
+_WALL_STYLES = {
+    "plank":   {"thick": 0.50, "round": 0.50, "rough": 0.0, "tint": (30, 14, -6)},   # warm pine
+    "plaster": {"thick": 0.44, "round": 0.28, "rough": 0.0, "tint": (26, 22, 12)},   # pale warm grey
+    "timber":  {"thick": 0.66, "round": 0.34, "rough": 1.4, "tint": (34, 6, -16)},   # dark red-brown
+    "stone":   {"thick": 0.80, "round": 0.30, "rough": 2.6, "tint": (2, 14, 26)},    # cold blue-grey
+    "brick":   {"thick": 0.62, "round": 0.22, "rough": 1.0, "tint": (44, 2, -18)},   # dark fired clay
+}
+_SLAB_STYLE = {
+    "shop": "plank",
+    # Wave A -- the small refuges (thin walls, gentle; SAFE_SCENES stay flat-lit)
+    "bedroom": "plaster",
+    "clerk_room": "plaster",
+    "guest_room_a": "plaster",
+    "guest_room_b": "plaster",
+    "toby_house": "plank",
+    # Wave B/C -- the three principal-seat interiors (maintainer call): the
+    # church reads its BOARD walls (plank, matching draw_crane_tableau), the
+    # Sheriff's office a pale institutional plaster, the Arcadia common room its
+    # rustic timber (the antler/firewood/buck-head lodge dressing).
+    "church": "plank",
+    "sheriff_office": "plaster",
+    "lodge": "timber",
+}
+_SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render thin
+
+
+def _wall_style(scene):
+    """The wall material style dict for this scene, or None if it is not a slab
+    scene (renders full-tile). Gates on _SLAB_SCENES membership (so a test that
+    injects a scene there still resolves), defaulting to `plank`. Single source
+    for band thickness + corner round + roughness + colour tint."""
+    key = getattr(scene, "key", None)
+    if key not in _SLAB_SCENES:
+        return None
+    return _WALL_STYLES.get(_SLAB_STYLE.get(key, "plank"), _WALL_STYLES["plank"])
+
+
+def _tint_col(col, t):
+    """Apply a material tint delta to a palette colour, clamped to [0, 255]."""
+    return (max(0, min(255, col[0] + t[0])),
+            max(0, min(255, col[1] + t[1])),
+            max(0, min(255, col[2] + t[2])))
+
+
+def _wall_tint_for(scene):
+    """The material tint delta for this scene's walls, or (0,0,0) if none
+    (non-slab scene, or a slab scene whose style declares no tint)."""
+    style = _wall_style(scene)
+    return style.get("tint", (0, 0, 0)) if style else (0, 0, 0)
+
+
+def _wall_slab(scene, tx, ty):
+    """This wall tile's thin-slab footprint as a LIST of tile-local rects
+    (x0, y0, x1, y1) px -- one per present band (1 for a run, 2 for a
+    corner/tee/cross) -- or None for a FULL tile (non-slab scene, non-wall tile,
+    or a lone pillar). Pure function of the tile + its 4 orthogonal neighbour
+    chars + the scene gate, so the wall-box card cache and the nav grid stay
+    valid."""
+    style = _wall_style(scene)
+    if style is None:
+        return None
+    W, H = scene.w, scene.h
+
+    def _c(x, y):
+        if scene.wrap_x:
+            x %= W
+        if scene.wrap_y:
+            y %= H
+        if 0 <= x < W and 0 <= y < H:
+            return scene.objects[y][x]
+        return None                        # off-map (the void beyond the map)
+
+    if _c(tx, ty) not in _WALL_CHARS:
+        return None
+    cN, cS = _c(tx, ty - 1), _c(tx, ty + 1)
+    cE, cW = _c(tx + 1, ty), _c(tx - 1, ty)
+    wN, wS = cN in _WALL_CHARS, cS in _WALL_CHARS      # a wall run continues
+    wE, wW = cE in _WALL_CHARS, cW in _WALL_CHARS
+    oN, oS = cN is not None, cS is not None            # "open" = not off-map
+    oE, oW = cE is not None, cW is not None
+    v_present = wN or wS                                # part of a vertical run
+    h_present = wE or wW                                # part of a horizontal run
+    if not (v_present or h_present):
+        return None                        # lone pillar / free nub: keep full
+    T = TILE
+    th = T * style["thick"]                 # band thickness from the material
+    p = T - th
+
+    def cross(open_neg, open_pos):
+        """Thin cross-extent (lo, hi) of a band from its two flanks' openness
+        ('open' = the flank is on-map, i.e. interior). Both open (a partition
+        between two rooms) -> CENTRE. One flank off-map (the building SHELL) ->
+        hug the OFF-MAP edge: the outer face stays on the building silhouette
+        (no floor lip past the wall) and the wall thins INward, growing the
+        room a little. Both off-map (a rare spike) -> centre."""
+        if open_neg and open_pos:
+            return p / 2.0, T - p / 2.0
+        if not open_neg:
+            return 0.0, th                 # exterior on the neg side: hug it
+        if not open_pos:
+            return p, T                    # exterior on the pos side: hug it
+        return p / 2.0, T - p / 2.0
+
+    vx0, vx1 = cross(oW, oE) if v_present else (0.0, T)     # V band X thinness
+    hy0, hy1 = cross(oN, oS) if h_present else (0.0, T)     # H band Y thinness
+    rects = []
+    if v_present:
+        # reach the N/S edge where the run continues (a wall), else stop at the
+        # crossbar (the H band) so a corner/end never overshoots into a room.
+        vy0 = 0.0 if wN else (hy0 if h_present else 0.0)
+        vy1 = T if wS else (hy1 if h_present else T)
+        rects.append((vx0, vy0, vx1, vy1))
+    if h_present:
+        hx0 = 0.0 if wW else (vx0 if v_present else 0.0)
+        hx1 = T if wE else (vx1 if v_present else T)
+        rects.append((hx0, hy0, hx1, hy1))
+    return rects
+
+
+# --- Rounded wall outline (2026-07, maintainer "rounded corners where the walls
+# connect") ------------------------------------------------------------------
+# The thin bands (_wall_slab) still meet at square 90deg corners. Round the FREE
+# corners (the ones facing open floor) into arcs so the walls flow into each
+# other; the corners that sit on a wall-neighbour SEAM stay sharp so the tile
+# still connects flush to its neighbour. The rounded outline drives BOTH draw
+# layers (the flat mass fill + the 3D prism extrude); collision/sight/nav keep
+# the square bands (the few-px rounding sits INSIDE the drawn face, so collision
+# is a hair proud -- the safe direction). Pure function of the footprint +
+# neighbour seams, cached.
+_ROUND_POLY_CACHE = {}                  # fillet radius is per-material now (style)
+
+
+def _round_seams(scene, tx, ty):
+    W, H = scene.w, scene.h
+
+    def _c(x, y):
+        if scene.wrap_x:
+            x %= W
+        if scene.wrap_y:
+            y %= H
+        return scene.objects[y][x] if 0 <= x < W and 0 <= y < H else None
+    return (_c(tx, ty - 1) in _WALL_CHARS, _c(tx, ty + 1) in _WALL_CHARS,
+            _c(tx + 1, ty) in _WALL_CHARS, _c(tx - 1, ty) in _WALL_CHARS)
+
+
+def _rounded_wall_poly(scene, tx, ty):
+    """(pts, draw) for the wall tile's THIN footprint with free corners rounded,
+    or None for a full/absent slab. pts = local-px outline (CW); draw[i] flags
+    whether edge pts[i]->pts[i+1] is EXPOSED (drawn) vs a merged neighbour seam
+    (skipped). Cached per (footprint, seams)."""
+    bands = _wall_slab(scene, tx, ty)
+    if bands is None:
+        return None
+    style = _wall_style(scene)
+    radius = TILE * style["thick"] * style["round"]     # fillet radius (px)
+    rough = style["rough"]
+    sN, sS, sE, sW = _round_seams(scene, tx, ty)
+    # A rough wall jitters PER TILE so masonry doesn't tile; a smooth wall
+    # (rough 0) keeps seed 0 so all like-shaped tiles share one cached outline.
+    seed = (((tx * 73856093) ^ (ty * 19349663)) & 0xffff) if rough > 0 else 0
+    key = (tuple(bands), sN, sS, sE, sW, round(radius, 2), round(rough, 2), seed)
+    hit = _ROUND_POLY_CACHE.get(key)
+    if hit is None:
+        hit = _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough, seed)
+        _ROUND_POLY_CACHE[key] = hit
+    return hit
+
+
+def _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough=0.0, seed=0):
+    T = TILE
+    SUP = 4                             # upsample for a clean mask outline
+    surf = pygame.Surface((T * SUP, T * SUP), pygame.SRCALPHA)
+    for (x0, y0, x1, y1) in bands:
+        pygame.draw.rect(surf, (255, 255, 255, 255),
+                         (round(x0 * SUP), round(y0 * SUP),
+                          round((x1 - x0) * SUP), round((y1 - y0) * SUP)))
+    mask = pygame.mask.from_surface(surf)
+    comps = mask.connected_components()
+    raw = (comps[0] if comps else mask).outline(2)
+    if len(raw) < 4:
+        return None
+    loop = [(px / SUP, py / SUP) for px, py in raw]
+    if loop[0] == loop[-1]:
+        loop.pop()
+    corners = _poly_corners(loop)         # rectilinear vertices only
+    if len(corners) < 4:
+        return None
+
+    def on_seam(pt):
+        x, y = pt
+        eps = 0.5
+        return ((y <= eps and sN) or (y >= T - eps and sS)
+                or (x >= T - eps and sE) or (x <= eps and sW))
+
+    out = []
+    n = len(corners)
+    for i in range(n):
+        A = corners[(i - 1) % n]
+        C = corners[i]
+        B = corners[(i + 1) % n]
+        if on_seam(C):
+            out.append(C)                 # a connection corner: keep it sharp
+        else:
+            out.extend(_fillet(A, C, B, radius))
+    # edge draw flags: an edge on a shared seam side is merged (not drawn)
+    draw = []
+    m = len(out)
+    for i in range(m):
+        p, q = out[i], out[(i + 1) % m]
+        seam = ((p[1] <= 0.5 and q[1] <= 0.5 and sN)
+                or (p[1] >= T - 0.5 and q[1] >= T - 0.5 and sS)
+                or (p[0] >= T - 0.5 and q[0] >= T - 0.5 and sE)
+                or (p[0] <= 0.5 and q[0] <= 0.5 and sW))
+        draw.append(not seam)
+    if rough > 0.0:
+        out, draw = _roughen(out, draw, rough, seed)
+    return (out, draw)
+
+
+def _roughen(pts, draw, rough, seed):
+    """Hew the FREE (drawn) outline edges: subdivide each long exposed edge and
+    kick its interior points along the edge normal by a seeded amount, so a
+    timber/stone wall reads rough-hewn, not machined. SEAM edges and the shared
+    corner points stay put (tiles still connect flush, corners stay rounded);
+    draw-only, so collision/sight/nav are untouched (they read the square
+    bands). Amplitude is small (a few px), well inside the collision band."""
+    def rnd(k):                            # deterministic (-1, 1) from seed + k
+        v = (seed * 2654435761 + k * 40503 + 0x9e37) & 0xffffffff
+        v ^= v >> 13
+        v = (v * 2246822519) & 0xffffffff
+        v ^= v >> 16
+        return (v / 0xffffffff) * 2.0 - 1.0
+    out, od, k = [], [], 0
+    n = len(pts)
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]
+        out.append(a)
+        od.append(draw[i])
+        if not draw[i]:
+            continue                       # seam edge: leave dead straight
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy)
+        if L < 6.0:                        # short edge / arc segment: leave it
+            continue
+        nx, ny = -dy / L, dx / L           # unit edge normal
+        segs = int(L // 5) + 1             # a kink roughly every 5 px
+        for s in range(1, segs):
+            f = s / segs
+            amp = rnd(k) * rough
+            k += 1
+            out.append((a[0] + dx * f + nx * amp, a[1] + dy * f + ny * amp))
+            od.append(True)
+    return out, od
+
+
+def _poly_corners(loop):
+    """Reduce a dense rectilinear outline to its corner vertices (drop points
+    that continue straight)."""
+    n = len(loop)
+    out = []
+    for i in range(n):
+        ax, ay = loop[(i - 1) % n]
+        bx, by = loop[i]
+        cx, cy = loop[(i + 1) % n]
+        # cross product of the two edges; ~0 -> collinear, drop it
+        if abs((bx - ax) * (cy - by) - (by - ay) * (cx - bx)) > 0.01:
+            out.append(loop[i])
+    return out
+
+
+def _fillet(A, C, B, r):
+    """Quarter-arc points replacing corner C (between edges A->C and C->B),
+    radius r clamped to half of each edge. Convex or concave (short arc either
+    way). Returns >=2 points from the incoming edge, around, to the outgoing."""
+    import math as _m
+    ax, ay = A
+    cx, cy = C
+    bx, by = B
+    din = (cx - ax, cy - ay)
+    dou = (bx - cx, by - cy)
+    lin = _m.hypot(*din) or 1.0
+    lou = _m.hypot(*dou) or 1.0
+    r = min(r, lin / 2.0, lou / 2.0)
+    if r < 0.6:
+        return [C]
+    uin = (din[0] / lin, din[1] / lin)
+    uou = (dou[0] / lou, dou[1] / lou)
+    p1 = (cx - uin[0] * r, cy - uin[1] * r)       # back up the incoming edge
+    p2 = (cx + uou[0] * r, cy + uou[1] * r)       # forward the outgoing edge
+    o = (p1[0] + p2[0] - cx, p1[1] + p2[1] - cy)  # arc centre (90deg corner)
+    a1 = _m.atan2(p1[1] - o[1], p1[0] - o[0])
+    a2 = _m.atan2(p2[1] - o[1], p2[0] - o[0])
+    while a2 - a1 > _m.pi:
+        a2 -= 2 * _m.pi
+    while a2 - a1 < -_m.pi:
+        a2 += 2 * _m.pi
+    seg = 4
+    return [(o[0] + r * _m.cos(a1 + (a2 - a1) * k / seg),
+             o[1] + r * _m.sin(a1 + (a2 - a1) * k / seg)) for k in range(seg + 1)]
+
+
+def diagonal_wall_joins(scene):
+    """List of ((x,y),(nx,ny)) DIAGONAL-ONLY wall joins: two diagonally adjacent
+    wall tiles whose BOTH orthogonal bridge tiles are open (floor/door), so the
+    walls connect only at a point. Under a full-tile render the fat blocks kiss
+    and it reads fine, but under the THIN-SLAB render the two thin walls end in
+    disconnected stubs (the maintainer's "walls like that"). The rule for a
+    _SLAB_SCENES scene: there must be NONE -- close the corner (make a bridge
+    tile a wall) so the walls connect orthogonally into a clean rounded L.
+    Guarded by tests/smoke.py."""
+    objs, W, H = scene.objects, scene.w, scene.h
+
+    def wall(x, y):
+        return 0 <= x < W and 0 <= y < H and objs[y][x] in _WALL_CHARS
+
+    def opn(x, y):
+        return 0 <= x < W and 0 <= y < H and objs[y][x] not in _WALL_CHARS
+    out, seen = [], set()
+    for y in range(H):
+        for x in range(W):
+            if not wall(x, y):
+                continue
+            for dx, dy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+                if wall(x + dx, y + dy) and opn(x + dx, y) and opn(x, y + dy):
+                    k = tuple(sorted(((x, y), (x + dx, y + dy))))
+                    if k not in seen:
+                        seen.add(k)
+                        out.append(k)
+    return out
+
+
 def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
@@ -1594,51 +2111,94 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 continue
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
-            pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
-            hsh = (tx * 73856093) ^ (ty * 19349663)
-            if hsh % 5 == 0:                       # pitting / grime
-                pygame.draw.rect(surf, (11, 10, 14),
-                                 (rx + (hsh % (TILE - 6)) + 3,
-                                  ry + ((hsh // 7) % (TILE - 6)) + 3, 3, 2))
-            elif hsh % 9 == 0:                      # hairline crack
-                cx = rx + (hsh % (TILE - 4)) + 2
-                cy = ry + ((hsh // 5) % (TILE - 8)) + 2
-                pygame.draw.line(surf, (30, 28, 35), (cx, cy), (cx, cy + 5), 1)
-            if hsh % 7 == 0:                        # water-stain dribble
-                sx = rx + (hsh % (TILE - 6)) + 3
-                pygame.draw.line(surf, (12, 11, 15), (sx, ry + 2),
-                                 (sx + ((hsh >> 5) & 1), ry + TILE - 3), 2)
-            elif hsh % 8 == 0:                      # exposed boards where it's rotted through
-                bx = rx + (hsh % (TILE - 8)) + 3
-                for k in range(3):
-                    pygame.draw.line(surf, (46, 37, 30),
-                                     (bx + k * 3, ry + 4), (bx + k * 3, ry + TILE - 4), 1)
-            j = (hsh >> 3) & 1     # 1px edge jitter -> hand-drawn wobble
-            if not _is_wall(scene, tx, ty - 1):     # room above: lit cap
-                pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
-                pygame.draw.line(surf, _WALL_FACE, (rx, ry + 2 + j),
-                                 (rx + TILE, ry + 2 + j), 1)
-            if not _is_wall(scene, tx, ty + 1):     # room below: foot shadow
-                # Damp band wicking up from the ground + a little moss,
-                # only where the wall actually meets open floor.
-                pygame.draw.rect(surf, (12, 11, 15), (rx, ry + TILE - 8, TILE, 5))
-                if hsh % 3 == 0:
-                    mx = rx + (hsh % (TILE - 6)) + 2
-                    pygame.draw.circle(surf, (44, 56, 40), (mx, ry + TILE - 3), 2)
-                pygame.draw.rect(surf, _WALL_FOOT, (rx, ry + TILE - 2, TILE, 2))
-                pygame.draw.line(surf, _WALL_FACE, (rx, ry + TILE - 3 - j),
-                                 (rx + TILE, ry + TILE - 3 - j), 1)
-                if hsh % 4 == 0:    # rubble/grime spilling onto the floor,
-                    bx = rx + (hsh % 18) + 4   # crossing the tile boundary so
-                    pygame.draw.rect(surf, (27, 25, 29),  # the room edge isn't
-                                     (bx, ry + TILE, 7, 3))     # a clean line
-                    pygame.draw.rect(surf, (15, 14, 18), (bx + 2, ry + TILE + 1, 3, 2))
-            if not _is_wall(scene, tx - 1, ty):
-                pygame.draw.line(surf, _WALL_FACE, (rx + j, ry),
-                                 (rx + j, ry + TILE), 1)
-            if not _is_wall(scene, tx + 1, ty):
-                pygame.draw.line(surf, _WALL_FACE, (rx + TILE - 1 - j, ry),
-                                 (rx + TILE - 1 - j, ry + TILE), 1)
+            poly = _rounded_wall_poly(scene, tx, ty)
+            bv = _bevel_corners(scene, tx, ty)
+            if poly is not None:
+                # Thin slab: render the tile's flat content into a scratch and
+                # clip it to the SAME rounded outline the 3D prism uses, so the
+                # near-black mass under the wall matches the thinned, rounded box
+                # and the room floor shows through where the wall was thinned.
+                scratch = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+                _wall_tile_flat(scratch, scene, tx, ty, 0, 0)
+                mask = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+                pygame.draw.polygon(mask, (255, 255, 255, 255), poly[0])
+                scratch.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                surf.blit(scratch, (rx, ry))
+            elif bv:
+                # Beveled tile: render the tile's flat content into a scratch,
+                # then clip it to the same beveled footprint the 3D box uses so
+                # no near-black corner triangle sits on the room floor beyond
+                # the box base. Flat inset is 1px MORE than the box so any
+                # yaw-bucket divergence in motion falls as a hair of floor, not
+                # a dark nub on the lit floor.
+                scratch = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+                _wall_tile_flat(scratch, scene, tx, ty, 0, 0)
+                mask = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+                pygame.draw.polygon(
+                    mask, (255, 255, 255, 255),
+                    _bevel_poly_local(bv, TILE, _BEVEL_INSET + 1.0))
+                scratch.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                surf.blit(scratch, (rx, ry))
+            else:
+                _wall_tile_flat(surf, scene, tx, ty, rx, ry)
+
+
+def _wall_tile_flat(surf, scene, tx, ty, rx, ry):
+    """One wall tile's flat near-black mass footprint + battered accents, drawn
+    at (rx, ry). Extracted from _draw_wall_mass so the bevel path can render it
+    into a scratch and clip it; the non-beveled call is byte-identical. The four
+    palette colours carry the material tint (a slab scene's `_WALL_STYLES`
+    colour); a non-slab scene's tint is (0,0,0) -> byte-identical."""
+    tint = _wall_tint_for(scene)
+    base = _tint_col(_WALL_BASE, tint)
+    face = _tint_col(_WALL_FACE, tint)
+    top = _tint_col(_WALL_TOP, tint)
+    foot = _tint_col(_WALL_FOOT, tint)
+    pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
+    hsh = (tx * 73856093) ^ (ty * 19349663)
+    if hsh % 5 == 0:                       # pitting / grime
+        pygame.draw.rect(surf, (11, 10, 14),
+                         (rx + (hsh % (TILE - 6)) + 3,
+                          ry + ((hsh // 7) % (TILE - 6)) + 3, 3, 2))
+    elif hsh % 9 == 0:                      # hairline crack
+        cx = rx + (hsh % (TILE - 4)) + 2
+        cy = ry + ((hsh // 5) % (TILE - 8)) + 2
+        pygame.draw.line(surf, (30, 28, 35), (cx, cy), (cx, cy + 5), 1)
+    if hsh % 7 == 0:                        # water-stain dribble
+        sx = rx + (hsh % (TILE - 6)) + 3
+        pygame.draw.line(surf, (12, 11, 15), (sx, ry + 2),
+                         (sx + ((hsh >> 5) & 1), ry + TILE - 3), 2)
+    elif hsh % 8 == 0:                      # exposed boards where it's rotted through
+        bx = rx + (hsh % (TILE - 8)) + 3
+        for k in range(3):
+            pygame.draw.line(surf, (46, 37, 30),
+                             (bx + k * 3, ry + 4), (bx + k * 3, ry + TILE - 4), 1)
+    j = (hsh >> 3) & 1     # 1px edge jitter -> hand-drawn wobble
+    if not _is_wall(scene, tx, ty - 1):     # room above: lit cap
+        pygame.draw.rect(surf, top, (rx, ry, TILE, 2))
+        pygame.draw.line(surf, face, (rx, ry + 2 + j),
+                         (rx + TILE, ry + 2 + j), 1)
+    if not _is_wall(scene, tx, ty + 1):     # room below: foot shadow
+        # Damp band wicking up from the ground + a little moss,
+        # only where the wall actually meets open floor.
+        pygame.draw.rect(surf, (12, 11, 15), (rx, ry + TILE - 8, TILE, 5))
+        if hsh % 3 == 0:
+            mx = rx + (hsh % (TILE - 6)) + 2
+            pygame.draw.circle(surf, (44, 56, 40), (mx, ry + TILE - 3), 2)
+        pygame.draw.rect(surf, foot, (rx, ry + TILE - 2, TILE, 2))
+        pygame.draw.line(surf, face, (rx, ry + TILE - 3 - j),
+                         (rx + TILE, ry + TILE - 3 - j), 1)
+        if hsh % 4 == 0:    # rubble/grime spilling onto the floor,
+            bx = rx + (hsh % 18) + 4   # crossing the tile boundary so
+            pygame.draw.rect(surf, (27, 25, 29),  # the room edge isn't
+                             (bx, ry + TILE, 7, 3))     # a clean line
+            pygame.draw.rect(surf, (15, 14, 18), (bx + 2, ry + TILE + 1, 3, 2))
+    if not _is_wall(scene, tx - 1, ty):
+        pygame.draw.line(surf, face, (rx + j, ry),
+                         (rx + j, ry + TILE), 1)
+    if not _is_wall(scene, tx + 1, ty):
+        pygame.draw.line(surf, face, (rx + TILE - 1 - j, ry),
+                         (rx + TILE - 1 - j, ry + TILE), 1)
 
 
 def _build_roof_regions(scene):
@@ -2773,22 +3333,31 @@ def _quad_pt(quad, fx, fy):
 
 
 def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
-                 face_col=None, top_col=None):
+                 face_col=None, top_col=None, bevel=0, foot=None):
     """One tile extruded between heights z0..z1. Rotation-correct: every
     EXPOSED side face (neighbour char not in `neigh`) is drawn, depth-sorted
     far->near so near faces overdraw far, capped with a flat shaded top quad
     (no axis-aligned texture that would overflow once the camera yaws).
     `face_col` / `top_col` default to the near-black wall palette; pass wood
-    tones for a counter/furniture box."""
+    tones for a counter/furniture box. `bevel` (a corner bitmask from
+    `_bevel_corners`) chamfers the given exposed convex corners; 0 draws the
+    verbatim square box (byte-identical). `foot` (a tile-local (x0,y0,x1,y1) px
+    rect from `_wall_slab`) shrinks the box to a THIN SLAB inside the tile; None
+    is the full tile (byte-identical). bevel and foot are never both set (a slab
+    scene gates the bevel off)."""
     face_col = _WALL_FACE if face_col is None else face_col
     top_col = _WALL_TOP if top_col is None else top_col
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
+    # Footprint edges as offsets from the tile CENTRE (None -> the full square).
+    if foot is None:
+        fx0, fy0, fx1, fy1 = -hw, -hw, hw, hw
+    else:
+        fx0, fy0, fx1, fy1 = foot[0] - hw, foot[1] - hw, foot[2] - hw, foot[3] - hw
+    mx, my = (fx0 + fx1) / 2.0, (fy0 + fy1) / 2.0
 
     def P(dx, dy, dz):
         return camera.project(wx + dx, wy + dy, dz)
-    g = [P(-hw, -hw, z0), P(hw, -hw, z0), P(hw, hw, z0), P(-hw, hw, z0)]
-    t = [P(-hw, -hw, z1), P(hw, -hw, z1), P(hw, hw, z1), P(-hw, hw, z1)]
     near = tuple(int(c * 0.5) for c in face_col)     # N/S faces
     side = tuple(int(c * 0.7) for c in face_col)     # E/W faces
     # Per-tile value jitter so the mass reads as many battered blocks rather
@@ -2804,44 +3373,100 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
         if 0 <= ay < scene.h and 0 <= ax < scene.w:
             return scene.objects[ay][ax] in neigh
         return True
-    # (neighbour dx, dy, face centroid offset, quad corners, colour) per side
+
+    if not bevel:
+        g = [P(fx0, fy0, z0), P(fx1, fy0, z0), P(fx1, fy1, z0), P(fx0, fy1, z0)]
+        t = [P(fx0, fy0, z1), P(fx1, fy0, z1), P(fx1, fy1, z1), P(fx0, fy1, z1)]
+        # (neighbour dx, dy, face centroid offset, quad corners, colour) per side
+        faces = (
+            (0, 1, (mx, fy1), (g[3], g[2], t[2], t[3]), near),    # south
+            (0, -1, (mx, fy0), (g[0], g[1], t[1], t[0]), near),   # north
+            (-1, 0, (fx0, my), (g[0], g[3], t[3], t[0]), side),   # west
+            (1, 0, (fx1, my), (g[1], g[2], t[2], t[1]), side),    # east
+        )
+        vis = [(camera.depth(wx + ox, wy + oy, (z0 + z1) / 2), quad, col)
+               for ndx, ndy, (ox, oy), quad, col in faces
+               if not is_n(tx + ndx, ty + ndy)]
+        vis.sort(key=lambda f: f[0])                      # far first
+        for _, quad, col in vis:
+            pygame.draw.polygon(surf, col, quad)
+        # Battered detail on the exposed near (south) face so no two wall faces
+        # read the same: a per-tile dark water-stain streak, a pit cluster, or a
+        # faint lit course line. Projected through the quad so it leans correctly.
+        if z1 - z0 > TILE * 0.4 and not is_n(tx, ty + 1):
+            sq = (g[3], g[2], t[2], t[3])
+            hsh = _vary(tx, ty + 7)
+            if hsh % 3 == 0:                               # water-stain dribble
+                fx = 0.2 + (hsh % 6) / 10.0
+                a = _quad_pt(sq, fx, 0.05); b = _quad_pt(sq, fx, 0.85)
+                pygame.draw.line(surf, tuple(int(c * 0.6) for c in near),
+                                 (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+            elif hsh % 4 == 0:                             # pitting cluster
+                for k in range(3):
+                    p = _quad_pt(sq, 0.25 + ((hsh >> k) % 6) / 12.0,
+                                 0.25 + ((hsh >> (k + 2)) % 5) / 12.0)
+                    pygame.draw.rect(surf, tuple(int(c * 0.7) for c in near),
+                                     (int(p[0]), int(p[1]), 2, 2))
+            elif hsh % 5 == 0:                             # a faint lit course line
+                a = _quad_pt(sq, 0.04, 0.5); b = _quad_pt(sq, 0.96, 0.5)
+                pygame.draw.line(surf, tuple(min(255, int(c * 1.4)) for c in near),
+                                 (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+        # flat shaded top cap: lit but kept dark to read as the game's near-black
+        # walls -- top clearly lighter than the sides for form, darker grout edge.
+        pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in top_col), t)
+        pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), t, 1)
+        return
+
+    # --- beveled path: chamfer the exposed convex corners in `bevel` ---------
+    B = _BEVEL_INSET
+    # Each cardinal face slides its endpoint(s) IN along the face at any corner
+    # that is beveled; the raw corner otherwise. (dx along the N/S edges, dy
+    # along the E/W edges.)
+    nw_nx = -hw + B if bevel & _BV_NW else -hw   # NW pt on the north edge
+    ne_nx = hw - B if bevel & _BV_NE else hw     # NE pt on the north edge
+    sw_sx = -hw + B if bevel & _BV_SW else -hw   # SW pt on the south edge
+    se_sx = hw - B if bevel & _BV_SE else hw     # SE pt on the south edge
+    nw_wy = -hw + B if bevel & _BV_NW else -hw   # NW pt on the west edge
+    sw_wy = hw - B if bevel & _BV_SW else hw     # SW pt on the west edge
+    ne_ey = -hw + B if bevel & _BV_NE else -hw   # NE pt on the east edge
+    se_ey = hw - B if bevel & _BV_SE else hw     # SE pt on the east edge
     faces = (
-        (0, 1, (0, hw), (g[3], g[2], t[2], t[3]), near),    # south
-        (0, -1, (0, -hw), (g[0], g[1], t[1], t[0]), near),  # north
-        (-1, 0, (-hw, 0), (g[0], g[3], t[3], t[0]), side),  # west
-        (1, 0, (hw, 0), (g[1], g[2], t[2], t[1]), side),    # east
+        (0, 1, (0, hw),      # south (y=hw): SW -> SE
+         (P(sw_sx, hw, z0), P(se_sx, hw, z0), P(se_sx, hw, z1), P(sw_sx, hw, z1)), near),
+        (0, -1, (0, -hw),    # north (y=-hw): NW -> NE
+         (P(nw_nx, -hw, z0), P(ne_nx, -hw, z0), P(ne_nx, -hw, z1), P(nw_nx, -hw, z1)), near),
+        (-1, 0, (-hw, 0),    # west (x=-hw): NW -> SW
+         (P(-hw, nw_wy, z0), P(-hw, sw_wy, z0), P(-hw, sw_wy, z1), P(-hw, nw_wy, z1)), side),
+        (1, 0, (hw, 0),      # east (x=hw): NE -> SE
+         (P(hw, ne_ey, z0), P(hw, se_ey, z0), P(hw, se_ey, z1), P(hw, ne_ey, z1)), side),
     )
     vis = [(camera.depth(wx + ox, wy + oy, (z0 + z1) / 2), quad, col)
            for ndx, ndy, (ox, oy), quad, col in faces
            if not is_n(tx + ndx, ty + ndy)]
-    vis.sort(key=lambda f: f[0])                      # far first
+    # A vertical chamfer face bridging each beveled corner's two edge points.
+    # Never culled (a back-facing one is overdrawn by the far->near sort).
+    for bit, (ax_, ay_), (bx_, by_) in (
+            (_BV_NW, (nw_nx, -hw), (-hw, nw_wy)),
+            (_BV_NE, (ne_nx, -hw), (hw, ne_ey)),
+            (_BV_SE, (se_sx, hw), (hw, se_ey)),
+            (_BV_SW, (sw_sx, hw), (-hw, sw_wy))):
+        if not (bevel & bit):
+            continue
+        quad = (P(ax_, ay_, z0), P(bx_, by_, z0), P(bx_, by_, z1), P(ax_, ay_, z1))
+        cxw, cyw = wx + (ax_ + bx_) / 2.0, wy + (ay_ + by_) / 2.0
+        vis.append((camera.depth(cxw, cyw, (z0 + z1) / 2), quad, near))
+    vis.sort(key=lambda f: f[0])
     for _, quad, col in vis:
         pygame.draw.polygon(surf, col, quad)
-    # Battered detail on the exposed near (south) face so no two wall faces
-    # read the same: a per-tile dark water-stain streak, a pit cluster, or a
-    # faint lit course line. Projected through the quad so it leans correctly.
-    if z1 - z0 > TILE * 0.4 and not is_n(tx, ty + 1):
-        sq = (g[3], g[2], t[2], t[3])
-        hsh = _vary(tx, ty + 7)
-        if hsh % 3 == 0:                               # water-stain dribble
-            fx = 0.2 + (hsh % 6) / 10.0
-            a = _quad_pt(sq, fx, 0.05); b = _quad_pt(sq, fx, 0.85)
-            pygame.draw.line(surf, tuple(int(c * 0.6) for c in near),
-                             (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
-        elif hsh % 4 == 0:                             # pitting cluster
-            for k in range(3):
-                p = _quad_pt(sq, 0.25 + ((hsh >> k) % 6) / 12.0,
-                             0.25 + ((hsh >> (k + 2)) % 5) / 12.0)
-                pygame.draw.rect(surf, tuple(int(c * 0.7) for c in near),
-                                 (int(p[0]), int(p[1]), 2, 2))
-        elif hsh % 5 == 0:                             # a faint lit course line
-            a = _quad_pt(sq, 0.04, 0.5); b = _quad_pt(sq, 0.96, 0.5)
-            pygame.draw.line(surf, tuple(min(255, int(c * 1.4)) for c in near),
-                             (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
-    # flat shaded top cap: lit but kept dark to read as the game's near-black
-    # walls -- top clearly lighter than the sides for form, darker grout edge.
-    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in top_col), t)
-    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), t, 1)
+    # Beveled top cap (a raw corner's two perimeter points coincide -> harmless).
+    top_poly = [
+        P(nw_nx, -hw, z1), P(ne_nx, -hw, z1),   # north edge
+        P(hw, ne_ey, z1), P(hw, se_ey, z1),     # east edge
+        P(se_sx, hw, z1), P(sw_sx, hw, z1),     # south edge
+        P(-hw, sw_wy, z1), P(-hw, nw_wy, z1),   # west edge
+    ]
+    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in top_col), top_poly)
+    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), top_poly, 1)
 
 
 def _tilt_wall_tint(scene, tx, ty):
@@ -2871,10 +3496,56 @@ def _tilt_wall_tint(scene, tx, ty):
     return face_col, top_col
 
 
+def _extrude_prism(surf, camera, scene, tx, ty, z0, z1, poly, draw_edges,
+                   face_col, top_col):
+    """Extrude a local-px OUTLINE polygon (the rounded thin-wall footprint)
+    between z0..z1: exposed side faces (draw_edges[i] False = a merged neighbour
+    seam, skipped) depth-sorted far->near, capped with the top polygon. The
+    rounded-corner sibling of _extrude_box for _SLAB_SCENES walls."""
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+
+    def P(lx, ly, dz):                     # local px -> world offset -> screen
+        return camera.project(wx + lx - hw, wy + ly - hw, dz)
+    near = tuple(int(c * 0.5) for c in face_col)     # N/S faces
+    side = tuple(int(c * 0.7) for c in face_col)     # E/W faces
+    jv = (_vary(tx * 8009 + ty, 3) % 15) - 7
+    near = tuple(max(0, min(255, c + jv)) for c in near)
+    side = tuple(max(0, min(255, c + jv)) for c in side)
+    n = len(poly)
+    ground = [P(px, py, z0) for px, py in poly]
+    top = [P(px, py, z1) for px, py in poly]
+    faces = []
+    for i in range(n):
+        if not draw_edges[i]:
+            continue
+        j = (i + 1) % n
+        (ax, ay), (bx, by) = poly[i], poly[j]
+        mx, my = (ax + bx) / 2 - hw, (ay + by) / 2 - hw
+        col = near if abs(bx - ax) >= abs(by - ay) else side
+        quad = (ground[i], ground[j], top[j], top[i])
+        faces.append((camera.depth(wx + mx, wy + my, (z0 + z1) / 2), quad, col))
+    faces.sort(key=lambda f: f[0])
+    for _, quad, col in faces:
+        pygame.draw.polygon(surf, col, quad)
+    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in top_col), top)
+    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), top, 1)
+
+
 def _tilt_wall_box(surf, camera, scene, tx, ty):
     face_col, top_col = _tilt_wall_tint(scene, tx, ty)
-    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
-                 face_col=face_col, top_col=top_col)
+    poly = _rounded_wall_poly(scene, tx, ty)
+    if poly is None:
+        _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                     face_col=face_col, top_col=top_col,
+                     bevel=_bevel_corners(scene, tx, ty))
+    else:
+        pts, draw_edges = poly
+        tint = _wall_tint_for(scene)       # material colour, matching the mass
+        fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP, tint)
+        _extrude_prism(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                       pts, draw_edges, fc, tc)
 
 
 _COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall
@@ -3108,6 +3779,10 @@ _TABLETOP_PROP_KINDS = frozenset((
     "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
     "book", "photo", "photo_frame", "tankard", "teapot",
     "wrong_radio", "place_setting",
+    # the shop counter's till + its receipt spike, the lodge desk's service
+    # bell, and the crayons on Toby's table (tableau-parity pass): all rest ON
+    # furniture, seated by seat_tabletop_props.
+    "cash_register", "bill_spike", "service_bell", "crayons",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
@@ -3120,12 +3795,18 @@ _WALL_DECO_KINDS = frozenset((
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard", "wall_cross",
+    # the Yellow Sign daubed on a wall face (the Sign Chamber apse; the
+    # tableau-parity pass) -- the floor `yellow_sign` warps onto the ground.
+    "wall_sign",
     # Framed needlework, a varnish-dark portrait, and a larder shelf of
     # preserves: all HANG on the wall face.
     "sampler", "oil_portrait", "preserve_shelf",
     # Things that belong ON a wall, not lying flat on the floor: a cobweb
     # spans a corner; a passing silhouette glides past a window.
     "cobweb", "passing_silhouette",
+    # the lodge reception key board + Toby's taped crayon drawings
+    # (tableau-parity pass): hung on the wall face.
+    "key_rack", "crayon_drawing",
     # The mine art pass (2026-07): shift tallies scratched into the rock face.
     "tally_marks",
 ))
@@ -3315,9 +3996,11 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
                   area=pygame.Rect(i, 0, 1, card.get_height()))
 
 
-def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
+def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False):
     """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
-    core and a muntin cross. `(ndx, ndy)` is the exposed face direction."""
+    core and a muntin cross. `(ndx, ndy)` is the exposed face direction.
+    `broken` (a thrown stone, TODO #5) swaps the lit glass for a dark hole
+    with shard teeth left in the frame -- the light is out for the run."""
     hw = TILE / 2
     pv = (-ndy, ndx)                 # along-wall axis on this face
     ph = hw * 0.60                   # half pane width
@@ -3329,10 +4012,20 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
                               wy + ndy * off + pv[1] * u, z)
     frame = [Q(-ph - 2, z0 - 2), Q(ph + 2, z0 - 2), Q(ph + 2, z1 + 2), Q(-ph - 2, z1 + 2)]
     glass = [Q(-ph, z0), Q(ph, z0), Q(ph, z1), Q(-ph, z1)]
-    core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
-            Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
     pygame.draw.polygon(surf, (96, 70, 50), frame)
     pygame.draw.polygon(surf, (60, 40, 25), frame, 1)
+    if broken:
+        pygame.draw.polygon(surf, (14, 12, 17), glass)             # the dark hole
+        for u0, u1, zt in ((-ph, -ph * 0.4, z1 - 4), (ph * 0.2, ph, z1 - 5),
+                           (-ph * 0.5, ph * 0.1, z0 + 4)):
+            pygame.draw.polygon(surf, (108, 96, 62),               # shard teeth
+                                [Q(u0, z1 if zt > (z0 + z1) / 2 else z0),
+                                 Q(u1, z1 if zt > (z0 + z1) / 2 else z0),
+                                 Q((u0 + u1) / 2, zt)])
+        pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
+        return
+    core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
+            Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
     pygame.draw.polygon(surf, (138, 104, 50), glass)
     pygame.draw.polygon(surf, (170, 138, 78), core)
     pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
@@ -3342,17 +4035,21 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
 
 def _tilt_window_box(surf, camera, scene, tx, ty):
     """A window is a SOLID wall tile, so it extrudes as a full wall box; a lit
-    pane is then set into each camera-facing exposed face."""
+    pane is then set into each camera-facing exposed face (dark + shard-toothed
+    once a thrown stone has broken it -- scene._broken_windows)."""
     _tilt_wall_box(surf, camera, scene, tx, ty)
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
+    wtx = tx % scene.w if scene.wrap_x else tx
+    wty = ty % scene.h if scene.wrap_y else ty
+    broken = (wtx, wty) in getattr(scene, "_broken_windows", ())
     cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
     for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
         if _is_wall(scene, tx + ndx, ty + ndy):
             continue                                     # buried face
         if camera.depth(wx + ndx * hw, wy + ndy * hw, _TILT_WALL_RISE / 2) <= cd:
             continue                                     # faces away from camera
-        _draw_window_pane(surf, camera, wx, wy, ndx, ndy)
+        _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken)
 
 
 _WALL_BOX_CACHE = {}
@@ -3428,6 +4125,13 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
     wty = scene.render_row(ty)
     ch = (scene.objects[wty][wtx]
           if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
+    if (ch in (".", " ") and 0 <= wty < scene.h and 0 <= wtx < scene.w
+            and scene.floor[wty][wtx] == ":"):
+        # A bare cover-floor tile: the tall-grass tuft (concealment made
+        # visible; mirrors the wall-scan's append condition exactly).
+        _tilt_grass_solid(surf, camera, scene, tx, ty,
+                          far=_tilt_lod_far(camera, tx, ty))
+        return
     if ch in _TILT_BILLBOARD_CHARS:
         kind = OBJECT_DEFS.get(ch, {}).get("kind")
         if kind == "tree":
@@ -3769,6 +4473,14 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                         if dx * dx + dy * dy > _TILT_BILLBOARD_CULL2:
                             continue        # far treeline -> lost in the fog
                     walls.append((tx, ty))
+                elif ch in (".", " ") and scene.floor[wty][wtx] == ":":
+                    # Bare cover floor: the tall-grass tuft joins the
+                    # depth-sorted set so the player wades INTO it (the
+                    # stealth visibility fix; _tilt_tile_box dispatches it).
+                    dx = (tx * TILE + 16) - camera.cam_x
+                    dy = (ty * TILE + 16) - camera.cam_y
+                    if dx * dx + dy * dy <= _TILT_BILLBOARD_CULL2:
+                        walls.append((tx, ty))
         _wc["key"] = wkey
         _wc["walls"] = walls
         _wc["scene"] = scene

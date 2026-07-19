@@ -283,6 +283,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []            # Watcher NPCs currently manifested
         self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
+        self._stones = []              # thrown river stones in flight (TODO #5)
+        self._echoes = []              # delayed knocks (the well drop)
+        self._bridge_dust = 0.0        # under-bridge deck-knock tell (TODO #5)
+        self._bridge_knock_t = 0.0
         self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
@@ -508,6 +512,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []
         self._watcher_clone_t = WATCHER_GRACE
         self._watcher_gaze = 0.0
+        self._stones = []
+        self._echoes = []
+        self._bridge_dust = 0.0
+        self._bridge_knock_t = 0.0
         self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
@@ -812,6 +820,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # the new scene from the persistent curse. Clear the old set and
         # the per-scene cultist top-up timer so cultists re-populate.
         self._watchers = []
+        self._stones = []              # a stone mid-flight stays behind
+        self._echoes = []
         # Reaching a SAFE_SCENE resets the two-touch cult grab (play-notes):
         # you can't be mid-grab inside a refuge, so a fresh encounter after
         # starts the touch count over.
@@ -949,6 +959,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # is never disturbed (rot skips _is_corpse). Nobody leaves
         # Brimley, not even by dying (NARRATIVE §5).
         self._apply_dead_locals()
+        # Broken windows stay broken for the RUN (TODO #5, the stone
+        # smash): lay the ledger back onto the rebuilt scene.
+        self.scene._broken_windows = {
+            tuple(p) for p in
+            (self.save.arg("broken_windows", {}) or {}).get(key, [])}
         # Re-derive the world rot for this scene from the evidence
         # count (rot decals, the ambient air, the stage-3 Sheriff).
         self._apply_rot()
@@ -1280,15 +1295,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self.player.x, self.player.y)
                 on_corn = (floor_ch_now == ":")
                 if on_corn and self.player.hidden is None:
+                    # Entering cover is WORDLESS (2026-07 playtest ruling:
+                    # no narrator box on stealth entry) -- the hide_enter
+                    # cue and the grass itself are the only tells.
                     self.player.hidden = "corn"
                     self.audio.play("hide_enter", 0.55)
-                    # One-shot teach (TODO #5): corn is CONCEALMENT, not
-                    # invisibility (the stealth rework's core rule).
-                    if self.save and not self.save.flag("teach_corn"):
-                        self.save.set_flag("teach_corn", True)
-                        self.show_notice("The stalks take you in. Distance "
-                                         "hides you. Close eyes still find "
-                                         "you.", duration=3.6)
                 elif (not on_corn) and self.player.hidden == "corn":
                     self.player.hidden = None
                     self.audio.play("hide_exit", 0.55)
@@ -1619,28 +1630,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                         m["x"], m["y"], p.x, p.y) < MOTH_LIGHT_R):
                     in_dark = False
                     break
-        was = getattr(p, "_in_dark", False)
+        # Entering shadow cover is WORDLESS (2026-07 playtest ruling: no
+        # narrator box on stealth entry; the old one-shot teach is cut).
         p._in_dark = in_dark
-        if (in_dark and not was
-                and not self.save.flag("teach_dark_seen")):
-            near = False
-            for grp in (self.scene.npcs, self.scene.enemies):
-                for a in grp:
-                    if not getattr(a, "alive", True):
-                        continue
-                    is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
-                               or getattr(a, "kind", "") == "cultist")
-                    if is_cult and self.scene.world_dist(
-                            a.x, a.y, p.x, p.y) < 260:
-                        near = True
-                        break
-                if near:
-                    break
-            if near:
-                self.save.set_flag("teach_dark_seen", True)
-                self.show_notice(
-                    "The dark takes the edge off their eyes. It will "
-                    "not save you up close.", duration=3.0)
 
     # ---- Animated doors + the one-hop noise bleed ----
     def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
@@ -1853,6 +1845,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.show_notice(verb, duration=1.8)
             self.audio.play("hide_enter", 0.7)
             return
+        # An interior door in reach: E opens or shuts it (2026-07). A shut
+        # door on a pursuer breaks the sightline (Scene.blocks_sight) and buys
+        # time; NPCs open their own way through (Scene.update).
+        if getattr(self.scene, "_inner_doors", None):
+            if self.scene.toggle_nearest_inner_door(
+                    self.player.x, self.player.y, game=self) is not None:
+                return
         # Splitting axe: if the player has the lumber_axe in their
         # inventory and is adjacent to a chop-eligible tile (`*`
         # debris OR `q` boarded panel), pressing E swings it. Combat
@@ -2096,6 +2095,151 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.player_fire_gun()
         elif w == "lumber_axe":
             self.player_axe_swing()
+
+    def _throw_stone(self):
+        """Right-click: lob a river stone along the aim (the distraction
+        verb, TODO #5). The stone is a placed NOISE EVENT and nothing
+        else -- no damage, no stagger; it rides the existing cult ear
+        (stealth.hear_noise) untouched. A rooted enclosed hide cannot
+        throw (you are folded under furniture); corn can (mobile
+        concealment keeps your arms). Off-hand: works whatever weapon is
+        equipped."""
+        if self.player.inventory.count("stone") <= 0:
+            return
+        if _is_enclosed_hide(self.player):
+            self.audio.play("bump", 0.25)
+            return
+        heading = self.look.aim if self.look is not None else 0.0
+        self.player.inventory.remove("stone", 1)
+        self._stones.append({
+            "x": self.player.x, "y": self.player.y,
+            "hx": math.cos(heading), "hy": math.sin(heading),
+            "p": 0.0,
+        })
+        self.audio.play("bump", 0.2)
+
+    def _tick_stones(self, dt):
+        """Advance thrown stones and the delayed knocks (the well drop).
+        A landing (range spent, or a wall) emits the clatter the cult's
+        ear picks up; a WINDOW in the way SMASHES instead -- the loud
+        tier (GLASS_LOUD sits over the searcher pull on purpose; a pane
+        breaks once, so the bigger lever has a scarcity price) and the
+        break is written to the run's broken_windows ledger. The arc is
+        cosmetic (the draw lifts by a sine of progress); the sim is a
+        straight line at STONE_SPEED."""
+        for ec in list(self._echoes):
+            ec["t"] -= dt
+            if ec["t"] > 0.0:
+                continue
+            self._echoes.remove(ec)
+            pan = self.audio.pan_for_world(ec["x"], self.player.x)
+            dm = self.audio.distance_attenuation(
+                ec["x"], ec["y"], self.player.x, self.player.y)
+            self.audio.play("bump", ec["vol"] * dm, pan=pan)
+            if ec.get("emit"):
+                self.scene.emit_noise(ec["x"], ec["y"], WELL_ECHO_LOUD,
+                                      kind="stone", reach=WELL_ECHO_REACH)
+        if not self._stones:
+            return
+        keep = []
+        for st in self._stones:
+            step = STONE_SPEED * dt
+            nx = st["x"] + st["hx"] * step
+            ny = st["y"] + st["hy"] * step
+            hit_wall = self.scene.is_solid_at(nx, ny)
+            if not hit_wall:
+                st["x"], st["y"] = nx, ny
+            st["p"] += step / STONE_RANGE
+            if st["p"] >= 1.0 or hit_wall:
+                if hit_wall and self._stone_smash_window(nx, ny):
+                    continue
+                self.scene.emit_noise(st["x"], st["y"], STONE_LOUD,
+                                      kind="stone", reach=STONE_REACH)
+                pan = self.audio.pan_for_world(st["x"], self.player.x)
+                dm = self.audio.distance_attenuation(
+                    st["x"], st["y"], self.player.x, self.player.y)
+                self.audio.play("bump", 0.5 * dm, pan=pan)
+            else:
+                keep.append(st)
+        self._stones = keep
+
+    def _tick_bridge_knocks(self, dt):
+        """While the player is in the under-bridge hide, anything walking
+        the deck overhead knocks on the planks (TODO #5, the maintainer's
+        bridge pick). Pure DRESSING: an audio + a faint dust tell, no
+        threat wiring at all -- the searchers up top neither know you are
+        below nor react to the footfalls. The dread is that you HEAR the
+        town cross over your head while you wait it out."""
+        scn = self.scene
+        deck = getattr(scn, "_bridge_deck_px", None)
+        hide = getattr(scn, "_bridge_hide_px", None)
+        if deck is None or hide is None or self.player is None:
+            self._bridge_dust = 0.0
+            return
+        # only while actually tucked under the span
+        if (getattr(self.player, "hidden", None) != "under"
+                or math.hypot(self.player.x - hide[0],
+                              self.player.y - hide[1]) > 20):
+            self._bridge_dust = max(0.0, getattr(self, "_bridge_dust", 0.0) - dt)
+            return
+        x0, x1, y0, y1 = deck
+        crossing = False
+        for grp in (scn.npcs, scn.enemies):
+            for a in grp:
+                if not getattr(a, "alive", True) or getattr(a, "_is_corpse", False):
+                    continue
+                if x0 <= a.x <= x1 and y0 <= a.y <= y1:
+                    crossing = True
+                    break
+            if crossing:
+                break
+        self._bridge_dust = getattr(self, "_bridge_dust", 0.0)
+        if crossing:
+            self._bridge_dust = min(1.0, self._bridge_dust + dt * 3.0)
+            self._bridge_knock_t = getattr(self, "_bridge_knock_t", 0.0) - dt
+            if self._bridge_knock_t <= 0.0:
+                self._bridge_knock_t = random.uniform(0.34, 0.6)
+                self.audio.play("wood_creak", 0.5)
+        else:
+            self._bridge_dust = max(0.0, self._bridge_dust - dt * 2.0)
+
+    def _stone_smash_window(self, nx, ny):
+        """A stone striking an intact WINDOW tile smashes it: the glass
+        noise (the one thrown sound loud enough to divert a searcher),
+        the pane dark + shard-toothed for the rest of the run (the
+        broken_windows save ledger; load_scene_now lays it back down).
+        Returns True if a smash happened; an already-broken window is
+        just a frame, the ordinary clatter handles it."""
+        from scenes.base import _WINDOW_CHARS
+        T = TILE
+        twx = int(nx // T)
+        twy = int(ny // T)
+        if self.scene.wrap_x:
+            twx %= self.scene.w
+        if self.scene.wrap_y:
+            twy %= self.scene.h
+        if not (0 <= twx < self.scene.w and 0 <= twy < self.scene.h):
+            return False
+        if self.scene.objects[twy][twx] not in _WINDOW_CHARS:
+            return False
+        broken = getattr(self.scene, "_broken_windows", None)
+        if broken is None:
+            broken = self.scene._broken_windows = set()
+        if (twx, twy) in broken:
+            return False
+        broken.add((twx, twy))
+        led = self.save.arg("broken_windows", {}) or {}
+        led.setdefault(self.scene.key, []).append([twx, twy])
+        self.save.set_arg("broken_windows", led)
+        wx = twx * T + T // 2
+        wy = twy * T + T // 2
+        self.scene.emit_noise(wx, wy, GLASS_LOUD, kind="glass",
+                              reach=GLASS_REACH)
+        pan = self.audio.pan_for_world(wx, self.player.x)
+        dm = self.audio.distance_attenuation(wx, wy,
+                                             self.player.x, self.player.y)
+        self.audio.play("glass_crunch", 0.7 * dm, pan=pan)
+        return True
 
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the kill counter (the
@@ -2771,6 +2915,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self._evidence_count() >= KING_GATE_EVIDENCE)
                 self.scene._bloom_armed = self.save.flag("bloom_armed")
             if not world_frozen:
+                # Thrown stones + the under-bridge deck-knocks ride the
+                # world clock, NOT the player-can-move gate: a stone in
+                # flight keeps flying while the PI is pinned mid-struggle,
+                # emerging from a hide, or held by closure -- it only
+                # pauses when a modal freezes the whole sim (TODO #5; this
+                # decoupling also fixes a stealth-§14 flake where a
+                # carried-over struggle/emerge state stalled the throw).
+                self._tick_stones(dt)
+                self._tick_bridge_knocks(dt)
                 exit_data = self.scene.find_exit_at(
                     self.player.x, self.player.y,
                     facing=self.player.facing)
@@ -2841,20 +2994,29 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # capture felt random ("some take me, some don't"). Enclosed
             # hides / invuln / mid-death are exempt, matching
             # _tick_cultists -- one gate for every grab site
-            # (systems/stealth.py grab_allowed; the loop below requires
-            # chase state, so concealment yields to a locked pursuer).
+            # (systems/stealth.py grab_allowed). The stealth economy
+            # (TODO #5): any AWAKE cultist grabs at arm's reach
+            # (CULT_GRAB_REACH), not only a locked chaser -- brushing past
+            # a scout is a risk now. The oblivious set-pieces (the Sign
+            # Chamber kneelers, the scribe: aggro 0 / lock_facing) still
+            # never grab, so sneaking past them to lift the Mask stays a
+            # designed beat; concealment still yields only to a LOCKED
+            # pursuer (grab_allowed, per-cultist below).
             if (not world_frozen and self._death_kind is None
-                    and _grab_ok(self.player, True)
                     and self.player.invuln <= 0):
                 for e in self.scene.enemies:
-                    # Only an AWARE cultist (actively chasing) takes you --
-                    # the oblivious kneelers at the Sign Chamber altar
-                    # (aggro 0) never enter "chase", so you can still sneak
-                    # past them to lift the Mask.
-                    if (e.alive and e.kind == "cultist"
-                            and getattr(e, "_cult_state", "") == "chase"
-                            and math.hypot(e.x - self.player.x,
-                                           e.y - self.player.y) < 22):
+                    if not (e.alive and e.kind == "cultist"):
+                        continue
+                    if getattr(e, "_stun_t", 0) > 0:
+                        continue        # staggered: no reach while reeling
+                    chasing = getattr(e, "_cult_state", "") == "chase"
+                    awake = (getattr(e, "aggro", 1) > 0
+                             and not getattr(e, "lock_facing", False))
+                    if not (chasing or awake):
+                        continue
+                    if (math.hypot(e.x - self.player.x,
+                                   e.y - self.player.y) < CULT_GRAB_REACH
+                            and _grab_ok(self.player, chasing)):
                         self._trigger_death("cultist")
                         break
             # Tick projectiles AFTER enemies so a brand-new shot doesn't
@@ -3173,9 +3335,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self.pause_choice = 0
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                # Left-click is the only action button: use whatever weapon
+                # Left-click is the action button: use whatever weapon
                 # is in hand -- fire the revolver or swing the axe.
                 self._use_weapon()
+            elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
+                # Right-click: lob a river stone along the aim -- the
+                # distraction verb (TODO #5). A placed noise event only.
+                self._throw_stone()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 

@@ -330,9 +330,38 @@ def _d_nightstand(surf, pal, c):
     pygame.draw.polygon(surf, _shade(pal["dark"], 0.5), pts2)
 
 
+def _d_gun_cabinet(surf, pal, c):
+    # the sheriff's arms locker: a glazed upper case with racked long guns
+    # (dark barrels, pale wooden stocks) and a solid lower cabinet with a
+    # padlock hasp on the door seam
+    gl = [_fp(c, 0.14, 0.46), _fp(c, 0.86, 0.46),
+          _fp(c, 0.86, 0.93), _fp(c, 0.14, 0.93)]
+    pygame.draw.polygon(surf, (30, 34, 36), [(int(x), int(y)) for x, y in gl])
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.7),
+                        [(int(x), int(y)) for x, y in gl], 1)
+    for fx in (0.26, 0.42, 0.58, 0.74):
+        a = _fp(c, fx, 0.55); b = _fp(c, fx, 0.90)
+        pygame.draw.line(surf, (62, 58, 52),
+                         (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 2)
+        s0 = _fp(c, fx, 0.55); s1 = _fp(c, fx, 0.64)
+        pygame.draw.line(surf, (98, 70, 44),
+                         (int(s0[0]), int(s0[1])), (int(s1[0]), int(s1[1])), 2)
+    g0 = _fp(c, 0.22, 0.88); g1 = _fp(c, 0.36, 0.62)      # glass glint
+    pygame.draw.line(surf, (118, 128, 126),
+                     (int(g0[0]), int(g0[1])), (int(g1[0]), int(g1[1])), 1)
+    m0 = _fp(c, 0.5, 0.06); m1 = _fp(c, 0.5, 0.42)        # lower door seam
+    pygame.draw.line(surf, _shade(pal["dark"], 0.7),
+                     (int(m0[0]), int(m0[1])), (int(m1[0]), int(m1[1])), 1)
+    hp = _fp(c, 0.5, 0.24)
+    pygame.draw.circle(surf, (156, 156, 164), (int(hp[0]), int(hp[1])), 2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
+    # the Sheriff's tall arms cabinet (tableau-parity pass): a glass upper case
+    # of racked long guns over a padlocked lower cabinet -- the cache he unlocks
+    "gun_cabinet": (18, 13, 24, _WOOD_DK, _d_gun_cabinet),
     # a small bedside end table (the guest-room template piece): a squat
     # box, drawer high + open shelf below. Short enough to see over.
     "nightstand": (16, 14, 16, _WOOD_MID, _d_nightstand),

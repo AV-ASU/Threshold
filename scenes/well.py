@@ -361,6 +361,13 @@ def build_works_cistern():
     sc.add_cult_station(7 * TILE + 16, 7 * TILE + 16, pose="chant",
                         face=(0, 1), dwell=(3.0, 6.0))
 
+    # River stones on the pool shores (TODO #5, the distraction verb):
+    # the dug-into river gives stones down here too.
+    for _tx, _ty in ((2, 4), (10, 6)):
+        _wx, _wy = _tx * TILE + 16, _ty * TILE + 16
+        if not sc.is_solid_at(_wx, _wy):
+            sc.add_item(_wx, _wy, "stone")
+
     def _vats_on_enter(game, scene):
         # First entry: the dig hit water. This is the river (NARRATIVE §2) --
         # the artery the cult followed down toward the door. Gated by the
@@ -917,12 +924,19 @@ def build_works_sign():
     sign_x = 6 * TILE + 16
     sc._sign_pos = (6 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 24, "pedestal"))
+    # The Pallid Mask itself, resting ON the altar cap, face-out to the kneeling
+    # (the focal object of draw_altar_tableau / draw_mara_tableau; the walkable
+    # altar was a bare stone block). _sign_on_enter drops it once it is taken.
+    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 24, "altar_mask",
+                                 z=18))
     # [E] cue at the altar -- the Mask / rite choice is the key decision
     # of the run and must read as interactable.
     sc.add_interactable(sc._sign_pos[0], sc._sign_pos[1], 50)
-    # The Sign itself -- one large painted face centred in the apse,
-    # flanked by two smaller ones, ringed with candles (the daubs the
-    # Mask on the altar is the original of).
+    # The Sign itself -- one large painted face daubed on the apse WALL above
+    # the altar (a wall_sign, so it hangs up the vertical wall as the tableau
+    # shows), flanked by two smaller floor daubs, ringed with candles (the
+    # daubs the Mask on the altar is the original of).
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "wall_sign"))
     sc.add_decoration(Decoration(sign_x, 1 * TILE + 18, "yellow_sign"))
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
@@ -968,10 +982,15 @@ def build_works_sign():
     # tick entirely (no visibility, no chase, no grab); pose='kneel'; non-solid
     # so it never blocks the Mask. The closing rite made present, not told
     # (NARRATIVE §2: the rite claims the collective).
-    holder = NPC(6 * TILE + 16, 3 * TILE + 16, "The rite-holder", "cultist",
+    # Bowed at the altar's foot, holding the rite (the fiction + the Mara
+    # staging both call it "bowed"). It kneels just WEST of the altar, facing
+    # it, rather than dead-centre in front: a standing centre figure occluded
+    # the Pallid Mask now resting on the altar, and the Mask must read to the
+    # congregation. Off-axis + kneeling, the front sightline to the Mask is clear.
+    holder = NPC(5 * TILE + 16, 2 * TILE + 20, "The rite-holder", "cultist",
                  movement="idle", solid=False, no_prompt=True)
-    holder.facing = (0, -1)
-    holder.pose = "chant"
+    holder.facing = (1, 0)
+    holder.pose = "kneel"
     sc.add_npc(holder)
 
     # THE CALLING-OUT (2026-07, settled with the user). First entry into
@@ -1164,9 +1183,13 @@ def build_works_sign():
         # C14c: once the Mask is lifted, _interact early-returns, so drop
         # the altar's [E] cue to stop a phantom prompt on backtrack. Scenes
         # rebuild each load, so this re-applies cleanly on every re-entry.
+        # The Mask itself leaves the altar with the same event (it is in the
+        # PI's inventory now), so drop the altar_mask decoration too.
         if game.save.flag("pallid_mask_taken"):
             scene.interactables = [t for t in scene.interactables
                                    if (t[0], t[1]) != scene._sign_pos]
+            scene.decorations = [d for d in scene.decorations
+                                 if d.kind != "altar_mask"]
     sc.on_enter_fn = _sign_on_enter
     sc.on_interact_fn = _interact
     return sc
@@ -1335,6 +1358,9 @@ def build_the_sump():
     sc.add_decoration(Decoration(7 * TILE + 26, 5 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = []
+    # A river stone on the pool shore (TODO #5, the distraction verb).
+    if not sc.is_solid_at(2 * TILE + 16, 5 * TILE + 16):
+        sc.add_item(2 * TILE + 16, 5 * TILE + 16, "stone")
     _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)
 
     def _on_enter(game, scene):

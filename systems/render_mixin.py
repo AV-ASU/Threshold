@@ -86,6 +86,63 @@ _PROP_STATIC_CACHE = {}
 _PROP_STATIC_ORDER = []
 _PROP_STATIC_CAP = 2000
 
+# The VISIBLE light model, the twin of Scene._LIGHT_KINDS (which carries only
+# the mechanical stealth radius). One row per light-emitting decoration kind:
+#   (radius, color, peak, src_z, arm, flicker_amp, flicker_speed)
+# `src_z` is the light SOURCE's real world HEIGHT (a yard-light head rides high
+# on its pole, a candle sits low) and `arm` is a screen-relative horizontal
+# offset (the yard light's gooseneck) -- so _draw_dark casts each pool onto the
+# floor UNDER the actual 3D source, foreshortened to a tilt ellipse, and adds
+# the pools together (DESIGN.md §6/§10: the light's direction is 3D, pools
+# combine and lift what they lie on). _draw_dark iterates EVERY emitter through
+# this table -- not just wall_torch -- so any real fixture (a cult brazier, a
+# candle, a town yard light) lights the dark it stands in (the shared light
+# logic: one table drives the surface if it ever darkens and the underground).
+FIXTURE_POOLS = {
+    #                radius  color            peak  src_z  arm  amp   spd
+    "wall_torch":   (102,  (255, 168, 78),   74,   24,    0,   0.18, 7.0),
+    "brazier":      (106,  (255, 150, 56),   76,   12,    0,   0.16, 6.0),
+    "burn_barrel":  (94,   (255, 150, 56),   68,   16,    0,   0.16, 6.0),
+    "camp_fire":    (106,  (255, 158, 60),   76,   4,     0,   0.18, 5.0),
+    "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
+    "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
+    "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
+    "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
+    "wall_lamp":    (80,   (255, 208, 150),  60,   20,    3,   0.04, 3.0),
+}
+
+# Additive floor light pools, cached per shape. A tilt-foreshortened ellipse
+# whose RGB carries color*falloff (blit with BLEND_RGB_ADD, so pools SUM where
+# they overlap and lift whatever they lie on -- lights interacting with each
+# other and with objects). Black adds nothing, so the surface needs no alpha.
+_FLOOR_POOL_CACHE = {}
+_FLOOR_POOL_ORDER = []
+
+
+def _floor_pool_surf(radius, squash, color, peak):
+    key = (radius, round(squash, 2), color, peak)
+    s = _FLOOR_POOL_CACHE.get(key)
+    if s is None:
+        w = max(2, radius * 2)
+        h = max(2, int(radius * 2 * squash))
+        s = pygame.Surface((w, h)).convert()
+        s.fill((0, 0, 0))
+        cx, cy = w // 2, h // 2
+        steps = 12
+        for k in range(steps, 0, -1):          # large dim ellipse first
+            rx = max(1, int(radius * k / steps))
+            ry = max(1, int(radius * squash * k / steps))
+            f = (1.0 - k / steps) ** 1.7 * (peak / 255.0)
+            col = (min(255, int(color[0] * f)),
+                   min(255, int(color[1] * f)),
+                   min(255, int(color[2] * f)))
+            pygame.draw.ellipse(s, col, (cx - rx, cy - ry, rx * 2, ry * 2))
+        _FLOOR_POOL_CACHE[key] = s
+        _FLOOR_POOL_ORDER.append(key)
+        if len(_FLOOR_POOL_ORDER) > 240:
+            _FLOOR_POOL_CACHE.pop(_FLOOR_POOL_ORDER.pop(0), None)
+    return s
+
 
 class RenderMixin:
     def _draw_boot_screen(self):
@@ -311,43 +368,61 @@ class RenderMixin:
         return surfaces
 
     def _draw_apex_overlay(self):
-        """Apex-tier rendering: when visibility hits >= 0.95,
-        the world goes wrong. Heavy red wash across the whole screen
-        (interiors and exteriors alike); the screen edges crush in
-        with a hard black vignette so the player's view narrows;
-        the overlay pulses on a slow sine so the dread reads as
-        active, not static. Cheap: two SRCALPHA blits per frame."""
+        """Max-visibility rendering, in TWO tiers keyed to WHO has you
+        (2026-07 playtest fix: the apex wash was too intense when only
+        cultists were chasing -- a human threat wearing the cosmic
+        overlay).
+
+        - **The King is the threat** (his roam is armed, or his body is
+          in your room): the full APEX tier -- a heavy dried-blood red
+          wash + a hard edge-crush tunnel vignette. The world is wrong
+          and He is looking. Unchanged from before.
+        - **Only the cult has you** (below the gate, no King body): a
+          milder TOWN tier -- no red wash, just a cold desaturated
+          tighten at the edges. Reads as "seen, cornered, the town has
+          turned its head" rather than "the void is eating you." The
+          cult is human; it does not get His colour.
+
+        Fires at visibility >= 0.95; both pulse on a slow sine so the
+        dread reads as active. Cheap: <=2 SRCALPHA blits per frame."""
         if self.scene is None or self.player is None:
             return
         if self.visibility < 0.95:
             return
-        # Safe / dim-safe interiors break the apex wash. The Inn is
-        # the refuge. Standing inside it lifts the apex pressure --
-        # only stepping out re-engages it. Reads as a deliberate
-        # sanctuary mechanic rather than a hole in the horror.
+        # Safe / dim-safe interiors break the wash entirely. The Inn is
+        # the refuge; stepping inside lifts the pressure. Reads as a
+        # deliberate sanctuary rather than a hole in the horror.
         if (self.scene.key in KING_FREE_SCENES
                 or self.scene.key in DIM_SAFE_SCENES):
             return
         t = pygame.time.get_ticks() / 1000.0
         pulse = 0.85 + 0.15 * math.sin(t * 1.4)
-        # Red wash across the whole screen. Uses C_BLOOD (a desaturated
-        # dried-blood red) rather than primary red so the apex tone
-        # reads as "wrong" without going carnival-haunted. Wash alpha
-        # routed through _claim_dark so the combined-darkness budget
-        # caps stacked overlays.
-        wash_a = self._claim_dark(int(70 * pulse))
-        wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        wash.fill((C_BLOOD[0], C_BLOOD[1], C_BLOOD[2], wash_a))
-        self.screen.blit(wash, (0, 0))
-        # Edge-crush vignette: heavy black ring around the screen
-        # with a clear ~110-px disc around the player. Forces the
-        # player to feel tunnel-vision. Inner radius pulses with
-        # the wash so the disc breathes with the world.
-        edge_a = self._claim_dark(int(180 * pulse))
-        edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        edge.fill((0, 0, 0, edge_a))
         psx, psy = self._player_screen()
-        clear_r = int(110 + 6 * math.sin(t * 1.4))
+        king_threat = (self._roam_king["armed"] or self._king is not None)
+        if king_threat:
+            # APEX tier: the red wash + the hard tunnel crush (His gaze).
+            wash_a = self._claim_dark(int(70 * pulse))
+            wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            wash.fill((C_BLOOD[0], C_BLOOD[1], C_BLOOD[2], wash_a))
+            self.screen.blit(wash, (0, 0))
+            edge_a = self._claim_dark(int(180 * pulse))
+            edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            edge.fill((0, 0, 0, edge_a))
+            clear_r = int(110 + 6 * math.sin(t * 1.4))
+            pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
+            self.screen.blit(edge, (0, 0))
+            return
+        # TOWN tier: no red, a gentler cold tighten. A thin desaturated
+        # slate wash + a soft, WIDER edge vignette (a bigger clear disc,
+        # a lighter ring) so it reads as pressure, not suffocation.
+        wash_a = self._claim_dark(int(24 * pulse))
+        wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        wash.fill((30, 32, 40, wash_a))
+        self.screen.blit(wash, (0, 0))
+        edge_a = self._claim_dark(int(96 * pulse))
+        edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        edge.fill((6, 7, 10, edge_a))
+        clear_r = int(168 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
 
@@ -422,6 +497,27 @@ class RenderMixin:
         fc["scene"] = self.scene
         self.screen.blit(fog, (0, 0))
 
+    def _draw_bridge_dust(self):
+        """A faint dust-fall from the deck overhead while the town crosses
+        the bridge above the under-bridge hide (TODO #5). Screen-space,
+        keyed to _bridge_dust (set by _tick_bridge_knocks) -- a few pale
+        motes sifting down the middle of the frame, so the knocks have a
+        visible partner. Pure dressing; nothing gameplay reads it."""
+        d = getattr(self, "_bridge_dust", 0.0)
+        if d <= 0.02:
+            return
+        t = pygame.time.get_ticks() / 1000.0
+        w, h = self.screen.get_width(), self.screen.get_height()
+        rng = random.Random(7)
+        for _ in range(int(26 * d)):
+            bx = rng.randint(int(w * 0.28), int(w * 0.72))
+            fall = (t * 60 + rng.randint(0, 400)) % (h * 0.5)
+            yy = int(h * 0.16 + fall)
+            a = int(120 * d * (0.4 + 0.6 * rng.random()))
+            self.screen.fill((150, 140, 120),
+                             (bx, yy, 1, 2), special_flags=0)
+            pygame.draw.circle(self.screen, (120, 112, 96), (bx, yy), 1)
+
     def _draw_hidden_overlay(self):
         """While player.hidden is set, render a dark vignette
         around the player so the screen FEELS cramped -- the player
@@ -485,29 +581,38 @@ class RenderMixin:
             return
         if self.scene.key not in DARK_SCENES:
             return
-        from scenes.base import _light_pool
         psx, psy = self._player_screen()
         lit = self._flashlight_lit()
-        # Diegetic wall-torch light: each torch punches its own warm, flickering
-        # pool into the gloom, so a torch-lit room reads without the flashlight.
         tnow = pygame.time.get_ticks() / 1000.0
-        torches = []
+        squash = self.camera.ground_squash()
+        # The gooseneck arm is screen-relative to the yaw (matches the yard-
+        # light solid), so its pool lands under the HEAD, not the pole base.
+        ax = math.cos(self.camera.yaw + math.pi / 2)
+        ay = math.sin(self.camera.yaw + math.pi / 2)
+        # Each emitter casts its light from its real 3D SOURCE down onto the
+        # floor (DESIGN.md §6/§10): the pool is a tilt ellipse on the ground
+        # under the source, and the pools ADD (combine where they overlap and
+        # lift the walls/props/actors they lie on). FIXTURE_POOLS drives it --
+        # any fixture, not just wall_torch.
+        fixtures = []
         for d in getattr(self.scene, "decorations", []):
-            if getattr(d, "kind", None) == "wall_torch":
-                tx, ty = self.camera.project(d.x, d.y)
-                fl = 0.82 + 0.18 * math.sin(tnow * 7.0 + d.x * 0.25)
-                torches.append((int(tx), int(ty) - 12, fl))
+            spec = FIXTURE_POOLS.get(getattr(d, "kind", None))
+            if spec is None:
+                continue
+            radius, color, peak, src_z, arm, famp, fspd = spec
+            cx, cy = self.camera.project(d.x + ax * arm, d.y + ay * arm, 0)
+            fl = (1.0 - famp) + famp * math.sin(tnow * fspd + d.x * 0.25)
+            fixtures.append((int(cx), int(cy), radius, color, peak, fl))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         # The far points are laid out in WORLD space around the player's feet
         # and projected through the camera, so the cone lies FLAT on the ground
         # -- under tilt it foreshortens with the floor instead of shooting off
-        # the screen into the void. (At pitch 0, scale 1.0, this projects to the
-        # same screen pixels the old screen-space math produced.)
+        # the screen into the void.
         cone = None
         if lit:
-            fx, fy = getattr(self.player, "facing", (0, 1)) or (0, 1)
-            flen = math.hypot(fx, fy) or 1.0
-            ang = math.atan2(fy / flen, fx / flen)
+            fxv, fyv = getattr(self.player, "facing", (0, 1)) or (0, 1)
+            flen = math.hypot(fxv, fyv) or 1.0
+            ang = math.atan2(fyv / flen, fxv / flen)
             reach, spread = 300, math.radians(30)
             pwx, pwy = self.player.x, self.player.y
 
@@ -518,29 +623,85 @@ class RenderMixin:
             left = _far(ang - spread)
             right = _far(ang + spread)
             cone = [(psx, psy), left, tip, right]
-        if lit:
-            # A warm held-light pool at the feet -- not eyes adjusting.
-            _light_pool(self.screen, psx, psy, 96, (240, 226, 165), 72)
-        else:
-            _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
-        for tx, ty, fl in torches:
-            _light_pool(self.screen, tx, ty, int(118 * fl), (255, 168, 78),
-                        int(82 * fl))
-        gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
+        # GLOOM: dim the whole room, then carve elliptical holes under the
+        # player + every pool so the objects standing in the light show
+        # through (the navigable read; the additive colour lands on top).
+        gloom = (130 if self.scene.key in CULT_DARK_SCENES
+                 else 72 if self.scene.key in DIM_INTERIOR_SCENES
+                 else 100)
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
-        rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
-        for rr, aa in sorted(rings, key=lambda p: -p[0]):
-            pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
-        for tx, ty, fl in torches:
-            trings = [(int((26 + i * 12) * fl), int(gloom * i / 7))
-                      for i in range(7)]
-            for rr, aa in sorted(trings, key=lambda p: -p[0]):
-                pygame.draw.circle(overlay, (0, 0, 0, aa), (tx, ty), rr)
+
+        def _carve(cx, cy, r):
+            n = 8
+            for i in range(n - 1, -1, -1):            # largest (dimmest) first
+                rr = r * (0.24 + 0.76 * i / (n - 1))
+                rx = int(rr)
+                ry = max(1, int(rr * squash))
+                aa = int(gloom * i / (n - 1))         # 0 centre -> gloom at rim
+                pygame.draw.ellipse(overlay, (0, 0, 0, aa),
+                                    (cx - rx, cy - ry, rx * 2, ry * 2))
+        _carve(psx, psy, 118)
+        for cx, cy, radius, color, peak, fl in fixtures:
+            _carve(cx, cy, int(radius * fl))
         if cone:
             # Carve the beam clear of the gloom (alpha 0 inside the cone).
             pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
         self.screen.blit(overlay, (0, 0))
+        # ADDITIVE light on top: the player's own pool + every fixture's, each
+        # a floor ellipse under its source. They SUM where they overlap and
+        # brighten the walls / props / actors they lie on.
+        pcol = (240, 226, 165) if lit else (120, 128, 156)
+        ppk, pr = (64 if lit else 70), 112
+        self.screen.blit(_floor_pool_surf(pr, squash, pcol, ppk),
+                         (psx - pr, psy - int(pr * squash)),
+                         special_flags=pygame.BLEND_RGB_ADD)
+        for cx, cy, radius, color, peak, fl in fixtures:
+            r = max(2, int(radius * fl))
+            self.screen.blit(_floor_pool_surf(r, squash, color,
+                                              int(peak * fl)),
+                             (cx - r, cy - int(r * squash)),
+                             special_flags=pygame.BLEND_RGB_ADD)
+        # CAST SHADOWS: every solid caster throws a soft shadow across the
+        # floor AWAY from each nearby source -- the light interacting with the
+        # object. A LOW source (a candle near the floor) throws a long shadow,
+        # a HIGH one (a yard-light head) a short one; under several lights an
+        # object throws several shadows, one per light.
+        from rendering.props import is_solid_prop
+        srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3])
+                for d in getattr(self.scene, "decorations", [])
+                for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),) if s]
+        if srcs:
+            casters = [(self.player.x, self.player.y, 8)]
+            for n in getattr(self.scene, "npcs", []):
+                if not getattr(n, "_inside", False):
+                    casters.append((n.x, n.y, 7))
+            for e in getattr(self.scene, "enemies", []):
+                casters.append((e.x, e.y, 7))
+            for d in getattr(self.scene, "decorations", []):
+                k = getattr(d, "kind", None)
+                if k not in FIXTURE_POOLS and is_solid_prop(k):
+                    casters.append((d.x, d.y, 8))
+            for ox, oy, foot in casters:
+                for sx, sy, radius, src_z in srcs:
+                    dx, dy = ox - sx, oy - sy
+                    dist = math.hypot(dx, dy)
+                    if dist < 2.0 or dist > radius:
+                        continue
+                    # A shadow is ABSENCE of light: SUBTRACT the pool's glow
+                    # where the object blocks it (a cool-grey sub), so it reads
+                    # as dark floor -- not a black-over-warm brown stain.
+                    a = int(74 * (1.0 - dist / radius))
+                    if a < 6:
+                        continue
+                    inv = (9.0 + 15.0 * (1.0 - min(1.0, src_z / 50.0))) / dist
+                    scx, scy = self.camera.project(ox + dx * inv,
+                                                   oy + dy * inv, 0)
+                    r = int(foot * 1.3)
+                    self.screen.blit(_floor_pool_surf(r, squash,
+                                                      (226, 224, 234), a),
+                                     (int(scx) - r, int(scy) - int(r * squash)),
+                                     special_flags=pygame.BLEND_RGB_SUB)
         if cone:
             # A faint warm wash inside the cone sells it as a light source.
             beam = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
@@ -1297,6 +1458,24 @@ class RenderMixin:
             _emit(self.camera.depth(p.x, p.y),
                   lambda p=p, psx=psx, psy=psy:
                   p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift)))
+        # Thrown river stones (TODO #5): a tiny pebble on a cosmetic arc
+        # (sine of flight progress) over its ground shadow. The player's
+        # own action, so never sight-gated -- like the pickups it must
+        # always READ.
+        for st in (getattr(self, "_stones", None) or []):
+            z = 12.0 + 30.0 * math.sin(math.pi * min(1.0, st["p"]))
+            ssx, ssy = self.camera.project(st["x"], st["y"], z)
+            gsx, gsy = self.camera.project(st["x"], st["y"], 0)
+
+            def _draw_stone(ssx=ssx, ssy=ssy, gsx=gsx, gsy=gsy):
+                sh = pygame.Surface((10, 4), pygame.SRCALPHA)
+                pygame.draw.ellipse(sh, (8, 7, 12, 70), (0, 0, 10, 4))
+                self.screen.blit(sh, (gsx - 5, gsy - actor_lift - 2))
+                pygame.draw.circle(self.screen, (112, 110, 104),
+                                   (int(ssx), int(ssy - actor_lift)), 2)
+                pygame.draw.circle(self.screen, (60, 58, 55),
+                                   (int(ssx), int(ssy - actor_lift)), 2, 1)
+            _emit(self.camera.depth(st["x"], st["y"]), _draw_stone)
         if self.player:
             psx, psy = self.camera.project(self.player.x, self.player.y)
             psy -= actor_lift             # stand on the floor under tilt
@@ -1571,6 +1750,27 @@ class RenderMixin:
                           lambda d=d, ox=ox, oy=oy: draw_wall_deco(
                               self.screen, self.camera, self.scene, d,
                               _WALL_MOUNT_Z, woff=(ox, oy)))
+            # Interior doors (2026-07): each leaf depth-sorts with the walls +
+            # props and swings on its hinge; a SHUT one occludes and blocks the
+            # sight cone (Scene.blocks_sight), so the room beyond stays hidden
+            # until it is opened. State lives on Scene._inner_doors.
+            _idoors = getattr(self.scene, "_inner_doors", None)
+            if _idoors:
+                from rendering.props import draw_inner_door
+                from scenes.base import _WALL_CHARS
+                _iobj = self.scene.objects
+
+                def _iwall(xx, yy):
+                    return (not (0 <= yy < len(_iobj) and 0 <= xx < len(_iobj[yy]))
+                            or _iobj[yy][xx] in _WALL_CHARS)
+                for (tx, ty), dd in _idoors.items():
+                    cx, cy = tx * TILE + TILE // 2, ty * TILE + TILE // 2
+                    ew = _iwall(tx - 1, ty) and _iwall(tx + 1, ty)
+                    _emit(self.camera.depth(cx, cy, _TILT_WALL_RISE),
+                          lambda cx=cx, cy=cy, ew=ew, dd=dd:
+                          draw_inner_door(self.screen, self.camera, cx, cy,
+                                          ew, dd["swing"], dd["kind"],
+                                          dd["seed"]))
             # The portal + folds depth-sort with the trees/walls/actors (so a
             # tree in front of one occludes it and it occludes what is behind)
             # instead of always drawing on top -- they are real upright things
@@ -1611,6 +1811,7 @@ class RenderMixin:
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
+        self._draw_bridge_dust()
         # Film grade over the whole world layer (desaturate, cool tint,
         # vignette, animated grain) -- fuses the frame into one grimy
         # image. Applied before the HUD so UI text stays crisp.

@@ -189,8 +189,13 @@ it renders the procedural sprites to a labelled PNG strip.
     `npc.stations` route — travel, dwell facing the work, next — on
     the cult's errand machinery (`stealth.errand_step`; Garrick,
     Royce, the store Hettie, Rev. Crane). `chaser` runs the cultist state
-    machine (`_cult_tick`: scout→chase→search→investigate). The
-    `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
+    machine (`_cult_tick`: scout→chase→search→investigate). SCOUT carries
+    the **cult-liveness beats** (TODO #23a; `systems/stealth.py`
+    `sync_pause`/`handoff_step`, `CULT_SYNC_*`/`CULT_HANDOFF_*` config):
+    the shared-clock synchrony all-stop and the crossing hand-off —
+    dressing that never touches the threat states (a frozen scout still
+    fills suspicion; `tests/stealth.py` §12 guards it; DESIGN.md §12).
+    The `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
     eruption ramp, 0→1 over ~1.2s, during which he cannot move).
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
@@ -374,7 +379,20 @@ it renders the procedural sprites to a labelled PNG strip.
   converges the room) or the window expires into the CAPTURED death.
   `_tick_visibility` reads the concealment-weighted gaze; only an
   enclosed hide keeps the strong `VIS_HIDE_BLEED` drain (corn gets idle
-  decay). The **hollow Sheriff** (`_force_chase`) is **exempt** — it bypasses
+  decay). **The stealth economy (2026-07 first human tuning pass,
+  DESIGN.md §12, stealth §13):** the speed ladder is King > sprint >
+  locked chase (`CULT_CHASE_MULT`) > walk > scout, sprint in LOS
+  multiplies the detection score (`SUS_SPRINT_MULT`), every grab site
+  reaches `CULT_GRAB_REACH`, cover entry is WORDLESS (the teach notices
+  are cut), and bare `:` cover tiles render as tall-grass tufts under
+  the tilt so concealment is visible. **River stones** (`STONE_*`,
+  item `stone`, right-click) are the placed-noise distraction verb:
+  they turn idle scouts, never divert a sighting-born search -- except
+  through a WINDOW (`GLASS_*`: the smash diverts even a search, and the
+  pane stays broken for the run, the `broken_windows` ledger) -- and a
+  stone dropped down the dead well rattles the whole square with no
+  bottom ever sounding (`WELL_ECHO_*`; stealth §14). The **hollow Sheriff**
+  (`_force_chase`) is **exempt** — it bypasses
   suspicion and cover entirely. The roaming **King** honors `player.hidden`
   (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);
   he is relentless in re-finding you, not in seeing through cover. Guarded
@@ -462,12 +480,15 @@ it renders the procedural sprites to a labelled PNG strip.
   (its eyes go dark, then it dissolves), or the **axe** / a **round**.
   **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
   `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
-  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze only OPENS under the
-  open sky or in the deep (2026-07 ruling, `WATCHER_OPEN_SCENES`): no
-  Watcher ever manifests inside a surface building** — any interior door
-  clears the wave, and the grace runs before it re-forms outside
-  (`tests/stealth.py` §11). (The old GAZE_BIND high-visibility
-  trigger is retired.) The gun and axe **share one weapon slot** (left-click
+  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
+  in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
+  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
+  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
+  the flashlight is the cover, and a Watcher caught in a pool / the beam
+  **BURNS** out (`WATCHER_LIGHT_BURN`). The **true refuges stay gaze-free**
+  (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
+  sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
+  high-visibility trigger is retired.) The gun and axe **share one weapon slot** (left-click
   to use; switch which is equipped from the inventory screen).
 - **Killing locals**: the gun is *not* cult-only. A clean round drops any
   living **local** instantly (lethal regardless of the evidence stagger
@@ -615,10 +636,91 @@ it renders the procedural sprites to a labelled PNG strip.
   itself). One-way is the King's signature alone. See DESIGN.md §7 "One
   phenomenon, two presentations" + DESIGN.md §7 "Decisions landed". Live
   proof sheet: `tools/preview_rift_anchored.py`.
+- **Interior doors — the subroom divider (2026-07, DESIGN.md §7).** The
+  third door kind, and NOT a teleport: a swinging leaf on a floor GAP in a
+  wall line WITHIN one scene, the tool that splits a box building into
+  several subrooms. State on `Scene._inner_doors`; author with
+  `Scene.add_inner_door(tx, ty, kind, open=False)` on a floor tile inside a
+  wall run. A shut leaf behaves like a wall (hooked into `is_solid_at` +
+  `blocks_sight` — so it occludes AND breaks a pursuer's line of sight,
+  buying time; the same `blocks_sight` `clear_sight_line` runs, one hook for
+  render + cult AI), open passes both; `_nav_solid_at` never counts a door
+  tile so NPCs route AT it and open their own way through. `Scene.update`
+  runs the open/close (most start CLOSED; an NPC nearing a shut door opens
+  it, it swings shut a beat after the last actor leaves); the player toggles
+  the nearest with **E** (`toggle_nearest_inner_door`, last in
+  `try_interact`). Kinds: `plank` (opaque wood) / `bars` + `half`
+  (see-through, block the body but not the sight cone — `_SEE_THROUGH_DOOR_KINDS`)
+  / `curtain` (drape). Draw: `rendering.props.draw_inner_door`, emitted +
+  depth-sorted in `draw_world`'s tilt pass. **Vary the wall**: `ew` (the swing
+  axis) is derived from the tile's wall neighbours, so a door in a SIDE (N-S)
+  wall opens E-W and a door in an E-W wall opens N-S. Don't put every door of a
+  building in E-W walls or the leaves all "face south" (error class #8); mix
+  side-wall and E-W-wall doors by what the geometry wants (the shop does).
+  Guard: `tests/stealth.py` §15.
+- **Interior partition corners are BEVELED (2026-07, `scenes/terrain.py`,
+  DESIGN.md §6).** A wall tile's exposed CONVEX corners (both adjacent faces +
+  the diagonal open to floor `.`) are chamfered in BOTH wall draw layers —
+  `_extrude_box` (a `bevel` bitmask param from `_bevel_corners`) and
+  `_draw_wall_mass` (clips `_wall_tile_flat` to `_bevel_poly_local`) — so the
+  chunky 90° jut softens while runs/tees/shell stay a full-thickness continuous
+  mass (byte-identical, no convex corner there). Draw-only; gated to
+  `_BEVEL_SCENES` (frozenset of the above-ground building interiors — shop,
+  church, barn, schoolhouse, sheriff_office, bedroom, clerk/guest rooms, lodge +
+  lodge_hall, toby_house, farmhouse, lodge_cellar — never the mine or outdoors).
+  `_BEVEL_INSET` = 0.28·TILE tunes the chamfer. Cache-safe (pure function of
+  tile + neighbours).
+- **Thin-SLAB walls — REAL geometry, not draw-only (2026-07, `scenes/terrain.py`,
+  DESIGN.md §6; maintainer "walls are no longer tiles / connect them by smoothing
+  it out").** The step past the bevel: a wall tile becomes a THIN slab
+  (`_SLAB_THICK` = 0.5·TILE). To keep the thin walls CONNECTED + smooth (no fat
+  junction, no notch), `_wall_slab(scene, tx, ty)` returns the footprint as a
+  LIST of up to two BANDS — a VERTICAL band (wall neighbour N or S) and/or a
+  HORIZONTAL band (wall neighbour E or W). A run is one band; an L / T / cross is
+  the union of both, meeting flush; each band reaches the edge only where the run
+  continues, else stops at the crossbar (no stub into a room). Cross-thickness:
+  floor/wall both sides → CENTRE (two-sided partition); one flank off-map → the
+  SHELL, which hugs the EXTERIOR edge (outer face stays on the silhouette, no
+  floor lip, thins inward). It is the SINGLE SOURCE for both draw layers
+  (`_extrude_box`'s `foot` rect, looped per band + `_draw_wall_mass`'s union
+  clip) AND the collision/sight/nav predicates (`scenes/base.py`
+  `_obj_solid_here`, shared by `is_solid_at` / `blocks_sight` / `_nav_solid_at`,
+  point-in-ANY-band, inclusive bounds so collision sits a hair proud of the drawn
+  face and a nav-grid centre on a slab stays solid) — so what the player bumps
+  and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (shop the
+  pilot; then the Wave A refuges + the three principal seats, church /
+  sheriff_office / lodge); off it, None → full tile → byte-identical
+  (`capture_world --diff` confirms the non-slab scenes). SUPERSEDES the bevel
+  where both apply (`_bevel_corners` returns 0 in a slab scene, so a slab
+  scene's `_BEVEL_SCENES` membership is inert). Roll out one interior at a time
+  per VISION. **Corners are
+  ROUNDED:** `_rounded_wall_poly` traces the band union to an outline and fillets
+  each FREE corner (facing floor) into an arc while a wall-neighbour SEAM corner
+  stays sharp (so tiles still connect flush); it drives the flat mass + a 3D
+  `_extrude_prism`. Collision/sight/nav keep the square bands (rounding sits
+  inside the drawn face). **Thickness + round + roughness + COLOUR are
+  per-MATERIAL:** `_WALL_STYLES` (`{thick, round, rough, tint}`) keyed by scene
+  via `_SLAB_STYLE`, read through `_wall_style(scene)`; `_SLAB_SCENES` is derived
+  from it. So a scene reads its construction (`plank`/`plaster`/`timber`/`brick`/
+  `stone`) from geometry AND a dark muddy colour `tint` (added to the near-black
+  palette in both draw layers, Darkwood-safe); a non-slab scene's tint is
+  (0,0,0) → byte-identical. Add a scene = one `_SLAB_STYLE` line.
+- **No diagonal-only wall joins in a slab scene (2026-07, maintainer "add a rule
+  not to have walls like that").** Two walls that meet only at a DIAGONAL (the
+  shared corner tile missing) look fine as fat full tiles but render as
+  DISCONNECTED thin stubs under the slab. So a `_SLAB_SCENES` wall layout must
+  never have one: where two perpendicular walls turn a corner, the corner TILE
+  itself must be a wall (an orthogonal L), not a diagonal near-miss. Enforced by
+  `tests/smoke.py [10/10]` via `terrain.diagonal_wall_joins(scene)`; fix a
+  failure by adding the missing corner tile (on the non-room side) so the walls
+  connect. Applies as each interior opts into `_SLAB_SCENES`.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
-  drive King safety, flashlight darkness, etc.
+  drive King safety, flashlight darkness, etc. `DIM_INTERIOR_SCENES` (2026-07)
+  is a `DARK_SCENES` subset for the explorable non-refuge interiors: a LIGHTER
+  gloom (72) so a ground-floor room reads dim-lit-by-bulbs, not pitch-black
+  (`_draw_dark`); lit by the genset `wall_lamp` fixture (DESIGN §6).
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.
@@ -638,6 +740,19 @@ it renders the procedural sprites to a labelled PNG strip.
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+  **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
+  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius the
+  stealth `lit_at`/shadow-cover gate reads) AND `FIXTURE_POOLS`
+  (`systems/render_mixin.py`, the VISIBLE light `_draw_dark` casts in a dark
+  scene: `radius, color, peak, src_z, arm, flicker_amp, flicker_speed`).
+  `_draw_dark` iterates EVERY emitter through `FIXTURE_POOLS` (not just
+  `wall_torch`), so a fixture missing from it will read + gate as lit but cast
+  no visible light in the dark. `src_z` is the light source's real world
+  HEIGHT and `arm` its gooseneck offset: the pool is a tilt-squashed ELLIPSE
+  cast on the floor UNDER the 3D source, pools blend ADDITIVELY (they combine
+  + lift the objects they lie on), and solid casters throw SUBTRACTIVE cast
+  shadows away from each source (DESIGN §6, the 3D light-interaction model).
+  Cold electric (`yard_light`) vs warm fire is a colour choice in that table.
   **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
   MAN-MADE things** (they read as flat cards that swivel to face the camera
   otherwise; the sprite-depth-anchoring pass converted `standing_stone` /

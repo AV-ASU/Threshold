@@ -143,109 +143,145 @@ def build_clearing():
     sc.on_interact_fn = _void_boss_interact
     return sc
 def build_shop():
-    """The General Store. A front shop where Hettie keeps the counter, and a
-    partitioned back STOREROOM through an interior doorway -- the dividing wall
-    makes it an indoor blind spot, and that's where the cult tells live (the
-    mirror with the wrong silhouette, the wrong_photo), unseen from the front
-    until the player steps back through the door."""
-    floor = ["=" * 16 for _ in range(12)]
+    """The General Store, rebuilt as a NESTED warren of subrooms (2026-07, the
+    interior-door pass; the pilot for the room redesign): an L-shaped public
+    shop floor where Hettie keeps the counter, and a chain of service rooms dug
+    off it behind interior doors that MOSTLY START CLOSED. Off the shop's west
+    side a plank door opens on a dry-goods STOCKROOM; off the BACK of the
+    stockroom a second plank door opens on the cold PANTRY -- two doors deep,
+    out of the shop's sight entirely, the true blind spot where the cult tells
+    live (the mirror with the wrong silhouette, the wrong_photo). A cloth
+    curtain closes off Hettie's little OFFICE nook on the shop's north-east.
+    Hettie opens her own way through on her route; the player opens them with
+    E, and a shut door on a pursuer breaks the sightline."""
+    floor = ["=" * 16 for _ in range(13)]
     objects = [
         "WWWWWWWWWWWWWWWW",   # 0
-        "W.....W........W",   # 1  storeroom (cols 1-5) | shop floor (cols 7-14)
-        "W.....W........W",   # 2
-        "W.....W........W",   # 3
-        "W..............W",   # 4  doorway gap in the partition (col 6)
-        "W.....W........W",   # 5
-        "WWWWWWW........W",   # 6  storeroom sealed off below
-        "W..............W",   # 7
-        "W.........S....W",   # 8  S = Hettie, behind the counter
+        "W....W....W....W",   # 1  pantry(1-4) | shop-back(6-9) | office(11-14)
+        "W....W.........W",   # 2  office door (col 10, a SIDE wall)
+        "WW.WWW....W....W",   # 3  pantry<->stockroom door (col 2)
+        "W....W....WWWWWW",   # 4  stockroom | shop | office SW corner (col 10)
+        "W..............W",   # 5  stockroom door (col 5, a SIDE wall)
+        "W....W.........W",   # 6  stockroom | shop
+        "W....W.........W",   # 7
+        "WWWWWW.........W",   # 8  stockroom S wall closes its SE corner (col 5)
         "W..............W",   # 9
         "W..............W",   # 10
-        "WWWWWWWWDWWWWWWW",   # 11  D = exit door back to the field
+        "W..............W",   # 11
+        "WWWWWWWWDWWWWWWW",   # 12  D = exit door back to the field (col 8)
     ]
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
     sc.add_exit("D", "brimley", "from_shop")
-    sc.set_spawn("default", 7, 9)
-    sc.set_spawn("from_brimley", 8, 10)      # one tile north of the D door
+    sc.set_spawn("default", 8, 10)
+    sc.set_spawn("from_brimley", 8, 11)      # one tile north of the D door
 
-    pos = sc.consume_marker("S")
-    if pos:
-        tx, ty = pos
-        het = NPC(tx * TILE + 16, ty * TILE + 16,
-                  "Hettie", "hettie", voice="blip_high",
-                  portrait="hettie",
-                  dialogue_fn=hettie_dialogue, movement="worker")
-        # Her JOB (the JOBS layer): the counter mostly, a pass along
-        # the empty goods shelves (dusting stock that never comes), a
-        # trip to the storeroom preserves through the partition door.
-        het.stations = [
-            {"x": tx * TILE + 16, "y": ty * TILE + 16,
-             "dwell": (10.0, 16.0), "face": (0, 1)},     # the counter
-            {"x": 9 * TILE + 16, "y": 2 * TILE + 16,
-             "dwell": (3.0, 5.0), "face": (0, -1)},      # the bare shelves
-            {"x": 3 * TILE + 16, "y": 1 * TILE + 24,
-             "dwell": (4.0, 7.0), "face": (0, -1)},      # the preserves
-        ]
-        sc.add_npc(het)
-    # Worn shop rug over the open floor -- multi-tile + off-grid to
+    # The three interior doors (2026-07), a nested chain + one nook, deliberately
+    # NOT all in the same wall: the stockroom and office doors sit in SIDE (N-S)
+    # walls and open east/west, while the pantry door sits in an E-W wall and
+    # opens north/south -- the leaves don't all face the same way. Most start
+    # CLOSED. The pantry door is two rooms deep, so the cult tells behind it are
+    # out of the shop's sight until you open the stockroom, cross it, and open
+    # the pantry.
+    sc.add_inner_door(5, 5, "plank")         # shop  -> stockroom (faces E-W)
+    sc.add_inner_door(2, 3, "plank")         # stockroom -> cold pantry (faces N-S)
+    sc.add_inner_door(10, 2, "curtain")      # shop  -> office nook (faces E-W)
+
+    # Hettie stands behind the counter in the shop, facing the entrance.
+    hx, hy = 8, 8
+    het = NPC(hx * TILE + 16, hy * TILE + 16,
+              "Hettie", "hettie", voice="blip_high",
+              portrait="hettie",
+              dialogue_fn=hettie_dialogue, movement="worker")
+    # Her JOB (the JOBS layer): the counter mostly, a pass along the empty goods
+    # shelves (dusting stock that never comes), and a trip back into the
+    # stockroom -- which walks her THROUGH the plank door, so she opens her own
+    # way (the auto-open showcase).
+    het.stations = [
+        {"x": hx * TILE + 16, "y": hy * TILE + 16,
+         "dwell": (10.0, 16.0), "face": (0, 1)},     # the counter
+        {"x": 8 * TILE + 16, "y": 2 * TILE + 16,
+         "dwell": (3.0, 5.0), "face": (0, -1)},      # the back-shop shelves
+        {"x": 2 * TILE + 16, "y": 5 * TILE + 16,
+         "dwell": (4.0, 7.0), "face": (0, -1)},      # the stockroom
+    ]
+    sc.add_npc(het)
+    # Worn shop rug over the shop floor -- multi-tile + off-grid to
     # break the plank tiling. First, so props draw on top.
-    sc.add_decoration(Decoration(10 * TILE + 24, 9 * TILE + 8, "rug",
+    sc.add_decoration(Decoration(8 * TILE + 24, 9 * TILE + 8, "rug",
                                  w=104, h=64, color=(58, 60, 64), seed=31))
-    # Sized darkwood furniture. The two long goods runs on the shop floor
-    # stand EMPTY (bare_shelf: dust-ghosts where stock stood, one tin left;
-    # no deliveries since the new year, DESIGN.md §4 food scarcity). Hettie
-    # keeps a real counter now -- a low see-over volume like the Lodge
-    # front desk -- plus a stool, and stocked shelves in the back room
-    # (her preserves; nobody buys, so those never emptied).
-    sc.add_furniture("bare_shelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
-    sc.add_furniture("bare_shelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
+    # --- The shop floor (public) ---
+    # The long goods runs stand EMPTY (bare_shelf: dust-ghosts where stock
+    # stood, one tin left; no deliveries since the new year, DESIGN.md §4 food
+    # scarcity). One in the back-shop aisle, one along the east wall.
+    sc.add_furniture("bare_shelf", [(6, 1), (7, 1)], w=58, h=18, seed=1)
+    sc.add_furniture("bare_shelf", [(12, 6), (13, 6)], w=58, h=18, seed=2)
+    # Hettie's counter -- a low see-over volume like the Lodge front desk --
+    # plus a stool tucked behind it.
+    sc.add_furniture("butcher_counter", [(8, 9)], see_over=True)
     sc.add_furniture("butcher_counter", [(9, 9)], see_over=True)
-    sc.add_furniture("butcher_counter", [(10, 9)], see_over=True)
-    sc.add_furniture("chair", [(10, 8)], w=22, h=28)
-    # Her storeroom stock: crates + a barrel (2026-07 audit fix: this was
-    # a 'bookshelf' case, which renders with colored BOOK SPINES -- a
-    # library bookcase in a grocer's overstock room).
-    sc.add_furniture("crate", [(1, 1)], seed=4)
-    sc.add_furniture("crate", [(2, 1)], seed=5)
-    sc.add_furniture("barrel", [(1, 2)])
-    sc.add_furniture("table", [(4, 2)], w=30, h=30)
-    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2, "candle"))
-    # A low goods shelf finishes the north-wall run, and the wrong radio
-    # sits ON it (its art is a thing on a surface; on the bare floor it
-    # read as a sticker under the tilt).
+    sc.add_furniture("chair", [(9, 8)], w=22, h=28)
+    # A potbelly stove fills the dead SW corner -- the general-store gathering
+    # spot, and the one warmth Hettie still feeds (the stoop line made a hearth:
+    # "I keep the lights on. So they know."). A split-wood stack sits beside it.
+    sc.add_furniture("stove", [(2, 10)], w=30, h=40, wall="W")
+    sc.add_furniture("firewood", [(3, 10)], w=44, h=24)
+    # A butter churn parked against the east wall of the shop floor. The dairy
+    # stopped coming before the trucks did.
+    sc.add_decoration(Decoration(14 * TILE + 10, 10 * TILE + 8,
+                                 "butter_churn"))
+    # The genset-electric MAIN light: a bulkhead lamp on the east wall over the
+    # shop floor. "I keep the lights on. So they know." (2026-07 interior pass.)
+    sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp"))
+    # A kerosene lamp on the counter is the backup for when the gas runs low.
+    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,
+                                 "kerosene_lamp"))
+    # The old brass till on the counter -- empty since the new year, the amount
+    # flag reading nothing ("Till's been empty since the new year" made an
+    # object; the tableau-parity pass). Seated on the counter by
+    # seat_tabletop_props. Sits east of Hettie's till spot so it never masks her.
+    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 16, "cash_register",
+                                 scale=1.1))
+    # Mara's tab curled on the receipt spike by the till: the spike rises right
+    # at the tab (the world-persistent `papers` at _receipt_pos below), so the
+    # two read as one -- slips impaled by the till.
+    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 9, "bill_spike"))
+    # Lodge dressing: a mounted buck + trophy walleye high on the back-shop
+    # north wall, over the empty aisle.
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    # --- The stockroom (west, first door): dry-goods overstock ---
+    sc.add_furniture("crate", [(1, 4)], seed=4)
+    sc.add_furniture("crate", [(1, 5)], seed=5)
+    sc.add_furniture("barrel", [(4, 7)])     # kept off the (5,5) door approach
+    sc.add_furniture("table", [(3, 6)], w=30, h=30)
+    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    # --- The cold pantry (nested, two doors deep): preserves + the cult tells ---
+    # Hettie's preserves on the north wall. Nobody has bought any in a while;
+    # the contents have all gone the same murky shade.
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22,
+                                 "preserve_shelf", seed=17))
+    # The cult tells, hidden in the pantry (the true blind spot, out of the
+    # shop's sight): the mirror that shows the wrong silhouette, the wrong_photo.
+    sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 16, "mirror"))
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 22,
+                                 "wrong_photo", stage=1))
+    # --- Hettie's office nook (north-east, curtain): the calendar, clock, radio ---
+    # A low goods shelf, and the wrong radio sits ON it (its art is a thing on
+    # a surface; on the bare floor it read as a sticker under the tilt).
     sc.add_furniture("shelf", [(13, 1)], w=28, h=16, seed=7)
     sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 22, "wrong_radio"))
-    # Lodge dressing on the shop floor: a mounted buck + trophy walleye on
-    # the north wall, a kerosene lamp on the counter. The cobweb hangs in
-    # the storeroom corner.
-    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
-    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2,
-                                 "kerosene_lamp"))
-    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
-                                 ang=0.0))
-    # Storeroom stock: a shelf of Hettie's preserves. Nobody has bought
-    # any in a while; the contents have all gone the same murky shade.
-    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 22,
-                                 "preserve_shelf", seed=17))
-    # A butter churn parked by the east wall. The dairy stopped coming
-    # before the trucks did.
-    sc.add_decoration(Decoration(14 * TILE + 10, 9 * TILE + 8,
-                                 "butter_churn"))
-    # The cult tells, hidden in the back storeroom (the blind spot): the
-    # mirror that shows the wrong silhouette, and a wrong_photo on the wall.
-    sc.add_decoration(Decoration(1 * TILE + 16, 3 * TILE + 16, "mirror"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22,
-                                 "wrong_photo", stage=1))
-    sc.add_decoration(Decoration(14 * TILE + 16, 1 * TILE + 22, "clock"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 22, "clock"))
     # Hettie's calendar -- "no deliveries in a while now," the days with
     # nowhere left to count toward (stasis, not a loop -- NARRATIVE §2).
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24, "calendar"))
-    for mx, my in [(8, 7), (12, 8), (10, 10)]:
+    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 24, "calendar"))
+    sc.add_furniture("chair", [(13, 3)], w=22, h=28)
+    for mx, my in [(11, 9), (5, 9), (9, 11)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
     # Mara's store tab (surface evidence; NARRATIVE §6, DESIGN.md §9). You get
@@ -253,8 +289,8 @@ def build_shop():
     # play-notes). The curled slip on the spike is only the world-persistent
     # FALLBACK, reachable once Hettie is DEAD, so killing her can never
     # soft-lock the descent. Both funnel through grant_receipt (flag-gated).
-    sc._receipt_pos = (9 * TILE + 16, 9 * TILE + 16)
-    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 6, "papers",
+    sc._receipt_pos = (8 * TILE + 16, 9 * TILE + 16)
+    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 6, "papers",
                                  seed=23))
 
     def _shop_update(game, scene, dt):
@@ -310,6 +346,9 @@ def build_barn():
     sc.add_furniture("table", [(11, 2), (12, 2)], w=54, h=36)
     sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 24, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
+    # Genset-electric main light on the main-floor north wall (the lantern +
+    # candle are backup). (2026-07 interior pass.)
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
     # Northern-MN lodge dressing: a mounted buck + trophy walleye on the
@@ -429,7 +468,7 @@ def build_barn():
 def build_toby_house():
     floor = ["=" * 14 for _ in range(10)]
     objects = [
-        "WWWWWWWWWWWWWW",   # 0
+        "WWWWWWWWWiWWWW",   # 0  i = the window Toby watches the corn line through
         "W....W.......W",   # 1  closet (cols 1-4) | the room (cols 6-12)
         "W....W.......W",   # 2
         "W............W",   # 3  doorway gap in the partition (col 5)
@@ -483,11 +522,25 @@ def build_toby_house():
     sc.add_decoration(Decoration(3 * TILE + 22, 3 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "missing_flyer"))
-    # His mother's needlework over the bed, and the canary cage by the
-    # partition: empty, door open. The bird went the way the dad did.
-    sc.add_decoration(Decoration(9 * TILE + 24, 0 * TILE + 22, "sampler",
+    # His mother's needlework on the north wall (moved east off the new
+    # window), and the canary cage by the partition: empty, door open. The
+    # bird went the way the dad did.
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "sampler",
                                  seed=14))
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 8, "birdcage"))
+    # Toby's WALL OF CRAYON DRAWINGS, taped up crooked across the north wall --
+    # the one almost-normal room in Brimley, and that read is the point
+    # (draw_toby_tableau). The walkable room had none; only the King drawing
+    # hidden in the closet. Placed at varied sub-tile offsets so they break the
+    # grid. The dark procession drawing joins them once toby_told (on_enter).
+    sc.add_decoration(Decoration(6 * TILE + 12, 0 * TILE + 20,
+                                 "crayon_drawing", motif="house"))
+    sc.add_decoration(Decoration(7 * TILE + 20, 0 * TILE + 26,
+                                 "crayon_drawing", motif="sun"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18,
+                                 "crayon_drawing", motif="family"))
+    # Crayons + a half-drawn sheet on his table (the toy radio shares it).
+    sc.add_decoration(Decoration(12 * TILE + 12, 1 * TILE + 16, "crayons"))
     # Chalk phantom-marks in the closet.
     sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
                                  "phantom_mark"))
@@ -509,4 +562,15 @@ def build_toby_house():
     sc.add_decoration(Decoration(drawing_x, drawing_y, "photo"))
     sc._drawing_pos = (drawing_x, drawing_y)
 
+    sc.on_enter_fn = _toby_house_on_enter
     return sc
+
+
+def _toby_house_on_enter(game, scene):
+    """Once Toby has told what he saw (the photo exchange sets `toby_told`), the
+    dark crayon drawing of the night procession joins the cheerful ones on his
+    wall (draw_toby_tableau). The scene rebuilds each load, so re-add it every
+    time the flag holds."""
+    if game.save.flag("toby_told"):
+        scene.add_decoration(Decoration(8 * TILE + 4, 0 * TILE + 34,
+                                        "crayon_drawing", motif="procession"))

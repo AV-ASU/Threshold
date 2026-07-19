@@ -342,6 +342,71 @@ Part B.
   flow-guarded (`_room_tone` set/cleared, the Mara silence). **Needs a
   LISTEN from the maintainer** (levels tuned by waveform, not by ear).
 
+### 2c. **[Opus + Fable]** Tableau ↔ scene environment parity  *(maintainer call 2026-07: "make sure the environment matches details in the tableaus"; COMPLETE)*
+
+Each close-up examine tableau (`ui/tableau.py`, described in `DIALOGUE.md` Part
+B) shows specific props the WALKABLE scene should also carry, so the room the
+player stands in reads as the room the close-up promised. A parity audit found
+the gaps; this pass dresses each walkable scene to match, one at a time, VISION-
+verified (four facings + dark), full gate + docs same commit. New man-made props
+are `SOLID_PROPS`/`FURNITURE` volumes or `_WALL_DECO` mounts (never standees,
+error class #7). The bedroom desk already has full parity (its `writing_desk`
+top draws the pistol + case file); it is the model.
+
+- **Hettie's shop — LANDED (2026-07).** New tabletop volumes `cash_register`
+  (the empty brass till, amount flag reading nothing) + `bill_spike` (Mara's tab
+  curled on the spike by the till), seated on the counter. Matches
+  `draw_hettie_tableau`. Bare shelves / one kept bulb / shop door were already
+  present.
+- **Crane's church — LANDED (2026-07).** New `lectern` SOLID_PROP (the open book
+  on a slanted board, brass cross on the column) at the head of the nave, in
+  front of the preacher's spot -- the centrepiece of `draw_crane_tableau`; the
+  church had only a bare altar table. Added a tall chancel WINDOW (terrain `'i'`
+  on the north wall) and the dead BELL ROPE (`rope`) hanging at the west edge.
+  Cross + candles + pews were already present.
+- **Vane's office — LANDED (2026-07).** Added the cold north WINDOW behind the
+  desk (terrain `'i'`), a HOLDING CELL in the SE corner (a `bars` inner-door
+  gate + two wall tiles, the empty sliver of cell where Mara was booked), and a
+  new `gun_cabinet` FURNITURE volume in the back records room (the glass-front
+  arms locker with racked guns + a padlock hasp, the cache he unlocks). Matches
+  `draw_vane_tableau`; the JAN 15 calendar + desk were already present.
+- **Sable's lodge — LANDED (2026-07).** New `key_rack` `_WALL_DECO` (a
+  pigeonhole board of hanging room keys, a couple of hooks empty) behind the
+  reception desk -- Sable's "full house" want made an object, the detail
+  `draw_sable_tableau` builds the desk around -- and a new `service_bell`
+  tabletop volume (brass dome + press button) on the register. The register +
+  clock were already present. The CEILING FAN is deferred: no overhead-prop
+  path in the tilt renderer (a moving shadow cast on the desk would be the
+  faithful option; not built).
+- **Toby's house — LANDED (2026-07).** New `crayon_drawing` `_WALL_DECO` (a
+  taped child's sheet, `motif` = house / sun / family / corn / the dark
+  procession) taped crooked across the north wall -- the one almost-normal room
+  in Brimley, and that read is the point (draw_toby_tableau). New `crayons`
+  tabletop volume (crayons + a half-drawn sheet) on his table beside the toy
+  radio, and a WINDOW (terrain `'i'`) he watches the corn line through. The dark
+  PROCESSION drawing joins the cheerful ones once `toby_told` (an on_enter that
+  re-adds it each load). The toy radio + closet (with the King drawing) were
+  already present.
+- **works_sign (Mara / the pedestal) — LANDED (2026-07).** New `altar_mask`
+  SOLID_PROP -- the Pallid Mask resting on the altar cap, face-out, pale with a
+  warm gold ember in each black socket -- the focal object of both
+  `draw_altar_tableau` and `draw_mara_tableau`; the walkable altar was a bare
+  stone block. Gated off once taken (`_sign_on_enter` drops the deco). Added a
+  wall-mounted `wall_sign` (the crude-mask glyph as a `_WALL_DECO`) daubed on
+  the apse wall above the altar so the big Sign hangs on the vertical wall as
+  the tableau shows (the flanking `yellow_sign` floor daubs stay). The
+  rite-holder was moved off the dead-centre front and made a low `kneel` (it
+  was a standing `chant` that both occluded the Mask and contradicted the
+  "bowed at the altar's foot" fiction).
+
+**#2c is COMPLETE: all six tableau-bearing walkable scenes (Hettie's shop,
+Crane's church, Vane's office, Sable's lodge, Toby's house, the Sign Chamber)
+now carry their close-up's specific details; the bedroom desk already had full
+parity. New procedural kinds: `cash_register`, `bill_spike`, `service_bell`,
+`crayons`, `altar_mask`, `lectern`, `gun_cabinet` (FURNITURE), `key_rack` +
+`crayon_drawing` + `wall_sign` (`_WALL_DECO`). Deferred: Sable's ceiling fan
+(no overhead tilt path).**
+
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
 **PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /
@@ -463,6 +528,155 @@ fog/forest periphery reads as dread, not filler.
   rebuilt building with VISION four-facing captures.
 - Its own build, scoped to run AFTER the conversation/tableau work so two big
   changes are never in the air at once.
+
+### 4c. **[Opus]** Interior doors + the multi-subroom redesign  *(maintainer complaint 2026-07: "all rooms are either a box or that room with the side room"; MECHANIC + SHOP PILOT landed, rollout open)*
+
+The maintainer's grievance: every interior is one open box or a box with a
+single side room. The fix has two halves, and the first is done.
+
+- **The MECHANIC landed (2026-07).** A new **interior door** kind (DESIGN.md
+  §7 / CLAUDE.md): a swinging leaf on a floor GAP in a wall line WITHIN one
+  scene, the tool that splits a building into subrooms. `Scene._inner_doors` +
+  `add_inner_door(tx, ty, kind, open=False)`; a shut leaf is solid + blocks
+  the sight cone (so it hides the room beyond AND breaks a pursuer's line of
+  sight, buying time), open passes both, NPCs route AT it and open their own
+  way (`Scene.update`), the player toggles the nearest with E. Kinds: plank /
+  bars / half (see-through) / curtain. Draw `rendering.props.draw_inner_door`.
+  Guard `tests/stealth.py` §15. Reachability is safe: an inner door sits on a
+  `.` gap tile, so smoke's flood-fill routes through it.
+- **The SHOP PILOT landed (2026-07).** `build_shop` (`scenes/interiors.py`) is
+  rebuilt as a NESTED warren, not a divided box: an L-shaped public shop floor,
+  a plank door to a dry-goods STOCKROOM, a second plank door off the BACK of
+  the stockroom to a cold PANTRY (two doors deep, a true blind spot for the
+  cult tells), and a curtain nook for Hettie's office. Hettie's worker route
+  walks her through the stockroom door (the auto-open showcase). Verified live
+  (VISION four-facing + the blind-spot chain); full gate green.
+- **STILL OPEN: roll the pattern out** to the other box-or-side-room interiors,
+  one at a time, each verified live per VISION: the barn (currently the same
+  main-floor + one-back-stall pattern), the church, the sheriff's office, the
+  schoolhouse, Toby's house (a refuge, so keep it gentle), the Lodge interiors.
+  Each is its OWN build (never two big scene changes in the air at once, #4b);
+  provenance first (SCENE-DRESSING PROCESS), reachability re-checked with
+  smoke's flood-fill, doors mostly CLOSED, varieties that fit context, and
+  **doors placed in VARIED walls** (not all in E-W walls facing south -- mix
+  side-wall N-S doors that open E-W with E-W-wall doors, error class #8;
+  the shop pilot does this).
+
+- **Interior partition CORNER BEVEL landed + rolled out (2026-07, maintainer
+  "round that corner" call; DESIGN.md §6, `scenes/terrain.py`).** The chunky 90°
+  corner where an interior partition wall juts into a room is chamfered in both
+  wall draw layers (`_bevel_corners` -> `_extrude_box` bevel param +
+  `_draw_wall_mass` clip); provably orthogonal to the run merge (runs/tees/shell
+  stay full-thickness, byte-identical), draw-only. `_BEVEL_SCENES` now covers
+  ALL above-ground building interiors (shop, church, barn, schoolhouse,
+  sheriff_office, bedroom, clerk/guest rooms, lodge + lodge_hall, toby_house,
+  farmhouse, lodge_cellar), each rendered + scanned; never the mine (thick reads
+  right) or outdoors (byte-identical, confirmed by capture_world --diff). *(Open
+  polish: tune `_BEVEL_INSET` (0.28·TILE) or subdivide to a 2-3 segment arc if
+  the maintainer wants a rounder corner than the single 45° chamfer.)*
+
+- **Thin-SLAB walls landed on the shop (2026-07, maintainer "thin the walls /
+  walls are no longer tiles / connect them by smoothing it out"; DESIGN.md §6,
+  `scenes/terrain.py`).** The step past the bevel, and unlike it, REAL geometry:
+  a wall tile becomes a THIN slab (`_SLAB_THICK` = 0.5·TILE) as the UNION of up
+  to two BANDS (a vertical band when a wall neighbour is N/S, a horizontal band
+  when E/W), so runs, corners (L), tees, crosses, and the shell all meet FLUSH as
+  thin walls with no fat junction and no notch. Cross-thickness: floor/wall both
+  sides → CENTRE (two-sided partition); one flank off-map → the SHELL, hugging
+  the EXTERIOR edge (outer face on the silhouette, no floor lip, thinning
+  inward). `_wall_slab(scene, tx, ty)` returns the band-rect list, the single
+  source for BOTH draw layers (`_extrude_box` `foot` param looped per band +
+  `_draw_wall_mass` union clip) AND the collision/sight/nav predicates
+  (`scenes/base.py` `_obj_solid_here`, shared by
+  `is_solid_at`/`blocks_sight`/`_nav_solid_at`, point-in-ANY-band, inclusive
+  bounds) — so the wall the player bumps and the AI sees IS the thin wall drawn.
+  SUPERSEDES the bevel in a slab scene (`_bevel_corners` returns 0 there). Gated
+  to `_SLAB_SCENES` (shop was the pilot; Wave A + the three principal seats have
+  since opted in, below); every NON-slab scene stays byte-identical
+  (capture_world --diff: brimley/works_cistern/depths_hall unchanged -- the slab
+  scenes legitimately differ). Guarded by `tests/stealth.py` §16 (bands thin, shell hugs the
+  exterior, junctions connect flush, collision+sight+nav agree); full gate green;
+  the shop verified live (VISION four-facing + dark + a top-down footprint
+  schematic). **Corners ROUNDED (2026-07, maintainer "rounded corners where the
+  walls connect"):** `_rounded_wall_poly` traces the band union to an outline and
+  fillets each FREE corner (facing floor) into an arc (`_fillet`, radius
+  `_ROUND_R`) while a wall-neighbour SEAM corner stays sharp so tiles connect
+  flush; it drives the flat mass + a new 3D `_extrude_prism` (the rounded sibling
+  of `_extrude_box`). Building outer corners + partition run-ends read rounded;
+  collision/sight/nav keep the square bands (the rounding sits inside the drawn
+  face). Verified live all four facings + dark. **No diagonal-only wall joins
+  (2026-07, maintainer "add a rule not to have walls like that"):** two walls
+  that met only at a diagonal (the corner tile missing) rendered as disconnected
+  thin stubs; the shop's stockroom-SE and office-SW corners were closed (a wall
+  added at the missing corner tile), and `terrain.diagonal_wall_joins` +
+  `tests/smoke.py [10/10]` now FAIL any slab scene with such a join.
+
+**THE ROLLOUT PROGRAM (2026-07, maintainer "apply to other scenes / fully take
+advantage"; the shop is the finished reference).** The thin-slab + rounded +
+real-geometry wall system is now a general geometry tool (single-source
+`_wall_slab`, the `_rounded_wall_poly`/`_fillet` outliner, the `_extrude_prism`
+that collision/sight/nav obey). Spend it in phases:
+
+- **Phase 1 -- material foundation.** *(1a LANDED 2026-07.)* `_WALL_STYLES`
+  (`{thick, round, rough}`) keyed per scene via `_SLAB_STYLE`, read through
+  `_wall_style`; `_SLAB_SCENES` derived from it. So thickness + corner round
+  read the CONSTRUCTION (`plank`/`plaster`/`timber`/`stone`) from one table;
+  `plank` = the old fixed constants byte-for-byte (shop geometry proven
+  identical, full byte-identity gate green). *(1b LANDED 2026-07.)* `rough > 0`
+  runs `_roughen`: a seeded PER-TILE jitter on the FREE outline edges (seam
+  edges + shared corners kept put, so tiles still connect flush and corners stay
+  rounded), draw-only so collision/sight/nav still read the square bands
+  (`§16`). `timber`/`stone` now read rough-hewn, not just thicker -- the same
+  primitive the mine (Phase 3) reuses. *(1c LANDED 2026-07, maintainer "wider
+  variety of colors".)* each style carries a dark muddy `tint` (delta on the
+  near-black palette, both draw layers, Darkwood-safe) so a room reads its
+  material in COLOUR too: warm-pine plank, pale plaster, red-brown timber,
+  rust brick, cold blue-grey stone. Non-slab tint (0,0,0) → byte-identical.
+- **Phase 2 -- interior rollout, one scene per build (consumes Phase 1 + grows
+  new shape primitives on demand).** Per-scene definition of done: assign a
+  style; redesign to multi-subroom (#4c interior doors, varied walls) if it is a
+  box; clear diagonal joins (smoke [10/10]); grow the new shapes a room needs
+  (round PILLAR from a lone wall tile → a cylinder via the prism; ARCHED
+  doorway head; ROUNDED counter/desk); re-tune cover for the thinner walls;
+  VISION four-facing + dark; full gate + `--diff`; docs same commit. Waves,
+  simplest → richest: **A refuges** *(LANDED 2026-07: bedroom / clerk_room /
+  guest_room_a+b = plaster, toby_house = plank; opted into `_SLAB_STYLE`, all
+  four facings verified clean, no diagonal joins, gate green, every non-rolled
+  scene byte-identical)*, **B explorables** *(sheriff_office = plaster + church =
+  plank LANDED 2026-07 with the three principal seats below; barn + schoolhouse
+  still open -- the barn first, and the church's curved apse / arched-window
+  SHAPES were deferred to Phase 4, the style opt-in shipped without them)*,
+  **C the complex** *(lodge = timber LANDED 2026-07; lodge_hall, lodge_cellar,
+  abandoned_farmhouse still open)*. *(A/B/C SAFE_SCENES stay flat-lit + safe;
+  only geometry + colour change.)*
+- **Phase 3 -- the mine reimagined (consumes 1b).** A `_ROCK_SCENES` set (Works
+  + Depths): full-THICK but the rough-outline + prism, so hewn rock reads
+  irregular/organic, not blocky boxes. Land with #14's side-dug chambers.
+- **Phase 4 -- freeform walls (the north star, "walls are no longer tiles" all
+  the way).** A wall SEGMENT primitive (endpoints + thickness + style, off the
+  tile grid) in the Scene model; collision/sight/nav read segment geometry; the
+  prism already draws it. Unlocks diagonal walls, a curved church apse, a round
+  silo/tower. Prototype ONE curved feature first.
+- **Cross-cutting (every phase, never its own):** thinner walls occlude LESS →
+  re-derive interior cover (the inner doors + furniture carry it, not wall
+  thickness), extend `tests/stealth.py §16` as styles/primitives land; VISION
+  toward the Darkwood organic read; guards + docs in the same commit.
+
+**The three principal seats LANDED (2026-07, maintainer "Cranes, Vanes, and
+Stables places should all be the thinner wall").** `church` = `plank` (its
+board walls, matching draw_crane_tableau), `sheriff_office` = `plaster` (pale
+institutional), `lodge` = `timber` (the rustic common room, its antler/firewood
+dressing). One `_SLAB_STYLE` line each; the new geometry each just gained (the
+church chancel windows, the office holding-cell bars + cabinet) reads clean
+under the thin walls. All three verified live (VISION four-facing + dark, the
+window/door seams checked), no diagonal joins (smoke [10/10]), full gate green.
+The bevel is auto-superseded for them (`_bevel_corners` returns 0 on a slab
+scene), so their `_BEVEL_SCENES` membership is now inert.
+
+**Still open:** the rest of Wave B (`barn`, `schoolhouse`) + Wave C
+(`lodge_hall`, `lodge_cellar`, `abandoned_farmhouse`); the deferred curved
+church shapes (Phase 4); Phase 3 (the mine, `_ROCK_SCENES`) + Phase 4 (freeform
+off-grid wall segments).
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
@@ -714,21 +928,116 @@ and the tests. Sequence it:
 
 **#22 is COMPLETE (22a + 22b + 22c all landed 2026-07).**
 
+### 23. **[Opus + Fable]** Complex behavior for cultists and locals  *(maintainer-approved plan 2026-07; built in pilots)*
+
+The cult AI and the town both deepen, inside hard fences: systemic not
+scripted; the people do NOT change (only the cult may act wrong, and only
+in cult ways; locals stay mundane and never signal the cosmology); nothing
+touches the pacing ratios, the SAFE_SCENES refuge, fold-only pursuit
+carry, or the Talk/two-touch gates; no new behavior ships with explanatory
+player-facing text (the behavior IS the tell); the King and hollow Sheriff
+keep their exemptions.
+
+- **23a. Cult liveness pilot. LANDED (2026-07) except station
+  authoring.** Two scout-only beats in `systems/stealth.py`, wired into
+  BOTH cult machines (`entities/npc.py` + `entities/enemy.py`); tuning in
+  the `CULT_SYNC_*` / `CULT_HANDOFF_*` config block. The **synchrony
+  beat** (`sync_pause`): on one shared clock every idle cult scout pauses
+  mid-stride at the same instant, one breath, then resumes (the
+  claimed-as-one-body wrongness, ambient). The **hand-off**
+  (`handoff_step`): two scouts whose rounds cross stop, face each other
+  for a silent beat, and part on a long per-actor cooldown. Both run
+  AFTER detection/hearing score the tick and never own any state but
+  scout: a frozen scout still fills suspicion and still promotes
+  (guarded end-to-end by `tests/stealth.py` §12); set-piece kneelers
+  keep their scripted stillness. **Still open in 23a:** job-station
+  authoring for the patrolled cult rooms that have none (works_sign's
+  lone patrol) -- place via the SCENE-DRESSING PROCESS (render first,
+  never by name).
+- **23b. The town half.** The **yield**: a local a cult patrol passes
+  steps off the lane, eyes down, waits, resumes; the cultist never
+  acknowledges them (the trapped-WITH-them split staged in pure
+  movement, no dialogue). **Mundane witness reactions**: a local who
+  sees the drawn gun, a sprint, or a moth axed flinches or hurries
+  indoors (rides homebody `_inside`); a kill nearby empties the street
+  for the visit. Strictly mundane reactions only, which strengthens
+  their ordinariness.
+- **23c. The mechanical pieces, sequenced for the #5 tuning pass.** The
+  SEARCH **sweep partition** (multiple searchers divide `sweep_points`,
+  no duplicate checks); **room posture** (a per-scene calm/uneasy/roused
+  int raised by flares, shots, struggles, and found bodies, decaying;
+  modulates walk speed, scan time, and sweep budget -- ship OFF-default
+  behind config until the human tuning pass absorbs it); the **flank
+  call** (a LOCKED chaser pulls at most ONE nearby patrol to a flank
+  point; same LOS and suspicion rules, normal search timer, never soft
+  omniscience); **object-state investigation** (a left-on noisemaker, an
+  opened door, a moth husk: pause at it, mark the room uneasy).
+- **23d. Content passes (anytime, Fable).** Fuller local **day-loops**
+  on the JOBS `stations` plumbing (Pell to the field edge he doesn't
+  look at, Calder to her gate, Royce circling his truck; door-anchor
+  honesty rules apply); **disposition framing** read off existing save
+  flags (mood, never a meter -- the TODO #2 fences).
+
 ## Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code
 inspection and needs a person playing the game.
 
-### 5. **[Opus]** Stealth rework — the TUNING loop
+### 5. **[Opus]** Stealth rework — the TUNING loop  *(FIRST HUMAN PASS LANDED 2026-07)*
 
 The mechanic AND the placement pass are built and guarded
 (`tests/stealth.py` + flow §25; see `DESIGN.md §12` for the design
-and its status note). What remains only proves out against a human
-player: the suspicion fill curve (`SUS_FILL_RATE`), the concealment
+and its status note). **The first human playtest (2026-07) found four
+faults and a batch landed against them** (guarded by stealth §13):
+1. *"Hiding spots as objects are too rare"* -- CONFIRMED (23 enclosed
+   hides in the game, ~all underground; seven of the eight surface
+   patrol scenes had zero). Landed: +7 surface hides on EXISTING props
+   (under the rust wagon + dead sedan on cornfield_path, under the
+   lodge-yard pickup, in the backwoods cordwood stack, under Calder's
+   supper table + the dead pickup in brimley, and UNDER THE BRIDGE at
+   the town's centre -- the crossers knock on the planks overhead,
+   `Game._tick_bridge_knocks`, dressing only). **Still open:** the
+   scenes with no honest anchor (graveyard, country_lane,
+   gravel_road_north) need a bespoke crawlable prop each, placed via the
+   SCENE-DRESSING PROCESS; the cornfield_maze stays hide-free on purpose
+   (its terror is exposure in corn).
+2. *"Corn / tall grass is invisible"* -- CONFIRMED (`:` cover rendered
+   as a flat floor tint). Landed: the tall-grass tuft layer
+   (`_tilt_grass_solid`, scenes/terrain.py): every bare `:` tile stands
+   up as waist-high dead-straw blades, depth-sorted with the corn so the
+   player wades IN. Draw only; collision/sight/cover rules untouched.
+3. *"No narrator boxes on stealth entry"* -- landed: both one-shot
+   teach notices (corn, shadow) CUT; `hide_enter`/`hide_exit` audio and
+   the visible cover are the only tells.
+4. *"Running around the cultist beats hiding"* -- CONFIRMED by the
+   numbers (cultists moved at 68% of WALK speed). Landed, the three
+   economy levers (`CULT_CHASE_MULT` / `CULT_GRAB_REACH` /
+   `SUS_SPRINT_MULT`): the locked-chase gear (ladder now King > sprint
+   105 > chase 85.5 > walk 84 > scout 57 -- walking away is dead, sprint
+   still escapes but drains and winds), the arm's-reach grab (brushing
+   an awake cultist fires the grab; Talk/two-touch gates unchanged), and
+   sprint-in-LOS multiplying the detection score.
+
+Landed with the pass (2026-07, maintainer-approved): **river stones**,
+the proactive distraction verb -- finite walk-over pickups where the
+water runs, right-click lobs one, the landing is a placed noise event
+that turns idle scouts and never diverts a sighting-born search -- plus
+the two approved follow-ons on the same plumbing: **a stone through a
+window** (the loud tier: diverts even a search, breaks once, dark +
+shard-toothed for the run via the broken_windows ledger; draw only,
+never an entrance) and **a stone down the dead well** (the shaft's
+rattle routes the square; no bottom ever sounds, wordless). All in
+`STONE_*`/`GLASS_*`/`WELL_ECHO_*` config; DESIGN.md §12; stealth §14.
+Spitballed and parked for a decision: the crouch stance (after the next
+playtest) and the window-vault prototype (one building, look-passed,
+last).
+
+What remains proves out only against further play: the new constants'
+FEEL, the suspicion fill curve (`SUS_FILL_RATE`), the concealment
 factors, the sweep budget, and the struggle window/presses. Also
-deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
-under tilt already carries the information function) and an
-exit-takes-a-beat vulnerability window on enclosed hides.
+deferred on purpose: the Pillar-2 **peek** verb (free look under tilt
+already carries the information function) and an exit-takes-a-beat
+vulnerability window on enclosed hides.
 
 ### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 
@@ -802,6 +1111,62 @@ set-pieces (their lines + palettes are canon, NARRATIVE §5/§8), so this is
 a re-presentation question, not a gap. Do not start without a fresh
 maintainer decision, and land each ending only through a look pass
 (VISION.md; `tests/render_smoke.py` drives every ending).
+
+### 21. **[Opus + Fable]** Light-driven dread — the blackout + watcher-in-dark storm  *(design sketch with the maintainer 2026-07; the LIGHTING FOUNDATION landed, the storm is parked)*
+
+**Foundation LANDED (2026-07 lighting pass).** Brimley's civic light is now
+period-correct **electric** (cold `yard_light` poles + gas `generator`s
+outside each building; the wrong-century civic lanterns are gone), and the
+light system is **shared**: `_draw_dark` iterates `FIXTURE_POOLS` across
+EVERY emitter (not just `wall_torch`), so any fixture lights the dark it
+stands in -- proven by the underground candles now casting real pools
+(DESIGN §6; NARRATIVE §5 grid-died-with-the-fold). This is the substrate the
+maintainer's blackout idea needs (killable light nodes + a real light
+system), teed up but NOT built.
+
+**Interior lighting LANDED too (2026-07, "do 3 then 1" pass 1 of 2).** The
+explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
+schoolhouse, sheriff's office) are now `DARK_SCENES` at a lighter gloom (72),
+lit by the period-electric **`wall_lamp`** (genset bulkhead fixture) with the
+old candles/kerosene demoted to accent -- they read dim-lit-by-bulbs with dark
+corners (DESIGN §6). The refuge (`SAFE_SCENES`) is deliberately excluded and
+stays flat-lit + safe. This is pass 1 ("just fix interior lighting first"); the
+Watcher rework below is pass 2 ("no light = danger").
+
+- **Watchers in the dark, scoped. LANDED (2026-07, pass 2 of "3 then 1").**
+  The non-refuge interiors (`DIM_INTERIOR_SCENES`) now adopt "no light =
+  danger": `WATCHER_OPEN_SCENES` folds them in, and in those rooms
+  `_tick_watchers` treats being in the DARK as exposure -- a light POOL
+  (`Scene.lit_at`) or the flashlight is the cover, and a Watcher caught in a
+  pool / the beam BURNS out (`WATCHER_LIGHT_BURN`, `_tick_watcher_gaze`). The
+  true refuges stay gaze-free (`SAFE_SCENES` excluded + `KING_FREE`). Guarded
+  by `tests/stealth.py` §11 (rewritten); DESIGN §4/§6, CLAUDE.md reconciled.
+  **Still open here:** the "go further" variant (even the refuges lose their
+  light-safety) is deliberately NOT built (the refuge is load-bearing); and
+  the blackout below is what makes it a *storm*.
+- **The moth blackout.** A moth flare knocks out the lights (kill a genset
+  node / drop the yard-light pools), the screen dims, and the cult camp
+  forms a procession to the flash and fans out to search. Rides the shared
+  light system + the existing moth flare (`rot_mixin`) + the procession
+  liveness (#23). Needs: a genset→fixtures power link (kill node = pools
+  die), a scene-level "blackout" state, and the procession staging.
+- **Watchers-in-the-dark.** Rework Watchers so they can open in ANY room
+  but only EXIST in the dark; the flashlight (or standing deep in a light
+  POOL) is what dispels them -- burn them out by getting lit. Couples with
+  the blackout (moths kill the lights → the dark → the Watchers) into "a
+  perfect storm." A real rework of `_tick_watchers` (DESIGN §1/§4), not a
+  tuning pass; keep the below-3 threat role.
+- **Retire the "special darkness" beam-off?** The deep (`CULT_DARK_SCENES`)
+  still swallows the flashlight by design (DESIGN §1). The lighting pass
+  did NOT change this (the deep is lit by its own ritual fires now, which
+  reads well); whether to fully retire the beam-off so light works
+  everywhere is the open dread decision here. Do not flip without a
+  maintainer call -- it softens a deliberate dread.
+
+All three are gated on a fresh maintainer go (per the 2026-07 discussion
+they were design-only). The **capture→King-unleashed** thread and the
+**procession-across-scenes** staging were sketched the same session and
+sit here too, unscoped.
 
 ### 16. **[Opus]** Ship track — packaging  *(was GAME_CHANGES §25)*
 

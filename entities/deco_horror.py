@@ -358,6 +358,23 @@ class DecoHorrorMixin:
             w = max(1, int(h * tri_t))
             pygame.draw.line(surf, gold, (x - w, ly), (x + w, ly), 1)
 
+    def _draw_wall_sign(self, surf, x, y):
+        """The Yellow Sign daubed on a WALL face rather than the floor: the same
+        crude-mask glyph as `yellow_sign`, but registered in `_WALL_DECO_KINDS`
+        so under tilt it hangs up the vertical apse wall (the Sign Chamber
+        tableau shows the Sign breathing on the wall, not warped onto the
+        floor). Draw is identical -- only the tilt-set membership differs."""
+        self._draw_yellow_sign(surf, x, y)
+
+    def _draw_altar_mask(self, surf, x, y):
+        """Flat (pitch-0) fallback for the Pallid Mask on the altar; the tilt
+        camera draws the real volume (rendering.props._draw_altar_mask_solid)."""
+        pygame.draw.ellipse(surf, (204, 200, 192), (x - 5, y - 7, 10, 14))
+        pygame.draw.ellipse(surf, (150, 148, 142), (x - 5, y - 7, 10, 14), 1)
+        for ex in (-2, 2):
+            pygame.draw.circle(surf, (10, 9, 11), (x + ex, y - 1), 1)
+            pygame.draw.circle(surf, (180, 120, 40), (x + ex, y), 1)
+
     def _draw_yellow_sign(self, surf, x, y):
         """The Yellow Sign -- His face, daubed in paint. CANON (NARRATIVE
         §4 #5): the Sign IS the Pallid Mask, "His face made an object",

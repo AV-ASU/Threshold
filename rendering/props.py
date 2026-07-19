@@ -1620,6 +1620,41 @@ def _draw_wall_torch_solid(surf, cam, deco):
                      max(1, int(1.5 * s)))
 
 
+def _draw_wall_lamp_solid(surf, cam, deco):
+    """A period interior electric fixture: a short conduit up the wall, a
+    bracket out toward the room, a frosted shade, and a STEADY warm bulb. The
+    1994 indoor twin of the yard light -- what the town's gensets actually
+    power inside (a bulkhead / utility light), not a candle. Drawn mounted up
+    the wall at its ground point (placements line it against the wall);
+    Game._draw_dark casts its warm pool."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    metal = (60, 58, 62)
+    metal_hi = (98, 96, 102)
+    mount_h = 20 * s
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, mount_h)
+    pygame.draw.line(surf, metal, base, top, max(1, int(1.5 * s)))       # conduit
+    pygame.draw.line(surf, metal_hi, base, top, 1)
+    # frosted shade: a small pale dome atop the conduit. SYMMETRIC (no arm),
+    # so it reads mounted on ANY wall regardless of orientation, never a
+    # bracket poking into the wall.
+    draw_solid(surf, cam, wx, wy,
+               [(mount_h - 3.2 * s, 3.0 * s, 3.0 * s),
+                (mount_h - 0.6 * s, 2.6 * s, 2.6 * s),
+                (mount_h, 1.4 * s, 1.4 * s)],
+               {"body": (150, 146, 140), "lo": (92, 88, 84),
+                "rim": (178, 174, 168)})
+    # the steady warm bulb glowing at the shade's lower lip
+    lamp = cam.project(wx, wy + 1.8 * s, mount_h - 3.4 * s)
+    lr = max(2, int(2.2 * s * cam.scale))
+    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
+    pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
+    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+    pygame.draw.circle(surf, (255, 230, 182), (int(lamp[0]), int(lamp[1])), lr)
+
+
 def _draw_smoke_solid(surf, cam, deco):
     """A rising column of smoke -- four puffs ascending in world z, each
     larger and more faded than the last. Reads as a real column you can
@@ -2249,6 +2284,364 @@ def _draw_valve_solid(surf, cam, deco):
                        cam.project(wx + 8 * s, wy + 5 * s, 0)], max(2, int(2 * s)))
 
 
+def _draw_yard_light_solid(surf, cam, deco):
+    """A rural dusk-to-dawn yard light: a tall wood pole, a downswept
+    gooseneck arm, a shallow galvanized reflector hood, and a cold mercury-
+    vapor lamp burning under it. The period-correct town light -- 1994
+    northern Minnesota ran on these, not lanterns -- and its glow is COLD
+    blue-white, the deliberate opposite of the warm fire the town huddles
+    at (burn barrels, braziers, candles). Runs off the generators now the
+    fold cut the grid (NARRATIVE §1)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    wood = (74, 60, 44)
+    wood_hi = (104, 86, 62)
+    galv = (120, 122, 130)
+    galv_lo = (70, 72, 80)
+    pole_h = 46 * s
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, pole_h)
+    pygame.draw.line(surf, wood, base, top, max(2, int(3 * s)))
+    pygame.draw.line(surf, wood_hi, base, top, max(1, int(1 * s)))
+    # a gooseneck arm: UP off the pole and OUT to one side (screen-relative to
+    # the yaw, so the head stays anchored off the pole from any facing, never a
+    # billboard), then a short drop to the lamp head
+    arm_len = 13 * s
+    ax = math.cos(cam.yaw + math.pi / 2)
+    ay = math.sin(cam.yaw + math.pi / 2)
+    hx = wx + ax * arm_len
+    hy = wy + ay * arm_len
+    hood_z = pole_h - 3 * s
+    knee = cam.project(wx + ax * arm_len * 0.55,
+                       wy + ay * arm_len * 0.55, pole_h + 2 * s)
+    head_top = cam.project(hx, hy, hood_z + 3 * s)
+    pygame.draw.line(surf, galv, top, knee, max(2, int(2 * s)))
+    pygame.draw.line(surf, galv, knee, head_top, max(2, int(2 * s)))
+    # the reflector hood: a taller galvanized DOME (a cone narrowing upward),
+    # opening downward over the lamp -- reads as a hood, not a flat ring
+    draw_solid(surf, cam, hx, hy,
+               [(hood_z, 4.8 * s, 4.8 * s),
+                (hood_z + 2.6 * s, 2.6 * s, 2.6 * s),
+                (hood_z + 4.0 * s, 0.8 * s, 0.8 * s)],
+               {"body": galv, "lo": galv_lo, "rim": (152, 154, 162)})
+    # a photocell nub perched on top of the dome
+    pc = cam.project(hx, hy, hood_z + 4.6 * s)
+    pygame.draw.circle(surf, galv_lo, (int(pc[0]), int(pc[1])),
+                       max(1, int(1.2 * s)))
+    # a faint cold spill on the ground under the head (always on, so the
+    # fixture reads as CASTING light even in daylight; the real navigable
+    # pool is punched by _draw_dark when the scene is dark)
+    _disc(surf, cam, hx, hy + 1.0 * s, 0.2 * s, 7.0 * s, 5.0 * s,
+          (150, 176, 210))
+    # the cold mercury-vapor lamp poking out the hood's lower FRONT lip
+    lamp = cam.project(hx, hy + 3.0 * s, hood_z - 1.6 * s)
+    lr = max(2, int(2.4 * s * cam.scale))
+    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (200, 224, 255, 60), (lr * 3, lr * 3), lr * 3)
+    pygame.draw.circle(glow, (216, 232, 255, 120), (lr * 3, lr * 3), lr * 2)
+    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+    pygame.draw.circle(surf, (232, 242, 255), (int(lamp[0]), int(lamp[1])), lr)
+    pygame.draw.circle(surf, (255, 255, 255), (int(lamp[0]), int(lamp[1])),
+                       max(1, lr // 2))
+
+
+def _draw_generator_solid(surf, cam, deco):
+    """A portable gas generator, tucked against a building's outside wall.
+    The fold cut Brimley off the grid with everything else (NARRATIVE §1),
+    so the town keeps its lights on off gasoline now: a low steel frame, a
+    fuel tank slung on top, a control panel of outlets, a stub muffler, and
+    a bare work-bulb clamped to the frame -- a small WARM light, the running
+    tell. A DETAIL, kept small (it must sit OUTSIDE, so it fronts the doors)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    steel = {"top": (86, 84, 92), "side": (56, 54, 62), "dark": (34, 33, 40)}
+    bw, bd, bh = 12 * s, 8 * s, 6 * s               # the engine frame
+    draw_box(surf, cam, wx, wy, bw, bd, bh, steel)
+    # fuel tank: a short upright canister on the frame's top
+    tank = {"body": (120, 62, 46), "lo": (66, 34, 26), "rim": (150, 92, 70)}
+    draw_solid(surf, cam, wx - 1.5 * s, wy,
+               [(bh, 3.0 * s, 3.0 * s), (bh + 3.4 * s, 3.0 * s, 3.0 * s)], tank)
+    # stub muffler canister on the frame's other end
+    draw_solid(surf, cam, wx + bw * 0.34, wy,
+               [(bh, 1.4 * s, 1.4 * s), (bh + 2.2 * s, 1.4 * s, 1.4 * s)],
+               {"body": (52, 50, 54), "lo": (30, 28, 32), "rim": (80, 78, 82)})
+    # control panel + two outlet dots on the near (south) face
+    panel = cam.project(wx, wy + bd * 0.5, bh * 0.5)
+    pw = max(2, int(3 * s * cam.scale))
+    ph = max(2, int(2 * s * cam.scale))
+    pygame.draw.rect(surf, (40, 40, 46),
+                     (int(panel[0] - pw), int(panel[1] - ph), pw * 2, ph * 2))
+    for ox in (-pw // 2, pw // 2):
+        pygame.draw.circle(surf, (150, 150, 158),
+                           (int(panel[0] + ox), int(panel[1])),
+                           max(1, int(1 * s)))
+    # a bare work-bulb clamped to the frame corner, warm, faintly wavering
+    stalk_base = cam.project(wx + bw * 0.5, wy - bd * 0.3, bh)
+    bl = cam.project(wx + bw * 0.5 + 1.5 * s, wy - bd * 0.3, bh + 2.4 * s)
+    pygame.draw.line(surf, (70, 68, 74), stalk_base, bl, max(1, int(1 * s)))
+    fl = 0.9 + 0.1 * math.sin(t * 5 + deco.seed)
+    br = max(2, int(2.0 * s * cam.scale))
+    glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (255, 210, 150, int(70 * fl)),
+                       (br * 3, br * 3), br * 3)
+    surf.blit(glow, (int(bl[0] - br * 3), int(bl[1] - br * 3)))
+    pygame.draw.circle(surf, (255, 224, 170), (int(bl[0]), int(bl[1])), br)
+
+
+def draw_inner_door(surf, cam, wx, wy, ew, swing, kind="plank", seed=0):
+    """An interior door leaf between two subrooms, swinging on its hinge from
+    across-the-gap (swing 0, SHUT) to along-the-wall (swing 1, OPEN). `ew` =
+    the door sits in an E-W wall (its opening faces N-S). Kinds: plank / bars
+    (a see-through cell gate) / curtain (a drape) / half (a counter door).
+    The collision + sight state lives on Scene._inner_doors; this only draws."""
+    from scenes.base import _TILT_WALL_RISE
+    leaf = 28.0
+    thick = 4.0
+    height = _TILT_WALL_RISE * (0.55 if kind == "half" else 0.9)
+    if ew:                              # E-W wall: shut leaf lies along X
+        hx, hy = wx - leaf / 2.0, wy
+        ang = swing * (math.pi / 2.0)
+    else:                              # N-S wall: shut leaf lies along Y
+        hx, hy = wx, wy - leaf / 2.0
+        ang = math.pi / 2.0 - swing * (math.pi / 2.0)
+    ca, sa = math.cos(ang), math.sin(ang)
+    bx, by = hx + (leaf / 2.0) * ca, hy + (leaf / 2.0) * sa
+    if kind == "bars":
+        iron = (58, 58, 66)
+        # frame + a low rail, then vertical bars you see between
+        rail = {"top": (46, 46, 52), "side": (30, 30, 36), "dark": (16, 16, 20)}
+        draw_box(surf, cam, bx, by, leaf, thick, height * 0.12, rail, yaw=ang)
+        top_rail = cam.project(hx + leaf * ca, hy + leaf * sa, height * 0.92)
+        hinge_top = cam.project(hx, hy, height * 0.92)
+        pygame.draw.line(surf, iron, hinge_top, top_rail, 2)
+        for i in range(5):
+            f = (i + 0.5) / 5.0
+            gx, gy = hx + leaf * f * ca, hy + leaf * f * sa
+            pygame.draw.line(surf, iron, cam.project(gx, gy, 0),
+                             cam.project(gx, gy, height * 0.92), 2)
+        return
+    if kind == "curtain":
+        pal = {"top": (104, 62, 60), "side": (78, 44, 44), "dark": (46, 26, 26)}
+    else:
+        pal = {"top": (98, 76, 50), "side": (68, 52, 34), "dark": (40, 30, 20)}
+    draw_box(surf, cam, bx, by, leaf, thick, height, pal, yaw=ang)
+    if kind == "plank":               # a couple seams + a knob
+        for fz in (0.35, 0.68):
+            a = cam.project(hx + leaf * 0.12 * ca, hy + leaf * 0.12 * sa,
+                            height * fz)
+            b = cam.project(hx + leaf * 0.88 * ca, hy + leaf * 0.88 * sa,
+                            height * fz)
+            pygame.draw.line(surf, (52, 40, 26), a, b, 1)
+        knob = cam.project(hx + leaf * 0.82 * ca, hy + leaf * 0.82 * sa,
+                           height * 0.5)
+        pygame.draw.circle(surf, (156, 146, 96),
+                           (int(knob[0]), int(knob[1])), max(1, 2))
+
+
+def _draw_cash_register_solid(surf, cam, deco):
+    """An old brass shop register: a shut cash drawer with a pull, a bank of
+    round keys on the near face, and a tall amount-flag housing standing off the
+    top with the pop-up number flags reading nothing behind its glass -- an
+    empty till. The housing carries its identity from above the counter (the
+    counter front hides the drawer/keys); lifts to `kwargs['z']` so it sits ON
+    the counter ("Till's been empty since the new year" made an object; the
+    walkable shop had none)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    body = {"top": (132, 110, 64), "side": (100, 82, 48), "dark": (66, 54, 32)}
+    draw = {"top": (90, 74, 42), "side": (68, 56, 32), "dark": (46, 38, 22)}
+    W, D, H = 18 * s, 13 * s, 11 * s
+    hD = D / 2
+    _vbox(surf, cam, wx, wy, W, D, z0, z0 + 4 * s, draw)                 # drawer
+    _vbox(surf, cam, wx, wy, W - 2 * s, D - 1.5 * s, z0 + 4 * s,
+          z0 + H, body)                                                  # body
+    P = _vframe(cam, wx, wy, 0.0)
+    # the cash-drawer pull, low on the near face
+    _lp(surf, P, (-4.5 * s, hD, z0 + 2 * s), (4.5 * s, hD, z0 + 2 * s),
+        (208, 184, 120), 2)
+    # the round key bank on the near face of the body (3 rows x 4)
+    for kz in (z0 + 5.3 * s, z0 + 7.0 * s, z0 + 8.7 * s):
+        for ci in range(4):
+            px, py = P((-5.2 + ci * 3.4) * s, hD - 0.8 * s, kz)
+            r = max(1, int(1.2 * s * cam.scale))
+            pygame.draw.circle(surf, (202, 180, 122), (int(px), int(py)), r)
+            pygame.draw.circle(surf, (72, 60, 36), (int(px), int(py)), r, 1)
+    # the amount-flag housing: a prominent box standing off the top, the read
+    # from above the counter. Sits at the back so the sloped keys front it.
+    fy = wy - (hD - 2.2 * s)
+    fz0, fz1 = z0 + H, z0 + H + 9 * s
+    _vbox(surf, cam, wx, fy, 14 * s, 4 * s, fz0, fz1, body)              # housing
+    Pf = _vframe(cam, wx, fy, 0.0)
+    fd = 2 * s
+    _qp(surf, Pf, [(-5.6 * s, fd, fz0 + 1.6 * s), (5.6 * s, fd, fz0 + 1.6 * s),
+                   (5.6 * s, fd, fz1 - 1.6 * s), (-5.6 * s, fd, fz1 - 1.6 * s)],
+        (24, 22, 20))                                                    # glass
+    # the pop-up number flags behind the glass, blank (an empty sale)
+    for dx in (-3.4 * s, -0.4 * s, 2.6 * s):
+        dp = Pf(dx, fd, fz0 + 4.6 * s)
+        pygame.draw.rect(surf, (156, 152, 138),
+                         (int(dp[0]) - 1, int(dp[1]) - 4,
+                          max(2, int(2.2 * s)), max(4, int(5 * s))))
+    # a brass crest bead along the top of the housing
+    _lp(surf, Pf, (-5.6 * s, fd, fz1 - 0.6 * s), (5.6 * s, fd, fz1 - 0.6 * s),
+        (196, 172, 112), max(1, int(1.4 * s)))
+
+
+def _draw_bill_spike_solid(surf, cam, deco):
+    """A receipt spike: a weighted base, a thin steel needle, and a fan of
+    impaled paper slips crowding the upper half (Mara's tab, the one Hettie
+    works off the spike). Lifts to `kwargs['z']` for the counter."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    base = {"top": (96, 96, 104), "side": (70, 70, 78), "dark": (48, 48, 56)}
+    _vbox(surf, cam, wx, wy, 7 * s, 6 * s, z0, z0 + 2 * s, base)         # base
+    P = _vframe(cam, wx, wy, 0.0)
+    tip = z0 + 13 * s
+    _lp(surf, P, (0, 0, z0 + 2 * s), (0, 0, tip), (176, 178, 188),
+        max(1, int(1.2 * s)))                                           # needle
+    # the impaled slips, a curling fan up the needle
+    for ox, oz, pw, col in ((-3.2 * s, tip - 6.5 * s, 6, (176, 168, 148)),
+                            (2.6 * s, tip - 5.0 * s, 5, (162, 154, 134)),
+                            (-2.4 * s, tip - 3.4 * s, 5, (178, 170, 150)),
+                            (1.6 * s, tip - 2.0 * s, 4, (166, 158, 138))):
+        a = P(ox, 0.4 * s, oz)
+        b = P(ox * 0.25, 0.4 * s, oz + 1.8 * s)
+        pygame.draw.line(surf, col, (int(a[0]), int(a[1])),
+                         (int(b[0]), int(b[1])), max(2, int(pw * 0.55 * s)))
+
+
+def _draw_altar_mask_solid(surf, cam, deco):
+    """The Pallid Mask resting on the cult's altar, face-out to the kneeling: a
+    pale drowned face, black eye sockets each holding a warm gold ember (it
+    knows your hands). A flat object shown to the congregation, so it faces
+    south by design (NARRATIVE 6a); a soft warm underglow. Lifts to kwargs['z']
+    (the pedestal cap); the scene drops it once the Mask is taken."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 18.0))
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0) or 0
+    hw, hh = 4.2 * s, 5.4 * s
+    fy = 5.5 * s                       # forward (south), the front of the cap
+    zc = z0 + hh + 1.5 * s             # mask centre height
+    gx, gy = cam.project(wx, wy + fy, zc)
+    gw = max(2, int(hw * cam.scale * 1.6)); gh = max(2, int(hh * cam.scale * 1.6))
+    glow = pygame.Surface((gw * 2 + 2, gh * 2 + 2), pygame.SRCALPHA)
+    pygame.draw.ellipse(glow, (150, 118, 66, 66), (1, 1, gw * 2, gh * 2))
+    surf.blit(glow, (int(gx) - gw - 1, int(gy) - gh - 1),
+              special_flags=pygame.BLEND_RGB_ADD)
+    pts = []
+    for i in range(16):
+        a = i / 16.0 * 2 * math.pi
+        pts.append(cam.project(wx + math.cos(a) * hw, wy + fy,
+                               zc + math.sin(a) * hh))
+    ipts = [(int(px), int(py)) for px, py in pts]
+    pygame.draw.polygon(surf, (204, 200, 192), ipts)
+    pygame.draw.polygon(surf, (150, 148, 142), ipts, 1)
+    n0 = cam.project(wx, wy + fy, zc + 1.0 * s)
+    n1 = cam.project(wx, wy + fy, zc - 2.2 * s)
+    pygame.draw.line(surf, (172, 168, 160), (int(n0[0]), int(n0[1])),
+                     (int(n1[0]), int(n1[1])), 1)
+    ember = 0.55 + 0.45 * math.sin(t * 1.6 + seed)
+    for ex in (-1.9 * s, 1.9 * s):
+        sk = cam.project(wx + ex, wy + fy, zc + 1.4 * s)
+        pygame.draw.circle(surf, (10, 9, 11), (int(sk[0]), int(sk[1])),
+                           max(1, int(1.4 * s * cam.scale)))
+        eg = cam.project(wx + ex, wy + fy, zc + 0.6 * s)
+        ec = (int(120 + 90 * ember), int(70 + 46 * ember), 30)
+        pygame.draw.circle(surf, ec, (int(eg[0]), int(eg[1])),
+                           max(1, int(0.7 * s * cam.scale)))
+
+
+def _draw_crayons_solid(surf, cam, deco):
+    """A child's crayons and a half-drawn sheet on the table: a pale sheet with
+    a couple of crude crayon strokes, and several short colored crayon sticks
+    scattered beside it. Lifts to kwargs['z'] for the tabletop (Toby's table)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    P = _vframe(cam, wx, wy, 0.0)
+    zsheet = z0 + 0.4 * s
+    _qp(surf, P, [(-8 * s, 6 * s, zsheet), (4 * s, 6 * s, zsheet),
+                  (4 * s, -6 * s, zsheet), (-8 * s, -6 * s, zsheet)],
+        (208, 202, 186))                                          # sheet
+    # a couple crude crayon strokes on the sheet (a sun, a stroke)
+    sc0 = P(-2 * s, 2 * s, zsheet + 0.1 * s)
+    pygame.draw.circle(surf, (228, 198, 82), (int(sc0[0]), int(sc0[1])),
+                       max(1, int(1.6 * s)))
+    a = P(-6 * s, -3 * s, zsheet + 0.1 * s); b = P(1 * s, -3 * s, zsheet + 0.1 * s)
+    pygame.draw.line(surf, (90, 170, 90), (int(a[0]), int(a[1])),
+                     (int(b[0]), int(b[1])), max(1, int(1.4 * s)))
+    # the crayon sticks scattered beside the sheet, short low colored cylinders
+    for ox, oy, col in ((7 * s, 4 * s, (200, 70, 60)), (8.5 * s, 1.5 * s, (70, 120, 200)),
+                        (6.5 * s, -1.5 * s, (90, 180, 90)), (9 * s, -4 * s, (230, 200, 80)),
+                        (7.5 * s, -6 * s, (180, 90, 180))):
+        ca = P(ox, oy, z0 + 0.8 * s); cb = P(ox + 3.4 * s, oy - 0.8 * s, z0 + 0.8 * s)
+        pygame.draw.line(surf, col, (int(ca[0]), int(ca[1])),
+                         (int(cb[0]), int(cb[1])), max(2, int(1.8 * s)))
+
+
+def _draw_service_bell_solid(surf, cam, deco):
+    """A brass reception service bell: a domed bell on a round base with a small
+    press button on top. Lifts to kwargs['z'] for the desk. Sable's tableau
+    keeps one on the register; the walkable desk had none."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    brass = {"body": (150, 128, 74), "lo": (104, 86, 48), "rim": (198, 174, 112)}
+    draw_solid(surf, cam, wx, wy, [
+        (z0 + 0.0, 5.0 * s, 4.2 * s),        # base disc
+        (z0 + 1.3 * s, 4.5 * s, 3.7 * s),
+        (z0 + 2.1 * s, 4.8 * s, 4.0 * s),    # dome shoulder
+        (z0 + 4.2 * s, 3.3 * s, 2.7 * s),
+        (z0 + 5.6 * s, 1.5 * s, 1.2 * s),
+        (z0 + 6.2 * s, 0.9 * s, 0.8 * s),    # cap
+    ], brass)
+    P = _vframe(cam, wx, wy, 0.0)
+    st = P(0, 0, z0 + 6.2 * s)
+    b = P(0, 0, z0 + 7.5 * s)
+    pygame.draw.line(surf, (120, 100, 58), (int(st[0]), int(st[1])),
+                     (int(b[0]), int(b[1])), max(1, int(1.2 * s)))
+    pygame.draw.circle(surf, (208, 186, 124), (int(b[0]), int(b[1])),
+                       max(1, int(1.4 * s)))
+
+
+def _draw_lectern_solid(surf, cam, deco):
+    """A church reading lectern: a narrow dark-wood column on a foot, a small
+    brass cross on the front, and the open book on a board slanted toward the
+    nave (near edge low, far edge high, so the camera looks down onto the pale
+    pages). The preacher's whole seat, the centrepiece of his tableau -- the
+    walkable church had only a bare altar table."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    wood = {"top": (80, 60, 40), "side": (60, 44, 30), "dark": (40, 30, 20)}
+    _vbox(surf, cam, wx, wy, 12 * s, 11 * s, 0, 2.5 * s, wood)      # foot
+    _vbox(surf, cam, wx, wy, 7 * s, 7 * s, 2.5 * s, 16 * s, wood)   # column
+    P = _vframe(cam, wx, wy, 0.0)
+    # a small brass cross on the front (south) face of the column
+    cz = 9 * s
+    _lp(surf, P, (0, 3.5 * s, cz - 2.6 * s), (0, 3.5 * s, cz + 2.6 * s),
+        (178, 154, 98), max(1, int(1.5 * s)))
+    _lp(surf, P, (-1.9 * s, 3.5 * s, cz + 0.9 * s), (1.9 * s, 3.5 * s, cz + 0.9 * s),
+        (178, 154, 98), max(1, int(1.5 * s)))
+    # the slanted book board: near (south) edge low, far (north) edge high
+    zlo, zhi = 16 * s, 20.5 * s
+    _qp(surf, P, [(-7 * s, 5 * s, zlo), (7 * s, 5 * s, zlo),
+                  (7 * s, -5 * s, zhi), (-7 * s, -5 * s, zhi)], wood["dark"])
+    # the open book on the board: two pale pages, a dark gutter, faint text
+    _qp(surf, P, [(-6 * s, 4 * s, zlo + 0.5 * s), (6 * s, 4 * s, zlo + 0.5 * s),
+                  (6 * s, -4 * s, zhi - 0.5 * s), (-6 * s, -4 * s, zhi - 0.5 * s)],
+        (198, 190, 170))
+    _lp(surf, P, (0, 4 * s, zlo + 0.5 * s), (0, -4 * s, zhi - 0.5 * s),
+        (118, 110, 94), max(1, int(1.3 * s)))
+    for lx in (-3 * s, 3 * s):
+        _lp(surf, P, (lx, 2.6 * s, zlo + 1.5 * s), (lx, -2.6 * s, zhi - 1.5 * s),
+            (150, 142, 124), 1)
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -2289,13 +2682,22 @@ SOLID_PROPS = {
     "lodge_gable":    _draw_lodge_gable_solid,
     "radio":          _draw_radio_solid,
     "wrong_radio":    _draw_wrong_radio_solid,
+    "cash_register":  _draw_cash_register_solid,
+    "bill_spike":     _draw_bill_spike_solid,
+    "service_bell":   _draw_service_bell_solid,
+    "crayons":        _draw_crayons_solid,
+    "altar_mask":     _draw_altar_mask_solid,
+    "lectern":        _draw_lectern_solid,
     "church_bell":    _draw_church_bell_solid,
     "valve":          _draw_valve_solid,
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,
     "lantern":       _draw_lantern_solid,
+    "yard_light":    _draw_yard_light_solid,
+    "generator":     _draw_generator_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
+    "wall_lamp":     _draw_wall_lamp_solid,
     "smoke":         _draw_smoke_solid,
     "wisp":          _draw_wisp_solid,
     "rope":          _draw_rope_solid,

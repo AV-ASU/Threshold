@@ -61,6 +61,17 @@ def tick(g, n=1, dt=1 / 30.0):
         g.state = "playing"
         if g.dialog.active:
             g.dialog.active = False
+        # A stray reach-grab (CULT_GRAB_REACH) can open THE TALK -- the
+        # one-time first-contact tableau, a world-freeze. Page it through
+        # the way a player would (Escape pages, never aborts; the release
+        # and stand-down run on the last page) so fixtures that are not
+        # about the grab keep running.
+        for _pg in range(14):
+            tb = getattr(g, "_tableau", None)
+            if tb is None or tb.get("kind") != "talk":
+                break
+            g._tableau_input(pygame.event.Event(pygame.KEYDOWN,
+                                                key=pygame.K_ESCAPE))
         g.step(dt)
 
 
@@ -156,12 +167,14 @@ def main():
     tick(g, 30)
     clear_cult(g)
     open_field(g)
-    n = plant(g, 30)
+    n = plant(g, 34)
     locked = False
     for _ in range(300):
         aim(g, n)
         tick(g, 1)
-        n.x, n.y = g.player.x + 30, g.player.y
+        # Pinned just OUTSIDE the arm's reach (CULT_GRAB_REACH), inside
+        # the SUS_NEAR field: point-blank for the fill, no grab noise.
+        n.x, n.y = g.player.x + 34, g.player.y
         g.player.hidden = "corn"
         if n._cult_state == "chase":
             locked = True
@@ -880,40 +893,75 @@ def main():
         pygame.key.get_pressed = _orig_gp
     check(splashed, "wade: a wet footfall throws a splash noise event")
 
-    # --- 11. Watchers open under the open sky / in the deep, NEVER inside
-    # a surface building (WATCHER_OPEN_SCENES, 2026-07 ruling) -------------
+    # --- 11. "no light = danger" (TODO #21): the gaze opens under the open
+    # sky, in the deep, AND in a DARK non-refuge interior -- but there a light
+    # POOL / the flashlight is the cover, and BURNS them. The true refuges
+    # (SAFE_SCENES) stay gaze-free. -------------------------------------------
     from systems.config import (WATCHER_OPEN_SCENES, WATCHER_WAKE_EV,
                                  WATCHER_GRACE, WATCHER_SPAWN_BASE,
-                                 KING_FREE_SCENES)
-    check("shop" not in WATCHER_OPEN_SCENES
-          and "church" not in WATCHER_OPEN_SCENES
-          and "sheriff_office" not in WATCHER_OPEN_SCENES
-          and "schoolhouse" not in WATCHER_OPEN_SCENES,
-          "watchers: surface interiors are outside the gaze's reach")
+                                 WATCHER_GAZE_DISPEL, WATCHER_LIGHT_BURN,
+                                 DIM_INTERIOR_SCENES, KING_FREE_SCENES)
+    check(DIM_INTERIOR_SCENES <= WATCHER_OPEN_SCENES,
+          "watchers: the dark non-refuge interiors are now in the gaze's reach")
+    check("bedroom" not in WATCHER_OPEN_SCENES
+          and "toby_house" not in WATCHER_OPEN_SCENES,
+          "watchers: the true refuges (SAFE_SCENES) stay outside the gaze")
     check("brimley" in WATCHER_OPEN_SCENES
           and "effigy_grove" in WATCHER_OPEN_SCENES
           and "works_sign" in WATCHER_OPEN_SCENES,
           "watchers: the open sky and the deep stay in it")
-    # Inside the shop: exposed, evidence pulled, long past every timer --
-    # and no Watcher ever opens.
+    # Inside the shop, standing in the DARK (unlit, flashlight off): the gaze
+    # opens now.
     g = new_game()
     g.load_scene_now("shop", "default")
     tick(g, 30)
     g.save.set_arg("evidence", [{"name": f"w{i}"}
                                 for i in range(WATCHER_WAKE_EV)])
-    g.player.hidden = None
+    dark_x, dark_y = 2 * TILE + 16, 9 * TILE + 16     # far from every fixture
+    assert not g.scene.lit_at(dark_x, dark_y)
     for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
-        g._tick_watchers(1 / 30.0)
+        g.player.x, g.player.y = dark_x, dark_y
         g.player.hidden = None
-    check(not g._watchers and not g._cursed,
-          "watchers: none ever manifests inside a surface building")
-    # A live wave clears at the door and the grace re-arms for the way out.
+        g._tick_watchers(1 / 30.0)
+        if g._watchers:
+            break
+    check(bool(g._watchers),
+          "watchers: standing in the dark of a non-refuge interior opens one")
+    # Step into a light POOL: exposure drops, so the wave stops driving
+    # visibility (the hold releases).
+    lit_x, lit_y = 13 * TILE + 16, 8 * TILE + 16       # under the wall_lamp
+    assert g.scene.lit_at(lit_x, lit_y)
+    g.player.x, g.player.y = lit_x, lit_y
+    g.player.hidden = None
+    g._tick_watchers(1 / 30.0)
+    check(g._watcher_gaze == 0.0,
+          "watchers: standing in a light pool drops the gaze hold (cover)")
+    # Light BURNS a Watcher: one caught IN a pool dissolves fast.
     g._cursed = True
     g._spawn_watcher()
-    g._tick_watchers(1 / 30.0)
-    check(not g._watchers and not g._cursed
-          and g._watcher_clone_t == WATCHER_GRACE,
-          "watchers: stepping indoors clears the wave and sets the grace")
+    if g._watchers:
+        w = g._watchers[-1]
+        w.x, w.y = lit_x, lit_y
+        burned = False
+        for _ in range(int((WATCHER_GAZE_DISPEL / (1 + WATCHER_LIGHT_BURN)
+                            + 0.6) * 30)):
+            w.x, w.y = lit_x, lit_y
+            g._tick_watcher_gaze(1 / 30.0)
+            if w not in g._watchers:
+                burned = True
+                break
+        check(burned, "watchers: a Watcher caught in a light pool burns out")
+    # The true refuge stays gaze-free: inside toby_house, no Watcher ever opens.
+    gr = new_game()
+    gr.load_scene_now("toby_house", "default")
+    tick(gr, 30)
+    gr.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(WATCHER_WAKE_EV)])
+    for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
+        gr.player.hidden = None
+        gr._tick_watchers(1 / 30.0)
+    check(not gr._watchers and not gr._cursed,
+          "watchers: the true refuge never manifests one")
     # Same clock in the open: the wave DOES open (the mechanic still works).
     g2 = new_game()
     g2.load_scene_now("brimley", "default")
@@ -929,6 +977,413 @@ def main():
             break
     check(bool(g2._watchers),
           "watchers: the same exposure in the open still opens the wave")
+
+    # ---- §12: cult liveness stays OUT of the threat path (TODO #23a) ----
+    # The synchrony beat and the hand-off are scout-only dressing; a frozen
+    # scout still detects, and no threat state ever pauses.
+    print("[12] cult liveness: synchrony + hand-off never touch the threat")
+    from types import SimpleNamespace
+    from systems.stealth import sync_pause, handoff_step
+    from systems.config import (CULT_SYNC_PERIOD, CULT_SYNC_HOLD,
+                                CULT_HANDOFF_RANGE, CULT_HANDOFF_HOLD)
+    from entities.npc import NPC
+    gl = new_game()
+    gl.load_scene_now("brimley", "default")
+    clear_cult(gl)
+    scn = gl.scene
+    real_ticks = pygame.time.get_ticks
+    try:
+        # (a) the shared clock: a scout freezes inside the window, not outside.
+        frame_ms = [int(CULT_SYNC_PERIOD * 1000) + 100]   # inside the hold
+        pygame.time.get_ticks = lambda: frame_ms[0]
+        sc_actor = SimpleNamespace(_cult_state="scout", lock_facing=False,
+                                   aggro=1)
+        check(sync_pause(sc_actor) is True,
+              "sync: a scout holds during the shared beat")
+        frame_ms[0] = int((CULT_SYNC_PERIOD + CULT_SYNC_HOLD) * 1000) + 500
+        check(sync_pause(sc_actor) is False,
+              "sync: the beat releases after the hold")
+        # (b) threat states never pause, even inside the window.
+        frame_ms[0] = int(CULT_SYNC_PERIOD * 1000) + 100
+        held = [sync_pause(SimpleNamespace(_cult_state=st, lock_facing=False,
+                                           aggro=1))
+                for st in ("chase", "search", "investigate")]
+        check(not any(held),
+              "sync: chase/search/investigate never pause")
+        check(sync_pause(SimpleNamespace(_cult_state="scout",
+                                         lock_facing=True, aggro=0)) is False,
+              "sync: set-piece kneelers keep their scripted stillness")
+        # (c) detection scores straight through the freeze: a real cultist
+        # in the open, player in view, gains suspicion while standing still.
+        open_field(gl)
+        cx = gl.player.x
+        cy = gl.player.y - 3 * TILE
+        cult = NPC(cx, cy, "A cultist", "cultist", movement="chaser",
+                   tag="cult_test")
+        cult.facing = (0, 1)                      # looking at the player
+        for _ in range(6):
+            cult._cult_tick(1 / 30.0, scn, gl.player)
+        check(cult._suspicion > 0.0,
+              "sync: a frozen scout still fills suspicion")
+        check((cult.x, cult.y) == (cx, cy),
+              "sync: and has not moved while the beat holds")
+        # (d) the hand-off: two crossing scouts freeze, face, and part on
+        # a cooldown; a chasing peer is never met.
+        frame_ms[0] = int((CULT_SYNC_PERIOD + CULT_SYNC_HOLD) * 1000) + 500
+        a = NPC(cx, cy, "A", "cultist", movement="chaser", tag="cult_test")
+        b = NPC(cx + CULT_HANDOFF_RANGE - 4, cy, "B", "cultist",
+                movement="chaser", tag="cult_test")
+        met = handoff_step(a, [a, b], scn, 1 / 30.0)
+        check(met and a._handoff_t > 0 and b._handoff_t > 0,
+              "hand-off: crossing scouts stop together")
+        check(abs(a.facing[0] - 1.0) < 0.01,
+              "hand-off: and face each other")
+        for _ in range(int(CULT_HANDOFF_HOLD * 30) + 2):
+            handoff_step(a, [a, b], scn, 1 / 30.0)
+            handoff_step(b, [a, b], scn, 1 / 30.0)
+        check(a._handoff_t <= 0 and a._handoff_cd > 0,
+              "hand-off: the meeting ends and the cooldown holds")
+        check(handoff_step(a, [a, b], scn, 1 / 30.0) is False,
+              "hand-off: no immediate second meeting")
+        c = NPC(cx, cy, "C", "cultist", movement="chaser", tag="cult_test")
+        d = NPC(cx + 10, cy, "D", "cultist", movement="chaser",
+                tag="cult_test")
+        d._cult_state = "chase"
+        check(handoff_step(c, [c, d], scn, 1 / 30.0) is False,
+              "hand-off: a chasing peer is never met")
+    finally:
+        pygame.time.get_ticks = real_ticks
+
+    # ---- §13: the stealth economy (TODO #5, 2026-07 playtest tuning) ----
+    # Running past the cult must not dominate hiding: the speed ladder
+    # holds (King > sprint > chase > walk > scout), sprint is conspicuous,
+    # and an awake cultist grabs at arm's reach.
+    print("[13] stealth economy: the ladder, sprint tell, arm's reach")
+    from systems.config import (CULT_CHASE_MULT, CULT_GRAB_REACH,
+                                SUS_SPRINT_MULT, PLAYER_SPRINT_MULT)
+    from systems.stealth import detection_score
+    ge = new_game()
+    ge.load_scene_now("brimley", "default")
+    tick(ge, 10)
+    clear_cult(ge)
+    open_field(ge)
+    walk = ge.player.speed
+    sprint = walk * PLAYER_SPRINT_MULT
+    chase = 0.95 * 60 * CULT_CHASE_MULT          # the surface regular
+    scout = 0.95 * 60
+    check(scout < walk < chase < sprint,
+          f"ladder: scout {scout:.0f} < walk {walk:.0f} < chase "
+          f"{chase:.1f} < sprint {sprint:.0f}")
+    check(1.0 * 60 * CULT_CHASE_MULT < sprint,
+          "ladder: the fastest underground chaser stays under sprint")
+    check(CULT_GRAB_REACH > 22,
+          "reach: the grab reaches past the old bare contact")
+    # Sprint is conspicuous: same geometry, higher score while sprinting.
+    ge.player.hidden = None
+    ge.player.sprint_active = False
+    n = plant(ge, 100)
+    n.facing = (1.0, 0.0)
+    ge.player.x, ge.player.y = n.x + 100, n.y
+    s_walk = detection_score(ge.scene, n.x, n.y, n.facing, ge.player, 180.0)
+    ge.player.sprint_active = True
+    s_run = detection_score(ge.scene, n.x, n.y, n.facing, ge.player, 180.0)
+    ge.player.sprint_active = False
+    check(s_walk > 0 and abs(s_run - min(1.0, s_walk * SUS_SPRINT_MULT))
+          < 1e-6, f"sprint tell: score {s_walk:.2f} -> {s_run:.2f} in LOS")
+    # An awake SCOUT at arm's reach grabs in the open: the first grab of
+    # the run is THE TALK (the tick helper pages it), which proves the
+    # reach fired without ending the run.
+    check(not ge.save.flag("cult_talk_given"), "reach: fresh run, no talk yet")
+    n._cult_state = "scout"
+    n._suspicion = 0.0
+    n.x, n.y = ge.player.x + 26, ge.player.y
+    for _ in range(6):
+        tick(ge, 1)
+        n.x, n.y = ge.player.x + 26, ge.player.y
+        if ge.save.flag("cult_talk_given"):
+            break
+    check(ge.save.flag("cult_talk_given"),
+          "reach: brushing an awake scout at 26px fires the grab (the Talk)")
+
+    # ---- §14: river stones (TODO #5, the distraction verb) --------------
+    # A thrown stone is a placed noise event: it spends from the pocket,
+    # flies, lands, and its clatter turns an idle scout -- but it can
+    # never divert a sighting-born search (loud sits under the pull), and
+    # a rooted enclosed hide cannot throw at all.
+    print("[14] river stones: the clatter routes a scout, never a search")
+    from systems.config import NOISE_SEARCH_PULL
+    gs = new_game()
+    gs.load_scene_now("brimley", "default")
+    tick(gs, 10)
+    clear_cult(gs)
+    open_field(gs)
+    gs.player.inventory.add("stone", 2)
+    n = plant(gs, 150)
+    n._cult_state = "scout"
+    n._suspicion = 0.0
+    pin = (gs.player.x + 150, gs.player.y)      # earshot, out of reach
+    n.x, n.y = pin
+    gs.look.aim = 0.0                            # throw east, toward him
+    gs._throw_stone()
+    check(gs.player.inventory.count("stone") == 1,
+          "stones: the throw spends one")
+    check(len(gs._stones) == 1, "stones: it flies")
+    for _ in range(90):
+        tick(gs, 1)
+        n.x, n.y = pin
+        if n._cult_state == "investigate":
+            break
+    check(not gs._stones, "stones: it lands inside the range budget")
+    check(n._cult_state == "investigate",
+          "stones: the clatter turns the idle scout")
+    # A sighting-born search holds through a stone.
+    n._cult_state = "search"
+    n._cult_state_t = 8.0
+    n._last_seen_pos = pin
+    n._noise_loud = NOISE_SEARCH_PULL
+    n._sweep_list = []
+    gs._throw_stone()
+    for _ in range(60):
+        tick(gs, 1)
+        if not gs._stones:
+            break
+    tick(gs, 3)
+    check(n._cult_state == "search",
+          "stones: a sighting-born search is never diverted")
+    # A rooted enclosed hide cannot throw.
+    gs.player.hidden = "under"
+    gs.player.inventory.add("stone", 1)
+    k0 = gs.player.inventory.count("stone")
+    gs._throw_stone()
+    check(gs.player.inventory.count("stone") == k0 and not gs._stones,
+          "stones: a rooted enclosed hide cannot throw")
+    gs.player.hidden = None
+    # A stone THROUGH A WINDOW: the loud tier. Two claims, each on its own
+    # FRESH game so a carried cultist can never scramble the beat.
+    # (1) the throw smashes the pane -> the run ledger + the broken set.
+    from scenes.base import _WINDOW_CHARS
+    gg = new_game()
+    gg.load_scene_now("brimley", "default")
+    tick(gg, 10)
+    # Clear ALL npcs, not just the cult: a wandering homebody local is a
+    # solid body that can step into the throw's path and stop the stone
+    # short of the pane (is_solid_at counts solid NPCs) -- realistic, but
+    # it makes a mechanic test flaky. The throw mechanic needs no NPCs.
+    gg.scene.npcs = []
+    win = None
+    for wy_ in range(gg.scene.h):
+        for wx_ in range(gg.scene.w):
+            if gg.scene.objects[wy_][wx_] not in _WINDOW_CHARS:
+                continue
+            bx_ = wx_ * TILE + 16
+            by_ = (wy_ + 2) * TILE + 16      # 2 south: the throw approach
+            if not gg.scene.is_solid_at(bx_, by_):
+                win = (wx_, wy_, bx_, by_)
+                break
+        if win:
+            break
+    check(win is not None, "glass: brimley offers a window with a clear approach")
+    wx_, wy_, bx_, by_ = win
+    gg.player.x, gg.player.y = bx_, by_
+    gg.player.hidden = None
+    gg.look.aim = -math.pi / 2               # throw north, at the pane
+    gg.player.inventory.add("stone", 1)
+    gg._throw_stone()
+    for _ in range(60):
+        tick(gg, 1)
+        if not gg._stones:
+            break
+    check((wx_, wy_) in getattr(gg.scene, "_broken_windows", set()),
+          "glass: the pane breaks and joins the scene's broken set")
+    led = gg.save.arg("broken_windows", {}) or {}
+    check([wx_, wy_] in led.get("brimley", []),
+          "glass: the break is written to the run ledger")
+    # (2) the loudness claim, tested straight on the noise bus (no throw,
+    # so no chase/grab in play): a GLASS_LOUD event over the searcher
+    # pull re-tasks a searcher that an ordinary stone (STONE_LOUD) could
+    # not divert.
+    from systems.config import GLASS_LOUD, GLASS_REACH, STONE_LOUD
+    check(STONE_LOUD <= NOISE_SEARCH_PULL < GLASS_LOUD,
+          "glass: only the glass tier clears the searcher-pull bar")
+    gg2 = new_game()
+    gg2.load_scene_now("brimley", "default")
+    tick(gg2, 10)
+    clear_cult(gg2)
+    open_field(gg2)
+    ng = plant(gg2, 90)
+    ng._cult_state = "search"
+    ng._cult_state_t = 20.0
+    src = (gg2.player.x + 120, gg2.player.y)
+    ng._last_seen_pos = src
+    ng._noise_loud = NOISE_SEARCH_PULL
+    ng._sweep_list = []
+    ng._sweep_i = 0
+    ng.x, ng.y = src
+    gg2.scene.emit_noise(src[0], src[1], STONE_LOUD, kind="stone")
+    for _ in range(4):
+        ng.x, ng.y = src
+        tick(gg2, 1)
+    check(ng._cult_state == "search",
+          "glass: an ordinary stone cannot divert the search")
+    gg2.scene.emit_noise(src[0], src[1], GLASS_LOUD, kind="glass",
+                         reach=GLASS_REACH)
+    for _ in range(4):
+        ng.x, ng.y = src
+        tick(gg2, 1)
+    check(ng._cult_state == "investigate",
+          "glass: the smash diverts even a sighting-born search")
+    # The dead well: a stone over the lip spends one and the shaft's
+    # rattle turns a scout across the square. No landing ever sounds.
+    gw = new_game()
+    gw.load_scene_now("brimley", "default")
+    tick(gw, 10)
+    clear_cult(gw)
+    gw.save.set_flag("well_examined", True)
+    wpx, wpy = gw.scene._well_pos
+    gw.player.x, gw.player.y = wpx, wpy + 20
+    gw.player.hidden = None
+    gw.player.inventory.add("stone", 1)
+    m = plant(gw, 200)
+    m._cult_state = "scout"
+    m._suspicion = 0.0
+    mpin = (wpx + 200, wpy)
+    m.x, m.y = mpin
+    press_e(gw)
+    check(gw.player.inventory.count("stone") == 0,
+          "well: the drop spends the stone")
+    for _ in range(60):
+        tick(gw, 1)
+        m.x, m.y = mpin
+        if m._cult_state == "investigate":
+            break
+    check(m._cult_state == "investigate",
+          "well: the shaft's rattle turns a scout across the square")
+
+    # The under-bridge hide: a real enclosed hide, and a cultist crossing
+    # the deck overhead knocks (dressing only -- it must NEVER route the
+    # searcher to the player below).
+    gb = new_game()
+    gb.load_scene_now("brimley", "default")
+    tick(gb, 10)
+    clear_cult(gb)
+    check(getattr(gb.scene, "_bridge_hide_px", None) is not None
+          and gb.scene._bridge_hide_px in [(h[0], h[1])
+                                           for h in gb.scene.hide_spots],
+          "bridge: the under-bridge hide is a registered enclosed hide")
+    bhx, bhy = gb.scene._bridge_hide_px
+    gb.player.x, gb.player.y = bhx, bhy
+    gb.player.hidden = "under"
+    x0, x1, y0, y1 = gb.scene._bridge_deck_px
+    b = plant(gb, 40)
+    b._cult_state = "scout"
+    b._suspicion = 0.0
+    b.x, b.y = (x0 + x1) / 2, (y0 + y1) / 2          # up on the deck
+    gb._bridge_dust = 0.0
+    for _ in range(40):
+        tick(gb, 1)
+        b.x, b.y = (x0 + x1) / 2, (y0 + y1) / 2
+    check(gb._bridge_dust > 0.0,
+          "bridge: a tread on the deck raises the dust/knock tell")
+    check(b._cult_state == "scout",
+          "bridge: the crosser never routes to the hidden player below")
+
+    # ---- §15: interior doors (2026-07) ---------------------------------
+    print("[15] interior doors: shut blocks body+sight, open sees through, "
+          "a shut door breaks the chase")
+    from scenes.base import Scene
+    # a wall dividing a top room from a bottom room, two door gaps in it
+    o = ["WWWWWW", "W....W", "W....W", "WW.W.W",
+         "W....W", "W....W", "WWWWWW"]
+    sd = Scene("doortest", ["=" * 6] * 7, o)
+    sd.add_inner_door(2, 3, "plank")
+    sd.add_inner_door(4, 3, "bars")
+    dx, dy = 2 * TILE + 16, 3 * TILE + 16
+    check(sd.is_solid_at(dx, dy) and sd.blocks_sight(dx, dy)
+          and not sd._nav_solid_at(dx, dy),
+          "doors: a shut plank door is solid + blocks sight, nav routes through")
+    sd._inner_doors[(2, 3)]["open"] = True
+    check(not sd.is_solid_at(dx, dy) and not sd.blocks_sight(dx, dy),
+          "doors: an open door passes the body and the sight cone")
+    check(sd.is_solid_at(4 * TILE + 16, 3 * TILE + 16)
+          and not sd.blocks_sight(4 * TILE + 16, 3 * TILE + 16),
+          "doors: a shut BARS door blocks the body but you see through it")
+    # the stealth payoff: shutting the plank door breaks the LOS across it
+    a0 = (2 * TILE + 16, 1 * TILE + 16)          # top room
+    a1 = (2 * TILE + 16, 5 * TILE + 16)          # bottom room, past the door
+    sd._inner_doors[(2, 3)]["open"] = True
+    open_los = sd.clear_sight_line(a0[0], a0[1], a1[0], a1[1])
+    sd._inner_doors[(2, 3)]["open"] = False
+    shut_los = sd.clear_sight_line(a0[0], a0[1], a1[0], a1[1])
+    check(open_los and not shut_los,
+          "doors: shutting the door breaks the line of sight across it")
+    was = sd._inner_doors[(2, 3)]["open"]
+    sd.toggle_nearest_inner_door(dx, dy)
+    check(sd._inner_doors[(2, 3)]["open"] != was,
+          "doors: the player E-toggle flips the nearest door")
+
+    # ---- §16: thin-slab walls (2026-07) --------------------------------
+    print("[16] thin-slab walls: bands thin two-sided partitions AND the shell, "
+          "connect flush at junctions, and collision+sight+nav agree")
+    import scenes.terrain as _terr
+    from scenes import load_scene
+    # synthetic scene: a vertical partition (col 2) between two rooms + a shell.
+    so = ["WWWWW", "W.W.W", "W.W.W", "W.W.W", "WWWWW"]
+    ss = Scene("slabtest", ["=" * 5] * 5, so)
+    _saved_slab = _terr._SLAB_SCENES
+    _terr._SLAB_SCENES = frozenset(_saved_slab | {"slabtest"})
+    try:
+        foot = _terr._wall_slab(ss, 2, 2)     # floor E+W, wall N+S -> centre X
+        check(isinstance(foot, list) and len(foot) == 1
+              and foot[0][1] == 0.0 and foot[0][3] == TILE
+              and 0.0 < foot[0][0] and foot[0][2] < TILE,
+              "slab: a two-sided vertical partition is one centred band (thin X)")
+        core = (2 * TILE + TILE // 2, 2 * TILE + TILE // 2)
+        gap = (2 * TILE + 2, 2 * TILE + TILE // 2)      # lx=2, in the W gap
+        check(ss.is_solid_at(*core) and ss.blocks_sight(*core),
+              "slab: the band core is solid + blocks sight")
+        check(not ss.is_solid_at(*gap) and not ss.blocks_sight(*gap),
+              "slab: the thinned strip passes the body AND the sight cone")
+        check(not ss.nav_grid()[2][2],
+              "slab: the nav grid marks a slab tile solid (routes around)")
+        # the SHELL now thins too, hugging the EXTERIOR edge (outer face stays
+        # on the building silhouette, no floor lip; the wall thins inward): the
+        # void-side edge is solid, the interior side passes.
+        sfoot = _terr._wall_slab(ss, 0, 2)              # W shell, exterior is W
+        check(isinstance(sfoot, list)
+              and ss.is_solid_at(0 * TILE + 2, 2 * TILE + TILE // 2)
+              and not ss.is_solid_at(0 * TILE + TILE - 2, 2 * TILE + TILE // 2),
+              "slab: the shell hugs the exterior edge, thinning inward")
+        # a junction (col-2 partition meets the bottom shell) connects FLUSH to
+        # the run above -- the shared centreline pixel is solid on both sides.
+        yb = 4 * TILE                                   # boundary row3|row4
+        check(ss.is_solid_at(2 * TILE + TILE // 2, yb - 1)
+              and ss.is_solid_at(2 * TILE + TILE // 2, yb + 1),
+              "slab: a run connects flush across a junction (no notch)")
+        # MATERIAL styles (Phase 1): thickness/round/rough come from _WALL_STYLES
+        # per scene. A rough material roughens the DRAWN outline but leaves the
+        # collision bands identical to a smooth material of the same thickness
+        # (rough is draw-only; collision/sight/nav read the square bands).
+        _terr._WALL_STYLES["_rufftest"] = {"thick": 0.5, "round": 0.5, "rough": 2.5}
+        _terr._SLAB_STYLE["slabtest"] = "_rufftest"
+        _terr._ROUND_POLY_CACHE.clear()
+        r_bands, r_poly = _terr._wall_slab(ss, 2, 2), _terr._rounded_wall_poly(ss, 2, 2)
+        _terr._SLAB_STYLE["slabtest"] = "plank"
+        _terr._ROUND_POLY_CACHE.clear()
+        s_bands, s_poly = _terr._wall_slab(ss, 2, 2), _terr._rounded_wall_poly(ss, 2, 2)
+        check(r_bands == s_bands,
+              "slab: a rough material leaves the collision bands unchanged (draw-only)")
+        check(len(r_poly[0]) > len(s_poly[0]),
+              "slab: a rough material jitters the drawn outline (more points)")
+    finally:
+        _terr._SLAB_SCENES = _saved_slab
+        _terr._SLAB_STYLE.pop("slabtest", None)
+        _terr._WALL_STYLES.pop("_rufftest", None)
+        _terr._ROUND_POLY_CACHE.clear()
+    check(any(_terr._wall_slab(load_scene("shop"), tx, ty)
+              for ty in range(13) for tx in range(16)),
+          "slab: the shipped shop pilot thins its walls (wired e2e)")
+    check(_terr._wall_slab(sd, 0, 0) is None,
+          "slab: a non-_SLAB_SCENES scene returns None (byte-identical)")
 
     print()
     if FAILS:

@@ -20,6 +20,16 @@ below 3 evidence; cultist gaze adds on top. **Hiding** bleeds it back down
 (passive corn-cover tiles, plus the few crawl-**under**-furniture
 `hide_spots` via E). See the Watcher note in §4.
 
+**The max-visibility overlay is TWO tiers keyed to WHO has you**
+(`_draw_apex_overlay`, 2026-07 playtest fix: the wash was too intense
+when only cultists were chasing). At `visibility >= 0.95`, if the King
+is the threat (`_roam_king["armed"]`, or his body is in your room)
+the **apex tier** paints His dried-blood red wash + a hard edge-crush
+tunnel vignette; if only the cult has you (below the gate, no King
+body) the milder **town tier** drops the red for a cold desaturated
+tighten with a wider clear disc. The cult is human and does not get His
+colour. Safe / dim-safe interiors break both.
+
 > **The King is a verdict, not a monster** *(the design spine of the roaming
 > King; the mechanics + tuning live in `CLAUDE.md` and the `KING_*` config,
 > this is the canon behind them).* Internalize these or the mechanics land
@@ -387,12 +397,19 @@ Only display names and fiction change.
   the eye itself are the tell — any future text must read as **His eye
   reaching into the plane**, never a side-cult's spell. Internal names
   (`_cursed`, `_apply_curse`) stay plumbing.
-  **The gaze only OPENS under the open sky or in the deep (2026-07 ruling,
-  `WATCHER_OPEN_SCENES`): no Watcher ever manifests inside a surface
-  building.** Step through any interior door and the wave clears; step back
-  out and the grace runs before it re-forms. A fold into a surface interior
-  binds nothing (`_roll_fold_watcher` exempts non-open destinations).
-  Guarded by `tests/stealth.py` §11.
+  **The gaze opens under the open sky, in the deep, AND in a DARK non-refuge
+  interior (the "no light = danger" rework, TODO #21; `WATCHER_OPEN_SCENES`
+  now includes `DIM_INTERIOR_SCENES`).** In those dim rooms exposure is
+  **being in the DARK**: a light POOL (`Scene.lit_at`) or the flashlight is
+  the cover, so His gaze can't hold you in the light, and a Watcher caught in
+  a pool / the beam **BURNS** out fast (`WATCHER_LIGHT_BURN`,
+  `_tick_watcher_gaze`) -- the flashlight is how you clear them, and the
+  refuge here is the LIT room, not the building. The **true refuges stay
+  gaze-free**: `SAFE_SCENES` (the PI's room, `toby_house`) are excluded from
+  `WATCHER_OPEN_SCENES` AND `KING_FREE`, so no Watcher ever opens there, and a
+  plain interior outside both sets is gaze-free too. A fold into a non-open
+  destination binds nothing (`_roll_fold_watcher`). Guarded by
+  `tests/stealth.py` §11.
 - ~~**Gun = false-power threshold (§1).**~~ **DONE + flow-guarded.** The
   mechanic matches canon and `tests/flow.py` locks all four facts:
   **< 3 evidence kills cultists**, **3+ only staggers**, the **King and
@@ -572,6 +589,103 @@ Built into the procedural draw layer (`scenes/base.py`,
   touch open floor, faint pitting/cracks. The seams vanish; a run reads
   as a single battered surface. Terrain rendering is shared through
   `draw_scene_terrain` (Scene.draw + the offline renderer use the same).
+- **Interior partition corners are BEVELED, not blocky (2026-07,
+  `scenes/terrain.py`).** The chunky 90° corner where an interior partition
+  wall juts into a room read as a box tip. `_bevel_corners(scene, tx, ty)`
+  returns a bitmask of a wall tile's exposed CONVEX corners — a corner where
+  BOTH adjacent tile faces (and the diagonal) are open interior floor (`.`) —
+  and both draw layers chamfer exactly those: the 3D box (`_extrude_box`, a
+  `bevel` param: shortened cardinal faces + a vertical chamfer quad per corner
+  + a beveled top cap) and the flat mass footprint (`_draw_wall_mass` clips
+  `_wall_tile_flat` to the same `_bevel_poly_local`, inset 1px more as motion
+  insurance). This is **provably orthogonal to the run MERGE**: a mid-run /
+  tee / shell tile has < 2 adjacent open sides → no convex corner → **byte
+  identical**, so runs stay a continuous full-thickness mass and only the juts
+  soften. **Draw-only** (collision + sight stay tile-based, like the inner-door
+  leaves). Gated to `_BEVEL_SCENES` (a module frozenset covering the
+  above-ground BUILDING interiors — shop / church / barn / schoolhouse /
+  sheriff_office / bedroom / clerk_room / guest_room_a+b / lodge / lodge_hall /
+  toby_house / abandoned_farmhouse / lodge_cellar — never the mine, hewn rock
+  reads right thick, nor outdoors; a single-room refuge with no partition juts
+  just renders byte-identical). `_BEVEL_INSET` (0.28·TILE) is
+  the single shared inset for both layers; bump it or subdivide the chamfer
+  into a 2-3 segment arc for rounder corners. Cache-safe (the bevel is a pure
+  function of the tile + its 8 neighbour chars + the gate).
+- **Thin-SLAB walls -- the step past the bevel, and NOT draw-only (2026-07,
+  maintainer "thin the walls / walls are no longer tiles / connect them by
+  smoothing it out").** Where the bevel only shaved a convex corner tip, a slab
+  makes the whole wall tile a THIN slab (`_SLAB_THICK` = 0.5·TILE). So the thin
+  walls stay CONNECTED and smooth -- no fat junction bulging out of a thin run,
+  no notch -- `_wall_slab(scene, tx, ty)` (`scenes/terrain.py`) returns the tile
+  footprint as the UNION of up to two BANDS: a VERTICAL band (present when the
+  tile has a wall neighbour N or S, i.e. it sits in a vertical run) and/or a
+  HORIZONTAL band (wall neighbour E or W). A straight run is ONE band; an
+  L-corner / T / cross is the union of both, so the thin walls meet flush. Each
+  band is thin across its run and reaches the tile edge ONLY where the run
+  continues (a wall neighbour), else stops at the other band's crossbar -- so a
+  corner or run-end never pokes a stub into a room. The cross-thickness reads
+  the flanks' openness (on-map = interior): floor/wall on BOTH sides CENTRES a
+  two-sided partition; ONE flank off-map is the building SHELL and it hugs the
+  OFF-MAP (exterior) edge, so the outer face stays on the building silhouette
+  (no floor lip past the wall) and the wall thins INward, growing the room a
+  little; a lone pillar with no wall neighbour stays full. Both draw layers read
+  it, looped per band (`_extrude_box` grew a `foot` rect param that shrinks the
+  3D box; `_draw_wall_mass` clips the flat near-black footprint to the union of
+  the band rects, so the mass matches the thinned boxes and the room floor shows
+  through). **Unlike the bevel, the geometry is REAL:** the collision / sight /
+  nav predicates (`scenes/base.py` `_obj_solid_here`, shared by `is_solid_at` /
+  `blocks_sight` / `_nav_solid_at`, point-in-ANY-band) also read `_wall_slab`,
+  so the wall the player BUMPS and the AI's line of sight obey the wall the
+  player SEES (inclusive bounds, so collision sits a hair proud of the drawn
+  face and a hug band's tile centre still reads solid -- the nav grid never
+  routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the shop was the
+  pilot; the Wave A refuges and the three principal-seat interiors -- church,
+  sheriff_office, lodge -- have since opted in); every NON-slab scene returns
+  None -> full tile -> byte-identical (the `--diff` gate confirms brimley /
+  works_cistern / depths_hall unchanged; the slab scenes legitimately differ).
+  The slab SUPERSEDES the bevel where both would apply
+  (`_bevel_corners` returns 0 for a `_SLAB_SCENES` scene). Cache-safe (a pure
+  function of the tile + its 4 orthogonal neighbour chars + the gate). Tune
+  `_SLAB_THICK`, and roll out one interior at a time per VISION (render + look,
+  all four facings + the dark).
+- **Rounded wall corners (2026-07, maintainer "rounded corners where the walls
+  connect").** The thin bands still meet at square 90° corners, so the DRAW
+  layers round them: `_rounded_wall_poly(scene, tx, ty)` traces the band union
+  to an outline (`pygame.mask`) and replaces each FREE corner (one facing open
+  floor) with a quarter-arc fillet (`_fillet`, radius `_ROUND_R` = half the band
+  thickness), while a corner that sits on a wall-neighbour SEAM stays sharp so
+  the tile still connects flush to its neighbour. It drives BOTH draw layers --
+  `_draw_wall_mass` fills the rounded polygon, and a new `_extrude_prism`
+  (the rounded-corner sibling of `_extrude_box`) extrudes it in 3D (exposed side
+  faces depth-sorted far→near, seam edges skipped, a rounded top cap). Building
+  outer corners and interior partition run-ends read rounded; the connections
+  stay flush. **Collision / sight / nav keep the SQUARE bands** (`_wall_slab`,
+  `_obj_solid_here`): the few-px rounding sits INSIDE the drawn face, so
+  collision is a hair proud (the safe direction) and no predicate pays for the
+  outline. Cached per (footprint, seams + the style's radius/rough); the
+  wall-box card cache holds the projected prism per tile+angle.
+- **Wall MATERIAL styles (2026-07, the rollout foundation).** Thickness, corner
+  round, surface roughness, and COLOUR are no longer bare constants -- they live
+  in `_WALL_STYLES` (`scenes/terrain.py`), one record per material (`{thick`
+  frac-of-TILE, `round` frac-of-thick, `rough` px, `tint` (dr,dg,db)`}`), and a
+  slab scene picks one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is
+  derived from it; `_wall_style(scene)` is the single lookup that `_wall_slab` /
+  `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry
+  AND the colour: `plank` (thin, smooth, warm pine -- the shop), `plaster` (thin,
+  pale warm grey), `timber` (heavier, hewn, dark red-brown), `brick` (fired-clay
+  rust), `stone` (thick rough masonry, cold blue-grey). **`tint`** is a delta
+  ADDED to the near-black wall palette (`_tint_col`), applied to BOTH draw layers
+  (`_wall_tile_flat`'s mass + `_extrude_prism`'s faces via `_tilt_wall_box`),
+  kept dark + muddy + desaturated (the Darkwood rule, no cheerful primaries) so
+  it reads only where the interior light pools land; a non-slab scene's tint is
+  (0,0,0) → byte-identical. `rough > 0` runs `_roughen`:
+  it subdivides the FREE (drawn) outline edges and kicks their interior points
+  along the edge normal by a seeded amount (PER TILE, so masonry doesn't tile),
+  leaving SEAM edges and shared corners put -- **draw-only**, so collision /
+  sight / nav still read the square bands (guarded by `tests/stealth.py §16`).
+  Adding a scene is one `_SLAB_STYLE` line; `plank` reproduces the old fixed
+  `_SLAB_THICK`/`_ROUND_R` exactly (byte-identical). Roll `_SLAB_STYLE` out one
+  interior at a time per VISION.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.
@@ -583,9 +697,67 @@ Built into the procedural draw layer (`scenes/base.py`,
   a grid of identical cells. Cornstalks are jittered off the grid. No
   cheerful primaries — props aged/stained.
 - **Lighting is the mood.** Cheap cached primitives: soft **contact
-  shadows** under props, **wall-cast shadows** + lit wall faces, and warm
-  **light pools** with falloff from every emitter (candle, lantern,
-  fireplace). Light is the only relief in the dark.
+  shadows** under props, **wall-cast shadows** + lit wall faces, and
+  **light pools** with falloff from every emitter. Light is the only relief
+  in the dark.
+  - **Two light families, cold vs warm (2026-07 lighting pass).** The
+    town's **civic** light is period-correct **electric**: rural
+    dusk-to-dawn **yard lights** on poles (`yard_light`, mercury-vapor
+    **cold** blue-white) threading the roads, run off **gas generators**
+    (`generator`) tucked outside each building. Provenance: the fold cut
+    Brimley off the grid with everything else (NARRATIVE §1), so the town
+    keeps its lights on off gasoline; a genset MUST sit outdoors (exhaust),
+    so it fronts the doors. Against that cold institutional glow, all
+    **fire** stays **warm** and is the thing the town *huddles* at (burn
+    barrels, cult braziers, the intimate candles at Calder's table). The
+    cold-electric-vs-warm-fire split is the deliberate read; the civic
+    lanterns Brimley used to run on (a 19th-century lamppost) were the wrong
+    century and are gone (the bridge keeps one hung lantern as a personal
+    accent). Both prop kinds are anchored `SOLID_PROPS` volumes (never
+    swiveling cards), verified in the 3D tilt.
+  - **The shared light logic (the "carry it underground" foundation).**
+    `_draw_dark` (`systems/render_mixin.py`) no longer special-cases
+    `wall_torch`: it iterates **`FIXTURE_POOLS`** (the visible-light twin of
+    `Scene._LIGHT_KINDS`) across **every** light-emitting decoration in the
+    room, so any real fixture -- a cult brazier, a Sign-Chamber candle, a
+    town yard light, a genset work-bulb -- lights the dark it stands in. One
+    table drives the surface (if it ever darkens) and the deep, with no
+    per-scene special-casing. The **deep still swallows the flashlight**
+    (`CULT_DARK_SCENES`, DESIGN §1's deliberate dread is preserved): the cult
+    sites are lit by the cult's OWN ritual fires now, not by your beam. Fully
+    retiring the "special darkness" beam-off is a separate dread decision
+    (`TODO.md`), not folded in here.
+  - **The light is 3D, and it interacts (2026-07 light-model pass).** Each
+    emitter carries a real world SOURCE HEIGHT (`src_z`) and a screen-relative
+    gooseneck offset (`arm`): a yard-light head rides high on its pole, a
+    candle sits at the floor. `_draw_dark` casts each pool onto the ground
+    UNDER that 3D source as a **tilt-foreshortened ellipse** (not a flat
+    screen circle -- a floor disc squashes by `Camera.ground_squash()`), and
+    the pools blend **additively** (`BLEND_RGB_ADD`), so two lights SUM where
+    they overlap (warm + cold pool toward white) and every pool lifts the
+    walls / props / actors standing in it -- **light interacting with light,
+    and with objects.** On top, a **cast-shadow** pass throws a soft shadow
+    across the floor AWAY from each source for every solid caster in range
+    (player, NPCs, solid props): a LOW source (a candle) throws a long shadow,
+    a HIGH one (a yard-light head) a short one, and under several lights an
+    object throws several. The shadow **subtracts** the pool's glow
+    (`BLEND_RGB_SUB`, a cool-grey) rather than painting black over it -- black
+    over warm light reads as a brown STAIN, subtraction reads as dark floor.
+    Both the pool and the shadow are cached per shape (`_floor_pool_surf`).
+  - **Interiors run on the gensets too (2026-07 interior lighting pass).** The
+    explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
+    schoolhouse, sheriff's office) are `DARK_SCENES` at a **lighter gloom**
+    (72, vs 100 for the deep and 130 cult-dark) -- they read "dim, lit by the
+    genset's bulbs + window spill, dark in the corners," not a pitch-black
+    cellar, and the flashlight works. Their MAIN light is the period-electric
+    **`wall_lamp`** (a 1994 bulkhead/utility fixture: conduit + frosted shade +
+    steady warm bulb, the indoor twin of the yard light), with the old candles
+    / kerosene lamps demoted to **backup accent** (realistic for a town on
+    failing genset power). The **refuge is deliberately excluded**
+    (`SAFE_SCENES` -- the PI's room, toby_house -- stay flat-lit + safe;
+    DESIGN §12), and the truly-abandoned interiors (`abandoned_farmhouse`,
+    `lodge_cellar`) keep the darker gloom + their candles. This is the ground
+    the "no light = danger" Watcher rework will stand on (`TODO.md` #21).
 - **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
   jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
   Repeated at scale across the Scriptorium and Sign Chamber, faintly
@@ -826,6 +998,63 @@ flanked by lit windows on an east/west/north face still resolves correctly (not
 just the old south default). This is what lets an overworld building FRONT the
 street it sits on -- Brimley's houses face east/west/north onto the central
 spine and their access road rather than all facing south (TODO #18 follow-up).
+
+### Interior doors -- dividing a building into subrooms (2026-07)
+
+The third door kind, distinct from the two above. A fade-door is a scene
+boundary; a see-through door shows a *different* scene's room through an
+opening. An **interior door** is neither: it is a swinging leaf on a floor
+GAP in a wall line **inside one scene**, the tool that turns a box building
+into several subrooms (the room-redesign lever -- buildings divided into
+several subrooms, not one open box).
+
+State lives on `Scene._inner_doors` (`(tx, ty) -> {open, kind, swing,
+close_t, seed}`); author with `Scene.add_inner_door(tx, ty, kind, open=False)`
+on a floor tile that sits in a wall run. It hooks the three existing
+predicates so a **shut** leaf behaves exactly like a wall and an **open** one
+like a gap, with no bespoke pathing:
+
+- `is_solid_at` -- a shut door blocks the body (a wall); open passes.
+- `blocks_sight` -- a shut door blocks the sight cone (so the room beyond
+  stays hidden until it is opened), **except** the see-through kinds
+  (`_SEE_THROUGH_DOOR_KINDS` = bars / half: they stop the body but you look
+  through them, the cell-gate / counter read). Open always passes. This is
+  the same `blocks_sight` that `clear_sight_line` runs, so ONE hook covers
+  both the render sight-gate AND the cult-AI line of sight -- **a shut door
+  breaks a pursuer's lock and buys time** (the design ask).
+- `_nav_solid_at` -- a door tile is never a nav wall, so NPCs route AT it and
+  open their own way through.
+
+**Most start closed.** `Scene.update` runs the open/close: an NPC within ~1.5
+tiles of a shut door opens it (a `wood_creak`), the door holds open while any
+actor is near, and it swings shut a beat (`close_t`) after the last one
+leaves. The player toggles the nearest door in reach with **E**
+(`toggle_nearest_inner_door`, wired last in `try_interact`). The `swing`
+value lerps toward the open/shut target each frame and drives only the draw.
+
+**Draw** (`rendering/props.draw_inner_door`, emitted in `draw_world`'s tilt
+pass, depth-sorted with the walls/props): the leaf swings on its hinge from
+across-the-gap (shut) to along-the-wall (open); `ew` (an E-W wall, read from
+the tile's wall neighbours) sets the hinge axis, so a door in a SIDE (N-S)
+wall opens east/west and a door in an E-W wall opens north/south. Kinds carry
+their own look: **plank** (wood panel, seams + knob), **bars** (a see-through
+iron cell gate), **curtain** (a maroon drape), **half** (a low counter door
+you see over).
+
+**Placement -- vary the wall, don't face them all one way.** Because `ew` is
+derived from the tile, WHICH wall you cut the gap into decides which way the
+leaf faces. Do not put every door of a building in E-W walls (they would all
+"face south" -- the same monotony the exterior-door rule and playtest error
+class 8 warn against). Mix side-wall (N-S) doors that open east/west with
+E-W-wall doors that open north/south, chosen by what the room's geography
+wants. The shop pilot does this: the stockroom and office doors sit in side
+walls (open E-W), the nested pantry door in an E-W wall (opens N-S). Verify
+under the tilt -- both orientations render (a side-wall door is a vertical
+leaf shut, swinging perpendicular open).
+
+Guarded by `tests/stealth.py` §15 (shut = solid + blocks sight + nav
+routes through; open passes both; a bars door is solid but see-through;
+shutting breaks the LOS across it; the E-toggle flips the nearest).
 
 ---
 
@@ -1418,6 +1647,91 @@ cover entirely. The roaming **King** honors `player.hidden` instead (corn or
 an enclosed hide drops his hunt to searching, `tests/king_roam.py`); he is
 relentless in that he re-finds you and his catch is birth-gated, not in that
 cover fails against him.
+
+### The stealth economy (2026-07, the first human tuning pass)
+
+The playtest verdict was "the whole system is avoided because it is just
+better to run around the cultist," and the numbers agreed (cultists
+patrolled AND chased at 68% of the player's walk). The batch that landed
+against it (`tests/stealth.py` §13 guards the contract):
+
+- **The speed ladder is now a real ladder:** King > player sprint (105)
+  > locked chase (`CULT_CHASE_MULT`, 85.5 px/s for the surface regular)
+  > player walk (84) > scout (57). Walking away from a locked cultist no
+  longer works; sprint still escapes but drains and winds (the existing
+  stamina), and the King stays the one thing sprint never beats.
+- **Sprint is conspicuous** (`SUS_SPRINT_MULT`, in
+  `stealth.detection_score`): a running figure in the line of sight
+  multiplies the detection score, so blowing past a scout lights the
+  bar. Running is the loud, seen, stamina-priced option; cover is the
+  cheap one.
+- **The cult has an arm's reach** (`CULT_GRAB_REACH`, every grab site):
+  brushing past any AWAKE cultist risks the contact grab, not only a
+  locked chaser. All the grab gates hold (the Talk, two-touch,
+  grab_allowed: concealment yields only to a locked pursuer, an
+  enclosed hide never grabs, set-piece kneelers never grab).
+- **Cover is VISIBLE:** every bare `:` cover tile stands up as a
+  waist-high tall-grass tuft under the tilt (`_tilt_grass_solid`,
+  scenes/terrain.py -- dead-straw blades, depth-sorted with the corn so
+  the player wades IN). Draw only; collision, sight, and the cover rules
+  are untouched.
+- **Entering cover is WORDLESS:** the corn and shadow teach notices were
+  cut (playtest ruling; DIALOGUE.md reconciled). The `hide_enter` /
+  `hide_exit` cues and the visible cover are the only tells.
+- **The surface hide desert was watered:** +6 enclosed hides on existing
+  props (TODO #5 lists them and what is still open).
+- **River stones are the distraction verb** (`STONE_*` config; landed
+  with the pass): finite walk-over pickups scattered where the water
+  runs (both Brimley banks, the Cistern shores, the Sump ledge).
+  Right-click lobs one along the aim; the landing is a placed NOISE
+  EVENT and nothing else -- no damage, no stagger, riding the existing
+  ear untouched. Its loudness sits between the scout threshold and the
+  searcher pull ON PURPOSE: a stone turns an idle head but never breaks
+  a sighting-born search, so it routes patrols rather than shaking a
+  hunt. A rooted enclosed hide cannot throw; corn can. Guarded by
+  `tests/stealth.py` §14. Two follow-ons ride the same plumbing:
+  - **A stone through a WINDOW smashes it** (`GLASS_*`): the one thrown
+    sound loud enough to divert even a sighting-born search -- the
+    bigger lever priced by scarcity (a pane breaks once, stays dark and
+    shard-toothed for the RUN via the `broken_windows` save ledger,
+    laid back down on every load). The break changes draw only:
+    collision and sight are untouched, and it is never an entrance
+    (the window-vault idea stays parked).
+  - **A stone down the DEAD WELL** (`WELL_ECHO_*`, `_brimley_interact`):
+    E at the well with a stone in pocket drops it; the knocks fall
+    away, the shaft's rattle carries across the square (scout-tier,
+    never a search-breaker), and **no bottom ever sounds** -- wordless
+    by design; the missing landing is the beat, and the well stays the
+    bottomless dread it is (NARRATIVE §5).
+- **The under-bridge hide** (`Game._tick_bridge_knocks`,
+  `scene._bridge_hide_px` / `_bridge_deck_px`): a rooted enclosed hide
+  on the mud shelf at the Brimley bridge's foot, the town's exact
+  centre that everything crosses. While you are tucked under it,
+  anything walking the deck overhead KNOCKS on the planks (a
+  `wood_creak` pulse + a faint screen-space dust-fall,
+  `_draw_bridge_dust`). Pure DRESSING: the crossers neither know you are
+  below nor react to the footfalls -- the dread is hearing the town pass
+  over your head while you wait. Guarded by `tests/stealth.py` §14 (the
+  hide is registered; a crosser raises the tell but never routes to the
+  player below).
+
+### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
+
+Two beats of body language on the SCOUT state alone, shared by both cult
+machines (`systems/stealth.py` `sync_pause` / `handoff_step`;
+`CULT_SYNC_*` / `CULT_HANDOFF_*` in config). The **synchrony beat**: on
+one shared slow clock, every idle cult scout in the room pauses
+mid-stride at the same instant for one breath, then resumes -- the
+claimed-as-one-body wrongness (the Sign Chamber rank's "stirs all at
+once") generalized into ambient, wordless behavior. The **hand-off**:
+two scouts whose rounds cross stop, face each other for a silent beat,
+and part on a long per-actor cooldown -- NARRATIVE §4's
+ordinary-people-with-bodies, staged in movement. Neither beat ever owns
+a tick outside scout: detection, hearing, and suspicion all score
+BEFORE the beats run, so a frozen scout still fills and still promotes,
+and notice/chase/search/investigate never pause (guarded by
+`tests/stealth.py` §12). Set-piece kneelers keep their scripted
+stillness. The rest of the approved behavior plan is `TODO.md` #23.
 
 ### Placement principles (the tuning-pass guide, `TODO.md` #5)
 

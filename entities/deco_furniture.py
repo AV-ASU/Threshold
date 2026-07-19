@@ -387,6 +387,113 @@ class DecoFurnitureMixin:
         nx = x - 8 + int((math.sin(self.t * 0.6) + 1) * 6)
         pygame.draw.line(surf, (220, 60, 60), (nx, y - 2), (nx, y + 4), 1)
 
+    def _draw_cash_register(self, surf, x, y):
+        """Flat (pitch-0) fallback for the shop till; the tilt camera draws the
+        real volume (rendering.props._draw_cash_register_solid)."""
+        pygame.draw.rect(surf, (98, 80, 46), (x - 8, y - 3, 16, 11))
+        pygame.draw.rect(surf, (64, 52, 30), (x - 8, y - 3, 16, 11), 1)
+        pygame.draw.rect(surf, (128, 106, 62), (x - 5, y - 8, 10, 6))   # flag
+        for kx in range(-5, 6, 3):
+            pygame.draw.circle(surf, (200, 178, 120), (x + kx, y + 4), 1)
+
+    def _draw_bill_spike(self, surf, x, y):
+        """Flat (pitch-0) fallback for the receipt spike; the tilt camera draws
+        the real volume (rendering.props._draw_bill_spike_solid)."""
+        pygame.draw.line(surf, (170, 172, 182), (x, y + 4), (x, y - 8), 1)
+        pygame.draw.rect(surf, (68, 68, 76), (x - 3, y + 3, 6, 3))
+        pygame.draw.line(surf, (168, 160, 140), (x - 2, y - 5), (x + 2, y - 4), 2)
+
+    def _draw_service_bell(self, surf, x, y):
+        """Flat (pitch-0) fallback for the reception service bell; the tilt
+        camera draws the real dome (rendering.props._draw_service_bell_solid)."""
+        pygame.draw.ellipse(surf, (150, 128, 74), (x - 5, y - 4, 10, 8))
+        pygame.draw.rect(surf, (150, 128, 74), (x - 5, y + 1, 10, 3))
+        pygame.draw.line(surf, (120, 100, 58), (x, y - 4), (x, y - 7), 1)
+        pygame.draw.circle(surf, (208, 186, 124), (x, y - 7), 1)
+
+    def _draw_crayons(self, surf, x, y):
+        """Flat (pitch-0) fallback for the crayons + sheet; the tilt camera
+        draws the real props version (rendering.props._draw_crayons_solid)."""
+        pygame.draw.rect(surf, (208, 202, 186), (x - 8, y - 5, 12, 11))
+        pygame.draw.circle(surf, (228, 198, 82), (x - 3, y), 2)
+        for i, col in enumerate(((200, 70, 60), (70, 120, 200), (90, 180, 90),
+                                 (230, 200, 80))):
+            pygame.draw.line(surf, col, (x + 5, y - 4 + i * 3),
+                             (x + 8, y - 4 + i * 3), 2)
+
+    def _draw_key_rack(self, surf, x, y):
+        """The lodge reception key board: a pigeonhole rack, rows of hooks with
+        the guest-room keys hanging (a couple of gaps for rooms in use). The
+        wall of keys Sable keeps ready, his 'full house' want made an object.
+        A `_WALL_DECO_KINDS` billboard lifted onto the wall face under tilt."""
+        pygame.draw.rect(surf, (80, 58, 38), (x - 10, y - 11, 20, 20))
+        pygame.draw.rect(surf, (46, 32, 20), (x - 10, y - 11, 20, 20), 1)
+        n = 0
+        for ry in range(5):
+            for cx in range(4):
+                hx = x - 7 + cx * 5
+                hy = y - 8 + ry * 4
+                n += 1
+                pygame.draw.circle(surf, (150, 140, 110), (hx, hy), 1)   # hook
+                if (n * 7) % 5 == 3:                # empty hooks (rooms in use)
+                    continue
+                pygame.draw.line(surf, (198, 176, 120), (hx, hy + 1),
+                                 (hx, hy + 3), 1)                        # shaft
+                pygame.draw.circle(surf, (198, 176, 120), (hx, hy + 3), 1)  # bow
+
+    def _draw_crayon_drawing(self, surf, x, y):
+        """A child's crayon picture on a taped sheet, hung crooked on the wall.
+        The `motif` kwarg picks the scene: house / sun / family / corn, and the
+        dark `procession` (what Toby saw, gated on toby_told). A _WALL_DECO
+        billboard lifted onto the wall face under tilt (Toby's tableau)."""
+        motif = self.kwargs.get("motif", "house")
+        pygame.draw.rect(surf, (206, 200, 184), (x - 8, y - 9, 16, 17))   # sheet
+        pygame.draw.rect(surf, (150, 146, 132), (x - 8, y - 9, 16, 17), 1)
+        for tx in (x - 7, x + 4):                                         # tape
+            pygame.draw.line(surf, (198, 206, 210), (tx, y - 10),
+                             (tx + 3, y - 8), 2)
+        if motif == "house":
+            pygame.draw.rect(surf, (70, 120, 200), (x - 5, y - 1, 8, 7))
+            pygame.draw.polygon(surf, (200, 70, 60),
+                                [(x - 6, y - 1), (x + 4, y - 1), (x - 1, y - 6)])
+            pygame.draw.rect(surf, (150, 90, 50), (x - 2, y + 2, 2, 4))
+            pygame.draw.circle(surf, (230, 200, 80), (x + 5, y - 6), 2)
+        elif motif == "sun":
+            pygame.draw.circle(surf, (230, 200, 80), (x - 1, y - 3), 4)
+            for dx, dy in ((-6, -3), (6, -3), (-1, -9), (5, -8), (-6, -7)):
+                pygame.draw.line(surf, (230, 200, 80), (x - 1, y - 3),
+                                 (x - 1 + dx, y - 3 + dy), 1)
+            pygame.draw.line(surf, (90, 180, 90), (x - 6, y + 6), (x + 6, y + 6), 2)
+        elif motif == "family":
+            for fx, col in ((x - 4, (200, 70, 60)), (x, (70, 120, 200)),
+                            (x + 4, (230, 190, 80))):
+                pygame.draw.circle(surf, col, (fx, y - 4), 1)
+                pygame.draw.line(surf, col, (fx, y - 3), (fx, y + 3), 1)
+                pygame.draw.line(surf, col, (fx - 2, y - 1), (fx + 2, y - 1), 1)
+        elif motif == "corn":
+            for cx in (x - 5, x - 1, x + 3):
+                pygame.draw.line(surf, (100, 150, 70), (cx, y + 6), (cx, y - 5), 2)
+                pygame.draw.circle(surf, (220, 190, 80), (cx, y - 4), 1)
+        elif motif == "procession":
+            pygame.draw.line(surf, (66, 54, 46), (x - 6, y - 5), (x + 4, y + 6), 2)
+            for i, fx in enumerate((x - 4, x - 1, x + 2, x + 5)):
+                fy = y - 3 + i * 2
+                pygame.draw.polygon(surf, (38, 34, 30),
+                                    [(fx - 1, fy + 3), (fx + 1, fy + 3), (fx, fy - 2)])
+            pygame.draw.circle(surf, (200, 168, 60), (x - 6, y - 6), 1)   # a gold door
+
+    def _draw_lectern(self, surf, x, y):
+        """Flat (pitch-0) fallback for the church lectern; the tilt camera draws
+        the real volume (rendering.props._draw_lectern_solid)."""
+        pygame.draw.rect(surf, (60, 44, 30), (x - 4, y - 4, 8, 12))       # column
+        pygame.draw.polygon(surf, (40, 30, 20),
+                            [(x - 7, y - 6), (x + 7, y - 6), (x + 6, y - 12),
+                             (x - 6, y - 12)])                            # board
+        pygame.draw.polygon(surf, (198, 190, 170),
+                            [(x - 6, y - 7), (x + 6, y - 7), (x + 5, y - 11),
+                             (x - 5, y - 11)])                            # pages
+        pygame.draw.line(surf, (178, 154, 98), (x, y - 2), (x, y + 4), 1) # cross
+
     def _draw_wrong_radio(self, surf, x, y):
         """A 1990s portable transistor radio sitting on a surface.
         Brown plastic body, chrome tuning dial, leather carry strap

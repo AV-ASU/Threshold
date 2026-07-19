@@ -240,6 +240,12 @@ class Scene:
         self.spawns = {"default": (self.w * 16, self.h * 16)}
         self.npcs = []
         self.decorations = []
+        # Interior doors (2026-07): (tx, ty) -> door dict, in a wall GAP between
+        # two subrooms. Most start CLOSED -- a closed door is solid + blocks
+        # sight (like a wall); open it and the gap is passable + see-through
+        # (the vision cone reads through it). The player toggles with E; NPCs
+        # auto-open as they near and it closes behind them (Scene.update).
+        self._inner_doors = {}
         # Furniture footprint tile (tx, ty) -> top height, so a tabletop prop
         # placed on that tile can be seated ON the surface (seat_tabletop_props).
         self._surface_tops = {}
@@ -468,7 +474,9 @@ class Scene:
     # LOOKS lit IS lit to the stealth model.
     _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
                     "campfire": 80.0, "camp_fire": 88.0,
-                    "lantern": 60.0, "candle": 55.0}
+                    "lantern": 60.0, "candle": 55.0,
+                    "yard_light": 85.0, "generator": 42.0,
+                    "wall_lamp": 62.0}
 
     def light_sources(self):
         """Cached [(x, y, r)] of the scene's light-emitting decorations
@@ -548,6 +556,32 @@ class Scene:
             return self.objects[ty][tx]
         return "#"
 
+    def _obj_solid_here(self, x_px, y_px):
+        """True where the OBJECT layer blocks at this pixel -- the single
+        source that collision (`is_solid_at`), sight (`blocks_sight`), and nav
+        (`_nav_solid_at`) all share. In a `_SLAB_SCENES` scene a WALL blocks
+        only where its THIN-SLAB footprint actually sits (the pixel is inside
+        `_wall_slab`'s rect); the thinned-away part of the tile passes -- so the
+        geometry the player bumps and the AI's line of sight obey the geometry
+        the player SEES (the 'walls are no longer tiles' contract), unlike the
+        draw-only bevel. Non-wall solid props are unchanged."""
+        ch = self.char_object_at(x_px, y_px)
+        if not (is_object_solid(ch) or ch in _WALL_CHARS):
+            return False
+        if ch in _WALL_CHARS and getattr(self, "key", None) in _terrain._SLAB_SCENES:
+            foot = _terrain._wall_slab(self, int(x_px // TILE), int(y_px // TILE))
+            if foot is not None:
+                lx, ly = x_px % TILE, y_px % TILE
+                # Solid where the pixel is inside ANY band. Inclusive bounds:
+                # collision/sight sit a hair PROUD of the drawn face (the player
+                # never clips inside the slab), and a tile CENTRE on a hug
+                # band's edge still reads solid, so the nav grid (sampled at
+                # centres) never routes an NPC through a wall tile.
+                if not any(r[0] <= lx <= r[2] and r[1] <= ly <= r[3]
+                           for r in foot):
+                    return False               # in the thinned-away part
+        return True
+
     # --- Cover-aware navigation (cultist pursuit, DESIGN.md §4) ----------
     # The cult AI (entities/enemy.py + npc.py) routes AROUND the volumetric
     # cover now standing mid-floor (pillars, pews, cots, basins) via a
@@ -559,7 +593,9 @@ class Scene:
         the (moving) NPCs that is_solid_at also counts. Baking live bodies
         into the path grid would leave phantom walls where someone briefly
         stood. Wrap-aware via the char_*_at lookups."""
-        return (is_object_solid(self.char_object_at(x_px, y_px))
+        if (int(x_px // self.TILE), int(y_px // self.TILE)) in self._inner_doors:
+            return False               # NPCs route through doors, opening them
+        return (self._obj_solid_here(x_px, y_px)
                 or is_floor_solid(self.char_floor_at(x_px, y_px)))
 
     def nav_grid(self):
@@ -748,16 +784,68 @@ class Scene:
         windows do NOT (you see through glass), and the floor never blocks
         (water/pits don't hide what's beyond them). Wrap-aware via the
         char_*_at lookups."""
+        d = self._inner_door_at(x_px, y_px)
+        if d is not None:
+            # Open: the cone reads through the gap. Shut: blocks like a wall --
+            # except a barred / half door, which you still see through.
+            return (not d["open"]
+                    and d["kind"] not in self._SEE_THROUGH_DOOR_KINDS)
         ch = self.char_object_at(x_px, y_px)
         if ch in _WINDOW_CHARS:
             return False
         od = OBJECT_DEFS.get(ch)
         if od and od.get("see_over"):
             return False           # low enough to see (and be seen) over
-        return ch in _WALL_CHARS or is_object_solid(ch)
+        return self._obj_solid_here(x_px, y_px)
+
+    # Interior-door kinds you can SEE (or see over) even when shut: the cell
+    # bars and the counter half-door block the body, never the line of sight.
+    _SEE_THROUGH_DOOR_KINDS = frozenset(("bars", "half"))
+
+    def add_inner_door(self, tx, ty, kind="plank", open=False):
+        """Register an interior door on a floor GAP in a wall line. Kinds:
+        plank (solid) / bars (see-through cell gate) / curtain (a drape) /
+        half (a counter swing-door you see over)."""
+        self._inner_doors[(tx, ty)] = {
+            "open": bool(open), "kind": kind, "seed": (tx * 7 + ty) & 255,
+            "swing": 1.0 if open else 0.0, "close_t": 0.0}
+
+    def _inner_door_at(self, x_px, y_px):
+        return self._inner_doors.get(
+            (int(x_px // self.TILE), int(y_px // self.TILE)))
+
+    def _door_sound(self, game, cx, cy):
+        aud = getattr(game, "audio", None)
+        pl = getattr(game, "player", None)
+        if aud is None or pl is None:
+            return
+        aud.play("wood_creak", 0.4, pan=aud.pan_for_world(cx, pl.x))
+
+    def toggle_nearest_inner_door(self, x_px, y_px, game=None, reach=None):
+        """Open/shut the interior door nearest (x_px, y_px) within `reach`
+        (default ~1.4 tiles) -- the player's E hand on a door. Returns the
+        door dict toggled, or None. A shut door on a pursuer breaks LOS."""
+        T = self.TILE
+        reach = reach if reach is not None else T * 1.4
+        best, bd = None, reach
+        for (tx, ty), d in self._inner_doors.items():
+            cx, cy = tx * T + T // 2, ty * T + T // 2
+            dist = math.hypot(self.world_dx(cx, x_px), self.world_dy(cy, y_px))
+            if dist < bd:
+                best, bd = d, dist
+        if best is not None:
+            best["open"] = not best["open"]
+            if best["open"]:
+                best["close_t"] = 1.6
+            if game is not None:
+                self._door_sound(game, x_px, y_px)
+        return best
 
     def is_solid_at(self, x_px, y_px, ignore=None):
-        if is_object_solid(self.char_object_at(x_px, y_px)): return True
+        d = self._inner_door_at(x_px, y_px)
+        if d is not None and not d["open"]:
+            return True                        # a shut door blocks the body
+        if self._obj_solid_here(x_px, y_px): return True
         if is_floor_solid(self.char_floor_at(x_px, y_px)): return True
         for npc in self.npcs:
             if npc is ignore or not npc.solid: continue
@@ -1009,6 +1097,36 @@ class Scene:
             [random.uniform(lo, hi), name, vol, lo, hi, pan_spread])
 
     def update(self, dt, game):
+        # Interior doors (2026-07): an NPC nearing a shut door opens it (they
+        # open their own way through -- _nav_solid_at routes them at it), and it
+        # swings shut a beat after the last actor leaves ("most closed"). The
+        # player opens/closes with E instead. A shut door on a pursuer breaks
+        # the sightline (blocks_sight) and buys time.
+        if self._inner_doors:
+            T = self.TILE
+            pl = getattr(game, "player", None)
+            for (tx, ty), d in self._inner_doors.items():
+                cx, cy = tx * T + T // 2, ty * T + T // 2
+                npc_near = any(
+                    abs(self.world_dx(cx, n.x)) < T * 1.5
+                    and abs(self.world_dy(cy, n.y)) < T * 1.5
+                    and not getattr(n, "_inside", False)
+                    for n in self.npcs)
+                player_near = (pl is not None
+                               and abs(self.world_dx(cx, pl.x)) < T * 1.5
+                               and abs(self.world_dy(cy, pl.y)) < T * 1.5)
+                if npc_near and not d["open"]:
+                    d["open"] = True
+                    self._door_sound(game, cx, cy)
+                if npc_near or player_near:
+                    d["close_t"] = 1.6
+                elif d["open"]:
+                    d["close_t"] -= dt
+                    if d["close_t"] <= 0.0:
+                        d["open"] = False
+                        self._door_sound(game, cx, cy)
+                d["swing"] += ((1.0 if d["open"] else 0.0) - d["swing"]) \
+                    * min(1.0, dt * 9.0)
         # The talk-hold: whoever the player is actually TALKING to (the
         # live float-caption speaker, or the partner of an organic
         # conversation, ui/conversation) stands their ground and faces the

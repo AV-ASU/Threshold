@@ -9,7 +9,8 @@ from rendering.transform import draw_vessel_bloom
 from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
-                             react_hold, errand_step, errand_drop)
+                             react_hold, errand_step, errand_drop,
+                             sync_pause, handoff_step)
 
 
 def _is_cultist(obj):
@@ -483,7 +484,8 @@ class Enemy:
                 # chase (play-notes: the first-ever cultist stays human).
                 self._last_seen_pos = (player.x, player.y)
                 if d > self.atk_range:
-                    self._cult_step(player.x, player.y, dt, scene)
+                    self._cult_step(player.x, player.y, dt, scene,
+                                    speed_mult=CULT_CHASE_MULT)
                 return
             # Lost the line: SEARCH, and sweep the enclosed hides
             # around last-seen (Pillar 3 -- searchers hunt cover; the
@@ -507,7 +509,8 @@ class Enemy:
                 self.morph_target = 0.0
             self._last_seen_pos = (player.x, player.y)
             if d > self.atk_range:
-                self._cult_step(player.x, player.y, dt, scene)
+                self._cult_step(player.x, player.y, dt, scene,
+                                speed_mult=CULT_CHASE_MULT)
             return
         # NOTICE: a scouting cultist whose suspicion is climbing stops
         # and turns toward what it half-saw (the telegraph window).
@@ -581,9 +584,16 @@ class Enemy:
         # to CHASE above.
         if getattr(self, "lock_facing", False):
             return
-        # Errands first: scenes that declare stations put the workers
-        # to WORK (basins, sorting tables); the pure roam only runs
-        # where no jobs are set.
+        # The liveness beats first (TODO #23a, mirrors the NPC machine:
+        # the synchrony all-stop, then a crossing hand-off -- dressing
+        # only, detection already scored this tick above), then errands
+        # (stations put the workers to WORK), then the pure roam.
+        if sync_pause(self):
+            return
+        peers = [e for e in getattr(scene, "enemies", [])
+                 if getattr(e, "kind", "") == "cultist"]
+        if handoff_step(self, peers, scene, dt):
+            return
         if errand_step(self, scene, dt,
                        lambda ex, ey: self._cult_step(ex, ey, dt, scene)):
             return

@@ -23,7 +23,7 @@ def build_church():
     up the bell tower from the vestry."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWW?WWWWW",   # 0  ? = graveyard gate (north, over the nave)
+        "WWWWWWWWWW?iiWWW",   # 0  ? = graveyard gate; ii = tall chancel windows
         "W.U...W........W",   # 1  U = stairs up the bell tower (in the vestry)
         "W...C.W........W",   # 2  C = legacy terminal marker (cut, blanked below)
         "W.....W........W",   # 3   vestry (cols 1-5) | nave (cols 7-14)
@@ -95,6 +95,17 @@ def build_church():
         for c in (9, 10, 11):        # right bench
             sc.add_furniture("pew", [(c, r)])
 
+    # Crane's LECTERN, at the head of the nave just south of the preacher's
+    # spot -- his whole seat, the centrepiece of his close-up tableau
+    # (draw_crane_tableau): the open book on the slanted board, the cross on the
+    # front. The walkable church had only the bare altar table (tableau-parity
+    # pass). Decoration = no collision, so he stands behind it and reads over it.
+    sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 12, "lectern"))
+    # The bell rope, hanging dead at the west edge of the chancel where the
+    # tower drops through the ceiling (the tableau's left-edge rope; the bell
+    # has not swung in years).
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "rope",
+                                 seed=3, scale=1.2))
     # The altar dressing (2026-07): a plain wooden CROSS on the wall above the
     # altar, and two candles standing ON the altar table (seated by
     # seat_tabletop_props). Austere, a poor country parish, not gilded.
@@ -102,6 +113,9 @@ def build_church():
     sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 8, "candle"))
     sc.add_decoration(Decoration(9 * TILE + 20, 1 * TILE + 8, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
+    # Genset-electric main light on the nave's north wall by the chancel (the
+    # altar candles are the devotion, not the wiring). (2026-07 interior pass.)
+    sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     # The parsonage's hunting-country dressing lives in the VESTRY (the
     # preacher's living quarters), not over the altar: a mounted buck on the
     # vestry's north wall. (The cobweb + desk lamp are added below.)
@@ -168,7 +182,7 @@ def build_sheriff_office():
     dividing wall makes the back room an indoor blind spot."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWWWWWWWW",   # 0
+        "WWWWWiiWWWWWWWWW",   # 0   ii = cold north windows behind the desk
         "W........W.....W",   # 1   main office (cols 1-8) | records (cols 10-14)
         "W........W.....W",   # 2
         "W..............W",   # 3   doorway gap in the partition (col 9)
@@ -177,8 +191,8 @@ def build_sheriff_office():
         "W........WWWWWWW",   # 6   records room sealed off below
         "W..............W",   # 7   the office opens out under the records room
         "W..............W",   # 8
-        "W..............W",   # 9
-        "W..............W",   # 10
+        "W...........WW.W",   # 9   holding-cell north wall; bars gate at col 14
+        "W...........W..W",   # 10  the holding cell (cols 13-14)
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
     sc = Scene("sheriff_office", floor, objects, music="home")
@@ -187,6 +201,12 @@ def build_sheriff_office():
     sc.add_exit("y", "brimley", "from_sheriff_office")
     sc.set_spawn("default", 4, 8)
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
+    # The holding cell (SE corner, cols 13-14 row 10): a barred gate on its
+    # north wall, the sliver of cell in Vane's tableau (draw_vane_tableau). It
+    # sits empty -- Mara was "released at dawn" (her booking slip is the
+    # evidence). The `bars` leaf blocks the body but you see through it into the
+    # empty cell (tableau-parity pass).
+    sc.add_inner_door(14, 9, "bars")
 
     pos = sc.consume_marker("Y")
     if pos:
@@ -207,6 +227,10 @@ def build_sheriff_office():
     sc.add_furniture("bed", [(1, 8), (2, 8), (1, 9), (2, 9)], w=54, h=54)
     sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     sc.add_furniture("table", [(11, 4), (12, 4)], w=54, h=36)
+    # The tall arms cabinet in the back records room -- the cache Vane unlocks
+    # (draw_vane_tableau's gun cabinet with the hasp + padlock; the shells drop
+    # from drop_ammo_cache when he hands it over). NE corner, against the wall.
+    sc.add_furniture("gun_cabinet", [(14, 1)], w=28, h=54)
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22, "candle"))
     # Sheriff's office in hunting country: a mounted buck + trophy
@@ -221,6 +245,9 @@ def build_sheriff_office():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
+    # Genset-electric main light on the office's north wall over the desk (the
+    # lantern + candle are the backup Vane keeps oiled). (2026-07 interior pass.)
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     # A candle on the records-room filing table (2026-07 audit fix: every
     # light lived in the main room, so the case board and the booking slip
     # sat unreadable in the dark in the real player view). Vane works his

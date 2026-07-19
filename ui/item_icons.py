@@ -163,6 +163,13 @@ def _powder(s):
     pygame.draw.rect(s, (220, 120, 50), (10, 2, 1, 1))
 
 
+def _stone(s):
+    # A river stone: a smooth grey pebble, one worn highlight.
+    pygame.draw.ellipse(s, (112, 110, 104), (4, 6, 9, 7))
+    pygame.draw.ellipse(s, (70, 68, 64), (4, 6, 9, 7), 1)
+    pygame.draw.line(s, (146, 144, 136), (6, 8), (8, 7), 1)
+
+
 def _iron_key(s):
     # A heavy iron key: round bow, straight shank, two teeth.
     pygame.draw.circle(s, (128, 126, 130), (5, 5), 3, 1)
@@ -184,6 +191,7 @@ _DISPATCH = {
     "unsent_letter":   _letter,
     "newspaper":       _newspaper,
     "batteries":       _batteries,
+    "stone":           _stone,
     "cult_calling":    _testimony,
     "cult_bargain":    _testimony,
     "cult_digging":    _testimony,

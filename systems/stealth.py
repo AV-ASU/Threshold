@@ -40,7 +40,10 @@ from systems.config import (SUS_NEAR, SUS_CONE_HALF, SUS_CONE_FEATHER,
                             SUS_CHECK_DIST, SUS_CHECK_PAUSE,
                             NOISE_HEAR_MIN, NOISE_FRESH,
                             NOISE_REACT_PAUSE, NOISE_SEARCH_PULL,
-                            NOISE_WALK_SPEED)
+                            NOISE_WALK_SPEED,
+                            CULT_SYNC_PERIOD, CULT_SYNC_HOLD,
+                            CULT_HANDOFF_RANGE, CULT_HANDOFF_HOLD,
+                            CULT_HANDOFF_CD, SUS_SPRINT_MULT)
 
 # The two enclosed hide kinds ('behind' was removed with the old model;
 # kept out on purpose -- see CLAUDE.md).
@@ -116,7 +119,13 @@ def detection_score(scene, ex, ey, facing, player, sight_range,
         return 0.0
     if not scene.clear_sight_line(ex, ey, player.x, player.y):
         return 0.0
-    return fall * face * conceal
+    score = fall * face * conceal
+    # Sprint is CONSPICUOUS (the stealth economy, TODO #5): a running
+    # figure in the line of sight reads louder than a walking one, so
+    # blowing past a scout actually lights the bar.
+    if getattr(player, "sprint_active", False):
+        score = min(1.0, score * SUS_SPRINT_MULT)
+    return score
 
 
 def sweep_points(scene, cx, cy, radius):
@@ -385,13 +394,89 @@ def errand_drop(actor):
     """Drop the errand's task pose, dwell, and planned leg (called
     whenever anything outranks the chore -- a noise, a sighting, the
     search). The station index survives, so the cultist RESUMES his
-    rounds from wherever the interruption leaves him."""
+    rounds from wherever the interruption leaves him. A pending
+    hand-off meeting is dropped with the chore (no stale freeze when
+    the actor falls back to scout after a chase)."""
     if getattr(actor, "_errand_posing", False):
         actor.pose = None
         actor._errand_posing = False
     actor._errand_dwell = 0.0
     actor._errand_path = None
     actor._errand_stuck = 0.0
+    actor._handoff_t = 0.0
+    actor._handoff_partner = None
+
+
+# ---- Cult liveness (TODO #23a pilot): scout-only body language -----------
+# Two beats of the claimed-as-one-body wrongness, dressing on the SCOUT
+# state alone. Both run AFTER detection/suspicion/hearing have already
+# scored the tick in the cult machines, and neither ever runs in
+# notice/chase/search/investigate -- so the threat model is untouched: a
+# frozen scout still fills suspicion, still hears, still promotes.
+
+def sync_pause(actor):
+    """The synchrony beat: on one shared slow clock, every idle cult
+    scout pauses mid-stride at the same instant -- the rank moving as
+    one body, ambient. Holds the actor exactly as it stands (no facing
+    change, no pose change; a digger frozen mid-task IS the read).
+    Set-piece kneelers keep their scripted stillness. Returns True
+    while the beat owns this actor's movement tick."""
+    if getattr(actor, "_cult_state", "scout") != "scout":
+        return False
+    if getattr(actor, "lock_facing", False) or getattr(actor, "aggro", 1) == 0:
+        return False
+    t = pygame.time.get_ticks() / 1000.0
+    return (t % CULT_SYNC_PERIOD) < CULT_SYNC_HOLD
+
+
+def handoff_step(actor, peers, scene, dt):
+    """The hand-off: two cult scouts whose rounds cross stop, face each
+    other for one silent beat, and part -- ordinary people with bodies,
+    working (NARRATIVE §4's domestic horror as movement). Wordless by
+    design: no float, no caption. Per-actor cooldown keeps it rare;
+    anything the eyes or ears raise still outranks it (the machines
+    only reach this in scout, and errand_drop clears a stale meeting).
+    Returns True while the meeting owns this actor's tick."""
+    ht = getattr(actor, "_handoff_t", 0.0)
+    if ht > 0.0:
+        actor._handoff_t = ht - dt
+        p = getattr(actor, "_handoff_partner", None)
+        if p is not None and getattr(p, "alive", True):
+            fdx = scene.world_dx(actor.x, p.x)
+            fdy = scene.world_dy(actor.y, p.y)
+            fm = math.hypot(fdx, fdy) or 1.0
+            actor.facing = (fdx / fm, fdy / fm)
+        if actor._handoff_t <= 0.0:
+            actor._handoff_partner = None
+        return True
+    cd = getattr(actor, "_handoff_cd", 0.0)
+    if cd > 0.0:
+        actor._handoff_cd = cd - dt
+        return False
+    for p in peers:
+        if p is actor or not getattr(p, "alive", True):
+            continue
+        if getattr(p, "_cult_state", None) != "scout":
+            continue
+        if getattr(p, "lock_facing", False) or getattr(p, "aggro", 1) == 0:
+            continue
+        if (getattr(p, "_handoff_cd", 0.0) > 0.0
+                or getattr(p, "_handoff_t", 0.0) > 0.0):
+            continue
+        if scene.world_dist(actor.x, actor.y, p.x, p.y) <= CULT_HANDOFF_RANGE:
+            actor._handoff_t = CULT_HANDOFF_HOLD
+            p._handoff_t = CULT_HANDOFF_HOLD
+            actor._handoff_partner = p
+            p._handoff_partner = actor
+            actor._handoff_cd = CULT_HANDOFF_CD
+            p._handoff_cd = CULT_HANDOFF_CD
+            fdx = scene.world_dx(actor.x, p.x)      # turn to each other
+            fdy = scene.world_dy(actor.y, p.y)      # the moment they stop
+            fm = math.hypot(fdx, fdy) or 1.0
+            actor.facing = (fdx / fm, fdy / fm)
+            p.facing = (-fdx / fm, -fdy / fm)
+            return True
+    return False
 
 
 def grab_allowed(player, chasing):

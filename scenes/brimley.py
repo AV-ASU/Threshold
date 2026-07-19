@@ -801,9 +801,13 @@ def build_brimley():
     sc.add_decoration(Decoration(7 * TILE + 16, 14 * TILE + 6, "dead_crow"))
     sc.add_decoration(Decoration(9 * TILE + 16, 16 * TILE + 6, "crow"))
 
-    # ---- Light is the mood ----
-    # A guttering lamppost one tile SW of each occupied door (they throw a
-    # pool across the threshold without standing IN the doorway).
+    # ---- Light is the mood: the town runs on electric, off gasoline ----
+    # A gas GENERATOR tucked outside each occupied building. The fold cut
+    # Brimley off the grid with everything else (NARRATIVE §1), so the town
+    # keeps the lights on off gas now; a genset MUST sit outdoors (exhaust),
+    # so it fronts the door and throws a small warm work-light across the
+    # threshold (the pool the door lantern used to). Placed one tile off the
+    # door -- the provenance behind the town's lights.
     for (lx, ly) in [(church_out[0], church_out[1] + 1),
                      (barn_out[0], barn_out[1] + 1),
                      (shop_out[0] - 1, shop_out[1]),     # beside the S door
@@ -812,26 +816,32 @@ def build_brimley():
                      (farm_out[0], farm_out[1] + 1),
                      (kid_out[0] + 1, kid_out[1])]:
         sc.add_decoration(Decoration(lx * TILE + 20,
-                                     ly * TILE + 16, "lantern"))
-    # The bridge: a single lantern on the exposed crossing, a creepy_tree
-    # on each bank for a held-breath pocket.
+                                     ly * TILE + 16, "generator"))
+    # The bridge keeps a single HUNG lantern on the exposed crossing (a
+    # personal light, not the civic grid), a creepy_tree on each bank for a
+    # held-breath pocket.
     sc.add_decoration(Decoration(river_center_x * TILE + 16,
                                  26 * TILE + 16, "lantern"))
     sc.add_decoration(Decoration(34 * TILE + 16, 22 * TILE + 16, "creepy_tree"))
     sc.add_decoration(Decoration(27 * TILE + 16, 28 * TILE + 16, "creepy_tree"))
 
-    # ---- Main-road waymarks: signs + a lamp thread to follow ----
+    # ---- Main-road waymarks: signs + the yard-light thread to follow ----
+    # Dusk-to-dawn mercury-vapor yard lights on poles: the period-correct
+    # civic light of a 1994 northern-Minnesota town, spaced far apart the way
+    # farmstead yard lights are. Their glow is COLD blue-white, the deliberate
+    # opposite of the warm fire the banks huddle at (burn barrels, braziers).
     sc.add_decoration(Decoration(56 * TILE + 16, 27 * TILE + 16, "town_sign",
                                  text="BRIMLEY"))
     sc.add_decoration(Decoration(51 * TILE + 16, 24 * TILE + 20, "town_sign",
                                  text="TOWN"))
     sc.add_decoration(Decoration(18 * TILE + 16, 26 * TILE + 16, "town_sign",
                                  text="TOWN"))
-    for lx in (8, 20, 40, 52):                      # lamps along the E-W spine
-        sc.add_decoration(Decoration(lx * TILE + 16, 24 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(51 * TILE + 16, 20 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(16 * TILE + 16, 15 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(16 * TILE + 16, 38 * TILE + 16, "lantern"))
+    for lx in (8, 20, 40, 52):                  # yard lights on the E-W spine
+        sc.add_decoration(Decoration(lx * TILE + 16, 24 * TILE + 16,
+                                     "yard_light"))
+    sc.add_decoration(Decoration(53 * TILE + 16, 18 * TILE + 16, "yard_light"))
+    sc.add_decoration(Decoration(16 * TILE + 16, 15 * TILE + 16, "yard_light"))
+    sc.add_decoration(Decoration(16 * TILE + 16, 38 * TILE + 16, "yard_light"))
 
     # Break the tidy boxes: a tipped wheelbarrow by the store, a dead
     # filling-station pump on the lane, mud tracked off the path.
@@ -917,8 +927,7 @@ def build_brimley():
     # south front now).
     sc.add_decoration(Decoration(20 * TILE + 16, 23 * TILE + 16, "flagpole"))
     # The community noticeboard at the well -- three flyers tacked tight
-    # with a hooded lantern above them.
-    sc.add_decoration(Decoration(54 * TILE + 16, 16 * TILE + 16, "lantern"))
+    # (the yard light in the lodge square throws over them now).
     for (fx, fy) in [(54 * TILE + 4, 16 * TILE + 22),
                      (54 * TILE + 16, 16 * TILE + 22),
                      (54 * TILE + 28, 16 * TILE + 22)]:
@@ -981,7 +990,43 @@ def build_brimley():
     # set-piece hide is the gap under the dead pickup's bed.
     sc.hide_spots = [
         (53 * TILE + 16, 31 * TILE + 8, "under"),
+        # The 2026-07 stealth pass (TODO #5): a second rooted hide on the
+        # east bank, under Mrs. Calder's outdoor supper table.
+        (42 * TILE + 16, 43 * TILE + 16, "under"),
     ]
+
+    # UNDER THE BRIDGE (TODO #5, maintainer pick): the mud shelf at the
+    # span's east foot, tucked beneath the deck head. Everything in
+    # Brimley crosses that bridge sooner or later; while you are under
+    # it, whatever crosses knocks on the planks over your head
+    # (Game._tick_bridge_knocks reads the deck band stored here).
+    _deck_cols = [c for c in range(sc.w) if sc.objects[25][c] == "$"]
+    if _deck_cols:
+        _bc = max(_deck_cols) + 1
+        if sc.floor[27][_bc] not in ("~", "@"):
+            _bhx, _bhy = _bc * TILE + 16, 27 * TILE + 16
+        else:
+            _bc = min(_deck_cols) - 1
+            _bhx, _bhy = _bc * TILE + 16, 27 * TILE + 16
+        sc.hide_spots.append((_bhx, _bhy, "under"))
+        sc._bridge_hide_px = (_bhx, _bhy)
+        sc._bridge_deck_px = (min(_deck_cols) * TILE,
+                              (max(_deck_cols) + 1) * TILE,
+                              24 * TILE, 27 * TILE)
+
+    # River stones scattered along both banks (TODO #5, the distraction
+    # verb): the river gives stones. Placed by scan because the water
+    # meanders; one per row, alternating banks, skipping the bridge rows.
+    for _i, _row in enumerate((18, 28, 33, 41, 48)):
+        _water = [c for c in range(26, 36)
+                  if sc.floor[_row][c] in ("~", "@")]
+        if not _water:
+            continue
+        _c = (min(_water) - 1) if _i % 2 == 0 else (max(_water) + 1)
+        _wx, _wy = _c * TILE + 16, _row * TILE + 16
+        if (sc.floor[_row][_c] not in ("~", "@")
+                and not sc.is_solid_at(_wx, _wy)):
+            sc.add_item(_wx, _wy, "stone")
 
     # The dead pickup is a big hulk -- solid tiles under its length so the
     # player can't walk through it (decoration at tile 54,30).
@@ -1027,6 +1072,22 @@ def build_brimley():
         # a dead, dry town well gone wrong -- ominous, going nowhere.
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
+            if (game.save.flag("well_examined")
+                    and game.player.inventory.count("stone") > 0):
+                # A stone over the lip (TODO #5, the distraction verb):
+                # the knocks fall away, the shaft's rattle carries across
+                # the square -- and no bottom ever sounds. WORDLESS by
+                # design (the missing landing IS the beat; the well stays
+                # the bottomless dread it is).
+                game.player.inventory.remove("stone", 1)
+                game.audio.play("bump", 0.5)
+                game._echoes.extend([
+                    {"t": 0.35, "x": wx, "y": wy, "vol": 0.34},
+                    {"t": 0.80, "x": wx, "y": wy, "vol": 0.22,
+                     "emit": True},
+                    {"t": 1.45, "x": wx, "y": wy, "vol": 0.12},
+                ])
+                return
             if not game.save.flag("well_examined"):
                 game.save.set_flag("well_examined", True)
                 game.audio.play("low_pulse", 0.4)

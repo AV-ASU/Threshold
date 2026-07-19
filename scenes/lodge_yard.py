@@ -179,9 +179,12 @@ def build_lodge_yard():
             objects[12][tx] = "X"
     sc.objects = objects
 
-    # No hide spots: the solid pickup truck and the corn perimeter are
-    # cover the player breaks line of sight behind (corn is walkable cover).
-    sc.hide_spots = []
+    # Enclosed hide (the 2026-07 stealth pass, TODO #5): the gap under
+    # the Clerk's dead pickup. The corn perimeter stays the mobile
+    # concealment the player breaks line of sight in.
+    sc.hide_spots = [
+        (20 * TILE + 16, 13 * TILE + 16, "under"),   # under the pickup's bed
+    ]
 
     def _outside_interact(game):
         px, py = game.player.x, game.player.y
