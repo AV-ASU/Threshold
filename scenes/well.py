@@ -201,6 +201,20 @@ def build_well_passage():
     for cx in (4, 7, 10, 13, 16, 19):
         objs[6][cx] = "s"
     objs[2][9] = "s"
+    # #14 -- two side-chambers dug off the gallery, so the mine reads as a
+    # dig with rooms cut off it, not a bare hall. Cut into the sealed north
+    # blocks, each reached through a single timbered ADIT off the corridor
+    # (distinct from the wide-open central bay): a FINISHED store squared
+    # into the east block, and a HALF-DUG niche the diggers started and quit
+    # in the west. Both adits open onto row 4 at non-rack columns, so the
+    # E-W patrol run (row 5) and its rack cover are untouched.
+    for cx in (15, 16, 17, 18):        # finished store: 4 wide, 2 deep
+        objs[1][cx] = "."
+        objs[2][cx] = "."
+    objs[3][16] = "."                  # its adit down to the corridor
+    for cx in (4, 5):                  # half-dug niche: one course deep, ragged
+        objs[2][cx] = "."
+    objs[3][5] = "."                   # its adit
     objects = ["".join(r) for r in objs]
     sc = Scene("well_passage", floor, objects, music="basement")
     sc.add_exit("F", "well_bottom", "from_below")
@@ -246,6 +260,27 @@ def build_well_passage():
                                  ang=math.pi / 2, seed=6))
     for mx, my in ((9, 3), (15, 5), (3, 5), (20, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
+    # --- The two dug side-chambers, dressed (#14) ---
+    # FINISHED store (east block): a room the gallery squared off for
+    # overflow stores. Crates and staged boards, a kept candle, the count
+    # scratched on the back wall. Timber went up over the adit mouth.
+    sc.add_decoration(Decoration(16 * TILE + 16, 3 * TILE + 30, "shoring_frame",
+                                 seed=31, ang=0.0, span=70))
+    sc.add_furniture("crate", [(15, 1)])
+    sc.add_furniture("crate", [(18, 1)])
+    sc.add_furniture("firewood", [(17, 2)], w=34, h=16, seed=24)
+    sc.add_decoration(Decoration(16 * TILE + 16, 1 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(17 * TILE + 16, 1 * TILE + 18, "tally_marks",
+                                 wall="N", seed=14))
+    # HALF-DUG niche (west block): a store the dig started and abandoned.
+    # A low spoil pile where they stopped, pick gouges in the raw wall, no
+    # light. The shoring went up before the digging quit.
+    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 30, "shoring_frame",
+                                 seed=17, ang=0.0, span=64))
+    sc.add_furniture("spoil_heap", [(4, 2)], seed=7, see_over=True)
+    sc.add_decoration(Decoration(5 * TILE + 6, 2 * TILE + 14, "claw_marks",
+                                 scale=1.5))
 
     # Two enclosed hides spaced down the run (DESIGN.md §12): the gap
     # under the bay's timber rack, and one under a far corridor rack --

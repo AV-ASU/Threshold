@@ -834,9 +834,23 @@ loot / testimony placement; most is just labor made visible.
   unhauled spoil, downed hafts). The grain heap's baked-in "old blood"
   ring was recut to dark chaff (a killer-cult relic in the ART layer).
   The Sign Chamber stays deliberately bare: the one properly FINISHED
-  room in the dig. What REMAINS here is the LEVEL-design half: timbered
-  side-chambers dug off the halls (new geometry, some finished, some
-  half-dug), doors under the cave-mouth adits.
+  room in the dig.
+- **The LEVEL-design half -- PILOT landed (2026-07, "keep going" after
+  Phase 3).** Timbered side-chambers dug off the halls, each reached through
+  a single ADIT off the corridor (distinct from the open bays that already
+  line the drifts): a FINISHED store (squared, crates + staged boards + a
+  kept candle + a wall tally) and a HALF-DUG niche (a shallow ragged pocket,
+  a low spoil pile + pick gouges, no light) -- the finished-vs-abandoned
+  read #14 asks for. Piloted on the **Timber Racks** (`well_passage`,
+  `scenes/well.py`): both cut into the sealed north wall blocks off the
+  patrol lane, so the tuned E-W run / racks / hides are untouched; reuses the
+  shipped mine kinds (no new procedural kinds); reachability re-checked
+  (smoke [4/10] flood-fill), VISION four-facing + dark verified, full gate
+  green. **Still open:** roll the pattern out to the other mine rooms one at
+  a time per VISION (the Sorting Hall's catalogued-overflow store, a
+  half-dug pocket off the Cistern or the procession drift, the Deepest
+  Face's hand-clawed dead-ends); and the cave-mouth ADIT `door_style` for
+  the scene-to-scene fade doors (a separate render item).
 
 ### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
 

@@ -490,7 +490,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | # | Room | Key | Contents |
 |---|---|---|---|
 | 1 | The Shaft Floor | `well_bottom` | The descent fold lands you here; its return pane (the way back up) stands where the rope once hung. Quiet airlock, 1 hide. |
-| 2 | The Timber Racks | `well_passage` | The dig's staged shoring lumber, racked on its way to the faces (renamed 2026-07: the old drying-corn-doll-material fiction was cut -- an obsessive dig runs no craft room). A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. |
+| 2 | The Timber Racks | `well_passage` | The dig's staged shoring lumber, racked on its way to the faces (renamed 2026-07: the old drying-corn-doll-material fiction was cut -- an obsessive dig runs no craft room). A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. **Two dug side-chambers off the run (#14 pilot, 2026-07):** a FINISHED store squared into the east wall (crates, staged boards, a kept candle, a wall tally) and a HALF-DUG niche the diggers quit in the west (a low spoil pile, pick gouges, no light), each reached through a single timbered ADIT off the corridor (distinct from the open central bay). Exploration texture off the patrol lane; the tuned E-W run, racks, and hides are untouched. |
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_cistern` | Where the dig **broke into the underground river** — the artery to the door (NARRATIVE §2), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. The scene key is now `works_cistern` (renamed 2026-07 to match the Cistern).* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence: the unsent letter (`maras_room`, a canonical trail beat — NARRATIVE §6).** A quiet beat off the gauntlet, 1 hide. |
@@ -522,8 +522,11 @@ finds you — run it on cover, timing, and breaking their line of sight).
   kind, kept); `the_old_stores` is the old workings' **Old
   Stores** — racked gear, tagged hafts, The Digging left on a shelf.
   Guarded by `tests/flow.py` §19b (token scan of `well.py`/`depths.py` +
-  the purged `bone_rack` furniture kind). The ART half of the mine read
-  (timbered side-chambers, spoil heaps, cart ruts) is TODO #14.
+  the purged `bone_rack` furniture kind). The mine's dressing (spoil heaps,
+  shoring frames, cart ruts, wall tallies) landed with the art pass; the
+  LEVEL-DESIGN half of TODO #14 -- timbered side-chambers dug off the halls,
+  some finished, some half-dug -- is now piloting, first on the Timber Racks
+  gallery (row 2 above), and rolls out room by room per VISION.
   **The corridors walk LONG (2026-07, the stealth pass):** the graded
   suspicion model (distance falloff) only reads when "far" exists, so the
   three corridor rooms were stretched -- the Timber Racks gallery (24
