@@ -531,9 +531,16 @@ single side room. The fix has two halves, and the first is done.
   unchanged). Guarded by `tests/stealth.py` §16 (bands thin, shell hugs the
   exterior, junctions connect flush, collision+sight+nav agree); full gate green;
   the shop verified live (VISION four-facing + dark + a top-down footprint
-  schematic). **Still open:** needs a maintainer LOOK (the 0.5·TILE thickness
-  taste; whether corners want ROUNDING on top of the thin L); then roll
-  `_SLAB_SCENES` out to the other interiors one at a time per VISION.
+  schematic). **Corners ROUNDED (2026-07, maintainer "rounded corners where the
+  walls connect"):** `_rounded_wall_poly` traces the band union to an outline and
+  fillets each FREE corner (facing floor) into an arc (`_fillet`, radius
+  `_ROUND_R`) while a wall-neighbour SEAM corner stays sharp so tiles connect
+  flush; it drives the flat mass + a new 3D `_extrude_prism` (the rounded sibling
+  of `_extrude_box`). Building outer corners + partition run-ends read rounded;
+  collision/sight/nav keep the square bands (the rounding sits inside the drawn
+  face). Verified live all four facings + dark. **Still open:** a maintainer LOOK
+  (the `_SLAB_THICK` 0.5·TILE + `_ROUND_R` radius taste); then roll `_SLAB_SCENES`
+  out to the other interiors one at a time per VISION.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

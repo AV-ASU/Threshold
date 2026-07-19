@@ -690,7 +690,12 @@ it renders the procedural sprites to a labelled PNG strip.
   and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (pilot =
   shop); off it, None → full tile → byte-identical (`capture_world --diff`
   confirms). SUPERSEDES the bevel where both apply (`_bevel_corners` returns 0 in
-  a slab scene). Roll out one interior at a time per VISION.
+  a slab scene). Roll out one interior at a time per VISION. **Corners are
+  ROUNDED:** `_rounded_wall_poly` traces the band union to an outline and fillets
+  each FREE corner (facing floor) into an arc while a wall-neighbour SEAM corner
+  stays sharp (so tiles still connect flush); it drives the flat mass + a 3D
+  `_extrude_prism`. Collision/sight/nav keep the square bands (rounding sits
+  inside the drawn face). `_ROUND_R` tunes the radius.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`

@@ -1823,6 +1823,145 @@ def _wall_slab(scene, tx, ty):
     return rects
 
 
+# --- Rounded wall outline (2026-07, maintainer "rounded corners where the walls
+# connect") ------------------------------------------------------------------
+# The thin bands (_wall_slab) still meet at square 90deg corners. Round the FREE
+# corners (the ones facing open floor) into arcs so the walls flow into each
+# other; the corners that sit on a wall-neighbour SEAM stay sharp so the tile
+# still connects flush to its neighbour. The rounded outline drives BOTH draw
+# layers (the flat mass fill + the 3D prism extrude); collision/sight/nav keep
+# the square bands (the few-px rounding sits INSIDE the drawn face, so collision
+# is a hair proud -- the safe direction). Pure function of the footprint +
+# neighbour seams, cached.
+_ROUND_R = _SLAB_THICK * 0.5           # fillet radius: a full round of the band
+_ROUND_POLY_CACHE = {}
+
+
+def _round_seams(scene, tx, ty):
+    W, H = scene.w, scene.h
+
+    def _c(x, y):
+        if scene.wrap_x:
+            x %= W
+        if scene.wrap_y:
+            y %= H
+        return scene.objects[y][x] if 0 <= x < W and 0 <= y < H else None
+    return (_c(tx, ty - 1) in _WALL_CHARS, _c(tx, ty + 1) in _WALL_CHARS,
+            _c(tx + 1, ty) in _WALL_CHARS, _c(tx - 1, ty) in _WALL_CHARS)
+
+
+def _rounded_wall_poly(scene, tx, ty):
+    """(pts, draw) for the wall tile's THIN footprint with free corners rounded,
+    or None for a full/absent slab. pts = local-px outline (CW); draw[i] flags
+    whether edge pts[i]->pts[i+1] is EXPOSED (drawn) vs a merged neighbour seam
+    (skipped). Cached per (footprint, seams)."""
+    bands = _wall_slab(scene, tx, ty)
+    if bands is None:
+        return None
+    sN, sS, sE, sW = _round_seams(scene, tx, ty)
+    key = (tuple(bands), sN, sS, sE, sW)
+    hit = _ROUND_POLY_CACHE.get(key)
+    if hit is None:
+        hit = _build_rounded_poly(bands, sN, sS, sE, sW)
+        _ROUND_POLY_CACHE[key] = hit
+    return hit
+
+
+def _build_rounded_poly(bands, sN, sS, sE, sW):
+    T = TILE
+    SUP = 4                             # upsample for a clean mask outline
+    surf = pygame.Surface((T * SUP, T * SUP), pygame.SRCALPHA)
+    for (x0, y0, x1, y1) in bands:
+        pygame.draw.rect(surf, (255, 255, 255, 255),
+                         (round(x0 * SUP), round(y0 * SUP),
+                          round((x1 - x0) * SUP), round((y1 - y0) * SUP)))
+    mask = pygame.mask.from_surface(surf)
+    comps = mask.connected_components()
+    raw = (comps[0] if comps else mask).outline(2)
+    if len(raw) < 4:
+        return None
+    loop = [(px / SUP, py / SUP) for px, py in raw]
+    if loop[0] == loop[-1]:
+        loop.pop()
+    corners = _poly_corners(loop)         # rectilinear vertices only
+    if len(corners) < 4:
+        return None
+
+    def on_seam(pt):
+        x, y = pt
+        eps = 0.5
+        return ((y <= eps and sN) or (y >= T - eps and sS)
+                or (x >= T - eps and sE) or (x <= eps and sW))
+
+    out = []
+    n = len(corners)
+    for i in range(n):
+        A = corners[(i - 1) % n]
+        C = corners[i]
+        B = corners[(i + 1) % n]
+        if on_seam(C):
+            out.append(C)                 # a connection corner: keep it sharp
+        else:
+            out.extend(_fillet(A, C, B, _ROUND_R))
+    # edge draw flags: an edge on a shared seam side is merged (not drawn)
+    draw = []
+    m = len(out)
+    for i in range(m):
+        p, q = out[i], out[(i + 1) % m]
+        seam = ((p[1] <= 0.5 and q[1] <= 0.5 and sN)
+                or (p[1] >= T - 0.5 and q[1] >= T - 0.5 and sS)
+                or (p[0] >= T - 0.5 and q[0] >= T - 0.5 and sE)
+                or (p[0] <= 0.5 and q[0] <= 0.5 and sW))
+        draw.append(not seam)
+    return (out, draw)
+
+
+def _poly_corners(loop):
+    """Reduce a dense rectilinear outline to its corner vertices (drop points
+    that continue straight)."""
+    n = len(loop)
+    out = []
+    for i in range(n):
+        ax, ay = loop[(i - 1) % n]
+        bx, by = loop[i]
+        cx, cy = loop[(i + 1) % n]
+        # cross product of the two edges; ~0 -> collinear, drop it
+        if abs((bx - ax) * (cy - by) - (by - ay) * (cx - bx)) > 0.01:
+            out.append(loop[i])
+    return out
+
+
+def _fillet(A, C, B, r):
+    """Quarter-arc points replacing corner C (between edges A->C and C->B),
+    radius r clamped to half of each edge. Convex or concave (short arc either
+    way). Returns >=2 points from the incoming edge, around, to the outgoing."""
+    import math as _m
+    ax, ay = A
+    cx, cy = C
+    bx, by = B
+    din = (cx - ax, cy - ay)
+    dou = (bx - cx, by - cy)
+    lin = _m.hypot(*din) or 1.0
+    lou = _m.hypot(*dou) or 1.0
+    r = min(r, lin / 2.0, lou / 2.0)
+    if r < 0.6:
+        return [C]
+    uin = (din[0] / lin, din[1] / lin)
+    uou = (dou[0] / lou, dou[1] / lou)
+    p1 = (cx - uin[0] * r, cy - uin[1] * r)       # back up the incoming edge
+    p2 = (cx + uou[0] * r, cy + uou[1] * r)       # forward the outgoing edge
+    o = (p1[0] + p2[0] - cx, p1[1] + p2[1] - cy)  # arc centre (90deg corner)
+    a1 = _m.atan2(p1[1] - o[1], p1[0] - o[0])
+    a2 = _m.atan2(p2[1] - o[1], p2[0] - o[0])
+    while a2 - a1 > _m.pi:
+        a2 -= 2 * _m.pi
+    while a2 - a1 < -_m.pi:
+        a2 += 2 * _m.pi
+    seg = 4
+    return [(o[0] + r * _m.cos(a1 + (a2 - a1) * k / seg),
+             o[1] + r * _m.sin(a1 + (a2 - a1) * k / seg)) for k in range(seg + 1)]
+
+
 def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
@@ -1839,19 +1978,17 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 continue
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
-            foot = _wall_slab(scene, tx, ty)
+            poly = _rounded_wall_poly(scene, tx, ty)
             bv = _bevel_corners(scene, tx, ty)
-            if foot is not None:
+            if poly is not None:
                 # Thin slab: render the tile's flat content into a scratch and
-                # clip it to the UNION of the band rects the 3D box uses, so the
-                # near-black mass under the wall matches the thinned box and the
-                # room floor shows through where the wall was thinned away.
+                # clip it to the SAME rounded outline the 3D prism uses, so the
+                # near-black mass under the wall matches the thinned, rounded box
+                # and the room floor shows through where the wall was thinned.
                 scratch = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
                 _wall_tile_flat(scratch, scene, tx, ty, 0, 0)
                 mask = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
-                for fx0, fy0, fx1, fy1 in foot:
-                    pygame.draw.rect(mask, (255, 255, 255, 255),
-                                     (fx0, fy0, fx1 - fx0, fy1 - fy0))
+                pygame.draw.polygon(mask, (255, 255, 255, 255), poly[0])
                 scratch.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
                 surf.blit(scratch, (rx, ry))
             elif bv:
@@ -3219,19 +3356,55 @@ def _tilt_wall_tint(scene, tx, ty):
     return face_col, top_col
 
 
+def _extrude_prism(surf, camera, scene, tx, ty, z0, z1, poly, draw_edges,
+                   face_col, top_col):
+    """Extrude a local-px OUTLINE polygon (the rounded thin-wall footprint)
+    between z0..z1: exposed side faces (draw_edges[i] False = a merged neighbour
+    seam, skipped) depth-sorted far->near, capped with the top polygon. The
+    rounded-corner sibling of _extrude_box for _SLAB_SCENES walls."""
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+
+    def P(lx, ly, dz):                     # local px -> world offset -> screen
+        return camera.project(wx + lx - hw, wy + ly - hw, dz)
+    near = tuple(int(c * 0.5) for c in face_col)     # N/S faces
+    side = tuple(int(c * 0.7) for c in face_col)     # E/W faces
+    jv = (_vary(tx * 8009 + ty, 3) % 15) - 7
+    near = tuple(max(0, min(255, c + jv)) for c in near)
+    side = tuple(max(0, min(255, c + jv)) for c in side)
+    n = len(poly)
+    ground = [P(px, py, z0) for px, py in poly]
+    top = [P(px, py, z1) for px, py in poly]
+    faces = []
+    for i in range(n):
+        if not draw_edges[i]:
+            continue
+        j = (i + 1) % n
+        (ax, ay), (bx, by) = poly[i], poly[j]
+        mx, my = (ax + bx) / 2 - hw, (ay + by) / 2 - hw
+        col = near if abs(bx - ax) >= abs(by - ay) else side
+        quad = (ground[i], ground[j], top[j], top[i])
+        faces.append((camera.depth(wx + mx, wy + my, (z0 + z1) / 2), quad, col))
+    faces.sort(key=lambda f: f[0])
+    for _, quad, col in faces:
+        pygame.draw.polygon(surf, col, quad)
+    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in top_col), top)
+    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), top, 1)
+
+
 def _tilt_wall_box(surf, camera, scene, tx, ty):
     face_col, top_col = _tilt_wall_tint(scene, tx, ty)
-    foot = _wall_slab(scene, tx, ty)
-    if foot is None:
+    poly = _rounded_wall_poly(scene, tx, ty)
+    if poly is None:
         _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
                      face_col=face_col, top_col=top_col,
                      bevel=_bevel_corners(scene, tx, ty))
     else:
-        # One box per band (a run is one, a corner/tee/cross two); they overlap
-        # in the tile centre and read as one connected near-black mass.
-        for r in foot:
-            _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
-                         face_col=face_col, top_col=top_col, foot=r)
+        pts, draw_edges = poly
+        _extrude_prism(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                       pts, draw_edges,
+                       face_col if face_col else _WALL_FACE,
+                       top_col if top_col else _WALL_TOP)
 
 
 _COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall

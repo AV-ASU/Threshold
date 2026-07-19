@@ -646,6 +646,22 @@ Built into the procedural draw layer (`scenes/base.py`,
   function of the tile + its 4 orthogonal neighbour chars + the gate). Tune
   `_SLAB_THICK`, and roll out one interior at a time per VISION (render + look,
   all four facings + the dark).
+- **Rounded wall corners (2026-07, maintainer "rounded corners where the walls
+  connect").** The thin bands still meet at square 90° corners, so the DRAW
+  layers round them: `_rounded_wall_poly(scene, tx, ty)` traces the band union
+  to an outline (`pygame.mask`) and replaces each FREE corner (one facing open
+  floor) with a quarter-arc fillet (`_fillet`, radius `_ROUND_R` = half the band
+  thickness), while a corner that sits on a wall-neighbour SEAM stays sharp so
+  the tile still connects flush to its neighbour. It drives BOTH draw layers --
+  `_draw_wall_mass` fills the rounded polygon, and a new `_extrude_prism`
+  (the rounded-corner sibling of `_extrude_box`) extrudes it in 3D (exposed side
+  faces depth-sorted far→near, seam edges skipped, a rounded top cap). Building
+  outer corners and interior partition run-ends read rounded; the connections
+  stay flush. **Collision / sight / nav keep the SQUARE bands** (`_wall_slab`,
+  `_obj_solid_here`): the few-px rounding sits INSIDE the drawn face, so
+  collision is a hair proud (the safe direction) and no predicate pays for the
+  outline. Cached per (footprint, seams); the wall-box card cache holds the
+  projected prism per tile+angle. `_ROUND_R` tunes how round.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.
