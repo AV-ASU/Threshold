@@ -2513,6 +2513,31 @@ def _draw_bill_spike_solid(surf, cam, deco):
                          (int(b[0]), int(b[1])), max(2, int(pw * 0.55 * s)))
 
 
+def _draw_service_bell_solid(surf, cam, deco):
+    """A brass reception service bell: a domed bell on a round base with a small
+    press button on top. Lifts to kwargs['z'] for the desk. Sable's tableau
+    keeps one on the register; the walkable desk had none."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    brass = {"body": (150, 128, 74), "lo": (104, 86, 48), "rim": (198, 174, 112)}
+    draw_solid(surf, cam, wx, wy, [
+        (z0 + 0.0, 5.0 * s, 4.2 * s),        # base disc
+        (z0 + 1.3 * s, 4.5 * s, 3.7 * s),
+        (z0 + 2.1 * s, 4.8 * s, 4.0 * s),    # dome shoulder
+        (z0 + 4.2 * s, 3.3 * s, 2.7 * s),
+        (z0 + 5.6 * s, 1.5 * s, 1.2 * s),
+        (z0 + 6.2 * s, 0.9 * s, 0.8 * s),    # cap
+    ], brass)
+    P = _vframe(cam, wx, wy, 0.0)
+    st = P(0, 0, z0 + 6.2 * s)
+    b = P(0, 0, z0 + 7.5 * s)
+    pygame.draw.line(surf, (120, 100, 58), (int(st[0]), int(st[1])),
+                     (int(b[0]), int(b[1])), max(1, int(1.2 * s)))
+    pygame.draw.circle(surf, (208, 186, 124), (int(b[0]), int(b[1])),
+                       max(1, int(1.4 * s)))
+
+
 def _draw_lectern_solid(surf, cam, deco):
     """A church reading lectern: a narrow dark-wood column on a foot, a small
     brass cross on the front, and the open book on a board slanted toward the
@@ -2588,6 +2613,7 @@ SOLID_PROPS = {
     "wrong_radio":    _draw_wrong_radio_solid,
     "cash_register":  _draw_cash_register_solid,
     "bill_spike":     _draw_bill_spike_solid,
+    "service_bell":   _draw_service_bell_solid,
     "lectern":        _draw_lectern_solid,
     "church_bell":    _draw_church_bell_solid,
     "valve":          _draw_valve_solid,

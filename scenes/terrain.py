@@ -3772,9 +3772,10 @@ _TABLETOP_PROP_KINDS = frozenset((
     "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
     "book", "photo", "photo_frame", "tankard", "teapot",
     "wrong_radio", "place_setting",
-    # the shop counter's till + its receipt spike (tableau-parity pass): both
-    # rest ON the counter, seated by seat_tabletop_props.
-    "cash_register", "bill_spike",
+    # the shop counter's till + its receipt spike, and the lodge desk's service
+    # bell (tableau-parity pass): all rest ON furniture, seated by
+    # seat_tabletop_props.
+    "cash_register", "bill_spike", "service_bell",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
@@ -3793,6 +3794,9 @@ _WALL_DECO_KINDS = frozenset((
     # Things that belong ON a wall, not lying flat on the floor: a cobweb
     # spans a corner; a passing silhouette glides past a window.
     "cobweb", "passing_silhouette",
+    # the lodge reception key board (tableau-parity pass): hangs on the wall
+    # behind Sable's desk.
+    "key_rack",
     # The mine art pass (2026-07): shift tallies scratched into the rock face.
     "tally_marks",
 ))

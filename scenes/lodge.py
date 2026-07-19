@@ -429,6 +429,13 @@ def build_lodge():
     sc.add_decoration(Decoration(sc._frontdesk_pos[0], sc._frontdesk_pos[1],
                                  "ledger", z=14))
     sc.add_interactable(sc._frontdesk_pos[0], sc._frontdesk_pos[1], 44)
+    # The wall of room keys behind the desk -- the pigeonhole board Sable keeps
+    # ready, his "full house" want made an object (draw_sable_tableau builds the
+    # desk around it; the walkable desk had only the register + clock). And a
+    # brass service bell on the register (tableau-parity pass); seated on the
+    # counter by seat_tabletop_props.
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "key_rack"))
+    sc.add_decoration(Decoration(9 * TILE + 22, 2 * TILE + 16, "service_bell"))
 
     # Northern-MN lodge decor. Wall mounts (no collision) along the
     # east + west walls; an oil lamp on the kitchen counter; cobwebs in

@@ -370,11 +370,18 @@ top draws the pistol + case file); it is the model.
   new `gun_cabinet` FURNITURE volume in the back records room (the glass-front
   arms locker with racked guns + a padlock hasp, the cache he unlocks). Matches
   `draw_vane_tableau`; the JAN 15 calendar + desk were already present.
-- **Still open (per the audit):** Sable's lodge (wall of room keys + service
-  bell; ceiling fan is deferred, no overhead tilt path), Toby's house (wall of
-  crayon drawings + crayons on the table + the `toby_told` procession drawing +
-  window), works_sign (the Pallid Mask visible on the altar; verify the
-  `yellow_sign` reads on the apse wall not the floor).
+- **Sable's lodge — LANDED (2026-07).** New `key_rack` `_WALL_DECO` (a
+  pigeonhole board of hanging room keys, a couple of hooks empty) behind the
+  reception desk -- Sable's "full house" want made an object, the detail
+  `draw_sable_tableau` builds the desk around -- and a new `service_bell`
+  tabletop volume (brass dome + press button) on the register. The register +
+  clock were already present. The CEILING FAN is deferred: no overhead-prop
+  path in the tilt renderer (a moving shadow cast on the desk would be the
+  faithful option; not built).
+- **Still open (per the audit):** Toby's house (wall of crayon drawings +
+  crayons on the table + the `toby_told` procession drawing + window),
+  works_sign (the Pallid Mask visible on the altar; verify the `yellow_sign`
+  reads on the apse wall not the floor).
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 

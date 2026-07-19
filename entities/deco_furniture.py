@@ -403,6 +403,34 @@ class DecoFurnitureMixin:
         pygame.draw.rect(surf, (68, 68, 76), (x - 3, y + 3, 6, 3))
         pygame.draw.line(surf, (168, 160, 140), (x - 2, y - 5), (x + 2, y - 4), 2)
 
+    def _draw_service_bell(self, surf, x, y):
+        """Flat (pitch-0) fallback for the reception service bell; the tilt
+        camera draws the real dome (rendering.props._draw_service_bell_solid)."""
+        pygame.draw.ellipse(surf, (150, 128, 74), (x - 5, y - 4, 10, 8))
+        pygame.draw.rect(surf, (150, 128, 74), (x - 5, y + 1, 10, 3))
+        pygame.draw.line(surf, (120, 100, 58), (x, y - 4), (x, y - 7), 1)
+        pygame.draw.circle(surf, (208, 186, 124), (x, y - 7), 1)
+
+    def _draw_key_rack(self, surf, x, y):
+        """The lodge reception key board: a pigeonhole rack, rows of hooks with
+        the guest-room keys hanging (a couple of gaps for rooms in use). The
+        wall of keys Sable keeps ready, his 'full house' want made an object.
+        A `_WALL_DECO_KINDS` billboard lifted onto the wall face under tilt."""
+        pygame.draw.rect(surf, (80, 58, 38), (x - 10, y - 11, 20, 20))
+        pygame.draw.rect(surf, (46, 32, 20), (x - 10, y - 11, 20, 20), 1)
+        n = 0
+        for ry in range(5):
+            for cx in range(4):
+                hx = x - 7 + cx * 5
+                hy = y - 8 + ry * 4
+                n += 1
+                pygame.draw.circle(surf, (150, 140, 110), (hx, hy), 1)   # hook
+                if (n * 7) % 5 == 3:                # empty hooks (rooms in use)
+                    continue
+                pygame.draw.line(surf, (198, 176, 120), (hx, hy + 1),
+                                 (hx, hy + 3), 1)                        # shaft
+                pygame.draw.circle(surf, (198, 176, 120), (hx, hy + 3), 1)  # bow
+
     def _draw_lectern(self, surf, x, y):
         """Flat (pitch-0) fallback for the church lectern; the tilt camera draws
         the real volume (rendering.props._draw_lectern_solid)."""
