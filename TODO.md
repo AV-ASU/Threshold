@@ -592,8 +592,8 @@ single side room. The fix has two halves, and the first is done.
   bounds) — so the wall the player bumps and the AI sees IS the thin wall drawn.
   SUPERSEDES the bevel in a slab scene (`_bevel_corners` returns 0 there). Gated
   to `_SLAB_SCENES` (shop was the pilot; Wave A + the three principal seats have
-  since opted in, below); every NON-slab scene stays byte-identical
-  (capture_world --diff: brimley/works_cistern/depths_hall unchanged -- the slab
+  since opted in, below); every NON-slab, NON-rock scene stays byte-identical
+  (capture_world --diff: brimley -- an outdoor scene -- unchanged; the slab + rock
   scenes legitimately differ). Guarded by `tests/stealth.py` §16 (bands thin, shell hugs the
   exterior, junctions connect flush, collision+sight+nav agree); full gate green;
   the shop verified live (VISION four-facing + dark + a top-down footprint
@@ -650,9 +650,20 @@ that collision/sight/nav obey). Spend it in phases:
   lodge_cellar = stone + abandoned_farmhouse = timber in Wave 3)*. **Phase 2 (all
   above-ground interiors) is now COMPLETE.** *(A/B/C SAFE_SCENES stay flat-lit +
   safe; only geometry + colour change.)*
-- **Phase 3 -- the mine reimagined (consumes 1b).** A `_ROCK_SCENES` set (Works
-  + Depths): full-THICK but the rough-outline + prism, so hewn rock reads
-  irregular/organic, not blocky boxes. Land with #14's side-dug chambers.
+- **Phase 3 -- the mine reimagined. *(LANDED 2026-07, maintainer "DO phase 3".)***
+  A `_ROCK_STYLE` / `_ROCK_SCENES` set (the 16 mine scenes -- Works + Depths +
+  Mara's cell) reads the new `rock` material: full-THICK (`thick`=1.0) but the
+  rough-outline + prism DRAW, so the hewn walls read irregular/organic, not blocky
+  boxes. Because `thick`=1.0 makes `_wall_slab` return full-tile bands AND rock
+  stays OUT of `_SLAB_SCENES`, collision/sight/nav read the tile grid UNCHANGED
+  (the roughening is draw-only, the mine's stealth footprint untouched); only the
+  styled DRAW roughens. `round`=0 so rock breaks sharp + jagged rather than
+  filleted; `rough`=3.2 (heavy) + a dark muddy earth `tint`. Guarded by
+  `tests/stealth.py §16` (full-tile bands, roughened outline, full-thick
+  collision+sight, rock excluded from `_SLAB_SCENES`, shipped scenes read the rock
+  style); verified live (well_passage / depths_hall / works_cistern / works_sign,
+  four facings + the dark). #14's side-dug chambers (the level-design half) are
+  still open, tracked there.
 - **Phase 4 -- freeform walls (the north star, "walls are no longer tiles" all
   the way).** A wall SEGMENT primitive (endpoints + thickness + style, off the
   tile grid) in the Scene model; collision/sight/nav read segment geometry; the
@@ -681,12 +692,13 @@ first stone scene: rough cold-grey masonry, fitting a cellar), `abandoned_farmho
 = timber. All had zero diagonal-only joins (smoke [10/10] clean, no geometry
 fixes needed); each verified live (VISION four-facing + the dark for the gloom
 scenes); full gate green. Every above-ground BUILDING interior now renders thin,
-material-coloured walls; only the mine (Phase 3) and outdoors stay full-tile.
+material-coloured walls; the mine renders full-thick hewn rock (Phase 3, LANDED
+below); only the outdoors stays full-tile.
 
-**Still open:** Phase 3 (the mine, a `_ROCK_SCENES` set -- full-thick but the
-rough-outline + prism, land with #14's side-dug chambers); Phase 4 (freeform
-off-grid wall segments, unlocking the deferred curved church apse / arched
-window); and the cross-cutting cover re-tune as styles land.
+**Still open:** Phase 4 (freeform off-grid wall segments, unlocking the deferred
+curved church apse / arched window); #14's side-dug mine chambers (the
+level-design half of Phase 3, the rock DRAW having landed); and the cross-cutting
+cover re-tune as styles land.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

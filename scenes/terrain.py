@@ -1770,6 +1770,11 @@ _WALL_STYLES = {
     "timber":  {"thick": 0.66, "round": 0.34, "rough": 1.4, "tint": (34, 6, -16)},   # dark red-brown
     "stone":   {"thick": 0.80, "round": 0.30, "rough": 2.6, "tint": (2, 14, 26)},    # cold blue-grey
     "brick":   {"thick": 0.62, "round": 0.22, "rough": 1.0, "tint": (44, 2, -18)},   # dark fired clay
+    # hewn ROCK (the mine, Phase 3): full-THICK (thick 1.0 -> the slab bands fill
+    # the whole tile, so DRAW roughens but collision stays the tile grid), NO
+    # corner round (rock breaks sharp + jagged, not filleted arcs), and a heavy
+    # rough so the wall face reads irregular/organic instead of a machined box.
+    "rock":    {"thick": 1.00, "round": 0.00, "rough": 3.2, "tint": (14, 10, 4)},    # dark muddy earth-rock
 }
 _SLAB_STYLE = {
     "shop": "plank",
@@ -1796,18 +1801,37 @@ _SLAB_STYLE = {
     "lodge_cellar": "stone",
     "abandoned_farmhouse": "timber",
 }
-_SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render thin
+_SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render THIN
+
+# Phase 3 -- the MINE reimagined as hewn rock. The Works + Depths get the `rock`
+# style (full-thick, so the DRAW roughens but collision/sight/nav stay the tile
+# grid -- these scenes are deliberately NOT in _SLAB_SCENES, so `_obj_solid_here`
+# never routes them through the thin-band collision; only the styled DRAW picks
+# them up via `_wall_style`). The list mirrors config.UNDERGROUND_SCENES + Mara's
+# cell (hardcoded here to keep terrain dependency-free, like _SLAB_STYLE).
+_ROCK_STYLE = {k: "rock" for k in (
+    "well_bottom", "well_passage",
+    "works_cistern", "works_sorting", "works_scriptorium", "works_sign",
+    "works_deepface", "maras_room",
+    "depths_antechamber", "depths_procession", "depths_hall",
+    "depths_threshing", "depths_stair",
+    "the_sump", "the_cells", "the_old_stores",
+)}
+_ROCK_SCENES = frozenset(_ROCK_STYLE)    # derived: full-thick + rough-hewn rock
 
 
 def _wall_style(scene):
-    """The wall material style dict for this scene, or None if it is not a slab
-    scene (renders full-tile). Gates on _SLAB_SCENES membership (so a test that
-    injects a scene there still resolves), defaulting to `plank`. Single source
-    for band thickness + corner round + roughness + colour tint."""
+    """The wall material style dict for this scene, or None if it has no styled
+    walls (renders verbatim full-tile). A THIN slab scene reads _SLAB_STYLE; a
+    full-thick ROCK scene (the mine) reads _ROCK_STYLE. Single source for band
+    thickness + corner round + roughness + colour tint. (A test that injects a
+    key into _SLAB_STYLE still resolves.)"""
     key = getattr(scene, "key", None)
-    if key not in _SLAB_SCENES:
-        return None
-    return _WALL_STYLES.get(_SLAB_STYLE.get(key, "plank"), _WALL_STYLES["plank"])
+    if key in _SLAB_SCENES:                 # THIN slab (a test may inject here)
+        return _WALL_STYLES.get(_SLAB_STYLE.get(key, "plank"), _WALL_STYLES["plank"])
+    if key in _ROCK_STYLE:                  # full-thick hewn ROCK (the mine)
+        return _WALL_STYLES.get(_ROCK_STYLE[key], _WALL_STYLES["stone"])
+    return None
 
 
 def _tint_col(col, t):

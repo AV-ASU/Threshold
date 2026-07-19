@@ -690,9 +690,13 @@ it renders the procedural sprites to a labelled PNG strip.
   and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (shop the
   pilot; now EVERY above-ground building interior — the Wave A refuges, the
   principal seats, and Wave 3's barn / schoolhouse / lodge_hall / lodge_cellar /
-  farmhouse — each with a per-material style; only the mine + outdoors stay
-  full-tile); off it, None → full tile → byte-identical
-  (`capture_world --diff` confirms the non-slab scenes). SUPERSEDES the bevel
+  farmhouse — each with a per-material style). The MINE (Works + Depths) instead
+  renders full-thick hewn **ROCK** (`_ROCK_STYLE` / `_ROCK_SCENES`, Phase 3): the
+  same styled rough-outline + prism DRAW, but `thick`=1.0, and it stays OUT of
+  `_SLAB_SCENES` so its collision/sight/nav read the tile grid UNCHANGED (the
+  roughening is draw-only). Only the OUTDOORS renders verbatim full-tile +
+  byte-identical (`capture_world --diff` confirms the non-styled scenes).
+  SUPERSEDES the bevel
   where both apply (`_bevel_corners` returns 0 in a slab scene, so a slab
   scene's `_BEVEL_SCENES` membership is inert). Roll out one interior at a time
   per VISION. **Corners are

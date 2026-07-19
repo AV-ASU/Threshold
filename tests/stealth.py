@@ -1385,6 +1385,38 @@ def main():
     check(_terr._wall_slab(sd, 0, 0) is None,
           "slab: a non-_SLAB_SCENES scene returns None (byte-identical)")
 
+    # ---- ROCK (Phase 3, the mine): full-THICK draw, UNCHANGED tile collision --
+    # A rock scene is styled for the DRAW (roughened outline) but stays FULL
+    # thickness: it is deliberately NOT in _SLAB_SCENES, so collision/sight/nav
+    # read the tile grid, unchanged. The point a THIN slab would thin away is
+    # STILL solid here. Guards the "full-thick, draw-only rough" contract.
+    rr = Scene("rocktest", ["=" * 5] * 5,
+               ["WWWWW", "W.W.W", "W.W.W", "W.W.W", "WWWWW"])
+    _saved_rock = _terr._ROCK_STYLE
+    _terr._ROCK_STYLE = dict(_saved_rock)
+    _terr._ROCK_STYLE["rocktest"] = "rock"
+    _terr._ROUND_POLY_CACHE.clear()
+    try:
+        rfoot = _terr._wall_slab(rr, 2, 2)          # thick 1.0 -> the whole tile
+        check(isinstance(rfoot, list) and any(
+                  r[0] <= 0.0 and r[2] >= TILE and r[1] <= 0.0 and r[3] >= TILE
+                  for r in rfoot),
+              "rock: a rock wall band fills the whole tile (full-thick)")
+        rpoly = _terr._rounded_wall_poly(rr, 2, 2)  # roughened DRAW outline
+        check(rpoly is not None and len(rpoly[0]) > 4,
+              "rock: the wall gets a roughened DRAW outline")
+        gap = (2 * TILE + 2, 2 * TILE + TILE // 2)   # a slab would thin this away
+        check(rr.is_solid_at(*gap) and rr.blocks_sight(*gap),
+              "rock: the wall stays full-thick to collision + sight (tile grid)")
+        check("rocktest" not in _terr._SLAB_SCENES,
+              "rock: a rock scene is NOT a thin _SLAB_SCENES scene")
+    finally:
+        _terr._ROCK_STYLE = _saved_rock
+        _terr._ROUND_POLY_CACHE.clear()
+    check(_terr._wall_style(load_scene("well_passage"))
+          is _terr._WALL_STYLES["rock"],
+          "rock: the shipped mine (well_passage) renders the rock style")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

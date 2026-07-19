@@ -642,9 +642,10 @@ Built into the procedural draw layer (`scenes/base.py`,
   pilot; EVERY above-ground building interior has since opted in -- the Wave A
   refuges, the three principal seats, and Wave 3's barn / schoolhouse /
   lodge_hall / lodge_cellar / abandoned_farmhouse -- each with a per-material
-  style; only the mine and outdoors stay full-tile); every NON-slab scene
+  style; the mine renders full-thick hewn ROCK (Phase 3 below); only the
+  outdoors stays full-tile); every NON-slab, NON-rock scene
   returns None -> full tile -> byte-identical (the `--diff` gate confirms
-  brimley / works_cistern / depths_hall unchanged; the slab scenes legitimately
+  brimley -- an outdoor scene -- unchanged; the slab + rock scenes legitimately
   differ).
   The slab SUPERSEDES the bevel where both would apply
   (`_bevel_corners` returns 0 for a `_SLAB_SCENES` scene). Cache-safe (a pure
@@ -676,7 +677,8 @@ Built into the procedural draw layer (`scenes/base.py`,
   `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry
   AND the colour: `plank` (thin, smooth, warm pine -- the shop), `plaster` (thin,
   pale warm grey), `timber` (heavier, hewn, dark red-brown), `brick` (fired-clay
-  rust), `stone` (thick rough masonry, cold blue-grey). **`tint`** is a delta
+  rust), `stone` (thick rough masonry, cold blue-grey), `rock` (full-thick,
+  sharp-cornered, heavily roughened dark earth -- the mine, Phase 3). **`tint`** is a delta
   ADDED to the near-black wall palette (`_tint_col`), applied to BOTH draw layers
   (`_wall_tile_flat`'s mass + `_extrude_prism`'s faces via `_tilt_wall_box`),
   kept dark + muddy + desaturated (the Darkwood rule, no cheerful primaries) so
