@@ -938,10 +938,24 @@ value lerps toward the open/shut target each frame and drives only the draw.
 **Draw** (`rendering/props.draw_inner_door`, emitted in `draw_world`'s tilt
 pass, depth-sorted with the walls/props): the leaf swings on its hinge from
 across-the-gap (shut) to along-the-wall (open); `ew` (an E-W wall, read from
-the tile's wall neighbours) sets the hinge axis. Kinds carry their own look:
-**plank** (wood panel, seams + knob), **bars** (a see-through iron cell
-gate), **curtain** (a maroon drape), **half** (a low counter door you see
-over). Guarded by `tests/stealth.py` §15 (shut = solid + blocks sight + nav
+the tile's wall neighbours) sets the hinge axis, so a door in a SIDE (N-S)
+wall opens east/west and a door in an E-W wall opens north/south. Kinds carry
+their own look: **plank** (wood panel, seams + knob), **bars** (a see-through
+iron cell gate), **curtain** (a maroon drape), **half** (a low counter door
+you see over).
+
+**Placement -- vary the wall, don't face them all one way.** Because `ew` is
+derived from the tile, WHICH wall you cut the gap into decides which way the
+leaf faces. Do not put every door of a building in E-W walls (they would all
+"face south" -- the same monotony the exterior-door rule and playtest error
+class 8 warn against). Mix side-wall (N-S) doors that open east/west with
+E-W-wall doors that open north/south, chosen by what the room's geography
+wants. The shop pilot does this: the stockroom and office doors sit in side
+walls (open E-W), the nested pantry door in an E-W wall (opens N-S). Verify
+under the tilt -- both orientations render (a side-wall door is a vertical
+leaf shut, swinging perpendicular open).
+
+Guarded by `tests/stealth.py` §15 (shut = solid + blocks sight + nav
 routes through; open passes both; a bars door is solid but see-through;
 shutting breaks the LOS across it; the E-toggle flips the nearest).
 

@@ -158,13 +158,13 @@ def build_shop():
     objects = [
         "WWWWWWWWWWWWWWWW",   # 0
         "W....W....W....W",   # 1  pantry(1-4) | shop-back(6-9) | office(11-14)
-        "W....W....W....W",   # 2
+        "W....W.........W",   # 2  office door (col 10, a SIDE wall)
         "WW.WWW....W....W",   # 3  pantry<->stockroom door (col 2)
-        "W....W....WW.WWW",   # 4  stockroom | shop | office curtain door (col 12)
-        "W....W.........W",   # 5  stockroom | shop (L wraps the office space)
-        "W....W.........W",   # 6
-        "WW.WWW.........W",   # 7  stockroom<->shop door (col 2)
-        "W..............W",   # 8  shop floor (spans, rows 8-11)
+        "W....W.....WWWWW",   # 4  stockroom | shop | office south wall
+        "W..............W",   # 5  stockroom door (col 5, a SIDE wall)
+        "W....W.........W",   # 6  stockroom | shop
+        "W....W.........W",   # 7
+        "WWWWW..........W",   # 8  stockroom south wall; shop floor (rows 8-11)
         "W..............W",   # 9
         "W..............W",   # 10
         "W..............W",   # 11
@@ -177,13 +177,16 @@ def build_shop():
     sc.set_spawn("default", 8, 10)
     sc.set_spawn("from_brimley", 8, 11)      # one tile north of the D door
 
-    # The three interior doors (2026-07), a nested chain + one nook. Most start
-    # CLOSED. The pantry door is two rooms deep -- the cult tells behind it are
+    # The three interior doors (2026-07), a nested chain + one nook, deliberately
+    # NOT all in the same wall: the stockroom and office doors sit in SIDE (N-S)
+    # walls and open east/west, while the pantry door sits in an E-W wall and
+    # opens north/south -- the leaves don't all face the same way. Most start
+    # CLOSED. The pantry door is two rooms deep, so the cult tells behind it are
     # out of the shop's sight until you open the stockroom, cross it, and open
     # the pantry.
-    sc.add_inner_door(2, 7, "plank")         # shop  -> stockroom
-    sc.add_inner_door(2, 3, "plank")         # stockroom -> cold pantry (blind spot)
-    sc.add_inner_door(12, 4, "curtain")      # shop  -> Hettie's office nook
+    sc.add_inner_door(5, 5, "plank")         # shop  -> stockroom (faces E-W)
+    sc.add_inner_door(2, 3, "plank")         # stockroom -> cold pantry (faces N-S)
+    sc.add_inner_door(10, 2, "curtain")      # shop  -> office nook (faces E-W)
 
     # Hettie stands behind the counter in the shop, facing the entrance.
     hx, hy = 8, 8
@@ -238,7 +241,7 @@ def build_shop():
     # --- The stockroom (west, first door): dry-goods overstock ---
     sc.add_furniture("crate", [(1, 4)], seed=4)
     sc.add_furniture("crate", [(1, 5)], seed=5)
-    sc.add_furniture("barrel", [(4, 5)])
+    sc.add_furniture("barrel", [(4, 7)])     # kept off the (5,5) door approach
     sc.add_furniture("table", [(3, 6)], w=30, h=30)
     sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",

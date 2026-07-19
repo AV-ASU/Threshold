@@ -492,7 +492,10 @@ single side room. The fix has two halves, and the first is done.
   schoolhouse, Toby's house (a refuge, so keep it gentle), the Lodge interiors.
   Each is its OWN build (never two big scene changes in the air at once, #4b);
   provenance first (SCENE-DRESSING PROCESS), reachability re-checked with
-  smoke's flood-fill, doors mostly CLOSED, varieties that fit context.
+  smoke's flood-fill, doors mostly CLOSED, varieties that fit context, and
+  **doors placed in VARIED walls** (not all in E-W walls facing south -- mix
+  side-wall N-S doors that open E-W with E-W-wall doors, error class #8;
+  the shop pilot does this).
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

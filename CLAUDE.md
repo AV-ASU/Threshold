@@ -652,7 +652,12 @@ it renders the procedural sprites to a labelled PNG strip.
   `try_interact`). Kinds: `plank` (opaque wood) / `bars` + `half`
   (see-through, block the body but not the sight cone — `_SEE_THROUGH_DOOR_KINDS`)
   / `curtain` (drape). Draw: `rendering.props.draw_inner_door`, emitted +
-  depth-sorted in `draw_world`'s tilt pass. Guard: `tests/stealth.py` §15.
+  depth-sorted in `draw_world`'s tilt pass. **Vary the wall**: `ew` (the swing
+  axis) is derived from the tile's wall neighbours, so a door in a SIDE (N-S)
+  wall opens E-W and a door in an E-W wall opens N-S. Don't put every door of a
+  building in E-W walls or the leaves all "face south" (error class #8); mix
+  side-wall and E-W-wall doors by what the geometry wants (the shop does).
+  Guard: `tests/stealth.py` §15.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
