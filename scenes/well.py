@@ -428,6 +428,20 @@ def build_works_sorting():
     objs[6][15] = "E"         # east -> the scriptorium
     objs[0][13] = "M"         # north (top of the stem) -> Mara's cell
     objs[10][4] = "D"         # south -> the bunk cells (dead-end branch)
+    # #14 -- two dug side-chambers off the sorting floor (rolling out the
+    # Timber Racks pattern). Cut into the sealed north wall block, each
+    # reached through a single ADIT, clear of the col-4 tally and col-8
+    # taxidermy wall mounts: a FINISHED overflow store squared into the west
+    # end, and a HALF-DUG niche the sorters quit in the middle. Both open off
+    # the patrol floor (rows 4-9), so the tuned crossing, tables, and hides
+    # stay untouched.
+    for cx in (1, 2, 3):               # finished overflow store: 3 wide, 2 deep
+        objs[1][cx] = "."
+        objs[2][cx] = "."
+    objs[3][2] = "."                   # its adit down to the sorting floor
+    for cx in (6, 7):                  # half-dug niche: one course deep, ragged
+        objs[2][cx] = "."
+    objs[3][6] = "."                   # its adit
     # (the sorting tables are 3D furniture now -- added after the scene is built,
     # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
@@ -492,6 +506,27 @@ def build_works_sorting():
     sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "mud_footprint"))
     for mx, my in ((5, 4), (10, 7), (13, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
+    # --- The two dug side-chambers, dressed (#14) ---
+    # FINISHED overflow store (west): where the catalogued effects spilled
+    # past the tables. Crates and a shed-life pile, a kept candle, a wall
+    # tally. Timbered at the adit mouth.
+    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 30, "shoring_frame",
+                                 seed=23, ang=0.0, span=70))
+    sc.add_furniture("crate", [(1, 1)])
+    sc.add_furniture("crate", [(3, 1)])
+    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "effects_pile",
+                                 seed=7))
+    sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 18, "tally_marks",
+                                 wall="N", seed=19))
+    # HALF-DUG niche (middle): a store the sorting started and abandoned.
+    # A low spoil pile, pick gouges in the raw wall, no light.
+    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 30, "shoring_frame",
+                                 seed=11, ang=0.0, span=64))
+    sc.add_furniture("spoil_heap", [(7, 2)], seed=9, see_over=True)
+    sc.add_decoration(Decoration(6 * TILE + 6, 2 * TILE + 14, "claw_marks",
+                                 scale=1.4))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     # The hardest crossing gets two enclosed hides among the cover lanes
     # (DESIGN.md §12): under a sorting table in each row. Both sit on
