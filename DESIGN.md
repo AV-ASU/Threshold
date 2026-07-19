@@ -663,16 +663,21 @@ Built into the procedural draw layer (`scenes/base.py`,
   outline. Cached per (footprint, seams + the style's radius/rough); the
   wall-box card cache holds the projected prism per tile+angle.
 - **Wall MATERIAL styles (2026-07, the rollout foundation).** Thickness, corner
-  round, and (Phase 1b) surface roughness are no longer bare constants -- they
-  live in `_WALL_STYLES` (`scenes/terrain.py`), one record per material
-  (`{thick` frac-of-TILE, `round` frac-of-thick, `rough` px`}`), and a slab
-  scene picks one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is derived
-  from it; `_wall_style(scene)` is the single lookup that `_wall_slab` /
+  round, and surface roughness are no longer bare constants -- they live in
+  `_WALL_STYLES` (`scenes/terrain.py`), one record per material (`{thick`
+  frac-of-TILE, `round` frac-of-thick, `rough` px`}`), and a slab scene picks
+  one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is derived from it;
+  `_wall_style(scene)` is the single lookup that `_wall_slab` /
   `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry:
   `plank` (thin, smooth -- the shop), `plaster` (thin, crisp), `timber`
-  (heavier), `stone` (thick masonry). Adding a scene is one `_SLAB_STYLE` line;
-  `plank` reproduces the old fixed `_SLAB_THICK`/`_ROUND_R` exactly
-  (byte-identical). Roll `_SLAB_STYLE` out one interior at a time per VISION.
+  (heavier, hewn), `stone` (thick rough masonry). `rough > 0` runs `_roughen`:
+  it subdivides the FREE (drawn) outline edges and kicks their interior points
+  along the edge normal by a seeded amount (PER TILE, so masonry doesn't tile),
+  leaving SEAM edges and shared corners put -- **draw-only**, so collision /
+  sight / nav still read the square bands (guarded by `tests/stealth.py §16`).
+  Adding a scene is one `_SLAB_STYLE` line; `plank` reproduces the old fixed
+  `_SLAB_THICK`/`_ROUND_R` exactly (byte-identical). Roll `_SLAB_STYLE` out one
+  interior at a time per VISION.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.

@@ -1359,8 +1359,26 @@ def main():
         check(ss.is_solid_at(2 * TILE + TILE // 2, yb - 1)
               and ss.is_solid_at(2 * TILE + TILE // 2, yb + 1),
               "slab: a run connects flush across a junction (no notch)")
+        # MATERIAL styles (Phase 1): thickness/round/rough come from _WALL_STYLES
+        # per scene. A rough material roughens the DRAWN outline but leaves the
+        # collision bands identical to a smooth material of the same thickness
+        # (rough is draw-only; collision/sight/nav read the square bands).
+        _terr._WALL_STYLES["_rufftest"] = {"thick": 0.5, "round": 0.5, "rough": 2.5}
+        _terr._SLAB_STYLE["slabtest"] = "_rufftest"
+        _terr._ROUND_POLY_CACHE.clear()
+        r_bands, r_poly = _terr._wall_slab(ss, 2, 2), _terr._rounded_wall_poly(ss, 2, 2)
+        _terr._SLAB_STYLE["slabtest"] = "plank"
+        _terr._ROUND_POLY_CACHE.clear()
+        s_bands, s_poly = _terr._wall_slab(ss, 2, 2), _terr._rounded_wall_poly(ss, 2, 2)
+        check(r_bands == s_bands,
+              "slab: a rough material leaves the collision bands unchanged (draw-only)")
+        check(len(r_poly[0]) > len(s_poly[0]),
+              "slab: a rough material jitters the drawn outline (more points)")
     finally:
         _terr._SLAB_SCENES = _saved_slab
+        _terr._SLAB_STYLE.pop("slabtest", None)
+        _terr._WALL_STYLES.pop("_rufftest", None)
+        _terr._ROUND_POLY_CACHE.clear()
     check(any(_terr._wall_slab(load_scene("shop"), tx, ty)
               for ty in range(13) for tx in range(16)),
           "slab: the shipped shop pilot thins its walls (wired e2e)")

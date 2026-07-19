@@ -556,10 +556,12 @@ that collision/sight/nav obey). Spend it in phases:
   `_wall_style`; `_SLAB_SCENES` derived from it. So thickness + corner round
   read the CONSTRUCTION (`plank`/`plaster`/`timber`/`stone`) from one table;
   `plank` = the old fixed constants byte-for-byte (shop geometry proven
-  identical, full byte-identity gate green). **1b still open:** the `rough`
-  outline variant (a seeded jitter on the FREE outline edges, seam-safe) so
-  stone/timber read rough-hewn, not just thicker -- the same primitive the mine
-  (Phase 3) needs.
+  identical, full byte-identity gate green). *(1b LANDED 2026-07.)* `rough > 0`
+  runs `_roughen`: a seeded PER-TILE jitter on the FREE outline edges (seam
+  edges + shared corners kept put, so tiles still connect flush and corners stay
+  rounded), draw-only so collision/sight/nav still read the square bands
+  (`§16`). `timber`/`stone` now read rough-hewn, not just thicker -- the same
+  primitive the mine (Phase 3) reuses.
 - **Phase 2 -- interior rollout, one scene per build (consumes Phase 1 + grows
   new shape primitives on demand).** Per-scene definition of done: assign a
   style; redesign to multi-subroom (#4c interior doors, varied walls) if it is a

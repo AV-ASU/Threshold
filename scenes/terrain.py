@@ -1763,8 +1763,8 @@ def _bevel_poly_local(bevel, size, inset):
 _WALL_STYLES = {
     "plank":   {"thick": 0.50, "round": 0.50, "rough": 0.0},  # thin, smooth (shop)
     "plaster": {"thick": 0.44, "round": 0.28, "rough": 0.0},  # thin, crisp render
-    "timber":  {"thick": 0.66, "round": 0.34, "rough": 0.0},  # heavier log/board
-    "stone":   {"thick": 0.80, "round": 0.30, "rough": 0.0},  # thick masonry
+    "timber":  {"thick": 0.66, "round": 0.34, "rough": 1.4},  # heavier, hewn log
+    "stone":   {"thick": 0.80, "round": 0.30, "rough": 2.6},  # thick rough masonry
 }
 _SLAB_STYLE = {
     "shop": "plank",
@@ -1889,15 +1889,18 @@ def _rounded_wall_poly(scene, tx, ty):
     radius = TILE * style["thick"] * style["round"]     # fillet radius (px)
     rough = style["rough"]
     sN, sS, sE, sW = _round_seams(scene, tx, ty)
-    key = (tuple(bands), sN, sS, sE, sW, round(radius, 2), round(rough, 2))
+    # A rough wall jitters PER TILE so masonry doesn't tile; a smooth wall
+    # (rough 0) keeps seed 0 so all like-shaped tiles share one cached outline.
+    seed = (((tx * 73856093) ^ (ty * 19349663)) & 0xffff) if rough > 0 else 0
+    key = (tuple(bands), sN, sS, sE, sW, round(radius, 2), round(rough, 2), seed)
     hit = _ROUND_POLY_CACHE.get(key)
     if hit is None:
-        hit = _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough)
+        hit = _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough, seed)
         _ROUND_POLY_CACHE[key] = hit
     return hit
 
 
-def _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough=0.0):
+def _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough=0.0, seed=0):
     T = TILE
     SUP = 4                             # upsample for a clean mask outline
     surf = pygame.Surface((T * SUP, T * SUP), pygame.SRCALPHA)
@@ -1943,7 +1946,45 @@ def _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough=0.0):
                 or (p[0] >= T - 0.5 and q[0] >= T - 0.5 and sE)
                 or (p[0] <= 0.5 and q[0] <= 0.5 and sW))
         draw.append(not seam)
+    if rough > 0.0:
+        out, draw = _roughen(out, draw, rough, seed)
     return (out, draw)
+
+
+def _roughen(pts, draw, rough, seed):
+    """Hew the FREE (drawn) outline edges: subdivide each long exposed edge and
+    kick its interior points along the edge normal by a seeded amount, so a
+    timber/stone wall reads rough-hewn, not machined. SEAM edges and the shared
+    corner points stay put (tiles still connect flush, corners stay rounded);
+    draw-only, so collision/sight/nav are untouched (they read the square
+    bands). Amplitude is small (a few px), well inside the collision band."""
+    def rnd(k):                            # deterministic (-1, 1) from seed + k
+        v = (seed * 2654435761 + k * 40503 + 0x9e37) & 0xffffffff
+        v ^= v >> 13
+        v = (v * 2246822519) & 0xffffffff
+        v ^= v >> 16
+        return (v / 0xffffffff) * 2.0 - 1.0
+    out, od, k = [], [], 0
+    n = len(pts)
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]
+        out.append(a)
+        od.append(draw[i])
+        if not draw[i]:
+            continue                       # seam edge: leave dead straight
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy)
+        if L < 6.0:                        # short edge / arc segment: leave it
+            continue
+        nx, ny = -dy / L, dx / L           # unit edge normal
+        segs = int(L // 5) + 1             # a kink roughly every 5 px
+        for s in range(1, segs):
+            f = s / segs
+            amp = rnd(k) * rough
+            k += 1
+            out.append((a[0] + dx * f + nx * amp, a[1] + dy * f + ny * amp))
+            od.append(True)
+    return out, od
 
 
 def _poly_corners(loop):
