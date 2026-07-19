@@ -2513,6 +2513,34 @@ def _draw_bill_spike_solid(surf, cam, deco):
                          (int(b[0]), int(b[1])), max(2, int(pw * 0.55 * s)))
 
 
+def _draw_crayons_solid(surf, cam, deco):
+    """A child's crayons and a half-drawn sheet on the table: a pale sheet with
+    a couple of crude crayon strokes, and several short colored crayon sticks
+    scattered beside it. Lifts to kwargs['z'] for the tabletop (Toby's table)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    P = _vframe(cam, wx, wy, 0.0)
+    zsheet = z0 + 0.4 * s
+    _qp(surf, P, [(-8 * s, 6 * s, zsheet), (4 * s, 6 * s, zsheet),
+                  (4 * s, -6 * s, zsheet), (-8 * s, -6 * s, zsheet)],
+        (208, 202, 186))                                          # sheet
+    # a couple crude crayon strokes on the sheet (a sun, a stroke)
+    sc0 = P(-2 * s, 2 * s, zsheet + 0.1 * s)
+    pygame.draw.circle(surf, (228, 198, 82), (int(sc0[0]), int(sc0[1])),
+                       max(1, int(1.6 * s)))
+    a = P(-6 * s, -3 * s, zsheet + 0.1 * s); b = P(1 * s, -3 * s, zsheet + 0.1 * s)
+    pygame.draw.line(surf, (90, 170, 90), (int(a[0]), int(a[1])),
+                     (int(b[0]), int(b[1])), max(1, int(1.4 * s)))
+    # the crayon sticks scattered beside the sheet, short low colored cylinders
+    for ox, oy, col in ((7 * s, 4 * s, (200, 70, 60)), (8.5 * s, 1.5 * s, (70, 120, 200)),
+                        (6.5 * s, -1.5 * s, (90, 180, 90)), (9 * s, -4 * s, (230, 200, 80)),
+                        (7.5 * s, -6 * s, (180, 90, 180))):
+        ca = P(ox, oy, z0 + 0.8 * s); cb = P(ox + 3.4 * s, oy - 0.8 * s, z0 + 0.8 * s)
+        pygame.draw.line(surf, col, (int(ca[0]), int(ca[1])),
+                         (int(cb[0]), int(cb[1])), max(2, int(1.8 * s)))
+
+
 def _draw_service_bell_solid(surf, cam, deco):
     """A brass reception service bell: a domed bell on a round base with a small
     press button on top. Lifts to kwargs['z'] for the desk. Sable's tableau
@@ -2614,6 +2642,7 @@ SOLID_PROPS = {
     "cash_register":  _draw_cash_register_solid,
     "bill_spike":     _draw_bill_spike_solid,
     "service_bell":   _draw_service_bell_solid,
+    "crayons":        _draw_crayons_solid,
     "lectern":        _draw_lectern_solid,
     "church_bell":    _draw_church_bell_solid,
     "valve":          _draw_valve_solid,

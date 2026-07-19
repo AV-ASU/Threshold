@@ -411,6 +411,16 @@ class DecoFurnitureMixin:
         pygame.draw.line(surf, (120, 100, 58), (x, y - 4), (x, y - 7), 1)
         pygame.draw.circle(surf, (208, 186, 124), (x, y - 7), 1)
 
+    def _draw_crayons(self, surf, x, y):
+        """Flat (pitch-0) fallback for the crayons + sheet; the tilt camera
+        draws the real props version (rendering.props._draw_crayons_solid)."""
+        pygame.draw.rect(surf, (208, 202, 186), (x - 8, y - 5, 12, 11))
+        pygame.draw.circle(surf, (228, 198, 82), (x - 3, y), 2)
+        for i, col in enumerate(((200, 70, 60), (70, 120, 200), (90, 180, 90),
+                                 (230, 200, 80))):
+            pygame.draw.line(surf, col, (x + 5, y - 4 + i * 3),
+                             (x + 8, y - 4 + i * 3), 2)
+
     def _draw_key_rack(self, surf, x, y):
         """The lodge reception key board: a pigeonhole rack, rows of hooks with
         the guest-room keys hanging (a couple of gaps for rooms in use). The
@@ -430,6 +440,47 @@ class DecoFurnitureMixin:
                 pygame.draw.line(surf, (198, 176, 120), (hx, hy + 1),
                                  (hx, hy + 3), 1)                        # shaft
                 pygame.draw.circle(surf, (198, 176, 120), (hx, hy + 3), 1)  # bow
+
+    def _draw_crayon_drawing(self, surf, x, y):
+        """A child's crayon picture on a taped sheet, hung crooked on the wall.
+        The `motif` kwarg picks the scene: house / sun / family / corn, and the
+        dark `procession` (what Toby saw, gated on toby_told). A _WALL_DECO
+        billboard lifted onto the wall face under tilt (Toby's tableau)."""
+        motif = self.kwargs.get("motif", "house")
+        pygame.draw.rect(surf, (206, 200, 184), (x - 8, y - 9, 16, 17))   # sheet
+        pygame.draw.rect(surf, (150, 146, 132), (x - 8, y - 9, 16, 17), 1)
+        for tx in (x - 7, x + 4):                                         # tape
+            pygame.draw.line(surf, (198, 206, 210), (tx, y - 10),
+                             (tx + 3, y - 8), 2)
+        if motif == "house":
+            pygame.draw.rect(surf, (70, 120, 200), (x - 5, y - 1, 8, 7))
+            pygame.draw.polygon(surf, (200, 70, 60),
+                                [(x - 6, y - 1), (x + 4, y - 1), (x - 1, y - 6)])
+            pygame.draw.rect(surf, (150, 90, 50), (x - 2, y + 2, 2, 4))
+            pygame.draw.circle(surf, (230, 200, 80), (x + 5, y - 6), 2)
+        elif motif == "sun":
+            pygame.draw.circle(surf, (230, 200, 80), (x - 1, y - 3), 4)
+            for dx, dy in ((-6, -3), (6, -3), (-1, -9), (5, -8), (-6, -7)):
+                pygame.draw.line(surf, (230, 200, 80), (x - 1, y - 3),
+                                 (x - 1 + dx, y - 3 + dy), 1)
+            pygame.draw.line(surf, (90, 180, 90), (x - 6, y + 6), (x + 6, y + 6), 2)
+        elif motif == "family":
+            for fx, col in ((x - 4, (200, 70, 60)), (x, (70, 120, 200)),
+                            (x + 4, (230, 190, 80))):
+                pygame.draw.circle(surf, col, (fx, y - 4), 1)
+                pygame.draw.line(surf, col, (fx, y - 3), (fx, y + 3), 1)
+                pygame.draw.line(surf, col, (fx - 2, y - 1), (fx + 2, y - 1), 1)
+        elif motif == "corn":
+            for cx in (x - 5, x - 1, x + 3):
+                pygame.draw.line(surf, (100, 150, 70), (cx, y + 6), (cx, y - 5), 2)
+                pygame.draw.circle(surf, (220, 190, 80), (cx, y - 4), 1)
+        elif motif == "procession":
+            pygame.draw.line(surf, (66, 54, 46), (x - 6, y - 5), (x + 4, y + 6), 2)
+            for i, fx in enumerate((x - 4, x - 1, x + 2, x + 5)):
+                fy = y - 3 + i * 2
+                pygame.draw.polygon(surf, (38, 34, 30),
+                                    [(fx - 1, fy + 3), (fx + 1, fy + 3), (fx, fy - 2)])
+            pygame.draw.circle(surf, (200, 168, 60), (x - 6, y - 6), 1)   # a gold door
 
     def _draw_lectern(self, surf, x, y):
         """Flat (pitch-0) fallback for the church lectern; the tilt camera draws

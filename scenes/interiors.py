@@ -468,7 +468,7 @@ def build_barn():
 def build_toby_house():
     floor = ["=" * 14 for _ in range(10)]
     objects = [
-        "WWWWWWWWWWWWWW",   # 0
+        "WWWWWWWWWiWWWW",   # 0  i = the window Toby watches the corn line through
         "W....W.......W",   # 1  closet (cols 1-4) | the room (cols 6-12)
         "W....W.......W",   # 2
         "W............W",   # 3  doorway gap in the partition (col 5)
@@ -522,11 +522,25 @@ def build_toby_house():
     sc.add_decoration(Decoration(3 * TILE + 22, 3 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "missing_flyer"))
-    # His mother's needlework over the bed, and the canary cage by the
-    # partition: empty, door open. The bird went the way the dad did.
-    sc.add_decoration(Decoration(9 * TILE + 24, 0 * TILE + 22, "sampler",
+    # His mother's needlework on the north wall (moved east off the new
+    # window), and the canary cage by the partition: empty, door open. The
+    # bird went the way the dad did.
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "sampler",
                                  seed=14))
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 8, "birdcage"))
+    # Toby's WALL OF CRAYON DRAWINGS, taped up crooked across the north wall --
+    # the one almost-normal room in Brimley, and that read is the point
+    # (draw_toby_tableau). The walkable room had none; only the King drawing
+    # hidden in the closet. Placed at varied sub-tile offsets so they break the
+    # grid. The dark procession drawing joins them once toby_told (on_enter).
+    sc.add_decoration(Decoration(6 * TILE + 12, 0 * TILE + 20,
+                                 "crayon_drawing", motif="house"))
+    sc.add_decoration(Decoration(7 * TILE + 20, 0 * TILE + 26,
+                                 "crayon_drawing", motif="sun"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18,
+                                 "crayon_drawing", motif="family"))
+    # Crayons + a half-drawn sheet on his table (the toy radio shares it).
+    sc.add_decoration(Decoration(12 * TILE + 12, 1 * TILE + 16, "crayons"))
     # Chalk phantom-marks in the closet.
     sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
                                  "phantom_mark"))
@@ -548,4 +562,15 @@ def build_toby_house():
     sc.add_decoration(Decoration(drawing_x, drawing_y, "photo"))
     sc._drawing_pos = (drawing_x, drawing_y)
 
+    sc.on_enter_fn = _toby_house_on_enter
     return sc
+
+
+def _toby_house_on_enter(game, scene):
+    """Once Toby has told what he saw (the photo exchange sets `toby_told`), the
+    dark crayon drawing of the night procession joins the cheerful ones on his
+    wall (draw_toby_tableau). The scene rebuilds each load, so re-add it every
+    time the flag holds."""
+    if game.save.flag("toby_told"):
+        scene.add_decoration(Decoration(8 * TILE + 4, 0 * TILE + 34,
+                                        "crayon_drawing", motif="procession"))

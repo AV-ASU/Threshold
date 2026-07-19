@@ -378,10 +378,17 @@ top draws the pistol + case file); it is the model.
   clock were already present. The CEILING FAN is deferred: no overhead-prop
   path in the tilt renderer (a moving shadow cast on the desk would be the
   faithful option; not built).
-- **Still open (per the audit):** Toby's house (wall of crayon drawings +
-  crayons on the table + the `toby_told` procession drawing + window),
-  works_sign (the Pallid Mask visible on the altar; verify the `yellow_sign`
-  reads on the apse wall not the floor).
+- **Toby's house — LANDED (2026-07).** New `crayon_drawing` `_WALL_DECO` (a
+  taped child's sheet, `motif` = house / sun / family / corn / the dark
+  procession) taped crooked across the north wall -- the one almost-normal room
+  in Brimley, and that read is the point (draw_toby_tableau). New `crayons`
+  tabletop volume (crayons + a half-drawn sheet) on his table beside the toy
+  radio, and a WINDOW (terrain `'i'`) he watches the corn line through. The dark
+  PROCESSION drawing joins the cheerful ones once `toby_told` (an on_enter that
+  re-adds it each load). The toy radio + closet (with the King drawing) were
+  already present.
+- **Still open (per the audit):** works_sign (the Pallid Mask visible on the
+  altar; verify the `yellow_sign` reads on the apse wall not the floor).
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
