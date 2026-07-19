@@ -695,7 +695,12 @@ it renders the procedural sprites to a labelled PNG strip.
   each FREE corner (facing floor) into an arc while a wall-neighbour SEAM corner
   stays sharp (so tiles still connect flush); it drives the flat mass + a 3D
   `_extrude_prism`. Collision/sight/nav keep the square bands (rounding sits
-  inside the drawn face). `_ROUND_R` tunes the radius.
+  inside the drawn face). **Thickness + round + roughness are per-MATERIAL:**
+  `_WALL_STYLES` (`{thick, round, rough}`) keyed by scene via `_SLAB_STYLE`, read
+  through `_wall_style(scene)`; `_SLAB_SCENES` is derived from it. So a scene
+  reads its construction (`plank`/`plaster`/`timber`/`stone`) from the geometry;
+  `plank` reproduces the old `_SLAB_THICK`/`_ROUND_R` byte-for-byte. Add a scene
+  = one `_SLAB_STYLE` line.
 - **No diagonal-only wall joins in a slab scene (2026-07, maintainer "add a rule
   not to have walls like that").** Two walls that meet only at a DIAGONAL (the
   shared corner tile missing) look fine as fat full tiles but render as

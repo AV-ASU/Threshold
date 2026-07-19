@@ -1752,8 +1752,35 @@ def _bevel_poly_local(bevel, size, inset):
 # (scenes/base.py, point-in-ANY-band) read this, so the geometry the player SEES
 # is what they bump and the AI's line of sight obeys -- unlike the draw-only
 # bevel. Gated to _SLAB_SCENES; every other scene returns None -> full tile.
-_SLAB_SCENES = frozenset({"shop"})       # pilot; roll out one scene at a time
-_SLAB_THICK = TILE * 0.5                 # band thickness across a run
+#
+# MATERIAL STYLES (2026-07, the rollout foundation): a slab scene picks a
+# material from _WALL_STYLES via _SLAB_STYLE, so thickness + corner round + (1b)
+# surface roughness read the CONSTRUCTION -- a thin smooth plank partition vs a
+# fat rough stone wall vs a heavy timber -- from one table. `thick` is the band
+# thickness as a fraction of TILE; `round` the fillet radius as a fraction of
+# that thickness (0 = square); `rough` the outline jitter amplitude in px
+# (0 = smooth; Phase 1b). Adding a scene is one _SLAB_STYLE line.
+_WALL_STYLES = {
+    "plank":   {"thick": 0.50, "round": 0.50, "rough": 0.0},  # thin, smooth (shop)
+    "plaster": {"thick": 0.44, "round": 0.28, "rough": 0.0},  # thin, crisp render
+    "timber":  {"thick": 0.66, "round": 0.34, "rough": 0.0},  # heavier log/board
+    "stone":   {"thick": 0.80, "round": 0.30, "rough": 0.0},  # thick masonry
+}
+_SLAB_STYLE = {
+    "shop": "plank",
+}
+_SLAB_SCENES = frozenset(_SLAB_STYLE)    # derived: the scenes that render thin
+
+
+def _wall_style(scene):
+    """The wall material style dict for this scene, or None if it is not a slab
+    scene (renders full-tile). Gates on _SLAB_SCENES membership (so a test that
+    injects a scene there still resolves), defaulting to `plank`. Single source
+    for band thickness + corner round + roughness."""
+    key = getattr(scene, "key", None)
+    if key not in _SLAB_SCENES:
+        return None
+    return _WALL_STYLES.get(_SLAB_STYLE.get(key, "plank"), _WALL_STYLES["plank"])
 
 
 def _wall_slab(scene, tx, ty):
@@ -1763,7 +1790,8 @@ def _wall_slab(scene, tx, ty):
     or a lone pillar). Pure function of the tile + its 4 orthogonal neighbour
     chars + the scene gate, so the wall-box card cache and the nav grid stay
     valid."""
-    if getattr(scene, "key", None) not in _SLAB_SCENES:
+    style = _wall_style(scene)
+    if style is None:
         return None
     W, H = scene.w, scene.h
 
@@ -1789,7 +1817,7 @@ def _wall_slab(scene, tx, ty):
     if not (v_present or h_present):
         return None                        # lone pillar / free nub: keep full
     T = TILE
-    th = _SLAB_THICK
+    th = T * style["thick"]                 # band thickness from the material
     p = T - th
 
     def cross(open_neg, open_pos):
@@ -1833,8 +1861,7 @@ def _wall_slab(scene, tx, ty):
 # the square bands (the few-px rounding sits INSIDE the drawn face, so collision
 # is a hair proud -- the safe direction). Pure function of the footprint +
 # neighbour seams, cached.
-_ROUND_R = _SLAB_THICK * 0.5           # fillet radius: a full round of the band
-_ROUND_POLY_CACHE = {}
+_ROUND_POLY_CACHE = {}                  # fillet radius is per-material now (style)
 
 
 def _round_seams(scene, tx, ty):
@@ -1858,16 +1885,19 @@ def _rounded_wall_poly(scene, tx, ty):
     bands = _wall_slab(scene, tx, ty)
     if bands is None:
         return None
+    style = _wall_style(scene)
+    radius = TILE * style["thick"] * style["round"]     # fillet radius (px)
+    rough = style["rough"]
     sN, sS, sE, sW = _round_seams(scene, tx, ty)
-    key = (tuple(bands), sN, sS, sE, sW)
+    key = (tuple(bands), sN, sS, sE, sW, round(radius, 2), round(rough, 2))
     hit = _ROUND_POLY_CACHE.get(key)
     if hit is None:
-        hit = _build_rounded_poly(bands, sN, sS, sE, sW)
+        hit = _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough)
         _ROUND_POLY_CACHE[key] = hit
     return hit
 
 
-def _build_rounded_poly(bands, sN, sS, sE, sW):
+def _build_rounded_poly(bands, sN, sS, sE, sW, radius, rough=0.0):
     T = TILE
     SUP = 4                             # upsample for a clean mask outline
     surf = pygame.Surface((T * SUP, T * SUP), pygame.SRCALPHA)
@@ -1902,7 +1932,7 @@ def _build_rounded_poly(bands, sN, sS, sE, sW):
         if on_seam(C):
             out.append(C)                 # a connection corner: keep it sharp
         else:
-            out.extend(_fillet(A, C, B, _ROUND_R))
+            out.extend(_fillet(A, C, B, radius))
     # edge draw flags: an edge on a shared seam side is merged (not drawn)
     draw = []
     m = len(out)

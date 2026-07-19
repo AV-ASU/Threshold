@@ -660,8 +660,19 @@ Built into the procedural draw layer (`scenes/base.py`,
   stay flush. **Collision / sight / nav keep the SQUARE bands** (`_wall_slab`,
   `_obj_solid_here`): the few-px rounding sits INSIDE the drawn face, so
   collision is a hair proud (the safe direction) and no predicate pays for the
-  outline. Cached per (footprint, seams); the wall-box card cache holds the
-  projected prism per tile+angle. `_ROUND_R` tunes how round.
+  outline. Cached per (footprint, seams + the style's radius/rough); the
+  wall-box card cache holds the projected prism per tile+angle.
+- **Wall MATERIAL styles (2026-07, the rollout foundation).** Thickness, corner
+  round, and (Phase 1b) surface roughness are no longer bare constants -- they
+  live in `_WALL_STYLES` (`scenes/terrain.py`), one record per material
+  (`{thick` frac-of-TILE, `round` frac-of-thick, `rough` px`}`), and a slab
+  scene picks one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is derived
+  from it; `_wall_style(scene)` is the single lookup that `_wall_slab` /
+  `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry:
+  `plank` (thin, smooth -- the shop), `plaster` (thin, crisp), `timber`
+  (heavier), `stone` (thick masonry). Adding a scene is one `_SLAB_STYLE` line;
+  `plank` reproduces the old fixed `_SLAB_THICK`/`_ROUND_R` exactly
+  (byte-identical). Roll `_SLAB_STYLE` out one interior at a time per VISION.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.

@@ -543,10 +543,49 @@ single side room. The fix has two halves, and the first is done.
   that met only at a diagonal (the corner tile missing) rendered as disconnected
   thin stubs; the shop's stockroom-SE and office-SW corners were closed (a wall
   added at the missing corner tile), and `terrain.diagonal_wall_joins` +
-  `tests/smoke.py [10/10]` now FAIL any slab scene with such a join. **Still
-  open:** a maintainer LOOK (the `_SLAB_THICK` 0.5·TILE + `_ROUND_R` radius
-  taste); then roll `_SLAB_SCENES` out to the other interiors one at a time per
-  VISION, each cleared of diagonal joins by the smoke rule first.
+  `tests/smoke.py [10/10]` now FAIL any slab scene with such a join.
+
+**THE ROLLOUT PROGRAM (2026-07, maintainer "apply to other scenes / fully take
+advantage"; the shop is the finished reference).** The thin-slab + rounded +
+real-geometry wall system is now a general geometry tool (single-source
+`_wall_slab`, the `_rounded_wall_poly`/`_fillet` outliner, the `_extrude_prism`
+that collision/sight/nav obey). Spend it in phases:
+
+- **Phase 1 -- material foundation.** *(1a LANDED 2026-07.)* `_WALL_STYLES`
+  (`{thick, round, rough}`) keyed per scene via `_SLAB_STYLE`, read through
+  `_wall_style`; `_SLAB_SCENES` derived from it. So thickness + corner round
+  read the CONSTRUCTION (`plank`/`plaster`/`timber`/`stone`) from one table;
+  `plank` = the old fixed constants byte-for-byte (shop geometry proven
+  identical, full byte-identity gate green). **1b still open:** the `rough`
+  outline variant (a seeded jitter on the FREE outline edges, seam-safe) so
+  stone/timber read rough-hewn, not just thicker -- the same primitive the mine
+  (Phase 3) needs.
+- **Phase 2 -- interior rollout, one scene per build (consumes Phase 1 + grows
+  new shape primitives on demand).** Per-scene definition of done: assign a
+  style; redesign to multi-subroom (#4c interior doors, varied walls) if it is a
+  box; clear diagonal joins (smoke [10/10]); grow the new shapes a room needs
+  (round PILLAR from a lone wall tile → a cylinder via the prism; ARCHED
+  doorway head; ROUNDED counter/desk); re-tune cover for the thinner walls;
+  VISION four-facing + dark; full gate + `--diff`; docs same commit. Waves,
+  simplest → richest: **A refuges** (bedroom, guest_room_a/b, clerk_room,
+  toby_house -- gentle), **B explorables** (sheriff_office, barn, schoolhouse,
+  church -- the barn first, the church's columns/arches first), **C the complex**
+  (lodge, lodge_hall, lodge_cellar, abandoned_farmhouse).
+- **Phase 3 -- the mine reimagined (consumes 1b).** A `_ROCK_SCENES` set (Works
+  + Depths): full-THICK but the rough-outline + prism, so hewn rock reads
+  irregular/organic, not blocky boxes. Land with #14's side-dug chambers.
+- **Phase 4 -- freeform walls (the north star, "walls are no longer tiles" all
+  the way).** A wall SEGMENT primitive (endpoints + thickness + style, off the
+  tile grid) in the Scene model; collision/sight/nav read segment geometry; the
+  prism already draws it. Unlocks diagonal walls, a curved church apse, a round
+  silo/tower. Prototype ONE curved feature first.
+- **Cross-cutting (every phase, never its own):** thinner walls occlude LESS →
+  re-derive interior cover (the inner doors + furniture carry it, not wall
+  thickness), extend `tests/stealth.py §16` as styles/primitives land; VISION
+  toward the Darkwood organic read; guards + docs in the same commit.
+
+**Still open:** a maintainer LOOK at the material range + 1b roughness taste;
+then Phase 1b, then Wave A.
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
