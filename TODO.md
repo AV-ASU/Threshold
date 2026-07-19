@@ -497,18 +497,18 @@ single side room. The fix has two halves, and the first is done.
   side-wall N-S doors that open E-W with E-W-wall doors, error class #8;
   the shop pilot does this).
 
-- **Interior partition CORNER BEVEL landed (2026-07, maintainer "round that
-  corner" call; DESIGN.md §6, `scenes/terrain.py`).** The chunky 90° corner
-  where an interior partition wall juts into a room is now chamfered in both
+- **Interior partition CORNER BEVEL landed + rolled out (2026-07, maintainer
+  "round that corner" call; DESIGN.md §6, `scenes/terrain.py`).** The chunky 90°
+  corner where an interior partition wall juts into a room is chamfered in both
   wall draw layers (`_bevel_corners` -> `_extrude_box` bevel param +
   `_draw_wall_mass` clip); provably orthogonal to the run merge (runs/tees/shell
-  stay full-thickness, byte-identical), draw-only. **STILL OPEN: expand
-  `_BEVEL_SCENES`** (currently `{"shop"}`) to the other interior building scenes
-  (church, barn, schoolhouse, sheriff_office, bedroom, lodge + lodge_hall +
-  guest/clerk rooms, toby_house, farmhouse, lodge_cellar), each with a VISION
-  four-facing + dark look; never the mine (thick reads right) or outdoors. Tune
-  `_BEVEL_INSET` (0.28·TILE) or subdivide to a 2-3 segment arc if a rounder
-  corner is wanted.
+  stay full-thickness, byte-identical), draw-only. `_BEVEL_SCENES` now covers
+  ALL above-ground building interiors (shop, church, barn, schoolhouse,
+  sheriff_office, bedroom, clerk/guest rooms, lodge + lodge_hall, toby_house,
+  farmhouse, lodge_cellar), each rendered + scanned; never the mine (thick reads
+  right) or outdoors (byte-identical, confirmed by capture_world --diff). *(Open
+  polish: tune `_BEVEL_INSET` (0.28·TILE) or subdivide to a 2-3 segment arc if
+  the maintainer wants a rounder corner than the single 45° chamfer.)*
 
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 

@@ -602,9 +602,12 @@ Built into the procedural draw layer (`scenes/base.py`,
   tee / shell tile has < 2 adjacent open sides → no convex corner → **byte
   identical**, so runs stay a continuous full-thickness mass and only the juts
   soften. **Draw-only** (collision + sight stay tile-based, like the inner-door
-  leaves). Gated to `_BEVEL_SCENES` (a module frozenset, prototype `{"shop"}`;
-  expand per interior building scene with a VISION look, never the mine —
-  hewn rock reads right thick — nor outdoors). `_BEVEL_INSET` (0.28·TILE) is
+  leaves). Gated to `_BEVEL_SCENES` (a module frozenset covering the
+  above-ground BUILDING interiors — shop / church / barn / schoolhouse /
+  sheriff_office / bedroom / clerk_room / guest_room_a+b / lodge / lodge_hall /
+  toby_house / abandoned_farmhouse / lodge_cellar — never the mine, hewn rock
+  reads right thick, nor outdoors; a single-room refuge with no partition juts
+  just renders byte-identical). `_BEVEL_INSET` (0.28·TILE) is
   the single shared inset for both layers; bump it or subdivide the chamfer
   into a 2-3 segment arc for rounder corners. Cache-safe (the bevel is a pure
   function of the tile + its 8 neighbour chars + the gate).

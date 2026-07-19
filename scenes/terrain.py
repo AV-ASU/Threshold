@@ -1661,7 +1661,14 @@ def _is_wall(scene, tx, ty):
 # stay tile-based, like the interior-door leaves). Gated to _BEVEL_SCENES so
 # every other scene is a strict no-op.
 _BEVEL_INSET = TILE * 0.28              # pull-in along each meeting edge (~9px)
-_BEVEL_SCENES = frozenset({"shop"})     # prototype gate; expand after a look
+# The above-ground BUILDING interiors (framed/plank walls): their partition
+# juts get chamfered. NOT the mine (hewn rock reads right thick) nor outdoors.
+_BEVEL_SCENES = frozenset({
+    "shop", "church", "barn", "schoolhouse", "sheriff_office",
+    "bedroom", "clerk_room", "guest_room_a", "guest_room_b",
+    "lodge", "lodge_hall", "toby_house",
+    "abandoned_farmhouse", "lodge_cellar",
+})
 _BV_NW, _BV_NE, _BV_SE, _BV_SW = 1, 2, 4, 8
 
 

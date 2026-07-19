@@ -665,9 +665,11 @@ it renders the procedural sprites to a labelled PNG strip.
   `_draw_wall_mass` (clips `_wall_tile_flat` to `_bevel_poly_local`) — so the
   chunky 90° jut softens while runs/tees/shell stay a full-thickness continuous
   mass (byte-identical, no convex corner there). Draw-only; gated to
-  `_BEVEL_SCENES` (frozenset, currently `{"shop"}`; expand per interior
-  building scene with a VISION look, never the mine or outdoors). `_BEVEL_INSET`
-  = 0.28·TILE tunes the chamfer. Cache-safe (pure function of tile + neighbours).
+  `_BEVEL_SCENES` (frozenset of the above-ground building interiors — shop,
+  church, barn, schoolhouse, sheriff_office, bedroom, clerk/guest rooms, lodge +
+  lodge_hall, toby_house, farmhouse, lodge_cellar — never the mine or outdoors).
+  `_BEVEL_INSET` = 0.28·TILE tunes the chamfer. Cache-safe (pure function of
+  tile + neighbours).
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
