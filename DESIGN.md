@@ -640,6 +640,20 @@ Built into the procedural draw layer (`scenes/base.py`,
     (`BLEND_RGB_SUB`, a cool-grey) rather than painting black over it -- black
     over warm light reads as a brown STAIN, subtraction reads as dark floor.
     Both the pool and the shadow are cached per shape (`_floor_pool_surf`).
+  - **Interiors run on the gensets too (2026-07 interior lighting pass).** The
+    explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
+    schoolhouse, sheriff's office) are `DARK_SCENES` at a **lighter gloom**
+    (72, vs 100 for the deep and 130 cult-dark) -- they read "dim, lit by the
+    genset's bulbs + window spill, dark in the corners," not a pitch-black
+    cellar, and the flashlight works. Their MAIN light is the period-electric
+    **`wall_lamp`** (a 1994 bulkhead/utility fixture: conduit + frosted shade +
+    steady warm bulb, the indoor twin of the yard light), with the old candles
+    / kerosene lamps demoted to **backup accent** (realistic for a town on
+    failing genset power). The **refuge is deliberately excluded**
+    (`SAFE_SCENES` -- the PI's room, toby_house -- stay flat-lit + safe;
+    DESIGN §12), and the truly-abandoned interiors (`abandoned_farmhouse`,
+    `lodge_cellar`) keep the darker gloom + their candles. This is the ground
+    the "no light = danger" Watcher rework will stand on (`TODO.md` #21).
 - **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
   jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
   Repeated at scale across the Scriptorium and Sign Chamber, faintly

@@ -226,6 +226,10 @@ def build_shop():
                                  "mounted_fish"))
     sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2,
                                  "kerosene_lamp"))
+    # The genset-electric MAIN light: a bulkhead lamp on the east wall over
+    # the counter (the kerosene lamp + candle are the backup for when the gas
+    # runs low). "I keep the lights on. So they know." (2026-07 interior pass.)
+    sc.add_decoration(Decoration(14 * TILE + 16, 8 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     # Storeroom stock: a shelf of Hettie's preserves. Nobody has bought
@@ -310,6 +314,9 @@ def build_barn():
     sc.add_furniture("table", [(11, 2), (12, 2)], w=54, h=36)
     sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 24, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
+    # Genset-electric main light on the main-floor north wall (the lantern +
+    # candle are backup). (2026-07 interior pass.)
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
     # Northern-MN lodge dressing: a mounted buck + trophy walleye on the

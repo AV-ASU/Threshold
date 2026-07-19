@@ -102,6 +102,9 @@ def build_church():
     sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 8, "candle"))
     sc.add_decoration(Decoration(9 * TILE + 20, 1 * TILE + 8, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
+    # Genset-electric main light on the nave's north wall by the chancel (the
+    # altar candles are the devotion, not the wiring). (2026-07 interior pass.)
+    sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     # The parsonage's hunting-country dressing lives in the VESTRY (the
     # preacher's living quarters), not over the altar: a mounted buck on the
     # vestry's north wall. (The cobweb + desk lamp are added below.)
@@ -221,6 +224,9 @@ def build_sheriff_office():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
+    # Genset-electric main light on the office's north wall over the desk (the
+    # lantern + candle are the backup Vane keeps oiled). (2026-07 interior pass.)
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     # A candle on the records-room filing table (2026-07 audit fix: every
     # light lived in the main room, so the case board and the booking slip
     # sat unreadable in the dark in the real player view). Vane works his

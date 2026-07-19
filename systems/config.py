@@ -198,6 +198,14 @@ MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
+# Dim ground-floor INTERIORS (2026-07 interior lighting pass): DARK scenes,
+# but a LIGHTER gloom than the deep -- they read "dim, lit by the genset's
+# bulbs + window spill, dark in the corners," not a pitch-black cellar. The
+# flashlight works (not cult-dark). This is the ground "no light = danger"
+# will stand on (TODO #21); the refuge (SAFE_SCENES) is deliberately excluded.
+DIM_INTERIOR_SCENES = {"shop", "church", "barn", "schoolhouse",
+                       "sheriff_office"}
+
 DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "works_cistern", "works_sorting", "maras_room",
                "works_scriptorium",
@@ -206,7 +214,7 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
                "the_sump", "the_cells", "the_old_stores",
-               "dark", "threshold"}
+               "dark", "threshold"} | DIM_INTERIOR_SCENES
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
 # mechanically disabled and the dread aperture closes regardless

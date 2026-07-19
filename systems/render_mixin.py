@@ -108,6 +108,7 @@ FIXTURE_POOLS = {
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
     "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
+    "wall_lamp":    (80,   (255, 208, 150),  60,   20,    3,   0.04, 3.0),
 }
 
 # Additive floor light pools, cached per shape. A tilt-foreshortened ellipse
@@ -625,7 +626,9 @@ class RenderMixin:
         # GLOOM: dim the whole room, then carve elliptical holes under the
         # player + every pool so the objects standing in the light show
         # through (the navigable read; the additive colour lands on top).
-        gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
+        gloom = (130 if self.scene.key in CULT_DARK_SCENES
+                 else 72 if self.scene.key in DIM_INTERIOR_SCENES
+                 else 100)
         overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
 

@@ -469,7 +469,8 @@ class Scene:
     _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
                     "campfire": 80.0, "camp_fire": 88.0,
                     "lantern": 60.0, "candle": 55.0,
-                    "yard_light": 85.0, "generator": 42.0}
+                    "yard_light": 85.0, "generator": 42.0,
+                    "wall_lamp": 62.0}
 
     def light_sources(self):
         """Cached [(x, y, r)] of the scene's light-emitting decorations

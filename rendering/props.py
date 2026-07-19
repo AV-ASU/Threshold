@@ -1620,6 +1620,41 @@ def _draw_wall_torch_solid(surf, cam, deco):
                      max(1, int(1.5 * s)))
 
 
+def _draw_wall_lamp_solid(surf, cam, deco):
+    """A period interior electric fixture: a short conduit up the wall, a
+    bracket out toward the room, a frosted shade, and a STEADY warm bulb. The
+    1994 indoor twin of the yard light -- what the town's gensets actually
+    power inside (a bulkhead / utility light), not a candle. Drawn mounted up
+    the wall at its ground point (placements line it against the wall);
+    Game._draw_dark casts its warm pool."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    metal = (60, 58, 62)
+    metal_hi = (98, 96, 102)
+    mount_h = 20 * s
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, mount_h)
+    pygame.draw.line(surf, metal, base, top, max(1, int(1.5 * s)))       # conduit
+    pygame.draw.line(surf, metal_hi, base, top, 1)
+    # frosted shade: a small pale dome atop the conduit. SYMMETRIC (no arm),
+    # so it reads mounted on ANY wall regardless of orientation, never a
+    # bracket poking into the wall.
+    draw_solid(surf, cam, wx, wy,
+               [(mount_h - 3.2 * s, 3.0 * s, 3.0 * s),
+                (mount_h - 0.6 * s, 2.6 * s, 2.6 * s),
+                (mount_h, 1.4 * s, 1.4 * s)],
+               {"body": (150, 146, 140), "lo": (92, 88, 84),
+                "rim": (178, 174, 168)})
+    # the steady warm bulb glowing at the shade's lower lip
+    lamp = cam.project(wx, wy + 1.8 * s, mount_h - 3.4 * s)
+    lr = max(2, int(2.2 * s * cam.scale))
+    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
+    pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
+    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+    pygame.draw.circle(surf, (255, 230, 182), (int(lamp[0]), int(lamp[1])), lr)
+
+
 def _draw_smoke_solid(surf, cam, deco):
     """A rising column of smoke -- four puffs ascending in world z, each
     larger and more faded than the last. Reads as a real column you can
@@ -2403,6 +2438,7 @@ SOLID_PROPS = {
     "generator":     _draw_generator_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
+    "wall_lamp":     _draw_wall_lamp_solid,
     "smoke":         _draw_smoke_solid,
     "wisp":          _draw_wisp_solid,
     "rope":          _draw_rope_solid,

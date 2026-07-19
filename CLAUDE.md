@@ -636,7 +636,10 @@ it renders the procedural sprites to a labelled PNG strip.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
-  drive King safety, flashlight darkness, etc.
+  drive King safety, flashlight darkness, etc. `DIM_INTERIOR_SCENES` (2026-07)
+  is a `DARK_SCENES` subset for the explorable non-refuge interiors: a LIGHTER
+  gloom (72) so a ground-floor room reads dim-lit-by-bulbs, not pitch-black
+  (`_draw_dark`); lit by the genset `wall_lamp` fixture (DESIGN §6).
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.

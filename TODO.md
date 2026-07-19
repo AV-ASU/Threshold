@@ -908,8 +908,25 @@ EVERY emitter (not just `wall_torch`), so any fixture lights the dark it
 stands in -- proven by the underground candles now casting real pools
 (DESIGN §6; NARRATIVE §5 grid-died-with-the-fold). This is the substrate the
 maintainer's blackout idea needs (killable light nodes + a real light
-system), teed up but NOT built:
+system), teed up but NOT built.
 
+**Interior lighting LANDED too (2026-07, "do 3 then 1" pass 1 of 2).** The
+explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
+schoolhouse, sheriff's office) are now `DARK_SCENES` at a lighter gloom (72),
+lit by the period-electric **`wall_lamp`** (genset bulkhead fixture) with the
+old candles/kerosene demoted to accent -- they read dim-lit-by-bulbs with dark
+corners (DESIGN §6). The refuge (`SAFE_SCENES`) is deliberately excluded and
+stays flat-lit + safe. This is pass 1 ("just fix interior lighting first"); the
+Watcher rework below is pass 2 ("no light = danger"), still to build:
+
+- **Watchers in the dark, scoped (pass 2, the maintainer's "3 then 1").**
+  Rework Watchers so the non-refuge interiors (the `DIM_INTERIOR_SCENES` now
+  lit above) adopt "no light = danger": a Watcher can open in a dark room, and
+  the flashlight / standing deep in a light POOL (`Scene.lit_at`, already the
+  shadow-cover gate) burns it out. Keep the true refuges safe (bedroom,
+  toby_house). Add these interiors to `WATCHER_OPEN_SCENES` (today it excludes
+  all surface buildings, DESIGN §4) + wire the lit-pool defense. Couple with
+  the blackout below.
 - **The moth blackout.** A moth flare knocks out the lights (kill a genset
   node / drop the yard-light pools), the screen dims, and the cult camp
   forms a procession to the flash and fans out to search. Rides the shared

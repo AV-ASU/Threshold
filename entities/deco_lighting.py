@@ -34,6 +34,20 @@ class DecoLightingMixin:
         pygame.draw.ellipse(surf, (255, 236, 175),
                             (bx - 1, int(y - 13 - fh * 0.45), 3, int(fh * 0.45)))     # core
 
+    def _draw_wall_lamp(self, surf, x, y):
+        # A period interior electric wall fixture: conduit + bracket + frosted
+        # shade + a STEADY warm bulb (no flame). The 1994 indoor twin of the
+        # yard light -- what the gensets power inside, not a candle.
+        _light_pool(surf, x, y - 8, 34, (255, 208, 150), 66)
+        pygame.draw.line(surf, (60, 58, 62), (x, y), (x, y - 14), 2)       # conduit
+        pygame.draw.ellipse(surf, (150, 146, 140), (x - 5, y - 18, 10, 6))  # shade
+        pygame.draw.ellipse(surf, (92, 88, 84), (x - 5, y - 18, 10, 6), 1)
+        f = 0.94 + 0.06 * math.sin(self.t * 3 + self.seed)
+        glow = pygame.Surface((12, 12), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (255, 214, 156, int(96 * f)), (6, 6), 5)
+        surf.blit(glow, (x - 6, y - 12 - 6))
+        pygame.draw.circle(surf, (255, 230, 182), (x, y - 12), 2)
+
     def _draw_candle(self, surf, x, y):
         _light_pool(surf, x, y - 2, 30, (255, 170, 80), 58)
         pygame.draw.rect(surf, (180, 180, 200), (x - 2, y, 4, 8))
