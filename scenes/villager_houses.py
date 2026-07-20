@@ -324,71 +324,76 @@ def build_sheriff_office():
 
 
 def build_abandoned_farmhouse():
-    """A plain abandoned farmhouse interior: a candle, a couple of
-    motes, otherwise bare. (The old two-stage glitch-wall trick -- a
-    passable south-face tile that dropped the player into a haunted
-    `haunted_house_glitch` version -- was CUT; the south face is now
-    solid, and the one live beat is the nailed-shut cult-chamber hatch
-    in the rear room.)"""
-    # THRESHOLD: cleaned up the void buffer + passable % glitch
-    # wall the original used to drop the player into the alternate
-    # haunted version. South face is now solid; row 7 was an open
-    # void buffer and is now a sealed wall row so the player can't
-    # walk into nothing.
+    """An abandoned FOUR-ROOM farmhouse (#4c): a KITCHEN (the entry), a
+    PARLOR, a BEDROOM, and a BACK ROOM, quartered by a cross of partition
+    walls and connected by three inner doors. Candle-lit and mostly bare;
+    the one live beat is the nailed-shut cult-chamber hatch in the back
+    room."""
     floor = ["=" * 12 for _ in range(10)]
+    # #4c -- a proper FOUR-ROOM farmhouse, not one box + a side room. A cross
+    # of partition walls (the col-6 vertical + the row-4 horizontal, meeting
+    # at the solid (6,4) corner) quarters the interior into a KITCHEN (NW, the
+    # entry), a PARLOR (NE), a BEDROOM (SW), and a BACK ROOM (SE, the sealed
+    # hatch). (The old two-stage glitch-wall trick -- a passable south-face
+    # tile that dropped the player into a haunted `haunted_house_glitch`
+    # version -- was CUT; the south face is solid.)
     objects = [
-        "WWWoWWWWWWWW",   # 0  o = exit back to village (north face)
-        "W.....W....W",   # 1  main room (cols 1-5) | back room (cols 7-10)
-        "W.....W....W",   # 2
-        "W..........W",   # 3  doorway gap in the partition (col 6)
-        "W.....W....W",   # 4
-        "WWWWWWW....W",   # 5  back room sealed off below
-        "W..........W",   # 6
-        "W..........W",   # 7
-        "W..........W",   # 8
+        "WWWoWWWWWWWW",   # 0  o = exit back to Brimley (north face)
+        "W.....W....W",   # 1  KITCHEN (NW, cols 1-5) | PARLOR (NE, cols 7-10)
+        "W..........W",   # 2  (6,2) = door gap, kitchen <-> parlor
+        "W.....W....W",   # 3
+        "WW.WWWWW.WWW",   # 4  horizontal cross wall; (2,4) + (8,4) door gaps
+        "W.....W....W",   # 5  BEDROOM (SW) | BACK ROOM (SE)
+        "W.....W....W",   # 6
+        "W.....W....W",   # 7
+        "W.....W....W",   # 8
         "WWWWWWWWWWWW",   # 9  sealed south wall
     ]
     sc = Scene("abandoned_farmhouse", floor, objects, music="home")
-    # Abandoned farmhouse now sits deep south on the brimley
-    # west bank.
+    # Abandoned farmhouse, deep south on the brimley west bank.
     sc.add_exit("o", "brimley", "from_abandoned_farmhouse")
-    sc.set_spawn("default",     3, 1)
+    sc.set_spawn("default",     3, 1)      # in the kitchen, at the door
     sc.set_spawn("from_brimley", 3, 1)
-    # When the player climbs back up from the cult chamber, they come up
-    # through the hatch in the back room. Spawn beside it.
-    # The abandoned farmhouse. Phantom marks scratched into the floorboards
-    # (phantom_mark is a floor decal, _FLOOR_DECAL_KINDS -- it warps onto the
-    # floor under the tilt, not the walls) -- thick in the back room. There's
-    # a (sealed) hatch back there too.
-    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(5 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(9 * TILE + 28, 2 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 24,
-                                 "bloodstain"))
-    # What the family left when they went: a preserves shelf nobody came
-    # back for, and a birdcage standing open in all that bare floor.
-    # (Shelf at col 1, 2026-07 audit fix: it hung centred over the col-3
-    # exit door -- a cupboard drawn across the only way out.)
+
+    # Three inner doors quartering the house, placed in VARIED walls (error
+    # class 8): the kitchen<->parlor door sits in the N-S col-6 wall so it
+    # swings E-W; the two doors through the E-W row-4 cross wall swing N-S. A
+    # curtain hangs over the bedroom, plank leaves elsewhere. All start shut;
+    # a shut leaf blocks the sight cone, so the back room (the hatch) and the
+    # bedroom are real blind spots off the entry.
+    sc.add_inner_door(6, 2, "plank")       # kitchen <-> parlor  (swings E-W)
+    sc.add_inner_door(2, 4, "curtain")     # kitchen <-> bedroom (swings N-S)
+    sc.add_inner_door(8, 4, "plank")       # parlor  <-> back room (swings N-S)
+
+    # A house left mid-life, gone abandoned. Phantom marks scratched into the
+    # floorboards (phantom_mark is a floor decal -- it warps onto the floor
+    # under the tilt, not the walls), one per room. A candle still burning in
+    # each room is the only light (the farmhouse keeps the darker gloom +
+    # candles, not the genset bulbs); who lit them, in an empty house.
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))   # kitchen
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "candle"))   # parlor
+    sc.add_decoration(Decoration(3 * TILE + 16, 6 * TILE + 16, "candle"))   # bedroom
+    sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "candle"))   # back room
+    sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16, "phantom_mark"))  # kitchen
+    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16, "phantom_mark"))  # parlor
+    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "phantom_mark"))  # bedroom
+    sc.add_decoration(Decoration(9 * TILE + 28, 6 * TILE + 16, "phantom_mark"))  # back room
+    sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 24, "bloodstain"))    # bedroom
+    # What the family left when they went: a preserves shelf nobody came back
+    # for on the kitchen wall, a birdcage standing open in the parlor, the bed
+    # still in the bedroom.
     sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 22,
                                  "preserve_shelf", seed=23))
-    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "birdcage"))
-    for mx, my in [(3, 2), (4, 6), (8, 7)]:
-        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
-                                     "mote"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 2 * TILE + 16, "birdcage"))
+    sc.add_furniture("bed", [(1, 7), (1, 8)], w=34, h=56)
+    for mx, my in [(3, 2), (4, 6), (9, 7)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    # Cult-chamber hatch: a sealed dead end, back in the rear room (the
-    # blind spot). It once dropped into the old cult chamber (now removed);
-    # pressing E plays a locked sound + a sealed-hatch notice (C14d). Drawn
-    # as a cellar_hatch.
+    # Cult-chamber hatch: a sealed dead end in the BACK ROOM (SE, a blind spot
+    # two doors off the entry). It once dropped into the old cult chamber (now
+    # removed); pressing E plays a locked sound + a sealed-hatch notice.
     hatch_x = 8 * TILE + 16
-    hatch_y = 3 * TILE + 16
+    hatch_y = 7 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._farmhouse_hatch = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
@@ -396,9 +401,7 @@ def build_abandoned_farmhouse():
     sc.hide_spots = []
 
     def _farmhouse_interact(game):
-        # Sealed. This hatch used to drop into the old cult chamber, which
-        # passaged through to the Works -- a shortcut around the descent.
-        # Closed (NARRATIVE §7/§9: the grove fold is the only way down).
+        # Sealed. The grove fold is the only way down (NARRATIVE §7/§9).
         if (abs(game.player.x - hatch_x) < 36
                 and abs(game.player.y - hatch_y) < 36):
             game.audio.play("door_close", 0.5)

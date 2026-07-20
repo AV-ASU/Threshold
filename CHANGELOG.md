@@ -195,6 +195,21 @@
 
 ## Walls & interior geometry
 
+- **2026-07 -- #4c: the abandoned farmhouse became a four-room warren.** The
+  farmhouse was a "box + one side room"; a house warrants real rooms, and
+  being abandoned it carries almost no load (just the sealed cellar hatch).
+  Quartered it with a cross of partition walls (a col-6 vertical + a row-4
+  horizontal meeting at a solid corner) into a KITCHEN (the entry), a PARLOR,
+  a BEDROOM, and a BACK ROOM (the hatch), connected by three inner doors in
+  varied walls (a curtain over the bedroom, plank leaves elsewhere; the
+  kitchen<->parlor door swings E-W, the two cross-wall doors swing N-S).
+  Re-dressed per room: the preserves shelf in the kitchen, the open birdcage
+  in the parlor, the bed in the bedroom, the hatch in the back room, and a
+  candle burning in each (the farmhouse keeps the darker gloom + candles, so
+  the division needed a light in every room -- who lit them, in an empty
+  house). Reachability holds through the doors (smoke [10/10]);
+  VISION-verified four facings + dark.
+
 - **2026-07 -- #4c: the barn divided into a three-room warren.** The barn was
   the flagship "box + one back stall" grievance, but its open floor is the
   commune dormitory ("they slept all over then"), which should stay open.
