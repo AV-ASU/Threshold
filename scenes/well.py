@@ -208,10 +208,11 @@ def build_well_passage():
     # into the east block, and a HALF-DUG niche the diggers started and quit
     # in the west. Both adits open onto row 4 at non-rack columns, so the
     # E-W patrol run (row 5) and its rack cover are untouched.
-    for cx in (15, 16, 17, 18):        # finished store: 4 wide, 2 deep
+    for cx in (15, 16, 17, 18):        # finished store: 4 wide at the back
         objs[1][cx] = "."
-        objs[2][cx] = "."
-    objs[3][16] = "."                  # its adit down to the corridor
+    for cx in (15, 16, 17):            # front row stops one shy of the east
+        objs[2][cx] = "."              # wall so the corner crate boxes no
+    objs[3][16] = "."                  # dead floor. Its adit to the corridor.
     for cx in (4, 5):                  # half-dug niche: one course deep, ragged
         objs[2][cx] = "."
     objs[3][5] = "."                   # its adit
@@ -363,12 +364,14 @@ def build_works_cistern():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # The SW niche, dressed (#14): timber over the adit mouth, the clawed
-    # corner stone, a cold seep finding the low place. No light -- the dig
-    # gave this one up.
+    # The SW niche, dressed (#14): timber over the adit mouth, a low spoil
+    # pile capping the corner where the dig stopped (the half-dug signature,
+    # matching the racks + sorting niches), the clawed corner stone, a cold
+    # seep finding the low place. No light -- the dig gave this one up.
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 2, "shoring_frame",
                                  seed=13, ang=0.0, span=64))
-    sc.add_decoration(Decoration(1 * TILE + 8, 8 * TILE + 14, "claw_marks",
+    sc.add_furniture("spoil_heap", [(1, 8)], seed=12, see_over=True)
+    sc.add_decoration(Decoration(2 * TILE + 4, 8 * TILE + 18, "claw_marks",
                                  scale=1.5))
     sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE + 16, "water_trail",
                                  pool=True, seed=8))
