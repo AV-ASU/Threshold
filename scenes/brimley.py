@@ -1095,11 +1095,6 @@ def build_brimley():
                     "[c=dim](You lean over the lip. The shaft drops "
                     "past where any water should be. No glint, no "
                     "bottom, just cold air climbing up out of it.)[/c]",
-                    "[c=dim]A dead well, dry a long time. The lip is worn "
-                    "smooth where the town used to lean and draw, back when "
-                    "it drew anything.[/c]",
-                    "Nothing down there now. And no way down it if there "
-                    "were.",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
             game.audio.play("low_pulse", 0.4)

@@ -681,8 +681,7 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   "There is no way back above you, and you are not hurt. Cut stone, worn
   smooth by years of feet that came this way before you."
 - **`threshing_floor`** (`build_depths_threshing._interact`): "The yield,
-  raked into low heaps: grain, all of it, tithed down from the fields above.
-  The town's whole harvest, carried down and never carried back up."
+  raked into low heaps: grain, all of it, tithed down from the fields above."
 - **`the_old_stores_shelves`** (`build_the_old_stores._interact`): "Shelves
   of the dig's gear: lamps burned black, pick hafts worn down to the grain,
   every one tagged in the same steady brown hand."
@@ -1179,9 +1178,8 @@ ones landed so far:
   A row of them, all the same, all shut.)[/c]" (the uncanny hotel of shut
   rooms kept ready for guests who won't come, NARRATIVE §4).
 - **`the_burning`** (`build_clearing._void_boss_interact`,
-  `scenes/interiors.py`): "A fire pit big enough to stand a family around,
-  cold a long while. What it burned was not all wood. Buckles, bowl rims,
-  boot eyelets, a watch case, slagged in the ash."
+  `scenes/interiors.py`): "A cold fire pit. In the ash, what would not burn:
+  buckles, bowl rims, boot eyelets, a watch case, slagged together."
 - **the procession candles** (`build_depths_procession._candles_interact`,
   first read): "[c=dim]A line of candles down the dark, burned to coins.
   Each one stands in older wax, and older wax under that.[/c]" /
@@ -1202,11 +1200,8 @@ ones landed so far:
 
 - **the dead well** (`_brimley_interact`, first read): "[c=dim](You lean
   over the lip. The shaft drops past where any water should be. No glint,
-  no bottom, just cold air climbing up out of it.)[/c]" / "[c=dim]A dead
-  well, dry a long time. The lip is worn smooth where the town used to lean
-  and draw, back when it drew anything.[/c]" / "Nothing down there now. And
-  no way down it if there were." Re-read: notice "Cold air climbs out of
-  the dark. No way down for you here."
+  no bottom, just cold air climbing up out of it.)[/c]" Re-read: notice
+  "Cold air climbs out of the dark. No way down for you here."
 - **the news rack** (`_brimley_interact`): "A coin rack of newspapers,
   bleached behind the scratched plastic. The county weekly." /
   "[c=dim]Dated January 15. Every copy in the stack. Nobody ever fed it

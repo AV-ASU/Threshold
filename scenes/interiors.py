@@ -137,8 +137,8 @@ def build_clearing():
         # Flavor narration only -- NOT one of the five canonical beats, so
         # it never touches the evidence count or the King-gate.
         _evidence(game, "the_burning",
-            "A fire pit big enough to stand a family around, cold a long "
-            "while. What it burned was not all wood. Buckles, bowl rims, boot eyelets, a watch case, slagged in the ash."
+            "A cold fire pit. In the ash, what would not burn: buckles, "
+            "bowl rims, boot eyelets, a watch case, slagged together."
         )
     sc.on_interact_fn = _void_boss_interact
     return sc

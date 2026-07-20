@@ -518,7 +518,7 @@ def build_depths_threshing():
         if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "threshing_floor",
                 "The yield, raked into low heaps: grain, all of it, tithed "
-                "down from the fields above. The town's whole harvest, carried down and never carried back up."
+                "down from the fields above."
             )
     sc.on_interact_fn = _interact
     return sc

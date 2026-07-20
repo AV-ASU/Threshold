@@ -156,6 +156,24 @@
 
 ## Close-up tableaux & the dialogue verb
 
+- **2026-07 -- #13b interior-voice trim, first pass.** The maintainer's
+  grievance was that "every interaction does something and never leaves the
+  player thinking" -- on-screen narrator captions fire on nearly every
+  world-prop examine, and several editorialize the conclusion the player was
+  meant to draw. Applied the pattern "state the fact and stop" to the three
+  clearest caption-only flavor examines (all non-canonical `_evidence` calls
+  that write nothing to the book, none flow-guarded): the **dead well** lost
+  its dry-well recap + "no way down it if there were" conclusion (the
+  bottomless shaft lands alone; the re-read notice still carries the
+  no-way-down fact); **`the_burning`** lost the "big enough to stand a family
+  around" framing and the "what it burned was not all wood" lead-in (the
+  slagged effects in the ash are the tell); **`threshing_floor`** lost the
+  "the town's whole harvest, carried down and never carried back up"
+  conclusion. `DIALOGUE.md` reconciled; full gate green. The fuller ~30-site
+  sweep (procession candles, the ledger re-examine, placeholder one-liners)
+  and the decision on the `_REVISIT_NUDGES` remain open per `TODO.md` #13b --
+  they are taste calls left for a maintainer read of this pattern first.
+
 - **2026-07 — The ask-questions dialogue verb, piloted then expanded to
   all six principals + the chorus (`TODO.md` #1).** Before this, every NPC
   conversation was a linear press-E counter. Built `ui/conversation.py` (a
