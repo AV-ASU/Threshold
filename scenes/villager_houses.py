@@ -348,9 +348,9 @@ def build_sheriff_office():
 def build_abandoned_farmhouse():
     """An abandoned FOUR-ROOM farmhouse (#4c): a KITCHEN (the entry), a
     PARLOR, a BEDROOM, and a BACK ROOM, quartered by a cross of partition
-    walls and connected by three inner doors. Candle-lit and mostly bare;
-    the one live beat is the nailed-shut cult-chamber hatch in the back
-    room."""
+    walls and connected by three inner doors. Candle-lit and strewn with a
+    fled family's left-behind belongings; the one live beat is the
+    nailed-shut cult-chamber hatch in the back room."""
     floor = ["=" * 12 for _ in range(10)]
     # #4c -- a proper FOUR-ROOM farmhouse, not one box + a side room. A cross
     # of partition walls (the col-6 vertical + the row-4 horizontal, meeting
@@ -410,6 +410,28 @@ def build_abandoned_farmhouse():
     sc.add_furniture("bed", [(1, 7), (1, 8)], w=34, h=56)
     for mx, my in [(3, 2), (4, 6), (9, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
+    # Dressing follow-up (2026-07): the quartered rooms read as empty boxes,
+    # but a fled family leaves a house FULL of what it could not carry. Scatter
+    # left-behind belongings, one or two per room -- all non-solid decorations,
+    # so collision, nav, and reachability are untouched: a wash basin and a
+    # knocked-over chair in the kitchen; a family portrait and the mother's
+    # needlework still hung in the parlor; a basin and another fallen chair in
+    # the bedroom; dead leaves blown in and a chair in the back room. Placed
+    # clear of the candles, the doors, the spawn, and the hatch.
+    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 16, "washstand"))
+    sc.add_decoration(Decoration(4 * TILE + 12, 3 * TILE + 20,
+                                 "overturned_chair"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22,
+                                 "oil_portrait", seed=6))
+    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 22,
+                                 "sampler", seed=11))
+    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 16, "washstand"))
+    sc.add_decoration(Decoration(5 * TILE + 12, 8 * TILE + 20,
+                                 "overturned_chair"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 5 * TILE + 16, "leaves"))
+    sc.add_decoration(Decoration(7 * TILE + 12, 6 * TILE + 20,
+                                 "overturned_chair"))
 
     # Cult-chamber hatch: a sealed dead end in the BACK ROOM (SE, a blind spot
     # two doors off the entry). It once dropped into the old cult chamber (now
