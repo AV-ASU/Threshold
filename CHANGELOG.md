@@ -195,6 +195,21 @@
 
 ## Walls & interior geometry
 
+- **2026-07 -- #4c: the barn divided into a three-room warren.** The barn was
+  the flagship "box + one back stall" grievance, but its open floor is the
+  commune dormitory ("they slept all over then"), which should stay open.
+  Resolved by dividing the UPPER floor with a row-5 partition into a FRONT BAY
+  (the entry + racked gear) while keeping the LOWER floor the open dormitory
+  (all six bedrolls sit there, the read intact); the old back stall is the
+  enclosed WORKROOM (Mara's journal + the sealed hatch). Two `plank` inner
+  doors in varied walls: the front-bay door swings N-S (E-W wall), the workroom
+  door swings E-W (N-S wall). Both start shut; a shut leaf blocks the sight
+  cone, so the workroom is a real back blind spot. The division cut the
+  dormitory off from the front-bay lamp, so a second genset wall_lamp was hung
+  on the partition to light the sleeping floor. Reachability holds through the
+  doors (smoke [10/10], no diagonal-only joins from the new wall);
+  VISION-verified four facings + dark.
+
 - **2026-07 -- #4c interior-door rollout continues: the church vestry got
   its swinging leaf.** The church was already nave + vestry + bell-tower,
   but the vestry was reached through an OPEN gap -- no door mechanic. Added

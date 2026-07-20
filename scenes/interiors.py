@@ -308,7 +308,9 @@ def build_shop():
     sc.hide_spots = []
     return sc
 def build_barn():
-    """Small barn on the brimley east bank. Holds Mara's journal
+    """Small barn on the brimley east bank, divided (#4c) into a front working
+    bay, an open sleeping-floor dormitory, and an enclosed back workroom, split
+    by two plank inner doors. Holds Mara's journal
     (a surface trail beat) behind the workbench, and a boarded-over hatch where a
     tunnel down to the Works once ran -- nailed shut now; the rite (the
     grove's descent fold) is the only way underground, and no hatch ever
@@ -317,11 +319,11 @@ def build_barn():
     floor = ["=" * 16 for _ in range(12)]
     objects = [
         "WWWWnWWWWWWWWWWW",   # 0  n = barn door (north face)
-        "W........W.....W",   # 1  main floor (cols 1-8) | back stall (cols 10-14)
+        "W........W.....W",   # 1  front bay (cols 1-8, rows 1-4) | workroom (cols 10-14)
         "W........W.....W",   # 2
         "W..............W",   # 3  doorway gap in the partition (col 9)
         "W........W.....W",   # 4
-        "W........W.....W",   # 5
+        "WWWW.WWWWW.....W",   # 5  front-bay S wall; door gap col 4 -> dormitory
         "W........WWWWWWW",   # 6  back stall sealed off below
         "W..............W",   # 7
         "W..............W",   # 8
@@ -336,6 +338,23 @@ def build_barn():
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
+
+    # #4c -- the barn reads as a divided working building now, not one open
+    # box + a back stall. A row-5 partition splits the upper floor into a
+    # FRONT BAY (the entry + the racked gear) and keeps the lower floor the
+    # open DORMITORY (all the bedrolls sit down there, so the "slept all over"
+    # read stays intact); the old back stall is the WORKROOM (Mara's journal +
+    # the sealed hatch). Two plank inner doors, placed in VARIED walls (error
+    # class 8): the front-bay door sits in the E-W row-5 wall so its leaf
+    # swings N-S; the workroom door in the N-S col-9 wall so its leaf swings
+    # E-W. Both start shut; a shut leaf blocks the sight cone, so the workroom
+    # is a real back blind spot, not an open gap. Player toggles nearest with E.
+    sc.add_inner_door(4, 5, "plank")     # front bay -> dormitory (swings N-S)
+    sc.add_inner_door(9, 3, "plank")     # front bay -> workroom (swings E-W)
+    # The division cuts the DORMITORY (a DIM_INTERIOR half) off from the
+    # front-bay wall_lamp, so hang a second genset bulkhead on the partition's
+    # south face to light the sleeping floor (verified in the dark render).
+    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "wall_lamp"))
 
     # Sized furniture: racked gear runs out front (the diggers' stowed kit;
     # 2026-07 audit fix: these were 'bookshelf' cases, which render with

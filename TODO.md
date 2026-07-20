@@ -96,10 +96,10 @@ stays one square scene with the torus wrap; see #4).
 
 The mechanic and the shop pilot are built (`CHANGELOG.md`, "Walls &
 interior geometry"). **Still open: roll the pattern out** to the remaining
-box-or-side-room interiors, one at a time, each VISION-verified: the barn,
-the sheriff's office, the schoolhouse, Toby's house (a refuge — keep it
-gentle), the Lodge interiors (the church's vestry leaf landed,
-`CHANGELOG.md`). Each is its own build; provenance
+box-or-side-room interiors, one at a time, each VISION-verified: the
+sheriff's office, the schoolhouse, Toby's house (a refuge — keep it
+gentle), the Lodge interiors (the church vestry + the barn three-room
+division landed, `CHANGELOG.md`). Each is its own build; provenance
 first (the SCENE-DRESSING PROCESS in `CLAUDE.md`), reachability
 re-checked with smoke's flood-fill, doors mostly closed, doors placed in
 VARIED walls (not all facing one way).
