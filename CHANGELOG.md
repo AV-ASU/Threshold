@@ -481,23 +481,31 @@
   placeholder -- no such draw kind exists). The rest of #4 (more scenes, a fog
   volume, landmark repetition) stays open.
 
-- **2026-07 -- the effigy grove reads above the river.** `effigy_grove` (the
-  descent mouth, north of Brimley above the river) rendered as a generic corn
-  crop circle: a uniform corn ring, no sense of the river the diggers followed
-  down to this ground (NARRATIVE §2/§5). The fix reads the river along the
-  NORTH rim, behind the dug mouth: a band of `~` water arced into the corn
-  border (`_in_river`, full across the top and deepening down the flanks where
-  the clearing recedes), so the terrain's own `emit_tilt_water_reeds` draws the
-  reeds + wet glint for free, matching the Brimley river exactly. The night
-  procession's bootprints (`mud_footprint`) climb from the bank down past the
-  spoil to the fire -- the way they came. The band is bounded by the map's
-  north edge and the flanking corn, so the circle still holds (the only ways
-  out stay the two folds; smoke flood-fill + no-diagonal-join green). TODO
-  called it "decoration only"; a convincing surface river needs real water
-  tiles to auto-reed, so the change extends to a minimal water band kept
-  entirely in the impassable border zone (reachability byte-safe). VISION-
-  verified across four facings, the river close-up, and the dark graded view;
-  in play the animated glint lifts it further, as it does in Brimley.
+- **2026-07 -- the effigy grove redesigned as a river site.** `effigy_grove`
+  (the descent mouth, north of Brimley above the river) rendered as a
+  symmetric corn crop circle with no sense of the river the diggers followed
+  down to this ground (NARRATIVE §2/§5). A first pass arced a reeded water band
+  along the NORTH rim, but a top-edge band reads as a LAKE, so the scene was
+  redesigned into a river site. The river now runs the FULL height down the
+  EAST side (`river_col`, a bending course that enters the top and leaves the
+  bottom; banks auto-reeded by the terrain's own `emit_tilt_water_reeds`, the
+  Brimley-river vocabulary), and the clearing is an ASYMMETRIC lobed hollow
+  (`_in_clearing`, an atan2-lobed edge rather than a clean ellipse) worked into
+  the corn on the near bank, its mud bank (`_in_bank`) meeting the water. The
+  dug mouth was moved to FACE the river: the dead fire/descent (the `O` fold +
+  `_rite_pos`) sits east of centre, a shoring frame behind it, the spoil hauled
+  east in a line to the bank, an ore cart left at the water's edge. The effigy
+  ring became a CRESCENT kneeling toward the fire, and the three stones scatter
+  through the hollow. The river is bounded top/bottom by the map edge and east
+  by corn, and the corn still borders every dry side, so the circle holds (only
+  the two folds exit). The fold/rite machinery moved with the fire (the `O`/`M`
+  tiles, `_rite_pos`, the loom anchor, the `from_well_bottom` spawn) with the
+  evidence-keyed charge/gate logic untouched -- full gate green (flow exercises
+  the rite at the new spot), smoke flood-fill + no-diagonal-join green. TODO
+  asked "decoration only," but a surface river needs real water tiles to
+  auto-reed, so the change includes water/bank terrain kept in the impassable
+  border zone (reachability safe). VISION-verified across four facings, close
+  vantages, and the dark graded view.
 
 - **2026-07 — Brimley rebuilt from 100x100 to 60x60 (`TODO.md` #18), a
   full reshape, not a scale-down.** The river moved to a central spine

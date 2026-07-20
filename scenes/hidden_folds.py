@@ -20,21 +20,23 @@ from .base import Scene
 # ----- #2: The Work-Clearing (no worker) ----------------------------
 
 def build_effigy_grove():
-    """A CROP CIRCLE in the corn north of Brimley, above the river --
-    the clearing the cult once worked, at the mouth of their mine.
-    Reached ONLY through the school rite's pane (the maze walk-in fold
-    was cut, 2026-07: the rite hid this place). The
-    corn itself is the border: an oval of cut ground pressed into an
-    unbroken field, charred at the heart. The RIVER reads along the
-    north rim now (2026-07): the diggers followed the water down to this
-    ground and the night procession came along it (NARRATIVE §2/§5), so a
-    reeded band of it curves into the corn border behind the dug mouth,
-    with the procession's bootprints worn up from the bank to the fire.
-    A dead fire pit at centre,
-    effigy-dolls in a ring, THREE weathered standing stones (organic,
-    seeded -- siblings, never copies) with the nailed-up faces on one of
-    them -- the work without the worker (the closing rite claimed the
-    town at once, NARRATIVE §4 / DESIGN.md §1).
+    """A worked HOLLOW on the near bank of the river north of Brimley --
+    the clearing the cult dug at, at the mouth of their mine. Reached ONLY
+    through the school rite's pane (the maze walk-in fold was cut, 2026-07:
+    the rite hid this place). REDESIGNED 2026-07 from a symmetric crop
+    circle into a river site: the RIVER runs the full height down the east
+    side (a real bending course, in at the top and out at the bottom, its
+    banks auto-reeded), and the clearing is an asymmetric lobed hollow
+    worked into the corn on its near bank. The diggers followed the water
+    DOWN to this ground and the night procession filed along it (NARRATIVE
+    §2/§5), so the DUG MOUTH faces the water: the dead fire east of centre,
+    a shoring frame behind the descent, the spoil hauled in a line to the
+    bank, the ore cart left at the water's edge. The congregation's
+    effigy-dolls kneel in a CRESCENT facing the fire, THREE weathered
+    standing stones (organic, seeded -- siblings, never copies) scattered
+    through the hollow with the nailed-up faces on one -- the work without
+    the worker (the closing rite claimed the town at once, NARRATIVE §4 /
+    DESIGN.md §1). The corn is still the border on every dry side.
 
     THE WAY DOWN lives here now: a fold stands over the dead fire ('O'),
     clarifying with the evidence count (fold_charge_fn, the meter). At 3
@@ -47,36 +49,41 @@ def build_effigy_grove():
     only His face; surfacing with the Mask sets descent_sealed (the
     SPREAD lock) and the circle lets go."""
     W, H = 26, 19
-    # The crop circle: an OVAL clearing pressed into solid corn. Inside
-    # the oval the ground is open (charred at the heart, grass out to
-    # the rim); everything outside it is standing corn -- the border IS
-    # the field. The clearing is CLEAN-CUT and big: the corn stays a
-    # distant rim, never crowding the fire, the stones or the door
-    # (the tall stalk standees lean over a tile or two at most).
-    def _in_clearing(tx, ty):
-        dx = (tx - 13) / 11.6
-        dy = (ty - 9) / 8.0
-        return dx * dx + dy * dy <= 1.0
+    # THE MINE-MOUTH AT THE RIVER (2026-07 makeover). The grove is a HOLLOW
+    # worked into the corn on the near bank of the river the diggers followed
+    # DOWN to this ground (NARRATIVE §2/§5) -- not a tidy crop circle. The
+    # river runs the FULL height down the EAST side (a real course, bending,
+    # in at the top and out at the bottom, so it reads as a river and never a
+    # pond) and auto-draws its reeds + wet glint (emit_tilt_water_reeds),
+    # matching the Brimley river. West of the water the clearing is an
+    # ASYMMETRIC lobed hollow, its worked mud bank meeting the river and
+    # charred at the dead fire. The corn is still the border on every dry
+    # side; the river is bounded top/bottom by the map edge and east by more
+    # corn, so the circle holds (the only ways out stay the two folds).
+    def river_col(ty):
+        return 21.0 + 1.3 * math.sin((ty - 2) * 0.42)
 
-    def _in_char(tx, ty):
-        dx = (tx - 13) / 4.4
-        dy = (ty - 8.5) / 3.2
-        return dx * dx + dy * dy <= 1.0
-
-    # THE RIVER (2026-07): the grove sits ABOVE the river, and the diggers
-    # followed the water DOWN to this ground (NARRATIVE §2/§5) -- the night
-    # procession Toby watched came along it. So the river reads across the
-    # NORTH rim, behind the dug mouth: a band arced into the corn border,
-    # full across the top and curving down the flanks. Water tiles auto-draw
-    # their reeds + wet glint (emit_tilt_water_reeds), matching the Brimley
-    # river. It never reaches the two folds; the band is bounded by the map's
-    # north edge and the corn to either side, so the circle still holds (the
-    # only ways out stay the pane over the fire and the school pane).
     def _in_river(tx, ty):
-        # A band hugging the clearing's north edge: full across row 0, and
-        # deepening down the flanks (where the clearing recedes) so the water
-        # curves around the rim instead of drawing a flat line.
-        return (ty <= 3 and 2 <= tx <= 23 and not _in_clearing(tx, ty))
+        return abs(tx - river_col(ty)) <= 1.4
+
+    def _in_bank(tx, ty):              # the worked mud strip on the west bank
+        return -3.0 <= (tx - river_col(ty)) < -1.4
+
+    def _in_clearing(tx, ty):
+        if _in_river(tx, ty):
+            return False
+        dx = (tx - 11.0) / 10.6
+        dy = (ty - 9.0) / 8.3
+        ang = math.atan2(dy, dx)
+        # A lobed edge, not a clean ellipse: the hollow reads worked, organic.
+        lobe = (1.0 + 0.12 * math.sin(3.0 * ang + 0.7)
+                + 0.06 * math.sin(5.0 * ang - 1.1))
+        return (dx * dx + dy * dy) <= lobe
+
+    def _in_char(tx, ty):             # charred ground at the dead fire
+        dx = (tx - 15.0) / 2.8
+        dy = (ty - 9.0) / 2.3
+        return dx * dx + dy * dy <= 1.0
 
     floor_rows = []
     for ty in range(H):
@@ -85,7 +92,9 @@ def build_effigy_grove():
             if _in_river(tx, ty):
                 row.append("~")            # river water (banks auto-reed)
             elif _in_char(tx, ty):
-                row.append("x")
+                row.append("x")            # charred fire ground
+            elif _in_bank(tx, ty):
+                row.append(";")            # worked mud bank at the water
             else:
                 row.append("g")
         floor_rows.append("".join(row))
@@ -93,24 +102,21 @@ def build_effigy_grove():
     for ty in range(H):
         row = []
         for tx in range(W):
-            if _in_river(tx, ty):
-                row.append(".")            # water floor: no corn over it
-            elif _in_clearing(tx, ty):
-                row.append(".")
+            if _in_river(tx, ty) or _in_bank(tx, ty) or _in_clearing(tx, ty):
+                row.append(".")            # walkable: water, bank, or clearing
             else:
-                row.append("C")
+                row.append("C")            # standing corn -- the border
         objects_l.append(row)
-    # Three ORGANIC standing stones around the ring -- solid, see-over
-    # footprints ('x' object) so they block walking but never sight.
-    for sx, sy in ((9, 5), (18, 12), (7, 12)):
+    # Three ORGANIC standing stones scattered through the hollow -- solid,
+    # see-over footprints ('x' object) so they block walking but never sight.
+    for sx, sy in ((8, 5), (6, 9), (9, 13)):
         objects_l[sy][sx] = "x"
-    # THE WAY DOWN: the fold tile at the dead fire ('O', a marker char:
-    # invisible, walkable), walked SOUTH into --
-    # a deliberate step into the pane, never crossed by the natural
-    # east-west walk through the clearing.
-    objects_l[8][13] = "O"
-    # The school door's grove-side pane ('M'), south of the ring. Walked
-    # SOUTH.
+    # THE WAY DOWN: the dead fire, east of the hollow's centre facing the
+    # river ('O', an invisible walkable marker), walked SOUTH into the
+    # descent -- the dug mouth, its spoil hauled to the water they followed.
+    objects_l[9][15] = "O"
+    # The school door's grove-side pane ('M'), in the clearing away from the
+    # water. Walked SOUTH.
     objects_l[13][13] = "M"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("effigy_grove", floor_rows, objects, music="outside")
@@ -120,10 +126,10 @@ def build_effigy_grove():
     sc.wrap_y = False
     sc.add_exit("O", "well_bottom", "from_grove", direction="south")
     sc.add_exit("M", "schoolhouse", "from_grove", direction="south")
-    sc.set_spawn("default", 2, 9)
-    # Back up out of the well: beside the fire, carried westward so
-    # arrival never re-fires the south-walked crossing.
-    sc.set_spawn("from_well_bottom", 12, 8)
+    sc.set_spawn("default", 5, 9)
+    # Back up out of the well: beside the fire, carried WEST so arrival
+    # never re-fires the south-walked crossing.
+    sc.set_spawn("from_well_bottom", 13, 9)
     # In through the school door: one tile north of its return pane.
     sc.set_spawn("from_school", 13, 12)
 
@@ -199,7 +205,7 @@ def build_effigy_grove():
     # sensation, the second begins the FULL door-dream (a pure
     # cutscene). Completion tears the pane open and keys the way home to
     # His face. Re-armed on every scene exit.
-    sc._rite_pos = (13 * TILE + 16, 8 * TILE + 16)
+    sc._rite_pos = (15 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._rite_pos[0], sc._rite_pos[1], 44)
 
     def _grove_interact(game):
@@ -258,7 +264,7 @@ def build_effigy_grove():
         if t <= 0.0:
             ev = min(3, game._evidence_count())
             charge = 0.15 + 0.85 * (ev / 3.0)
-            fx, fy = 13 * TILE + 16, 8 * TILE + 16
+            fx, fy = 15 * TILE + 16, 9 * TILE + 16
             d = math.hypot(game.player.x - fx, game.player.y - fy)
             prox = max(0.25, 1.0 - d / (12 * TILE))
             pan = game.audio.pan_for_world(fx, game.player.x)
@@ -283,55 +289,57 @@ def build_effigy_grove():
     sc.on_enter_fn = _grove_enter
 
     # ---- Decorations ----
-    # The dead fire pit on the fold tile itself, the Sign painted under
-    # it. (The fold's gold pool relights the charred ring as the frame
-    # clarifies; the way down stands IN the fire.)
-    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16, "brazier"))
-    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16,
-                                 "yellow_sign"))
-    # Effigy circle around the fire -- six small chairs/effigies on
-    # the charred ring. Each represents a local the priest was working
-    # against.
-    effigy_ring = [
-        (11, 6), (15, 6), (11, 10), (15, 10), (10, 8), (17, 8),
+    # The dead fire on the fold tile, the Sign painted under it. (The fold's
+    # gold pool relights the charred ground as the frame clarifies; the way
+    # down stands IN the fire.)
+    sc.add_decoration(Decoration(15 * TILE + 16, 9 * TILE + 16, "brazier"))
+    sc.add_decoration(Decoration(15 * TILE + 16, 9 * TILE + 16, "yellow_sign"))
+    # The congregation's EFFIGY CRESCENT: small chairs/effigies drawn up in
+    # an arc on the hollow's west, all opening toward the fire and the dug
+    # mouth beyond it -- a rank that knelt facing the water, not a tidy ring.
+    # Each stands for a local the cult was working against.
+    effigy_crescent = [
+        (13, 5), (11, 6), (10, 8), (10, 10), (11, 12), (12, 13),
     ]
-    for tx, ty in effigy_ring:
+    for tx, ty in effigy_crescent:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "small_chair"))
-    # THREE standing stones, organic and asymmetric (distinct seeds).
-    # The nailed-up faces moved from the old tree-wall board onto the
-    # north-west stone -- fixed to the rock, watching the fire.
-    sc.add_decoration(Decoration(9 * TILE + 16, 5 * TILE + 16,
+    # THREE standing stones, organic and asymmetric (distinct seeds),
+    # scattered through the hollow. The nailed-up faces are fixed to the
+    # north-west stone, turned toward the fire.
+    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16,
                                  "standing_stone", seed=11))
-    sc.add_decoration(Decoration(18 * TILE + 16, 12 * TILE + 16,
+    sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16,
                                  "standing_stone", seed=47))
-    sc.add_decoration(Decoration(7 * TILE + 16, 12 * TILE + 16,
+    sc.add_decoration(Decoration(9 * TILE + 16, 13 * TILE + 16,
                                  "standing_stone", seed=83))
-    sc.add_decoration(Decoration(9 * TILE + 16, 5 * TILE + 6,
+    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 6,
                                  "polaroid_wall"))
-    # One old stain on the approach, one mark off the ring -- kept sparse
-    # so the fire, the stones and the fold stay the focus.
-    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16,
+    # One old stain by the fire, one mark off the crescent -- kept sparse so
+    # the fire, the stones and the fold stay the focus.
+    sc.add_decoration(Decoration(12 * TILE + 16, 10 * TILE + 16,
                                  "bloodstain"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 12 * TILE + 16,
+    sc.add_decoration(Decoration(10 * TILE + 16, 12 * TILE + 16,
                                  "phantom_mark"))
-    # The DUG MOUTH (TODO #681): this clearing is the mouth of the cult's
-    # mine, and the way down stands in the fire. A timber shoring frame set
-    # behind the descent (north, the far side under the tilt) frames the pane
-    # like a mine adit, with spoil thrown up off the ring where they dug --
-    # so the descent reads as going DOWN into worked ground, not just a fire.
-    # Kept sparse so the fire, the stones and the fold stay the focus.
-    sc.add_decoration(Decoration(13 * TILE + 16, 5 * TILE + 16,
+    # THE DUG MOUTH ON THE RIVER: the way down is the mine mouth, and the dig
+    # FACED the water the diggers followed (NARRATIVE §2/§5). A timber shoring
+    # frame stands behind the descent (north, the far side under the tilt)
+    # framing the pane like an adit; the spoil they dug is hauled east in a
+    # line toward the bank, and the cart they hauled it in is left at the
+    # water's edge -- so the descent reads as worked ground running down to
+    # the river, not just a fire.
+    sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16,
                                  "shoring_frame"))
-    sc.add_decoration(Decoration(10 * TILE + 12, 6 * TILE + 16,
+    sc.add_decoration(Decoration(16 * TILE + 12, 8 * TILE + 16,
                                  "spoil_heap", seed=5))
-    sc.add_decoration(Decoration(16 * TILE + 20, 11 * TILE + 16,
+    sc.add_decoration(Decoration(18 * TILE + 20, 9 * TILE + 16,
                                  "spoil_heap", seed=9))
-    # The way they came: the night procession walked UP from the river to
-    # this fire (NARRATIVE §5, Toby's witness). Bootprints worn from the
-    # north bank down past the spoil to the dead fire -- staggered off the
-    # grid so the trail wanders like feet, not a ruled line.
-    for _fx, _fy in ((8, 4), (9, 5), (11, 6), (12, 7)):
+    sc.add_decoration(Decoration(18 * TILE + 16, 11 * TILE + 16,
+                                 "ore_cart", seed=3))
+    # The way they came: the night procession filed along the river to this
+    # fire (NARRATIVE §5, Toby's witness). Bootprints worn down the near bank
+    # to the dead fire -- staggered off the grid so the trail wanders.
+    for _fx, _fy in ((16, 5), (16, 7), (15, 8)):
         sc.add_decoration(Decoration(_fx * TILE + 14, _fy * TILE + 18,
                                      "mud_footprint"))
     # ---- No worker ----
