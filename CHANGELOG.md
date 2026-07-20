@@ -195,6 +195,17 @@
 
 ## Walls & interior geometry
 
+- **2026-07 -- #4c: Toby's closet got a curtain (the refuge, kept gentle).**
+  The kid's house was room + closet through an OPEN col-5 gap. Toby's house is
+  a SAFE_SCENE refuge, so the leaf is the gentlest in the set: a maroon
+  `curtain` (`add_inner_door(5, 3)`), a drape over a child's closet nook where
+  a plank door would read too institutional. Shut (its default), the opaque
+  drape keeps the closet the BLIND SPOT it is meant to be -- the corn dolls,
+  the phantom marks, and the crayon King stay hidden until the player draws it
+  back (the shut curtain blocks the sight cone; open passes). The col-5 wall is
+  N-S, so it hangs across an E-W doorway. No lighting concern (the refuge stays
+  flat-lit). Reachability holds (smoke [10/10]); VISION-verified four facings.
+
 - **2026-07 -- #4c: the sheriff's office records room got its door.** The
   office was already three spaces (main office / back RECORDS room / holding
   cell), but the main<->records divide was an OPEN gap in the col-9 partition

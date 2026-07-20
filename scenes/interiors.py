@@ -500,7 +500,7 @@ def build_toby_house():
         "WWWWWWWWWiWWWW",   # 0  i = the window Toby watches the corn line through
         "W....W.......W",   # 1  closet (cols 1-4) | the room (cols 6-12)
         "W....W.......W",   # 2
-        "W............W",   # 3  doorway gap in the partition (col 5)
+        "W............W",   # 3  curtain doorway in the partition (col 5)
         "W....W.......W",   # 4
         "WWWWWW.......W",   # 5  closet sealed off below
         "W........K...W",   # 6  K = Toby
@@ -513,6 +513,14 @@ def build_toby_house():
     sc.add_exit("J", "brimley", "from_toby_house")
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
+    # The closet doorway (#4c): a maroon CURTAIN across the col-5 partition gap
+    # (row 3), the gentlest leaf in the set -- this is the refuge (a SAFE_SCENE),
+    # and a drape over a child's closet nook fits a kid's room where a plank door
+    # would read too institutional. Drawn shut, it also keeps the closet the
+    # blind spot it is meant to be (the corn dolls, the phantom marks, and the
+    # crayon King hidden until the player draws it back). The col-5 wall is N-S,
+    # so it hangs across an E-W doorway.
+    sc.add_inner_door(5, 3, "curtain")
 
     pos = sc.consume_marker("K")
     if pos:
