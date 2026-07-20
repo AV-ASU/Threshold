@@ -275,38 +275,45 @@ class DecoHorrorMixin:
         pygame.draw.line(surf, (30, 4, 6), (x - 8, y + 8), (x + 10, y + 8), 1)
 
     def _draw_hanging_figure(self, surf, x, y):
-        """Vague humanoid silhouette suspended from a rope going off-
-        tile upward. Slumped, no facial detail, very small slow sway.
-        Used in the deep tree band of brimley and the cornfield's
-        far rows."""
-        sway = math.sin(self.t * 0.45 + self.seed) * 2.6
-        sx_ = int(sway)
-        # Long rope going up out of frame
-        pygame.draw.line(surf, (140, 110, 70),
-                         (x, y - 32), (x + sx_, y - 14), 1)
-        # Knot at neck
-        pygame.draw.circle(surf, (90, 60, 30), (x + sx_, y - 14), 2)
-        # Slumped head
-        pygame.draw.circle(surf, (20, 16, 22), (x + sx_, y - 10), 4)
-        # Body / robes (trapezoid hanging straight down)
-        pygame.draw.polygon(surf, (16, 12, 18), [
-            (x + sx_ - 5, y - 8), (x + sx_ + 5, y - 8),
-            (x + sx_ + 7, y + 12), (x + sx_ - 7, y + 12),
-        ])
-        pygame.draw.polygon(surf, (4, 2, 6), [
-            (x + sx_ - 5, y - 8), (x + sx_ + 5, y - 8),
-            (x + sx_ + 7, y + 12), (x + sx_ - 7, y + 12),
-        ], 1)
-        # Limp arms drooping at sides
-        pygame.draw.line(surf, (16, 12, 18),
-                         (x + sx_ - 5, y - 6), (x + sx_ - 7, y + 4), 2)
-        pygame.draw.line(surf, (16, 12, 18),
-                         (x + sx_ + 5, y - 6), (x + sx_ + 7, y + 4), 2)
-        # Limp feet
-        pygame.draw.line(surf, (8, 6, 10),
-                         (x + sx_ - 4, y + 12), (x + sx_ - 4, y + 14), 2)
-        pygame.draw.line(surf, (8, 6, 10),
-                         (x + sx_ + 4, y + 12), (x + sx_ + 4, y + 14), 2)
+        """A body hanged by the neck: a taut rope up out of frame, the head
+        LOLLED off the noose, limp arms held in, and feet DANGLING toes-down
+        clear of the ground. The whole form swings as a PENDULUM from the
+        fixed rope anchor above (the feet swing furthest), so it reads as
+        suspended, not standing (2026-07 redecoration-audit fix: the old
+        flaring-robe silhouette with planted feet read as a standing hooded
+        blob). No facial detail. A hung standee card under tilt (_STANDEE_HANG).
+        Used in the deep tree bands and the backwoods cabin."""
+        # Pendulum: the anchor above is FIXED; the swing grows toward the feet.
+        ang = math.sin(self.t * 0.5 + self.seed) * 0.09
+        sn, cs = math.sin(ang), math.cos(ang)
+        ax, ay = x, y - 40                       # fixed rope anchor, up out of frame
+
+        def P(d):                                # a point d px down the swing line
+            return (int(ax + sn * d), int(ay + cs * d))
+        neck = P(24); sh = P(31); waist = P(39); hip = P(44); knee = P(51); feet = P(57)
+        # the taut rope, a real length from the anchor down to the neck
+        pygame.draw.line(surf, (150, 120, 78), (ax, ay), neck, 2)
+        pygame.draw.circle(surf, (96, 66, 34), neck, 2)          # the noose knot
+        # head LOLLED to one side off the noose (dead weight, not upright)
+        hx, hy = neck[0] - 3, neck[1] + 4
+        pygame.draw.circle(surf, (22, 17, 22), (hx, hy), 4)
+        pygame.draw.circle(surf, (6, 4, 8), (hx, hy), 4, 1)
+        # torso: a LIMP column, heavy at the shoulders, TAPERING to the hips
+        # (not a robe flaring wider at the hem -- that was the standing read)
+        body = [(sh[0] - 5, sh[1]), (sh[0] + 5, sh[1]),
+                (hip[0] + 3, hip[1]), (hip[0] - 3, hip[1])]
+        pygame.draw.polygon(surf, (16, 12, 18), body)
+        pygame.draw.polygon(surf, (4, 2, 6), body, 1)
+        # limp arms hanging straight down, held IN against the body
+        pygame.draw.line(surf, (14, 10, 16), (sh[0] - 4, sh[1] + 1), (waist[0] - 3, waist[1]), 2)
+        pygame.draw.line(surf, (14, 10, 16), (sh[0] + 4, sh[1] + 1), (waist[0] + 3, waist[1]), 2)
+        # legs dangling together, feet lolled toes-DOWN and clear of the ground
+        pygame.draw.line(surf, (12, 9, 14), (hip[0] - 2, hip[1]), (knee[0] - 2, knee[1]), 2)
+        pygame.draw.line(surf, (12, 9, 14), (hip[0] + 2, hip[1]), (knee[0] + 2, knee[1]), 2)
+        pygame.draw.line(surf, (12, 9, 14), (knee[0] - 2, knee[1]), (feet[0] - 1, feet[1]), 2)
+        pygame.draw.line(surf, (12, 9, 14), (knee[0] + 2, knee[1]), (feet[0] + 1, feet[1]), 2)
+        pygame.draw.line(surf, (8, 6, 10), (feet[0] - 1, feet[1]), (feet[0] - 3, feet[1] + 3), 2)
+        pygame.draw.line(surf, (8, 6, 10), (feet[0] + 1, feet[1]), (feet[0] + 2, feet[1] + 3), 2)
 
     def _draw_claw_marks(self, surf, x, y):
         """Five parallel deep gouges torn diagonally across a wall.

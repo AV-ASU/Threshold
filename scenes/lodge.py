@@ -395,15 +395,20 @@ def build_lodge():
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
-    # THRESHOLD liminal dressing: the lodge common room reads
-    # wrong-empty. A wall of the vanished by the north wall of the
-    # living room (the same guests the cellar Ledger records), a meal
-    # abandoned mid-setting on the kitchen table, and a single chair
-    # knocked over in all that empty floor -- the one wrong detail in
-    # the void.
+    # THRESHOLD liminal dressing: the lodge common room reads wrong-empty. A
+    # WALL OF THE VANISHED clustered tight on the north wall above the reception
+    # desk -- the same guests the cellar Ledger records (a surface town-dread
+    # read, the community searching for people the fold won't give back; the
+    # same missing_flyer dressing kept in brimley + the lodge yard -- distinct
+    # from the underground Sorting-Hall version that was cut as a killer-cult
+    # tracking read). 2026-07 redecoration-audit fix: the three were interleaved
+    # among the trophy mounts; grouped now so they read as one wall, the buck /
+    # fish / portrait kept to their own stretches. Plus a meal abandoned
+    # mid-setting on the kitchen table, and a single chair knocked over in all
+    # that empty floor -- the one wrong detail in the void.
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
     sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 8, "place_setting"))
     sc.add_decoration(Decoration(13 * TILE + 16, 6 * TILE + 16, "overturned_chair"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "small_chair"))
@@ -453,10 +458,11 @@ def build_lodge():
                                  ang=math.pi / 2))
     sc.add_furniture("firewood", [(15, 8), (16, 8)], w=58, h=24)
     sc.add_furniture("antler_rack", [(16, 2)], w=22, h=46)
-    # A varnish-dark oil portrait hung among the missing flyers -- some
-    # founding Arcadia proprietor whose face has sunk into the murk.
-    # Nobody can say who it is anymore.
-    sc.add_decoration(Decoration(12 * TILE + 24, 0 * TILE + 22,
+    # A varnish-dark oil portrait on its own north-wall stretch (col 13, east
+    # of the flyer cluster now, so the trophies no longer interleave the wall
+    # of the vanished) -- some founding Arcadia proprietor whose face has sunk
+    # into the murk. Nobody can say who it is anymore.
+    sc.add_decoration(Decoration(13 * TILE + 8, 0 * TILE + 22,
                                  "oil_portrait", seed=2))
     # An empty birdcage by the east wall, door hanging open. The lodge
     # used to keep a canary for the guests.
@@ -619,10 +625,16 @@ def build_lodge_hall():
     # the doors -- the Arcadia's genteel dressing, gone to murk.
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22,
                                  "oil_portrait", seed=4))
-    sc.add_decoration(Decoration(21 * TILE + 4, 0 * TILE + 22, "sampler",
+    # The sampler on a clear north-wall stretch between doors (2026-07
+    # redecoration-audit fix: it was crammed into the far NE corner at col 21,
+    # jammed against the loft stairs and contradicting this comment's "between
+    # the doors"). Now in the col 12-14 bay, reading as a pair with the portrait.
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 22, "sampler",
                                  seed=7))
-    # A hall side table against the south wall with an unlit candle.
-    sc.add_furniture("nightstand", [(6, 4)], w=26, h=30)
+    # A hall side table against the south wall with an unlit candle. A proper
+    # console footprint (2026-07 audit: the old w26 h30 read as a cramped
+    # nightstand, too slight for a lodge hall).
+    sc.add_furniture("nightstand", [(6, 4)], w=36, h=26)
     sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "candle"))
     # Cobwebs fanning from the high corners; dust motes down the hall.
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
