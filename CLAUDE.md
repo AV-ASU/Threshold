@@ -14,6 +14,18 @@
 > project's non-negotiable first step; do it automatically, never wait to be
 > asked, and never announce you are "about to" instead of doing it.
 >
+> **The six docs are current-state only — history lives in
+> `CHANGELOG.md`, which is explicitly NOT part of this rule (2026-07
+> restructure).** Full-read-every-turn only stays affordable if there's
+> little to read. Each of the six states what IS true today, once, without
+> re-narrating how it got that way; the "2026-07 rework, superseded the
+> old X" story for any landed change belongs in `CHANGELOG.md` instead.
+> `CHANGELOG.md` is never required reading before answering — read it only
+> when you're chasing down *why* something is the way it is, or writing a
+> new entry for work you just landed. If a doc you're editing has drifted
+> back into narrating its own history inline, that's rot the same as a
+> stale fact: move the history out, leave the current state.
+>
 > **The six-doc canon.** This file (`CLAUDE.md`) is the project's entry
 > point and operating guide, and now the first of the six you read in full;
 > the other five named above are the rest of the canon:
@@ -24,7 +36,8 @@
 >   world rot, the fold, the tilted camera, audio, stealth, the Works level,
 >   and art direction.
 > - **`TODO.md`** — the live list of genuinely open work. Not a place for
->   lore.
+>   lore, and not a place for landed work either — once a ticket ships,
+>   its story moves to `CHANGELOG.md` and it's deleted from here outright.
 > - **`DIALOGUE.md`** — the dialogue & narrator bible: every word the player
 >   reads (spoken NPC/PI lines and narrator/world boxes), organized by WHO
 >   says what and WHAT causes what, plus the voice rules. **Its contract:
@@ -38,10 +51,18 @@
 >
 > These six files are the ENTIRE doc canon. The old per-topic docs
 > (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
-> audit files) were folded into them and deleted (2026-07), so every design
-> or story reference now lives in one of these six. When you change a canon
-> fact, change it in its ONE home and reconcile the others: a detail that is
-> true in one doc and stale in another is rot.
+> audit files) were folded into them and deleted (2026-07); their substance
+> is indexed in `CHANGELOG.md` under the section it landed in. When you
+> change a canon fact, change it in its ONE home and reconcile the others:
+> a detail that is true in one doc and stale in another is rot.
+>
+> **`README.md` is not canon, and is deliberately thin.** It's the public
+> front door (install/run/controls), kept short on purpose so there's
+> almost nothing in it to drift. It still falls under "docs are part of
+> the change" below — if your diff changes install steps, controls, the
+> save model, or the test command, update it in the same commit — but it
+> is never required reading before answering, and architecture detail
+> belongs in this file, not duplicated there.
 
 > **HARD RULE — no dashes in player-facing text.** Never use em-dashes (—),
 > en-dashes (–), or double-hyphen dashes (`--`) as punctuation in ANY text the
@@ -115,48 +136,47 @@ it renders the procedural sprites to a labelled PNG strip.
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
   - `systems/tableau_mixin.py` — the **close-up examine tableaux**
     (`_open_desk_tableau` / `_tableau_input` / `_draw_tableau`): a modal
-    close-up of a prop with a menu that mutates it live (take the gun off the
-    desk, read the case file), the world frozen while it is up. Art (the
-    procedural close-ups) lives in `ui/tableau.py`; the pilot is the bedroom
-    writing desk. The **face-across-a-table principal talks** ride the same
-    frame (2026-07, all six principal seats): `clerk_dialogue` /
-    `sheriff_dialogue` / `hettie_dialogue` / `preacher_dialogue` /
-    `toby_dialogue` / `_mara_voice` open the talk as a tableau (the
-    `_open_*_tableau`
-    openers + `open_conversation(..., tableau=True)`), the conversation's
+    close-up of a prop with a menu that mutates it live (take the gun off
+    the desk, read the case file), the world frozen while it is up. Art
+    (the procedural close-ups) lives in `ui/tableau.py`; the pilot is the
+    bedroom writing desk. The **face-across-a-table principal talks** ride
+    the same frame, all six seats: `clerk_dialogue` / `sheriff_dialogue` /
+    `hettie_dialogue` / `preacher_dialogue` / `toby_dialogue` /
+    `_mara_voice` each open their talk as a tableau (the `_open_*_tableau`
+    openers + `open_conversation(..., tableau=True)`); the conversation's
     beats render as the caption and its menu as the option panel
     (`_convo_tableau_input`), and the art reads save flags so the close-up
-    carries what the talk earned (Sable's photo/Invitation on the register;
-    Vane's pose reading his despair ledger, the given paper, the opened
-    cabinet; Hettie's door-glance idle, the tab leaving the spike, the
-    traded paper; Crane's hands folding or gripping the lectern on the press
-    fork; Toby's corn-line watch, the procession drawing, the brows the
-    promise levels). **MARA is the last seat and carries the REVEAL**
-    (2026-07): the calling-out confrontation opens with her masked and
-    hooded, one of the congregation, the caption LISTING her "One of them"
+    carries what the talk earned (Sable's photo/Invitation on the
+    register; Vane's pose reading his despair ledger, the given paper, the
+    opened cabinet; Hettie's door-glance idle, the tab leaving the spike,
+    the traded paper; Crane's hands folding or gripping the lectern on the
+    press fork; Toby's corn-line watch, the procession drawing, the brows
+    the promise levels). **Mara is the last seat and carries the REVEAL:**
+    the calling-out confrontation opens with her masked and hooded, one of
+    the congregation, the caption LISTING her "One of them"
     (`MARA_CONVO["name"]` is a callable), until the greet's `("do", ...)`
-    beat (`_mara_unmask`) pulls the carved mask off — the face from the
-    photograph, gone thin — and the listing turns to her name; her captions
-    page on Escape (the reveal can't be skipped), and the art reads
-    `mara_lucid` (raised bleeding palms) / `mara_named` (her fist on the
-    PI's coat, the rank stirring). The conversation engine grew `("do",
-    fn)` beats + callable `name` for it, and `load_scene_now` now drops a
+    beat (`_mara_unmask`) pulls the carved mask off (the face from the
+    photograph, gone thin) and the listing turns to her name; her
+    captions page on Escape (the reveal can't be skipped), and the art
+    reads `mara_lucid` (raised bleeding palms) / `mara_named` (her fist on
+    the PI's coat, the rank stirring). The conversation engine's `("do",
+    fn)` beats and callable `name` support this; `load_scene_now` drops a
     stale tableau alongside the convo. The chorus still floats its talk
-    (the `tests/flow.py`
-    §26 float guards ride Royce). **THE TALK rides the frame too** (the tone
-    inversion: `_cult_talk` → `_open_talk_tableau`, a scripted caption chain,
-    not a Conversation — the grip close-up, the one reach-for-the-revolver
-    choice, Escape pages instead of aborting). **THE PEDESTAL** (the Sign
-    Chamber altar, `_open_altar_tableau`) is the OBJECT close-up of His face
-    on the stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN
-    (BREAK → `_play_ending("rite_broken")`), Escape backs out. All #2b
-    seats ship. **The #2b sound pass (2026-07)** gave every close-up its
-    soundscape: `lean_in` on open (the world holding its breath) + a
-    per-seat ROOM TONE looped while it is up (`_TABLEAU_TONES` here,
-    `Audio.room_tone`; the world-freeze had left the frames in dead
-    air). Mara's seat stays silent by design (`_mara_voice`
-    force-silences the room). See `DESIGN.md` §11. Player-facing text is
-    in `DIALOGUE.md` Part B.
+    (not a tableau; `tests/flow.py` §26 float guards ride Royce). **THE
+    TALK rides the frame too** (the tone inversion: `_cult_talk` →
+    `_open_talk_tableau`, a scripted caption chain, not a Conversation —
+    the grip close-up, the one reach-for-the-revolver choice, Escape
+    pages instead of aborting). **THE PEDESTAL** (the Sign Chamber altar,
+    `_open_altar_tableau`) is the OBJECT close-up of His face on the
+    stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN (BREAK →
+    `_play_ending("rite_broken")`), Escape backs out. Every close-up
+    carries a soundscape: `lean_in` on open (the world holding its
+    breath) + a per-seat ROOM TONE looped while it is up (`_TABLEAU_TONES`
+    here, `Audio.room_tone`). Mara's seat stays silent by design
+    (`_mara_voice` force-silences the room). How this landed (pilot →
+    the six seats → the Talk → the pedestal → the sound pass) is in
+    `CHANGELOG.md`. See `DESIGN.md` §11. Player-facing text is in
+    `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
@@ -888,16 +908,30 @@ it renders the procedural sprites to a labelled PNG strip.
   touched is part of the SAME task and belongs in the SAME commit; it ranks
   above declaring the work done. NEVER wait to be asked. Match the doc to what
   moved: **`TODO.md`** when a ticket lands, changes scope, or a new task
-  surfaces (mark it, do not leave it stale); **`NARRATIVE.md`** when a canon
-  fact, invariant, or player-facing story detail changes; **`DESIGN.md`** when
-  a system, a mechanic, or its code-map changes; **`DIALOGUE.md`** when ANY
-  player-facing spoken line or narrator box changes (see the next bullet);
-  **`VISION.md`** when the see-it-don't-guess rule or the capture workflow
-  changes; **`CLAUDE.md`** when the layout, a convention, or a workflow
-  changes. One fact, one home, then reconcile the siblings (a detail true in
-  one doc and stale in another is rot). A change is not "done" until its docs
-  match it, so before you commit, ask which of the six canon docs your diff
-  just made stale and fix them in the same breath.
+  surfaces — and when it LANDS, don't just mark it: write what it was and why
+  to `CHANGELOG.md`, then delete it from `TODO.md` outright (no "done"
+  archive there, that's what turned it into 1400+ lines before the 2026-07
+  restructure); **`NARRATIVE.md`** when a canon fact, invariant, or
+  player-facing story detail changes; **`DESIGN.md`** when a system, a
+  mechanic, or its code-map changes (state the CURRENT system; if you're
+  narrating how it used to work, that paragraph belongs in `CHANGELOG.md`
+  instead); **`DIALOGUE.md`** when ANY player-facing spoken line or narrator
+  box changes (see the next bullet); **`VISION.md`** when the
+  see-it-don't-guess rule or the capture workflow changes; **`CLAUDE.md`**
+  when the layout, a convention, or a workflow changes; **`README.md`** when
+  install steps, controls, the save model, or the test command change (it's
+  not canon, but it's still part of this contract — see HARD RULE #0). One
+  fact, one home, then reconcile the siblings (a detail true in one doc and
+  stale in another is rot). A change is not "done" until its docs match it,
+  so before you commit, ask which of the six canon docs (plus `README.md`)
+  your diff just made stale and fix them in the same breath.
+- **CONSOLIDATE RULE LISTS, DON'T JUST APPEND.** The PLAYTEST ERROR CLASSES
+  and SCENE-DRESSING PROCESS lists below exist because specific failures
+  happened; that's healthy. But a list that only ever grows by appending a
+  new numbered item eventually stops being readable, and each new failure
+  might actually be an instance of a class already on the list. Before
+  minting a new rule, check whether an existing one should just be worded
+  wider to cover it. Prefer widening over appending.
 - **DIALOGUE AND ITS DOC ARE ONE (non-negotiable, `DIALOGUE.md` contract).**
   Every word the player reads lives in two homes: the code that ships it and
   `DIALOGUE.md`. They are the same text. If your diff changes, adds, or cuts
@@ -914,7 +948,10 @@ it renders the procedural sprites to a labelled PNG strip.
   BEFORE `git commit`/`push`. A commit was pushed twice this project with a
   `NameError` because edits were batched and not re-verified. For
   rendering/refactor work also run the byte-identity gate
-  (`tools/capture_world.py --tag before/after`, then `--diff`).
+  (`tools/capture_world.py --tag before/after`, then `--diff`). CI also runs
+  `tools/check_canon_keys.py` (a cheap tripwire verifying the load-bearing
+  item/scene keys named in `NARRATIVE.md`'s canon invariants still exist in
+  the source) — run it locally too if you renamed or cut an item/scene key.
 - **One edit at a time on a shifting file.** Don't batch many `Edit`s against
   the same file in one turn; an early edit moves line context and later ones
   silently mis-apply. For multi-site mechanical changes, write a small Python
