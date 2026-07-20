@@ -427,6 +427,16 @@
   §7 step 5, DESIGN §5/§7, and CLAUDE.md updated (the grove left the
   standing-rift-pane family). Full gate green; VISION-verified (four facings,
   the shaft close-up, the dark graded view).
+  - **Follow-up (maintainer feedback: "the hanging bodies, and I don't see
+    the entrance"):** the old crop-circle dressing that survived the rework
+    read as macabre standing/hanging figures and fought the mine-mouth
+    identity, and the shaft was a thin flat black bar. Fix: cut the three
+    `standing_stone` monoliths + the `polaroid_wall` nailed-faces (the
+    "bodies"), and enlarge the shaft to a 2x2 black void pit with a timber
+    headframe over its lip and the cut rope hanging in -- it reads as an
+    actual entrance now, not a stain. The empty effigy CHAIRS (not figures)
+    stay, kneeling toward the shaft; the haul gear moved clear of the bigger
+    pit. VISION-reverified across four facings + the dark view; gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

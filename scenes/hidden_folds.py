@@ -29,14 +29,15 @@ def build_effigy_grove():
     banks auto-reeded), and the clearing is an asymmetric lobed hollow
     worked into the corn on its near bank. The diggers followed the water
     DOWN to this ground and the night procession filed along it (NARRATIVE
-    §2/§5), so the DUG MOUTH faces the water: the dead fire east of centre,
-    a shoring frame behind the descent, the spoil hauled in a line to the
-    bank, the ore cart left at the water's edge. The congregation's
-    effigy-dolls kneel in a CRESCENT facing the fire, THREE weathered
-    standing stones (organic, seeded -- siblings, never copies) scattered
-    through the hollow with the nailed-up faces on one -- the work without
-    the worker (the closing rite claimed the town at once, NARRATIVE §4 /
-    DESIGN.md §1). The corn is still the border on every dry side.
+    §2/§5), so the DUG MOUTH faces the water: the SHAFT is a 2x2 black pit
+    east of centre, a timber headframe over its far lip and the haul rope
+    hanging cut; the ore carts, rail and heaped spoil are the abandoned
+    haul head, hauled up while the rope still held. The congregation's
+    empty effigy chairs stand in a CRESCENT facing the shaft -- the work
+    without the worker (the closing rite claimed the town at once, NARRATIVE
+    §4 / DESIGN.md §1). The corn is still the border on every dry side.
+    (The old crop-circle dressing -- the dead fire, the standing stones,
+    the nailed-up faces -- was cut with the mine-mouth rework, 2026-07.)
 
     THE WAY DOWN is the mine SHAFT itself (2026-07 rework: no rift-portal,
     no evidence re-gate -- the way here was already earned upstream, §3/§4).
@@ -79,9 +80,10 @@ def build_effigy_grove():
                 + 0.06 * math.sin(5.0 * ang - 1.1))
         return (dx * dx + dy * dy) <= lobe
 
-    # THE SHAFT: a short run of black void floor -- the dug drop into the
-    # dark, the way down (there is no fire here, so no charred ground).
-    _shaft_tiles = {(15, 9), (15, 10)}
+    # THE SHAFT: a 2x2 block of black void floor -- the dug drop into the
+    # dark, the way down (there is no fire here, so no charred ground). A big
+    # dark hole so the mine mouth reads as an ENTRANCE, not a stain.
+    _shaft_tiles = {(15, 9), (16, 9), (15, 10), (16, 10)}
 
     floor_rows = []
     for ty in range(H):
@@ -105,10 +107,6 @@ def build_effigy_grove():
             else:
                 row.append("C")            # standing corn -- the border
         objects_l.append(row)
-    # Three ORGANIC standing stones scattered through the hollow -- solid,
-    # see-over footprints ('x' object) so they block walking but never sight.
-    for sx, sy in ((8, 5), (6, 9), (9, 13)):
-        objects_l[sy][sx] = "x"
     # THE WAY DOWN is the mine SHAFT itself now (a decoration + the E-press
     # rite at (15, 9)), not a rift-pane exit -- so there is no 'O' tile in
     # the grove. The descent is the door-dream; _grove_update carries the PI
@@ -244,71 +242,61 @@ def build_effigy_grove():
     sc.on_enter_fn = _grove_enter
 
     # ---- Decorations ----
-    # THE SHAFT MOUTH (the way down): the mine's dug shaft, black to the
-    # bottom (the '@' void floor above). A timber headframe shores its far
-    # lip and the haul rope hangs into it CUT (NARRATIVE §7) -- a frayed
-    # body's length, then dark, no bottom in the light -- and the Sign is
-    # daubed beside it. You go down by the rite (the door-dream), never a
-    # climb; E here is the descent.
+    # THE SHAFT MOUTH (the way down): a 2x2 black pit dug into the ground.
+    # A timber headframe stands over its far lip, and the haul rope hangs
+    # from it into the dark, CUT (NARRATIVE §7) -- a frayed body's length,
+    # then nothing, no bottom in the light. The Sign is daubed at the near
+    # lip. You go down by the rite (the door-dream), never a climb; E here
+    # is the descent.
     sc.add_decoration(Decoration(15 * TILE + 16, 8 * TILE + 16,
                                  "shoring_frame"))
-    sc.add_decoration(Decoration(15 * TILE + 22, 9 * TILE + 2, "rope"))
-    sc.add_decoration(Decoration(13 * TILE + 20, 10 * TILE + 20,
+    sc.add_decoration(Decoration(16 * TILE + 16, 8 * TILE + 16,
+                                 "shoring_frame"))
+    sc.add_decoration(Decoration(15 * TILE + 26, 8 * TILE + 26, "rope"))
+    sc.add_decoration(Decoration(14 * TILE + 12, 10 * TILE + 22,
                                  "yellow_sign"))
-    # The congregation's EFFIGY CRESCENT: small chairs/effigies drawn up in
-    # an arc on the hollow's west, all opening toward the SHAFT MOUTH they
-    # knelt facing -- a rank, not a tidy ring. Each stands for a local the
-    # cult was working against.
+    # The congregation's EFFIGY CRESCENT: empty chairs drawn up in an arc on
+    # the hollow's west, opening toward the shaft they knelt facing -- a
+    # rank, not a tidy ring. Each stands for a local the cult worked against.
     effigy_crescent = [
-        (13, 5), (11, 6), (10, 8), (10, 10), (11, 12), (12, 13),
+        (12, 5), (10, 6), (9, 8), (9, 11), (11, 13),
     ]
     for tx, ty in effigy_crescent:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "small_chair"))
-    # THREE standing stones, organic and asymmetric (distinct seeds),
-    # scattered through the hollow. The nailed-up faces are fixed to the
-    # north-west stone, turned toward the shaft.
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16,
-                                 "standing_stone", seed=11))
-    sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16,
-                                 "standing_stone", seed=47))
-    sc.add_decoration(Decoration(9 * TILE + 16, 13 * TILE + 16,
-                                 "standing_stone", seed=83))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 6,
-                                 "polaroid_wall"))
-    # One old stain, one mark off the crescent -- kept sparse so the shaft,
-    # the stones and the effigies stay the focus.
+    # One old stain, one mark off the crescent -- kept sparse so the shaft
+    # and the haul gear stay the focus.
     sc.add_decoration(Decoration(12 * TILE + 16, 10 * TILE + 16,
                                  "bloodstain"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 12 * TILE + 16,
+    sc.add_decoration(Decoration(9 * TILE + 16, 12 * TILE + 16,
                                  "phantom_mark"))
     # THE HAUL HEAD: a working mine mouth. The rail the ore carts ran on
     # leads from the shaft out toward the spoil dump and the water the
     # diggers followed (NARRATIVE §2/§5) -- one cart still on the line, one
     # tipped at its end; the dug spoil is heaped where they threw it, hauled
     # up while the rope still held.
-    for _rx, _ry in ((16, 9), (17, 9), (18, 9)):
+    for _rx, _ry in ((17, 10), (18, 11)):
         sc.add_decoration(Decoration(_rx * TILE + 16, _ry * TILE + 16,
                                      "mine_rail"))
-    sc.add_decoration(Decoration(17 * TILE + 16, 9 * TILE + 10,
+    sc.add_decoration(Decoration(17 * TILE + 16, 10 * TILE + 8,
                                  "ore_cart", seed=3))
-    sc.add_decoration(Decoration(18 * TILE + 20, 11 * TILE + 16,
+    sc.add_decoration(Decoration(18 * TILE + 20, 12 * TILE + 16,
                                  "ore_cart", seed=7))
-    sc.add_decoration(Decoration(16 * TILE + 12, 7 * TILE + 16,
+    sc.add_decoration(Decoration(17 * TILE + 12, 8 * TILE + 16,
                                  "spoil_heap", seed=5))
-    sc.add_decoration(Decoration(18 * TILE + 16, 8 * TILE + 16,
+    sc.add_decoration(Decoration(18 * TILE + 16, 9 * TILE + 16,
                                  "spoil_heap", seed=9))
     # The way they came: the night procession filed along the river to the
     # shaft (NARRATIVE §5, Toby's witness). Bootprints worn down the near
     # bank -- staggered off the grid so the trail wanders.
-    for _fx, _fy in ((16, 5), (16, 7), (16, 8)):
+    for _fx, _fy in ((15, 6), (15, 7), (14, 8)):
         sc.add_decoration(Decoration(_fx * TILE + 14, _fy * TILE + 18,
                                      "mud_footprint"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE §4 / DESIGN.md §1), so individual cursing -- and the figure
     # who'd do it -- is gone. The grove is left as the work without the
-    # worker: the shaft, the effigy rank, the nailed-up faces, the haul gear
-    # abandoned mid-work, all tended by no one you'll ever see.
+    # worker: the shaft, the empty effigy chairs, the haul gear abandoned
+    # mid-work, all tended by no one you'll ever see.
     sc.hide_spots = []
     return sc
