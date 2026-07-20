@@ -186,117 +186,127 @@ def old_man_house_on_enter(game, scene):
 
 
 def build_sheriff_office():
-    """The Sheriff's office. A main room where Vane watches from his desk, and
-    a partitioned back RECORDS room (the case board he can't file on, the dead
-    payphone, his cartridges) reached through an interior doorway -- the
-    dividing wall makes the back room an indoor blind spot."""
+    """The Sheriff's office (#4c redesign, 2026-07): FOUR rooms, not a box + a
+    back room. A cross of partition walls quarters the interior into a public
+    FRONT (the entry off the field), Vane's OFFICE (his desk + cot, behind a
+    see-over front counter), the back RECORDS room (the case board he can't
+    file on, the payphone, his ammo cabinet, Mara's booking slip), and a
+    BOOKING room with the barred holding CELL. Connected by inner doors in
+    varied walls: a see-over `half` counter (front<->office), `plank` leaves
+    (office<->records, records<->booking), and the cell's `bars` gate."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWiiWWWWWWWWW",   # 0   ii = cold north windows behind the desk
-        "W........W.....W",   # 1   main office (cols 1-8) | records (cols 10-14)
-        "W........W.....W",   # 2
-        "W..............W",   # 3   plank doorway in the partition (col 9)
-        "W....Y...W.....W",   # 4   Y = Sheriff, at his desk
-        "W........W.....W",   # 5
-        "W........WWWWWWW",   # 6   records room sealed off below
-        "W..............W",   # 7   the office opens out under the records room
-        "W..............W",   # 8
-        "W...........WW.W",   # 9   holding-cell north wall; bars gate at col 14
-        "W...........W..W",   # 10  the holding cell (cols 13-14)
+        "WWWiiWWWWWWWWWWW",   # 0  ii = cold north windows behind Vane's desk
+        "W.....W........W",   # 1  OFFICE (cols 1-5) | RECORDS (cols 7-14)
+        "W.....W........W",   # 2
+        "W..............W",   # 3  (6,3) office<->records doorway
+        "W..Y..W........W",   # 4  Y = Sheriff Vane, at his desk
+        "W.....W........W",   # 5
+        "WWW.WWWWWW.WWWWW",   # 6  cross wall; (3,6) counter, (10,6) records door
+        "W.....W........W",   # 7  FRONT (cols 1-5) | BOOKING (cols 7-14)
+        "W.....W.....W.WW",   # 8  cell north wall; bars gate at (13,8)
+        "W.....W.....W..W",   # 9  the holding cell (cols 13-14, rows 9-10)
+        "W.....W.....W..W",   # 10
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
     sc = Scene("sheriff_office", floor, objects, music="home")
-    # The Sheriff's office stands on the Brimley bank now; its door
-    # opens back onto the field.
+    # The Sheriff's office stands on the Brimley bank; its door opens back onto
+    # the field.
     sc.add_exit("y", "brimley", "from_sheriff_office")
-    sc.set_spawn("default", 4, 8)
+    sc.set_spawn("default", 3, 8)            # in the public front
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
-    # The holding cell (SE corner, cols 13-14 row 10): a barred gate on its
-    # north wall, the sliver of cell in Vane's tableau (draw_vane_tableau). It
-    # sits empty -- Mara was "released at dawn" (her booking slip is the
-    # evidence). The `bars` leaf blocks the body but you see through it into the
-    # empty cell (tableau-parity pass).
-    sc.add_inner_door(14, 9, "bars")
-    # The records-room doorway (#4c): a solid plank leaf on the col-9 partition
-    # gap (row 3), so the back room where Vane keeps the case board, the
-    # payphone, and his cache reads as a room you step into, not an open bay.
-    # Shut by default, it breaks a pursuer's line of sight into the records room
-    # (the indoor blind spot). The col-9 wall is N-S, so this leaf swings E-W --
-    # a second orientation against the cell's north-wall bars gate (swings N-S).
-    sc.add_inner_door(9, 3, "plank")
+    # Four rooms, connected by inner doors in VARIED walls (error class 8):
+    #  - the FRONT COUNTER: a see-over `half` leaf on the row-6 wall (swings
+    #    N-S), so the public front and Vane's office read across it.
+    #  - the RECORDS door: a `plank` leaf on the col-6 wall (swings E-W).
+    #  - the BOOKING door: a `plank` leaf on the row-6 wall (swings N-S).
+    #  - the CELL: a see-through `bars` gate (swings N-S) into the barred
+    #    holding cell (empty -- Mara was "released at dawn"). All but the
+    #    counter start shut, and a shut leaf breaks a pursuer's line of sight,
+    #    so the records room and the booking cell are real indoor blind spots.
+    sc.add_inner_door(6, 3, "plank")         # office  <-> records (swings E-W)
+    sc.add_inner_door(3, 6, "half")          # front   <-> office  (counter, N-S)
+    sc.add_inner_door(10, 6, "plank")        # records <-> booking (swings N-S)
+    sc.add_inner_door(13, 8, "bars")         # booking -> holding cell (swings N-S)
 
     pos = sc.consume_marker("Y")
     if pos:
         tx, ty = pos
-        # The Sheriff sits at his desk. He doesn't patrol -- the lesser
-        # cult walks the roads. He just watches the player from the
-        # chair. The first read is friendly; later visits dim him.
+        # Vane sits at his desk behind the counter. He doesn't patrol -- the
+        # cult walks the roads. He watches the player over the counter.
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
                        "Sheriff", "sheriff",
                        voice="blip_gruff", portrait="sheriff",
                        dialogue_fn=sheriff_dialogue, movement="watch"))
 
-    # Sized darkwood furniture: a long shelf, the desk (radio on it), a 2x2
-    # bed in the corner, a chair, and a filing table in the back records room.
-    sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=6)
-    sc.add_furniture("table", [(4, 5), (5, 5)], w=54, h=36)
-    sc.add_furniture("chair", [(6, 4)], w=22, h=28)
-    sc.add_furniture("bed", [(1, 8), (2, 8), (1, 9), (2, 9)], w=54, h=54)
+    # ---- OFFICE (NW): Vane's working room ----
+    # His desk (radio on it), the cot + washstand tucked along the west wall
+    # (he lives at his desk now), and the antler coat-rack.
+    sc.add_furniture("table", [(3, 3), (4, 3)], w=54, h=36)   # Vane's desk
+    sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=56)     # his cot, W wall
     sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
-    sc.add_furniture("table", [(11, 4), (12, 4)], w=54, h=36)
-    # The tall arms cabinet in the back records room -- the cache Vane unlocks
-    # (draw_vane_tableau's gun cabinet with the hasp + padlock; the shells drop
-    # from drop_ammo_cache when he hands it over). NE corner, against the wall.
-    sc.add_furniture("gun_cabinet", [(14, 1)], w=28, h=54)
-    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22, "candle"))
-    # Sheriff's office in hunting country: a mounted buck + trophy
-    # walleye on the north wall (replacing the old banner), an antler
-    # coat-rack against the west wall, and a cobweb in the records corner.
-    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 22, "buck_head",
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 8, "radio"))
+    sc.add_decoration(Decoration(1 * TILE + 20, 3 * TILE + 8, "washstand"))
+    # Genset-electric main light + a backup candle Vane keeps oiled.
+    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 8, "candle"))
+    # Hunting-country office: a mounted buck over the desk (N wall), the
+    # calendar of months he stopped reporting (stopped JAN 15), a cobweb.
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 22, "calendar"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
+
+    # ---- FRONT (SW): the public entry, off the field ----
+    # A waiting bench (two chairs) and a side table, a former lawman's portrait
+    # on the wall, a lantern by the door, and its own genset light.
+    sc.add_furniture("chair", [(1, 8)], w=22, h=28)
+    sc.add_furniture("chair", [(1, 9)], w=22, h=28)
+    sc.add_furniture("table", [(2, 10)], w=30, h=30)
+    sc.add_decoration(Decoration(3 * TILE + 16, 6 * TILE + 30, "oil_portrait",
+                                 seed=9))
+    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 10 * TILE + 24, "lantern"))
+
+    # ---- RECORDS (NE): the back file room ----
+    # The case board of the disappeared Vane can't file on (polaroid wall), the
+    # Blaine girl's MISSING flyer beside it, the dead payphone, a varnish-dark
+    # portrait of the lawman before him, and the tall arms cabinet (his cache).
+    sc.add_furniture("gun_cabinet", [(14, 1)], w=28, h=54)
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 24, "missing_flyer"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 22, "oil_portrait",
+                                 seed=4))
+    sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # AM radio on the desk, a lantern by the door.
-    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
-    # Genset-electric main light on the office's north wall over the desk (the
-    # lantern + candle are the backup Vane keeps oiled). (2026-07 interior pass.)
-    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
-    # A candle on the records-room filing table (2026-07 audit fix: every
-    # light lived in the main room, so the case board and the booking slip
-    # sat unreadable in the dark in the real player view). Vane works his
-    # files by candlelight; seat_tabletop_props stands it on the table.
-    sc.add_decoration(Decoration(12 * TILE + 8, 4 * TILE + 8, "candle"))
-    # Sheriff Vane's office made specific to the man, with the worst of it
-    # tucked into the back room the public never sees: the case board of the
-    # disappeared he can't file on (polaroid wall), the Blaine girl's MISSING
-    # flyer beside it, the payphone he still lifts to a dead line. A calendar
-    # of months he stopped reporting hangs by the front desk.
-    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
-                                 "polaroid_wall"))
-    sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 24,
-                                 "missing_flyer"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
-    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
-    # A varnish-dark portrait of a lawman who held the office before
-    # Vane, and the washstand by his cot -- he lives at his desk now.
-    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22,
-                                 "oil_portrait", seed=4))
-    sc.add_decoration(Decoration(3 * TILE + 20, 8 * TILE + 8, "washstand"))
-    for mx, my in [(4, 7), (6, 8), (3, 9)]:
-        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
-                                     "mote"))
-    # Mara's booking slip, in the back records room's filing table (surface
-    # a surface trail beat; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not
-    # on Vane -- reachable whether he is alive, dead, or never spoken to
-    # (world-persistent; killing him can never soft-lock the descent).
+    # Genset light for the file room.
+    sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # Mara's booking slip, in the records-room filing table (a surface trail
+    # beat; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not on Vane --
+    # reachable whether he is alive, dead, or never spoken to (world-persistent;
+    # killing him can never soft-lock the descent). A candle lights the table.
+    sc.add_furniture("table", [(11, 4), (12, 4)], w=54, h=36)
+    sc.add_decoration(Decoration(8 * TILE + 8, 4 * TILE + 8, "candle"))
     sc._record_pos = (11 * TILE + 16, 4 * TILE + 16)
     sc.add_decoration(Decoration(11 * TILE + 16, 4 * TILE + 6, "papers",
                                  seed=41))
     sc.add_interactable(sc._record_pos[0], sc._record_pos[1], 40)
+
+    # ---- BOOKING (SE) + the holding CELL ----
+    # A booking desk, and the barred cell (empty, a faint old stain) behind its
+    # see-through gate -- the sliver of cell in Vane's tableau
+    # (draw_vane_tableau). Its own genset light.
+    sc.add_furniture("table", [(8, 8), (9, 8)], w=54, h=36)   # booking desk
+    sc.add_furniture("chair", [(8, 9)], w=22, h=28)
+    sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(13 * TILE + 20, 10 * TILE + 24, "bloodstain",
+                                 scale=1.4))
+    sc.add_decoration(Decoration(14 * TILE + 26, 8 * TILE + 6, "cobweb",
+                                 ang=math.pi))
+
+    for mx, my in [(4, 2), (9, 3), (3, 9), (10, 9)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
     def _office_interact(game):
         rx, ry = sc._record_pos
@@ -320,9 +330,9 @@ def build_sheriff_office():
         # The lawman's cartridges -- the best ammo source in town (one-time),
         # kept in the back records room. EARNED, not free (DESIGN.md §2): the
         # drop waits until Vane hands over the cabinet (the trust-gated "cache"
-        # exchange sets vane_gave_cache and also drops it live). Neglect him
-        # and the town's one weapon cache stays locked -- the gun is never
-        # required, so this soft-locks nothing.
+        # exchange sets vane_gave_cache and also drops it live). Neglect him and
+        # the town's one weapon cache stays locked -- the gun is never required,
+        # so this soft-locks nothing.
         if game.save.flag("vane_gave_cache"):
             from .base import drop_ammo_cache
             drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")

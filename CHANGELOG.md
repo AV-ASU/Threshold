@@ -231,17 +231,23 @@
   N-S, so it hangs across an E-W doorway. No lighting concern (the refuge stays
   flat-lit). Reachability holds (smoke [10/10]); VISION-verified four facings.
 
-- **2026-07 -- #4c: the sheriff's office records room got its door.** The
-  office was already three spaces (main office / back RECORDS room / holding
-  cell), but the main<->records divide was an OPEN gap in the col-9 partition
-  -- no door mechanic. Added a `plank` inner door on that gap
-  (`add_inner_door(9, 3)`): shut, it blocks the sight cone, so the back room
-  (the case board Vane can't file on, the payphone, his ammo cabinet) is a real
-  shut-able indoor blind spot a pursuer's line of sight breaks on. The col-9
-  wall is N-S, so the leaf swings E-W -- a second orientation against the
-  holding cell's north-wall `bars` gate (swings N-S). The records room already
-  carries its own candle, so the divide needs no new light. Reachability holds
-  through the door (smoke [10/10]); VISION-verified four facings + dark.
+- **2026-07 -- #4c: the sheriff's office rebuilt into FOUR rooms.** First pass
+  just doored the existing records gap, but the office still read as "two rooms"
+  (maintainer). Redesigned the whole interior on a cross of partition walls into
+  four legible spaces: a public FRONT (the entry off the field), Vane's OFFICE
+  (his desk + cot, behind a see-over front counter), the back RECORDS room (the
+  case board, the payphone, his ammo cabinet, Mara's booking slip), and a
+  BOOKING room with the barred holding CELL. Connected by inner doors in VARIED
+  walls + kinds: a see-over **`half` counter** (front<->office, the FIRST
+  shipping use of that kind), `plank` leaves (office<->records swings E-W,
+  records<->booking swings N-S), and the cell's `bars` gate. Every room carries
+  its own genset `wall_lamp` + a candle (no dark box). Load-bearing wiring
+  preserved: `maras_record` (the booking slip) stays in the records filing table
+  and the ammo cache still drops there (world-persistent, no soft-lock), Vane
+  still watches from his desk. Grid validated (no diagonal-only joins);
+  reachability holds through the door chain (smoke [10/10] flood-fill); LOS
+  correct (opaque leaves block shut, the counter + bars see through);
+  VISION-verified four facings + real-view dark + a counter close-up.
 
 - **2026-07 -- #4c: the abandoned farmhouse became a four-room warren.** The
   farmhouse was a "box + one side room"; a house warrants real rooms, and
