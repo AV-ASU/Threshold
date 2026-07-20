@@ -465,6 +465,22 @@
 
 ## Brimley geography
 
+- **2026-07 -- #4 outdoor-dread composition, first scene.** The outdoor zone
+  is the game's weakest dread (long open sightlines read as a field). Per the
+  ticket's "name ONE scene and ONE composition" rule, cornfield_path (the
+  60-tile dead-straight E-W road that wraps on both axes) got a corn THROAT:
+  standing corn juts from both shoulders at cols 22-24, pinching the road so
+  the far half (and the maze/brimley branch at col 30) hides behind the stalks
+  until you walk through the gap. Draw + placement only -- the walking lane
+  (PATH_ROW) stays open, so collision/nav/reachability are unchanged (smoke
+  flood-fill green); the corn is solid cover on the shoulders. Because the
+  scene wraps on x, walking the loop returns you past the same throat (the
+  "handed back / the town rearranges" uncanny) with no sim change.
+  VISION-verified (the pinch reads, the lane stays clear, no error draws; a
+  first `scarecrow` landmark attempt was pulled when it rendered as a magenta
+  placeholder -- no such draw kind exists). The rest of #4 (more scenes, a fog
+  volume, landmark repetition) stays open.
+
 - **2026-07 — Brimley rebuilt from 100x100 to 60x60 (`TODO.md` #18), a
   full reshape, not a scale-down.** The river moved to a central spine
   with a bridge crossing, all seven buildings redistributed around it,
