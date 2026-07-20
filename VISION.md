@@ -73,9 +73,22 @@ reveal each wall face, not just dead-on.
   render refactors. It only covers a handful of scenes.
 - **Any scene, any facing** (ad-hoc): boot the game headless
   (`SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy`), `load_scene_now(key)`, set
-  `player.x/y` + `player.facing` + `look.aim/head` to the facing, snap the
-  camera (`_update_camera(snap=True)`), draw to an offscreen `Surface`
-  (`draw_world`), and `pygame.image.save`. For CLEAN inspection stub
+  `player.x/y` + `player.facing` + `look.body`/`look.aim` + `look.cam_yaw` to
+  the facing, **then set `game.camera.yaw = game.look.cam_yaw` yourself**, snap
+  the camera position (`_update_camera(snap=True)`), draw to an offscreen
+  `Surface` (`draw_world`), and `pygame.image.save`.
+  **CRUCIAL, and learned the hard way (2026-07): `_update_camera` sets the
+  camera POSITION only, NEVER its yaw.** The yaw is copied from `look.cam_yaw`
+  in `_update_look` (the live input loop), which the ad-hoc render path does
+  not run, so if you skip the explicit `camera.yaw = ...` the view stays at
+  **yaw 0 (the NORTH facing) for every "facing" you set**, and a four-facing
+  sheet is just north four times. This exact omission shipped a whole session
+  of "verified four facings" that were all north, hiding an E/W-broken prop.
+  For a facing heading `h` (N `= -pi/2`, E `= 0`, S `= pi/2`, W `= pi`):
+  `look.body = look.aim = h`, and `camera.yaw = look.cam_yaw = h + pi/2`.
+  Confirm the fix works by eyeballing that the room actually ROTATES between
+  the four panels (props move to a different corner); if all four look
+  identical, the yaw never took. For CLEAN inspection stub
   `rendering.sight.visible_factor -> 1.0` (drop the cone) and
   `scenes.base.apply_grade -> None` (drop the film grade); for the REAL player
   view leave both on. A working template lives in the session scratchpad

@@ -2644,12 +2644,14 @@ def _draw_lectern_solid(surf, cam, deco):
 
 def _draw_bell_stock_solid(surf, cam, deco):
     """The church bell's timber BELL-STOCK: a braced trestle -- four canted
-    posts rising to a HEADSTOCK beam the bell's gudgeons ride in, with a
-    mid-height ledger tie on each side and diagonal knee braces up to the
-    beam. Built from yaw-rotated boxes + projected brace lines so it holds
-    under the tilt (2026-07 audit fix: it was a scaled-up TABLE box, which
-    read as a platform, not a bell frame; the bell hung off a tabletop). The
-    church_bell hangs off the headstock centre."""
+    posts rising to a HEADSTOCK beam the bell's gudgeons ride in, tied by a
+    mid-height ledger RING and diagonal knee braces on every face. Carries
+    horizontal members in BOTH planes (E-W ties + N-S ties, an E-W headstock
+    + N-S top caps) so it reads as a bell frame from ALL FOUR facings, not
+    just broadside (2026-07 fix: the first build ran every beam E-W, so it
+    was planar in X and collapsed to a thin stick when viewed edge-on from
+    E/W -- a defect a genuine four-facing check surfaces). The church_bell
+    hangs off the headstock centre."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     wood = {"top": (108, 84, 55), "side": (82, 62, 41), "dark": (56, 42, 28)}
@@ -2657,26 +2659,35 @@ def _draw_bell_stock_solid(surf, cam, deco):
     H = 46 * s          # post height to the headstock
     c = 15 * s          # half-footprint (posts near the 2x2 corners)
     post = 4.2 * s
+    tie = 2.6 * s       # ledger-tie thickness
+    span = c * 2 + post
     # four corner posts, canted very slightly inward (base out at +-c, so the
     # trestle reads as splayed legs, not a table's straight legs)
     corners = ((-c, -c, wood), (c, -c, wood2), (-c, c, wood2), (c, c, wood))
     for (px, py, pal) in corners:
         _vbox(surf, cam, wx + px, wy + py, post, post, 0, H, pal, outline=False)
-    # a mid-height ledger tie down each side (E-W), joining front + back posts
-    for py in (-c, c):
-        _vbox(surf, cam, wx, wy + py, c * 2 + post, 2.6 * s,
-              H * 0.44, H * 0.44 + 3 * s, wood2, outline=False)
-    # diagonal KNEE braces from the outer posts up under the headstock (the
-    # trestle read) -- projected lines so they cant correctly under the tilt
+    # a mid-height ledger RING joining the posts on ALL FOUR sides -- so a
+    # horizontal member reads in both planes (the anti-thin fix): E-W ties at
+    # front + back, N-S ties at left + right.
+    zt0, zt1 = H * 0.44, H * 0.44 + 3 * s
+    for py in (-c, c):                       # E-W ties (broadside from N/S)
+        _vbox(surf, cam, wx, wy + py, span, tie, zt0, zt1, wood2, outline=False)
+    for px in (-c, c):                       # N-S ties (broadside from E/W)
+        _vbox(surf, cam, wx + px, wy, tie, span, zt0, zt1, wood2, outline=False)
+    # diagonal KNEE braces from every corner post up under the headstock (they
+    # cant inward in BOTH x and y, so a brace shows on every facing)
     for px in (-c, c):
         for py in (-c, c):
             a = cam.project(wx + px, wy + py, H * 0.40)
             b = cam.project(wx + px * 0.28, wy + py * 0.55, H)
             pygame.draw.line(surf, wood["dark"], a, b, max(1, int(2 * s)))
-    # the HEADSTOCK beam across the top (E-W), the bell's pivot, drawn last so
-    # it sits highest -- a stouter timber than the posts
-    _vbox(surf, cam, wx, wy, c * 2 + post + 5 * s, 6.0 * s,
-          H, H + 6.0 * s, wood)
+    # N-S top caps at the ends (broadside from E/W) so the TOP of the frame
+    # reads edge-on too, then the stouter E-W HEADSTOCK across the centre (the
+    # bell's pivot), drawn last so it sits highest.
+    for px in (-c, c):
+        _vbox(surf, cam, wx + px, wy, tie + 1 * s, span, H, H + 4.0 * s,
+              wood2, outline=False)
+    _vbox(surf, cam, wx, wy, span + 5 * s, 6.0 * s, H, H + 6.0 * s, wood)
     # the two iron gudgeon straps the bell's cannons ride in, under the beam
     for px in (-4 * s, 4 * s):
         g0 = cam.project(wx + px, wy - 3 * s, H)
