@@ -195,7 +195,7 @@ def build_sheriff_office():
         "WWWWWiiWWWWWWWWW",   # 0   ii = cold north windows behind the desk
         "W........W.....W",   # 1   main office (cols 1-8) | records (cols 10-14)
         "W........W.....W",   # 2
-        "W..............W",   # 3   doorway gap in the partition (col 9)
+        "W..............W",   # 3   plank doorway in the partition (col 9)
         "W....Y...W.....W",   # 4   Y = Sheriff, at his desk
         "W........W.....W",   # 5
         "W........WWWWWWW",   # 6   records room sealed off below
@@ -217,6 +217,13 @@ def build_sheriff_office():
     # evidence). The `bars` leaf blocks the body but you see through it into the
     # empty cell (tableau-parity pass).
     sc.add_inner_door(14, 9, "bars")
+    # The records-room doorway (#4c): a solid plank leaf on the col-9 partition
+    # gap (row 3), so the back room where Vane keeps the case board, the
+    # payphone, and his cache reads as a room you step into, not an open bay.
+    # Shut by default, it breaks a pursuer's line of sight into the records room
+    # (the indoor blind spot). The col-9 wall is N-S, so this leaf swings E-W --
+    # a second orientation against the cell's north-wall bars gate (swings N-S).
+    sc.add_inner_door(9, 3, "plank")
 
     pos = sc.consume_marker("Y")
     if pos:

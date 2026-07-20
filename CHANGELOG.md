@@ -195,6 +195,18 @@
 
 ## Walls & interior geometry
 
+- **2026-07 -- #4c: the sheriff's office records room got its door.** The
+  office was already three spaces (main office / back RECORDS room / holding
+  cell), but the main<->records divide was an OPEN gap in the col-9 partition
+  -- no door mechanic. Added a `plank` inner door on that gap
+  (`add_inner_door(9, 3)`): shut, it blocks the sight cone, so the back room
+  (the case board Vane can't file on, the payphone, his ammo cabinet) is a real
+  shut-able indoor blind spot a pursuer's line of sight breaks on. The col-9
+  wall is N-S, so the leaf swings E-W -- a second orientation against the
+  holding cell's north-wall `bars` gate (swings N-S). The records room already
+  carries its own candle, so the divide needs no new light. Reachability holds
+  through the door (smoke [10/10]); VISION-verified four facings + dark.
+
 - **2026-07 -- #4c: the abandoned farmhouse became a four-room warren.** The
   farmhouse was a "box + one side room"; a house warrants real rooms, and
   being abandoned it carries almost no load (just the sealed cellar hatch).
