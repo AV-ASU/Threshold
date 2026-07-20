@@ -334,10 +334,6 @@ compression pass (#4b).
 - **[Opus]** **Held-weapon offset per camera yaw** — `draw_axe_held` reads
   at rest; eyeball the equipped-weapon offset at every camera yaw so it
   never floats off the hand. Verify with a tilt capture across yaws.
-- **[Fable + Opus]** **The grove reads north of Brimley, the river in
-  view** — `effigy_grove` is the mouth of the cult's mine, north of town
-  above the river, but the scene art is still a bare corn crop circle.
-  Dress the rim so the river reads below it. Decoration only.
 - **[Opus]** **Higher-contrast see-through doors** — opt in the doors where
   the sight-gated aperture effect reads strongest: a lit room off a dark
   hall, the front door onto the yard. Draw/opt-in only; no new tech.

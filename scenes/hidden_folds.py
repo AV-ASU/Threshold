@@ -25,7 +25,12 @@ def build_effigy_grove():
     Reached ONLY through the school rite's pane (the maze walk-in fold
     was cut, 2026-07: the rite hid this place). The
     corn itself is the border: an oval of cut ground pressed into an
-    unbroken field, charred at the heart. A dead fire pit at centre,
+    unbroken field, charred at the heart. The RIVER reads along the
+    north rim now (2026-07): the diggers followed the water down to this
+    ground and the night procession came along it (NARRATIVE §2/§5), so a
+    reeded band of it curves into the corn border behind the dug mouth,
+    with the procession's bootprints worn up from the bank to the fire.
+    A dead fire pit at centre,
     effigy-dolls in a ring, THREE weathered standing stones (organic,
     seeded -- siblings, never copies) with the nailed-up faces on one of
     them -- the work without the worker (the closing rite claimed the
@@ -58,17 +63,42 @@ def build_effigy_grove():
         dy = (ty - 8.5) / 3.2
         return dx * dx + dy * dy <= 1.0
 
+    # THE RIVER (2026-07): the grove sits ABOVE the river, and the diggers
+    # followed the water DOWN to this ground (NARRATIVE §2/§5) -- the night
+    # procession Toby watched came along it. So the river reads across the
+    # NORTH rim, behind the dug mouth: a band arced into the corn border,
+    # full across the top and curving down the flanks. Water tiles auto-draw
+    # their reeds + wet glint (emit_tilt_water_reeds), matching the Brimley
+    # river. It never reaches the two folds; the band is bounded by the map's
+    # north edge and the corn to either side, so the circle still holds (the
+    # only ways out stay the pane over the fire and the school pane).
+    def _in_river(tx, ty):
+        # A band hugging the clearing's north edge: full across row 0, and
+        # deepening down the flanks (where the clearing recedes) so the water
+        # curves around the rim instead of drawing a flat line.
+        return (ty <= 3 and 2 <= tx <= 23 and not _in_clearing(tx, ty))
+
     floor_rows = []
     for ty in range(H):
         row = []
         for tx in range(W):
-            row.append("x" if _in_char(tx, ty) else "g")
+            if _in_river(tx, ty):
+                row.append("~")            # river water (banks auto-reed)
+            elif _in_char(tx, ty):
+                row.append("x")
+            else:
+                row.append("g")
         floor_rows.append("".join(row))
     objects_l = []
     for ty in range(H):
         row = []
         for tx in range(W):
-            row.append("." if _in_clearing(tx, ty) else "C")
+            if _in_river(tx, ty):
+                row.append(".")            # water floor: no corn over it
+            elif _in_clearing(tx, ty):
+                row.append(".")
+            else:
+                row.append("C")
         objects_l.append(row)
     # Three ORGANIC standing stones around the ring -- solid, see-over
     # footprints ('x' object) so they block walking but never sight.
@@ -297,6 +327,13 @@ def build_effigy_grove():
                                  "spoil_heap", seed=5))
     sc.add_decoration(Decoration(16 * TILE + 20, 11 * TILE + 16,
                                  "spoil_heap", seed=9))
+    # The way they came: the night procession walked UP from the river to
+    # this fire (NARRATIVE §5, Toby's witness). Bootprints worn from the
+    # north bank down past the spoil to the dead fire -- staggered off the
+    # grid so the trail wanders like feet, not a ruled line.
+    for _fx, _fy in ((8, 4), (9, 5), (11, 6), (12, 7)):
+        sc.add_decoration(Decoration(_fx * TILE + 14, _fy * TILE + 18,
+                                     "mud_footprint"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE §4 / DESIGN.md §1), so individual cursing -- and the figure

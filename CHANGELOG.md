@@ -481,6 +481,24 @@
   placeholder -- no such draw kind exists). The rest of #4 (more scenes, a fog
   volume, landmark repetition) stays open.
 
+- **2026-07 -- the effigy grove reads above the river.** `effigy_grove` (the
+  descent mouth, north of Brimley above the river) rendered as a generic corn
+  crop circle: a uniform corn ring, no sense of the river the diggers followed
+  down to this ground (NARRATIVE §2/§5). The fix reads the river along the
+  NORTH rim, behind the dug mouth: a band of `~` water arced into the corn
+  border (`_in_river`, full across the top and deepening down the flanks where
+  the clearing recedes), so the terrain's own `emit_tilt_water_reeds` draws the
+  reeds + wet glint for free, matching the Brimley river exactly. The night
+  procession's bootprints (`mud_footprint`) climb from the bank down past the
+  spoil to the fire -- the way they came. The band is bounded by the map's
+  north edge and the flanking corn, so the circle still holds (the only ways
+  out stay the two folds; smoke flood-fill + no-diagonal-join green). TODO
+  called it "decoration only"; a convincing surface river needs real water
+  tiles to auto-reed, so the change extends to a minimal water band kept
+  entirely in the impassable border zone (reachability byte-safe). VISION-
+  verified across four facings, the river close-up, and the dark graded view;
+  in play the animated glint lifts it further, as it does in Brimley.
+
 - **2026-07 — Brimley rebuilt from 100x100 to 60x60 (`TODO.md` #18), a
   full reshape, not a scale-down.** The river moved to a central spine
   with a bridge crossing, all seven buildings redistributed around it,
