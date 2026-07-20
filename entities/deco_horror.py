@@ -454,8 +454,11 @@ class DecoHorrorMixin:
                              (x + dx, y0 + rl * 0.7), 1)
 
     def _draw_phantom_mark(self, surf, x, y):
-        # A small chalk symbol scratched into a wall. Static (no anim).
-        # Shape is suggestive but doesn't match any other game mark.
+        # A small chalk symbol. Registered as a floor decal
+        # (_FLOOR_DECAL_KINDS), so under the tilt it warps flat onto the
+        # floorboards (NOT a wall mark, despite reading like a scratched
+        # sigil). Static (no anim). Shape is suggestive but doesn't match
+        # any other game mark.
         pygame.draw.line(surf, (220, 220, 230), (x - 6, y - 4), (x + 6, y - 4), 1)
         pygame.draw.line(surf, (220, 220, 230), (x, y - 6), (x, y + 4), 1)
         pygame.draw.line(surf, (220, 220, 230), (x - 4, y + 4), (x + 4, y + 4), 1)

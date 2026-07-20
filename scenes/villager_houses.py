@@ -346,8 +346,10 @@ def build_abandoned_farmhouse():
     sc.set_spawn("from_brimley", 3, 1)
     # When the player climbs back up from the cult chamber, they come up
     # through the hatch in the back room. Spawn beside it.
-    # The abandoned farmhouse. Phantom marks on the walls -- thick in the
-    # back room. There's a (sealed) hatch back there too.
+    # The abandoned farmhouse. Phantom marks scratched into the floorboards
+    # (phantom_mark is a floor decal, _FLOOR_DECAL_KINDS -- it warps onto the
+    # floor under the tilt, not the walls) -- thick in the back room. There's
+    # a (sealed) hatch back there too.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(5 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
