@@ -628,12 +628,14 @@ it renders the procedural sprites to a labelled PNG strip.
   SEAL). **The rope is CUT (2026-06, §14): the descent is the RITE** — at 3
   evidence Sable hands over the Invitation (`rite_envelope`), the school
   rite (incense + the final chalk door) opens the school↔grove fold, and
-  the grove's **descent fold** (clarity = evidence count via
-  `Scene.fold_charge_fn`; crossable at 3 via `Scene.exit_gate_fn`) lands at
-  `well_bottom`. **§15 rework:** the crossing is opened by the GROVE
-  RITE (the full door-dream, cutscene only, two-press); the circle then
-  holds you and the way home is **keyed to the Mask** (crossing up sets
-  `descent_sealed`, the SPREAD lock). The **Deep Stair is CUT**: the way
+  the grove is the **mine mouth**: a physical dug SHAFT (2026-07 rework, no
+  rift-portal, no re-gate at the grove — the way here was already earned).
+  **§15 rework:** the descent is the GROVE RITE (the full door-dream,
+  cutscene only, two-press E at the shaft lip); the dream IS the descent,
+  and the grove's `on_update` carries the PI down to `well_bottom` the
+  moment it ends. The circle then holds you and the way home is **keyed to
+  the Mask** (crossing the shaft-floor return pane up sets `descent_sealed`,
+  the SPREAD lock). The **Deep Stair is CUT**: the way
   deeper is the **blast** at the deepest face (`powder` from the Sump,
   Mask in hand, two-press) → the one-way FALL into the Depths. The
   Brimley well is dread set-dressing; the Ledger's checkout dates stop
@@ -876,8 +878,9 @@ it renders the procedural sprites to a labelled PNG strip.
   pickup logs the gate beat QUIETLY (`_evidence(..., quiet=True)`) so no case
   note pops before he has read it. The FULL ~7s wordless dream
   (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
-  `begin_rite_dream` — completing it opens the descent fold
-  (`rite_performed`) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;
+  `begin_rite_dream` — completing it sets `rite_performed` (the grove's
+  `on_update` then carries the PI down the mine shaft to `well_bottom` — the
+  dream IS the descent, 2026-07) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;
   the `FLASHBACK_*` tuning block (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
   `_RATE_MIN/_MAX`, `_FOCAL_Y`) is defined in `ui/cutscenes.py`.
 - **Visuals:** dried-wood doorframe in black; a pulsing gold glow pooled at

@@ -401,6 +401,32 @@
 
 ## The fold & portals
 
+- **2026-07 — the grove descent became a physical mine shaft (no
+  rift-portal, no redundant gate).** The grove's DOWN used to be an
+  evidence-gated rift pane over a dead fire: it clarified as evidence
+  mounted and the two-press rite tore it open. But the descent was already
+  gated UPSTREAM — you can only reach the grove by doing the school rite,
+  which needs Sable's Invitation, which he hands over at 3 evidence — so the
+  grove re-checking evidence and clarifying a rift was a dead gate (in play
+  you never saw it at anything but fully-formed). The rework, per the
+  maintainer: make the grove read as the **actual mine mouth** — a black
+  void-floor SHAFT collared in timber, the haul rope hanging CUT (the rope
+  is cut, canon), ore carts on a rail, spoil heaped, the Sign daubed at the
+  lip — and drop the rift entirely. `_grove_interact` is now an ungated
+  two-press commit at the shaft lip; the second press plays the SAME
+  door-dream, and the dream IS the descent — `_finish_rite` sets
+  `rite_performed`, and the grove's `on_update` carries the PI straight down
+  to `well_bottom` the moment the dream ends (no walk-through-a-pane step).
+  The `O` descent fold/exit is gone from the grove; `fold_charge_fn` /
+  `exit_gate_fn` now drive only the school pane (the "circle holds"). The
+  Mask-keyed shaft-floor return (`well_bottom` up) and the seal/SPREAD logic
+  are unchanged. The grove's dead fire + charred ground were cut (nothing
+  chars a mine mouth); the effigy crescent + stones now kneel toward the
+  shaft. `tests/flow.py` §1 (a)/(d)/(f) rewritten for the physical shaft;
+  DIALOGUE.md's grove-rite section + `the_rite` note reconciled; NARRATIVE
+  §7 step 5, DESIGN §5/§7, and CLAUDE.md updated (the grove left the
+  standing-rift-pane family). Full gate green; VISION-verified (four facings,
+  the shaft close-up, the dark graded view).
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

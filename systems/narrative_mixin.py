@@ -64,12 +64,11 @@ class NarrativeMixin:
         self._start_flashback("rite")
 
     def _finish_rite(self):
-        """Rite-dream completion: the pane tears open, the circle seals.
-        DIEGETIC only -- no banner, no 'accepted' notice. The PI's note
-        registers it obliquely (a NOTE, never evidence)."""
-        import pygame as _pg
+        """Rite-dream completion: the shaft has the PI now -- the grove's
+        _grove_update carries him down to the works the next frame (the dream
+        IS the descent). DIEGETIC only -- no banner, no 'accepted' notice.
+        The PI's note registers it obliquely (a NOTE, never evidence)."""
         self.save.set_flag("rite_performed", True)
-        self._rite_fold_t0 = _pg.time.get_ticks()    # the opening ramp
         self.audio.play("void_sting", 0.8)
         self.audio.play("low_pulse", 0.95)
         self._log_note("the_rite", [
@@ -78,9 +77,9 @@ class NarrativeMixin:
             "one day faded.",
             "I walked up to it the way I never did in my sleep. It "
             "knew me. It let me in.",
-            "When I came out of it the fire was open and the corn "
-            "had closed. I am not saying that to anyone the way I "
-            "just said it here.",
+            "When I opened my eyes I was at the bottom of the shaft, in "
+            "the dark, the mouth a coin of grey light far above. No rope "
+            "carried me down. I do not let myself think about what did.",
         ])
 
     def _tick_flashback(self, dt):

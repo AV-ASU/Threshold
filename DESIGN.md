@@ -328,9 +328,10 @@ Only display names and fiction change.
 ## 5. The Basement Level — "The Works" (built)
 
 The cult's **year-long excavation**, reached *only* through the effigy
-grove's descent fold, which lands at the Shaft Floor of the cult's own
-mine (scene key `well_bottom` — a legacy name; the town well itself is
-dread set-dressing and goes nowhere, NARRATIVE §7). The attuned didn't build a
+grove's mine shaft — the descent is the door-dream rite at the shaft mouth
+(2026-07), which lands at the Shaft Floor of the cult's own mine (scene key
+`well_bottom` — a legacy name; the town well itself is dread set-dressing
+and goes nowhere, NARRATIVE §7). The attuned didn't build a
 temple — they **dug**, following
 the water down toward the door the dream promised (NARRATIVE §2). The seven rooms
 are the **dig** at successive depths; partway down it broke into the
@@ -341,7 +342,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 
 | # | Room | Key | Contents |
 |---|---|---|---|
-| 1 | The Shaft Floor | `well_bottom` | The descent fold lands you here; its return pane (the way back up) stands where the rope once hung. Quiet airlock, 1 hide. |
+| 1 | The Shaft Floor | `well_bottom` | The descent (the door-dream down the shaft) lands you here; its return pane (the way back up) stands where the rope once hung. Quiet airlock, 1 hide. |
 | 2 | The Timber Racks | `well_passage` | The dig's staged shoring lumber, racked on its way to the faces (renamed 2026-07: the old drying-corn-doll-material fiction was cut -- an obsessive dig runs no craft room). A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. **Two dug side-chambers off the run (#14 pilot, 2026-07):** a FINISHED store squared into the east wall (crates, staged boards, a kept candle, a wall tally) and a HALF-DUG niche the diggers quit in the west (a low spoil pile, pick gouges, no light), each reached through a single timbered ADIT off the corridor (distinct from the open central bay). Exploration texture off the patrol lane; the tuned E-W run, racks, and hides are untouched. |
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_cistern` | Where the dig **broke into the underground river** — the artery to the door (NARRATIVE §2), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. The scene key is now `works_cistern` (renamed 2026-07 to match the Cistern).* **#14 (2026-07):** a HALF-DUG niche clawed into the dry SW corner stone (a timbered adit off the crossing, a low spoil pile capping the corner, pick gouges, a cold seep, no light) — where the dig tried for the river through the corner and gave up. |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. **Two dug side-chambers off the sorting floor (#14, 2026-07):** a FINISHED overflow store (crates, a shed-life pile, a kept candle, a wall tally) and a HALF-DUG niche (a low spoil pile, pick gouges, no light), each through a single ADIT cut into the north block clear of the tally + taxidermy mounts, off the patrol floor so the tuned crossing/tables/hides are untouched. |
@@ -351,8 +352,9 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 7 | **The Deepest Face** | `works_deepface` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
-- **One way down:** the grove rite's opened pane only; the barn cellar hatch
-  stays sealed (`scenes/interiors.py`). The shaft-floor return pane is
+- **One way down:** the grove rite (the door-dream at the mine shaft) only;
+  the barn cellar hatch stays sealed (`scenes/interiors.py`). The shaft-floor
+  return pane is
   **keyed to the Mask** (never one-way); crossing it up seals the
   descent (`descent_sealed`, the SPREAD lock).
 - **Point of no return:** the FALL through the blasted face (Room 7;
@@ -657,8 +659,9 @@ clearing at the mouth of the cult's mine, **north of Brimley above the
 river**, reached ONLY through the school rite's pane (NARRATIVE §7).
 
 **The standing-pane canon (2026-06) holds for every fold that shows
-itself** — the school↔grove pane, the grove's descent fold, the shaft
-floor's keyed return, and the King's portal. Faced head-on, a fold SHOWS
+itself** — the school↔grove pane, the shaft floor's keyed return, and the
+King's portal. (The grove's DOWN is no longer a fold: it is the physical
+mine shaft, descended by the door-dream rite, 2026-07.) Faced head-on, a fold SHOWS
 itself: a standing black-gold rift frame anchored on its world seam, one
 visual family with the King's portal (`rendering/portal.py
 draw_rift_door`). Step to the side and the pane thins and dims toward
@@ -698,9 +701,10 @@ There are exactly two kinds of spatial transition in THRESHOLD:
   the player-only escape.
 - **The Fold**: everything else. One phenomenon with two faces:
   - **The fold you SEE** -- the standing rift frame: the rite's panes
-    (the school door, the grove's descent fold, the shaft floor's keyed
-    return -- at rest, quiet) and the King's portal (the same frame torn
-    violently). One renderer, one black-gold grammar.
+    (the school door and the shaft floor's keyed return -- at rest, quiet)
+    and the King's portal (the same frame torn violently). One renderer,
+    one black-gold grammar. (The grove's DOWN left this family in 2026-07:
+    it is the physical mine shaft now, descended by the door-dream.)
   - **The fold you DON'T** -- the silent lie: the torus wrap, the
     seamless world edges, the in-maze relocations. The horror here is
     futility, never spectacle; no frame is ever shown.
@@ -756,11 +760,12 @@ and drive a fold's formation charge per frame (`Scene.fold_charge_fn(game,
 char)` → 0..1 into `draw_rift_door`'s charge ramp; 0 = not drawn, reads as
 floor). Direction-gated exits also route straight through `cross_fold`
 regardless of set membership, so a fold can join ANY two scenes --
-including surface↔underground. Shipped uses: the **effigy grove's descent
-fold** (clarity = evidence/3, opens at 3, lands at `well_bottom`, dies at
-`descent_sealed`), its **shaft-floor keyed return** (answers only the Mask
-after the grove rite), and the **school door** (opened by the chalk-door
-rite, then permanent). Folds stay two-way until they DIE or are **KEYED** --
+including surface↔underground. Shipped uses: the **shaft-floor keyed
+return** (`well_bottom` → grove, answers only the Mask, then seals), and the
+**school door** (opened by the chalk-door rite, then permanent). (The grove's
+DOWN was a state-driven fold until 2026-07; it is now the physical mine shaft
+below, descended by the door-dream rite and lands at `well_bottom` via the
+grove's `on_update`, no fold.) Folds stay two-way until they DIE or are **KEYED** --
 never one-way (the King keeps his signature). Live proof sheet:
 `tools/preview_rift_anchored.py`.
 

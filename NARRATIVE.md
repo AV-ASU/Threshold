@@ -417,16 +417,19 @@ below, and the mine has one mouth. In order:
    final chalk door drawn on the board: the school↔grove fold opens
    and lands him in the fold-hidden grove clearing, the mouth of the
    cult's mine.
-5. **The grove rite.** Over the dead fire stands a rift that clarifies
-   as evidence mounts. At 3, Invitation in hand, the PI performs the
-   rite: he consciously re-enters his one year-old dream — the full
-   door-dream, a pure cutscene; the journal only ever flashes the
-   memory — and finally answers the door. The rift tears open and
-   carries him down into the Works. **The circle then holds you:** the
-   clearing's surface exits refuse, and the return pane answers only
-   His face — keyed to the Mask, never one-way (one-way stays the
-   King's signature). Surfacing with the Mask seals the descent at
-   your back and locks the run to SPREAD.
+5. **The mine mouth.** The grove is the dug shaft itself: a black drop
+   collared in timber, ore carts and spoil abandoned mid-work along the
+   rail, the haul rope cut. The rope is CUT (§14), so you cannot climb
+   down — you go down by the RITE, and there is **no gate at the mouth**
+   (the way here was already earned, §3/§4). At the shaft's lip the PI
+   consciously re-enters his one year-old dream — the full door-dream, a
+   pure cutscene; the journal only ever flashes the memory — and finally
+   answers the door. The dream IS the descent: it carries him down the
+   shaft into the Works. **The circle then holds you:** the clearing's
+   surface exit refuses, and the shaft-floor return pane answers only His
+   face — keyed to the Mask, never one-way (one-way stays the King's
+   signature). Surfacing with the Mask seals the descent at your back and
+   locks the run to SPREAD.
 6. **The Works.** Mara's cell, the cult's testimony (§9), and the Sign
    Chamber, where he lifts the **Pallid Mask** from the cult's altar.
 7. **The fall.** Mask in hand, powder from the Sump: the **blast** at

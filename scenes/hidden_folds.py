@@ -38,14 +38,13 @@ def build_effigy_grove():
     the worker (the closing rite claimed the town at once, NARRATIVE §4 /
     DESIGN.md §1). The corn is still the border on every dry side.
 
-    THE WAY DOWN lives here now: a fold stands over the dead fire ('O'),
-    clarifying with the evidence count (fold_charge_fn, the meter). At 3
-    evidence with the Invitation, THE RITE (E at the fire, two-press)
-    plays the FULL door-dream (begin_rite_dream, cutscene only); on
-    completion the pane tears OPEN (the regular standing rift; one
-    presentation, one family) and the CIRCLE HOLDS: the school pane
-    ('M') refuses while the way down lives --
-    the seal is DISCOVERED, never announced. The way home (well_bottom's pane) answers
+    THE WAY DOWN is the mine SHAFT itself (2026-07 rework: no rift-portal,
+    no evidence re-gate -- the way here was already earned upstream, §3/§4).
+    THE RITE (E at the shaft lip, two-press) plays the FULL door-dream
+    (begin_rite_dream, cutscene only); the dream IS the descent -- on
+    completion _grove_update carries the PI down to well_bottom. The CIRCLE
+    HOLDS: the school pane ('M') refuses while the way down lives; the seal
+    is DISCOVERED, never announced. The way home (well_bottom's pane) answers
     only His face; surfacing with the Mask sets descent_sealed (the
     SPREAD lock) and the circle lets go."""
     W, H = 26, 19
@@ -80,10 +79,9 @@ def build_effigy_grove():
                 + 0.06 * math.sin(5.0 * ang - 1.1))
         return (dx * dx + dy * dy) <= lobe
 
-    def _in_char(tx, ty):             # charred ground at the dead fire
-        dx = (tx - 15.0) / 2.8
-        dy = (ty - 9.0) / 2.3
-        return dx * dx + dy * dy <= 1.0
+    # THE SHAFT: a short run of black void floor -- the dug drop into the
+    # dark, the way down (there is no fire here, so no charred ground).
+    _shaft_tiles = {(15, 9), (15, 10)}
 
     floor_rows = []
     for ty in range(H):
@@ -91,8 +89,8 @@ def build_effigy_grove():
         for tx in range(W):
             if _in_river(tx, ty):
                 row.append("~")            # river water (banks auto-reed)
-            elif _in_char(tx, ty):
-                row.append("x")            # charred fire ground
+            elif (tx, ty) in _shaft_tiles:
+                row.append("@")            # the shaft: a black drop
             elif _in_bank(tx, ty):
                 row.append(";")            # worked mud bank at the water
             else:
@@ -111,10 +109,10 @@ def build_effigy_grove():
     # see-over footprints ('x' object) so they block walking but never sight.
     for sx, sy in ((8, 5), (6, 9), (9, 13)):
         objects_l[sy][sx] = "x"
-    # THE WAY DOWN: the dead fire, east of the hollow's centre facing the
-    # river ('O', an invisible walkable marker), walked SOUTH into the
-    # descent -- the dug mouth, its spoil hauled to the water they followed.
-    objects_l[9][15] = "O"
+    # THE WAY DOWN is the mine SHAFT itself now (a decoration + the E-press
+    # rite at (15, 9)), not a rift-pane exit -- so there is no 'O' tile in
+    # the grove. The descent is the door-dream; _grove_update carries the PI
+    # down the moment it completes (the dream IS the descent).
     # The school door's grove-side pane ('M'), in the clearing away from the
     # water. Walked SOUTH.
     objects_l[13][13] = "M"
@@ -124,7 +122,6 @@ def build_effigy_grove():
     # are fade-less.
     sc.wrap_x = False
     sc.wrap_y = False
-    sc.add_exit("O", "well_bottom", "from_grove", direction="south")
     sc.add_exit("M", "schoolhouse", "from_grove", direction="south")
     sc.set_spawn("default", 5, 9)
     # Back up out of the well: beside the fire, carried WEST so arrival
@@ -133,78 +130,53 @@ def build_effigy_grove():
     # In through the school door: one tile north of its return pane.
     sc.set_spawn("from_school", 13, 12)
 
-    # ---- The two state-driven folds ----
+    # ---- The ONE state-driven fold: the school pane ('M') ----
+    # The descent is no longer a rift-portal: it is the physical mine shaft
+    # below (the two-press rite + door-dream, _grove_interact). The only fold
+    # that SHOWS here is the school pane -- the way back, dead while the
+    # circle holds (after the rite, before the Mask seals the descent).
     def _charge(game, ch):
-        ev = game._evidence_count()
-        if ch == "O":
-            if game.save.flag("descent_sealed"):
-                return 0.0
-            if game.save.flag("rite_performed"):
-                # The pane, tearing fully open over a few seconds after
-                # the dream; 1.0 on later loads. (The REGULAR standing
-                # rift pane: the rift family has one presentation.)
-                t0 = getattr(game, "_rite_fold_t0", None)
-                if t0 is None:
-                    return 1.0
-                import pygame as _pg
-                return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
-            # Pre-rite: a thread of gold at 0 evidence, a fully formed
-            # (but shut) frame at 3. The frame IS the evidence meter.
-            return min(1.0, 0.15 + 0.85 * (ev / 3.0))
-        if ch == "M" and (game.save.flag("rite_performed")
-                          and not game.save.flag("descent_sealed")):
-            # The circle holds you: while the way down lives, the school
-            # pane is dead.
+        if ch != "M":
+            return 1.0
+        if (game.save.flag("rite_performed")
+                and not game.save.flag("descent_sealed")):
+            return 0.0                     # the circle holds: the pane is dead
+        if not game.save.flag("school_door_open"):
             return 0.0
-        if ch == "M":
-            if not game.save.flag("school_door_open"):
-                return 0.0
-            # The school door forms over a few seconds when it is first
-            # drawn; on any later load it simply stands.
-            t0 = getattr(game, "_school_door_t0", None)
-            if t0 is None:
-                return 1.0
-            import pygame as _pg
-            return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
-        return 1.0
+        # The school door forms over a few seconds when first drawn; on any
+        # later load it simply stands.
+        t0 = getattr(game, "_school_door_t0", None)
+        if t0 is None:
+            return 1.0
+        import pygame as _pg
+        return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
     sc.fold_charge_fn = _charge
 
     def _gate(game, ch):
-        sealed_in = (game.save.flag("rite_performed")
-                     and not game.save.flag("descent_sealed"))
-        if ch == "O":
-            if game.save.flag("descent_sealed"):
-                return False
-            if game.save.flag("rite_performed"):
-                return _charge(game, "O") >= 0.999
-            # Shut until the rite. Once, say why in sensation.
-            if not game.save.flag("grove_fold_refused"):
-                game.save.set_flag("grove_fold_refused", True)
-                game.audio.play("low_pulse", 0.4)
-                game.show_notice("The light over the fire will not take "
-                                 "your weight. Not yet.", duration=3.2)
+        if ch != "M":
+            return True
+        if (game.save.flag("rite_performed")
+                and not game.save.flag("descent_sealed")):
+            # The circle holds you (one sensation line, once).
+            if not game.save.flag("grove_held_noticed"):
+                game.save.set_flag("grove_held_noticed", True)
+                game.audio.play("low_pulse", 0.5)
+                game.show_notice("The way you came does not open. The "
+                                 "circle holds. There is only down.",
+                                 duration=3.4)
             return False
-        if ch == "M":
-            if sealed_in:
-                # The circle holds you (one sensation line, once).
-                if not game.save.flag("grove_held_noticed"):
-                    game.save.set_flag("grove_held_noticed", True)
-                    game.audio.play("low_pulse", 0.5)
-                    game.show_notice("The way you came does not open. "
-                                     "The circle holds. There is only "
-                                     "down.", duration=3.4)
-                return False
-            return (game.save.flag("school_door_open")
-                    and _charge(game, "M") >= 0.999)
-        return True
+        return (game.save.flag("school_door_open")
+                and _charge(game, "M") >= 0.999)
     sc.exit_gate_fn = _gate
 
-    # ---- THE RITE (E at the dead fire) ----
-    # Two-press commit (never a lone-press point of no return; the
-    # point-of-no-return lesson): the first press lays the stakes out in
-    # sensation, the second begins the FULL door-dream (a pure
-    # cutscene). Completion tears the pane open and keys the way home to
-    # His face. Re-armed on every scene exit.
+    # ---- THE DESCENT (E at the shaft mouth) ----
+    # The mine mouth is physical, but the rope is CUT (NARRATIVE §7): you
+    # cannot climb down. Two-press commit (never a lone-press point of no
+    # return): the first press lays the stakes at the lip, the second begins
+    # the FULL door-dream (a pure cutscene). The dream IS the descent -- on
+    # completion the shaft has you and _grove_update carries you down. NO
+    # evidence gate: the way here was already earned upstream (Sable's
+    # Invitation at 3 evidence, then the school rite). Re-armed on every exit.
     sc._rite_pos = (15 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._rite_pos[0], sc._rite_pos[1], 44)
 
@@ -215,31 +187,19 @@ def build_effigy_grove():
             return
         save = game.save
         if save.flag("descent_sealed"):
-            game.show_notice("Cold ash. The fire is done with this place.")
-            return
-        if save.flag("rite_performed"):
-            game.show_notice("The fire is open. The way down waits.")
-            return
-        if game._evidence_count() < 3:
-            game.audio.play("low_pulse", 0.4)
-            game.show_notice("The thread of gold stands in the dead "
-                             "fire, not finished forming.")
-            return
-        if not game.player.inventory.has("rite_envelope"):
-            game.audio.play("low_pulse", 0.4)
-            game.show_notice("The fire is ready for something. You were "
-                             "never given what it wants.")
+            game.show_notice("Cold air climbs out of the shaft. It is done "
+                             "with this place.")
             return
         if not save.flag("rite_laid"):
             save.set_flag("rite_laid", True)
             game.audio.play("low_pulse", 0.5)
             game.dialog.show([
-                "[c=dim](You stand over the dead fire. The gold stands "
-                "fully formed in it now, and the air leans toward it the "
-                "way a room leans toward an open window.)[/c]",
-                "[c=dim]You know what this is. You stood in front of it "
-                "once, a year ago, asleep, and you did not answer.[/c]",
-                "[c=dim](Press again to close your eyes.)[/c]",
+                "[c=dim](You stand at the lip of the shaft. The cut rope "
+                "hangs a body's length into the dark and stops, frayed. "
+                "There is no bottom in the light.)[/c]",
+                "[c=dim]You have stood here before. A year ago, asleep, at "
+                "a door you never reached.[/c]",
+                "[c=dim](Press again to go down.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         game.begin_rite_dream()
@@ -252,52 +212,53 @@ def build_effigy_grove():
     sc.on_exit_fn = _grove_exit
 
     def _grove_update(game, scene, dt):
-        # THE LOOM: a low, ominous bed that swells as evidence is found
-        # -- the fold's charge made audible. A repeating low pulse,
-        # louder and FASTER as the way down clarifies (ev 0: a faint
-        # beat every ~5.5s; ev 3: a strong one every ~2s), panned to
-        # the fire and leaning harder the closer you stand to it. Falls
-        # silent once the descent seals (descent_sealed).
+        # THE DESCENT: once the rite-dream has run, the shaft HAS you --
+        # carry the PI down to the works (the dream IS the descent). Fires
+        # the frame the dream ends; you cannot linger at the lip. You only
+        # return to the grove holding the Mask, and coming up seals the
+        # descent, so this never re-fires.
+        if (game.save.flag("rite_performed")
+                and not game.save.flag("descent_sealed")):
+            game.load_scene_now("well_bottom", "from_grove")
+            return
         if game.save.flag("descent_sealed"):
             return
+        # THE LOOM: a low bed at the shaft mouth -- the dark under the mine
+        # breathing, panned to the shaft and leaning in as you near it.
         t = getattr(scene, "_loom_t", 0.0) - dt
         if t <= 0.0:
-            ev = min(3, game._evidence_count())
-            charge = 0.15 + 0.85 * (ev / 3.0)
             fx, fy = 15 * TILE + 16, 9 * TILE + 16
             d = math.hypot(game.player.x - fx, game.player.y - fy)
             prox = max(0.25, 1.0 - d / (12 * TILE))
             pan = game.audio.pan_for_world(fx, game.player.x)
-            game.audio.play("low_pulse",
-                            min(0.85, 0.16 + 0.55 * charge * prox),
+            game.audio.play("low_pulse", min(0.7, 0.18 + 0.4 * prox),
                             pan=pan)
-            t = 5.5 - 3.5 * charge
+            t = 3.2
         scene._loom_t = t
     sc.on_update_fn = _grove_update
 
     def _grove_enter(game, scene):
-        if game.save.flag("grove_seen"):
-            return
+        # No first-sight rift beat now: the mine mouth is a physical place,
+        # not a clarifying portal. (grove_seen kept for any downstream read.)
         game.save.set_flag("grove_seen", True)
-        if (game._evidence_count() < 3
-                and not game.save.flag("descent_sealed")):
-            game.dialog.show([
-                "[c=dim](Something over the dead fire catches the light. "
-                "A thread of gold, standing on end. You lose it when you "
-                "look straight at it.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
     sc.on_enter_fn = _grove_enter
 
     # ---- Decorations ----
-    # The dead fire on the fold tile, the Sign painted under it. (The fold's
-    # gold pool relights the charred ground as the frame clarifies; the way
-    # down stands IN the fire.)
-    sc.add_decoration(Decoration(15 * TILE + 16, 9 * TILE + 16, "brazier"))
-    sc.add_decoration(Decoration(15 * TILE + 16, 9 * TILE + 16, "yellow_sign"))
+    # THE SHAFT MOUTH (the way down): the mine's dug shaft, black to the
+    # bottom (the '@' void floor above). A timber headframe shores its far
+    # lip and the haul rope hangs into it CUT (NARRATIVE §7) -- a frayed
+    # body's length, then dark, no bottom in the light -- and the Sign is
+    # daubed beside it. You go down by the rite (the door-dream), never a
+    # climb; E here is the descent.
+    sc.add_decoration(Decoration(15 * TILE + 16, 8 * TILE + 16,
+                                 "shoring_frame"))
+    sc.add_decoration(Decoration(15 * TILE + 22, 9 * TILE + 2, "rope"))
+    sc.add_decoration(Decoration(13 * TILE + 20, 10 * TILE + 20,
+                                 "yellow_sign"))
     # The congregation's EFFIGY CRESCENT: small chairs/effigies drawn up in
-    # an arc on the hollow's west, all opening toward the fire and the dug
-    # mouth beyond it -- a rank that knelt facing the water, not a tidy ring.
-    # Each stands for a local the cult was working against.
+    # an arc on the hollow's west, all opening toward the SHAFT MOUTH they
+    # knelt facing -- a rank, not a tidy ring. Each stands for a local the
+    # cult was working against.
     effigy_crescent = [
         (13, 5), (11, 6), (10, 8), (10, 10), (11, 12), (12, 13),
     ]
@@ -306,7 +267,7 @@ def build_effigy_grove():
                                      "small_chair"))
     # THREE standing stones, organic and asymmetric (distinct seeds),
     # scattered through the hollow. The nailed-up faces are fixed to the
-    # north-west stone, turned toward the fire.
+    # north-west stone, turned toward the shaft.
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16,
                                  "standing_stone", seed=11))
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16,
@@ -315,38 +276,39 @@ def build_effigy_grove():
                                  "standing_stone", seed=83))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 6,
                                  "polaroid_wall"))
-    # One old stain by the fire, one mark off the crescent -- kept sparse so
-    # the fire, the stones and the fold stay the focus.
+    # One old stain, one mark off the crescent -- kept sparse so the shaft,
+    # the stones and the effigies stay the focus.
     sc.add_decoration(Decoration(12 * TILE + 16, 10 * TILE + 16,
                                  "bloodstain"))
     sc.add_decoration(Decoration(10 * TILE + 16, 12 * TILE + 16,
                                  "phantom_mark"))
-    # THE DUG MOUTH ON THE RIVER: the way down is the mine mouth, and the dig
-    # FACED the water the diggers followed (NARRATIVE §2/§5). A timber shoring
-    # frame stands behind the descent (north, the far side under the tilt)
-    # framing the pane like an adit; the spoil they dug is hauled east in a
-    # line toward the bank, and the cart they hauled it in is left at the
-    # water's edge -- so the descent reads as worked ground running down to
-    # the river, not just a fire.
-    sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16,
-                                 "shoring_frame"))
-    sc.add_decoration(Decoration(16 * TILE + 12, 8 * TILE + 16,
-                                 "spoil_heap", seed=5))
-    sc.add_decoration(Decoration(18 * TILE + 20, 9 * TILE + 16,
-                                 "spoil_heap", seed=9))
-    sc.add_decoration(Decoration(18 * TILE + 16, 11 * TILE + 16,
+    # THE HAUL HEAD: a working mine mouth. The rail the ore carts ran on
+    # leads from the shaft out toward the spoil dump and the water the
+    # diggers followed (NARRATIVE §2/§5) -- one cart still on the line, one
+    # tipped at its end; the dug spoil is heaped where they threw it, hauled
+    # up while the rope still held.
+    for _rx, _ry in ((16, 9), (17, 9), (18, 9)):
+        sc.add_decoration(Decoration(_rx * TILE + 16, _ry * TILE + 16,
+                                     "mine_rail"))
+    sc.add_decoration(Decoration(17 * TILE + 16, 9 * TILE + 10,
                                  "ore_cart", seed=3))
-    # The way they came: the night procession filed along the river to this
-    # fire (NARRATIVE §5, Toby's witness). Bootprints worn down the near bank
-    # to the dead fire -- staggered off the grid so the trail wanders.
-    for _fx, _fy in ((16, 5), (16, 7), (15, 8)):
+    sc.add_decoration(Decoration(18 * TILE + 20, 11 * TILE + 16,
+                                 "ore_cart", seed=7))
+    sc.add_decoration(Decoration(16 * TILE + 12, 7 * TILE + 16,
+                                 "spoil_heap", seed=5))
+    sc.add_decoration(Decoration(18 * TILE + 16, 8 * TILE + 16,
+                                 "spoil_heap", seed=9))
+    # The way they came: the night procession filed along the river to the
+    # shaft (NARRATIVE §5, Toby's witness). Bootprints worn down the near
+    # bank -- staggered off the grid so the trail wanders.
+    for _fx, _fy in ((16, 5), (16, 7), (16, 8)):
         sc.add_decoration(Decoration(_fx * TILE + 14, _fy * TILE + 18,
                                      "mud_footprint"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE §4 / DESIGN.md §1), so individual cursing -- and the figure
     # who'd do it -- is gone. The grove is left as the work without the
-    # worker: the dead fire, the effigy ring, the nailed-up faces, all
-    # tended by no one you'll ever see: a maker-less dread tableau.
+    # worker: the shaft, the effigy rank, the nailed-up faces, the haul gear
+    # abandoned mid-work, all tended by no one you'll ever see.
     sc.hide_spots = []
     return sc

@@ -124,8 +124,10 @@ def main():
         gg.cross_fold(*data)
         return True
 
-    # (a) Below 3 evidence: Sable holds the envelope; the grove fold is a
-    # dim thread that will not cross; the well is dread set-dressing.
+    # (a) Below 3 evidence: Sable holds the envelope; the well is dread
+    # set-dressing. The descent is the physical mine SHAFT now (2026-07),
+    # gated UPSTREAM (the Invitation + the school rite), never a rift
+    # re-gated at the grove -- so the grove carries no 'O' descent fold.
     g.load_scene_now("brimley")
     ready(g)
     wx, wy = g.scene._well_pos
@@ -139,24 +141,16 @@ def main():
           "sable: below 3 evidence the Invitation stays under the register")
     g.load_scene_now("effigy_grove")
     ready(g)
-    check(0.0 < g.scene.fold_charge_fn(g, "O") < 0.2,
-          "grove: at 0 evidence the descent fold is a faint thread")
-    # The gate and charge key on the EVIDENCE COUNT (the five canonical
-    # beats), never on visibility or its floor -- Watchers raise the
-    # visibility floor and must never open the way down.
+    check(g.scene.find_marker("O") is None
+          and "O" not in getattr(g.scene, "exits", {}),
+          "grove: the descent is a physical shaft, not an 'O' rift fold")
+    # Nothing about VISIBILITY may touch the way down: the below-3 Watcher
+    # threat raises the visibility floor, and it must never open the descent.
     import inspect as _insp_g
     from scenes import hidden_folds as _hf_mod
     _gsrc = _insp_g.getsource(_hf_mod.build_effigy_grove)
-    check("_evidence_count" in _gsrc and "visibility" not in _gsrc,
-          "grove: the descent keys on evidence, never the visibility floor")
-    _vis_before = g.visibility
-    g.visibility = 1.0                      # even pinned at the cap...
-    check(g.scene.fold_charge_fn(g, "O") < 0.2 and not _take_fold(g, "O"),
-          "grove: max visibility alone never charges or opens the fold")
-    g.visibility = _vis_before
-    check(not _take_fold(g, "O"),
-          "grove: at 0 evidence the descent fold will not cross")
-    check(g.scene.key == "effigy_grove", "grove: still in the grove")
+    check("visibility" not in _gsrc,
+          "grove: the descent never keys on visibility or its floor")
 
     # (b) At 3 evidence the "way down" question OPENS; asking it hands over
     # the Invitation once, with the PI's note. The silent auto-handoff is
@@ -236,39 +230,37 @@ def main():
     check(_take_fold(g, "O") and g.scene.key == "effigy_grove",
           "school: the drawn door crosses to the grove")
 
-    # (d) THE RITE: at 3 evidence + the Invitation, E at the dead fire is
-    # a TWO-PRESS commit (never a lone-press point of no return); the
-    # second press plays the FULL door-dream (a pure cutscene, no input),
-    # and completion tears the pane open and seals the circle.
-    check(g.scene.fold_charge_fn(g, "O") >= 0.999,
-          "grove: at 3 evidence the frame is fully formed (the meter)")
-    ready(g)
-    check(not _take_fold(g, "O") and g.scene.key == "effigy_grove",
-          "grove: even at 3 evidence the fold will not cross before the rite")
+    # (d) THE DESCENT: at the shaft mouth, E is a TWO-PRESS commit (never a
+    # lone-press drop); the second press plays the FULL door-dream (a pure
+    # cutscene, no input), and the dream IS the descent -- when it ends the
+    # shaft carries the PI down (the grove's on_update). No rift, no re-gate.
     g.player.x, g.player.y = g.scene._rite_pos
     g.scene.on_interact_fn(g)                  # first press: the stakes
     check(g.save.flag("rite_laid") and not g.save.flag("rite_performed"),
-          "rite: first press lays the stakes (two-press commit)")
+          "descent: first press lays the stakes (two-press commit)")
     ready(g)
     g.scene.on_interact_fn(g)                  # second press: the dream
     check(g._flashback_phase is not None
           and g._flashback_mode == "rite",
-          "rite: second press starts the FULL door-dream (cutscene only)")
+          "descent: second press starts the FULL door-dream (cutscene only)")
     while g._flashback_phase is not None:
         g._tick_flashback(0.5)
     check(g.save.flag("rite_performed") and g.save.flag("flashback_seen"),
-          "rite: the dream completes the rite (and seeds the Threshold beat)")
+          "descent: the dream completes the rite (seeds the Threshold beat)")
     check(any(isinstance(e, dict) and e.get("name") == "the_rite"
               for e in g.save.arg("notes", [])),
-          "rite: acceptance lands as an oblique NOTE, never a banner")
+          "descent: acceptance lands as an oblique NOTE, never a banner")
     check(len(g.save.arg("evidence", [])) == 3,
-          "rite: the rite never inflates evidence")
-    g._rite_fold_t0 = None                        # skip the opening ramp
+          "descent: the rite never inflates evidence")
+    # The circle seals the surface exit behind you (checked while still in
+    # the grove, before the auto-descend loads the works).
     check(not g.scene.exit_gate_fn(g, "M"),
-          "rite: the circle seals the surface exit behind you")
-    ready(g)
-    check(_take_fold(g, "O") and g.scene.key == "well_bottom",
-          "rite: the opened pane lands at the shaft floor")
+          "descent: the circle seals the surface exit behind you")
+    # The dream IS the descent: the grove's update carries the PI down to the
+    # shaft floor the moment it ends.
+    g.scene.on_update_fn(g, g.scene, 0.1)
+    check(g.scene.key == "well_bottom",
+          "descent: the completed dream carries the PI down to the shaft floor")
     # (e) The way home is KEYED to His face, never one-way (the King keeps
     # his signature).
     ready(g)
@@ -280,7 +272,6 @@ def main():
     for i in range(3):
         g2.save.arg("evidence", []).append({"name": f"_e{i}", "lines": ["x"]})
     g2.save.set_flag("rite_performed", True)
-    g2._rite_fold_t0 = None
     g2.player.inventory.add("pallid_mask", 1)
     g2.load_scene_now("well_bottom", "from_grove")
     ready(g2)
@@ -288,9 +279,13 @@ def main():
           "egress: His face opens the way home")
     check(g2.save.flag("descent_sealed"),
           "egress: crossing up with the Mask seals the descent (SPREAD lock)")
-    check(g2.scene.fold_charge_fn(g2, "O") == 0.0
-          and not _take_fold(g2, "O"),
-          "egress: the descent fold is dead behind you")
+    # The descent is dead behind you: the shaft is done (descent_sealed) --
+    # the interact refuses and the grove's update no longer carries you down.
+    g2.player.x, g2.player.y = g2.scene._rite_pos
+    g2.scene.on_interact_fn(g2)                # the shaft: cold, done
+    g2.scene.on_update_fn(g2, g2.scene, 0.1)
+    check(g2.scene.key == "effigy_grove",
+          "egress: the shaft is dead behind you (no re-descent)")
     g2.save.set_flag("school_door_open", True)
     g2._school_door_t0 = None
     check(g2.scene.exit_gate_fn(g2, "M"),

@@ -708,12 +708,13 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   something asleep." / "I walked up. I looked in. For a blip something
   looked back, met my eye, and then it broke." / "I never reached it. One
   dream, a year ago, and it never came again. So why do I know this place."
-- **`the_rite`** (`_finish_rite`, note; the grove rite completed): "I went
+- **`the_rite`** (`_finish_rite`, note; the descent-dream completed): "I went
   back into the dream. On purpose, this time. The same door, the same
   light under it, a year old and not one day faded." / "I walked up to it
   the way I never did in my sleep. It knew me. It let me in." / "When I
-  came out of it the fire was open and the corn had closed. I am not
-  saying that to anyone the way I just said it here."
+  opened my eyes I was at the bottom of the shaft, in the dark, the mouth a
+  coin of grey light far above. No rope carried me down. I do not let
+  myself think about what did."
 - **`the_turning`** (`_tick_king_roam`, note; 2 evidence, the telegraph):
   "Something at the end of the north road turned to face me. It has not
   moved. It does not need to yet." / "It knows my face. Like a draft off a
@@ -958,22 +959,22 @@ fire, then the last chalk door on the board.
   the corner your own hand, the smallest one. It is the only door on the
   board that is open.)[/c]"
 
-## The grove rite & the descent gates
-- **First sight of the grove fold** (below 3 evidence, once):
-  "[c=dim](Something over the dead fire catches the light. A thread of
-  gold, standing on end. You lose it when you look straight at it.)[/c]"
-- **The fire's refusals** (`_grove_interact`): below 3 evidence: "The
-  thread of gold stands in the dead fire, not finished forming." Without
-  the Invitation: "The fire is ready for something. You were never given
-  what it wants." After the rite: "The fire is open. The way down waits."
-  After the descent seals: "Cold ash. The fire is done with this place."
-  Walking a surface exit before the rite (once): "The light over the fire
-  will not take your weight. Not yet."
-- **The rite's two-press commit:** "[c=dim](You stand over the dead fire.
-  The gold stands fully formed in it now, and the air leans toward it the
-  way a room leans toward an open window.)[/c]" / "[c=dim]You know what
-  this is. You stood in front of it once, a year ago, asleep, and you did
-  not answer.[/c]" / "[c=dim](Press again to close your eyes.)[/c]"
+## The mine mouth & the descent gates
+- **The descent** (`_grove_interact`; the shaft mouth in the grove).
+  **REDESIGNED 2026-07: the descent is the physical mine SHAFT now, not a
+  rift-portal, and it is NOT re-gated at the grove** (the way here was
+  already earned upstream, Sable's Invitation at 3 evidence then the school
+  rite). E at the lip is a two-press commit: "[c=dim](You stand at the lip
+  of the shaft. The cut rope hangs a body's length into the dark and stops,
+  frayed. There is no bottom in the light.)[/c]" / "[c=dim]You have stood
+  here before. A year ago, asleep, at a door you never reached.[/c]" /
+  "[c=dim](Press again to go down.)[/c]" The second press plays the
+  door-dream, and the dream IS the descent (the shaft carries the PI down to
+  the works). After the descent seals, the shaft is dead: "Cold air climbs
+  out of the shaft. It is done with this place." (The old evidence-gated
+  rift beats over the dead fire -- the thread of gold, the light that would
+  not take your weight, the fire ready for something you were never given --
+  were CUT with this rework.)
 - **The circle holds** (a surface exit after the rite, once): notice "The
   way you came does not open. The circle holds. There is only down."
 - **The shaft-floor pane, no Mask** (once): notice "The pane stands where
