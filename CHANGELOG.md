@@ -195,6 +195,20 @@
 
 ## Walls & interior geometry
 
+- **2026-07 -- #4c interior-door rollout continues: the church vestry got
+  its swinging leaf.** The church was already nave + vestry + bell-tower,
+  but the vestry was reached through an OPEN gap -- no door mechanic. Added
+  a `plank` inner door on that gap (`add_inner_door(3, 6)`): shut, it blocks
+  the sight cone, so the vestry (the preacher's quarters + the tower stairs)
+  is now a real shut-able blind spot a pursuer's line of sight breaks on,
+  not just a doorway. It starts closed (the preacher opens his own way
+  through on his cot round; the player toggles it with E) and sits in an E-W
+  wall, so the leaf swings N-S -- varied from the shop's E-W-swinging
+  stockroom/pantry doors. Reachability holds (smoke routes through the gap
+  tile); VISION-verified the leaf reads from all facings. Still open per
+  `TODO.md` #4c: the barn, sheriff's office, schoolhouse, Toby's house, the
+  Lodge interiors.
+
 - **2026-07 -- Wall-material rollout finished: Phase 2 complete + Phase 3
   (the mine as hewn rock).** Wave 3 opted the remaining above-ground
   interiors into `_SLAB_STYLE` (`barn` + `abandoned_farmhouse` = timber,

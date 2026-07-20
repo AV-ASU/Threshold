@@ -55,6 +55,16 @@ def build_church():
     sc.set_spawn("from_graveyard", 10, 1)      # one tile south of the ? door
     sc.set_spawn("from_bell_tower", 2, 2)      # at the foot of the U stairs
 
+    # The vestry doorway (the gap at col 3 in the row-6 dividing wall) gets a
+    # swinging plank leaf (#4c): a shut door blocks the sight cone, so the
+    # vestry (the preacher's quarters + the bell-tower stairs) is a real
+    # shut-able blind spot a pursuer's line of sight breaks on, not just an
+    # open gap. Starts closed; the preacher opens his own way through on his
+    # cot round, the player toggles it with E. It sits in an E-W wall run, so
+    # the leaf swings north-south (the shop's stockroom/pantry doors are the
+    # E-W-swinging pair, keeping the game's inner doors varied per error class 8).
+    sc.add_inner_door(3, 6, "plank")
+
     pos = sc.consume_marker("O")
     if pos:
         tx, ty = pos
