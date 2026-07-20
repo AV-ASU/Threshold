@@ -29,3 +29,8 @@ jobs:
         # commit. Self-configures the SDL dummy drivers.
         timeout-minutes: 25
         run: python tests/run_all.py
+      - name: Check canon-doc/code key drift
+        # Cheap tripwire: load-bearing item/scene keys named in
+        # NARRATIVE.md's Canon invariants must still appear in the
+        # source. Pure text/file parsing -- no display/audio needed.
+        run: python tools/check_canon_keys.py
