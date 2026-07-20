@@ -299,169 +299,21 @@ Only display names and fiction change.
 
 ## 4. Still loose (design TODO)
 
-> **2026-06 canon-alignment pass (settled with the user).** A batch of
-> story/canon decisions were locked that session; the **concrete code
-> changes** to make the game match live in **`TODO.md`** (the former
-> `GAME_CHANGES.md` handoff tracker, folded into `TODO.md` in 2026-07).
-> The decisions themselves are canon now and live where canon lives:
-> the Ledger placement, Sable as the most-attuned local, Royce, Mrs.
-> Calder, the testimony fragments, the Mask-as-permission temptation,
-> the keystone spent at the Threshold, the lure chain, and the awareness
-> model are all stated in `NARRATIVE.md` (§§1, 2, 4, 6, 8, 9). This
-> section keeps only what is genuinely still loose below.
+> The **concrete code changes** for canon-alignment work live in
+> **`TODO.md`**; the decisions themselves are canon and live where canon
+> lives (`NARRATIVE.md` §§1, 2, 4, 6, 8, 9). The history of everything this
+> section used to list as loose, and how it landed, moved to
+> `CHANGELOG.md`. What's still genuinely open is below.
 
-- ~~**Cultist movement → dynamic AI, not preset patrol coordinates.**~~
-  **DONE.** The hard-coded `waypoints=[...]` are gone from `_cultist` and all
-  14 spawns. SCOUT now **pure-roams** — each cultist picks its own reachable
-  goals, wanders, pauses to scan — and pursuit is **cover-aware** in two
-  ways. (1) **Detection is line-of-sight**, not X-ray: `has_los` gates on
-  `Scene.clear_sight_line` (the `blocks_sight` predicate — walls + solid props
-  occlude, windows + water do not), so stepping behind cover drops the lock
-  and the cultist falls to SEARCH. This is the hide system now — you break a
-  chase by **positioning**, not by an E-press (the old "behind" `hide_spots`
-  were removed as redundant; only crawl-**under**-furniture hides remain). (2)
-  **Pathing routes around cover**: a wrap-aware BFS nav layer
-  (`Scene.nav_grid`/`nav_clear_line`/`nav_path`/`nav_toward` in
-  `scenes/base.py`) steers pursuers **around** the volumetric props (pillars,
-  pews, cots, basins) while staying a straight shot in the open. Both wired
-  into both cult paths (`enemy.py` underground + `npc.py` surface chasers); the
-  `_force_chase` apex stays straight and **never loses sight** (relentless). A
-  chase carries **only across a direction-gated rift FOLD** now
-  (`_note_fold_pursuit`/`_tick_fold_pursuit` — surface NPC chasers AND
-  underground Enemy cultists, the latter spawned native to the destination); an
-  **ordinary crossing shakes it** — a door, ladder, rope, a seamless outdoor
-  passage, a road loop, or any non-fold target — so a chaser follows within a
-  scene and across a fold but **never across an ordinary scene boundary**
-  (play-notes narrowing, 2026-07). **SAFE_SCENES** stay the refuge a fold can't
-  breach. The Watcher-curse gaze still seeds on any fold OR passage
-  (`_exit_is_fold`) — that is His attention reaching across the wrongness, not
-  a cultist on foot. Guards: flow.py §20 (no preset routes + nav routes around
-  cover) and §21 (only a rift fold carries the chase; the refuge is never
-  breached), plus tests/fold_pursuit.py.
-- ~~**Scrub the eat-cult fiction (code ↔ NARRATIVE §2).**~~ **DONE.** Canon is a
-  **claiming** cult that renders no bodies (no cannibalism). The `works_cistern`
-  is **the Cistern** (the dig hitting the river — *"the water runs on,
-  downward, and does not echo back"*); `depths_threshing` is a literal grain
-  **tithe** (*"The town's whole harvest, carried down and never carried
-  back up."*); and the last tallow leak — the basement lodge-candle
-  callback (*"wax on your thumb… tasting it"*) — is re-cut to candle
-  **devotion** (*"the same guttering candles as the dark below, kept
-  burning up here too"* — its old "part of it the whole time" tail was
-  later cut in the #13b editorializing trim). A flow.py guard
-  (§19) locks the fiction out of the scene source.
-- ~~**Scrub time-loop language (code ↔ NARRATIVE §2).**~~ **DONE.** The fold is
-  **spatial, not temporal**. Old Pell reads as **stasis** (*"I've got the
-  calendar where I want it. Stopped."*); the road carries the **fold**
-  (Royce: *"The corn handed me back every time."*). No line says the days
-  repeat / fold back on themselves. Locked by the flow.py §19 guard.
-- ~~**Cut Toby's "dad" line.**~~ **DONE.** *"My dad went down too. He
-  still comes home for dinner."* is gone (it leaked that claiming is
-  *perceptible* + happens by *individual descent*, both forbidden by NARRATIVE §2). His
-  unnameable-wrongness register survives in his convo (*"I tried to lie
-  yesterday. My mouth wouldn't."*); the old tongue line lives on only as
-  his tableau's held-shut mouth (an art direction note, no longer spoken).
-  Locked by the flow.py §19 guard.
-- **Seed the door's dream (DONE).** The origin (NARRATIVE §2) is now diegetic: reading
-  Mara's journal through a third time triggers a wordless **door-dream
-  cutscene** (`_tick_flashback` in `systems/narrative_mixin.py`,
-  `_draw_flashback` in `ui/cutscenes.py`), and
-  living it writes a half-dismissed memory to the **case notebook**
-  (`_log_dream_entry`, stored in save arg `notes`, NOT `evidence`). Canon:
-  the PI dreamed the door **once, a year ago, never reached it** — the note
-  must read that way (a flow.py canon-guard enforces "a year" + no recurrence
-  language).
-- ~~**Reskin `effigy_grove` as a maker-less dread tableau.**~~ **DONE.**
-  Individual cursing is redundant now the closing rite claims the whole town
-  at once (NARRATIVE §2), so there is no maker. `effigy_grove` is a maker-less dread
-  tableau — a crop circle in the corn north of Brimley, above the river (the
-  corn itself is the border): the dead fire, the effigy ring, three weathered
-  standing stones with the nailed-up faces fixed to one, all tended by no one
-  you'll ever see — the work, no worker. Locked in `tests/flow.py`. *(Its
-  one-time siblings `husk_grove` / `scarecrow_ring` were cut with the walk-in
-  discovery folds, 2026-07.)*
-- ~~**Rehome the Watchers as His gaze (§1).**~~ **DONE (2026-07), then made
-  THE below-3 threat (play-notes rework).** The Watchers are His gaze made
-  manifest and the primary visibility driver below the King-gate. From
-  `WATCHER_WAKE_EV` (1) evidence, while the player is EXPOSED (open, not in
-  cover / a safe room), the domain OPENS Watchers on a timer
-  (`_tick_watchers`): `WATCHER_GRACE` (6s) before the first of a wave and
-  after clearing one, then the evidence-scaled `_watcher_spawn_interval`
-  between the rest (the King floods them deep). Each live Watcher HOLDS the
-  exposed player and drives visibility UP by `WATCHER_GAZE`/s (the active
-  climb, `_watcher_gaze`) plus a small residual `WATCHER_FLOOR`, so ignoring
-  them SNOWBALLS toward the King line; the field caps at `WATCHER_MAX`. Clear
-  them (gaze `WATCHER_GAZE_DISPEL` s / axe / round, `_dispel_watcher`); cover
-  pauses the timer and drops the hold. The old high-visibility
-  `_tick_gaze_bind` / `GAZE_BIND_*` trigger is retired. A Watcher opening
-  carries **no narrator box at all** (play-notes cut): the void-sting and
-  the eye itself are the tell — any future text must read as **His eye
-  reaching into the plane**, never a side-cult's spell. Internal names
-  (`_cursed`, `_apply_curse`) stay plumbing.
-  **The gaze opens under the open sky, in the deep, AND in a DARK non-refuge
-  interior (the "no light = danger" rework, TODO #21; `WATCHER_OPEN_SCENES`
-  now includes `DIM_INTERIOR_SCENES`).** In those dim rooms exposure is
-  **being in the DARK**: a light POOL (`Scene.lit_at`) or the flashlight is
-  the cover, so His gaze can't hold you in the light, and a Watcher caught in
-  a pool / the beam **BURNS** out fast (`WATCHER_LIGHT_BURN`,
-  `_tick_watcher_gaze`) -- the flashlight is how you clear them, and the
-  refuge here is the LIT room, not the building. The **true refuges stay
-  gaze-free**: `SAFE_SCENES` (the PI's room, `toby_house`) are excluded from
-  `WATCHER_OPEN_SCENES` AND `KING_FREE`, so no Watcher ever opens there, and a
-  plain interior outside both sets is gaze-free too. A fold into a non-open
-  destination binds nothing (`_roll_fold_watcher`). Guarded by
-  `tests/stealth.py` §11.
-- ~~**Gun = false-power threshold (§1).**~~ **DONE + flow-guarded.** The
-  mechanic matches canon and `tests/flow.py` locks all four facts:
-  **< 3 evidence kills cultists**, **3+ only staggers**, the **King and
-  the Watchers are bullet-phantom** (unshootable — you can't fire down a
-  direction you can't point at), and a **clean round always kills a
-  local** (the gate only ever protected the cult).
-- ~~**Scrap corpse persistence (§1, §2).**~~ **SUPERSEDED (2026-07
-  ruling: dead locals stay dead).** The scrap removed the old replay
-  and the accumulating corpse `mold` stage; the ruling reinstated
-  persistence in its simplest form — a `dead_locals` save-arg ledger +
-  `_apply_dead_locals` on scene load lays each killed local's body back
-  down where it fell. No mold stage returns (corpses draw at 0, a clean
-  fresh kill); the visibility spike and the cult body-investigate ping
-  are unchanged; cultist bodies still last only the visit. Guarded by
-  flow §32.
-- **Mara's journal → the door (DONE).** Reading `mom_notebook` to the end
-  drops the **door-dream cutscene** (the lure that took her) — the game's
-  clearest, wordless look at NARRATIVE §2: a dried-wood doorframe in black, a pulsing
-  gold glow pooled at the door's base, eyes peeking, and an **accelerating
-  swarm of His dark-wood masks** whose gold gazes all converge on the player,
-  over a wind/falling audio bed (`falling_air`). Mara is *answered, not
-  deceived*.
-- **Surface "He knows you" where it can land (DONE — NOT the lethal King).**
-  The PI's single year-ago dream sits in the **case notebook** (`the_dream`
-  note). When he first reaches the **real Threshold** (`scenes/depths.py
-  build_threshold`), having dreamed it (`flashback_seen`), one quiet line
-  lands before the doorframe beat: *"You have stood here before. In sleep."*
-  (canon-accurate: he did stand at the door, once, in the dream).
-- ~~**Name the principal locals.**~~ **DONE.** Locals in a small town know
-  each other by name; the wax-museum quality is partly the old role-tags.
-  Now named, surfaced as the dialogue speaker: the Sheriff is **Hollis
-  Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister
-  is **Hettie** (one person, not two — merged with the chorus Hettie), the
-  Kid **Toby**, and the Lodge Clerk **Mr. Sable** (a local — the most
-  attuned of them; the genteel name is the funereal-hospitality tell). The rest of the Brimley
-  chorus was already named: Old Pell, Mrs. Calder, Royce, Garrick. Locked in
-  `tests/flow.py`.
+- Dynamic cultist AI (no preset patrol coordinates, line-of-sight
+  detection, nav-aware pursuit, fold-only chase carry), the eat-cult and
+  time-loop fiction scrubs, Toby's cut "dad" line, the journal door-dream,
+  the maker-less effigy grove, the Watchers' rehoming as His gaze, the
+  gun's false-power threshold, corpse persistence, the "he knows you"
+  threshold recognition, and naming the principal locals are all landed —
+  see `CHANGELOG.md` for what each was and why it changed.
 - **The liminal-composition pass** (§6): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
-- ~~Individual-curser in dialog / evidence beats.~~ **Superseded:** the
-  closing rite makes an individual curser redundant (see the build-order
-  above).
-- ~~**Reconcile the calendar (April 14).**~~ **DONE.** The seal is locked
-  to **mid-January 1994** and the full chain lives in NARRATIVE §1 setting note 3
-  (door wakes ~April '93 → attuned from summer '93 → Mara north in the
-  fall → rite mid-January → the PI in on April 15, 1994). Swept: Hettie's
-  till is empty "since the new year" (both lines), the case note reads
-  "Drove north in the fall, quit calling home by the new year," Mara's
-  cell journal says the rest "had been here since the summer," the
-  threshing tithe dropped its "season on season," and every wall calendar
-  in town now defaults to a stopped **JAN 15** card. Flow-guarded
-  (`tests/flow.py` §23a). See NARRATIVE §1 setting note 3 (the timeline).
 - **Food scarcity — the VISUAL pass (mostly done).** The dialogue side is
   done (Hettie: "The shelves don't empty anymore... No deliveries.";
   "Shelves are bare. Till's been empty since the new year"), and the world
@@ -589,103 +441,33 @@ Built into the procedural draw layer (`scenes/base.py`,
   touch open floor, faint pitting/cracks. The seams vanish; a run reads
   as a single battered surface. Terrain rendering is shared through
   `draw_scene_terrain` (Scene.draw + the offline renderer use the same).
-- **Interior partition corners are BEVELED, not blocky (2026-07,
-  `scenes/terrain.py`).** The chunky 90° corner where an interior partition
-  wall juts into a room read as a box tip. `_bevel_corners(scene, tx, ty)`
-  returns a bitmask of a wall tile's exposed CONVEX corners — a corner where
-  BOTH adjacent tile faces (and the diagonal) are open interior floor (`.`) —
-  and both draw layers chamfer exactly those: the 3D box (`_extrude_box`, a
-  `bevel` param: shortened cardinal faces + a vertical chamfer quad per corner
-  + a beveled top cap) and the flat mass footprint (`_draw_wall_mass` clips
-  `_wall_tile_flat` to the same `_bevel_poly_local`, inset 1px more as motion
-  insurance). This is **provably orthogonal to the run MERGE**: a mid-run /
-  tee / shell tile has < 2 adjacent open sides → no convex corner → **byte
-  identical**, so runs stay a continuous full-thickness mass and only the juts
-  soften. **Draw-only** (collision + sight stay tile-based, like the inner-door
-  leaves). Gated to `_BEVEL_SCENES` (a module frozenset covering the
-  above-ground BUILDING interiors — shop / church / barn / schoolhouse /
-  sheriff_office / bedroom / clerk_room / guest_room_a+b / lodge / lodge_hall /
-  toby_house / abandoned_farmhouse / lodge_cellar — never the mine, hewn rock
-  reads right thick, nor outdoors; a single-room refuge with no partition juts
-  just renders byte-identical). `_BEVEL_INSET` (0.28·TILE) is
-  the single shared inset for both layers; bump it or subdivide the chamfer
-  into a 2-3 segment arc for rounder corners. Cache-safe (the bevel is a pure
-  function of the tile + its 8 neighbour chars + the gate).
-- **Thin-SLAB walls -- the step past the bevel, and NOT draw-only (2026-07,
-  maintainer "thin the walls / walls are no longer tiles / connect them by
-  smoothing it out").** Where the bevel only shaved a convex corner tip, a slab
-  makes the whole wall tile a THIN slab (`_SLAB_THICK` = 0.5·TILE). So the thin
-  walls stay CONNECTED and smooth -- no fat junction bulging out of a thin run,
-  no notch -- `_wall_slab(scene, tx, ty)` (`scenes/terrain.py`) returns the tile
-  footprint as the UNION of up to two BANDS: a VERTICAL band (present when the
-  tile has a wall neighbour N or S, i.e. it sits in a vertical run) and/or a
-  HORIZONTAL band (wall neighbour E or W). A straight run is ONE band; an
-  L-corner / T / cross is the union of both, so the thin walls meet flush. Each
-  band is thin across its run and reaches the tile edge ONLY where the run
-  continues (a wall neighbour), else stops at the other band's crossbar -- so a
-  corner or run-end never pokes a stub into a room. The cross-thickness reads
-  the flanks' openness (on-map = interior): floor/wall on BOTH sides CENTRES a
-  two-sided partition; ONE flank off-map is the building SHELL and it hugs the
-  OFF-MAP (exterior) edge, so the outer face stays on the building silhouette
-  (no floor lip past the wall) and the wall thins INward, growing the room a
-  little; a lone pillar with no wall neighbour stays full. Both draw layers read
-  it, looped per band (`_extrude_box` grew a `foot` rect param that shrinks the
-  3D box; `_draw_wall_mass` clips the flat near-black footprint to the union of
-  the band rects, so the mass matches the thinned boxes and the room floor shows
-  through). **Unlike the bevel, the geometry is REAL:** the collision / sight /
-  nav predicates (`scenes/base.py` `_obj_solid_here`, shared by `is_solid_at` /
-  `blocks_sight` / `_nav_solid_at`, point-in-ANY-band) also read `_wall_slab`,
-  so the wall the player BUMPS and the AI's line of sight obey the wall the
-  player SEES (inclusive bounds, so collision sits a hair proud of the drawn
-  face and a hug band's tile centre still reads solid -- the nav grid never
-  routes an NPC through a wall tile). Gated to `_SLAB_SCENES` (the shop was the
-  pilot; the Wave A refuges and the three principal-seat interiors -- church,
-  sheriff_office, lodge -- have since opted in); every NON-slab scene returns
-  None -> full tile -> byte-identical (the `--diff` gate confirms brimley /
-  works_cistern / depths_hall unchanged; the slab scenes legitimately differ).
-  The slab SUPERSEDES the bevel where both would apply
-  (`_bevel_corners` returns 0 for a `_SLAB_SCENES` scene). Cache-safe (a pure
-  function of the tile + its 4 orthogonal neighbour chars + the gate). Tune
-  `_SLAB_THICK`, and roll out one interior at a time per VISION (render + look,
-  all four facings + the dark).
-- **Rounded wall corners (2026-07, maintainer "rounded corners where the walls
-  connect").** The thin bands still meet at square 90° corners, so the DRAW
-  layers round them: `_rounded_wall_poly(scene, tx, ty)` traces the band union
-  to an outline (`pygame.mask`) and replaces each FREE corner (one facing open
-  floor) with a quarter-arc fillet (`_fillet`, radius `_ROUND_R` = half the band
-  thickness), while a corner that sits on a wall-neighbour SEAM stays sharp so
-  the tile still connects flush to its neighbour. It drives BOTH draw layers --
-  `_draw_wall_mass` fills the rounded polygon, and a new `_extrude_prism`
-  (the rounded-corner sibling of `_extrude_box`) extrudes it in 3D (exposed side
-  faces depth-sorted far→near, seam edges skipped, a rounded top cap). Building
-  outer corners and interior partition run-ends read rounded; the connections
-  stay flush. **Collision / sight / nav keep the SQUARE bands** (`_wall_slab`,
-  `_obj_solid_here`): the few-px rounding sits INSIDE the drawn face, so
-  collision is a hair proud (the safe direction) and no predicate pays for the
-  outline. Cached per (footprint, seams + the style's radius/rough); the
-  wall-box card cache holds the projected prism per tile+angle.
-- **Wall MATERIAL styles (2026-07, the rollout foundation).** Thickness, corner
-  round, surface roughness, and COLOUR are no longer bare constants -- they live
-  in `_WALL_STYLES` (`scenes/terrain.py`), one record per material (`{thick`
-  frac-of-TILE, `round` frac-of-thick, `rough` px, `tint` (dr,dg,db)`}`), and a
-  slab scene picks one via `_SLAB_STYLE` (scene → style). `_SLAB_SCENES` is
-  derived from it; `_wall_style(scene)` is the single lookup that `_wall_slab` /
-  `_rounded_wall_poly` read. So a room reads its CONSTRUCTION from the geometry
-  AND the colour: `plank` (thin, smooth, warm pine -- the shop), `plaster` (thin,
-  pale warm grey), `timber` (heavier, hewn, dark red-brown), `brick` (fired-clay
-  rust), `stone` (thick rough masonry, cold blue-grey). **`tint`** is a delta
-  ADDED to the near-black wall palette (`_tint_col`), applied to BOTH draw layers
-  (`_wall_tile_flat`'s mass + `_extrude_prism`'s faces via `_tilt_wall_box`),
-  kept dark + muddy + desaturated (the Darkwood rule, no cheerful primaries) so
-  it reads only where the interior light pools land; a non-slab scene's tint is
-  (0,0,0) → byte-identical. `rough > 0` runs `_roughen`:
-  it subdivides the FREE (drawn) outline edges and kicks their interior points
-  along the edge normal by a seeded amount (PER TILE, so masonry doesn't tile),
-  leaving SEAM edges and shared corners put -- **draw-only**, so collision /
-  sight / nav still read the square bands (guarded by `tests/stealth.py §16`).
-  Adding a scene is one `_SLAB_STYLE` line; `plank` reproduces the old fixed
-  `_SLAB_THICK`/`_ROUND_R` exactly (byte-identical). Roll `_SLAB_STYLE` out one
-  interior at a time per VISION.
+- **Interior walls render as thin-slab geometry, per material (current
+  state; `scenes/terrain.py`; how this evolved — bevel → slab → rounded →
+  materials — is in `CHANGELOG.md`, "Walls & interior geometry").**
+  `_wall_slab(scene, tx, ty)` returns a wall tile's footprint as the union
+  of up to two BANDS (a vertical band where the tile has a wall neighbour
+  N/S, a horizontal band where E/W), so runs/corners/tees/crosses meet
+  FLUSH with no fat junction and no notch. Cross-thickness reads the
+  flanks' openness: floor/wall both sides CENTRES a two-sided partition;
+  one flank off-map is the building SHELL, hugging the exterior edge (no
+  floor lip, thinning inward). This is the SINGLE SOURCE for both draw
+  layers (`_extrude_box`'s `foot` param, `_draw_wall_mass`'s clip) AND the
+  collision/sight/nav predicates (`scenes/base.py` `_obj_solid_here`,
+  point-in-ANY-band) — the wall the player bumps and the AI's line of
+  sight obey the wall drawn. `_rounded_wall_poly`/`_fillet` round every
+  FREE corner (facing open floor) into an arc while wall-seam corners stay
+  sharp so tiles connect flush; collision/sight/nav keep the square bands
+  underneath (the rounding sits inside the drawn face). Thickness, corner
+  round, surface roughness, and a dark muddy colour tint are per-MATERIAL
+  (`_WALL_STYLES`: plank/plaster/timber/brick/stone), keyed per scene via
+  `_SLAB_STYLE` and read through `_wall_style(scene)`; `_SLAB_SCENES` is
+  derived from it. Gated to `_SLAB_SCENES` (the shop was the pilot; Wave A
+  refuges + the three principal seats — church, sheriff_office, lodge —
+  have since opted in); every non-slab scene returns `None` → full tile →
+  byte-identical. This SUPERSEDES the older draw-only corner bevel where
+  both would apply (`_bevel_corners` returns 0 in a slab scene). Cache-safe
+  throughout (pure functions of the tile + its neighbour chars + the
+  gate). Roll `_SLAB_STYLE` out one interior at a time per VISION.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.
