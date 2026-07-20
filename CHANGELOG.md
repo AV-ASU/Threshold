@@ -195,6 +195,31 @@
 
 ## Walls & interior geometry
 
+- **2026-07 -- #4c interior-door rollout COMPLETE; four interiors left whole
+  on purpose.** With the shop pilot, the church vestry, the barn, the abandoned
+  farmhouse, the sheriff's office, and Toby's closet all doored, the rollout is
+  done. The remaining candidates were assessed and deliberately LEFT undivided,
+  per the settled principle (the door mechanic completes buildings that ARE
+  divided but lack the leaf; it never forces a warren onto an authentic open
+  space):
+  - **schoolhouse** -- the fiction is a "one-room schoolhouse" the commune
+    crammed into as an open dormitory ("they slept all over then"), and the
+    chalk-door rite fold stands in the open middle of the floor. A partition
+    would fight both the fiction and the rite geometry.
+  - **lodge (common room)** -- a deliberately open-plan hotel common room; its
+    col-7 counter peninsula replaced a wall on purpose, so re-walling it would
+    revert that choice.
+  - **lodge_hall** -- already a "hall of rooms": its rooms (the spare room, the
+    two guest rooms, the loft) are separate scenes off the corridor, and its
+    locked 'l' facade doors are deliberate uncanny dressing (they open onto
+    nothing), not real subrooms.
+  - **lodge_cellar** -- an authentic single L-shaped storage cellar, "strictly
+    a one-way-down room" with no side room to divide.
+
+  The single hotel guest rooms and the PI's bedroom are single rooms by nature.
+  TODO #4c's interior-door-rollout half is closed (the wall-material Phase 4 +
+  the deferred church-apse shapes remain).
+
 - **2026-07 -- #4c: Toby's closet got a curtain (the refuge, kept gentle).**
   The kid's house was room + closet through an OPEN col-5 gap. Toby's house is
   a SAFE_SCENE refuge, so the leaf is the gentlest in the set: a maroon

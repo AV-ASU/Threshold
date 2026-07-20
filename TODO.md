@@ -92,23 +92,17 @@ stays one square scene with the torus wrap; see #4).
 - Its own build, scoped to run after the conversation/tableau work so two
   big changes are never in the air at once.
 
-### 4c. **[Opus]** Interior doors + multi-subroom redesign — rollout
+### 4c. **[Opus]** Wall program — Phase 4 (freeform walls)
 
-The mechanic and the shop pilot are built (`CHANGELOG.md`, "Walls &
-interior geometry"). **Still open: roll the pattern out** to the remaining
-box-or-side-room interiors, one at a time, each VISION-verified: the
-sheriff's office, the schoolhouse, Toby's house (a refuge — keep it
-gentle), the Lodge interiors (the church vestry, the barn
-three-room division, and the abandoned-farmhouse four-room warren landed,
-`CHANGELOG.md`). Each is its own build; provenance
-first (the SCENE-DRESSING PROCESS in `CLAUDE.md`), reachability
-re-checked with smoke's flood-fill, doors mostly closed, doors placed in
-VARIED walls (not all facing one way).
-
-**The wall-material rollout program** (thin-slab + rounded + per-material
-styles, `CHANGELOG.md`) is a general tool now. Phase 2 (every above-ground
-interior) and Phase 3 (the mine as full-thick hewn `rock`) have both landed
-(`CHANGELOG.md`); still open:
+The **interior-door rollout is COMPLETE** (`CHANGELOG.md`, "Walls & interior
+geometry"): the shop pilot, the church vestry, the barn, the abandoned
+farmhouse, the sheriff's office, and Toby's closet are all doored, and the
+schoolhouse + the Lodge interiors were assessed and deliberately left whole as
+authentic open spaces (a one-room schoolhouse with the rite fold in the open
+floor; an open-plan lodge common room; a hall of separate room-scenes; a
+single-room cellar). The **wall-material rollout program** (thin-slab + rounded
++ per-material styles) has landed Phase 2 (every above-ground interior) and
+Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
 - **Phase 4 — freeform walls** (the north star): a wall SEGMENT primitive
   off the tile grid, unlocking diagonal walls, a curved church apse, a
   round silo/tower. Prototype ONE curved feature first.
