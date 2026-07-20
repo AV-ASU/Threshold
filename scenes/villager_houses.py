@@ -245,15 +245,18 @@ def build_sheriff_office():
     sc.add_furniture("table", [(3, 3), (4, 3)], w=54, h=36)   # Vane's desk
     sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=56)     # his cot, W wall
     sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
+    sc.add_furniture("bookshelf", [(4, 5), (5, 5)], w=58, h=18, seed=6)  # law books
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(1 * TILE + 20, 3 * TILE + 8, "washstand"))
     # Genset-electric main light + a backup candle Vane keeps oiled.
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 8, "candle"))
-    # Hunting-country office: a mounted buck over the desk (N wall), the
-    # calendar of months he stopped reporting (stopped JAN 15), a cobweb.
+    # Hunting-country office: a mounted buck + the trophy walleye over the desk
+    # (N wall, the pair), the calendar of months he stopped reporting (stopped
+    # JAN 15), a cobweb.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "mounted_fish"))
     sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 22, "calendar"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
 
@@ -263,7 +266,9 @@ def build_sheriff_office():
     sc.add_furniture("chair", [(1, 8)], w=22, h=28)
     sc.add_furniture("chair", [(1, 9)], w=22, h=28)
     sc.add_furniture("table", [(2, 10)], w=30, h=30)
-    sc.add_decoration(Decoration(3 * TILE + 16, 6 * TILE + 30, "oil_portrait",
+    # A former lawman's portrait on a SOLID stretch of the counter wall (col 5,
+    # clear of the counter door at col 3 -- error class 7: never over a door).
+    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 30, "oil_portrait",
                                  seed=9))
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 10 * TILE + 24, "lantern"))
