@@ -29,16 +29,19 @@ def build_effigy_grove():
     banks auto-reeded), and the clearing is an asymmetric lobed hollow
     worked into the corn on its near bank. The diggers followed the water
     DOWN to this ground and the night procession filed along it (NARRATIVE
-    §2/§5). The MINE MOUTH is an ADIT dug into the TOP (north) rock face of
-    the hollow (2026-07 rework): a dark tunnel mouth cut into a rock outcrop
-    (a wall mass), a timber SET over it, the haul rope hanging cut, the yard
-    in front dug down to bare dirt with the ore carts on their rail and the
-    heaped spoil. The congregation's empty effigy chairs stand in the hollow
-    facing the adit -- the work without the worker (the closing rite claimed
-    the town at once, NARRATIVE §4 / DESIGN.md §1). The corn is still the
-    border on every dry side. (The old crop-circle dressing -- the dead
-    fire, the standing stones, the nailed-up faces, and then the mid-hollow
-    black pit -- was cut on the way to this adit, 2026-07.)
+    §2/§5). The MINE MOUTH is an open HOLE dug into the ground you climb down
+    into, like a cellar entrance (2026-07 rework, the `descent_pit` prop): a
+    dark shaft ringed by broken dug earth, the far wall dropping away into
+    black, the CUT haul rope hanging into it (the floor below is well_bottom).
+    NOT a structure, not the town's water well -- a hole. The yard around it
+    is dug to bare dirt where they hauled and dumped, with the ore carts on
+    their rail and the heaped spoil ringing the mouth. The congregation's
+    empty effigy chairs stand back in the hollow facing the shaft -- the work
+    without the worker (the closing rite claimed the town at once, NARRATIVE
+    §4 / DESIGN.md §1). The corn is still the border on every dry side. (The
+    old dressing -- the dead fire, the standing stones, the nailed-up faces,
+    the grey adit wall, and the winch-well shaft -- was cut on the way to this
+    open hole, 2026-07.)
 
     THE WAY DOWN is the mine SHAFT itself (2026-07 rework: no rift-portal,
     no evidence re-gate -- the way here was already earned upstream, §3/§4).
@@ -81,30 +84,26 @@ def build_effigy_grove():
                 + 0.06 * math.sin(5.0 * ang - 1.1))
         return (dx * dx + dy * dy) <= lobe
 
-    # THE ADIT: the mine mouth is a tunnel dug into the TOP (north) rock face
-    # of the hollow -- not a pit in the grass. A dark tunnel MOUTH (@ void)
-    # opens SOUTH out of a ROCK OUTCROP (a wall mass), the working yard in
-    # front of it dug down to bare dirt. The way down is the door-dream rite
-    # at the mouth (E), no fold.
-    _adit_mouth = {(14, 2), (15, 2)}                 # the dark tunnel mouth
-    _rock_face = ({(tx, 1) for tx in range(12, 18)}  # the outcrop it is cut into
-                  | {(12, 2), (13, 2), (16, 2), (17, 2)})
-
-    def _in_yard(tx, ty):                             # the dug dirt working yard
-        return 3 <= ty <= 6 and 12 <= tx <= 17
+    # THE SHAFT HEAD: the way down is a timbered winch SHAFT sunk in the
+    # worked yard -- a stone-collared mouth with the headframe still standing
+    # over it and the haul rope (cut) hanging into the dark (the `well` prop;
+    # the game's own name for the floor below is well_bottom). Not a pit in
+    # the grass and not a rock wall: a shaft you were meant to be lowered
+    # down. The ground around it is dug to bare dirt where they hauled and
+    # dumped; the ore carts, their rail, and the heaped spoil ring it.
+    def _in_yard(tx, ty):                             # the dug dirt haul yard
+        return 3 <= ty <= 8 and 10 <= tx <= 16
 
     floor_rows = []
     for ty in range(H):
         row = []
         for tx in range(W):
-            if (tx, ty) in _adit_mouth:
-                row.append("@")            # the tunnel mouth: black
-            elif _in_river(tx, ty):
+            if _in_river(tx, ty):
                 row.append("~")            # river water (banks auto-reed)
             elif _in_bank(tx, ty):
                 row.append(";")            # worked mud bank at the water
             elif _in_yard(tx, ty) and _in_clearing(tx, ty):
-                row.append("d")            # the dug dirt yard before the mouth
+                row.append("d")            # the dug dirt haul yard
             else:
                 row.append("g")
         floor_rows.append("".join(row))
@@ -112,20 +111,23 @@ def build_effigy_grove():
     for ty in range(H):
         row = []
         for tx in range(W):
-            if (tx, ty) in _rock_face:
-                row.append("W")            # the mine's rock outcrop (a wall mass)
-            elif (tx, ty) in _adit_mouth:
-                row.append(".")            # the mouth is walkable (no corn/rock)
-            elif _in_river(tx, ty) or _in_bank(tx, ty) or _in_clearing(tx, ty):
+            if _in_river(tx, ty) or _in_bank(tx, ty) or _in_clearing(tx, ty):
                 row.append(".")            # walkable: water, bank, or clearing
             else:
                 row.append("C")            # standing corn -- the border
         objects_l.append(row)
-    # THE WAY DOWN is the mine ADIT (the mouth at (14, 2) + the E-press rite),
-    # not a rift-pane exit -- so there is no 'O' tile. The descent is the
-    # door-dream; _grove_update carries the PI down the moment it completes.
-    # The school door's grove-side pane ('M'), in the hollow. Walked SOUTH.
+    # THE WAY DOWN is the mine SHAFT itself (the well at (13, 5) + the E-press
+    # rite), not a rift-pane exit -- so there is no 'O' tile. The descent is
+    # the door-dream; _grove_update carries the PI down the moment it
+    # completes. The school door's grove-side pane ('M'), in the hollow.
+    # Walked SOUTH.
     objects_l[13][13] = "M"
+    # The mine mouth is an open HOLE (the descent_pit decoration below); make
+    # its footprint tiles solid-but-invisible ('x') so the player stops at the
+    # lip instead of walking onto the void -- the E-press at the lip is the
+    # descent, not a step into the hole.
+    for _px, _py in ((12, 5), (13, 5), (14, 5), (13, 4)):
+        objects_l[_py][_px] = "x"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("effigy_grove", floor_rows, objects, music="outside")
     # Part of the continuous outside world -- transitions in and out
@@ -187,7 +189,7 @@ def build_effigy_grove():
     # completion the shaft has you and _grove_update carries you down. NO
     # evidence gate: the way here was already earned upstream (Sable's
     # Invitation at 3 evidence, then the school rite). Re-armed on every exit.
-    sc._rite_pos = (14 * TILE + 16, 3 * TILE + 16)
+    sc._rite_pos = (13 * TILE + 16, 5 * TILE + 16)
     sc.add_interactable(sc._rite_pos[0], sc._rite_pos[1], 44)
 
     def _grove_interact(game):
@@ -204,9 +206,9 @@ def build_effigy_grove():
             save.set_flag("rite_laid", True)
             game.audio.play("low_pulse", 0.5)
             game.dialog.show([
-                "[c=dim](You stand at the mouth of the mine. A few feet in, "
-                "the floor drops away into a shaft, and the cut rope hangs "
-                "into it, frayed, a body's length, then nothing.)[/c]",
+                "[c=dim](You stand at the shaft head. The mouth drops away "
+                "into the dark, and the cut haul rope hangs into it, frayed, "
+                "a body's length, then nothing.)[/c]",
                 "[c=dim]You have stood here before. A year ago, asleep, at "
                 "a door you never reached.[/c]",
                 "[c=dim](Press again to go down.)[/c]",
@@ -237,7 +239,7 @@ def build_effigy_grove():
         # breathing, panned to the shaft and leaning in as you near it.
         t = getattr(scene, "_loom_t", 0.0) - dt
         if t <= 0.0:
-            fx, fy = 14 * TILE + 16, 3 * TILE + 16
+            fx, fy = 13 * TILE + 16, 5 * TILE + 16
             d = math.hypot(game.player.x - fx, game.player.y - fy)
             prox = max(0.25, 1.0 - d / (12 * TILE))
             pan = game.audio.pan_for_world(fx, game.player.x)
@@ -254,56 +256,55 @@ def build_effigy_grove():
     sc.on_enter_fn = _grove_enter
 
     # ---- Decorations ----
-    # THE ADIT MOUTH (the way down): a timber SET stands over the tunnel
-    # mouth -- uprights flanking the walking lane, a header beam passed under
-    # (the mine's own grammar, from the Timber Racks). The haul rope hangs
-    # from the header into the dark, CUT (NARRATIVE §7). The Sign is daubed
-    # at the threshold. You go down by the rite (the door-dream), never a
-    # climb; E at the mouth is the descent.
-    sc.add_furniture("shoring_frame", [(13, 3), (16, 3)],
-                     seed=5, ang=0.0, span=96)
-    sc.add_decoration(Decoration(14 * TILE + 22, 2 * TILE + 26, "rope"))
-    sc.add_decoration(Decoration(15 * TILE + 16, 3 * TILE + 10,
+    # THE MINE MOUTH (the way down): an open HOLE dug into the ground you climb
+    # down into, like a cellar entrance -- not a structure and not a well. A
+    # dark shaft with a broken-earth lip, rough timber shoring at the mouth,
+    # and a ladder dropping into the black (descent_pit). You go down by the
+    # rite (the door-dream), never a climb; E at the mouth is the descent. The
+    # Sign is daubed on the ground beside it.
+    sc.add_decoration(Decoration(13 * TILE + 16, 5 * TILE + 16,
+                                 "descent_pit", seed=5))
+    sc.add_decoration(Decoration(14 * TILE + 26, 5 * TILE + 22,
                                  "yellow_sign"))
-    # THE HAUL HEAD: a working mine mouth. The rail the ore carts ran on
-    # leads from the mouth out into the yard -- one cart still on the line,
-    # one tipped off it; the dug spoil is heaped where they threw it, hauled
-    # out while the rope still held. The yard ground is dug down to dirt.
-    for _rx, _ry in ((14, 4), (14, 5), (15, 6)):
+    # THE HAUL GEAR: the rail the ore carts ran on leads off the shaft into
+    # the yard -- one loaded cart still on the line, one tipped off it; the
+    # dug spoil is heaped where they threw it, hauled up while the rope still
+    # held. Kept EAST of the walking lane so the shaft stays the focus and the
+    # approach up the middle stays clear.
+    for _rx, _ry in ((14, 6), (15, 6), (16, 6)):
         sc.add_decoration(Decoration(_rx * TILE + 16, _ry * TILE + 16,
-                                     "mine_rail"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 5 * TILE + 8,
+                                     "mine_rail", ang=0.0))
+    sc.add_decoration(Decoration(16 * TILE + 20, 6 * TILE + 10,
                                  "ore_cart", seed=3))
-    sc.add_decoration(Decoration(16 * TILE + 20, 6 * TILE + 16,
+    sc.add_decoration(Decoration(15 * TILE + 18, 7 * TILE + 18,
                                  "ore_cart", seed=7))
-    sc.add_decoration(Decoration(12 * TILE + 12, 4 * TILE + 16,
+    sc.add_decoration(Decoration(11 * TILE + 12, 4 * TILE + 16,
                                  "spoil_heap", seed=5))
-    sc.add_decoration(Decoration(17 * TILE + 16, 4 * TILE + 16,
+    sc.add_decoration(Decoration(16 * TILE + 18, 8 * TILE + 12,
                                  "spoil_heap", seed=9))
-    sc.add_decoration(Decoration(13 * TILE + 16, 6 * TILE + 16,
+    sc.add_decoration(Decoration(10 * TILE + 20, 7 * TILE + 16,
                                  "spoil_heap", seed=2))
-    # The congregation's EFFIGY CRESCENT: empty chairs in the hollow, drawn
-    # up facing the adit they knelt toward -- a rank, not a tidy ring. Each
-    # stands for a local the cult worked against.
-    for tx, ty in ((10, 9), (13, 10), (16, 10), (18, 9)):
+    # The congregation's EFFIGY RANK: empty chairs drawn up back in the hollow
+    # facing the shaft they knelt toward -- a loose rank, not a tidy ring.
+    # Each stands for a local the cult worked against. Pulled clear of the
+    # shaft and the walking lane.
+    for tx, ty in ((10, 10), (16, 10), (11, 12), (15, 12)):
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "small_chair"))
-    # One old stain in the yard, one mark off the crescent -- kept sparse so
-    # the adit and the haul gear stay the focus.
-    sc.add_decoration(Decoration(13 * TILE + 16, 7 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 11 * TILE + 16,
-                                 "phantom_mark"))
-    # The way they came: the night procession filed up to the mouth
+    # One old stain in the yard, kept sparse so the shaft and the haul gear
+    # stay the focus.
+    sc.add_decoration(Decoration(11 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    # The way they came: the night procession filed up to the shaft
     # (NARRATIVE §5, Toby's witness). Bootprints worn up from the hollow --
     # staggered off the grid so the trail wanders.
-    for _fx, _fy in ((12, 9), (13, 8), (13, 7)):
+    for _fx, _fy in ((12, 10), (13, 9), (13, 8)):
         sc.add_decoration(Decoration(_fx * TILE + 14, _fy * TILE + 18,
                                      "mud_footprint"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE §4 / DESIGN.md §1), so individual cursing -- and the figure
     # who'd do it -- is gone. The grove is left as the work without the
-    # worker: the adit, the empty effigy chairs, the haul gear abandoned
+    # worker: the shaft, the empty effigy chairs, the haul gear abandoned
     # mid-work, all tended by no one you'll ever see.
     sc.hide_spots = []
     return sc

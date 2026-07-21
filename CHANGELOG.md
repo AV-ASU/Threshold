@@ -450,6 +450,25 @@
     the floor drops into a shaft just inside). NARRATIVE §7 step 5 + the
     docstring updated (adit, not a pit). Reads as a mine from all four
     facings; smoke + full gate green.
+  - **Follow-up 3 (maintainer: the adit "looks awful"; "DO NOT REUSE THE
+    WELL"; "IT IS THE ENTRANCE TO A MINE. ITS A HOLE OR LIKE GOING INTO A
+    CELLER"):** the adit's outdoor `W` rock face rendered as a grey building
+    wall, and a borrowed `well`/`cistern_basin` read as the town well. The
+    entrance is not a structure -- it is a HOLE you climb down into, like a
+    cellar. Built a purpose-made procedural prop, **`descent_pit`**
+    (`rendering/props.py _draw_descent_pit_solid` + a flat `_draw_descent_pit`
+    fallback in `entities/deco_mine.py`): an open shaft you look down into
+    under the tilt -- a dark mouth ringed by jagged thrown-up dug earth, the
+    far interior wall a rim->black vertical gradient (the bottomless drop),
+    the CUT haul rope hanging into it frayed (NARRATIVE §7, not a climbable
+    ladder -- there is no ordinary way down). Its footprint tiles are made
+    solid-but-invisible (`x`) so the player stops at the lip; E there is the
+    descent. The grove keeps the ore carts (rails turned to E-W haul track so
+    they stop reading as a second ladder), spoil, effigy rank. The old
+    `W` rock face, the `@` pit, and the winch-well/cistern shaft are all gone.
+    NARRATIVE §7 step 5 + DIALOGUE.md + the grove docstring reconciled to the
+    open hole; VISION-reverified (magnified + four facings + dark); full gate
+    green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

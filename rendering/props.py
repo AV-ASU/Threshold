@@ -1310,6 +1310,113 @@ def _draw_cellar_hatch_solid(surf, cam, deco):
                        max(2, int(4 * s)), 2)
 
 
+def _draw_descent_pit_solid(surf, cam, deco):
+    """The mine mouth: an open HOLE dug into the ground, like a cellar
+    entrance -- not a structure and not a well. A dark shaft ringed by broken
+    dug earth: the far wall drops away into black (bottomless) with the CUT
+    haul rope hanging into it, frayed. Under the tilt you look over the near
+    lip and straight down into it. (Flat pitch-0 uses the 2D sprite.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    hw, hd = 30 * s, 23 * s           # mouth half-width (E-W) / half-depth (N-S)
+    D = 46 * s                        # visible drop before it goes fully black
+    rng = random.Random(getattr(deco, "seed", 0) or 0)
+
+    def P(lx, ly, lz):
+        return cam.project(wx + lx, wy + ly, lz)
+
+    # mouth rim corners at ground; n = near (+hd, south), f = far (-hd, north)
+    nl, nr = P(-hw, hd, 0.0), P(hw, hd, 0.0)
+    fl, fr = P(-hw, -hd, 0.0), P(hw, -hd, 0.0)
+    nld, nrd = P(-hw, hd, -D), P(hw, hd, -D)
+    fld, frd = P(-hw, -hd, -D), P(hw, -hd, -D)
+
+    black    = (4, 3, 6)
+    wall     = (50, 38, 27)
+    earth    = (68, 51, 33)
+    earth_hi = (98, 76, 49)
+    earth_d  = (40, 30, 20)
+
+    # AO ground shadow so the hole seats into the earth
+    bx, by = cam.project(wx, wy, 0.0)
+    aw = int((hw + 12 * s) * cam.scale)
+    ah = int((hd + 12 * s) * cam.ground_squash() * cam.scale)
+    if aw > 0 and ah > 0:
+        ao = pygame.Surface((aw * 2 + 6, ah * 2 + 6), pygame.SRCALPHA)
+        pygame.draw.ellipse(ao, (0, 0, 0, 82), (3, 3, aw * 2, ah * 2))
+        surf.blit(ao, (int(bx) - aw - 3, int(by) - ah - 3))
+
+    # 1) the DUG-EARTH RIM: a jagged mound of thrown-up earth ringing the mouth
+    #    (draw the outer earth footprint; the dark mouth punches through it)
+    R = 8 * s
+    outer = []
+    corners = [(-hw - R, hd + R), (hw + R, hd + R),
+               (hw + R, -hd - R), (-hw - R, -hd - R)]
+    for i in range(4):
+        (ax, ay), (bx2, by2) = corners[i], corners[(i + 1) % 4]
+        for k in range(4):
+            t = k / 4.0
+            outer.append(P(ax + (bx2 - ax) * t + rng.uniform(-2.4 * s, 2.4 * s),
+                           ay + (by2 - ay) * t + rng.uniform(-2.4 * s, 2.4 * s), 0.0))
+    pygame.draw.polygon(surf, earth, outer)
+    pygame.draw.polygon(surf, earth_hi, outer, max(1, int(2 * s)))   # crumbling lit edge
+
+    # 2) the VOID mouth (black)
+    pygame.draw.polygon(surf, black, [nl, nr, fr, fl])
+    # 3) side interior walls (west/east) receding into the dark
+    pygame.draw.polygon(surf, earth_d, [fl, nl, nld, fld])
+    pygame.draw.polygon(surf, earth_d, [fr, nr, nrd, frd])
+    # 4) the FAR interior wall you look into: a rim->black vertical gradient --
+    #    the drop the eye follows down
+    bands = 9
+    for i in range(bands):
+        t0, t1 = i / bands, (i + 1) / bands
+        a = (fl[0] + (fld[0] - fl[0]) * t0, fl[1] + (fld[1] - fl[1]) * t0)
+        b = (fr[0] + (frd[0] - fr[0]) * t0, fr[1] + (frd[1] - fr[1]) * t0)
+        c = (fr[0] + (frd[0] - fr[0]) * t1, fr[1] + (frd[1] - fr[1]) * t1)
+        d = (fl[0] + (fld[0] - fl[0]) * t1, fl[1] + (fld[1] - fl[1]) * t1)
+        f = (1.0 - t0) ** 1.7
+        col = (int(wall[0] * f + black[0] * (1 - f)),
+               int(wall[1] * f + black[1] * (1 - f)),
+               int(wall[2] * f + black[2] * (1 - f)))
+        pygame.draw.polygon(surf, col, [a, b, c, d])
+    for gx in (-0.5, -0.1, 0.35):                        # dug tool-marks / strata
+        tx = gx * hw
+        pygame.draw.line(surf, earth_d, P(tx, -hd, -3 * s),
+                         P(tx, -hd, -D * 0.82), max(1, int(1 * s)))
+
+    # 5) the CUT HAUL ROPE hanging into the dark -- frayed, a body's length,
+    #    then nothing (NARRATIVE §7: no rope carries you down, the dream does;
+    #    a cut rope, not a climbable ladder, so there is no ordinary way down)
+    rx, ry = wx + 2 * s, wy - hd + 7 * s        # hangs from just inside the rim
+    rtop, rbot = -1.0 * s, -D * 0.44
+    cord, cord_d = (128, 106, 68), (84, 65, 39)
+    rope = []
+    for i in range(9):
+        f = i / 8.0
+        z = rtop + (rbot - rtop) * f
+        rope.append(cam.project(rx + math.sin(f * 5.0) * 1.5 * s, ry, z))
+    pygame.draw.lines(surf, cord_d, False, rope, max(2, int(3 * s)))
+    pygame.draw.lines(surf, cord, False, rope, max(1, int(2 * s)))
+    ex, ey = rope[-1]                            # the frayed cut end, then black
+    for dx in (-3, -1, 1.5, 3):
+        pygame.draw.line(surf, cord, (ex, ey),
+                         (ex + dx * s, ey + rng.uniform(1.5, 3.5) * s), 1)
+
+    # 6) the near LIP last: the bright broken edge where the ground drops in
+    def jag(a, b, n, amp):
+        pts = []
+        for k in range(n + 1):
+            t = k / n
+            x, y = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+            if 0 < k < n:
+                x += rng.uniform(-amp, amp)
+                y += rng.uniform(-amp, amp)
+            pts.append((x, y))
+        return pts
+    pygame.draw.lines(surf, earth_hi, False, jag(nl, nr, 6, 1.9 * s), max(2, int(2 * s)))
+
+
 # ---- Lighting fixtures as real volumetric props ---------------------------
 # Each reads `deco.kwargs['z']` for the base height (a candle on a tabletop
 # stands ON the tabletop, not hovering at floor level), then builds the body
@@ -2702,6 +2809,7 @@ SOLID_PROPS = {
     "shaft_ladder":  _draw_shaft_ladder_solid,
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
+    "descent_pit":   _draw_descent_pit_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
     "town_sign":     _draw_town_sign_solid,
