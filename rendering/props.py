@@ -1339,18 +1339,47 @@ def _draw_hill_cap_solid(surf, cam, deco):
                             wy + ry * wob[i] * scale * math.sin(2 * math.pi * i / N), zc)
                 for i in range(N)]
         pygame.draw.polygon(surf, col, ring)
-    # a light grass TEXTURE so the dome doesn't read as a bare balloon: short
-    # world-fixed tuft flecks scattered over the crown, darker + lighter grass
-    for _ in range(int(26 * s)):
-        a = rng.uniform(0, 6.283)
-        rr = math.sqrt(rng.random()) * 0.86
-        gx = wx + rx * rr * math.cos(a)
-        gy = wy + ry * rr * math.sin(a)
-        gz = z + bulge * (1.0 - rr) * 0.9
+    # --- DETAIL over the dome (all world-fixed by seed so it never crawls) ---
+    def _pt(a, rr, lift=0.0):
+        return (wx + rx * rr * math.cos(a), wy + ry * rr * math.sin(a),
+                z + bulge * (1.0 - rr) + lift)
+
+    # (a) soft grass CLUMPS -- mottled darker/lighter patches for tonal relief,
+    #     so the crown isn't one flat gradient
+    for _ in range(int(16 * s)):
+        a = rng.uniform(0, 6.283); rr = math.sqrt(rng.random()) * 0.86
+        gx, gy, gz = _pt(a, rr)
+        c = cam.project(gx, gy, gz)
+        pr = int(rng.uniform(6, 13) * s)
+        shade = rng.choice([(28, 52, 24), (52, 84, 44), (66, 98, 52)])
+        patch = pygame.Surface((pr * 2 + 2, pr + 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(patch, (*shade, 85), (0, 0, pr * 2, pr))
+        surf.blit(patch, (int(c[0]) - pr, int(c[1]) - pr // 2))
+
+    # (b) STONES poking through the turf -- the hill's own rock showing
+    for _ in range(int(5 * s)):
+        a = rng.uniform(0, 6.283); rr = math.sqrt(rng.random()) * 0.72
+        gx, gy, gz = _pt(a, rr)
+        c = cam.project(gx, gy, gz)
+        sr = int(rng.uniform(3, 6) * s)
+        rk = (int(c[0]) - sr, int(c[1]) - sr // 2, sr * 2, max(2, sr))
+        pygame.draw.ellipse(surf, (40, 43, 49), rk)
+        pygame.draw.ellipse(surf, (86, 88, 96),
+                            (rk[0] + 1, rk[1], rk[2] - 3, max(1, rk[3] - 2)))
+
+    # (c) dense GRASS TUFTS -- varied length, lean and shade, the odd dry gold
+    #     tip tying the crown to the field around it
+    greens = [(28, 52, 24), (46, 80, 38), (62, 96, 50), (80, 112, 58)]
+    for _ in range(int(78 * s)):
+        a = rng.uniform(0, 6.283); rr = math.sqrt(rng.random()) * 0.94
+        gx, gy, gz = _pt(a, rr)
         p0 = cam.project(gx, gy, gz)
-        p1 = cam.project(gx + rng.uniform(-1.2, 1.2) * s, gy, gz + rng.uniform(2, 4) * s)
-        tuft = (56, 88, 44) if rng.random() < 0.5 else (30, 54, 26)
-        pygame.draw.line(surf, tuft, p0, p1, 1)
+        hh = rng.uniform(2.5, 6.5) * s
+        p1 = cam.project(gx + rng.uniform(-1.7, 1.7) * s, gy, gz + hh)
+        pygame.draw.line(surf, rng.choice(greens), p0, p1, 1)
+        if rng.random() < 0.09:                       # a dry gold blade tip
+            pygame.draw.line(surf, (154, 142, 80), p1,
+                             (p1[0], p1[1] - max(1, int(1.5 * s))), 1)
 
 
 # ---- Lighting fixtures as real volumetric props ---------------------------
