@@ -417,11 +417,11 @@ below, and the mine has one mouth. In order:
    final chalk door drawn on the board: the school↔grove fold opens
    and lands him in the fold-hidden grove clearing, the mouth of the
    cult's mine.
-5. **The mine mouth.** The grove is the mine's dug mouth: a hewn-rock outcrop
-   with a dark ADIT cut into it, the same rough rock the Works below are cut
-   from, timbered over like the racks below, the shaft dropping away just
-   inside with the cut haul rope hanging into it. Ore carts and spoil stand
-   abandoned mid-work along the rail beside it. The rope is CUT (§14), so you
+5. **The mine mouth.** The grove is the mine's dug mouth: a green HILL in the
+   middle of the clearing with a dark stone ADIT cut into its south face,
+   timbered over like the racks below, the shaft dropping away just inside with
+   the cut haul rope hanging into it. Ore carts and spoil stand abandoned
+   mid-work along the rail in the yard below it. The rope is CUT (§14), so you
    cannot climb down — you go down by the RITE, and there is **no gate at the
    mouth**
    (the way here was already earned, §3/§4). At the mouth the PI

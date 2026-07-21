@@ -727,12 +727,18 @@ it renders the procedural sprites to a labelled PNG strip.
   stays sharp (so tiles still connect flush); it drives the flat mass + a 3D
   `_extrude_prism`. Collision/sight/nav keep the square bands (rounding sits
   inside the drawn face). **Thickness + round + roughness + COLOUR are
-  per-MATERIAL:** `_WALL_STYLES` (`{thick, round, rough, tint}`) keyed by scene
-  via `_SLAB_STYLE`, read through `_wall_style(scene)`; `_SLAB_SCENES` is derived
-  from it. So a scene reads its construction (`plank`/`plaster`/`timber`/`brick`/
-  `stone`) from geometry AND a dark muddy colour `tint` (added to the near-black
-  palette in both draw layers, Darkwood-safe); a non-slab scene's tint is
-  (0,0,0) → byte-identical. Add a scene = one `_SLAB_STYLE` line.
+  per-MATERIAL:** `_WALL_STYLES` (`{thick, round, rough, tint, top_tint?}`) keyed
+  by scene via `_SLAB_STYLE`, read through `_wall_style(scene)`; `_SLAB_SCENES` is
+  derived from it. So a scene reads its construction (`plank`/`plaster`/`timber`/
+  `brick`/`stone`/`rock`/`turf`) from geometry AND a dark muddy colour `tint`
+  (added to the near-black palette in both draw layers, Darkwood-safe); a
+  non-slab scene's tint is (0,0,0) → byte-identical. Add a scene = one
+  `_SLAB_STYLE` line. **`top_tint` (2026-07) tints the TOP cap face separately**
+  from the sides (`_wall_top_tint_for`, applied in both draw layers): only
+  `turf` sets it — a GRASS-green top over cold STONE sides, so a full-thick mound
+  reads as a grassy HILL with bare stone where it is cut into (the effigy grove's
+  mine mouth: a green hill in `_ROCK_STYLE` with a stone adit). Every other style
+  omits `top_tint` → the top falls back to the side `tint` → byte-identical.
 - **No diagonal-only wall joins in a slab scene (2026-07, maintainer "add a rule
   not to have walls like that").** Two walls that meet only at a DIAGONAL (the
   shared corner tile missing) look fine as fat full tiles but render as

@@ -960,9 +960,9 @@ fire, then the last chalk door on the board.
   board that is open.)[/c]"
 
 ## The mine mouth & the descent gates
-- **The descent** (`_grove_interact`; the mine mouth in the grove -- a
-  hewn-rock outcrop with a dark ADIT cut into it, the same rock the Works
-  below are cut from, timbered over, the shaft dropping away just inside).
+- **The descent** (`_grove_interact`; the mine mouth in the grove -- a green
+  HILL with a dark stone ADIT cut into its south face, timbered over, the shaft
+  dropping away just inside).
   **REDESIGNED 2026-07: the descent is the physical mine now, not a
   rift-portal, and it is NOT re-gated at the grove** (the way here was already
   earned upstream, Sable's Invitation at 3 evidence then the school rite). E at

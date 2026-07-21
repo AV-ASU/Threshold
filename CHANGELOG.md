@@ -526,6 +526,22 @@
     adit mouth (dialog back to "a few feet in, the floor drops away into a
     shaft"); NARRATIVE §7 step 5 + DIALOGUE.md + the grove docstring reconciled.
     Full gate green.
+  - **Follow-up 8 (maintainer: "put that in the middle and make it shaped like
+    a hill green and stone cut into it"):** the grey rock outcrop became a green
+    HILL with stone cut into it, centred in the clearing. Needed a per-face wall
+    tint so one mound could be grass on top AND stone on the cut faces: added
+    `_wall_top_tint_for` + a `top_tint` override in `_WALL_STYLES` (used by both
+    the tilt `_extrude_prism` path and the flat `_wall_tile_flat` path), and a
+    new **`turf`** material -- cold STONE `tint` on the side/foot faces, GREEN
+    grass `top_tint` on the cap. Every existing style omits `top_tint`, so it
+    falls back to the side tint and all shipped scenes stay byte-identical. The
+    grove's `_ROCK_STYLE` entry switched rock->turf; the mouth is now a radial
+    turf mound centred at tile (12,8) with a dark ADIT cut into its SOUTH face
+    (the exposed stone cut reads where the grass gives way), the interact/loom/
+    spawns/dressing all moved to the centred layout. Still real wall geometry,
+    so static + correct from every facing; the mine's own material, so it fits
+    the world. Grove docstring + NARRATIVE §7 step 5 + DIALOGUE.md reconciled.
+    Full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

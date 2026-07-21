@@ -1775,6 +1775,14 @@ _WALL_STYLES = {
     # corner round (rock breaks sharp + jagged, not filleted arcs), and a heavy
     # rough so the wall face reads irregular/organic instead of a machined box.
     "rock":    {"thick": 1.00, "round": 0.00, "rough": 3.2, "tint": (14, 10, 4)},    # dark muddy earth-rock
+    # A grassy HILL cut open: the SIDE/foot faces are cold exposed STONE (the
+    # `tint`), but the flat TOP is GRASS (`top_tint` -- a per-face override, so
+    # a mound reads as green turf on top with bare stone showing where it is cut
+    # into, e.g. an adit mouth). Only `turf` sets top_tint; every other style
+    # (and every non-styled scene) leaves it None -> the top uses `tint` ->
+    # byte-identical.
+    "turf":    {"thick": 1.00, "round": 0.55, "rough": 3.0, "tint": (2, 12, 18),
+                "top_tint": (-18, 26, -36)},                                        # green grass on stone
 }
 _SLAB_STYLE = {
     "shop": "plank",
@@ -1816,14 +1824,14 @@ _ROCK_STYLE = {k: "rock" for k in (
     "depths_antechamber", "depths_procession", "depths_hall",
     "depths_threshing", "depths_stair",
     "the_sump", "the_cells", "the_old_stores",
-    # The effigy grove is outdoors, but its mine MOUTH is a hewn-rock outcrop
-    # (the W tiles of the adit): styling it `rock` renders that outcrop with the
-    # SAME hewn-rock draw as the mine below, so the entrance matches the world
-    # it opens into instead of the default grey building-wall look. The grove's
-    # only W tiles are the mouth, so nothing else is touched; draw-only, so its
-    # collision/sight/nav are unchanged.
-    "effigy_grove",
 )}
+# The effigy grove is outdoors, but its mine MOUTH is a HILL with stone cut into
+# it (the W tiles): the `turf` style renders the mound with a GRASS top and bare
+# STONE side/cut faces, so it reads as a green hill with a stone adit dug into
+# it, in the game's own wall-geometry (not a grey building wall). Full-thick like
+# rock (collision reads the tile grid), so it joins _ROCK_STYLE for that routing
+# but with the turf material.
+_ROCK_STYLE["effigy_grove"] = "turf"
 _ROCK_SCENES = frozenset(_ROCK_STYLE)    # derived: full-thick + rough-hewn rock
 
 
@@ -1853,6 +1861,17 @@ def _wall_tint_for(scene):
     (non-slab scene, or a slab scene whose style declares no tint)."""
     style = _wall_style(scene)
     return style.get("tint", (0, 0, 0)) if style else (0, 0, 0)
+
+
+def _wall_top_tint_for(scene):
+    """The tint delta for the wall TOP face -- a style's `top_tint` override
+    (e.g. `turf`'s green grass over stone sides), else the same as the side
+    `tint`. A style without `top_tint` and a non-styled scene both fall back to
+    the side tint, so the top is byte-identical to before this override."""
+    style = _wall_style(scene)
+    if not style:
+        return (0, 0, 0)
+    return style.get("top_tint", style.get("tint", (0, 0, 0)))
 
 
 def _wall_slab(scene, tx, ty):
@@ -2192,7 +2211,7 @@ def _wall_tile_flat(surf, scene, tx, ty, rx, ry):
     tint = _wall_tint_for(scene)
     base = _tint_col(_WALL_BASE, tint)
     face = _tint_col(_WALL_FACE, tint)
-    top = _tint_col(_WALL_TOP, tint)
+    top = _tint_col(_WALL_TOP, _wall_top_tint_for(scene))    # grass over stone for turf
     foot = _tint_col(_WALL_FOOT, tint)
     pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
     hsh = (tx * 73856093) ^ (ty * 19349663)
@@ -3583,7 +3602,8 @@ def _tilt_wall_box(surf, camera, scene, tx, ty):
         pts, draw_edges = poly
         tint = _wall_tint_for(scene)       # material colour, matching the mass
         fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
-        tc = _tint_col(top_col if top_col else _WALL_TOP, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP,
+                       _wall_top_tint_for(scene))   # top may be grass over stone
         _extrude_prism(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
                        pts, draw_edges, fc, tc)
 
