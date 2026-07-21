@@ -61,6 +61,12 @@ tools already shipped:
 - **Landmark repetition + same-scene silent folds** (`Game.cross_fold`,
   draw-only) for the "handed back / the town rearranges" uncanny with no
   sim change.
+- **Turf HILLS + unified roof caps** (shipped 2026-07 for the grove mine
+  mouth): the `turf` wall material (grass top, stone sides, via `top_tint`) +
+  the `hill_cap` dome prop raise a grassy hill from the game's OWN wall
+  geometry — real occlusion + relief for an outdoor scene, static/correct
+  from every facing, WITHOUT the parked heightfield floor-roll. A new lever
+  for this pass (`rendering/props.py`, `scenes/terrain.py _WALL_STYLES`).
 
 **To turn into work: name ONE scene and the ONE composition it gets** (this
 sightline broken by this corn lane, this landmark passed twice in fog). Do
@@ -349,6 +355,14 @@ compression pass (#4b).
   `scenes/__init__.py` duplicates the `UNDERGROUND_SCENES` gating idea,
   derive from one source; (d) `husk_bundle` + `pillar` are registered
   kinds with no placements (keep as reusable art or cut).
+- **[Opus]** **Grove mine-hill finish level-up** (deferred, maintainer "fine
+  for now") — the mouth is a green turf HILL with a stone adit; its grass-dome
+  ROOF got a full detail pass, but the stone side/cut faces + the adit mouth
+  are plainer by comparison. Bring the stone up to the roof's finish (strata,
+  cracks, a little scree/moss at the base) and make the adit read a touch more
+  as the focal point, so the whole object sits at one level of craft.
+  `hill_cap` (`rendering/props.py`) + the `turf` walls + `_grove_interact`
+  dressing (`scenes/hidden_folds.py`).
 - **[Opus]** **Louvered belfry openings** — the bell tower's belfry uses
   the glazed cottage-window char (`'i'`), which renders as glass everywhere.
   A belfry wants louvered slats, which needs its own window style or a

@@ -412,7 +412,11 @@
   maintainer: make the grove read as the **actual mine mouth** — a black
   void-floor SHAFT collared in timber, the haul rope hanging CUT (the rope
   is cut, canon), ore carts on a rail, spoil heaped, the Sign daubed at the
-  lip — and drop the rift entirely. `_grove_interact` is now an ungated
+  lip — and drop the rift entirely. (That first VISUAL was itself redesigned
+  across the follow-ups below — well, custom open-pit prop, rock adit — and
+  LANDED as a green turf HILL with a stone ADIT cut into it and a unified
+  grass-dome roof; the DESCENT mechanic described here is unchanged throughout.)
+  `_grove_interact` is now an ungated
   two-press commit at the shaft lip; the second press plays the SAME
   door-dream, and the dream IS the descent — `_finish_rite` sets
   `rite_performed`, and the grove's `on_update` carries the PI straight down
