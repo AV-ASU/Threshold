@@ -1816,6 +1816,13 @@ _ROCK_STYLE = {k: "rock" for k in (
     "depths_antechamber", "depths_procession", "depths_hall",
     "depths_threshing", "depths_stair",
     "the_sump", "the_cells", "the_old_stores",
+    # The effigy grove is outdoors, but its mine MOUTH is a hewn-rock outcrop
+    # (the W tiles of the adit): styling it `rock` renders that outcrop with the
+    # SAME hewn-rock draw as the mine below, so the entrance matches the world
+    # it opens into instead of the default grey building-wall look. The grove's
+    # only W tiles are the mouth, so nothing else is touched; draw-only, so its
+    # collision/sight/nav are unchanged.
+    "effigy_grove",
 )}
 _ROCK_SCENES = frozenset(_ROCK_STYLE)    # derived: full-thick + rough-hewn rock
 

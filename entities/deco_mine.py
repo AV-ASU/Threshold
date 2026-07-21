@@ -76,20 +76,6 @@ class DecoMineMixin:
             pygame.draw.rect(surf, (86, 66, 43),
                              (int(bx) + 1, int(by) - 2, 3, 4))
 
-    def _draw_descent_pit(self, surf, x, y):
-        """Flat pitch-0 fallback for the mine mouth: a dark dug hole with a
-        broken earth rim and the cut haul rope hanging into the dark. (The
-        tilt view draws it as a real open shaft you look down into via
-        rendering/props.py.)"""
-        pygame.draw.ellipse(surf, (46, 34, 22), (x - 23, y - 16, 46, 32))   # dug rim
-        pygame.draw.ellipse(surf, (7, 6, 10), (x - 18, y - 12, 36, 24))     # the hole
-        pygame.draw.ellipse(surf, (2, 2, 4), (x - 12, y - 6, 24, 16))       # black throat
-        pygame.draw.line(surf, (84, 65, 39), (x + 1, y - 10), (x + 2, y + 2), 2)
-        pygame.draw.line(surf, (128, 106, 68), (x + 1, y - 10), (x + 2, y + 2), 1)
-        for dx in (-2, 0, 2):                                               # frayed cut end
-            pygame.draw.line(surf, (128, 106, 68), (x + 2, y + 2),
-                             (x + 2 + dx, y + 5), 1)
-
     def _draw_ore_cart(self, surf, x, y):
         # top-down: the rusted tub, its dark mouth, four wheel hubs
         pygame.draw.rect(surf, (58, 40, 30), (x - 13, y - 8, 26, 16))

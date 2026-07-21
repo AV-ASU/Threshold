@@ -506,6 +506,26 @@
     fixed world rim point (the north side). The hole now looks genuinely
     different from each facing -- a static object you move around, not a card
     turning to face you. Full gate green.
+  - **Follow-up 7 (maintainer: "it still doesn't look good, it doesn't look
+    like it fits in our world" -> chose "render the mouth in the game's rock
+    vocabulary"):** the whole custom `descent_pit` line was a one-off drawn in
+    a visual language nothing else in the game uses (smooth 3D gradient walls),
+    so it read as a foreign smudge. CUT the pit prop entirely
+    (`_draw_descent_pit_solid` + the flat `_draw_descent_pit` + the SOLID_PROPS
+    entry) and rebuilt the mouth from the game's OWN hewn-rock renderer:
+    `effigy_grove` joined `scenes/terrain.py _ROCK_STYLE`, so the mouth's `W`
+    tiles now render with the exact hewn-rock draw the Works/Depths use (rough
+    outline, dark muddy tint) instead of the default grey building wall. The
+    mouth is a craggy rock OUTCROP (an irregular W-tile footprint with peaks)
+    with a dark ADIT (`@`) cut into its south face, timbered over with a
+    `shoring_frame` (a plain decoration so the mouth stays walkable to press E),
+    a little bare bedrock at the threshold easing to the dug-dirt haul yard.
+    Because it is real wall geometry it is static and correct from every facing
+    (adit on approach, solid crag from behind) and it matches the mine it opens
+    into by construction. Interact + loom + the two-press dialog moved to the
+    adit mouth (dialog back to "a few feet in, the floor drops away into a
+    shaft"); NARRATIVE §7 step 5 + DIALOGUE.md + the grove docstring reconciled.
+    Full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

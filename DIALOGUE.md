@@ -960,16 +960,16 @@ fire, then the last chalk door on the board.
   board that is open.)[/c]"
 
 ## The mine mouth & the descent gates
-- **The descent** (`_grove_interact`; the mine mouth in the grove -- an open
-  HOLE dug into the ground you climb down into, like a cellar entrance, dug
-  earth ringing it and the cut haul rope hanging into the dark). **REDESIGNED
-  2026-07: the descent is the physical mine now, not a rift-portal, and it is
-  NOT re-gated at the grove** (the way here was already earned upstream,
-  Sable's Invitation at 3 evidence then the school rite). E at the mouth is a
-  two-press commit: "[c=dim](You stand at the shaft head.
-  The mouth drops away into the dark, and the cut haul rope hangs into it,
-  frayed, a body's length, then nothing.)[/c]" / "[c=dim]You have stood here
-  before. A year ago, asleep, at a door you never reached.[/c]" /
+- **The descent** (`_grove_interact`; the mine mouth in the grove -- a
+  hewn-rock outcrop with a dark ADIT cut into it, the same rock the Works
+  below are cut from, timbered over, the shaft dropping away just inside).
+  **REDESIGNED 2026-07: the descent is the physical mine now, not a
+  rift-portal, and it is NOT re-gated at the grove** (the way here was already
+  earned upstream, Sable's Invitation at 3 evidence then the school rite). E at
+  the mouth is a two-press commit: "[c=dim](You stand at the mouth of the mine.
+  A few feet in, the floor drops away into a shaft, and the cut haul rope hangs
+  into it, frayed, a body's length, then nothing.)[/c]" / "[c=dim]You have
+  stood here before. A year ago, asleep, at a door you never reached.[/c]" /
   "[c=dim](Press again to go down.)[/c]" The second press plays the
   door-dream, and the dream IS the descent (the mine carries the PI down to
   the works). After the descent seals, the mine is dead: "Cold air climbs out
