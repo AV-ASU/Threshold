@@ -664,7 +664,7 @@ def build_lodge_hall():
             if abs(px - lx) <= 40 and abs(py - ly) <= 44:
                 game.audio.play("door_locked", 0.5)
                 game.dialog.show([
-                    "[c=dim](Locked. A row of them, all the same, all shut.)[/c]",
+                    "[c=dim]Locked.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
     sc.on_interact_fn = _hall_interact

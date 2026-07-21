@@ -1177,9 +1177,10 @@ pure control/feedback layer stays indexed; see Coverage):
 Transcribed as the narrator sweep (`TODO.md` #13b/#15) reaches each. The
 ones landed so far:
 - **the Arcadia guest-hall LOCKED doors** (`build_lodge_hall._hall_interact`,
-  `scenes/lodge.py`; every locked 'l' door in the guest wing): "[c=dim](Locked.
-  A row of them, all the same, all shut.)[/c]" (the uncanny hotel of shut
-  rooms kept ready for guests who won't come, NARRATIVE §4).
+  `scenes/lodge.py`; every locked 'l' door in the guest wing): "[c=dim]Locked.[/c]"
+  (the uncanny hotel of shut rooms kept ready for guests who won't come,
+  NARRATIVE §4, is carried by the row of doors itself, not spelled out in the
+  line).
 - **`the_burning`** (`build_clearing._void_boss_interact`,
   `scenes/interiors.py`): "A cold fire pit. In the ash, what would not burn:
   buckles, bowl rims, boot eyelets, a watch case, slagged together."
