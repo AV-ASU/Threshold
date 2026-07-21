@@ -417,11 +417,12 @@ below, and the mine has one mouth. In order:
    final chalk door drawn on the board: the school↔grove fold opens
    and lands him in the fold-hidden grove clearing, the mouth of the
    cult's mine.
-5. **The mine mouth.** The grove is the dug shaft itself: a black drop
+5. **The mine mouth.** The grove is the mine's dug mouth: an ADIT cut into
+   the rock at the top of the hollow, the shaft dropping away just inside,
    collared in timber, ore carts and spoil abandoned mid-work along the
    rail, the haul rope cut. The rope is CUT (§14), so you cannot climb
    down — you go down by the RITE, and there is **no gate at the mouth**
-   (the way here was already earned, §3/§4). At the shaft's lip the PI
+   (the way here was already earned, §3/§4). At the mouth the PI
    consciously re-enters his one year-old dream — the full door-dream, a
    pure cutscene; the journal only ever flashes the memory — and finally
    answers the door. The dream IS the descent: it carries him down the

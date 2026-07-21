@@ -960,21 +960,21 @@ fire, then the last chalk door on the board.
   board that is open.)[/c]"
 
 ## The mine mouth & the descent gates
-- **The descent** (`_grove_interact`; the shaft mouth in the grove).
-  **REDESIGNED 2026-07: the descent is the physical mine SHAFT now, not a
-  rift-portal, and it is NOT re-gated at the grove** (the way here was
-  already earned upstream, Sable's Invitation at 3 evidence then the school
-  rite). E at the lip is a two-press commit: "[c=dim](You stand at the lip
-  of the shaft. The cut rope hangs a body's length into the dark and stops,
-  frayed. There is no bottom in the light.)[/c]" / "[c=dim]You have stood
-  here before. A year ago, asleep, at a door you never reached.[/c]" /
-  "[c=dim](Press again to go down.)[/c]" The second press plays the
-  door-dream, and the dream IS the descent (the shaft carries the PI down to
-  the works). After the descent seals, the shaft is dead: "Cold air climbs
-  out of the shaft. It is done with this place." (The old evidence-gated
-  rift beats over the dead fire -- the thread of gold, the light that would
-  not take your weight, the fire ready for something you were never given --
-  were CUT with this rework.)
+- **The descent** (`_grove_interact`; the mine ADIT dug into the top rock
+  face of the grove). **REDESIGNED 2026-07: the descent is the physical mine
+  now, not a rift-portal, and it is NOT re-gated at the grove** (the way here
+  was already earned upstream, Sable's Invitation at 3 evidence then the
+  school rite). E at the mouth is a two-press commit: "[c=dim](You stand at
+  the mouth of the mine. A few feet in, the floor drops away into a shaft,
+  and the cut rope hangs into it, frayed, a body's length, then nothing.)[/c]"
+  / "[c=dim]You have stood here before. A year ago, asleep, at a door you
+  never reached.[/c]" / "[c=dim](Press again to go down.)[/c]" The second
+  press plays the door-dream, and the dream IS the descent (the mine carries
+  the PI down to the works). After the descent seals, the mine is dead: "Cold
+  air climbs out of the mine. It is done with this place." (The old
+  evidence-gated rift beats over the dead fire -- the thread of gold, the
+  light that would not take your weight, the fire ready for something you
+  were never given -- were CUT with this rework.)
 - **The circle holds** (a surface exit after the rite, once): notice "The
   way you came does not open. The circle holds. There is only down."
 - **The shaft-floor pane, no Mask** (once): notice "The pane stands where

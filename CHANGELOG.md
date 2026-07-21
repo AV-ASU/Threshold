@@ -437,6 +437,19 @@
     actual entrance now, not a stain. The empty effigy CHAIRS (not figures)
     stay, kneeling toward the shaft; the haul gear moved clear of the bigger
     pit. VISION-reverified across four facings + the dark view; gate green.
+  - **Follow-up 2 (maintainer: "it still doesn't look like a mine" / "on the
+    top side"):** a flat black pit in grass never reads as a mine (the
+    game's mine is enclosed rock + timber + rails). Rebuilt the mouth as a
+    proper ADIT dug into the TOP (north) edge, using the game's real
+    mine-adit vocabulary: a ROCK OUTCROP (wall tiles) with a dark tunnel
+    MOUTH (`@` void) cut into it, a spanning `shoring_frame` timber SET over
+    the mouth (uprights flanking, header passed under -- the Timber Racks'
+    grammar), a working YARD dug down to bare dirt in front, ore carts on a
+    rail running out, spoil heaped. The descent interact + loom moved to the
+    mouth (14, 3); the dialog reconciled (you stand at the mouth of the mine,
+    the floor drops into a shaft just inside). NARRATIVE §7 step 5 + the
+    docstring updated (adit, not a pit). Reads as a mine from all four
+    facings; smoke + full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing
