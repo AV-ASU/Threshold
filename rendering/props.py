@@ -1332,14 +1332,19 @@ def _draw_descent_pit_solid(surf, cam, deco):
     earth    = (68, 51, 33)
     earth_hi = (98, 76, 49)
 
-    # an IRREGULAR ROUND mouth, not a square pit: a ring of jittered points
-    # (something clawed out of the ground). Wider E-W than deep N-S so it sits
-    # right under the tilt. Each vertex is the rim at z=0 and again at depth.
-    N = 15
-    rad = [(30 * s * (0.82 + rng.random() * 0.34),
-            23 * s * (0.82 + rng.random() * 0.34)) for _ in range(N)]
-    loc = [(rx * math.cos(2 * math.pi * i / N), ry * math.sin(2 * math.pi * i / N))
-           for i, (rx, ry) in enumerate(rad)]
+    # an IRREGULAR LOBED mouth, not a square pit and not a plain circle: a ring
+    # with world-fixed LOBES (a circle would look identical at every camera yaw
+    # -- billboard; the lobes are what you see rotate as you orbit it, so the
+    # hole reads as a real object clawed into the ground). Radii live in WORLD
+    # space (slightly widened E-W to counter the tilt squash) and the lobes are
+    # a fixed function of the vertex angle, so the whole outline is world-locked.
+    N = 16
+    loc = []
+    for i in range(N):
+        a = 2 * math.pi * i / N
+        r = 27 * s * (1.0 + 0.24 * math.sin(2 * a + 0.9)
+                          + 0.15 * math.sin(3 * a - 0.5)) * (0.9 + rng.random() * 0.2)
+        loc.append((r * math.cos(a) * 1.12, r * math.sin(a)))
     mouth = [P(lx, ly, 0.0) for lx, ly in loc]
     deep  = [P(lx, ly, -D) for lx, ly in loc]
     cx, cy = cam.project(wx, wy, 0.0)
@@ -1371,27 +1376,38 @@ def _draw_descent_pit_solid(surf, cam, deco):
                  key=lambda e: mouth[e[0]][1] + mouth[e[1]][1])
     near = [(a, b) for a, b in segs if (mouth[a][1] + mouth[b][1]) * 0.5 >= cy]
 
+    # WORLD-FIXED light (a constant world direction, NOT the camera): the wall
+    # facing it is lit, the far side of the pit is shadowed. This is what makes
+    # the hole read as STATIC -- its bright side stays put in the world as you
+    # orbit, instead of the whole pit looking the same from every angle.
+    LIGHT = -2.15                          # world angle the light comes from
+
     def draw_wall(a, b, lead):            # a receding interior wall, rim->black
+        wang = math.atan2(loc[a][1] + loc[b][1], loc[a][0] + loc[b][0])
+        bright = 0.66 + 0.42 * math.cos(wang - LIGHT)      # world-fixed, 0.24..1.08
         for j in range(7):
             t0, t1 = j / 7.0, (j + 1) / 7.0
             p0 = (mouth[a][0] + (deep[a][0] - mouth[a][0]) * t0, mouth[a][1] + (deep[a][1] - mouth[a][1]) * t0)
             p1 = (mouth[b][0] + (deep[b][0] - mouth[b][0]) * t0, mouth[b][1] + (deep[b][1] - mouth[b][1]) * t0)
             p2 = (mouth[b][0] + (deep[b][0] - mouth[b][0]) * t1, mouth[b][1] + (deep[b][1] - mouth[b][1]) * t1)
             p3 = (mouth[a][0] + (deep[a][0] - mouth[a][0]) * t1, mouth[a][1] + (deep[a][1] - mouth[a][1]) * t1)
-            f = (1.0 - t0) ** 1.7 * lead
-            col = (int(wcol[0] * f + black[0] * (1 - f)),
-                   int(wcol[1] * f + black[1] * (1 - f)),
-                   int(wcol[2] * f + black[2] * (1 - f)))
+            f = (1.0 - t0) ** 1.7 * lead * bright
+            col = (min(255, int(wcol[0] * f + black[0] * (1 - f))),
+                   min(255, int(wcol[1] * f + black[1] * (1 - f))),
+                   min(255, int(wcol[2] * f + black[2] * (1 - f))))
             pygame.draw.polygon(surf, col, [p0, p1, p2, p3])
 
     for k, (a, b) in enumerate(far):      # back (far) to front, sides dimmer
         draw_wall(a, b, 1.0 if k < len(far) * 0.55 else 0.82)
 
-    # the CUT haul rope: hung just inside the FARTHEST rim point, straight down
-    # the shaft, frayed a body's length then nothing (NARRATIVE §7 -- a cut
-    # rope, no ordinary way down; the dream carries you)
-    fi = min(range(N), key=lambda i: mouth[i][1])
-    rlx, rly = loc[fi][0] * 0.78, loc[fi][1] * 0.78
+    # the CUT haul rope: hung from a FIXED WORLD point on the rim (the north
+    # side, where the haul beam stood), NOT the camera-near or camera-far side
+    # -- so as you orbit the pit the rope moves around it and the whole thing
+    # reads as a real object in the world. Straight down the shaft, frayed a
+    # body's length then nothing (NARRATIVE §7 -- a cut rope, no ordinary way
+    # down; the dream carries you).
+    ni = min(range(N), key=lambda i: loc[i][1])   # the northmost rim vertex
+    rlx, rly = loc[ni][0] * 0.82, loc[ni][1] * 0.82
     cord, cord_d = (128, 106, 68), (84, 65, 39)
     rope = [P(rlx + math.sin(j / 8.0 * 5.0) * 1.5 * s, rly,
               -1.0 * s + (-D * 0.44 + 1.0 * s) * (j / 8.0)) for j in range(9)]

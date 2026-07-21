@@ -494,6 +494,18 @@
     from the projected geometry. So the drop always faces the viewer and the
     hole holds its depth from all four facings (VISION-reverified per facing).
     Full gate green.
+  - **Follow-up 6 (maintainer: "the hole is facing the camera and not static
+    in the world"):** the yaw-aware pit had CAMERA-locked features -- the cut
+    rope hung from the camera-far rim and every wall shaded the same rim->black
+    -- so a near-symmetric round hole looked identical from every angle and
+    read as billboarding. Re-anchored everything to the WORLD: (a) the outline
+    gained world-fixed LOBES (a plain circle projects identically at every yaw;
+    the lobes are what you see rotate as you orbit it); (b) a world-fixed light
+    direction lights one side of the pit, so its bright side stays put in the
+    world instead of following the camera; (c) the cut rope now hangs from a
+    fixed world rim point (the north side). The hole now looks genuinely
+    different from each facing -- a static object you move around, not a card
+    turning to face you. Full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing
