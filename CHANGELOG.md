@@ -469,6 +469,18 @@
     NARRATIVE §7 step 5 + DIALOGUE.md + the grove docstring reconciled to the
     open hole; VISION-reverified (magnified + four facings + dark); full gate
     green.
+  - **Follow-up 4 (maintainer: "use stone and not dirt for the floor, well a
+    transition of the two"):** the mouth is cut into ROCK, so the yard ground
+    is now a radial STONE->dirt->grass transition (`_yard_floor`: bare stone
+    `_` right at the shaft, a dug-dirt `d` haul apron, then grass, with a
+    deterministic per-tile wobble breaking the edge). Also caught + cut a
+    stray **`hanging_figure`** the stage-3 world-rot pass was scattering into
+    the grove (`systems/rot_mixin.py _rot_decals`): a hanged body reads wrong
+    at the cult's own mine mouth ("work without the worker" -- they claim
+    people into the hive, they do not hang them) and re-triggered the "hanging
+    bodies" note; the grove keeps the rest of the ambient rot (crows, claw
+    marks, watching eyes/wounds) and the town/fields keep their hanging
+    figures. Docstring reconciled; full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

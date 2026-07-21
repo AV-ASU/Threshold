@@ -33,9 +33,10 @@ def build_effigy_grove():
     into, like a cellar entrance (2026-07 rework, the `descent_pit` prop): a
     dark shaft ringed by broken dug earth, the far wall dropping away into
     black, the CUT haul rope hanging into it (the floor below is well_bottom).
-    NOT a structure, not the town's water well -- a hole. The yard around it
-    is dug to bare dirt where they hauled and dumped, with the ore carts on
-    their rail and the heaped spoil ringing the mouth. The congregation's
+    NOT a structure, not the town's water well -- a hole. The ground reads
+    the rock it is cut into: bare STONE right at the mouth, easing out through
+    a dug-dirt haul apron to grass, with the ore carts on their rail and the
+    heaped spoil ringing the mouth. The congregation's
     empty effigy chairs stand back in the hollow facing the shaft -- the work
     without the worker (the closing rite claimed the town at once, NARRATIVE
     §4 / DESIGN.md §1). The corn is still the border on every dry side. (The
@@ -91,8 +92,17 @@ def build_effigy_grove():
     # the grass and not a rock wall: a shaft you were meant to be lowered
     # down. The ground around it is dug to bare dirt where they hauled and
     # dumped; the ore carts, their rail, and the heaped spoil ring it.
-    def _in_yard(tx, ty):                             # the dug dirt haul yard
-        return 3 <= ty <= 8 and 10 <= tx <= 16
+    def _yard_floor(tx, ty):
+        # The mouth is cut into ROCK: bare STONE right at the shaft, easing out
+        # through a dug-dirt apron to grass -- a stone<->dirt transition, not a
+        # clean ring (a deterministic per-tile wobble breaks the edge).
+        d = math.hypot(tx - 13, (ty - 5) * 1.25)
+        wob = ((tx * 5 + ty * 11) % 7) * 0.13
+        if d <= 1.9 + wob:
+            return "_"                     # stone: the rock the shaft is cut into
+        if d <= 3.7 + wob:
+            return "d"                     # the dug-dirt haul apron
+        return None
 
     floor_rows = []
     for ty in range(H):
@@ -102,10 +112,9 @@ def build_effigy_grove():
                 row.append("~")            # river water (banks auto-reed)
             elif _in_bank(tx, ty):
                 row.append(";")            # worked mud bank at the water
-            elif _in_yard(tx, ty) and _in_clearing(tx, ty):
-                row.append("d")            # the dug dirt haul yard
             else:
-                row.append("g")
+                yf = _yard_floor(tx, ty) if _in_clearing(tx, ty) else None
+                row.append(yf if yf else "g")
         floor_rows.append("".join(row))
     objects_l = []
     for ty in range(H):
