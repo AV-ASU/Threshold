@@ -163,6 +163,16 @@ class DecoNatureMixin:
                              (x - 2 + i * 2, y + 4),
                              (x - 2 + i * 2 + sway, y - 2 - i), 1)
 
+    def _draw_hill_cap(self, surf, x, y):
+        """Flat pitch-0 fallback for the unified grassy hilltop dome: a filled
+        green ellipse with a lit crest. (The tilt view draws it as a real domed
+        cap over the mound top via rendering/props.py.)"""
+        rx = int(self.kwargs.get("rx", 100) * 0.7)
+        ry = int(self.kwargs.get("ry", 88) * 0.5)
+        pygame.draw.ellipse(surf, (40, 70, 33), (x - rx, y - ry, rx * 2, ry * 2))
+        pygame.draw.ellipse(surf, (72, 104, 54),
+                            (x - rx // 2, y - ry // 2, rx, ry))
+
     def _draw_corn_doll(self, surf, x, y):
         """A small corn-husk effigy -- bundled stalks tied at the
         waist with twine, vaguely humanoid. The cult's curse-work

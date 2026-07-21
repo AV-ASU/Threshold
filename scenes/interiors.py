@@ -137,8 +137,8 @@ def build_clearing():
         # Flavor narration only -- NOT one of the five canonical beats, so
         # it never touches the evidence count or the King-gate.
         _evidence(game, "the_burning",
-            "A fire pit big enough to stand a family around, cold a long "
-            "while. What it burned was not all wood. Buckles, bowl rims, boot eyelets, a watch case, slagged in the ash."
+            "A cold fire pit. In the ash, what would not burn: buckles, "
+            "bowl rims, boot eyelets, a watch case, slagged together."
         )
     sc.on_interact_fn = _void_boss_interact
     return sc
@@ -308,7 +308,9 @@ def build_shop():
     sc.hide_spots = []
     return sc
 def build_barn():
-    """Small barn on the brimley east bank. Holds Mara's journal
+    """Small barn on the brimley east bank, divided (#4c) into a front working
+    bay, an open sleeping-floor dormitory, and an enclosed back workroom, split
+    by two plank inner doors. Holds Mara's journal
     (a surface trail beat) behind the workbench, and a boarded-over hatch where a
     tunnel down to the Works once ran -- nailed shut now; the rite (the
     grove's descent fold) is the only way underground, and no hatch ever
@@ -317,11 +319,11 @@ def build_barn():
     floor = ["=" * 16 for _ in range(12)]
     objects = [
         "WWWWnWWWWWWWWWWW",   # 0  n = barn door (north face)
-        "W........W.....W",   # 1  main floor (cols 1-8) | back stall (cols 10-14)
+        "W........W.....W",   # 1  front bay (cols 1-8, rows 1-4) | workroom (cols 10-14)
         "W........W.....W",   # 2
         "W..............W",   # 3  doorway gap in the partition (col 9)
         "W........W.....W",   # 4
-        "W........W.....W",   # 5
+        "WWWW.WWWWW.....W",   # 5  front-bay S wall; door gap col 4 -> dormitory
         "W........WWWWWWW",   # 6  back stall sealed off below
         "W..............W",   # 7
         "W..............W",   # 8
@@ -336,6 +338,23 @@ def build_barn():
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
+
+    # #4c -- the barn reads as a divided working building now, not one open
+    # box + a back stall. A row-5 partition splits the upper floor into a
+    # FRONT BAY (the entry + the racked gear) and keeps the lower floor the
+    # open DORMITORY (all the bedrolls sit down there, so the "slept all over"
+    # read stays intact); the old back stall is the WORKROOM (Mara's journal +
+    # the sealed hatch). Two plank inner doors, placed in VARIED walls (error
+    # class 8): the front-bay door sits in the E-W row-5 wall so its leaf
+    # swings N-S; the workroom door in the N-S col-9 wall so its leaf swings
+    # E-W. Both start shut; a shut leaf blocks the sight cone, so the workroom
+    # is a real back blind spot, not an open gap. Player toggles nearest with E.
+    sc.add_inner_door(4, 5, "plank")     # front bay -> dormitory (swings N-S)
+    sc.add_inner_door(9, 3, "plank")     # front bay -> workroom (swings E-W)
+    # The division cuts the DORMITORY (a DIM_INTERIOR half) off from the
+    # front-bay wall_lamp, so hang a second genset bulkhead on the partition's
+    # south face to light the sleeping floor (verified in the dark render).
+    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "wall_lamp"))
 
     # Sized furniture: racked gear runs out front (the diggers' stowed kit;
     # 2026-07 audit fix: these were 'bookshelf' cases, which render with
@@ -374,12 +393,22 @@ def build_barn():
                                  "preserve_shelf", seed=21))
     # It read like one farmer's barn, but the newcomers bedded down here in
     # numbers (Toby: "They slept all over then. The barn.") -- dress it so it
-    # reads inhabited by MANY (TODO #691). Several bedrolls laid out across
-    # the main floor (staggered off the grid, clear of the spawn tile and the
-    # door approach), with a couple of gear crates for their belongings.
-    for (bx, by, ba) in [(2, 7, 0.0), (3, 9, 0.5), (6, 7, -0.4), (7, 9, 0.2)]:
+    # reads inhabited by MANY. Six bedrolls laid out across the main floor
+    # (staggered off the grid, clear of the spawn tile at (5,8), the col-5
+    # walk to the back stall, and the door approach), each with a pile of
+    # shed belongings beside a couple, plus gear crates -- a commune
+    # dormitory, not one farmer's cot.
+    for (bx, by, ba) in [(2, 7, 0.0), (3, 9, 0.5), (6, 7, -0.4), (7, 9, 0.2),
+                         (4, 7, 0.3), (8, 8, -0.2)]:
         sc.add_decoration(Decoration(bx * TILE + 14, by * TILE + 18,
                                      "bedroll", ang=ba, seed=bx * 7 + by))
+    # Their belongings, set down where the fold took them (the effects the
+    # Sorting Hall now catalogues, shed at the sleeping place): a folded
+    # bundle beside two of the rolls.
+    sc.add_decoration(Decoration(3 * TILE + 16, 8 * TILE + 16, "effects_pile",
+                                 seed=4))
+    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "effects_pile",
+                                 seed=9))
     sc.add_decoration(Decoration(2 * TILE + 18, 10 * TILE + 12, "crate",
                                  seed=3))
     sc.add_decoration(Decoration(7 * TILE + 14, 10 * TILE + 12, "crate",
@@ -471,7 +500,7 @@ def build_toby_house():
         "WWWWWWWWWiWWWW",   # 0  i = the window Toby watches the corn line through
         "W....W.......W",   # 1  closet (cols 1-4) | the room (cols 6-12)
         "W....W.......W",   # 2
-        "W............W",   # 3  doorway gap in the partition (col 5)
+        "W............W",   # 3  curtain doorway in the partition (col 5)
         "W....W.......W",   # 4
         "WWWWWW.......W",   # 5  closet sealed off below
         "W........K...W",   # 6  K = Toby
@@ -484,6 +513,14 @@ def build_toby_house():
     sc.add_exit("J", "brimley", "from_toby_house")
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
+    # The closet doorway (#4c): a maroon CURTAIN across the col-5 partition gap
+    # (row 3), the gentlest leaf in the set -- this is the refuge (a SAFE_SCENE),
+    # and a drape over a child's closet nook fits a kid's room where a plank door
+    # would read too institutional. Drawn shut, it also keeps the closet the
+    # blind spot it is meant to be (the corn dolls, the phantom marks, and the
+    # crayon King hidden until the player draws it back). The col-5 wall is N-S,
+    # so it hangs across an E-W doorway.
+    sc.add_inner_door(5, 3, "curtain")
 
     pos = sc.consume_marker("K")
     if pos:

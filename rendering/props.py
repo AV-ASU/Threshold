@@ -1310,6 +1310,78 @@ def _draw_cellar_hatch_solid(surf, cam, deco):
                        max(2, int(4 * s)), 2)
 
 
+def _draw_hill_cap_solid(surf, cam, deco):
+    """One unified grassy DOME over a turf mound: the hill's whole top drawn as
+    a SINGLE smooth radial-shaded surface at the wall-top height, so the roof
+    reads as ONE object instead of a grid of per-tile tops. `rx`/`ry` are the
+    mound's world-px radii and `z` the top height (kwargs); a slight centre
+    bulge + a rim->crest grass gradient give it a rounded dome. It sits over the
+    tile tops (a `depth_bias` keys it after the mound walls), leaving the stone
+    side/cut faces the walls draw below it untouched."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    rx = float(kw.get("rx", 100)) * s
+    ry = float(kw.get("ry", 88)) * s
+    z = float(kw.get("z", 26))
+    bulge = float(kw.get("bulge", 9)) * s
+    rng = random.Random(getattr(deco, "seed", 0) or 0)
+    N = 30
+    wob = [1.0 + rng.uniform(-0.05, 0.05) for _ in range(N)]      # organic rim, world-fixed
+    rim, crest = (40, 70, 33), (76, 108, 56)                      # grass: dark rim -> lit crest
+    steps = 9
+    for k in range(steps):
+        t = k / (steps - 1)                     # 0 rim .. 1 crest
+        scale = 1.0 - 0.94 * t
+        zc = z + bulge * t                      # the centre bulges up -> a dome
+        col = tuple(int(rim[j] + (crest[j] - rim[j]) * (t ** 0.85)) for j in range(3))
+        ring = [cam.project(wx + rx * wob[i] * scale * math.cos(2 * math.pi * i / N),
+                            wy + ry * wob[i] * scale * math.sin(2 * math.pi * i / N), zc)
+                for i in range(N)]
+        pygame.draw.polygon(surf, col, ring)
+    # --- DETAIL over the dome (all world-fixed by seed so it never crawls) ---
+    def _pt(a, rr, lift=0.0):
+        return (wx + rx * rr * math.cos(a), wy + ry * rr * math.sin(a),
+                z + bulge * (1.0 - rr) + lift)
+
+    # (a) soft grass CLUMPS -- mottled darker/lighter patches for tonal relief,
+    #     so the crown isn't one flat gradient
+    for _ in range(int(16 * s)):
+        a = rng.uniform(0, 6.283); rr = math.sqrt(rng.random()) * 0.86
+        gx, gy, gz = _pt(a, rr)
+        c = cam.project(gx, gy, gz)
+        pr = int(rng.uniform(6, 13) * s)
+        shade = rng.choice([(28, 52, 24), (52, 84, 44), (66, 98, 52)])
+        patch = pygame.Surface((pr * 2 + 2, pr + 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(patch, (*shade, 85), (0, 0, pr * 2, pr))
+        surf.blit(patch, (int(c[0]) - pr, int(c[1]) - pr // 2))
+
+    # (b) STONES poking through the turf -- the hill's own rock showing
+    for _ in range(int(5 * s)):
+        a = rng.uniform(0, 6.283); rr = math.sqrt(rng.random()) * 0.72
+        gx, gy, gz = _pt(a, rr)
+        c = cam.project(gx, gy, gz)
+        sr = int(rng.uniform(3, 6) * s)
+        rk = (int(c[0]) - sr, int(c[1]) - sr // 2, sr * 2, max(2, sr))
+        pygame.draw.ellipse(surf, (40, 43, 49), rk)
+        pygame.draw.ellipse(surf, (86, 88, 96),
+                            (rk[0] + 1, rk[1], rk[2] - 3, max(1, rk[3] - 2)))
+
+    # (c) dense GRASS TUFTS -- varied length, lean and shade, the odd dry gold
+    #     tip tying the crown to the field around it
+    greens = [(28, 52, 24), (46, 80, 38), (62, 96, 50), (80, 112, 58)]
+    for _ in range(int(78 * s)):
+        a = rng.uniform(0, 6.283); rr = math.sqrt(rng.random()) * 0.94
+        gx, gy, gz = _pt(a, rr)
+        p0 = cam.project(gx, gy, gz)
+        hh = rng.uniform(2.5, 6.5) * s
+        p1 = cam.project(gx + rng.uniform(-1.7, 1.7) * s, gy, gz + hh)
+        pygame.draw.line(surf, rng.choice(greens), p0, p1, 1)
+        if rng.random() < 0.09:                       # a dry gold blade tip
+            pygame.draw.line(surf, (154, 142, 80), p1,
+                             (p1[0], p1[1] - max(1, int(1.5 * s))), 1)
+
+
 # ---- Lighting fixtures as real volumetric props ---------------------------
 # Each reads `deco.kwargs['z']` for the base height (a candle on a tabletop
 # stands ON the tabletop, not hovering at floor level), then builds the body
@@ -2642,12 +2714,67 @@ def _draw_lectern_solid(surf, cam, deco):
             (150, 142, 124), 1)
 
 
+def _draw_bell_stock_solid(surf, cam, deco):
+    """The church bell's timber BELL-STOCK: a braced trestle -- four canted
+    posts rising to a HEADSTOCK beam the bell's gudgeons ride in, tied by a
+    mid-height ledger RING and diagonal knee braces on every face. Carries
+    horizontal members in BOTH planes (E-W ties + N-S ties, an E-W headstock
+    + N-S top caps) so it reads as a bell frame from ALL FOUR facings, not
+    just broadside (2026-07 fix: the first build ran every beam E-W, so it
+    was planar in X and collapsed to a thin stick when viewed edge-on from
+    E/W -- a defect a genuine four-facing check surfaces). The church_bell
+    hangs off the headstock centre."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    wood = {"top": (108, 84, 55), "side": (82, 62, 41), "dark": (56, 42, 28)}
+    wood2 = {"top": (95, 73, 48), "side": (71, 53, 35), "dark": (47, 36, 24)}
+    H = 46 * s          # post height to the headstock
+    c = 15 * s          # half-footprint (posts near the 2x2 corners)
+    post = 4.2 * s
+    tie = 2.6 * s       # ledger-tie thickness
+    span = c * 2 + post
+    # four corner posts, canted very slightly inward (base out at +-c, so the
+    # trestle reads as splayed legs, not a table's straight legs)
+    corners = ((-c, -c, wood), (c, -c, wood2), (-c, c, wood2), (c, c, wood))
+    for (px, py, pal) in corners:
+        _vbox(surf, cam, wx + px, wy + py, post, post, 0, H, pal, outline=False)
+    # a mid-height ledger RING joining the posts on ALL FOUR sides -- so a
+    # horizontal member reads in both planes (the anti-thin fix): E-W ties at
+    # front + back, N-S ties at left + right.
+    zt0, zt1 = H * 0.44, H * 0.44 + 3 * s
+    for py in (-c, c):                       # E-W ties (broadside from N/S)
+        _vbox(surf, cam, wx, wy + py, span, tie, zt0, zt1, wood2, outline=False)
+    for px in (-c, c):                       # N-S ties (broadside from E/W)
+        _vbox(surf, cam, wx + px, wy, tie, span, zt0, zt1, wood2, outline=False)
+    # diagonal KNEE braces from every corner post up under the headstock (they
+    # cant inward in BOTH x and y, so a brace shows on every facing)
+    for px in (-c, c):
+        for py in (-c, c):
+            a = cam.project(wx + px, wy + py, H * 0.40)
+            b = cam.project(wx + px * 0.28, wy + py * 0.55, H)
+            pygame.draw.line(surf, wood["dark"], a, b, max(1, int(2 * s)))
+    # N-S top caps at the ends (broadside from E/W) so the TOP of the frame
+    # reads edge-on too, then the stouter E-W HEADSTOCK across the centre (the
+    # bell's pivot), drawn last so it sits highest.
+    for px in (-c, c):
+        _vbox(surf, cam, wx + px, wy, tie + 1 * s, span, H, H + 4.0 * s,
+              wood2, outline=False)
+    _vbox(surf, cam, wx, wy, span + 5 * s, 6.0 * s, H, H + 6.0 * s, wood)
+    # the two iron gudgeon straps the bell's cannons ride in, under the beam
+    for px in (-4 * s, 4 * s):
+        g0 = cam.project(wx + px, wy - 3 * s, H)
+        g1 = cam.project(wx + px, wy - 3 * s, H - 4 * s)
+        pygame.draw.line(surf, (40, 38, 40), g0, g1, max(1, int(1.6 * s)))
+
+
 SOLID_PROPS = {
+    "bell_stock":    _draw_bell_stock_solid,
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
     "shaft_ladder":  _draw_shaft_ladder_solid,
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
+    "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
     "town_sign":     _draw_town_sign_solid,

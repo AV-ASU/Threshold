@@ -156,6 +156,24 @@
 
 ## Close-up tableaux & the dialogue verb
 
+- **2026-07 -- #13b interior-voice trim, first pass.** The maintainer's
+  grievance was that "every interaction does something and never leaves the
+  player thinking" -- on-screen narrator captions fire on nearly every
+  world-prop examine, and several editorialize the conclusion the player was
+  meant to draw. Applied the pattern "state the fact and stop" to the three
+  clearest caption-only flavor examines (all non-canonical `_evidence` calls
+  that write nothing to the book, none flow-guarded): the **dead well** lost
+  its dry-well recap + "no way down it if there were" conclusion (the
+  bottomless shaft lands alone; the re-read notice still carries the
+  no-way-down fact); **`the_burning`** lost the "big enough to stand a family
+  around" framing and the "what it burned was not all wood" lead-in (the
+  slagged effects in the ash are the tell); **`threshing_floor`** lost the
+  "the town's whole harvest, carried down and never carried back up"
+  conclusion. `DIALOGUE.md` reconciled; full gate green. The fuller ~30-site
+  sweep (procession candles, the ledger re-examine, placeholder one-liners)
+  and the decision on the `_REVISIT_NUDGES` remain open per `TODO.md` #13b --
+  they are taste calls left for a maintainer read of this pattern first.
+
 - **2026-07 — The ask-questions dialogue verb, piloted then expanded to
   all six principals + the chorus (`TODO.md` #1).** Before this, every NPC
   conversation was a linear press-E counter. Built `ui/conversation.py` (a
@@ -194,6 +212,140 @@
   this one instance.
 
 ## Walls & interior geometry
+
+- **2026-07 -- #4c interior-door rollout COMPLETE; four interiors left whole
+  on purpose.** With the shop pilot, the church vestry, the barn, the abandoned
+  farmhouse, the sheriff's office, and Toby's closet all doored, the rollout is
+  done. The remaining candidates were assessed and deliberately LEFT undivided,
+  per the settled principle (the door mechanic completes buildings that ARE
+  divided but lack the leaf; it never forces a warren onto an authentic open
+  space):
+  - **schoolhouse** -- the fiction is a "one-room schoolhouse" the commune
+    crammed into as an open dormitory ("they slept all over then"), and the
+    chalk-door rite fold stands in the open middle of the floor. A partition
+    would fight both the fiction and the rite geometry.
+  - **lodge (common room)** -- a deliberately open-plan hotel common room; its
+    col-7 counter peninsula replaced a wall on purpose, so re-walling it would
+    revert that choice.
+  - **lodge_hall** -- already a "hall of rooms": its rooms (the spare room, the
+    two guest rooms, the loft) are separate scenes off the corridor, and its
+    locked 'l' facade doors are deliberate uncanny dressing (they open onto
+    nothing), not real subrooms.
+  - **lodge_cellar** -- an authentic single L-shaped storage cellar, "strictly
+    a one-way-down room" with no side room to divide.
+
+  The single hotel guest rooms and the PI's bedroom are single rooms by nature.
+  TODO #4c's interior-door-rollout half is closed (the wall-material Phase 4 +
+  the deferred church-apse shapes remain).
+
+- **2026-07 -- #4c: Toby's closet got a curtain (the refuge, kept gentle).**
+  The kid's house was room + closet through an OPEN col-5 gap. Toby's house is
+  a SAFE_SCENE refuge, so the leaf is the gentlest in the set: a maroon
+  `curtain` (`add_inner_door(5, 3)`), a drape over a child's closet nook where
+  a plank door would read too institutional. Shut (its default), the opaque
+  drape keeps the closet the BLIND SPOT it is meant to be -- the corn dolls,
+  the phantom marks, and the crayon King stay hidden until the player draws it
+  back (the shut curtain blocks the sight cone; open passes). The col-5 wall is
+  N-S, so it hangs across an E-W doorway. No lighting concern (the refuge stays
+  flat-lit). Reachability holds (smoke [10/10]); VISION-verified four facings.
+
+- **2026-07 -- #4c: the sheriff's office rebuilt into FOUR rooms.** First pass
+  just doored the existing records gap, but the office still read as "two rooms"
+  (maintainer). Redesigned the whole interior on a cross of partition walls into
+  four legible spaces: a public FRONT (the entry off the field), Vane's OFFICE
+  (his desk + cot, behind a see-over front counter), the back RECORDS room (the
+  case board, the payphone, his ammo cabinet, Mara's booking slip), and a
+  BOOKING room with the barred holding CELL. Connected by inner doors in VARIED
+  walls + kinds: a see-over **`half` counter** (front<->office, the FIRST
+  shipping use of that kind), `plank` leaves (office<->records swings E-W,
+  records<->booking swings N-S), and the cell's `bars` gate. Every room carries
+  its own genset `wall_lamp` + a candle (no dark box). Load-bearing wiring
+  preserved: `maras_record` (the booking slip) stays in the records filing table
+  and the ammo cache still drops there (world-persistent, no soft-lock), Vane
+  still watches from his desk. Grid validated (no diagonal-only joins);
+  reachability holds through the door chain (smoke [10/10] flood-fill); LOS
+  correct (opaque leaves block shut, the counter + bars see through);
+  VISION-verified four facings + real-view dark + a counter close-up.
+
+- **2026-07 -- #4c: the abandoned farmhouse became a four-room warren.** The
+  farmhouse was a "box + one side room"; a house warrants real rooms, and
+  being abandoned it carries almost no load (just the sealed cellar hatch).
+  Quartered it with a cross of partition walls (a col-6 vertical + a row-4
+  horizontal meeting at a solid corner) into a KITCHEN (the entry), a PARLOR,
+  a BEDROOM, and a BACK ROOM (the hatch), connected by three inner doors in
+  varied walls (a curtain over the bedroom, plank leaves elsewhere; the
+  kitchen<->parlor door swings E-W, the two cross-wall doors swing N-S).
+  Re-dressed per room: the preserves shelf in the kitchen, the open birdcage
+  in the parlor, the bed in the bedroom, the hatch in the back room, and a
+  candle burning in each (the farmhouse keeps the darker gloom + candles, so
+  the division needed a light in every room -- who lit them, in an empty
+  house). Reachability holds through the doors (smoke [10/10]);
+  VISION-verified four facings + dark.
+
+- **2026-07 -- #4c: the barn divided into a three-room warren.** The barn was
+  the flagship "box + one back stall" grievance, but its open floor is the
+  commune dormitory ("they slept all over then"), which should stay open.
+  Resolved by dividing the UPPER floor with a row-5 partition into a FRONT BAY
+  (the entry + racked gear) while keeping the LOWER floor the open dormitory
+  (all six bedrolls sit there, the read intact); the old back stall is the
+  enclosed WORKROOM (Mara's journal + the sealed hatch). Two `plank` inner
+  doors in varied walls: the front-bay door swings N-S (E-W wall), the workroom
+  door swings E-W (N-S wall). Both start shut; a shut leaf blocks the sight
+  cone, so the workroom is a real back blind spot. The division cut the
+  dormitory off from the front-bay lamp, so a second genset wall_lamp was hung
+  on the partition to light the sleeping floor. Reachability holds through the
+  doors (smoke [10/10], no diagonal-only joins from the new wall);
+  VISION-verified four facings + dark.
+
+- **2026-07 -- #4c interior-door rollout continues: the church vestry got
+  its swinging leaf.** The church was already nave + vestry + bell-tower,
+  but the vestry was reached through an OPEN gap -- no door mechanic. Added
+  a `plank` inner door on that gap (`add_inner_door(3, 6)`): shut, it blocks
+  the sight cone, so the vestry (the preacher's quarters + the tower stairs)
+  is now a real shut-able blind spot a pursuer's line of sight breaks on,
+  not just a doorway. It starts closed (the preacher opens his own way
+  through on his cot round; the player toggles it with E) and sits in an E-W
+  wall, so the leaf swings N-S -- varied from the shop's E-W-swinging
+  stockroom/pantry doors. Reachability holds (smoke routes through the gap
+  tile); VISION-verified the leaf reads from all facings. Still open per
+  `TODO.md` #4c: the barn, sheriff's office, schoolhouse, Toby's house, the
+  Lodge interiors.
+
+- **2026-07 -- Wall-material rollout finished: Phase 2 complete + Phase 3
+  (the mine as hewn rock).** Wave 3 opted the remaining above-ground
+  interiors into `_SLAB_STYLE` (`barn` + `abandoned_farmhouse` = timber,
+  `schoolhouse` = plank, `lodge_hall` = plaster, `lodge_cellar` = stone, the
+  first stone scene), completing Phase 2 -- every above-ground building
+  interior now renders thin material-coloured walls. Phase 3 added the `rock`
+  material and `_ROCK_STYLE`/`_ROCK_SCENES` (the 16 Works/Depths/Mara's-cell
+  scenes): full-thick (`thick`=1.0) but the rough-outline + prism draw, so
+  the hewn walls read irregular, not blocky. Because `thick`=1.0 makes
+  `_wall_slab` return full-tile bands AND rock stays OUT of `_SLAB_SCENES`,
+  collision/sight/nav read the tile grid UNCHANGED (the roughening is
+  draw-only, the mine's stealth footprint untouched). Guarded by
+  `tests/stealth.py` §16; every non-slab/non-rock scene stays byte-identical.
+- **2026-07 -- Redecoration-audit deferred polish landed, and a render-recipe
+  bug that had hidden a defect.** The LOW items from the 17-scene visual audit
+  shipped: the bell tower got a bespoke timber bell-stock (a braced trestle,
+  not a scaled table box), the schoolhouse cots were jittered off the grid,
+  `_draw_hanging_figure` was redrawn as a suspended pendulum body (was a
+  standing hooded blob), the lodge missing-flyer/polaroid "wall of the
+  vanished" was clustered above the desk (KEPT, not cut -- surface town-dread
+  dressing, distinct from the underground read that was cut), and the
+  lodge_hall sampler/side-table were re-homed. The barn was also dressed as a
+  commune dormitory (six bedrolls + shed belongings, Toby's "they slept all
+  over then"). **The catch:** the bell-stock ran every beam E-W (planar in X)
+  and collapsed to a thin diagonal stick when viewed edge-on from E/W -- but
+  it "passed" a four-facing check because the ad-hoc render script never set
+  `camera.yaw` (that copy lives in `_update_look`, which the headless path
+  skips), so every "N/E/S/W" capture stayed at yaw 0, the NORTH facing, four
+  times. A whole session of "VISION-verified four facings" was really
+  north-only. Root-caused, `VISION.md`'s render recipe corrected to spell out
+  the `camera.yaw = look.cam_yaw` step (+ a "confirm the room rotates" check),
+  the bell-stock rebuilt with a mid-height ledger ring + N-S top caps so it
+  carries members in both planes and reads as a frame from every facing, and
+  the session's other touched scenes re-swept from genuine four facings (all
+  clean; the rest were facing-invariant standees / wall-decos / floor-decals).
 
 - **2026-07 — Four-stage evolution of interior wall rendering, landed
   incrementally on the shop pilot then rolled out.** (1) **Beveled convex
@@ -249,6 +401,165 @@
 
 ## The fold & portals
 
+- **2026-07 — the grove descent became a physical mine shaft (no
+  rift-portal, no redundant gate).** The grove's DOWN used to be an
+  evidence-gated rift pane over a dead fire: it clarified as evidence
+  mounted and the two-press rite tore it open. But the descent was already
+  gated UPSTREAM — you can only reach the grove by doing the school rite,
+  which needs Sable's Invitation, which he hands over at 3 evidence — so the
+  grove re-checking evidence and clarifying a rift was a dead gate (in play
+  you never saw it at anything but fully-formed). The rework, per the
+  maintainer: make the grove read as the **actual mine mouth** — a black
+  void-floor SHAFT collared in timber, the haul rope hanging CUT (the rope
+  is cut, canon), ore carts on a rail, spoil heaped, the Sign daubed at the
+  lip — and drop the rift entirely. (That first VISUAL was itself redesigned
+  across the follow-ups below — well, custom open-pit prop, rock adit — and
+  LANDED as a green turf HILL with a stone ADIT cut into it and a unified
+  grass-dome roof; the DESCENT mechanic described here is unchanged throughout.)
+  `_grove_interact` is now an ungated
+  two-press commit at the shaft lip; the second press plays the SAME
+  door-dream, and the dream IS the descent — `_finish_rite` sets
+  `rite_performed`, and the grove's `on_update` carries the PI straight down
+  to `well_bottom` the moment the dream ends (no walk-through-a-pane step).
+  The `O` descent fold/exit is gone from the grove; `fold_charge_fn` /
+  `exit_gate_fn` now drive only the school pane (the "circle holds"). The
+  Mask-keyed shaft-floor return (`well_bottom` up) and the seal/SPREAD logic
+  are unchanged. The grove's dead fire + charred ground were cut (nothing
+  chars a mine mouth); the effigy crescent + stones now kneel toward the
+  shaft. `tests/flow.py` §1 (a)/(d)/(f) rewritten for the physical shaft;
+  DIALOGUE.md's grove-rite section + `the_rite` note reconciled; NARRATIVE
+  §7 step 5, DESIGN §5/§7, and CLAUDE.md updated (the grove left the
+  standing-rift-pane family). Full gate green; VISION-verified (four facings,
+  the shaft close-up, the dark graded view).
+  - **Follow-up (maintainer feedback: "the hanging bodies, and I don't see
+    the entrance"):** the old crop-circle dressing that survived the rework
+    read as macabre standing/hanging figures and fought the mine-mouth
+    identity, and the shaft was a thin flat black bar. Fix: cut the three
+    `standing_stone` monoliths + the `polaroid_wall` nailed-faces (the
+    "bodies"), and enlarge the shaft to a 2x2 black void pit with a timber
+    headframe over its lip and the cut rope hanging in -- it reads as an
+    actual entrance now, not a stain. The empty effigy CHAIRS (not figures)
+    stay, kneeling toward the shaft; the haul gear moved clear of the bigger
+    pit. VISION-reverified across four facings + the dark view; gate green.
+  - **Follow-up 2 (maintainer: "it still doesn't look like a mine" / "on the
+    top side"):** a flat black pit in grass never reads as a mine (the
+    game's mine is enclosed rock + timber + rails). Rebuilt the mouth as a
+    proper ADIT dug into the TOP (north) edge, using the game's real
+    mine-adit vocabulary: a ROCK OUTCROP (wall tiles) with a dark tunnel
+    MOUTH (`@` void) cut into it, a spanning `shoring_frame` timber SET over
+    the mouth (uprights flanking, header passed under -- the Timber Racks'
+    grammar), a working YARD dug down to bare dirt in front, ore carts on a
+    rail running out, spoil heaped. The descent interact + loom moved to the
+    mouth (14, 3); the dialog reconciled (you stand at the mouth of the mine,
+    the floor drops into a shaft just inside). NARRATIVE §7 step 5 + the
+    docstring updated (adit, not a pit). Reads as a mine from all four
+    facings; smoke + full gate green.
+  - **Follow-up 3 (maintainer: the adit "looks awful"; "DO NOT REUSE THE
+    WELL"; "IT IS THE ENTRANCE TO A MINE. ITS A HOLE OR LIKE GOING INTO A
+    CELLER"):** the adit's outdoor `W` rock face rendered as a grey building
+    wall, and a borrowed `well`/`cistern_basin` read as the town well. The
+    entrance is not a structure -- it is a HOLE you climb down into, like a
+    cellar. Built a purpose-made procedural prop, **`descent_pit`**
+    (`rendering/props.py _draw_descent_pit_solid` + a flat `_draw_descent_pit`
+    fallback in `entities/deco_mine.py`): an open shaft you look down into
+    under the tilt -- a dark mouth ringed by jagged thrown-up dug earth, the
+    far interior wall a rim->black vertical gradient (the bottomless drop),
+    the CUT haul rope hanging into it frayed (NARRATIVE §7, not a climbable
+    ladder -- there is no ordinary way down). Its footprint tiles are made
+    solid-but-invisible (`x`) so the player stops at the lip; E there is the
+    descent. The grove keeps the ore carts (rails turned to E-W haul track so
+    they stop reading as a second ladder), spoil, effigy rank. The old
+    `W` rock face, the `@` pit, and the winch-well/cistern shaft are all gone.
+    NARRATIVE §7 step 5 + DIALOGUE.md + the grove docstring reconciled to the
+    open hole; VISION-reverified (magnified + four facings + dark); full gate
+    green.
+  - **Follow-up 4 (maintainer: "use stone and not dirt for the floor, well a
+    transition of the two"):** the mouth is cut into ROCK, so the yard ground
+    is now a radial STONE->dirt->grass transition (`_yard_floor`: bare stone
+    `_` right at the shaft, a dug-dirt `d` haul apron, then grass, with a
+    deterministic per-tile wobble breaking the edge). Also caught + cut a
+    stray **`hanging_figure`** the stage-3 world-rot pass was scattering into
+    the grove (`systems/rot_mixin.py _rot_decals`): a hanged body reads wrong
+    at the cult's own mine mouth ("work without the worker" -- they claim
+    people into the hive, they do not hang them) and re-triggered the "hanging
+    bodies" note; the grove keeps the rest of the ambient rot (crows, claw
+    marks, watching eyes/wounds) and the town/fields keep their hanging
+    figures. Docstring reconciled; full gate green.
+  - **Follow-up 5 (maintainer: "does that even look good at other angles" /
+    "it's too square"):** the `descent_pit` was drawn for the south approach
+    (a hard-coded north far-wall) and flattened into a dark rectangle from the
+    other facings, and its square box read as man-made. Rewrote
+    `_draw_descent_pit_solid` (`rendering/props.py`) to be (a) an IRREGULAR
+    ROUND pit -- a 15-point jittered ring, not a rectangle, so it reads as
+    something clawed out of the ground; and (b) YAW-AWARE -- each rim segment's
+    receding interior wall is drawn only when its midpoint sits above the mouth
+    centre on screen (the far arc under the tilt), with the near arc as the
+    bright broken lip and the cut rope hung from the farthest point, all picked
+    from the projected geometry. So the drop always faces the viewer and the
+    hole holds its depth from all four facings (VISION-reverified per facing).
+    Full gate green.
+  - **Follow-up 6 (maintainer: "the hole is facing the camera and not static
+    in the world"):** the yaw-aware pit had CAMERA-locked features -- the cut
+    rope hung from the camera-far rim and every wall shaded the same rim->black
+    -- so a near-symmetric round hole looked identical from every angle and
+    read as billboarding. Re-anchored everything to the WORLD: (a) the outline
+    gained world-fixed LOBES (a plain circle projects identically at every yaw;
+    the lobes are what you see rotate as you orbit it); (b) a world-fixed light
+    direction lights one side of the pit, so its bright side stays put in the
+    world instead of following the camera; (c) the cut rope now hangs from a
+    fixed world rim point (the north side). The hole now looks genuinely
+    different from each facing -- a static object you move around, not a card
+    turning to face you. Full gate green.
+  - **Follow-up 7 (maintainer: "it still doesn't look good, it doesn't look
+    like it fits in our world" -> chose "render the mouth in the game's rock
+    vocabulary"):** the whole custom `descent_pit` line was a one-off drawn in
+    a visual language nothing else in the game uses (smooth 3D gradient walls),
+    so it read as a foreign smudge. CUT the pit prop entirely
+    (`_draw_descent_pit_solid` + the flat `_draw_descent_pit` + the SOLID_PROPS
+    entry) and rebuilt the mouth from the game's OWN hewn-rock renderer:
+    `effigy_grove` joined `scenes/terrain.py _ROCK_STYLE`, so the mouth's `W`
+    tiles now render with the exact hewn-rock draw the Works/Depths use (rough
+    outline, dark muddy tint) instead of the default grey building wall. The
+    mouth is a craggy rock OUTCROP (an irregular W-tile footprint with peaks)
+    with a dark ADIT (`@`) cut into its south face, timbered over with a
+    `shoring_frame` (a plain decoration so the mouth stays walkable to press E),
+    a little bare bedrock at the threshold easing to the dug-dirt haul yard.
+    Because it is real wall geometry it is static and correct from every facing
+    (adit on approach, solid crag from behind) and it matches the mine it opens
+    into by construction. Interact + loom + the two-press dialog moved to the
+    adit mouth (dialog back to "a few feet in, the floor drops away into a
+    shaft"); NARRATIVE §7 step 5 + DIALOGUE.md + the grove docstring reconciled.
+    Full gate green.
+  - **Follow-up 8 (maintainer: "put that in the middle and make it shaped like
+    a hill green and stone cut into it"):** the grey rock outcrop became a green
+    HILL with stone cut into it, centred in the clearing. Needed a per-face wall
+    tint so one mound could be grass on top AND stone on the cut faces: added
+    `_wall_top_tint_for` + a `top_tint` override in `_WALL_STYLES` (used by both
+    the tilt `_extrude_prism` path and the flat `_wall_tile_flat` path), and a
+    new **`turf`** material -- cold STONE `tint` on the side/foot faces, GREEN
+    grass `top_tint` on the cap. Every existing style omits `top_tint`, so it
+    falls back to the side tint and all shipped scenes stay byte-identical. The
+    grove's `_ROCK_STYLE` entry switched rock->turf; the mouth is now a radial
+    turf mound centred at tile (12,8) with a dark ADIT cut into its SOUTH face
+    (the exposed stone cut reads where the grass gives way), the interact/loom/
+    spawns/dressing all moved to the centred layout. Still real wall geometry,
+    so static + correct from every facing; the mine's own material, so it fits
+    the world. Grove docstring + NARRATIVE §7 step 5 + DIALOGUE.md reconciled.
+    Full gate green.
+  - **Follow-up 9 (maintainer: "make the 'roof' of this cave look like one
+    object"):** the turf mound's top was a grid of per-tile caps (each W tile
+    draws its own top quad + a dark seam outline). Added a `hill_cap` solid prop
+    (`rendering/props.py _draw_hill_cap_solid` + a flat `_draw_hill_cap`
+    fallback): ONE domed grass surface drawn over the mound top at the wall-top
+    height, sized to the mound centre/radii and keyed after the walls with a
+    `depth_bias`, so the hilltop reads as a single rounded object instead of
+    tiled caps while the stone side/cut faces below stay the walls'. Placed once
+    in the grove over the mound. **Detail pass (maintainer: "that roof lacks
+    detail"):** concentric rim->crest rings + a centre bulge for the dome FORM,
+    then world-fixed (seeded) DETAIL over it -- soft grass CLUMPS for tonal
+    relief, STONES poking through the turf (the hill's own rock showing), dense
+    varied grass TUFTS with the odd dry gold tip tying it to the field. All
+    seeded so it never crawls and rotates WITH the hill. Full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing
@@ -266,6 +577,23 @@
   clearing, reached only through the school rite's pane.
 
 ## The Works, the mine, and cast fiction
+
+- **2026-07 -- #14 level-design half landed: side-dug chambers off the mine
+  halls.** Timbered side-chambers were cut off four box/cruciform Works/Depths
+  rooms -- the Timber Racks (`well_passage`), the Sorting Hall (`works_sorting`),
+  the Kneeling Hall (`depths_hall`), and the Cistern (`works_cistern`) -- each a
+  FINISHED store (crates, staged goods, a kept candle, a wall tally) and/or a
+  HALF-DUG niche (a low spoil pile, pick gouges, no light), reached through a
+  single timbered ADIT off the floor, cut into a sealed wall block clear of the
+  patrol lane so the tuned crossings/props/hides stay untouched. The
+  octagonal/cavern rooms (Shaft Floor, Scriptorium, Deepest Face, antechamber,
+  threshing, Old Stores, stair) were assessed and left as-is (their `_bevel`/
+  `_cavern` walls fight clean rectangular cut-ins, and each is already dressed
+  as the dig); the cave-mouth adit doors were already done (`door_style="cave"`
+  on every `UNDERGROUND_SCENES` room). A follow-up correction pass added the
+  Cistern niche's missing spoil pile (the half-dug signature its two sibling
+  niches carried) and closed a boxed dead-floor tile in the well_passage store.
+  Reachability re-checked per room (smoke flood-fill); full gate green.
 
 - **2026-07 — The killer-cult fiction scrub.** Early scene text implied
   the cult rendered/ate victims (a "Tallow Vats" room, bone-rack furniture,
@@ -295,6 +623,48 @@
   in-memory only, so there was no persistence concern in cutting them.
 
 ## Brimley geography
+
+- **2026-07 -- #4 outdoor-dread composition, first scene.** The outdoor zone
+  is the game's weakest dread (long open sightlines read as a field). Per the
+  ticket's "name ONE scene and ONE composition" rule, cornfield_path (the
+  60-tile dead-straight E-W road that wraps on both axes) got a corn THROAT:
+  standing corn juts from both shoulders at cols 22-24, pinching the road so
+  the far half (and the maze/brimley branch at col 30) hides behind the stalks
+  until you walk through the gap. Draw + placement only -- the walking lane
+  (PATH_ROW) stays open, so collision/nav/reachability are unchanged (smoke
+  flood-fill green); the corn is solid cover on the shoulders. Because the
+  scene wraps on x, walking the loop returns you past the same throat (the
+  "handed back / the town rearranges" uncanny) with no sim change.
+  VISION-verified (the pinch reads, the lane stays clear, no error draws; a
+  first `scarecrow` landmark attempt was pulled when it rendered as a magenta
+  placeholder -- no such draw kind exists). The rest of #4 (more scenes, a fog
+  volume, landmark repetition) stays open.
+
+- **2026-07 -- the effigy grove redesigned as a river site.** `effigy_grove`
+  (the descent mouth, north of Brimley above the river) rendered as a
+  symmetric corn crop circle with no sense of the river the diggers followed
+  down to this ground (NARRATIVE §2/§5). A first pass arced a reeded water band
+  along the NORTH rim, but a top-edge band reads as a LAKE, so the scene was
+  redesigned into a river site. The river now runs the FULL height down the
+  EAST side (`river_col`, a bending course that enters the top and leaves the
+  bottom; banks auto-reeded by the terrain's own `emit_tilt_water_reeds`, the
+  Brimley-river vocabulary), and the clearing is an ASYMMETRIC lobed hollow
+  (`_in_clearing`, an atan2-lobed edge rather than a clean ellipse) worked into
+  the corn on the near bank, its mud bank (`_in_bank`) meeting the water. The
+  dug mouth was moved to FACE the river: the dead fire/descent (the `O` fold +
+  `_rite_pos`) sits east of centre, a shoring frame behind it, the spoil hauled
+  east in a line to the bank, an ore cart left at the water's edge. The effigy
+  ring became a CRESCENT kneeling toward the fire, and the three stones scatter
+  through the hollow. The river is bounded top/bottom by the map edge and east
+  by corn, and the corn still borders every dry side, so the circle holds (only
+  the two folds exit). The fold/rite machinery moved with the fire (the `O`/`M`
+  tiles, `_rite_pos`, the loom anchor, the `from_well_bottom` spawn) with the
+  evidence-keyed charge/gate logic untouched -- full gate green (flow exercises
+  the rite at the new spot), smoke flood-fill + no-diagonal-join green. TODO
+  asked "decoration only," but a surface river needs real water tiles to
+  auto-reed, so the change includes water/bank terrain kept in the impassable
+  border zone (reachability safe). VISION-verified across four facings, close
+  vantages, and the dark graded view.
 
 - **2026-07 — Brimley rebuilt from 100x100 to 60x60 (`TODO.md` #18), a
   full reshape, not a scale-down.** The river moved to a central spine

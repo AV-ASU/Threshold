@@ -522,7 +522,13 @@ class RotMixin:
         if stage >= 2:
             pool += ["claw_marks", "yellow_sign", "gore", "bloodstain"]
         if stage >= 3 and not underground:
-            pool += ["hanging_figure", "corn_doll", "watching_eye"]
+            pool += ["corn_doll", "watching_eye"]
+            # No hanged body at the effigy grove: it is the cult's own dug
+            # mine mouth, "work without the worker" (they claim people into
+            # the hive, they do not hang them), and a hanging figure reads
+            # wrong at the mouth. The town + fields still get it.
+            if key != "effigy_grove":
+                pool.append("hanging_figure")
         if underground:
             # Tight corridors: signs and wounds only, never a hanging body.
             pool = ["phantom_mark", "watching_wound", "yellow_sign",

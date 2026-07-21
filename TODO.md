@@ -61,6 +61,12 @@ tools already shipped:
 - **Landmark repetition + same-scene silent folds** (`Game.cross_fold`,
   draw-only) for the "handed back / the town rearranges" uncanny with no
   sim change.
+- **Turf HILLS + unified roof caps** (shipped 2026-07 for the grove mine
+  mouth): the `turf` wall material (grass top, stone sides, via `top_tint`) +
+  the `hill_cap` dome prop raise a grassy hill from the game's OWN wall
+  geometry — real occlusion + relief for an outdoor scene, static/correct
+  from every facing, WITHOUT the parked heightfield floor-roll. A new lever
+  for this pass (`rendering/props.py`, `scenes/terrain.py _WALL_STYLES`).
 
 **To turn into work: name ONE scene and the ONE composition it gets** (this
 sightline broken by this corn lane, this landmark passed twice in fog). Do
@@ -92,26 +98,17 @@ stays one square scene with the torus wrap; see #4).
 - Its own build, scoped to run after the conversation/tableau work so two
   big changes are never in the air at once.
 
-### 4c. **[Opus]** Interior doors + multi-subroom redesign — rollout
+### 4c. **[Opus]** Wall program — Phase 4 (freeform walls)
 
-The mechanic and the shop pilot are built (`CHANGELOG.md`, "Walls &
-interior geometry"). **Still open: roll the pattern out** to the remaining
-box-or-side-room interiors, one at a time, each VISION-verified: the barn,
-the church, the sheriff's office, the schoolhouse, Toby's house (a refuge —
-keep it gentle), the Lodge interiors. Each is its own build; provenance
-first (the SCENE-DRESSING PROCESS in `CLAUDE.md`), reachability
-re-checked with smoke's flood-fill, doors mostly closed, doors placed in
-VARIED walls (not all facing one way).
-
-**The wall-material rollout program** (thin-slab + rounded + per-material
-styles, `CHANGELOG.md`) is a general tool now; still open:
-- **Phase 2, remaining waves.** Wave B explorables: `barn` +
-  `schoolhouse` (church + sheriff_office landed with the three principal
-  seats). Wave C the complex: `lodge_hall`, `lodge_cellar`,
-  `abandoned_farmhouse` (`lodge` itself landed).
-- **Phase 3 — the mine reimagined.** A `_ROCK_SCENES` set (Works +
-  Depths): full-thick but rough-outline + prism, so hewn rock reads
-  irregular, not blocky. Land with #14's side-dug chambers.
+The **interior-door rollout is COMPLETE** (`CHANGELOG.md`, "Walls & interior
+geometry"): the shop pilot, the church vestry, the barn, the abandoned
+farmhouse, the sheriff's office, and Toby's closet are all doored, and the
+schoolhouse + the Lodge interiors were assessed and deliberately left whole as
+authentic open spaces (a one-room schoolhouse with the rite fold in the open
+floor; an open-plan lodge common room; a hall of separate room-scenes; a
+single-room cellar). The **wall-material rollout program** (thin-slab + rounded
++ per-material styles) has landed Phase 2 (every above-ground interior) and
+Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
 - **Phase 4 — freeform walls** (the north star): a wall SEGMENT primitive
   off the tile grid, unlocking diagonal walls, a curved church apse, a
   round silo/tower. Prototype ONE curved feature first.
@@ -155,15 +152,6 @@ one-shots that ARE the dread (the frozen news rack, the empty church).
 Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
 assert on several of these captions/notes) and update the ones whose
 behavior legitimately changes.
-
-### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways
-
-The fiction half and the dressing half both landed (`CHANGELOG.md`, "The
-Works, the mine, and cast fiction"). **Still open — the LEVEL-DESIGN
-half:** timbered side-chambers dug off the halls (new geometry, some
-finished, some half-dug), doors under the cave-mouth adits. The Sign
-Chamber stays deliberately bare (the one properly finished room in the
-dig) — don't dress it.
 
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 
@@ -352,10 +340,6 @@ compression pass (#4b).
 - **[Opus]** **Held-weapon offset per camera yaw** — `draw_axe_held` reads
   at rest; eyeball the equipped-weapon offset at every camera yaw so it
   never floats off the hand. Verify with a tilt capture across yaws.
-- **[Fable + Opus]** **The grove reads north of Brimley, the river in
-  view** — `effigy_grove` is the mouth of the cult's mine, north of town
-  above the river, but the scene art is still a bare corn crop circle.
-  Dress the rim so the river reads below it. Decoration only.
 - **[Opus]** **Higher-contrast see-through doors** — opt in the doors where
   the sight-gated aperture effect reads strongest: a lit room off a dark
   hall, the front door onto the yard. Draw/opt-in only; no new tech.
@@ -371,25 +355,20 @@ compression pass (#4b).
   `scenes/__init__.py` duplicates the `UNDERGROUND_SCENES` gating idea,
   derive from one source; (d) `husk_bundle` + `pillar` are registered
   kinds with no placements (keep as reusable art or cut).
-- **[Fable + Opus]** **The barn reads lived-in by several people** — the
-  barn carries Mara's journal but currently reads as one person's spot.
-  Dress it so it looks inhabited by more than one: multiple
-  bedrolls/pallets, several sets of belongings, more than one place set.
-  Decoration only.
-- **[Opus]** **Redecoration-audit deferred polish** — every MEDIUM+
-  finding from a 17-scene visual audit was fixed; these LOW items were
-  deliberately deferred: (a) bell tower — a bespoke timber bell-stock
-  frame instead of the scaled table platform, louvered belfry openings
-  instead of glazed cottage windows; (b) schoolhouse — jitter the 12
-  grid-locked cots a few px so the dormitory reads crammed; (c)
-  hanging_figure legibility — reads as a standing hooded blob among trees,
-  not a suspended body (graveyard, clearing, backwoods_cabin); (d) lodge —
-  cluster the missing-flyer/polaroid wall above the reception desk instead
-  of interleaving with trophies; (e) lodge_hall — bump the side-table
-  footprint and re-home the corner-crammed sampler; (f) guest_room_a —
-  nudge the buck trophy toward a light source; (g) farmhouse — reconcile a
-  stale "phantom marks on the walls" comment against the actual floor-decal
-  render.
+- **[Opus]** **Grove mine-hill finish level-up** (deferred, maintainer "fine
+  for now") — the mouth is a green turf HILL with a stone adit; its grass-dome
+  ROOF got a full detail pass, but the stone side/cut faces + the adit mouth
+  are plainer by comparison. Bring the stone up to the roof's finish (strata,
+  cracks, a little scree/moss at the base) and make the adit read a touch more
+  as the focal point, so the whole object sits at one level of craft.
+  `hill_cap` (`rendering/props.py`) + the `turf` walls + `_grove_interact`
+  dressing (`scenes/hidden_folds.py`).
+- **[Opus]** **Louvered belfry openings** — the bell tower's belfry uses
+  the glazed cottage-window char (`'i'`), which renders as glass everywhere.
+  A belfry wants louvered slats, which needs its own window style or a
+  wall-deco louver over the openings (a small per-scene window-style
+  mechanism). Deferred from the redecoration-audit polish (the rest of which
+  landed, `CHANGELOG.md`).
 
 ---
 

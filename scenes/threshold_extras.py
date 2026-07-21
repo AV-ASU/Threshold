@@ -94,10 +94,18 @@ def build_schoolhouse():
 
     # The commune: two banks of cots crammed against the long walls, a narrow
     # aisle down the middle. Where several people lived, in rows, for months.
+    # Each cot is nudged a few px off its tile and slightly canted (DRAW only
+    # -- the collision footprint stays tile-locked), so the banks read as beds
+    # shoved in by hand and crammed, not a grid of installed cots (error class
+    # 8: no perfect straight prop rows). Seeded per tile, so it never tiles.
     west = [(2, 3), (4, 3), (2, 5), (4, 5), (2, 7), (4, 7)]
     east = [(11, 3), (13, 3), (11, 5), (13, 5), (11, 7), (13, 7)]
     for (cx, cy) in west + east:
-        sc.add_furniture("cot", [(cx, cy)])
+        h = (cx * 73856093) ^ (cy * 19349663)
+        jx = ((h >> 3) % 9) - 4              # -4..+4 px
+        jy = ((h >> 7) % 7) - 3              # -3..+3 px
+        ja = (((h >> 11) % 13) - 6) * 0.02   # a slight per-cot cant
+        sc.add_furniture("cot", [(cx, cy)], dx=jx, dy=jy, ang=ja)
     # Their effects, still beside the beds -- bowls they ate from, candle stubs
     # burned down, a kerosene lamp, an old dark stain. People were here.
     for (bx, by) in ((3, 4), (12, 4), (3, 8), (12, 6), (5, 6)):
@@ -745,8 +753,10 @@ def build_bell_tower():
     the player climbs up: at night, lights move on every street
     even though nobody is supposed to be out.
 
-    Layout (10 wide x 8 tall): all wall border. Bell decoration
-    at (5, 3). Hide spot behind the bell hoist."""
+    Layout (12 wide x 10 tall): all wall border with window slits.
+    A 2x2 timber bell-stock trestle dead centre (cols 5-6, rows 4-5)
+    the player circles; the bell hangs off its headstock. No hide
+    spot (the frame is cover, not a crouch)."""
     # A 12x10 lookout with a solid 2x2 bell housing dead centre: a column
     # you circle, so whatever is on its far side is an indoor blind spot.
     floor_rows = ["=" * 12 for _ in range(10)]
@@ -767,11 +777,13 @@ def build_bell_tower():
     sc.add_exit("L", "church", "from_bell_tower")
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
-    # The 2x2 bell-stock at centre as a real timber platform volume (a
-    # scaled-up table box; 2026-07 audit fix: it was four raw 't' object
-    # tiles, which no tilt set draws -- the column the player circles was
-    # an invisible collision block and the bell hung off nothing).
-    sc.add_furniture("table", [(5, 4), (6, 4), (5, 5), (6, 5)], scale=2.0)
+    # The 2x2 bell-stock at centre: a bespoke braced timber TRESTLE (four
+    # canted posts to a headstock beam, ledger ties, knee braces; 2026-07
+    # redecoration-audit fix -- it was a scaled-up TABLE box that read as a
+    # platform, so the bell hung off a tabletop). Same 2x2 collision
+    # footprint the player circles; the bell hangs off the headstock.
+    sc.add_furniture("bell_stock", [(5, 4), (6, 4), (5, 5), (6, 5)],
+                     scale=1.5, seed=1)
     # The bell hangs off the housing's south face (drawn upward from its
     # lip, so under tilt it reads in front of the solid housing box),
     # with the pull rope dropping to hand height below it. E on the

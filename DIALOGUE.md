@@ -681,8 +681,7 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   "There is no way back above you, and you are not hurt. Cut stone, worn
   smooth by years of feet that came this way before you."
 - **`threshing_floor`** (`build_depths_threshing._interact`): "The yield,
-  raked into low heaps: grain, all of it, tithed down from the fields above.
-  The town's whole harvest, carried down and never carried back up."
+  raked into low heaps: grain, all of it, tithed down from the fields above."
 - **`the_old_stores_shelves`** (`build_the_old_stores._interact`): "Shelves
   of the dig's gear: lamps burned black, pick hafts worn down to the grain,
   every one tagged in the same steady brown hand."
@@ -709,12 +708,13 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   something asleep." / "I walked up. I looked in. For a blip something
   looked back, met my eye, and then it broke." / "I never reached it. One
   dream, a year ago, and it never came again. So why do I know this place."
-- **`the_rite`** (`_finish_rite`, note; the grove rite completed): "I went
+- **`the_rite`** (`_finish_rite`, note; the descent-dream completed): "I went
   back into the dream. On purpose, this time. The same door, the same
   light under it, a year old and not one day faded." / "I walked up to it
   the way I never did in my sleep. It knew me. It let me in." / "When I
-  came out of it the fire was open and the corn had closed. I am not
-  saying that to anyone the way I just said it here."
+  opened my eyes I was at the bottom of the shaft, in the dark, the mouth a
+  coin of grey light far above. No rope carried me down. I do not let
+  myself think about what did."
 - **`the_turning`** (`_tick_king_roam`, note; 2 evidence, the telegraph):
   "Something at the end of the north road turned to face me. It has not
   moved. It does not need to yet." / "It knows my face. Like a draft off a
@@ -959,22 +959,24 @@ fire, then the last chalk door on the board.
   the corner your own hand, the smallest one. It is the only door on the
   board that is open.)[/c]"
 
-## The grove rite & the descent gates
-- **First sight of the grove fold** (below 3 evidence, once):
-  "[c=dim](Something over the dead fire catches the light. A thread of
-  gold, standing on end. You lose it when you look straight at it.)[/c]"
-- **The fire's refusals** (`_grove_interact`): below 3 evidence: "The
-  thread of gold stands in the dead fire, not finished forming." Without
-  the Invitation: "The fire is ready for something. You were never given
-  what it wants." After the rite: "The fire is open. The way down waits."
-  After the descent seals: "Cold ash. The fire is done with this place."
-  Walking a surface exit before the rite (once): "The light over the fire
-  will not take your weight. Not yet."
-- **The rite's two-press commit:** "[c=dim](You stand over the dead fire.
-  The gold stands fully formed in it now, and the air leans toward it the
-  way a room leans toward an open window.)[/c]" / "[c=dim]You know what
-  this is. You stood in front of it once, a year ago, asleep, and you did
-  not answer.[/c]" / "[c=dim](Press again to close your eyes.)[/c]"
+## The mine mouth & the descent gates
+- **The descent** (`_grove_interact`; the mine mouth in the grove -- a green
+  HILL with a dark stone ADIT cut into its south face, timbered over, the shaft
+  dropping away just inside).
+  **REDESIGNED 2026-07: the descent is the physical mine now, not a
+  rift-portal, and it is NOT re-gated at the grove** (the way here was already
+  earned upstream, Sable's Invitation at 3 evidence then the school rite). E at
+  the mouth is a two-press commit: "[c=dim](You stand at the mouth of the mine.
+  A few feet in, the floor drops away into a shaft, and the cut haul rope hangs
+  into it, frayed, a body's length, then nothing.)[/c]" / "[c=dim]You have
+  stood here before. A year ago, asleep, at a door you never reached.[/c]" /
+  "[c=dim](Press again to go down.)[/c]" The second press plays the
+  door-dream, and the dream IS the descent (the mine carries the PI down to
+  the works). After the descent seals, the mine is dead: "Cold air climbs out
+  of the mine. It is done with this place." (The old evidence-gated rift beats
+  over the dead fire -- the thread of gold, the light that would not take your
+  weight, the fire ready for something you were never given -- were CUT with
+  this rework.)
 - **The circle holds** (a surface exit after the rite, once): notice "The
   way you came does not open. The circle holds. There is only down."
 - **The shaft-floor pane, no Mask** (once): notice "The pane stands where
@@ -1179,9 +1181,8 @@ ones landed so far:
   A row of them, all the same, all shut.)[/c]" (the uncanny hotel of shut
   rooms kept ready for guests who won't come, NARRATIVE §4).
 - **`the_burning`** (`build_clearing._void_boss_interact`,
-  `scenes/interiors.py`): "A fire pit big enough to stand a family around,
-  cold a long while. What it burned was not all wood. Buckles, bowl rims,
-  boot eyelets, a watch case, slagged in the ash."
+  `scenes/interiors.py`): "A cold fire pit. In the ash, what would not burn:
+  buckles, bowl rims, boot eyelets, a watch case, slagged together."
 - **the procession candles** (`build_depths_procession._candles_interact`,
   first read): "[c=dim]A line of candles down the dark, burned to coins.
   Each one stands in older wax, and older wax under that.[/c]" /
@@ -1202,11 +1203,8 @@ ones landed so far:
 
 - **the dead well** (`_brimley_interact`, first read): "[c=dim](You lean
   over the lip. The shaft drops past where any water should be. No glint,
-  no bottom, just cold air climbing up out of it.)[/c]" / "[c=dim]A dead
-  well, dry a long time. The lip is worn smooth where the town used to lean
-  and draw, back when it drew anything.[/c]" / "Nothing down there now. And
-  no way down it if there were." Re-read: notice "Cold air climbs out of
-  the dark. No way down for you here."
+  no bottom, just cold air climbing up out of it.)[/c]" Re-read: notice
+  "Cold air climbs out of the dark. No way down for you here."
 - **the news rack** (`_brimley_interact`): "A coin rack of newspapers,
   bleached behind the scratched plastic. The county weekly." /
   "[c=dim]Dated January 15. Every copy in the stack. Nobody ever fed it

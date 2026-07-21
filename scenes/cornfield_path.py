@@ -88,6 +88,21 @@ def build_cornfield_path():
         (41, 10, "rust_sedan", 2.85, 52, "h"),
     ])
 
+    # #4 outdoor-dread composition (2026-07): a corn THROAT pinches the
+    # 60-tile dead-straight road so the long shot breaks. Standing corn
+    # juts from both shoulders at cols 22-24, hiding the far half of the
+    # road (and the maze/brimley branch at col 30) until you walk through
+    # the gap. Draw + placement only: row PATH_ROW (the walking lane) stays
+    # open, so collision, nav, and reachability are unchanged; the corn is
+    # solid cover on the shoulders. The pinch itself is the landmark: because
+    # the scene wraps on x, walking the loop brings you back past the SAME
+    # corn throat (the "handed back / rearranges" uncanny, TODO #4). Placed
+    # after the forest-band scatter so the band does not overwrite it; the row
+    # PATH_ROW gap keeps it Euclidean-honest.
+    for _cx in (22, 23, 24):
+        objects_l[PATH_ROW - 1][_cx] = "C"   # north-shoulder standing corn
+        objects_l[PATH_ROW + 1][_cx] = "C"   # south-shoulder standing corn
+
     floor = ["".join(r) for r in floor_ll_fp]
     objects = ["".join(r) for r in objects_l]
     sc = Scene("cornfield_path", floor, objects, music="outside")
