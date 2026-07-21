@@ -1310,6 +1310,49 @@ def _draw_cellar_hatch_solid(surf, cam, deco):
                        max(2, int(4 * s)), 2)
 
 
+def _draw_hill_cap_solid(surf, cam, deco):
+    """One unified grassy DOME over a turf mound: the hill's whole top drawn as
+    a SINGLE smooth radial-shaded surface at the wall-top height, so the roof
+    reads as ONE object instead of a grid of per-tile tops. `rx`/`ry` are the
+    mound's world-px radii and `z` the top height (kwargs); a slight centre
+    bulge + a rim->crest grass gradient give it a rounded dome. It sits over the
+    tile tops (a `depth_bias` keys it after the mound walls), leaving the stone
+    side/cut faces the walls draw below it untouched."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    rx = float(kw.get("rx", 100)) * s
+    ry = float(kw.get("ry", 88)) * s
+    z = float(kw.get("z", 26))
+    bulge = float(kw.get("bulge", 9)) * s
+    rng = random.Random(getattr(deco, "seed", 0) or 0)
+    N = 30
+    wob = [1.0 + rng.uniform(-0.05, 0.05) for _ in range(N)]      # organic rim, world-fixed
+    rim, crest = (40, 70, 33), (76, 108, 56)                      # grass: dark rim -> lit crest
+    steps = 9
+    for k in range(steps):
+        t = k / (steps - 1)                     # 0 rim .. 1 crest
+        scale = 1.0 - 0.94 * t
+        zc = z + bulge * t                      # the centre bulges up -> a dome
+        col = tuple(int(rim[j] + (crest[j] - rim[j]) * (t ** 0.85)) for j in range(3))
+        ring = [cam.project(wx + rx * wob[i] * scale * math.cos(2 * math.pi * i / N),
+                            wy + ry * wob[i] * scale * math.sin(2 * math.pi * i / N), zc)
+                for i in range(N)]
+        pygame.draw.polygon(surf, col, ring)
+    # a light grass TEXTURE so the dome doesn't read as a bare balloon: short
+    # world-fixed tuft flecks scattered over the crown, darker + lighter grass
+    for _ in range(int(26 * s)):
+        a = rng.uniform(0, 6.283)
+        rr = math.sqrt(rng.random()) * 0.86
+        gx = wx + rx * rr * math.cos(a)
+        gy = wy + ry * rr * math.sin(a)
+        gz = z + bulge * (1.0 - rr) * 0.9
+        p0 = cam.project(gx, gy, gz)
+        p1 = cam.project(gx + rng.uniform(-1.2, 1.2) * s, gy, gz + rng.uniform(2, 4) * s)
+        tuft = (56, 88, 44) if rng.random() < 0.5 else (30, 54, 26)
+        pygame.draw.line(surf, tuft, p0, p1, 1)
+
+
 # ---- Lighting fixtures as real volumetric props ---------------------------
 # Each reads `deco.kwargs['z']` for the base height (a candle on a tabletop
 # stands ON the tabletop, not hovering at floor level), then builds the body
@@ -2702,6 +2745,7 @@ SOLID_PROPS = {
     "shaft_ladder":  _draw_shaft_ladder_solid,
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
+    "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
     "town_sign":     _draw_town_sign_solid,

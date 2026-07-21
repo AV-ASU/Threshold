@@ -542,6 +542,16 @@
     so static + correct from every facing; the mine's own material, so it fits
     the world. Grove docstring + NARRATIVE §7 step 5 + DIALOGUE.md reconciled.
     Full gate green.
+  - **Follow-up 9 (maintainer: "make the 'roof' of this cave look like one
+    object"):** the turf mound's top was a grid of per-tile caps (each W tile
+    draws its own top quad + a dark seam outline). Added a `hill_cap` solid prop
+    (`rendering/props.py _draw_hill_cap_solid` + a flat `_draw_hill_cap`
+    fallback): ONE domed grass surface drawn over the mound top at the wall-top
+    height (concentric rim->crest rings with a slight centre bulge + world-fixed
+    grass-tuft texture), sized to the mound centre/radii and keyed after the
+    walls with a `depth_bias`, so the hilltop reads as a single rounded object
+    instead of tiled caps while the stone side/cut faces below stay the walls'.
+    Placed once in the grove over the mound. Full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing

@@ -274,6 +274,15 @@ def build_effigy_grove():
     sc.on_enter_fn = _grove_enter
 
     # ---- Decorations ----
+    # THE HILL'S ROOF as ONE object: a single grassy DOME cap drawn over the
+    # mound's per-tile tops (matched to the mound centre + radii), so the hilltop
+    # reads as one smooth rounded surface instead of a grid of tile caps. A
+    # depth_bias keys it after the mound walls; it covers only the tops, leaving
+    # the stone side/cut faces the walls draw below it. (Sized to _in_mound:
+    # centre tile (12,8), X radius 3.4 tiles, Y radius 3.4/1.15.)
+    sc.add_decoration(Decoration(12 * TILE + 16, 8 * TILE + 16, "hill_cap",
+                                 seed=5, rx=118, ry=101, z=26, bulge=9,
+                                 depth_bias=150))
     # THE ADIT MOUTH (the way down): timber SHORING stands over the dark tunnel
     # mouth cut in the rock -- the mine's own grammar, from the racks below. A
     # plain decoration (not add_furniture) so the mouth stays walkable to press
