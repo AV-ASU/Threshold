@@ -481,6 +481,19 @@
     bodies" note; the grove keeps the rest of the ambient rot (crows, claw
     marks, watching eyes/wounds) and the town/fields keep their hanging
     figures. Docstring reconciled; full gate green.
+  - **Follow-up 5 (maintainer: "does that even look good at other angles" /
+    "it's too square"):** the `descent_pit` was drawn for the south approach
+    (a hard-coded north far-wall) and flattened into a dark rectangle from the
+    other facings, and its square box read as man-made. Rewrote
+    `_draw_descent_pit_solid` (`rendering/props.py`) to be (a) an IRREGULAR
+    ROUND pit -- a 15-point jittered ring, not a rectangle, so it reads as
+    something clawed out of the ground; and (b) YAW-AWARE -- each rim segment's
+    receding interior wall is drawn only when its midpoint sits above the mouth
+    centre on screen (the far arc under the tilt), with the near arc as the
+    bright broken lip and the cut rope hung from the farthest point, all picked
+    from the projected geometry. So the drop always faces the viewer and the
+    hole holds its depth from all four facings (VISION-reverified per facing).
+    Full gate green.
 - **2026-07 — Portal/fold system consolidated from the retired
   `PORTALS.md`.** Landed the "one phenomenon, two presentations" model
   (doors fade; everything else is the Fold, either shown as a standing
