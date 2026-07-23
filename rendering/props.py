@@ -1583,6 +1583,76 @@ def _draw_dining_set_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (106, 82, 52), dr2)
 
 
+def _draw_bar_dressing_solid(surf, cam, deco):
+    """THE SERVICE BAR dressing (interiors pilot, TODO #24, ensemble 3):
+    what lives on the lodge's pass-through counter run. The counter tiles
+    themselves stay the '5' boxes (collision + see-over unchanged); this
+    deco lays Sable's service along the top, world-space, with its wear:
+    a water pitcher, the tray of upturned glasses kept ready, folded
+    towels, ONE used glass at the far end (the only guest in months
+    drank from it), ring stains down the service edge, and a towel over
+    the lip. Anchor = the run's centre; the run extends north-south."""
+    wx, wy = deco.x, deco.y
+    Z = 15.2                      # the counter top plane (_COUNTER_RISE)
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # ring stains wandering down the service (east) edge, years of cups
+    for oy, orr in ((-52, 2.4), (-20, 2.8), (18, 2.2), (44, 2.6)):
+        _ell(wx + 4, wy + oy, Z, orr, orr, (54, 40, 26), 1)
+    # the worn pale patch where Sable's hand rests at the pass-through
+    _ell(wx + 2, wy + 58, Z, 6, 4, (112, 88, 56))
+
+    # the pitcher at the north end: a real vessel with a lip and handle
+    pit = {"top": (146, 150, 156), "side": (116, 120, 128),
+           "dark": (86, 90, 98)}
+    _vbox(surf, cam, wx - 1, wy - 52, 6, 6, 15, 25, pit, outline=False)
+    _ell(wx - 1, wy - 52, 25, 3.4, 3.4, (86, 90, 98), 1)
+    _wline(wx + 3, wy - 55, 24, wx + 5, wy - 52, 21, (116, 120, 128))
+
+    # the tray of upturned glasses, squared and READY (the host's habit)
+    tr = [cam.project(wx - 6, wy - 34, Z), cam.project(wx + 6, wy - 34, Z),
+          cam.project(wx + 6, wy - 16, Z), cam.project(wx - 6, wy - 16, Z)]
+    pygame.draw.polygon(surf, (96, 74, 46), tr)
+    pygame.draw.polygon(surf, (58, 44, 28), tr, 1)
+    for gy in (-30, -25, -20):
+        for gx in (-3, 2):
+            _ell(wx + gx, wy + gy, Z + 3.5, 1.8, 1.8, (150, 154, 160), 1)
+
+    # folded towels mid-run: two clean stacked quads
+    for i in range(2):
+        tw = [cam.project(wx - 5, wy - 2 + i, Z + i * 1.2),
+              cam.project(wx + 4, wy - 3 + i, Z + i * 1.2),
+              cam.project(wx + 5, wy + 6 + i, Z + i * 1.2),
+              cam.project(wx - 4, wy + 7 + i, Z + i * 1.2)]
+        pygame.draw.polygon(surf, (152, 140, 118) if i else (138, 126, 106),
+                            tw)
+        pygame.draw.polygon(surf, (104, 94, 78), tw, 1)
+
+    # THE ONE USED GLASS at the south end, its ring beside it: the only
+    # guest in months set it down here
+    gl = {"top": (150, 154, 160), "side": (122, 126, 134),
+          "dark": (94, 98, 106)}
+    _vbox(surf, cam, wx - 2, wy + 34, 3.6, 3.6, 15, 20, gl, outline=False)
+    _ell(wx - 2, wy + 34, 20, 2.2, 2.2, (94, 98, 106), 1)
+    _ell(wx + 3, wy + 38, Z, 2.4, 2.4, (54, 40, 26), 1)
+
+    # the towel over the counter's west lip, top flap + hanging face
+    pygame.draw.polygon(surf, (140, 126, 104), [
+        cam.project(wx - 8, wy + 12, Z), cam.project(wx - 2, wy + 12, Z),
+        cam.project(wx - 2, wy + 20, Z), cam.project(wx - 8, wy + 20, Z)])
+    pygame.draw.polygon(surf, (124, 110, 90), [
+        cam.project(wx - 8, wy + 13, Z), cam.project(wx - 8, wy + 19, Z),
+        cam.project(wx - 8, wy + 19, 7.0), cam.project(wx - 8, wy + 13, 8.0)])
+
+
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
     floor (not a flat decal), an iron pull-ring on top. Default lid is
@@ -3110,6 +3180,7 @@ SOLID_PROPS = {
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "kitchen_wall":  _draw_kitchen_wall_solid,
     "dining_set":    _draw_dining_set_solid,
+    "bar_dressing":  _draw_bar_dressing_solid,
     "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,

@@ -372,6 +372,12 @@ def build_lodge():
     # second seat's place is bare wood with the dust-shadow of a setting
     # that once lay there. Same 'x'-stamp collision as the kitchen wall.
     sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 16, "dining_set"))
+    # THE SERVICE BAR (ensemble 3): the pass-through counter run at col 7
+    # was four tiles of bare wood mid-room. Its dressing rides ON the '5'
+    # counter boxes (collision untouched): pitcher, the ready tray of
+    # glasses, folded towels, the ONE used glass, ring stains, the towel
+    # over the lip.
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE, "bar_dressing"))
     # Against the west wall -- the oven door faces east, into the kitchen.
     # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
     # the north-wall ham composed into ONE ensemble against the west
