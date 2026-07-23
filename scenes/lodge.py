@@ -372,12 +372,13 @@ def build_lodge():
     # second seat's place is bare wood with the dust-shadow of a setting
     # that once lay there. Same 'x'-stamp collision as the kitchen wall.
     sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 16, "dining_set"))
-    # THE SERVICE BAR (ensemble 3): the pass-through counter run at col 7
-    # was four tiles of bare wood mid-room. Its dressing rides ON the '5'
-    # counter boxes (collision untouched): pitcher, the ready tray of
-    # glasses, folded towels, the ONE used glass, ring stains, the towel
-    # over the lip.
-    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE, "bar_dressing"))
+    # (The bar_dressing ensemble left with the sideways desk; the draw
+    # stays in the library for a real bar elsewhere.)
+    # LIGHT FIXTURES (the lodge runs on the genset like every interior):
+    # a wall lamp over the reception and one over the sitting area, the
+    # kerosene lamp staying the kitchen's own.
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 16, "wall_lamp"))
     # Against the west wall -- the oven door faces east, into the kitchen.
     # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
     # the north-wall ham composed into ONE ensemble against the west
@@ -393,11 +394,11 @@ def build_lodge():
     for _kx in (2, 3):     # the dining set: table row + chair row
         _objs[3][_kx] = "x"
         _objs[4][_kx] = "x"
-    # Close the desk-to-bar JOINT: the reception counter (cols 8-9 row 2)
-    # and the service bar (col 7 rows 3-6) met only at a diagonal, so
-    # they read as TWO desks. One corner tile welds them into the single
-    # front-of-house L a real lobby would have.
-    _objs[2][7] = "5"
+    # The SIDEWAYS DESK is CUT (2026-07 maintainer ruling): the old col-7
+    # counter run read as a second desk floating mid-room. The reception
+    # counter alone is the front of house; the floor it stood on opens up.
+    for _ky in (3, 4, 5, 6):
+        _objs[_ky][7] = "."
     sc.objects = _objs
     # The sitting-room FIREPLACE: a real stone furniture volume (2026-07
     # audit fix: it was a raw 'f' object tile, which no tilt set draws, so
