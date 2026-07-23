@@ -393,6 +393,18 @@
 
 ## The interiors pilot (2026-07, TODO #24)
 
+- **2026-07 — The lodge pilot COMPLETE (ensembles 2-4 + the host).**
+  The dining set (the one set place, the dust-shadow of the second, live
+  candle, yaw-tucked chairs, splinted leg); the service bar dressing
+  (pitcher, ready tray, towels, the one used glass) with the desk-to-bar
+  corner welded into a single front-of-house L; the hearth as a real
+  masonry mass (firebox + breast past the eave, mantle + candle, tools,
+  log basket, the buck's antlers rehung on the breast, soot + ash).
+  Sable's front view got the V shirt-front + smile + watch chain, his
+  key rack tripled to the pigeonholed wall of keys with ONE empty hook
+  (the PI's room), and a latent fade bug died: the prop occlusion fade
+  assumed a generic tall box, so an NPC behind their own counter faded
+  it permanently -- furniture now fades against its real spec height.
 - **2026-07 — The kitchen wall lands (the first ensemble).** The lodge's
   loose stove + the north-wall ham + scattered kitchen intent composed
   into ONE `SOLID_PROPS` object (`kitchen_wall`): cookstove on legs with

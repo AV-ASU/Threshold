@@ -393,12 +393,26 @@ def build_lodge():
     for _kx in (2, 3):     # the dining set: table row + chair row
         _objs[3][_kx] = "x"
         _objs[4][_kx] = "x"
+    # Close the desk-to-bar JOINT: the reception counter (cols 8-9 row 2)
+    # and the service bar (col 7 rows 3-6) met only at a diagonal, so
+    # they read as TWO desks. One corner tile welds them into the single
+    # front-of-house L a real lobby would have.
+    _objs[2][7] = "5"
     sc.objects = _objs
     # The sitting-room FIREPLACE: a real stone furniture volume (2026-07
     # audit fix: it was a raw 'f' object tile, which no tilt set draws, so
     # the hearth was an invisible collision block; the candle "on the
     # fireplace" floated over bare floor).
-    sc.add_furniture("fireplace", [(12, 4)], w=34, h=30)
+    # THE HEARTH (ensemble 4): the freestanding fireplace composed as a
+    # real masonry object -- firebox + chimney breast past the eave,
+    # mantle, tools, log basket, the antlers rehung on the breast. 'X'
+    # stamp: a chimney column blocks the body AND the sight line.
+    sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 16,
+                                 "hearth_mass"))
+    _o2 = [list(r) for r in sc.objects] if isinstance(sc.objects[0], str) \
+        else sc.objects
+    _o2[4][12] = "X"
+    sc.objects = _o2
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
@@ -409,7 +423,10 @@ def build_lodge():
     sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 10, "candle", z=16))
     # (The old west-wall banner was CUT, 2026-07 audit: E/W wall faces are
     # edge-on to the tilt, so it was invisible from every reachable angle.)
-    sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
+    # The hearth candle lives ON the mantle now (live flicker, seated at
+    # the shelf's height; the one moving thing on the masonry).
+    sc.add_decoration(Decoration(12 * TILE + 20, 4 * TILE + 26, "candle",
+                                 z=26))
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
@@ -468,8 +485,8 @@ def build_lodge():
     # Trophy mounts flush on the NORTH wall (row 0), facing down into the
     # room -- the buck replaces the old generic photo; a walleye on the
     # kitchen-side wall. (The "wrong" taxidermy lives underground now.)
-    sc.add_decoration(Decoration(15 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
+    # (The buck rehung onto the hearth's chimney breast, 2026-07 -- the
+    # trophy lives where a lodge would actually hang it.)
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24, "mounted_fish"))
     sc.add_decoration(Decoration(2 * TILE + 14, 6 * TILE + 2, "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))

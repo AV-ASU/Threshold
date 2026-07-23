@@ -1653,6 +1653,87 @@ def _draw_bar_dressing_solid(surf, cam, deco):
         cam.project(wx - 8, wy + 19, 7.0), cam.project(wx - 8, wy + 13, 8.0)])
 
 
+def _draw_hearth_mass_solid(surf, cam, deco):
+    """THE HEARTH (interiors pilot, TODO #24, ensemble 4): the lodge's
+    freestanding fireplace composed as one masonry object. A stone
+    firebox with an arched ember mouth facing the sitting rug, the
+    chimney breast rising past the eave, a wood mantle wrapping the
+    south face, fire tools leaning at one flank and the log basket at
+    the other, the buck's antlers rehung on the breast. Wear per the
+    #24 rule: soot up the face, ash spilled on the hearthstone, mortar
+    lines aged dark. World-space throughout."""
+    wx, wy = deco.x, deco.y
+    stone = {"top": (96, 94, 96), "side": (74, 72, 76), "dark": (52, 50, 54)}
+    stone_d = {"top": (80, 78, 80), "side": (60, 58, 62),
+               "dark": (42, 40, 44)}
+    wood = {"top": (98, 74, 46), "side": (72, 54, 34), "dark": (44, 32, 20)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # the hearthstone apron on the rug side, ash-dusted
+    ap = [cam.project(wx - 16, wy + 12, 0.2), cam.project(wx + 16, wy + 12, 0.2),
+          cam.project(wx + 14, wy + 22, 0.2), cam.project(wx - 14, wy + 22, 0.2)]
+    pygame.draw.polygon(surf, (88, 86, 88), ap)
+    pygame.draw.polygon(surf, (58, 56, 60), ap, 1)
+    _ell(wx + 2, wy + 16, 0.3, 6, 3, (60, 58, 56))          # spilled ash
+    _ell(wx - 6, wy + 18, 0.3, 3, 2, (48, 46, 45))
+
+    # the firebox, then the breast rising past the eave
+    _vbox(surf, cam, wx, wy, 30, 24, 0, 22, stone)
+    _vbox(surf, cam, wx, wy - 1, 20, 16, 22, 48, stone_d)
+    # mortar courses in the faces' world planes
+    for mz in (7, 14):
+        _wline(wx - 15, wy + 12, mz, wx + 15, wy + 12, mz, (52, 50, 54))
+    for mz in (28, 35, 42):
+        _wline(wx - 10, wy + 7, mz, wx + 10, wy + 7, mz, (44, 42, 46))
+    # the arched mouth on the south face, embers banked low inside
+    mo = [cam.project(wx - 8, wy + 12.2, 2), cam.project(wx + 8, wy + 12.2, 2),
+          cam.project(wx + 6, wy + 12.2, 14), cam.project(wx + 2, wy + 12.2, 17),
+          cam.project(wx - 2, wy + 12.2, 17), cam.project(wx - 6, wy + 12.2, 14)]
+    pygame.draw.polygon(surf, (14, 12, 12), mo)
+    for gi, gox in enumerate((-4, 0, 4)):
+        gp = cam.project(wx + gox, wy + 11, 2.5)
+        pygame.draw.rect(surf, (176 - gi * 20, 78 - gi * 12, 26),
+                         (int(gp[0]), int(gp[1]), 2, 1))
+    # soot licking up from the mouth over the breast
+    st = [cam.project(wx - 5, wy + 12.1, 17), cam.project(wx + 5, wy + 12.1, 17),
+          cam.project(wx + 3, wy + 7.1, 34), cam.project(wx - 3, wy + 7.1, 30)]
+    pygame.draw.polygon(surf, (24, 22, 24), st)
+
+    # the mantle shelf wrapping the south face
+    _vbox(surf, cam, wx, wy + 9, 36, 8, 23, 26, wood)
+    # the buck's antlers rehung on the breast above it
+    bp = cam.project(wx, wy + 6.9, 36)
+    pygame.draw.circle(surf, (96, 78, 58), (int(bp[0]), int(bp[1])), 2)
+    for sgn in (-1, 1):
+        _wline(wx + sgn * 1, wy + 6.9, 37, wx + sgn * 5, wy + 6.9, 41,
+               (150, 138, 116))
+        _wline(wx + sgn * 5, wy + 6.9, 41, wx + sgn * 8, wy + 6.9, 40,
+               (150, 138, 116))
+        _wline(wx + sgn * 4, wy + 6.9, 40, wx + sgn * 5, wy + 6.9, 43,
+               (150, 138, 116))
+
+    # fire tools leaning at the east flank: poker + shovel
+    _wline(wx + 17, wy + 8, 0, wx + 19, wy + 6, 19, (70, 70, 78), 2)
+    _wline(wx + 20, wy + 9, 0, wx + 22, wy + 7, 17, (70, 70, 78))
+    sh = cam.project(wx + 20, wy + 9, 1)
+    pygame.draw.rect(surf, (82, 82, 90), (int(sh[0]) - 2, int(sh[1]), 4, 3))
+    # the log basket at the west flank, split wood ends showing
+    _vbox(surf, cam, wx - 21, wy + 8, 12, 10, 0, 9,
+          {"top": (92, 70, 44), "side": (68, 52, 32), "dark": (42, 32, 20)})
+    for lox, loy in ((-24, 6), (-20, 7), (-18, 9)):
+        lp2 = cam.project(wx + lox, wy + loy, 9)
+        pygame.draw.circle(surf, (128, 102, 66), (int(lp2[0]), int(lp2[1])), 2)
+        pygame.draw.circle(surf, (74, 56, 36), (int(lp2[0]), int(lp2[1])), 2, 1)
+
+
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
     floor (not a flat decal), an iron pull-ring on top. Default lid is
@@ -3181,6 +3262,7 @@ SOLID_PROPS = {
     "kitchen_wall":  _draw_kitchen_wall_solid,
     "dining_set":    _draw_dining_set_solid,
     "bar_dressing":  _draw_bar_dressing_solid,
+    "hearth_mass":   _draw_hearth_mass_solid,
     "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
