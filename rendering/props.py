@@ -1299,6 +1299,30 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
     wood = {"top": (104, 80, 50), "side": (78, 58, 38), "dark": (48, 34, 22)}
     wood_d = {"top": (86, 66, 42), "side": (62, 46, 30), "dark": (40, 28, 18)}
     T = 32
+    rng = random.Random(int(wx * 7 + wy * 13) & 0xffff)
+
+    # --- the UNDER-LAYER (drawn first, beneath everything): the years on
+    # the floor and the wall. A working kitchen stains its room.
+    sy0_pre = wy - T * 2.1
+    # grease + ash staining around the stove's feet
+    for _ in range(4):
+        gx = wx + rng.uniform(-6, 16)
+        gy = wy + rng.uniform(-12, 14)
+        gp = cam.project(gx, gy, 0)
+        gw = rng.randint(6, 14)
+        pygame.draw.ellipse(surf, (24, 20, 16),
+                            (int(gp[0]) - gw // 2, int(gp[1]) - 2, gw, 4))
+    # the worn pale path where feet stood at the counter, years of it
+    wp = cam.project(wx + 16, sy0_pre + T * 1.0, 0)
+    pygame.draw.ellipse(surf, (96, 76, 50),
+                        (int(wp[0]) - 12, int(wp[1]) - 4, 26, 9))
+    pygame.draw.ellipse(surf, (104, 84, 56),
+                        (int(wp[0]) - 7, int(wp[1]) - 3, 15, 6))
+    # soot fan on the wall behind the pipe, and scorch behind the stove
+    sp = cam.project(wx - 10, wy - 2, 30)
+    pygame.draw.polygon(surf, (16, 15, 16), [
+        (int(sp[0]) - 3, int(sp[1]) + 14), (int(sp[0]) - 8, int(sp[1]) - 8),
+        (int(sp[0]) + 2, int(sp[1]) - 12), (int(sp[0]) + 6, int(sp[1]) + 12)])
 
     # --- the pot shelf (wall-most, drawn first): a thin plank at z26
     sy0 = wy - T * 2.1          # shelf spans the counter run
@@ -1382,6 +1406,95 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
                            (int(cp[0]) + lox, int(cp[1])), 2)
         pygame.draw.circle(surf, (70, 52, 32),
                            (int(cp[0]) + lox, int(cp[1])), 2, 1)
+
+    # --- THE WEAR + THE MESS (2026-07 maintainer: "aged and worn,
+    # scratches and stains, silverware and dishes and messes"). Drawn
+    # last so it sits ON the surfaces.
+    # rust bleeding down the stove's room face + a dented seam
+    sf = cam.project(wx + 12, wy + 8, 20)
+    for _ in range(5):
+        rx_ = int(sf[0]) + rng.randint(-9, 4)
+        ry_ = int(sf[1]) + rng.randint(-8, 6)
+        rl = rng.randint(2, 5)
+        pygame.draw.line(surf, (92, 58, 40), (rx_, ry_), (rx_, ry_ + rl), 1)
+    # ash spill out of the fire door, smeared toward the room
+    ap = cam.project(wx + 14, wy, 1)
+    pygame.draw.ellipse(surf, (58, 56, 54),
+                        (int(ap[0]) - 3, int(ap[1]) - 2, 12, 5))
+    pygame.draw.ellipse(surf, (40, 38, 37),
+                        (int(ap[0]) + 1, int(ap[1]) - 1, 6, 3))
+    # soot rings where the pipe joins, and a bent pipe seam line
+    for jz in (28, 38):
+        jp = cam.project(wx - 2, wy - 2, jz)
+        pygame.draw.line(surf, (14, 14, 16),
+                         (int(jp[0]) - 4, int(jp[1])),
+                         (int(jp[0]) + 4, int(jp[1])), 2)
+    # counter top: knife scratches, cup rings, grease patch
+    for _ in range(4):
+        s0 = cam.project(wx + rng.uniform(-6, 4),
+                         sy0 + T * rng.uniform(0.35, 1.5), 15)
+        pygame.draw.line(surf, (58, 42, 26),
+                         (int(s0[0]), int(s0[1])),
+                         (int(s0[0]) + rng.randint(3, 8),
+                          int(s0[1]) + rng.randint(-1, 2)), 1)
+    for ry2 in (0.55, 1.15):
+        rp = cam.project(wx - 4, sy0 + T * ry2, 15)
+        pygame.draw.ellipse(surf, (52, 38, 24),
+                            (int(rp[0]) - 3, int(rp[1]) - 2, 7, 4), 1)
+    # the dish stack: two plates + a tin mug by the bowl
+    dp = cam.project(wx - 4, sy0 + T * 0.75, 15)
+    for i, pr in enumerate((6, 5)):
+        pygame.draw.ellipse(surf, (168, 160, 146),
+                            (int(dp[0]) - pr, int(dp[1]) - 2 - i * 2,
+                             pr * 2, 5))
+        pygame.draw.ellipse(surf, (110, 104, 92),
+                            (int(dp[0]) - pr, int(dp[1]) - 2 - i * 2,
+                             pr * 2, 5), 1)
+    mg = cam.project(wx + 2, sy0 + T * 0.95, 15)
+    pygame.draw.rect(surf, (130, 134, 140),
+                     (int(mg[0]) - 2, int(mg[1]) - 4, 5, 5))
+    pygame.draw.arc(surf, (130, 134, 140),
+                    (int(mg[0]) + 2, int(mg[1]) - 3, 4, 4), -1.2, 1.2, 1)
+    # silverware: a fork and two spoons, one dropped to the floor
+    fp = cam.project(wx + 1, sy0 + T * 1.4, 15)
+    pygame.draw.line(surf, (150, 152, 158),
+                     (int(fp[0]), int(fp[1])),
+                     (int(fp[0]) + 6, int(fp[1]) - 1), 1)
+    for tx_ in range(3):
+        pygame.draw.line(surf, (150, 152, 158),
+                         (int(fp[0]) + 5 + tx_, int(fp[1]) - 3),
+                         (int(fp[0]) + 5 + tx_, int(fp[1]) - 1), 1)
+    sp2 = cam.project(wx - 2, sy0 + T * 1.55, 15)
+    pygame.draw.line(surf, (150, 152, 158),
+                     (int(sp2[0]), int(sp2[1])),
+                     (int(sp2[0]) + 5, int(sp2[1])), 1)
+    pygame.draw.circle(surf, (150, 152, 158),
+                       (int(sp2[0]) + 6, int(sp2[1])), 1)
+    dr = cam.project(wx + 12, sy0 + T * 1.8, 0)     # the dropped one
+    pygame.draw.line(surf, (128, 130, 136),
+                     (int(dr[0]), int(dr[1])),
+                     (int(dr[0]) + 5, int(dr[1]) + 1), 1)
+    pygame.draw.circle(surf, (128, 130, 136),
+                       (int(dr[0]) + 6, int(dr[1]) + 1), 1)
+    # crumbs + onion skins by the crate, a rag over the counter edge
+    for _ in range(5):
+        cb = cam.project(wx + rng.uniform(4, 18),
+                         wy + T * 0.75 + rng.uniform(-8, 8), 0)
+        pygame.draw.rect(surf, (150, 122, 74),
+                         (int(cb[0]), int(cb[1]), 1, 1))
+    rg = cam.project(wx + 10, sy0 + T * 1.25, 13)
+    pygame.draw.polygon(surf, (140, 126, 104), [
+        (int(rg[0]) - 3, int(rg[1]) - 2), (int(rg[0]) + 3, int(rg[1]) - 3),
+        (int(rg[0]) + 4, int(rg[1]) + 6), (int(rg[0]) - 1, int(rg[1]) + 7)])
+    pygame.draw.line(surf, (104, 92, 74),
+                     (int(rg[0]) - 1, int(rg[1])),
+                     (int(rg[0]) + 2, int(rg[1]) + 5), 1)
+    # a leaning chipped plate on the shelf + its dust line
+    lp = cam.project(wx - 5, sy0 + T * 0.55, 29)
+    pygame.draw.ellipse(surf, (160, 152, 138),
+                        (int(lp[0]) - 4, int(lp[1]) - 7, 8, 8))
+    pygame.draw.ellipse(surf, (104, 98, 86),
+                        (int(lp[0]) - 4, int(lp[1]) - 7, 8, 8), 1)
 
 
 def _draw_cellar_hatch_solid(surf, cam, deco):
