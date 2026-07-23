@@ -391,6 +391,19 @@
   office, schoolhouse, Toby's house, the Lodge) is still open per
   `TODO.md` #4c.
 
+## The interiors pilot (2026-07, TODO #24)
+
+- **2026-07 — The kitchen wall lands (the first ensemble).** The lodge's
+  loose stove + the north-wall ham + scattered kitchen intent composed
+  into ONE `SOLID_PROPS` object (`kitchen_wall`): cookstove on legs with
+  ember grate, stovepipe climbing past the eave with a wall elbow,
+  counter run with pot shelf over, three hung pots, the house ham on the
+  shelf hook, a wood crate under the lip. Placed on the west wall over
+  'x' see-over stamps (the car pattern); the old raw 'k' stove tile the
+  furniture stamp had been hiding was cleared (smoke [9/9] caught it).
+  Also scrubbed en route: the capital-H "Hunter" entity (a cut design)
+  from the backwoods cabin's display name + docstring.
+
 ## The Lodge (2026-07 quality sprint)
 
 - **2026-07 — Sable reachable across his desk (counter-aware talk reach).**

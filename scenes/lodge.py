@@ -373,7 +373,18 @@ def build_lodge():
     sc.add_furniture("chair", [(2, 4)], w=22, h=28)
     sc.add_furniture("chair", [(3, 4)], w=22, h=28)
     # Against the west wall -- the oven door faces east, into the kitchen.
-    sc.add_furniture("stove", [(2, 5)], w=30, h=40, wall="W")
+    # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
+    # the north-wall ham composed into ONE ensemble against the west
+    # wall -- cookstove + pipe past the eave, counter run + pot shelf,
+    # the ham on the shelf hook, a wood crate under. Collision is the
+    # car pattern: a SOLID_PROPS volume over raw 'x' see-over stamps.
+    sc.add_decoration(Decoration(30, 5 * TILE + 16, "kitchen_wall"))
+    _objs = [list(r) for r in sc.objects] if isinstance(sc.objects[0], str) \
+        else sc.objects
+    for _ky in (3, 4, 5, 6):
+        _objs[_ky][1] = "x"
+    _objs[5][2] = "."      # the old map's raw stove tile, now open floor
+    sc.objects = _objs
     # The sitting-room FIREPLACE: a real stone furniture volume (2026-07
     # audit fix: it was a raw 'f' object tile, which no tilt set draws, so
     # the hearth was an invisible collision block; the candle "on the
@@ -382,7 +393,7 @@ def build_lodge():
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
-    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 22, "meat"))
+    # (The hung meat moved into the kitchen-wall ensemble, 2026-07.)
     sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 14, "candle"))  # on table
     # (The old west-wall banner was CUT, 2026-07 audit: E/W wall faces are
     # edge-on to the tilt, so it was invisible from every reachable angle.)

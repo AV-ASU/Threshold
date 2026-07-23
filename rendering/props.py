@@ -1284,6 +1284,106 @@ def _draw_staircase_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (10, 8, 12), mouth)
 
 
+def _draw_kitchen_wall_solid(surf, cam, deco):
+    """THE KITCHEN WALL (interiors pilot, TODO #24): the lodge's cooking
+    run composed as ONE object against a west wall. Cookstove on legs
+    with its pipe climbing past the eave, a counter run north of it with
+    the pot shelf over, three hung pots, the house ham on the shelf's
+    end hook, a wood crate under the counter lip. Provenance: Sable
+    keeps a working kitchen for a full house that no longer comes.
+    Anchor = the stove's floor point; the run extends NORTH (-y); the
+    wall is WEST (-x)."""
+    wx, wy = deco.x, deco.y
+    iron = {"top": (56, 56, 62), "side": (40, 40, 46), "dark": (24, 24, 28)}
+    iron_d = {"top": (44, 44, 50), "side": (30, 30, 36), "dark": (18, 18, 22)}
+    wood = {"top": (104, 80, 50), "side": (78, 58, 38), "dark": (48, 34, 22)}
+    wood_d = {"top": (86, 66, 42), "side": (62, 46, 30), "dark": (40, 28, 18)}
+    T = 32
+
+    # --- the pot shelf (wall-most, drawn first): a thin plank at z26
+    sy0 = wy - T * 2.1          # shelf spans the counter run
+    _vbox(surf, cam, wx - 6, sy0 + T * 0.9, 14, T * 2.2, 26, 29, wood_d)
+    # two iron shelf brackets against the wall
+    for by in (sy0 + 4, sy0 + T * 1.7):
+        _vbox(surf, cam, wx - 9, by, 3, 3, 20, 26, iron_d, outline=False)
+
+    # --- the stovepipe: up from the stove top, elbow into the wall
+    _vbox(surf, cam, wx - 2, wy - 2, 6, 6, 24, 46, iron_d, outline=False)
+    _vbox(surf, cam, wx - 8, wy - 2, 10, 6, 40, 46, iron_d, outline=False)
+    # pipe collar
+    _vbox(surf, cam, wx - 2, wy - 2, 8, 8, 24, 26, iron, outline=False)
+
+    # --- the counter run (two tiles north of the stove; the darker
+    # palette keeps it welded to the ensemble instead of popping loose)
+    _vbox(surf, cam, wx - 1, sy0 + T * 0.95, 22, T * 1.9, 0, 15, wood_d)
+    # counter-top dressing: a bowl and a board
+    bp = cam.project(wx - 3, sy0 + T * 0.5, 15)
+    pygame.draw.ellipse(surf, (140, 132, 116),
+                        (int(bp[0]) - 4, int(bp[1]) - 2, 8, 5))
+    pygame.draw.ellipse(surf, (92, 86, 74),
+                        (int(bp[0]) - 4, int(bp[1]) - 2, 8, 5), 1)
+    kb = cam.project(wx + 1, sy0 + T * 1.3, 15)
+    pygame.draw.rect(surf, (118, 94, 62),
+                     (int(kb[0]) - 6, int(kb[1]) - 3, 12, 5))
+
+    # --- the cookstove: legs, body, top plates, fire door
+    for lx, ly in ((-9, -8), (9, -8), (-9, 8), (9, 8)):
+        _vbox(surf, cam, wx + lx, wy + ly, 3, 3, 0, 4, iron_d, outline=False)
+    _vbox(surf, cam, wx, wy, 24, 20, 4, 24, iron)
+    for py_ in (-5, 5):          # two round plates on the top
+        pp = cam.project(wx + 2, wy + py_, 24)
+        pygame.draw.ellipse(surf, (26, 26, 30),
+                            (int(pp[0]) - 4, int(pp[1]) - 2, 9, 5))
+        pygame.draw.ellipse(surf, (70, 70, 78),
+                            (int(pp[0]) - 4, int(pp[1]) - 2, 9, 5), 1)
+    # fire door on the ROOM (+x) face, ember glow behind the grate
+    d0 = cam.project(wx + 12, wy - 6, 8)
+    d1 = cam.project(wx + 12, wy + 6, 8)
+    d2 = cam.project(wx + 12, wy + 6, 19)
+    d3 = cam.project(wx + 12, wy - 6, 19)
+    pygame.draw.polygon(surf, (16, 16, 20), [d0, d1, d2, d3])
+    pygame.draw.polygon(surf, (60, 60, 68), [d0, d1, d2, d3], 1)
+    gm = cam.project(wx + 12, wy, 13)
+    for gi, (gox, goy) in enumerate(((-3, 0), (0, 1), (3, 0), (-1, -2))):
+        pygame.draw.rect(surf, (168 - gi * 18, 74 - gi * 10, 24),
+                         (int(gm[0]) + gox, int(gm[1]) + goy, 2, 1))
+
+    # --- three pots hung under the shelf
+    for i, py_ in enumerate((0.35, 0.95, 1.55)):
+        hy = sy0 + T * py_
+        hp = cam.project(wx - 3, hy, 22)
+        r = 4 + (i % 2)
+        pygame.draw.line(surf, (150, 150, 160),
+                         (int(hp[0]), int(hp[1]) - 4),
+                         (int(hp[0]), int(hp[1])), 1)
+        pygame.draw.ellipse(surf, (30, 30, 36),
+                            (int(hp[0]) - r, int(hp[1]), r * 2, r + 3))
+        pygame.draw.ellipse(surf, (66, 66, 74),
+                            (int(hp[0]) - r, int(hp[1]), r * 2, r + 3), 1)
+
+    # --- the ham on the shelf's north end hook
+    hp = cam.project(wx - 3, sy0 - 2, 26)
+    pygame.draw.line(surf, (150, 150, 160),
+                     (int(hp[0]), int(hp[1])),
+                     (int(hp[0]), int(hp[1]) + 4), 1)
+    ham = (int(hp[0]) - 4, int(hp[1]) + 4, 9, 12)
+    pygame.draw.ellipse(surf, (118, 62, 50), ham)
+    pygame.draw.ellipse(surf, (86, 44, 36), ham, 1)
+    for ny in range(1, 3):       # the net
+        pygame.draw.line(surf, (170, 154, 128),
+                         (ham[0], ham[1] + ny * 4),
+                         (ham[0] + 9, ham[1] + ny * 4), 1)
+
+    # --- the wood crate under the counter's south lip
+    _vbox(surf, cam, wx - 1, wy + T * 0.75, 18, 14, 0, 11, wood_d)
+    cp = cam.project(wx + 8, wy + T * 0.75, 6)
+    for lox in (-3, 2):
+        pygame.draw.circle(surf, (120, 96, 62),
+                           (int(cp[0]) + lox, int(cp[1])), 2)
+        pygame.draw.circle(surf, (70, 52, 32),
+                           (int(cp[0]) + lox, int(cp[1])), 2, 1)
+
+
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
     floor (not a flat decal), an iron pull-ring on top. Default lid is
@@ -2809,6 +2909,7 @@ SOLID_PROPS = {
     "shaft_ladder":  _draw_shaft_ladder_solid,
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
+    "kitchen_wall":  _draw_kitchen_wall_solid,
     "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
