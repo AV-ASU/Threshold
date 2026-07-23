@@ -667,16 +667,37 @@ def draw_object(surf, ch, rx, ry, tx, ty):
 def draw_floor(surf, ch, rx, ry, tx, ty):
     fd = FLOOR_DEFS.get(ch, FLOOR_DEFS["."])
     base = fd["color"]
-    # Per-tile value jitter so adjacent tiles never read identical -- the
-    # cheapest break of the grid lockstep (cached per (ch,tx,ty), so free
-    # after the first draw). Animated floors (~,@) skip it: they reseed each
-    # frame and a jitter would shimmer as you walk.
-    if ch not in _ANIM_FLOOR and ch != "0":
-        jv = (_vary(tx * 8009 + ty, 0) % 13) - 6        # -6..6, value only
-        base = (max(0, min(255, base[0] + jv)),
-                max(0, min(255, base[1] + jv)),
-                max(0, min(255, base[2] + jv)))
-    pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
+    # Sub-tile value noise + the macro shadow, evaluated per 8px cell and
+    # BILINEAR across tile corners (corner hashes are shared with the
+    # neighbouring tiles), so ground brightness rolls smoothly ACROSS tile
+    # edges. The old whole-tile jitter + per-tile shadow alpha stepped at
+    # every tile boundary and read as a checkerboard of 32px squares (the
+    # 2026-07 quality sprint's "square patches of grass"). Cost lands only
+    # on the first draw (tiles are cached); animated floors (~,@) keep the
+    # flat fill + the per-tile tail shadow (they redraw every frame).
+    smooth = ch not in _ANIM_FLOOR and ch != "0"
+    if smooth:
+        def _cj(cx, cy):
+            return (_vary(cx * 8009 + cy * 7919, 0) % 15) - 7
+        c00, c10 = _cj(tx, ty), _cj(tx + 1, ty)
+        c01, c11 = _cj(tx, ty + 1), _cj(tx + 1, ty + 1)
+        cell = TILE // 4
+        for syc in range(4):
+            v = (syc + 0.5) / 4.0
+            for sxc in range(4):
+                u = (sxc + 0.5) / 4.0
+                jv = ((c00 * (1 - u) + c10 * u) * (1 - v)
+                      + (c01 * (1 - u) + c11 * u) * v)
+                sh = (math.sin((tx + u) * 0.23 + (ty + v) * 0.15)
+                      + 0.6 * math.sin((tx + u) * 0.09 - (ty + v) * 0.19))
+                lv = jv - min(58.0, max(0.0, -sh) * 30.0)
+                col = (max(0, min(255, int(base[0] + lv))),
+                       max(0, min(255, int(base[1] + lv))),
+                       max(0, min(255, int(base[2] + lv))))
+                pygame.draw.rect(surf, col, (rx + sxc * cell,
+                                             ry + syc * cell, cell, cell))
+    else:
+        pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
     if ch == "0":
         # Smooth flat grey stone: a single flat fill, nothing else -- no detail,
         # no per-tile jitter, and NOT the macro shadow blotch below. Perfectly,
@@ -960,14 +981,14 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         if seed % 9 == 0:
             pygame.draw.rect(surf, (24, 22, 30),
                              (rx + (seed * 3 % 24) + 2, ry + (seed * 5 % 24) + 2, 4, 3))
-    # Macro shadow blotches: a low-frequency, world-anchored darkening
-    # that rolls across many tiles at once, so the floor stops reading
-    # as a grid of identical cells. Two cheap sine layers, darken-only.
-    shade = (math.sin(tx * 0.23 + ty * 0.15)
-             + 0.6 * math.sin(tx * 0.09 - ty * 0.19))
-    a = int(max(0.0, -shade) * 30)
-    if a:
-        surf.blit(_dark_tile(min(58, a)), (rx, ry))
+    # Macro shadow blotches for the ANIMATED floors only (the smooth cells
+    # above already folded the shadow into the static tiles per sub-cell).
+    if not smooth:
+        shade = (math.sin(tx * 0.23 + ty * 0.15)
+                 + 0.6 * math.sin(tx * 0.09 - ty * 0.19))
+        a = int(max(0.0, -shade) * 30)
+        if a:
+            surf.blit(_dark_tile(min(58, a)), (rx, ry))
 
 
 def is_floor_solid(ch):
@@ -1284,42 +1305,69 @@ def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
                 (trunk_h * 0.5, trunk_r, trunk_r),
                 (trunk_h, trunk_r * 0.86, trunk_r * 0.86)],
                trunk_pal)
-    # Canopy -- stacked elliptical sections form a tapered sphere
-    canopy_pal = {
-        "body": (24 + g, 54 + g, 30 + g // 2),
-        "lo":   (14 + g // 2, 36 + g, 20 + g // 2),
-        "rim":  (44 + g, 80 + g, 48 + g),
-    }
-    z0 = trunk_h * 0.80
-    h = canopy_h
-    if far:
-        # Far LOD: a 3-ring canopy lobe instead of 6. Same silhouette envelope
-        # (base/widest/crown), half the polygon + ellipse work.
-        canopy_sections = [
-            (z0,             canopy_r * 0.32, canopy_r * 0.32),
-            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
-            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
+    # The stand is NORTH-WOODS APRIL (2026-07 quality sprint; the old
+    # summer-green canopy blobs read as "weird shaped trees" -- a smooth
+    # body of revolution at this size is a lampshade). Two species by
+    # seed: ~2/3 boreal SPRUCE -- a ragged dark cone of stacked, jittered
+    # tiers, the shape this renderer is genuinely good at -- and ~1/3
+    # BARE deciduous, a taller trunk with seeded branch strokes and no
+    # canopy at all (the sealed winter only just let go; nothing has
+    # leafed). Seasonally true (NARRATIVE §3: April, last year's corn
+    # dead standing) and darker on the skyline than the green ever was.
+    species = _vary(seed, 6) % 3
+    if species < 2:
+        # SPRUCE: stacked drooping tiers, each ring jittered so no two
+        # trees repeat and no tier is a clean circle.
+        spruce_pal = {
+            "body": (18 + g // 2, 38 + g // 2, 26 + g // 3),
+            "lo":   (10 + g // 3, 24 + g // 3, 16 + g // 3),
+            "rim":  (32 + g // 2, 56 + g // 2, 38 + g // 2),
+        }
+        z0 = trunk_h * 0.55
+        h = canopy_h * 1.15
+        tiers = 2 if far else 3 + (_vary(seed, 7) % 2)
+        for i in range(tiers):
+            t = i / max(1, tiers - 1)              # 0 bottom .. 1 top
+            jr = 0.82 + (_vary(seed, 8 + i) % 9) * 0.045   # 0.82..1.18
+            rr = canopy_r * (1.05 - 0.62 * t) * jr
+            tz = z0 + h * (0.06 + 0.86 * t)
+            th = h * (0.34 if i < tiers - 1 else 0.26)
+            jx = ((_vary(seed, 12 + i) % 7) - 3) * 0.5
+            draw_solid(surf, camera, wx + lean_x + jx, wy,
+                       [(tz, rr, rr),
+                        (tz + th * 0.55, rr * 0.62, rr * 0.62),
+                        (tz + th, rr * 0.22, rr * 0.22)],
+                       spruce_pal)
     else:
-        canopy_sections = [
-            (z0,             canopy_r * 0.32, canopy_r * 0.32),
-            (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
-            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
-            (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
-            (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
-            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
-    draw_solid(surf, camera, wx + lean_x, wy, canopy_sections, canopy_pal)
-    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric. The
-    # back ranks (far LOD) skip it -- it's a subtle asymmetry lost at range.
-    if not far and (_vary(seed, 6) % 3) == 0:
-        ox = ((_vary(seed, 7) % 11) - 5) * 0.9
-        oy = ((_vary(seed, 8) % 7) - 3) * 0.45
-        zoff = h * 0.22
-        rr = canopy_r * 0.55
-        draw_solid(surf, camera, wx + lean_x + ox, wy + oy,
-                   [(z0 + zoff,            rr * 0.4, rr * 0.4),
-                    (z0 + zoff + rr,       rr,       rr),
-                    (z0 + zoff + rr * 2.2, rr * 0.3, rr * 0.3)],
-                   canopy_pal)
+        # BARE: the trunk carries on past its bole into a leader + seeded
+        # branch strokes. Projected as world lines at build time (the card
+        # is yaw-keyless like every tree; branch parallax across a head
+        # turn is background-subtle).
+        bare = (54 + g // 3, 40 + g // 4, 28 + g // 4)
+        top_h = trunk_h + canopy_h * 0.9
+        p0 = camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.8)
+        p1 = camera.project(wx + lean_x, wy, top_h)
+        pygame.draw.line(surf, bare, p0, p1, 2)
+        n_br = 3 if far else 5 + (_vary(seed, 7) % 3)
+        for i in range(n_br):
+            fz = 0.35 + 0.6 * ((_vary(seed, 8 + i) % 97) / 97.0)
+            bz = trunk_h * 0.8 + (top_h - trunk_h * 0.8) * fz
+            ang = ((_vary(seed, 16 + i) % 628) / 100.0)
+            ln = canopy_r * (0.55 + (_vary(seed, 24 + i) % 7) * 0.09) \
+                * (1.0 - 0.5 * fz)
+            bx0 = wx + lean_x * fz
+            q0 = camera.project(bx0, wy, bz)
+            q1 = camera.project(bx0 + math.cos(ang) * ln,
+                                wy + math.sin(ang) * ln * 0.5,
+                                bz + ln * 0.7)
+            pygame.draw.line(surf, bare, q0, q1, 1)
+            if not far and i % 2 == 0:
+                q2 = camera.project(bx0 + math.cos(ang) * ln * 1.25,
+                                    wy + math.sin(ang) * ln * 0.6,
+                                    bz + ln * 1.05)
+                pygame.draw.line(
+                    surf, (bare[0] - 12, bare[1] - 10, bare[2] - 8),
+                    q1, q2, 1)
 
 
 # Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster

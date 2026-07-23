@@ -451,7 +451,11 @@ def build_arrival_road():
     for cx in (car_tx - 1, car_tx):                   # footprint runs N-S now
         for cy in (car_ty - 1, car_ty, car_ty + 1):   # (the car points up-road)
             if 0 <= cx < sc.w and 0 <= cy < sc.h:
-                objs[cy][cx] = "X"
+                # see-over solid ('x', the counter precedent): a sedan is
+                # waist-high, so it blocks the body but not the sight cone
+                # (the tall 'X' carved a hard black wedge behind the car,
+                # 2026-07 quality sprint).
+                objs[cy][cx] = "x"
     sc.objects = objs
 
     def _road_interact(game):

@@ -929,14 +929,16 @@ class RenderMixin:
         psy -= int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
         return psx, psy
 
-    def _draw_solid_prop(self, d, ox=0.0, oy=0.0):
+    def _draw_solid_prop(self, d, ox=0.0, oy=0.0, target=None):
         """Draw one solid furniture/prop by blitting a cached card. Solid props
         (headstones, signs, the flagpole, lamps, furniture boxes) are STATIC --
         none animate -- and their shape relative to the ground point depends
         only on the camera angle, never on where the camera is panned to. So
         render the 3D prop once per (prop, angle) into a card and blit it at the
         projected base, exactly like the trees. The wrap offset (ox, oy) only
-        moves the base, so every wrap-clone shares one card."""
+        moves the base, so every wrap-clone shares one card. `target` lets the
+        per-actor occlusion fade route the blit through draw_with_alpha's
+        scratch (screen-aligned) instead of the screen."""
         cam = self.camera
         bx, by = cam.project(d.x + ox, d.y + oy)
         # Yaw-invariant props build once (no yaw in the key) and live in their
@@ -963,7 +965,8 @@ class RenderMixin:
                 cache.pop(order.pop(0), None)
         card, ax, ay = entry
         if card is not None:
-            self.screen.blit(card, (bx - ax, by - ay))
+            (target if target is not None else self.screen).blit(
+                card, (bx - ax, by - ay))
 
     def _invalidate_prop_card(self, deco):
         """Drop any cached solid-prop card for `deco` so its next draw rebuilds
@@ -1693,9 +1696,33 @@ class RenderMixin:
                             # every other prop is unaffected.
                             _dbias = float(getattr(d, "kwargs", {})
                                            .get("depth_bias", 0.0))
-                            _emit(self.camera.depth(d.x + ox, d.y + oy) + _dbias,
-                                  lambda d=d, ox=ox, oy=oy:
-                                  self._draw_solid_prop(d, ox, oy))
+                            # Per-actor occlusion fade, the same primitive
+                            # the walls use (2026-07 quality sprint: the
+                            # prop emit never faded, so the car and any
+                            # tall furniture blanketed whoever stood
+                            # behind them despite DESIGN.md's claim).
+                            pa = 255
+                            if _focus_pre:
+                                _pod = self.camera.depth(d.x + ox, d.y + oy)
+                                _pos = _screen_span(self.camera, d.x + ox,
+                                                    d.y + oy, 25, 20)
+                                for _pd, _ps in _focus_pre:
+                                    pa = min(pa, occluder_alpha_box(
+                                        _pod, _pos, _pd, _ps))
+                                    if pa <= 60:
+                                        break
+                            def _prop_fn(d=d, ox=ox, oy=oy, pa=pa,
+                                         psx=psx, psy=psy):
+                                if pa >= 255:
+                                    self._draw_solid_prop(d, ox, oy)
+                                else:
+                                    draw_with_alpha(
+                                        self.screen, pa,
+                                        lambda s: self._draw_solid_prop(
+                                            d, ox, oy, target=s),
+                                        rect=(psx - 90, psy - 140, 180, 200))
+                            _emit(self.camera.depth(d.x + ox, d.y + oy)
+                                  + _dbias, _prop_fn)
             # Surface props seated ON furniture (a ledger, plate, lamp on a
             # desk/table): lifted to the prop height (deco kwarg `z`) and
             # depth-sorted at the SOUTH EDGE of their host tile, not their own

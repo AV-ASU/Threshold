@@ -443,6 +443,31 @@
   neighbor scene's terrain; strips now paint true edge strips, drawn over
   the rim fade where a neighbor exists.
 
+## Terrain & prop read (2026-07 quality sprint)
+
+- **2026-07 — Solid props fade for occluded actors (the car fix).** The
+  per-actor occlusion fade was wired only for wall tiles; the solid-prop
+  emit blitted every card at full opacity (despite docstrings claiming
+  otherwise), so the car -- the game's largest prop card -- blanketed
+  whoever stood behind it. The prop emit now runs the same
+  `occluder_alpha_box` fade the walls use. The car's footprint also went
+  `'X'` → `'x'` (see-over, the counter precedent): a sedan is waist-high
+  and should not carve a black wedge out of the sight cone.
+- **2026-07 — The ground stops checkerboarding.** Floor brightness was
+  three per-tile constants (base, ±6 whole-tile jitter, one macro-shadow
+  alpha), so every variation landed as a hard-edged 32px square.
+  `draw_floor` now evaluates sub-tile value noise + the macro shadow per
+  8px cell, bilinear across tile corners SHARED with neighbouring tiles,
+  so brightness rolls smoothly across tile edges. Cost only on first draw
+  (tiles are cached); animated water keeps the flat fill.
+- **2026-07 — North-woods April trees.** The old tree was a symmetric
+  green body-of-revolution canopy -- summer foliage in a fiction set the
+  week the ice went out, and it read as a faceted lampshade ("weird
+  shaped trees"). The stand is now ~2/3 boreal SPRUCE (ragged dark cones
+  of jittered stacked tiers -- the shape the renderer is genuinely good
+  at) and ~1/3 BARE deciduous (trunk + seeded branch strokes, nothing
+  leafed). Seasonally true and darker on the skyline.
+
 ## Lighting
 
 - **2026-07 — Two-family light model + shared fixture table.** Brimley's
