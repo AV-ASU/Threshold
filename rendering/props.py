@@ -1301,28 +1301,32 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
     T = 32
     rng = random.Random(int(wx * 7 + wy * 13) & 0xffff)
 
+    # World-space helpers: everything on a surface is projected geometry
+    # (a plate is a circle in the WORLD's plane, foreshortened by the
+    # camera), never a screen-aligned mark -- error class 7.
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
     # --- the UNDER-LAYER (drawn first, beneath everything): the years on
     # the floor and the wall. A working kitchen stains its room.
     sy0_pre = wy - T * 2.1
-    # grease + ash staining around the stove's feet
+    # grease + ash staining around the stove's feet, in the floor plane
     for _ in range(4):
-        gx = wx + rng.uniform(-6, 16)
-        gy = wy + rng.uniform(-12, 14)
-        gp = cam.project(gx, gy, 0)
-        gw = rng.randint(6, 14)
-        pygame.draw.ellipse(surf, (24, 20, 16),
-                            (int(gp[0]) - gw // 2, int(gp[1]) - 2, gw, 4))
+        _ell(wx + rng.uniform(-6, 16), wy + rng.uniform(-12, 14), 0.2,
+             rng.uniform(4, 8), rng.uniform(2.5, 5), (24, 20, 16))
     # the worn pale path where feet stood at the counter, years of it
-    wp = cam.project(wx + 16, sy0_pre + T * 1.0, 0)
-    pygame.draw.ellipse(surf, (96, 76, 50),
-                        (int(wp[0]) - 12, int(wp[1]) - 4, 26, 9))
-    pygame.draw.ellipse(surf, (104, 84, 56),
-                        (int(wp[0]) - 7, int(wp[1]) - 3, 15, 6))
-    # soot fan on the wall behind the pipe, and scorch behind the stove
-    sp = cam.project(wx - 10, wy - 2, 30)
+    _ell(wx + 16, sy0_pre + T * 1.0, 0.2, 12, 7, (96, 76, 50))
+    _ell(wx + 16, sy0_pre + T * 1.0, 0.3, 7, 4, (104, 84, 56))
+    # soot fan up the wall behind the pipe (the wall's vertical plane)
     pygame.draw.polygon(surf, (16, 15, 16), [
-        (int(sp[0]) - 3, int(sp[1]) + 14), (int(sp[0]) - 8, int(sp[1]) - 8),
-        (int(sp[0]) + 2, int(sp[1]) - 12), (int(sp[0]) + 6, int(sp[1]) + 12)])
+        cam.project(wx - 10, wy - 7, 26), cam.project(wx - 10, wy - 9, 40),
+        cam.project(wx - 10, wy + 4, 42), cam.project(wx - 10, wy + 6, 26)])
 
     # --- the pot shelf (wall-most, drawn first): a thin plank at z26
     sy0 = wy - T * 2.1          # shelf spans the counter run
@@ -1340,15 +1344,20 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
     # --- the counter run (two tiles north of the stove; the darker
     # palette keeps it welded to the ensemble instead of popping loose)
     _vbox(surf, cam, wx - 1, sy0 + T * 0.95, 22, T * 1.9, 0, 15, wood_d)
-    # counter-top dressing: a bowl and a board
-    bp = cam.project(wx - 3, sy0 + T * 0.5, 15)
-    pygame.draw.ellipse(surf, (140, 132, 116),
-                        (int(bp[0]) - 4, int(bp[1]) - 2, 8, 5))
-    pygame.draw.ellipse(surf, (92, 86, 74),
-                        (int(bp[0]) - 4, int(bp[1]) - 2, 8, 5), 1)
-    kb = cam.project(wx + 1, sy0 + T * 1.3, 15)
-    pygame.draw.rect(surf, (118, 94, 62),
-                     (int(kb[0]) - 6, int(kb[1]) - 3, 12, 5))
+    # counter-top dressing: a stew bowl and a cutting board with cleaver
+    _ell(wx - 3, sy0 + T * 0.5, 15, 5, 5, (140, 132, 116))
+    _ell(wx - 3, sy0 + T * 0.5, 15, 5, 5, (86, 80, 68), 1)
+    _ell(wx - 3, sy0 + T * 0.5, 15.5, 3, 3, (96, 78, 58))
+    bd = [cam.project(wx - 6, sy0 + T * 1.22, 15),
+          cam.project(wx + 6, sy0 + T * 1.18, 15),
+          cam.project(wx + 7, sy0 + T * 1.44, 15),
+          cam.project(wx - 5, sy0 + T * 1.48, 15)]
+    pygame.draw.polygon(surf, (116, 92, 60), bd)
+    pygame.draw.polygon(surf, (74, 56, 36), bd, 1)
+    _wline(wx - 2, sy0 + T * 1.28, 15.5, wx + 5, sy0 + T * 1.34, 15.5,
+           (150, 152, 158), 2)                       # the cleaver blade
+    _wline(wx - 5, sy0 + T * 1.26, 15.5, wx - 2, sy0 + T * 1.28, 15.5,
+           (70, 52, 32), 2)                          # its wood handle
 
     # --- the cookstove: legs, body, top plates, fire door
     for lx, ly in ((-9, -8), (9, -8), (-9, 8), (9, 8)):
@@ -1372,31 +1381,33 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
         pygame.draw.rect(surf, (168 - gi * 18, 74 - gi * 10, 24),
                          (int(gm[0]) + gox, int(gm[1]) + goy, 2, 1))
 
-    # --- three pots hung under the shelf
+    # --- three pots hung under the shelf: real hanging VOLUMES (small
+    # kettle boxes with flared world-plane rims), never screen ellipses
     for i, py_ in enumerate((0.35, 0.95, 1.55)):
         hy = sy0 + T * py_
-        hp = cam.project(wx - 3, hy, 22)
-        r = 4 + (i % 2)
-        pygame.draw.line(surf, (150, 150, 160),
-                         (int(hp[0]), int(hp[1]) - 4),
-                         (int(hp[0]), int(hp[1])), 1)
-        pygame.draw.ellipse(surf, (30, 30, 36),
-                            (int(hp[0]) - r, int(hp[1]), r * 2, r + 3))
-        pygame.draw.ellipse(surf, (66, 66, 74),
-                            (int(hp[0]) - r, int(hp[1]), r * 2, r + 3), 1)
+        r = 3.0 + (i % 2)
+        _wline(wx - 3, hy, 26, wx - 3, hy, 23 - i % 2, (150, 150, 160))
+        pot = {"top": (44, 44, 50), "side": (32, 32, 38),
+               "dark": (20, 20, 24)}
+        _vbox(surf, cam, wx - 3, hy, r * 2, r * 2, 17 - (i % 2),
+              23 - i % 2, pot, outline=False)
+        _ell(wx - 3, hy, 23 - i % 2, r + 1, r + 1, (66, 66, 74), 1)
 
-    # --- the ham on the shelf's north end hook
-    hp = cam.project(wx - 3, sy0 - 2, 26)
-    pygame.draw.line(surf, (150, 150, 160),
-                     (int(hp[0]), int(hp[1])),
-                     (int(hp[0]), int(hp[1]) + 4), 1)
-    ham = (int(hp[0]) - 4, int(hp[1]) + 4, 9, 12)
-    pygame.draw.ellipse(surf, (118, 62, 50), ham)
-    pygame.draw.ellipse(surf, (86, 44, 36), ham, 1)
-    for ny in range(1, 3):       # the net
-        pygame.draw.line(surf, (170, 154, 128),
-                         (ham[0], ham[1] + ny * 4),
-                         (ham[0] + 9, ham[1] + ny * 4), 1)
+    # --- the ham on the shelf's north end hook: a hanging body drawn in
+    # the world's vertical plane (a y-z circle sweep), netted
+    hx, hy2 = wx - 3, sy0 - 2
+    _wline(hx, hy2, 26, hx, hy2, 23, (150, 150, 160))
+    for rz, rr, col in ((17.5, 4.6, (118, 62, 50)),
+                        (17.5, 4.6, None)):
+        pts = [cam.project(hx, hy2 + rr * math.cos(a),
+                           rz + 5.5 * math.sin(a))
+               for a in [i2 * math.pi / 6.0 for i2 in range(12)]]
+        if col:
+            pygame.draw.polygon(surf, col, pts)
+        else:
+            pygame.draw.polygon(surf, (86, 44, 36), pts, 1)
+    for nz in (15.0, 18.0, 21.0):    # the net, wrapped in world space
+        _wline(hx, hy2 - 4.4, nz, hx, hy2 + 4.4, nz, (170, 154, 128))
 
     # --- the wood crate under the counter's south lip
     _vbox(surf, cam, wx - 1, wy + T * 0.75, 18, 14, 0, 11, wood_d)
@@ -1407,94 +1418,85 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
         pygame.draw.circle(surf, (70, 52, 32),
                            (int(cp[0]) + lox, int(cp[1])), 2, 1)
 
-    # --- THE WEAR + THE MESS (2026-07 maintainer: "aged and worn,
-    # scratches and stains, silverware and dishes and messes"). Drawn
-    # last so it sits ON the surfaces.
-    # rust bleeding down the stove's room face + a dented seam
-    sf = cam.project(wx + 12, wy + 8, 20)
-    for _ in range(5):
-        rx_ = int(sf[0]) + rng.randint(-9, 4)
-        ry_ = int(sf[1]) + rng.randint(-8, 6)
-        rl = rng.randint(2, 5)
-        pygame.draw.line(surf, (92, 58, 40), (rx_, ry_), (rx_, ry_ + rl), 1)
-    # ash spill out of the fire door, smeared toward the room
-    ap = cam.project(wx + 14, wy, 1)
-    pygame.draw.ellipse(surf, (58, 56, 54),
-                        (int(ap[0]) - 3, int(ap[1]) - 2, 12, 5))
-    pygame.draw.ellipse(surf, (40, 38, 37),
-                        (int(ap[0]) + 1, int(ap[1]) - 1, 6, 3))
-    # soot rings where the pipe joins, and a bent pipe seam line
-    for jz in (28, 38):
-        jp = cam.project(wx - 2, wy - 2, jz)
-        pygame.draw.line(surf, (14, 14, 16),
-                         (int(jp[0]) - 4, int(jp[1])),
-                         (int(jp[0]) + 4, int(jp[1])), 2)
-    # counter top: knife scratches, cup rings, grease patch
+    # --- THE WEAR + THE MESS, all WORLD-SPACE (2026-07 rework: the first
+    # pass drew screen-aligned marks -- error class 7, "props face the
+    # camera" -- and too many same-weight specks. Fewer, BIGGER objects,
+    # each in its true plane, each distinguishable at arm's length).
+    # rust bleeding down the stove's room face: world-vertical streaks
     for _ in range(4):
-        s0 = cam.project(wx + rng.uniform(-6, 4),
-                         sy0 + T * rng.uniform(0.35, 1.5), 15)
-        pygame.draw.line(surf, (58, 42, 26),
-                         (int(s0[0]), int(s0[1])),
-                         (int(s0[0]) + rng.randint(3, 8),
-                          int(s0[1]) + rng.randint(-1, 2)), 1)
-    for ry2 in (0.55, 1.15):
-        rp = cam.project(wx - 4, sy0 + T * ry2, 15)
-        pygame.draw.ellipse(surf, (52, 38, 24),
-                            (int(rp[0]) - 3, int(rp[1]) - 2, 7, 4), 1)
-    # the dish stack: two plates + a tin mug by the bowl
-    dp = cam.project(wx - 4, sy0 + T * 0.75, 15)
-    for i, pr in enumerate((6, 5)):
-        pygame.draw.ellipse(surf, (168, 160, 146),
-                            (int(dp[0]) - pr, int(dp[1]) - 2 - i * 2,
-                             pr * 2, 5))
-        pygame.draw.ellipse(surf, (110, 104, 92),
-                            (int(dp[0]) - pr, int(dp[1]) - 2 - i * 2,
-                             pr * 2, 5), 1)
-    mg = cam.project(wx + 2, sy0 + T * 0.95, 15)
-    pygame.draw.rect(surf, (130, 134, 140),
-                     (int(mg[0]) - 2, int(mg[1]) - 4, 5, 5))
-    pygame.draw.arc(surf, (130, 134, 140),
-                    (int(mg[0]) + 2, int(mg[1]) - 3, 4, 4), -1.2, 1.2, 1)
-    # silverware: a fork and two spoons, one dropped to the floor
-    fp = cam.project(wx + 1, sy0 + T * 1.4, 15)
-    pygame.draw.line(surf, (150, 152, 158),
-                     (int(fp[0]), int(fp[1])),
-                     (int(fp[0]) + 6, int(fp[1]) - 1), 1)
-    for tx_ in range(3):
-        pygame.draw.line(surf, (150, 152, 158),
-                         (int(fp[0]) + 5 + tx_, int(fp[1]) - 3),
-                         (int(fp[0]) + 5 + tx_, int(fp[1]) - 1), 1)
-    sp2 = cam.project(wx - 2, sy0 + T * 1.55, 15)
-    pygame.draw.line(surf, (150, 152, 158),
-                     (int(sp2[0]), int(sp2[1])),
-                     (int(sp2[0]) + 5, int(sp2[1])), 1)
-    pygame.draw.circle(surf, (150, 152, 158),
-                       (int(sp2[0]) + 6, int(sp2[1])), 1)
-    dr = cam.project(wx + 12, sy0 + T * 1.8, 0)     # the dropped one
-    pygame.draw.line(surf, (128, 130, 136),
-                     (int(dr[0]), int(dr[1])),
-                     (int(dr[0]) + 5, int(dr[1]) + 1), 1)
-    pygame.draw.circle(surf, (128, 130, 136),
-                       (int(dr[0]) + 6, int(dr[1]) + 1), 1)
-    # crumbs + onion skins by the crate, a rag over the counter edge
-    for _ in range(5):
-        cb = cam.project(wx + rng.uniform(4, 18),
-                         wy + T * 0.75 + rng.uniform(-8, 8), 0)
-        pygame.draw.rect(surf, (150, 122, 74),
-                         (int(cb[0]), int(cb[1]), 1, 1))
-    rg = cam.project(wx + 10, sy0 + T * 1.25, 13)
+        ry_ = wy + rng.uniform(-8, 8)
+        rz0 = rng.uniform(14, 20)
+        _wline(wx + 12.4, ry_, rz0, wx + 12.4, ry_,
+               rz0 - rng.uniform(4, 8), (96, 60, 40))
+    # THE SKILLET on the stove's front plate: big black iron, its handle
+    # swung toward the room -- the one object the eye lands on first
+    _ell(wx + 2, wy + 5, 24.6, 6.5, 6.5, (26, 26, 30))
+    _ell(wx + 2, wy + 5, 24.6, 6.5, 6.5, (74, 74, 82), 1)
+    _ell(wx + 2, wy + 5, 25.0, 4.2, 4.2, (38, 36, 40))
+    _wline(wx + 7, wy + 8, 24.6, wx + 14, wy + 12, 24.6, (30, 30, 34), 2)
+    # ash spilled from the fire door onto the boards, a smeared fan
+    _ell(wx + 15, wy + 1, 0.4, 5.5, 3.5, (58, 56, 54))
+    _ell(wx + 18, wy + 2, 0.3, 3.0, 2.0, (42, 40, 39))
+    # soot rings where the pipe sections join (bands around the pipe)
+    for jz in (28.0, 38.0):
+        _wline(wx - 5, wy - 2, jz, wx + 1, wy - 2, jz, (14, 14, 16), 2)
+    # counter top: three long knife scratches + two cup rings, in-plane
+    for _ in range(3):
+        sx0 = wx + rng.uniform(-6, 0)
+        sy_ = sy0 + T * rng.uniform(0.4, 1.5)
+        _wline(sx0, sy_, 15.2, sx0 + rng.uniform(5, 9),
+               sy_ + rng.uniform(-2, 3), 15.2, (58, 42, 26))
+    for ry2 in (0.6, 1.1):
+        _ell(wx - 3, sy0 + T * ry2, 15.2, 2.6, 2.6, (52, 38, 24), 1)
+    # THE DISH STACK: two full-size plates, rims ringed, slightly offset
+    for i, pr in enumerate((6.0, 5.2)):
+        _ell(wx - 3 + i, sy0 + T * 0.8, 15.0 + i * 1.4, pr, pr,
+             (168, 160, 146))
+        _ell(wx - 3 + i, sy0 + T * 0.8, 15.0 + i * 1.4, pr, pr,
+             (104, 98, 86), 1)
+        _ell(wx - 3 + i, sy0 + T * 0.8, 15.1 + i * 1.4, pr * 0.55,
+             pr * 0.55, (140, 132, 118), 1)
+    # the tin mug: a real little cylinder with a world-space handle
+    mug = {"top": (138, 142, 148), "side": (112, 116, 124),
+           "dark": (84, 88, 96)}
+    _vbox(surf, cam, wx + 1, sy0 + T * 1.0, 4, 4, 15, 20, mug,
+          outline=False)
+    _wline(wx + 4, sy0 + T * 1.0, 19, wx + 6, sy0 + T * 1.0, 17,
+           (112, 116, 124))
+    # silverware: ONE fork, ONE spoon, laid in-plane by the board; one
+    # more spoon dropped to the floorboards mid-room
+    _wline(wx - 5, sy0 + T * 1.6, 15.2, wx + 1, sy0 + T * 1.62, 15.2,
+           (154, 156, 162))
+    for pxo in (-0.8, 0.0, 0.8):
+        _wline(wx + 1 + pxo, sy0 + T * 1.62, 15.2,
+               wx + 2.4 + pxo, sy0 + T * 1.63, 15.2, (154, 156, 162))
+    _wline(wx - 4, sy0 + T * 1.75, 15.2, wx + 1, sy0 + T * 1.76, 15.2,
+           (154, 156, 162))
+    _ell(wx + 2, sy0 + T * 1.76, 15.2, 1.4, 1.4, (154, 156, 162))
+    _wline(wx + 13, sy0 + T * 1.9, 0.3, wx + 18, sy0 + T * 1.95, 0.3,
+           (128, 130, 136))
+    _ell(wx + 19, sy0 + T * 1.95, 0.3, 1.4, 1.4, (128, 130, 136))
+    # the rag draped over the counter's room edge: top flap in the
+    # counter plane, hanging flap down the face
+    rgx, rgy = wx + 9, sy0 + T * 1.3
     pygame.draw.polygon(surf, (140, 126, 104), [
-        (int(rg[0]) - 3, int(rg[1]) - 2), (int(rg[0]) + 3, int(rg[1]) - 3),
-        (int(rg[0]) + 4, int(rg[1]) + 6), (int(rg[0]) - 1, int(rg[1]) + 7)])
-    pygame.draw.line(surf, (104, 92, 74),
-                     (int(rg[0]) - 1, int(rg[1])),
-                     (int(rg[0]) + 2, int(rg[1]) + 5), 1)
-    # a leaning chipped plate on the shelf + its dust line
-    lp = cam.project(wx - 5, sy0 + T * 0.55, 29)
-    pygame.draw.ellipse(surf, (160, 152, 138),
-                        (int(lp[0]) - 4, int(lp[1]) - 7, 8, 8))
-    pygame.draw.ellipse(surf, (104, 98, 86),
-                        (int(lp[0]) - 4, int(lp[1]) - 7, 8, 8), 1)
+        cam.project(rgx - 4, rgy - 3, 15.2),
+        cam.project(rgx + 1, rgy + 4, 15.2),
+        cam.project(rgx + 2, rgy + 4, 15.2),
+        cam.project(rgx - 2, rgy - 3, 15.2)])
+    pygame.draw.polygon(surf, (128, 114, 94), [
+        cam.project(rgx + 1, rgy - 2, 15.0),
+        cam.project(rgx + 1, rgy + 3, 15.0),
+        cam.project(rgx + 1, rgy + 3, 8.0),
+        cam.project(rgx + 1, rgy - 2, 9.0)])
+    # a chipped plate leaning against the wall on the shelf: a circle in
+    # the world's VERTICAL plane, so it turns honestly with the camera
+    lpx, lpy = wx - 5, sy0 + T * 0.55
+    lpp = [cam.project(lpx, lpy + 4.2 * math.cos(a),
+                       29.0 + 4.2 * (1 + math.sin(a)))
+           for a in [i2 * math.pi / 6.0 for i2 in range(12)]]
+    pygame.draw.polygon(surf, (160, 152, 138), lpp)
+    pygame.draw.polygon(surf, (104, 98, 86), lpp, 1)
 
 
 def _draw_cellar_hatch_solid(surf, cam, deco):

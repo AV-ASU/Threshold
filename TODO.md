@@ -204,6 +204,13 @@ placement.
   turns)? Powered behavior rides the light pillar's genset link (#21).
   Not everything can or should move; a still room with ONE moving thing
   is scarier than a busy one.
+- **EVERY ENSEMBLE SHIPS ITS WEAR LAYER, WORLD-SPACE.** The object's
+  years (rust, soot, scratches), its stains on the surfaces around it
+  (the floor wears where feet stood), and at least one piece of honest
+  mess -- with FEW, BIG, DISTINGUISHABLE items, never same-weight
+  speckle. Every mark is projected geometry in its true plane (a plate
+  is a world-plane circle); screen-aligned marks are error class 7.
+  The floors set the bar; the decor rises to it.
 - **Rug rework rides along:** the rug must read from every facing (its
   pattern/fringe currently only reads from N).
 - **Blank building faces:** E/W exterior shells (the backwoods cabin is
