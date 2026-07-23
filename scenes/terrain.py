@@ -688,9 +688,13 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                 u = (sxc + 0.5) / 4.0
                 jv = ((c00 * (1 - u) + c10 * u) * (1 - v)
                       + (c01 * (1 - u) + c11 * u) * v)
+                # Amplitude tuned DOWN with the smoothing (2026-07): the
+                # old per-tile stepping read as texture, but a smooth
+                # -58-value blob read as the hard shadow of nothing (the
+                # playtest's "weird dark patch outside the cabin").
                 sh = (math.sin((tx + u) * 0.23 + (ty + v) * 0.15)
                       + 0.6 * math.sin((tx + u) * 0.09 - (ty + v) * 0.19))
-                lv = jv - min(58.0, max(0.0, -sh) * 30.0)
+                lv = jv - min(30.0, max(0.0, -sh) * 17.0)
                 col = (max(0, min(255, int(base[0] + lv))),
                        max(0, min(255, int(base[1] + lv))),
                        max(0, min(255, int(base[2] + lv))))
@@ -763,23 +767,46 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         # slightly different tone (keyed to its global board row) so
         # long planks read across the room -- shadowed seams, a lit
         # edge under each, staggered end-joints, knots.
+        # The boards must vary ALONG their length too, or an E/W facing
+        # (boards rotated to vertical) reads as long uniform stripes
+        # (2026-07 playtest: "the floor on the east/west looks like
+        # straight lines"). Per-tile grain patches + end-joints every ~3
+        # tiles of run give the cross-grain rhythm; the macro shadow is
+        # folded into the board shade (these rects overdraw the smooth
+        # base cells, which used to silently drop it).
+        msh = (math.sin((tx + 0.5) * 0.23 + (ty + 0.5) * 0.15)
+               + 0.6 * math.sin((tx + 0.5) * 0.09 - (ty + 0.5) * 0.19))
+        mdark = min(30.0, max(0.0, -msh) * 17.0)
         boards = ((0, 10), (10, 12), (22, 10))     # (y0, height) per board
         for b, (y0, bh) in enumerate(boards):
             row = ty * 3 + b
             v = ((row * 2654435761) & 0xff) / 255.0 - 0.5    # -0.5..0.5
-            shade = (max(0, min(255, int(88 + v * 26))),
-                     max(0, min(255, int(66 + v * 20))),
-                     max(0, min(255, int(42 + v * 16))))
+            g2 = (((row * 40503 + tx * 9176) & 0xff) / 255.0 - 0.5)
+            shade = (max(0, min(255, int(88 + v * 26 + g2 * 14 - mdark))),
+                     max(0, min(255, int(66 + v * 20 + g2 * 10 - mdark))),
+                     max(0, min(255, int(42 + v * 16 + g2 * 8 - mdark * 0.8))))
             pygame.draw.rect(surf, shade, (rx, ry + y0, TILE, bh))
+            # A part-tile grain patch so one board's tone shifts mid-run.
+            if (row * 13 + tx * 5) % 3 == 0:
+                px0 = rx + ((row * 17 + tx * 23) % 16)
+                pw = 10 + ((row + tx) % 8)
+                patch = tuple(max(0, min(255,
+                                         c + (6 if (row + tx) % 2 else -6)))
+                              for c in shade)
+                pygame.draw.rect(surf, patch, (px0, ry + y0 + 1, pw, bh - 2))
             pygame.draw.line(surf, (52, 36, 22),
                              (rx, ry + y0), (rx + TILE, ry + y0), 1)
             pygame.draw.line(surf, (104, 80, 52),
                              (rx, ry + y0 + 1), (rx + TILE, ry + y0 + 1), 1)
-            # Staggered end-joint -- only some boards, so planks run long.
-            if (tx * 3 + row) % 5 == 0:
+            # Staggered end-joints every ~3 tiles of board run (a lit edge
+            # beside each so the butt reads under the tilt).
+            if (row * 7 + tx * 3) % 3 == 0:
                 jx = rx + ((row * 11 + tx * 7) % (TILE - 6)) + 3
                 pygame.draw.line(surf, (50, 34, 20),
                                  (jx, ry + y0 + 1), (jx, ry + y0 + bh - 1), 1)
+                pygame.draw.line(surf, (110, 86, 56),
+                                 (jx + 1, ry + y0 + 1),
+                                 (jx + 1, ry + y0 + bh - 1), 1)
         # Dark knots, sparse.
         seed = tx * 31 + ty * 17
         if seed % 6 == 0:

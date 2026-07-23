@@ -694,7 +694,10 @@ section is the CODE MAP only — where each system lives:
      lockstep (no perfect straight prop rows); decorate more than just the one north wall
      face; beds/furniture sit in the room's back, not across the door. **VIEW EVERY ROOM
      FROM ALL FOUR N/E/S/W FACINGS before calling it done** (`tools/capture_world.py` per
-     facing) -- most of these hide on the one facing you happened to check.
+     facing) -- most of these hide on the one facing you happened to check. **Check E/W
+     FIRST** (2026-07 playtest): the art was habitually authored for the N read, so the
+     rotated facings are where floors go stripey, rugs stop reading, and building shells
+     go blank.
   9. **Threat pacing.** Speed ratios are intentional (player sprint below the King so a
      locked apex can't be outrun but CAN be hidden from); pursuit rules, apex spawn
      placement (never on the player's exit tile), and monster visibility/design must

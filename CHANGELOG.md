@@ -445,6 +445,18 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — Plank floors read from E/W; macro shadow tamed.** Boards
+  varied only per ROW, so a rotated (E/W) facing showed long uniform
+  stripes ("the floor on the east/west looks like straight lines"); the
+  board rects also overdrew the new smooth base cells and silently
+  dropped the macro shadow indoors. Boards now carry along-the-run grain
+  patches + staggered end-joints every ~3 tiles, with the macro shadow
+  folded into the board shade. And the macro shadow's amplitude was cut
+  (58 → 30 max, gentler curve): the old per-tile stepping read as
+  texture, but once smoothed the full-strength blob read as the hard
+  shadow of nothing (the playtest's "weird dark patch outside the
+  cabin").
+
 - **2026-07 — Solid props fade for occluded actors (the car fix).** The
   per-actor occlusion fade was wired only for wall tiles; the solid-prop
   emit blitted every card at full opacity (despite docstrings claiming

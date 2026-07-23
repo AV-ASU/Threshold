@@ -153,6 +153,48 @@ Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
 assert on several of these captions/notes) and update the ones whose
 behavior legitimately changes.
 
+### 24. **[Opus + Fable]** INTERIORS PROGRAM — ensembles, floor plans, the prop fifteen
+
+**Maintainer directive (2026-07 playtest): "props seem scattered without
+any purpose... treat what you have as multiple props touching each other
+and make those into ONE new object with more handcrafted detail."** The
+rooms read as prop soup; the fix is composed ensembles, not more
+placement.
+
+- **THE ENSEMBLE RULE.** Props that touch each other or a shared wall
+  merge into ONE handcrafted multi-tile object (a `SOLID_PROPS` volume
+  with a designed silhouette), authored for the projection, never
+  re-scattered as separates. Design each from the FIXED CAMERA's four
+  facings, E/W FIRST (the historically weakest angles).
+- **REAL FLOOR PLANS FIRST.** Before re-dressing a room, sketch it from a
+  real reference plan (1990s Minnesota cabin / small hotel / farmhouse):
+  work zones, walk lanes, furniture against walls, one focal wall using
+  volume and negative space. Provenance stays king (SCENE-DRESSING
+  PROCESS).
+- **The prop fifteen (reusable ensembles, build as a library):**
+  1. kitchen (wood stove + counter + stovepipe + hung pots),
+  2. hearth wall (fireplace + mantle + fire tools + log basket),
+  3. bearskin rug, 4. trophy wall (mounted wolf + buck + fish as ONE),
+  5. bed corner (bed + nightstand + wall pegs + underfoot rug),
+  6. writing nook (desk + chair + lamp + papers),
+  7. dining set (table + benches + settings),
+  8. wash corner (washstand + mirror + towel rail),
+  9. gun rack wall, 10. coat wall (pegs + coats + boots under),
+  11. pantry shelving (stocked and bare variants),
+  12. reading chair + side table + oil lamp,
+  13. workbench wall (hung tools + vise),
+  14. woodpile + stove pairing,
+  15. wardrobe with the robe made legible (Sable's closet: the tell
+      reads the moment you round the partition, no squinting).
+  Each through the render-first loop (preview sheet → approve → place).
+- **Rug rework rides along:** the rug must read from every facing (its
+  pattern/fringe currently only reads from N).
+- **Blank building faces:** E/W exterior shells (the hunter's cabin is a
+  bare grey slab from the side) need relief — windows, timber framing, a
+  lean-to, stacked wood — via the ensemble library, not one-offs.
+- **Pilot ONE room** (the lodge common room or the hunter's cabin),
+  approved via captures, before the pass rolls wider.
+
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 
 Built in pilots, inside hard fences: systemic not scripted; the people do
