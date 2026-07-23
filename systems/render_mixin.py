@@ -24,6 +24,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
 from rendering.king_unfold import draw_unfold_catch
 from rendering.moth import draw_moth
 from rendering.transform import draw_vessel_bloom
+from rendering.furniture import FURNITURE as _FURN_SPECS
 from systems.config import *        # noqa: F401,F403
 
 # The "?" tell card, pre-rendered once per alpha bucket (8 buckets) --
@@ -1701,11 +1702,20 @@ class RenderMixin:
                             # prop emit never faded, so the car and any
                             # tall furniture blanketed whoever stood
                             # behind them despite DESIGN.md's claim).
+                            # Heights are REAL per kind: a waist-high
+                            # see-over piece never fades (a generic tall
+                            # box made Sable's own desk vanish for Sable,
+                            # standing forever behind it).
                             pa = 255
-                            if _focus_pre:
+                            _fh = 25.0
+                            _fsp = _FURN_SPECS.get(d.kind)
+                            if _fsp:
+                                _fh = float(_fsp[2]) * (getattr(
+                                    d, "scale", 1.0) or 1.0)
+                            if _focus_pre and _fh >= 18.0:
                                 _pod = self.camera.depth(d.x + ox, d.y + oy)
                                 _pos = _screen_span(self.camera, d.x + ox,
-                                                    d.y + oy, 25, 20)
+                                                    d.y + oy, _fh, 20)
                                 for _pd, _ps in _focus_pre:
                                     pa = min(pa, occluder_alpha_box(
                                         _pod, _pos, _pd, _ps))
