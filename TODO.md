@@ -402,6 +402,15 @@ compression pass (#4b).
 
 ## Process
 
+### D. **[Fable]** Doc consolidation — remainder
+
+Phase 1 landed (the threat section moved to DESIGN §1; `CHANGELOG.md`,
+"Documentation process"). Still open: CLAUDE.md's Layout section carries a
+tableau mega-paragraph and several system narrations (Casebook, dialogue
+channels, moth/stealth asides) that duplicate or should live in
+DESIGN/DIALOGUE; move each to its one home and leave a code-map pointer,
+one section per pass, keeping the every-turn read shrinking.
+
 ### R. **[Fable]** Cross-model review gate
 
 After an **[Opus]** ticket lands, run a **Fable** review pass before it

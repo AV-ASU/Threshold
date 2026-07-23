@@ -149,6 +149,96 @@ its head) and pings the cult to **investigate the body**, and the body
 > evidence-pickup autosave (`Game._autosave`, play-notes) persists it like
 > any other arg. Guarded: flow §27/§32.
 
+### The evidence ladder, the Moths, the Watchers, the deep-water WADE
+
+> Moved whole from `CLAUDE.md` (2026-07 doc consolidation: one fact, one
+> home -- these systems' only full descriptions used to live in the entry
+> point instead of the design doc).
+
+- **The evidence LADDER (2026-07)**: each surface beat flips a visible
+  world state. **Ev 0**: the town is only wrong — **no cult patrols
+  spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
+  far up the road, ONE omen moth pre-drifting his road
+  (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
+  cult wakes (patrols spawn). **Cultist spawn geography (2026-07):** a cult
+  scene keeps `Scene.cult_target` roamers filled (default `CULT_REGULARS` 2),
+  spawning them at the farthest unoccupied point in `Scene.cult_spawns` (a
+  hand-placed spawn-anchor pool) else the map corners — `_spawn_cultist(...,
+  from_pool=True)`. On the first awake tick after a load the scene is
+  PREFILLED straight to target (`_cult_prefilled`, reset per load) so it reads
+  populated the moment you enter; killed cultists then respawn one at a time on
+  the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
+  **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
+  evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
+  attention finds YOU — a single SEEKER moth materialises in the player's
+  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
+  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
+  (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
+  but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
+  (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
+  its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
+  NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
+  window to reach the lodge for the Invitation before the hunt begins
+  (decouples the spike from progression). Then his shedding starts and the
+  seeker slows to `MOTH_SEEK3_*` (5-6 min).
+- **The Moths** (the King's heralds; `MOTH_*` config, sim in
+  `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
+  `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
+  billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
+  every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
+  moths into whatever room HE occupies (`_roam_king["scene"]`), plus
+  the player-seeker drip above. They **PERSIST and STACK per room**
+  (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
+  fill fuller and fuller, and the field only thins when the player
+  **spends** one (`_moth_spent`: a pop, or a flare burning out). So a
+  room whipping with fast fliers means *he keeps coming back here*.
+  Enter one's `MOTH_RADIUS` and it KINDLES (`MOTH_KINDLE` window: back
+  out, axe it quietly up close, or spend a round from range); the
+  window expiring is the **FLARE**: a `MOTH_REACH` noise the cult
+  converges on, a visibility spike capped under the King, the dark
+  broken around it (`_tick_dark_cover`) — it burns `MOTH_FLARE_DUR`,
+  then **falls** as a charred husk that stays for the visit. First
+  flare files a case NOTE (never evidence). Guarded by
+  `tests/stealth.py` §9.
+- **The Watchers** (His gaze made manifest; the play-notes rework made them
+  **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
+  `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
+  in cover / a safe room), the domain **opens** a Watcher on a timer:
+  `WATCHER_GRACE` (6s) before the FIRST of a wave (and after you clear one),
+  then the **evidence-scaled** interval between the rest
+  (`_watcher_spawn_interval`: `WATCHER_SPAWN_BASE` shaved per further
+  evidence down to `WATCHER_SPAWN_MIN` — the King floods them deep). Each live
+  Watcher **HOLDS you while you are exposed and drives visibility UP** by
+  `WATCHER_GAZE`/s (the active climb — `_watcher_gaze`, the main visibility
+  driver below the cult), on top of a small residual `WATCHER_FLOOR` (summed,
+  capped `VIS_FLOOR_TOTAL_CAP` 0.92, just under the King). Ignore them and it
+  **snowballs** (more open, faster); it caps at `WATCHER_MAX` (5). You clear
+  them (`_dispel_watcher`): hold one in your **gaze** `WATCHER_GAZE_DISPEL` s
+  (its eyes go dark, then it dissolves), or the **axe** / a **round**.
+  **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
+  `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
+  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
+  in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
+  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
+  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
+  the flashlight is the cover, and a Watcher caught in a pool / the beam
+  **BURNS** out (`WATCHER_LIGHT_BURN`). The **true refuges stay gaze-free**
+  (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
+  sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
+  high-visibility trigger is retired.) The gun and axe **share one weapon slot** (left-click
+  to use; switch which is equipped from the inventory screen).
+- **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
+  flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
+  depths_threshing) stand in walkable `~` water. Wading a water tile
+  **halves the player's speed** (sprint can't clear it) and throws a
+  **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via
+  `Scene.emit_noise` kind `"splash"`) that searchers converge on, so
+  standing water is a routing risk, not just dressing. No new AI (rides
+  the existing `stealth.hear_noise` ear); the Brimley river is **excluded**
+  (not a WADE scene, keeps its own in/out rules). Water is authored per
+  scene with the `_flood` helper (`scenes/depths.py`); guarded by
+  `tests/stealth.py` §10.
+
 ---
 
 ## 2. World rot — the town curdling as you understand it

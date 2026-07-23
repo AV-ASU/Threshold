@@ -843,6 +843,17 @@
 
 ## Documentation process
 
+- **2026-07 — CLAUDE.md threat section consolidated (the quality sprint's
+  doc pass, phase 1).** CLAUDE.md had grown into a second design doc: the
+  evidence ladder, the Moths, the Watchers, and the WADE had their ONLY
+  full descriptions in the entry point, while the rest of its threat
+  section duplicated DESIGN §1/§12 nearly verbatim. The four unique
+  blocks moved whole into DESIGN §1 ("The evidence ladder, the Moths,
+  the Watchers, the deep-water WADE"); CLAUDE.md's section shrank to a
+  pure code map (~15.6k → ~2.7k chars off the every-turn read).
+  Remainder (the tableau mega-paragraph and other Layout duplication)
+  ticketed in TODO.
+
 - **2026-07 — The six-doc canon consolidated from many per-topic docs.**
   `CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and two audit
   files (`STORY_AUDIT.md`, `CODE_HEALTH_AUDIT.md`) were folded into
