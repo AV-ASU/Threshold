@@ -291,9 +291,11 @@ everywhere), and the flashlight opening on the PI's desk
   only EXIST in the dark) — couples with the blackout into the perfect
   storm. A real rework of `_tick_watchers`; keep the below-3 threat role.
 - The **capture→King-unleashed** thread and **procession-across-scenes**
-  staging sit here too, unscoped. The **capture fork** (hard run-end with
-  scarier cultists vs capture-as-continuation waking in the cells) is a
-  standing maintainer decision still open from the QC discussion.
+  staging sit here too, unscoped. **The capture fork is RULED (2026-07,
+  maintainer): capture is GAME OVER** — the CAPTURED card stays a hard
+  run-end, no capture-as-continuation. The corollary work item: cultists
+  must EARN that ending (the "cultists feel too weak" playtest note) —
+  lands through the #5/#6 tuning loop, not a new system.
 
 ### 16. **[Opus]** Ship track — packaging
 
