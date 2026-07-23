@@ -3074,6 +3074,58 @@ def _round_water_corners(surf, scene, tx, ty, rx, ry):
             pygame.draw.circle(surf, mud, (cxp, cyp), r, 1)
 
 
+# The VOID SURROUND (2026-07): alpha veil per tile past the map's edge. Three
+# rim tiles continue the nearest in-bounds ground under a deepening veil, then
+# the flat build's near-black takes over -- the world's edge reads as ground
+# falling away into dark, not a hard cut or a tiling artifact.
+_VOID_RIM_FADE = (150, 200, 236)
+_VOID_VEILS = {}
+
+
+def _void_rim_veil(alpha):
+    v = _VOID_VEILS.get(alpha)
+    if v is None:
+        v = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+        v.fill((6, 6, 10, alpha))
+        _VOID_VEILS[alpha] = v
+    return v
+
+
+def _void_surround_pass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Compose what lies past the map's edge (the tilt window's off-map area).
+
+    The floor raster skips off-map tiles (draw_scene_terrain used to paint
+    them as endless "." floor -- the checkered void around every interior).
+    This pass draws the edge instead: for _VOID_RIM_FADE's few tiles past the
+    bounds, the rim continues the nearest in-bounds floor char under a
+    deepening dark veil, so the ground visibly falls away into the void's
+    near-black. Wrapped axes never reach here (no off-map exists there);
+    seamless neighbor strips paint real world content OVER this fade where a
+    neighbor exists (draw_terrain_tilted runs them after this pass)."""
+    W, H = scene.w, scene.h
+    wx = scene.wrap_x
+    fade = _VOID_RIM_FADE
+    depth = len(fade)
+    for ty in range(y0, y1):
+        ty2 = scene.render_row(ty)
+        for tx in range(x0, x1):
+            tx2 = tx % W if wx else tx
+            if 0 <= ty2 < H and 0 <= tx2 < W:
+                continue
+            cy2 = min(max(ty2, 0), H - 1)
+            cx2 = min(max(tx2, 0), W - 1)
+            d = max(abs(ty2 - cy2), abs(tx2 - cx2))
+            if d > depth:
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            ch = scene.floor[cy2][cx2]
+            if ch in _ANIM_FLOOR:
+                ch = "."           # the rim ghost never animates
+            draw_floor(surf, ch, rx, ry, tx, ty)
+            surf.blit(_void_rim_veil(fade[d - 1]), (rx, ry))
+
+
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                        skip_billboard=False, skip_roofs=False,
                        bake_static=False):
@@ -3119,8 +3171,20 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
         _CORN_RUN_CACHE.clear()      # corn-run LOD decomposition is per scene
         _PATH_FRINGE_CACHE.clear()   # path-edge fringe cards are scene-keyed
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
+    def _off_map(ty, tx):
+        # Mirrors _lookup_floor's wrap handling: a tile is off-map only after
+        # the wrap axes have had their say. Off-map tiles are NOT rastered as
+        # "." floor anymore (that painted the endless phantom-tile plain the
+        # maintainer called the checkered void); _void_surround_pass composes
+        # the world's edge instead.
+        ty = scene.render_row(ty)
+        if wx:
+            tx %= W
+        return not (0 <= ty < H and 0 <= tx < W)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
+            if _off_map(ty, tx):
+                continue
             ch = _lookup_floor(ty, tx)
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
@@ -4367,11 +4431,14 @@ def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
         # target world point = host world point + (offset_dx, offset_dy)
         tw, th = tgt.w, tgt.h
         for ty in range(y0, y1):
-            if 0 <= ty < H:
-                continue                     # host renders this row
+            ty_in = 0 <= ty < H
             for tx in range(x0, x1):
-                if 0 <= tx < W:
-                    continue                 # host renders this column
+                # Skip only tiles the HOST actually renders (both coords in
+                # bounds). The old per-axis skips dropped every N/S and E/W
+                # edge strip -- only diagonal corners ever painted, so the
+                # seamless seam never actually showed the neighbor.
+                if ty_in and 0 <= tx < W:
+                    continue
                 nx_px = tx * TILE + TILE // 2 + n.offset_dx
                 ny_px = ty * TILE + TILE // 2 + n.offset_dy
                 ntx = int(nx_px // TILE)
@@ -4473,18 +4540,23 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             _blit_window_wrapped(flat, full, bx0, by0,
                                  scene.wrap_x, scene.wrap_y)
             _overlay_anim_water(flat, scene, water, bx0, by0, span_b)
+            # A one-axis wrap scene (the Yard's E-W loop) still has off-map
+            # past its non-wrapped edges; compose that edge too.
+            if not (scene.wrap_x and scene.wrap_y):
+                _void_surround_pass(flat, scene, bx0, by0,
+                                    tx0, ty0, tx1, ty1)
         else:
-            # Phase 2 of the seamless-world neighbor strip: when the player is
-            # near a non-wrap host's edge and the visible tile range extends
-            # past the world's bounds, fill the OUT-OF-BOUNDS tiles with the
-            # neighbor scene's floor content (per world_neighbors). The
-            # in-bounds area is overdrawn with the host's tiles below, so the
-            # strip shows only where the host doesn't reach -- a seamless seam.
+            draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
+                               skip_billboard=True, skip_roofs=True)
+            _void_surround_pass(flat, scene, bx0, by0, tx0, ty0, tx1, ty1)
+            # Seamless-world neighbor strips: where the visible window extends
+            # past a non-wrap host's bounds AND a neighbor exists there
+            # (per world_neighbors), paint the neighbor scene's floor content
+            # OVER the rim fade -- real world beyond the seam. Elsewhere the
+            # fade stays: ground falling away into the dark.
             if not (scene.wrap_x or scene.wrap_y):
                 _draw_neighbor_strips(flat, scene, bx0, by0,
                                       tx0, ty0, tx1, ty1)
-            draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
-                               skip_billboard=True, skip_roofs=True)
         warped = _tilt_warp(flat, camera, fast=fast_look)
         _fc["key"] = fkey
         _fc["surf"] = warped

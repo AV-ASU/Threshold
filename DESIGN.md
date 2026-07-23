@@ -1093,6 +1093,14 @@ the live render path under tilt, not isolated scaffolding.
 ### Decisions (locked with the user)
 
 - **Pitch:** fixed oblique, target **~55°**. Not free-pitch.
+- **Scale: sprite-native (`TILT_ZOOM` 1.10).** Sprites draw at fixed pixel
+  size (they do not scale with the camera), so the camera scale IS the
+  body:world proportion. The tilt originally shipped zoomed out to 0.72 to
+  show more world, which shrank rooms/doors/buildings against the bodies
+  (the "world feels too small compared to the player" playtest verdict) and
+  left most of the frame as void. 1.10 restores the drawn proportions and
+  tightens the visible window; the sight cone (360 world px) still fits the
+  frame with margin.
 - **Default camera:** glued **behind the player's facing** -- whatever
   compass direction the player faces is "forward / camera home."
 - **Rotation = a head-turn, not an orbit.** Free-smooth yaw, **clamped to
@@ -1103,6 +1111,16 @@ the live render path under tilt, not isolated scaffolding.
   `overcast` sallow sky for Brimley daytime, a near-black `void` surround
   for interiors/underground. It is a *skybox*, never a roof over the play
   area or the UI.
+- **The void surround (the map's edge under tilt).** Off-map tiles are
+  never rastered as floor (they used to paint as an endless "." default
+  floor plain -- the checkered void around every interior). Instead the
+  floor raster skips them and `_void_surround_pass` (`scenes/terrain.py`)
+  composes the edge: a three-tile rim continues the nearest in-bounds
+  ground under a deepening dark veil, then near-black -- the world's edge
+  reads as ground falling away into the dark. Wrapped axes have no off-map;
+  seamless neighbor strips paint real neighbor terrain OVER the fade where
+  a `world_neighbors` entry exists (and the strip painter now fills true
+  N/S/E/W edge strips, not just diagonal corners).
 - **Blind-spot vision (Phase 4).** When the head turns, the **terrain**
   behind/around the player is revealed (it just draws), but **NPCs and
   the world-rot decals stay hidden until actually looked at** -- gated

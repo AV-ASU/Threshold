@@ -125,7 +125,12 @@ WALK_ANIM_RATE = 10.0
 # Oblique-camera tilt (DESIGN.md §10). The tilt is the ONLY camera; the
 # pitch is locked to TILT_PITCH_DEG for the life of the Game. No flat view.
 TILT_PITCH_DEG = 55
-TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
+TILT_ZOOM = 1.10             # camera scale at full tilt (1.0 = sprite-native)
+# 2026-07 scale pass: 0.72 zoomed the WORLD out while sprites stayed
+# fixed-size, so rooms/doors/buildings read cramped against the bodies (the
+# maintainer's "world feels too small compared to the player"). 1.10 restores
+# sprite-native proportions and tightens the visible window (less info on
+# screen = more dread); the sight cone (360 world px) still fits the frame.
 TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 # Blind-spot fog: thin cold gray veiling the AREA outside the forward sight
 # cone under tilt (the cone itself is punched clear). Low alpha so off-cone

@@ -376,6 +376,34 @@
   office, schoolhouse, Toby's house, the Lodge) is still open per
   `TODO.md` #4c.
 
+## Camera & the world's edge
+
+- **2026-07 — Sprite-native camera scale (`TILT_ZOOM` 0.72 → 1.10).** The
+  first-five-minutes quality sprint's opening move. The tilt shipped zoomed
+  out to 0.72 "to show more world", but sprites draw at fixed pixel size,
+  so the zoom-out shrank the WORLD against the BODIES: rooms read cramped,
+  props read as noise, and most of the frame was empty void — the
+  maintainer's "the world feels too small compared to the player" and "it
+  feels low quality" playtest verdicts in one constant. A headless A/B
+  (0.72 / 0.90 / 1.00 / 1.15) showed rooms filling the frame and Brimley's
+  props resolving into readable objects at ≥1.0; 1.10 shipped (slightly
+  past sprite-native, so the world reads a touch larger than the body —
+  the requested direction). Side effect: the visible window tightened
+  ~47%, which is dread-positive (less information on screen).
+- **2026-07 — The void surround: the map's edge composed
+  (`scenes/terrain.py`).** Off-map tiles rastered as an endless field of
+  `"."` default floor (per-tile jitter + macro shadow = the "checkered
+  void" around every interior), and outdoor scenes hard-cut to black past
+  their bounds (the maintainer: "all of the space outside the scene is
+  black and it takes away from the scene"). The floor raster now skips
+  off-map tiles; a new `_void_surround_pass` draws a three-tile rim that
+  continues the nearest in-bounds ground under a deepening veil into
+  near-black. Also fixed en route: `_draw_neighbor_strips`' skip
+  conditions dropped every N/S and E/W edge strip (only diagonal corners
+  ever painted), so the seamless-world seam never actually showed the
+  neighbor scene's terrain; strips now paint true edge strips, drawn over
+  the rim fade where a neighbor exists.
+
 ## Lighting
 
 - **2026-07 — Two-family light model + shared fixture table.** Brimley's
