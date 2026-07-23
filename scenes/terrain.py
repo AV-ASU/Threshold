@@ -182,9 +182,9 @@ OBJECT_DEFS = {
     # notice. The wall blocks movement so the player can't just walk
     # through an unlocked-looking door.
     "z": {"solid": True,  "kind": "door"},   # door to locked_house (red herring)
-    # Door "1" -> the Clerk's room (key 'clerk_room'), an unconditional
-    # exit off the ground floor. ("2" is a vestigial tile from a cut
-    # scene; no active map places it.)
+    # Door "1" -> lives in clerk_room as the stair head DOWN to the guest
+    # hall (the loft route: hall staircase 'U' up, this door back down).
+    # ("2" is a vestigial tile from a cut scene; no active map places it.)
     "1": {"solid": False, "kind": "door"},   # door to clerk_room (Clerk's room)
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing

@@ -340,6 +340,12 @@ def build_lodge():
     # first crossing.
     sc._hatch_pos = (3 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._hatch_pos[0], sc._hatch_pos[1], 40)
+    # The hatch is a real raised VOLUME under the tilt (2026-07 quality
+    # sprint: it rendered flat -- a raw 'L' object tile, playtest error
+    # class 7). Draw-only: 'L' keeps the walk-over exit + the gate above;
+    # house_on_enter mirrors the padlock/open state onto the lid.
+    sc.add_decoration(Decoration(sc._hatch_pos[0], sc._hatch_pos[1],
+                                 "cellar_hatch", padlock=True))
 
     def _house_gate(game, ch):
         if ch != "L":
@@ -489,6 +495,12 @@ def house_on_enter(game, scene):
                   if getattr(n, "tag", None) not in
                   ("host_innkeeper",)]
     scene._key_hook_pos = None
+    # Mirror the padlock state onto the hatch lid: the unlock notice says
+    # "the hatch swings up", so the world shows it swung up.
+    for d in scene.decorations:
+        if d.kind == "cellar_hatch" and game.save.flag("cellar_unlocked"):
+            d.kwargs["open"] = True
+            d.kwargs["padlock"] = False
     # The trap-keeper at his post: standing BEHIND the front-desk
     # register (north of it, against the wall), facing south into the
     # room. The desk volume sits between him and the player, so he reads
@@ -504,6 +516,11 @@ def house_on_enter(game, scene):
                movement="watch", speed=0.6, radius=320)
     host.facing = (0, 1)
     host.tag = "host_innkeeper"
+    # The desk between you outranges the default talk reach: pressed flat
+    # against the counter the PI still stands ~48px from Sable, so E fell
+    # through to the register beat and he could never be spoken to from
+    # the front (2026-07 quality sprint). A counter seat gets a long arm.
+    host.talk_reach = 56
     # He carries the way down. Kill him before he hands over the
     # Invitation and it drops with the body (dialogue.sable_on_death);
     # if he already gave it, there is nothing to loot.
@@ -808,18 +825,27 @@ def build_clerk_room():
     # priority and made the only "the Clerk is one of them" clue
     # unreachable. (clerk_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
-        (1 * TILE + 24, 6 * TILE + 24, "under"),   # the bed's walkable lip
+        (1 * TILE + 24, 3 * TILE + 8, "under"),    # the bed's walkable lip
     ]
     # [E] cue for the robe closet (the tell). The dresser is bare and has
     # no handler in clerk_room_interact, so it gets no [E] prompt (C14a).
     sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)
 
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
-    # -> _closet_pos), a low dresser (bare -> _dresser_pos).
-    sc.add_furniture("bed", [(2, 6), (3, 6), (2, 7), (3, 7)], w=56, h=56)
-    sc.add_furniture("nightstand", [(4, 6)], w=26, h=30)   # bedside stand
+    # -> _closet_pos), a low dresser (bare -> _dresser_pos). The bed sits
+    # in the room's BACK, headboard under the dormer window (2026-07
+    # quality sprint; it used to straddle the door column at the room's
+    # front -- playtest error class 8), and the south half is dressed so
+    # the loft doesn't read as a bare box.
+    sc.add_furniture("bed", [(1, 1), (2, 1), (1, 2), (2, 2)], w=56, h=56)
+    sc.add_furniture("nightstand", [(3, 1)], w=26, h=30)   # bedside stand
     sc.add_furniture("wardrobe", [(10, 2), (10, 3)], w=26, h=54)
     sc.add_furniture("table", [(5, 7), (6, 7)], w=54, h=32)
+    sc.add_furniture("chair", [(6, 6)], w=22, h=28)        # his morning seat
+    # A worn rug mid-room, off-grid, under nothing -- the open floor the
+    # old layout left bare now reads furnished.
+    sc.add_decoration(Decoration(4 * TILE + 8, 5 * TILE + 24, "rug",
+                                 w=110, h=70, color=(74, 48, 44), seed=23))
 
     # Wall items mounted on the NORTH wall (row 0). Lodge dressing: a
     # mounted buck (replaces the old generic photo) and a trophy
@@ -835,8 +861,9 @@ def build_clerk_room():
     sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 2,
                                  "kerosene_lamp"))
     # The Clerk's washstand against the west wall -- he keeps himself
-    # presentable for the desk.
-    sc.add_decoration(Decoration(1 * TILE + 18, 2 * TILE + 16, "washstand"))
+    # presentable for the desk. (South of the bed since the 2026-07
+    # layout fix moved the bed into the room's back corner.)
+    sc.add_decoration(Decoration(1 * TILE + 18, 4 * TILE + 16, "washstand"))
     for i in range(4):
         sc.add_decoration(Decoration(40 + i * 60,
                                      200 + (i % 2) * 40, "mote"))

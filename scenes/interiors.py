@@ -194,6 +194,7 @@ def build_shop():
               "Hettie", "hettie", voice="blip_high",
               portrait="hettie",
               dialogue_fn=hettie_dialogue, movement="worker")
+    het.talk_reach = 56          # a counter seat: reachable across the till
     # Her JOB (the JOBS layer): the counter mostly, a pass along the empty goods
     # shelves (dusting stock that never comes), and a trip back into the
     # stockroom -- which walks her THROUGH the plank door, so she opens her own

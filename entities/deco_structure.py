@@ -659,6 +659,13 @@ class DecoStructureMixin:
         gate the trip down behind an E-press handler instead of an
         auto-transition. Used in the barn to replace the chest-as-
         trapdoor placeholder."""
+        kw = getattr(self, "kwargs", {}) or {}
+        if kw.get("open"):
+            # the frame with the dark mouth: the lid is thrown back
+            pygame.draw.rect(surf, (110, 80, 50), (x - 12, y - 12, 24, 24))
+            pygame.draw.rect(surf, (10, 8, 8), (x - 9, y - 9, 18, 18))
+            pygame.draw.rect(surf, (60, 38, 24), (x - 12, y - 12, 24, 24), 2)
+            return
         pygame.draw.rect(surf, (110, 80, 50), (x - 12, y - 12, 24, 24))
         pygame.draw.rect(surf, (60, 38, 24), (x - 12, y - 12, 24, 24), 2)
         pygame.draw.line(surf, (60, 38, 24),
@@ -669,6 +676,10 @@ class DecoStructureMixin:
         pygame.draw.rect(surf, (30, 30, 38), (x - 4, y - 3, 8, 4), 1)
         pygame.draw.circle(surf, (180, 180, 200), (x, y + 2), 4, 2)
         pygame.draw.circle(surf, (90, 90, 110), (x, y + 2), 4, 1)
+        if kw.get("padlock"):
+            pygame.draw.rect(surf, (70, 70, 82), (x - 4, y + 8, 8, 4))
+            pygame.draw.circle(surf, (118, 112, 96), (x, y + 14), 3)
+            pygame.draw.circle(surf, (46, 44, 40), (x, y + 14), 3, 1)
 
     def _draw_wall_cross(self, surf, x, y):
         """A plain wooden cross hung on the wall above the church altar (a

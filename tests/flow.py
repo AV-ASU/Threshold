@@ -299,6 +299,17 @@ def main():
     gl = new_game()
     gl.load_scene_now("lodge")
     ready(gl)
+    # Counter-aware talk reach (2026-07 quality sprint): pressed flat
+    # against the desk FRONT, E must reach Sable across the counter (the
+    # old flat 40px reach fell ~8px short, so E fell through to the
+    # register and Sable could never be spoken to from the front).
+    gl.player.x, gl.player.y = 288, 97
+    gl.try_interact()
+    check(gl._tableau is not None and gl._tableau.get("kind") == "sable",
+          "lodge: E across the front desk reaches Sable's talk")
+    gl._close_tableau()
+    gl._convo = None
+    ready(gl)
     gl.player.x, gl.player.y = gl.scene._frontdesk_pos
     gl.scene.on_interact_fn(gl)                      # first press: sign
     check(gl.save.flag("register_signed"),

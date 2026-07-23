@@ -122,6 +122,12 @@ MOVE_SMOOTH_TAU = 0.12
 # cycling twice as fast as the ground covered.
 WALK_ANIM_RATE = 10.0
 
+# NPC talk reach (px, player centre to npc centre). Per-NPC override via
+# npc.talk_reach: a counter seat (Sable's desk, Hettie's till) needs a
+# longer arm than the default or the furniture between you outranges the
+# talk and E falls through to the prop behind them.
+NPC_TALK_REACH = 40
+
 # Oblique-camera tilt (DESIGN.md §10). The tilt is the ONLY camera; the
 # pitch is locked to TILT_PITCH_DEG for the life of the Game. No flat view.
 TILT_PITCH_DEG = 55

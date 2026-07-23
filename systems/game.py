@@ -1884,7 +1884,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             if getattr(npc, "_inside", False):
                 continue        # homebody is behind their door
             d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
-            if d < bd and d < 40:
+            if d < bd and d < getattr(npc, "talk_reach", NPC_TALK_REACH):
                 bd = d; best = npc
         if best:
             self.audio.play("confirm", 0.6)

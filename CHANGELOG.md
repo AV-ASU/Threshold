@@ -391,6 +391,30 @@
   office, schoolhouse, Toby's house, the Lodge) is still open per
   `TODO.md` #4c.
 
+## The Lodge (2026-07 quality sprint)
+
+- **2026-07 — Sable reachable across his desk (counter-aware talk reach).**
+  The NPC-talk check was a bare 40px literal in two places (try_interact +
+  the [E] cue); pressed flat against the reception counter the PI still
+  stood ~48px from Sable, so E fell through to the register beat and the
+  host could never be spoken to from the front. New `NPC_TALK_REACH`
+  config default + per-NPC `npc.talk_reach` override; Sable and Hettie
+  (the two counter seats) get 56. Flow-guarded (E across the desk front
+  opens Sable's tableau).
+- **2026-07 — The padlocked cellar hatch is a real volume.** It was only
+  the flat 'L' exit tile (playtest error class 7: a raw object tile under
+  the tilt); the existing `cellar_hatch` SOLID_PROPS volume is now placed
+  over it, with new `padlock` / `open` lid states (the lodge's
+  freshly-oiled padlock; the lid swings up once unlocked, synced from the
+  `cellar_unlocked` flag on entry). Barn/farmhouse hatches keep the
+  nailed-shut cross-board default.
+- **2026-07 — Sable's loft room re-laid.** The bed straddled the door
+  column at the room's front (error class 8); it moved to the back corner
+  under the dormer window (nightstand beside it, washstand down the west
+  wall), and the bare south half gained his morning chair + a worn
+  off-grid rug. The registry's stale "(locked)" annotation and the door-'1'
+  comment were corrected en route.
+
 ## Camera & the world's edge
 
 - **2026-07 — Sprite-native camera scale (`TILT_ZOOM` 0.72 → 1.10).** The

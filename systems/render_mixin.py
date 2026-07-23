@@ -1944,7 +1944,8 @@ class RenderMixin:
                 if (getattr(npc, "no_prompt", False)
                         or getattr(npc, "_inside", False)):
                     continue
-                if math.hypot(npc.x - px, npc.y - py) < 40:
+                if (math.hypot(npc.x - px, npc.y - py)
+                        < getattr(npc, "talk_reach", NPC_TALK_REACH)):
                     target = (npc.x, npc.y)
                     break
         # 5. A scene interactable (on_interact_fn readable/pickup -- the

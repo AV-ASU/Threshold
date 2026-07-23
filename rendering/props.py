@@ -1286,23 +1286,58 @@ def _draw_staircase_solid(surf, cam, deco):
 
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
-    floor (not a flat decal), cross-boarded and nailed shut, an iron pull-ring
-    on top. (The flat pitch-0 view uses the 2D sprite.)"""
+    floor (not a flat decal), an iron pull-ring on top. Default lid is
+    cross-boarded and nailed shut (the barn/farmhouse sealed hatches);
+    kwargs: `padlock=True` swaps the cross-boards for a hasp + hanging lock
+    (the Lodge's freshly-oiled padlock), `open=True` draws the frame's dark
+    mouth with the lid thrown back (the unlocked way down). (The flat
+    pitch-0 view uses the 2D sprite.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {}) or {}
     w, d, rim = 26 * s, 24 * s, 6 * s
     pal = {"top": (120, 86, 50), "side": (84, 58, 34), "dark": (58, 40, 22)}
-    _vbox(surf, cam, wx, wy, w, d, 0, rim, pal)
     hw, hd = w / 2, d / 2
+    if kw.get("open"):
+        # the frame's rim, the dark mouth below, the lid thrown back
+        _vbox(surf, cam, wx, wy, w, d, 0, rim * 0.5, pal)
+        z = rim * 0.5
+        mouth = [cam.project(wx - hw + 3 * s, wy - hd + 3 * s, z),
+                 cam.project(wx + hw - 3 * s, wy - hd + 3 * s, z),
+                 cam.project(wx + hw - 3 * s, wy + hd - 3 * s, z),
+                 cam.project(wx - hw + 3 * s, wy + hd - 3 * s, z)]
+        pygame.draw.polygon(surf, (10, 8, 8), mouth)
+        lid = [cam.project(wx - hw, wy - hd, z),
+               cam.project(wx + hw, wy - hd, z),
+               cam.project(wx + hw, wy - hd + 4 * s, z + 20 * s),
+               cam.project(wx - hw, wy - hd + 4 * s, z + 20 * s)]
+        pygame.draw.polygon(surf, pal["side"], lid)
+        pygame.draw.polygon(surf, pal["dark"], lid, 1)
+        return
+    _vbox(surf, cam, wx, wy, w, d, 0, rim, pal)
     tl, tr = cam.project(wx - hw, wy - hd, rim), cam.project(wx + hw, wy - hd, rim)
     bl, br = cam.project(wx - hw, wy + hd, rim), cam.project(wx + hw, wy + hd, rim)
-    # plank seams + the cross-boards nailed over the lid (shut)
+    # plank seams
     for f in (0.33, 0.66):
         a = (tl[0] + (bl[0] - tl[0]) * f, tl[1] + (bl[1] - tl[1]) * f)
         b = (tr[0] + (br[0] - tr[0]) * f, tr[1] + (br[1] - tr[1]) * f)
         pygame.draw.line(surf, pal["dark"], a, b, 1)
-    pygame.draw.line(surf, _shade(pal["top"], 1.1), tl, br, max(2, int(2 * s)))
-    pygame.draw.line(surf, _shade(pal["top"], 1.1), tr, bl, max(2, int(2 * s)))
+    if kw.get("padlock"):
+        # hasp over the front edge + the padlock hanging on it
+        hp = cam.project(wx, wy + hd - 2 * s, rim)
+        pygame.draw.rect(surf, (70, 70, 82),
+                         (int(hp[0]) - int(4 * s), int(hp[1]) - int(2 * s),
+                          int(8 * s), int(4 * s)))
+        lk = cam.project(wx, wy + hd, rim * 0.35)
+        r = max(2, int(3 * s))
+        pygame.draw.circle(surf, (118, 112, 96), (int(lk[0]), int(lk[1])), r)
+        pygame.draw.circle(surf, (46, 44, 40), (int(lk[0]), int(lk[1])), r, 1)
+    else:
+        # the cross-boards nailed over the lid (shut for good)
+        pygame.draw.line(surf, _shade(pal["top"], 1.1), tl, br,
+                         max(2, int(2 * s)))
+        pygame.draw.line(surf, _shade(pal["top"], 1.1), tr, bl,
+                         max(2, int(2 * s)))
     for c in (tl, tr, bl, br):                                  # nail heads
         pygame.draw.circle(surf, (54, 52, 58), (int(c[0]), int(c[1])), max(1, int(1.5 * s)))
     ring = cam.project(wx, wy, rim)                             # iron pull-ring
