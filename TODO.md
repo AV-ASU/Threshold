@@ -187,13 +187,39 @@ placement.
   15. wardrobe with the robe made legible (Sable's closet: the tell
       reads the moment you round the partition, no squinting).
   Each through the render-first loop (preview sheet → approve → place).
+- **15 INSIDE + 15 OUTSIDE (maintainer refinement).** The fifteen above
+  are the INTERIOR library; a matching EXTERIOR fifteen follows (porch
+  ensemble, lean-to + stacked wood, clothesline, rain barrel + gutter,
+  fence-and-gate runs, mailbox post, burn barrel, machine shed face,
+  pump + trough, chicken wire pen, propane/fuel tank, junk pile, tarped
+  equipment, porch chair + rifle, antler-over-door). Same rules.
+- **USE ALL SIX SURFACES.** This is a 3D environment: on top of, next
+  to, underneath, hung from walls, standing on floors, and dropped from
+  ceilings/rooflines are all placement options. An ensemble is allowed
+  to span floor-to-ceiling (stovepipe up through the roof, hams hung
+  from beams, a wall of pelts reaching the eave).
+- **ANIMATE WHERE IT EARNS IT.** Each ensemble asks: could a part move,
+  and does the world state show through it (a TV that plays static only
+  while the genset runs, a stovepipe that smokes when lit, a fan that
+  turns)? Powered behavior rides the light pillar's genset link (#21).
+  Not everything can or should move; a still room with ONE moving thing
+  is scarier than a busy one.
 - **Rug rework rides along:** the rug must read from every facing (its
   pattern/fringe currently only reads from N).
-- **Blank building faces:** E/W exterior shells (the hunter's cabin is a
-  bare grey slab from the side) need relief — windows, timber framing, a
-  lean-to, stacked wood — via the ensemble library, not one-offs.
-- **Pilot ONE room** (the lodge common room or the hunter's cabin),
-  approved via captures, before the pass rolls wider.
+- **Blank building faces:** E/W exterior shells (the backwoods cabin is
+  a bare grey slab from the side) need relief — windows, timber framing,
+  a lean-to, stacked wood — via the exterior library, not one-offs.
+- **Pilot: the LODGE COMMON ROOM** (in progress; the "random stove"
+  becomes the kitchen ensemble), approved via captures before the pass
+  rolls wider.
+
+### 25. **[Opus]** Axe redesign — the swing animation
+
+Maintainer ask (2026-07): update the axe design, the SWING animation
+mostly. The held-weapon yaw-offset polish item folds in here. Through
+the preview loop: render the swing arc frames headless, judge the arc /
+follow-through / recovery, then wire. The chop-stun timing itself is
+tuned and untouched (threat pacing, error class 9).
 
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 
