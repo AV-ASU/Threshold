@@ -167,13 +167,21 @@ class DialogueBox:
         self.choice_callback = None
         self.audio.play("menu_open", 0.5)
 
-    def show_choice(self, prompt, options, callback, speaker="", voice="blip_mid", portrait=None):
+    def show_choice(self, prompt, options, callback, speaker="", voice="blip_mid", portrait=None, spent=None):
         # A choice is always MODAL -- it needs the frozen world and the
-        # option cursor. Force show() past the floating router.
+        # option cursor. Force show() past the floating router. `spent`
+        # (parallel bools) dims re-askable rows already asked this run and
+        # opens the cursor on the first fresh one.
         self._force_modal_next = True
         self.show([prompt], speaker=speaker, voice=voice, portrait=portrait)
         self.choices = options
         self.choice_idx = 0
+        self.choice_spent = list(spent) if spent else None
+        if spent:
+            for i, s in enumerate(spent):
+                if not s:
+                    self.choice_idx = i
+                    break
         self.choice_callback = callback
 
     def update(self, dt):
@@ -348,9 +356,13 @@ class DialogueBox:
         surf.blit(s, crect.topleft)
         pygame.draw.line(surf, (70, 64, 84), crect.topleft, crect.topright)
         surf.set_clip(crect)
+        spent = getattr(self, "choice_spent", None)
         for i, opt in enumerate(self.choices):
             selected = (i == self.choice_idx)
             color = C_GOLD if selected else (172, 166, 156)
+            if (not selected and spent and i < len(spent) and spent[i]
+                    and i != len(self.choices) - 1):
+                color = (120, 116, 106)      # a spent, re-askable question
             oy2 = crect.y + 10 + i * 24
             if selected:
                 pygame.draw.rect(surf, C_GOLD,

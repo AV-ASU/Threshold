@@ -1848,6 +1848,7 @@ class RenderMixin:
         self._draw_interact_prompt()
         self._draw_hud()
         self._draw_notebook_toast()
+        self._draw_save_toast()
         # Floating NPC speech (above the speaker's head, non-modal, not
         # sight-gated) sits under the modal dialog box -- the two are
         # mutually exclusive in practice, but a scripted modal always wins.
@@ -2208,6 +2209,49 @@ class RenderMixin:
         ttl.set_alpha(int(255 * a))
         self.screen.blit(lbl, (tx, oy + 8))
         self.screen.blit(ttl, (tx, oy + 8 + lbl.get_height() + 2))
+
+    def _draw_save_toast(self):
+        """A small 3.5in floppy in the corner while the evidence autosave
+        writes the disk slot (the clue IS the checkpoint; this is the one
+        reliable 'that just saved' tell). Period-perfect for 1994, UI-layer
+        only (never fiction), procedurally drawn. Sits BELOW the notebook
+        scribble so the two coexist on a canonical evidence beat."""
+        tt = getattr(self, "_save_toast_t", 0.0)
+        if tt <= 0:
+            return
+        frac = max(0.0, min(1.0, (SAVE_TOAST_DUR - tt) / SAVE_TOAST_DUR))
+        if frac < 0.10:
+            a = frac / 0.10
+        elif frac > 0.80:
+            a = max(0.0, (1.0 - frac) / 0.20)
+        else:
+            a = 1.0
+        if a <= 0.0:
+            return
+        ox, oy = 16, 16 + 56 + 10          # under the scribble leaf
+        S = 30
+        disk = pygame.Surface((S, S), pygame.SRCALPHA)
+
+        def C(r, g, b, al=255):
+            return (r, g, b, int(al * a))
+        # shell (clipped top-right corner), steel shutter, label, hub notch
+        pygame.draw.polygon(disk, C(52, 56, 78), [
+            (2, 2), (S - 8, 2), (S - 3, 7), (S - 3, S - 3), (2, S - 3)])
+        pygame.draw.polygon(disk, C(24, 26, 38), [
+            (2, 2), (S - 8, 2), (S - 3, 7), (S - 3, S - 3), (2, S - 3)], 1)
+        pygame.draw.rect(disk, C(148, 152, 164), (9, 2, 12, 9))    # shutter
+        pygame.draw.rect(disk, C(60, 62, 74), (14, 4, 4, 5))       # its slot
+        pygame.draw.rect(disk, C(206, 200, 184), (7, 15, S - 14, 10))  # label
+        pygame.draw.line(disk, C(120, 114, 100), (9, 19), (S - 9, 19), 1)
+        pygame.draw.line(disk, C(120, 114, 100), (9, 22), (S - 12, 22), 1)
+        self.screen.blit(disk, (ox, oy))
+        lbl = self.fonts["serif_tiny"].render("Saved", True, (168, 176, 198))
+        lbl.set_alpha(int(255 * a))
+        wash = pygame.Surface((lbl.get_width() + 12,
+                               lbl.get_height() + 6), pygame.SRCALPHA)
+        wash.fill((8, 7, 12, int(150 * a)))
+        self.screen.blit(wash, (ox + S + 6, oy + 6))
+        self.screen.blit(lbl, (ox + S + 12, oy + 9))
 
     def _draw_notice(self):
         s = self.fonts["serif"].render(self.notice_text, True, C_WHITE)

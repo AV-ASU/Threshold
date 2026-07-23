@@ -128,6 +128,17 @@ WALK_ANIM_RATE = 10.0
 # talk and E falls through to the prop behind them.
 NPC_TALK_REACH = 40
 
+# Conversation-menu input guard (s): the E that skims a talk's last
+# caption opens the question menu in the SAME press chain, so a held or
+# spammed E used to pick an option the player never read. Confirms are
+# swallowed for this long after a menu opens (arrows still move).
+CONVO_MENU_GUARD = 0.30
+
+# The save toast (s): a small floppy-disk glyph beside the notebook
+# scribble whenever evidence pickup writes the disk slot (the clue IS the
+# checkpoint; the icon is the one reliable "that just saved" tell).
+SAVE_TOAST_DUR = 2.2
+
 # Oblique-camera tilt (DESIGN.md §10). The tilt is the ONLY camera; the
 # pitch is locked to TILT_PITCH_DEG for the life of the Game. No flat view.
 TILT_PITCH_DEG = 55

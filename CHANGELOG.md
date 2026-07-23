@@ -756,6 +756,21 @@
 
 ## Save model
 
+- **2026-07 — The floppy save toast.** The evidence autosave wrote the
+  disk with no feedback at all (the scribble toast says NOTED, not SAVED,
+  and the quiet journal pickup showed nothing). A small procedurally-drawn
+  3.5in floppy + "Saved" now fades in under the scribble leaf whenever
+  `write_disk()` actually succeeds. Also fixed: `systems/save.py`'s
+  docstring still narrated the retired sleep-at-the-cot save model.
+- **2026-07 — Spent conversation questions + the menu guard.** E-spam
+  through a talk's captions could pick a menu option the player never
+  read (the caption→menu chain is synchronous), and re-askable questions
+  looked identical to fresh ones. Every finished exchange now marks
+  itself asked; spent rows dim in both menu presentations (authored order
+  kept — indices are load-bearing for scripted drives); the cursor opens
+  on the first fresh row; and tableau menus swallow confirm presses for
+  `CONVO_MENU_GUARD` (0.3s) after opening.
+
 - **2026-07 — Save model simplified to one disk slot, autosaved on
   evidence pickup.** Earlier iterations saved at the cot. The current
   model: the cot is a pure REST (heal + visibility cool, no save); the

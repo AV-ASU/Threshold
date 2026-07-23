@@ -330,7 +330,11 @@ it renders the procedural sprites to a labelled PNG strip.
     scene + a COOLED visibility (halved, so a reload never lands in a
     maxed-out death), atomic write to `~/.threshold` /
     `%APPDATA%\THRESHOLD` (`THRESHOLD_SAVE_DIR` overrides for tests), and
-    fires from `_evidence`'s canonical branch (`scenes/dialogue.py`).
+    fires from `_evidence`'s canonical branch (`scenes/dialogue.py`). A
+    successful write flashes the **floppy save toast** (`_draw_save_toast`
+    in `render_mixin`, a small 3.5in disk under the notebook scribble,
+    `SAVE_TOAST_DUR`): the one reliable "that just saved" tell, gated on
+    the write so it never lies about a failed disk.
     Continue reads it back and **wakes at the scene the last clue was
     found in** (its `default` spawn); a death or a quit costs everything
     since the last clue, never the run. The **cot** (`Game._sleep_at_cot`)
@@ -371,7 +375,12 @@ it renders the procedural sprites to a labelled PNG strip.
   `DialogueBox.show` does the routing. E answers the world first and only
   skims the caption when nothing else takes the press (last in
   `try_interact`). Replacing an active caption fires its pending
-  `on_complete` early rather than dropping it.
+  `on_complete` early rather than dropping it. **Conversation menus mark
+  SPENT questions** (2026-07): every finished exchange sets its asked flag;
+  re-askable spent rows render dimmed in both menu presentations, the
+  cursor opens on the first fresh row, and a tableau menu swallows confirms
+  for its first `CONVO_MENU_GUARD` beat so the E that skimmed the last
+  caption can never pick an option unread.
 
 ## Threat model (the core mechanic, in `systems/threat_mixin.py`)
 

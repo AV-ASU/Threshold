@@ -346,12 +346,25 @@ class TableauMixin:
                          "cb": on_complete}
         tb["menu"] = None
 
-    def _tableau_choices(self, prompt, labels, pick):
+    def _tableau_choices(self, prompt, labels, pick, spent=None):
         tb = self._tableau
         if tb is None:
             return
+        # The cursor opens on the first FRESH option: spent rows stay
+        # pickable (a re-read is allowed) but a spammed E should never
+        # land on one by default. `opened` stamps the tableau clock so
+        # the confirm guard can swallow the same press chain that opened
+        # the menu (CONVO_MENU_GUARD).
+        cur = 0
+        if spent:
+            for i, s in enumerate(spent):
+                if not s:
+                    cur = i
+                    break
         tb["menu"] = {"prompt": prompt, "labels": list(labels),
-                      "pick": pick, "cursor": 0}
+                      "pick": pick, "cursor": cur,
+                      "spent": list(spent) if spent else None,
+                      "opened": tb.get("t", 0.0)}
         tb["caption"] = None
 
     def _convo_tableau_input(self, ev, tb):
@@ -389,6 +402,13 @@ class TableauMixin:
                 menu["cursor"] = (menu["cursor"] + 1) % n
                 self.audio.play("cursor", 0.45)
             elif ev.key in (pygame.K_e, pygame.K_RETURN, pygame.K_SPACE):
+                # The E that skimmed the last caption opens this menu in
+                # the same synchronous chain; a held/spammed E then picked
+                # an option the player never read. Swallow confirms for
+                # the menu's first beat (arrows still move immediately).
+                from systems.config import CONVO_MENU_GUARD
+                if tb.get("t", 0.0) - menu.get("opened", 0.0) < CONVO_MENU_GUARD:
+                    return
                 self.audio.play("confirm", 0.45)
                 idx, pick = menu["cursor"], menu["pick"]
                 tb["menu"] = None
@@ -683,6 +703,7 @@ class TableauMixin:
         y += 12
         cur = menu["cursor"]
         last = len(menu["labels"]) - 1
+        spent = menu.get("spent")
         for i, label in enumerate(menu["labels"]):
             sel = (i == cur)
             if sel:
@@ -690,6 +711,10 @@ class TableauMixin:
                 col = (246, 230, 160)
             else:
                 col = (150, 146, 132) if i == last else (176, 168, 146)
+                # A SPENT question (asked before, still re-askable) sinks
+                # into the page so the fresh ones read at a glance.
+                if spent and i < len(spent) and spent[i] and i != last:
+                    col = (118, 114, 102)
             surf.blit(of.render(("  " if sel else "   ") + _plain(label),
                                 True, col), (x0, y))
             y += 34

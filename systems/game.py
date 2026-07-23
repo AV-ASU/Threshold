@@ -424,7 +424,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.save.data["spawn"] = "default"
         self.save.set_arg("visibility_at_sleep",
                           round(self.visibility * 0.5, 3))
-        self.save.write_disk()
+        if self.save.write_disk():
+            # The floppy toast: the one reliable "that just saved" tell
+            # (gated on the WRITE, so the icon never lies about a failed
+            # disk). Drawn beside the notebook scribble in render_mixin.
+            self._save_toast_t = SAVE_TOAST_DUR
 
     def _sleep_at_cot(self):
         """Rest in the spare-room cot. Saving moved to evidence pickup
@@ -561,6 +565,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._death_t = 0.0
         self._notebook_toast_t = 0.0   # case-book scribble toast timer
         self._notebook_toast_name = None   # the beat the scribble names
+        self._save_toast_t = 0.0       # floppy save-indicator toast timer
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -2884,6 +2889,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_death(dt)
                 return
             self._notebook_toast_t = max(0.0, self._notebook_toast_t - dt)
+            self._save_toast_t = max(
+                0.0, getattr(self, "_save_toast_t", 0.0) - dt)
             self.update_player(dt, keys)
             # Any open modal (dialogue, inventory, notebook, text prompt)
             # FREEZES the world sim: NPC patrols, enemies, projectiles and
