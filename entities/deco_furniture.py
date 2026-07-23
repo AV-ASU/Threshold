@@ -422,24 +422,33 @@ class DecoFurnitureMixin:
                              (x + 8, y - 4 + i * 3), 2)
 
     def _draw_key_rack(self, surf, x, y):
-        """The lodge reception key board: a pigeonhole rack, rows of hooks with
-        the guest-room keys hanging (a couple of gaps for rooms in use). The
-        wall of keys Sable keeps ready, his 'full house' want made an object.
-        A `_WALL_DECO_KINDS` billboard lifted onto the wall face under tilt."""
-        pygame.draw.rect(surf, (80, 58, 38), (x - 10, y - 11, 20, 20))
-        pygame.draw.rect(surf, (46, 32, 20), (x - 10, y - 11, 20, 20), 1)
+        """THE WALL OF KEYS (the tableau's board, world-size): a wide
+        pigeonholed reception rack behind Sable's desk, every guest-room
+        key hanging on its hook except ONE. Nobody is checked in but the
+        PI, so the single empty hook is HIS room -- the full house Sable
+        keeps ready, and the one gap in it is you. A `_WALL_DECO_KINDS`
+        billboard lifted onto the wall face under tilt."""
+        W2, H2 = 21, 14
+        pygame.draw.rect(surf, (74, 54, 34), (x - W2, y - H2, W2 * 2, H2 * 2))
+        pygame.draw.rect(surf, (44, 30, 18), (x - W2, y - H2, W2 * 2, H2 * 2), 1)
+        pygame.draw.rect(surf, (96, 72, 46),
+                         (x - W2 + 2, y - H2 + 2, W2 * 2 - 4, 3))  # header rail
         n = 0
-        for ry in range(5):
-            for cx in range(4):
-                hx = x - 7 + cx * 5
-                hy = y - 8 + ry * 4
+        for ry in range(3):
+            for cx in range(7):
+                hx = x - W2 + 5 + cx * 6
+                hy = y - H2 + 8 + ry * 7
                 n += 1
-                pygame.draw.circle(surf, (150, 140, 110), (hx, hy), 1)   # hook
-                if (n * 7) % 5 == 3:                # empty hooks (rooms in use)
+                # the pigeonhole cell + its hook
+                pygame.draw.rect(surf, (58, 42, 26), (hx - 2, hy - 1, 5, 6), 1)
+                pygame.draw.circle(surf, (150, 140, 110), (hx, hy), 1)
+                if n == 10:          # the ONE empty hook: the PI's room
                     continue
-                pygame.draw.line(surf, (198, 176, 120), (hx, hy + 1),
-                                 (hx, hy + 3), 1)                        # shaft
-                pygame.draw.circle(surf, (198, 176, 120), (hx, hy + 3), 1)  # bow
+                pygame.draw.line(surf, (204, 180, 118), (hx, hy + 1),
+                                 (hx, hy + 4), 1)                    # shaft
+                pygame.draw.rect(surf, (204, 180, 118),
+                                 (hx - 1, hy + 3, 3, 2))             # the bit
+                pygame.draw.circle(surf, (222, 198, 132), (hx, hy), 1)  # bow
 
     def _draw_crayon_drawing(self, surf, x, y):
         """A child's crayon picture on a taped sheet, hung crooked on the wall.
