@@ -644,6 +644,18 @@ Built into the procedural draw layer (`scenes/base.py`,
     (`BLEND_RGB_SUB`, a cool-grey) rather than painting black over it -- black
     over warm light reads as a brown STAIN, subtraction reads as dark floor.
     Both the pool and the shadow are cached per shape (`_floor_pool_surf`).
+  - **The interior light is COLD, and darkness is designed (2026-07
+    light ruling).** No warm-lamp cosiness indoors: `wall_lamp` casts cold
+    blue-white (the maintainer's "LED" read; in 1994 the same light is a
+    fluorescent tube / cold bulb, so the period holds) with a fast shallow
+    shimmer instead of a candle flicker. Fire (candles, kerosene, the
+    hearth) is a PROP with a small warm pool, never a room's light source.
+    Fixtures are placed by COVERAGE across different walls, and
+    **`tools/light_audit.py`** is the design surface: it overlays every
+    emitter's mechanical `lit_at` radius (filled), its visible pool
+    (ring, in the fixture's colour), and cross-hatches everywhere no
+    radius reaches -- THE DARK as a reviewable shape. Run it before and
+    after placing any fixture; the dark places are chosen, not left over.
   - **Interiors run on the gensets too (2026-07 interior lighting pass).** The
     explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
     schoolhouse, sheriff's office) are `DARK_SCENES` at a **lighter gloom**

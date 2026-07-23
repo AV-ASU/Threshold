@@ -374,11 +374,14 @@ def build_lodge():
     sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 16, "dining_set"))
     # (The bar_dressing ensemble left with the sideways desk; the draw
     # stays in the library for a real bar elsewhere.)
-    # LIGHT FIXTURES (the lodge runs on the genset like every interior):
-    # a wall lamp over the reception and one over the sitting area, the
-    # kerosene lamp staying the kitchen's own.
-    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 16, "wall_lamp"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 16, "wall_lamp"))
+    # LIGHT FIXTURES, placed by COVERAGE not wall habit (2026-07 ruling:
+    # cold electric only, distributed across THREE walls -- reception N,
+    # kitchen W, sitting-area E -- so their pools meet mid-room and the
+    # dark gaps are designed, not accidental; tools/light_audit.py shows
+    # both radii + the dark map).
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(1 * TILE + 8, 4 * TILE, "wall_lamp"))
+    sc.add_decoration(Decoration(16 * TILE + 24, 6 * TILE, "wall_lamp"))
     # Against the west wall -- the oven door faces east, into the kitchen.
     # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
     # the north-wall ham composed into ONE ensemble against the west

@@ -109,7 +109,12 @@ FIXTURE_POOLS = {
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
     "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
-    "wall_lamp":    (80,   (255, 208, 150),  60,   20,    3,   0.04, 3.0),
+    # COLD electric (2026-07 light ruling: no warm-lamp cosiness indoors;
+    # the civic light is cold blue-white -- the maintainer's "LED" read,
+    # delivered in 1994 by fluorescent tube/cold bulb -- with a fast
+    # shallow shimmer instead of a candle flicker. Fire is a PROP now,
+    # never the room's light.)
+    "wall_lamp":    (88,   (205, 218, 240),  62,   20,    3,   0.05, 13.0),
 }
 
 # Additive floor light pools, cached per shape. A tilt-foreshortened ellipse

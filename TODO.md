@@ -348,6 +348,10 @@ still price it). Landed already: the lighting foundation, interior
 lighting, `WATCHER_LIGHT_BURN`, the beam-off retirement (light works
 everywhere), and the flashlight opening on the PI's desk
 (`CHANGELOG.md`, "Lighting" / "The light pillar"). Open, in build order:
+- **LANDED en route: the light audit overlay** (`tools/light_audit.py`,
+  the dev design surface: mechanical radius + visible pool + the hatched
+  dark map per scene) and the COLD ruling (wall_lamp cold blue-white;
+  fire demoted to prop). Next placement passes run through the audit.
 - **The light-security loop (the core).** Buildings' fixtures can be
   restored/switched; lit rooms are SECURED against Watchers; lights decay
   or fail over time; gasoline for the gensets is the cost (canon-ready:
