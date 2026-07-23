@@ -1499,6 +1499,90 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (104, 98, 86), lpp, 1)
 
 
+def _draw_dining_set_solid(surf, cam, deco):
+    """THE DINING SET (interiors pilot, TODO #24, ensemble 2): the lodge
+    common room's table composed as one object. A plank table on four
+    legs, two chairs tucked at lived angles, and ONE place set clean and
+    waiting: Sable keeps the room ready for the full house that no
+    longer comes. The second seat's place is bare wood. Wear layer per
+    the #24 rule: cup rings, scuffed floor where chairs drag, a splinted
+    leg, seat centres worn pale. All world-space geometry."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (100, 76, 48), "side": (72, 54, 34), "dark": (44, 32, 20)}
+    wood_d = {"top": (80, 60, 38), "side": (58, 42, 28), "dark": (36, 26, 16)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- floor wear first: drag scuffs where the chairs live
+    for cxo in (-14, 14):
+        _wline(wx + cxo - 4, wy + 22, 0.2, wx + cxo + 5, wy + 26, 0.2,
+               (58, 44, 28))
+        _wline(wx + cxo - 2, wy + 25, 0.2, wx + cxo + 6, wy + 28, 0.2,
+               (52, 40, 26))
+
+    # --- two chairs, tucked at slightly different angles (yaw'd volumes)
+    for cxo, cyaw in ((-14, 0.18), (14, -0.30)):
+        cx = wx + cxo
+        cy = wy + 24
+        _vbox(surf, cam, cx, cy, 13, 12, 0, 10, wood_d, yaw=cyaw)
+        _vbox(surf, cam, cx, cy + 5, 13, 3, 10, 24, wood_d, yaw=cyaw,
+              outline=False)
+        # the seat's centre worn pale by years of sitting
+        _ell(cx, cy - 1, 10.3, 3.5, 3.0, (96, 74, 48))
+
+    # --- the table: four legs, then the plank top with overhang
+    for lx, ly in ((-22, -12), (22, -12), (-22, 12), (22, 12)):
+        _vbox(surf, cam, wx + lx, wy + ly, 4, 4, 0, 13, wood_d,
+              outline=False)
+    # the splinted leg: a paler new batten strapped to the NE leg
+    _wline(wx + 24, wy - 12, 2, wx + 24, wy - 12, 11, (128, 104, 66), 2)
+    _vbox(surf, cam, wx, wy, 56, 32, 13, 16, wood)
+    # plank seams along the top, in the table's plane
+    for py_ in (-8, 0, 8):
+        _wline(wx - 27, wy + py_, 16.2, wx + 27, wy + py_, 16.2,
+               (58, 44, 28))
+    # table wear: two old cup rings + a long scratch, bare of any cloth
+    _ell(wx + 12, wy - 4, 16.2, 2.6, 2.6, (56, 42, 26), 1)
+    _ell(wx + 15, wy - 2, 16.2, 2.6, 2.6, (56, 42, 26), 1)
+    _wline(wx - 20, wy + 5, 16.2, wx - 4, wy + 7, 16.2, (58, 44, 28))
+
+    # --- THE ONE SET PLACE (the west seat): plate, fork, knife, folded
+    # cloth, all squared and clean. Nobody has eaten off it in months.
+    px_, py2 = wx - 14, wy - 2
+    _ell(px_, py2, 16.4, 5.6, 5.6, (176, 168, 152))
+    _ell(px_, py2, 16.4, 5.6, 5.6, (110, 104, 92), 1)
+    _ell(px_, py2, 16.5, 3.4, 3.4, (150, 142, 128), 1)
+    _wline(px_ - 9, py2 - 4, 16.4, px_ - 9, py2 + 4, 16.4,
+           (158, 160, 166))                      # the fork, squared
+    for pxo in (-0.9, 0.0, 0.9):
+        _wline(px_ - 9 + pxo, py2 - 6, 16.4, px_ - 9 + pxo, py2 - 4,
+               16.4, (158, 160, 166))
+    _wline(px_ + 9, py2 - 4, 16.4, px_ + 9, py2 + 4, 16.4,
+           (158, 160, 166))                      # the knife
+    _wline(px_ + 10.2, py2 - 4, 16.4, px_ + 10.2, py2 + 1, 16.4,
+           (128, 130, 136))
+    cl = [cam.project(px_ - 3, py2 + 7, 16.4),
+          cam.project(px_ + 4, py2 + 7, 16.4),
+          cam.project(px_ + 5, py2 + 10, 16.4),
+          cam.project(px_ - 2, py2 + 10, 16.4)]
+    pygame.draw.polygon(surf, (150, 138, 116), cl)  # the folded cloth
+    pygame.draw.polygon(surf, (108, 98, 82), cl, 1)
+    # the OTHER seat's place: bare wood, and the faint clean rectangle
+    # where a second setting once lay (the dust remembers it)
+    dr2 = [cam.project(wx + 8, wy - 8, 16.15),
+           cam.project(wx + 21, wy - 8, 16.15),
+           cam.project(wx + 21, wy + 4, 16.15),
+           cam.project(wx + 8, wy + 4, 16.15)]
+    pygame.draw.polygon(surf, (106, 82, 52), dr2)
+
+
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
     floor (not a flat decal), an iron pull-ring on top. Default lid is
@@ -3025,6 +3109,7 @@ SOLID_PROPS = {
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "kitchen_wall":  _draw_kitchen_wall_solid,
+    "dining_set":    _draw_dining_set_solid,
     "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,

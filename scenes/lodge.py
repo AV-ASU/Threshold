@@ -366,12 +366,12 @@ def build_lodge():
     # props below sit on top of it.
     sc.add_decoration(Decoration(11 * TILE + 24, 7 * TILE + 12, "rug",
                                  w=140, h=92, color=(70, 58, 40), seed=23))
-    # Sized darkwood kitchen furniture (decorations over invisible
-    # collision tiles): a 2-tile dining table + two chairs, the range.
-    # The counter bar/cabinets stay as object tiles.
-    sc.add_furniture("table", [(2, 3), (3, 3)], w=58, h=40)
-    sc.add_furniture("chair", [(2, 4)], w=22, h=28)
-    sc.add_furniture("chair", [(3, 4)], w=22, h=28)
+    # THE DINING SET (interiors pilot, TODO #24, ensemble 2): table + two
+    # tucked chairs + the ONE set place composed as one object -- Sable
+    # keeps the room ready for the full house that no longer comes; the
+    # second seat's place is bare wood with the dust-shadow of a setting
+    # that once lay there. Same 'x'-stamp collision as the kitchen wall.
+    sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 16, "dining_set"))
     # Against the west wall -- the oven door faces east, into the kitchen.
     # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
     # the north-wall ham composed into ONE ensemble against the west
@@ -384,6 +384,9 @@ def build_lodge():
     for _ky in (3, 4, 5, 6):
         _objs[_ky][1] = "x"
     _objs[5][2] = "."      # the old map's raw stove tile, now open floor
+    for _kx in (2, 3):     # the dining set: table row + chair row
+        _objs[3][_kx] = "x"
+        _objs[4][_kx] = "x"
     sc.objects = _objs
     # The sitting-room FIREPLACE: a real stone furniture volume (2026-07
     # audit fix: it was a raw 'f' object tile, which no tilt set draws, so
@@ -394,7 +397,10 @@ def build_lodge():
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
     # (The hung meat moved into the kitchen-wall ensemble, 2026-07.)
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 14, "candle"))  # on table
+    # The table candle stays a LIVE deco (it flickers; the one moving
+    # thing on a still table, per the #24 animate-where-earned rule),
+    # seated on the ensemble's tabletop via the z kwarg.
+    sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 10, "candle", z=16))
     # (The old west-wall banner was CUT, 2026-07 audit: E/W wall faces are
     # edge-on to the tilt, so it was invisible from every reachable angle.)
     sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
@@ -415,7 +421,8 @@ def build_lodge():
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
     sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 8, "place_setting"))
+    # (The loose place_setting deco was absorbed into the dining-set
+    # ensemble, 2026-07: the one set place is drawn in the table's plane.)
     sc.add_decoration(Decoration(13 * TILE + 16, 6 * TILE + 16, "overturned_chair"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "small_chair"))
     sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16, "small_chair"))
