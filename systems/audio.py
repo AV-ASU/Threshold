@@ -324,6 +324,7 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["corn_hiss"]   = self._tone_corn_hiss()    # Toby: the stalks
         self.sfx["talk_breath"] = self._tone_talk_breath()  # the Talk: him
         self.sfx["altar_air"]   = self._tone_altar_air()    # the pedestal
+        self.sfx["desk_air"]    = self._tone_desk_air()     # the spare room
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -2024,6 +2025,32 @@ class Audio:                        #Starting screen needs music, something simp
         breathe = 0.55 + 0.45 * _np.sin(2 * _np.pi * (1.0 / 9.0) * t)
         airbed = self._smoothed_noise(n, 0.985, rng) * 0.18
         sig = (drone * breathe + airbed) * vol
+        return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
+
+    def _tone_desk_air(self, duration_ms=7000, vol=0.11):
+        """The bedroom desk: the Arcadia keeping its hours around the
+        spare room. Near-still air with a soft warm body (57 Hz + a 228
+        Hz partial so laptops carry it), one distant floor settle far
+        off in the house mid-loop -- an old hotel being quiet at you.
+        Deliberately plainer than every seat tone: the PI's own room is
+        the one close-up with nothing in it but him."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng(91)
+        air = self._smoothed_noise(n, 0.982, rng)
+        body = (_np.sin(2 * _np.pi * 57.0 * t) * 0.10
+                + _np.sin(2 * _np.pi * 228.0 * t) * 0.04)
+        swell = 0.80 + 0.20 * _np.sin(2 * _np.pi * (1.0 / 7.0) * t)
+        sig = air * 0.80 * swell + body
+        # the settle: one soft complaint from another floor at 4.6 s
+        s0, sd = int(4.6 * sr), int(0.09 * sr)
+        creak = self._smoothed_noise(sd, 0.78, rng) * _np.hanning(sd) * 0.32
+        sig[s0:s0 + sd] += dsp.lowpass(creak, 520, order=2)
+        sig *= vol
         return dsp.to_sound(self._loop_seam(_np.clip(sig, -1.0, 1.0)))
 
     def room_tone(self, name, volume=0.9):

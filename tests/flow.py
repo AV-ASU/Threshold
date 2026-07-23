@@ -873,6 +873,8 @@ def main():
     gsr.try_interact()
     check(gsr._tableau is not None and gsr._tableau["kind"] == "desk",
           "startroom: [E] at the desk opens the close-up examine tableau")
+    check(gsr.audio._room_tone == "desk_air",
+          "startroom: the desk close-up starts its room tone (the house)")
     _labels = [o[0] for o in gsr._tableau_options()]
     check("Take the pistol" in _labels and "Read the case file" in _labels
           and "Step back" in _labels,
@@ -1466,7 +1468,8 @@ def main():
     check(not gt.audio.enabled
           or all(k in gt.audio.sfx for k in
                  ("lean_in", "fan_air", "window_wind", "bulb_hum",
-                  "nave_air", "corn_hiss", "talk_breath", "altar_air")),
+                  "nave_air", "corn_hiss", "talk_breath", "altar_air",
+                  "desk_air")),
           "audio: the tableau cue set is built")
     check(gt.audio._room_tone == "fan_air",
           "audio: Sable's close-up starts its room tone (the fan)")

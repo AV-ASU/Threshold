@@ -1336,7 +1336,10 @@ tunes; silence is a move):
   **`talk_breath`** (two slow breath cycles behind wood that does not
   move), the pedestal **`altar_air`** (the house tritone, 41 + 58 Hz, at
   whisper level, breathing once per loop on the daubed Sign's painted
-  period). Every tone is mixed UNDER the caption voice blips (peaks
+  period), and the bedroom desk **`desk_air`** (2026-07 quality sprint:
+  the Arcadia keeping its hours around the spare room -- near-still air, a
+  soft warm body, one distant floor settle; deliberately the plainest of
+  the set). Every tone is mixed UNDER the caption voice blips (peaks
   0.05-0.13), loop-seam crossfaded, and modulated on whole cycles so
   `loops=-1` never clicks. **Mara's seat carries NO tone on purpose:**
   `_mara_voice` force-silences the room, and her confrontation plays

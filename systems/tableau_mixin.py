@@ -39,10 +39,9 @@ def _plain(s):
 # Each close-up's ROOM TONE (the #2b sound pass, 2026-07): a quiet bed
 # looped on the ambient channel while the tableau is up, because the
 # world-freeze also freezes the scene's scheduled ambients and every
-# close-up sat in dead air. (cue_name, volume); a kind with no entry is
-# SILENT ON PURPOSE -- Mara's confrontation plays in the force_silence
-# _mara_voice lays down (silence is a move), and the desk pilot stays
-# plain utilitarian.
+# close-up sat in dead air. (cue_name, volume); the ONE kind with no
+# entry is SILENT ON PURPOSE -- Mara's confrontation plays in the
+# force_silence _mara_voice lays down (silence is a move).
 _TABLEAU_TONES = {
     "sable":  ("fan_air", 0.9),       # the ceiling fan's warm push
     "vane":   ("window_wind", 0.9),   # thin cold wind at the glass
@@ -51,6 +50,7 @@ _TABLEAU_TONES = {
     "toby":   ("corn_hiss", 0.9),     # the dead stalks past his window
     "talk":   ("talk_breath", 1.0),   # his breathing, behind the wood
     "altar":  ("altar_air", 1.0),     # the tritone pressure of the room
+    "desk":   ("desk_air", 0.9),      # the Arcadia being quiet at you
 }
 
 
