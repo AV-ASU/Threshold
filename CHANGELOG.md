@@ -213,6 +213,21 @@
 
 ## Walls & interior geometry
 
+- **2026-07 — Doors and windows join the thin-slab walls (`_gap_slab`;
+  the "glitched door" / "wrong windows" playtest finds).** In slab scenes,
+  a door or window tile extruded as a FULL-tile box (its char isn't a wall
+  char, so `_wall_slab` returned None) while the wall around it was a
+  half-tile slab -- every doorway and window read as a near-black full-tile
+  monolith jutting from the thin wall line, with the pane floating on the
+  phantom face. New `_gap_slab` carries the flanking walls' band through
+  the gap tile; the door lintel, window box, and pane face-plane all take
+  it, in the wall's material tint. The flat full-tile window art is skipped
+  under tilt in slab scenes (it peeked out past the band as a lit strip at
+  the wall's foot), and interior panes now glaze with flat overcast
+  daylight instead of the facade's warm lit-from-within amber. Also cut in
+  the same sprint: the bedroom's "You wake up." first-step notice (the
+  room, the light, and the muffled wake audio already say it).
+
 - **2026-07 -- #4c interior-door rollout COMPLETE; four interiors left whole
   on purpose.** With the shop pilot, the church vestry, the barn, the abandoned
   farmhouse, the sheriff's office, and Toby's closet all doored, the rollout is

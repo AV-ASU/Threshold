@@ -478,6 +478,18 @@ Built into the procedural draw layer (`scenes/base.py`,
   bevel where both would apply (`_bevel_corners` returns 0 in a slab scene).
   Cache-safe throughout (pure functions of the tile + its neighbour chars +
   the gate). Roll `_SLAB_STYLE` out one interior at a time per VISION.
+  **Doors and windows take the slab THROUGH the gap (`_gap_slab`).** A
+  door/window tile is not a wall char, so `_wall_slab` returns None for it;
+  `_gap_slab` carries the flanking walls' band through the gap tile instead
+  (same `cross()` rules, so it meets the neighbour bands flush). The door's
+  lintel box, the window's box, and the window pane's face plane all read
+  it, in the wall's material tint -- without it they extruded as full-tile
+  near-black monoliths jutting from the thin wall line. Under tilt a slab
+  scene also skips the flat full-tile window art (the 3D band + set-in pane
+  carry the read). **Window glazing reads by scene:** an interior scene's
+  panes hold flat overcast DAYLIGHT (a dim room looking out at the grey
+  sky); an exterior facade keeps the warm lit-from-within amber (the town
+  keeping its lights on, §6 lighting).
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.

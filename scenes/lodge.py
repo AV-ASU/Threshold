@@ -195,9 +195,7 @@ def bedroom_on_enter(game, scene):
     # fires once per session. `_opening_t` ticks up in
     # bedroom_on_update; the slots check thresholds.
     scene._opening_t = 0.0
-    scene._opening_slots = {
-        "wake_notice_armed":   True,    # fires on first step
-    }
+    scene._opening_slots = {}
     scene._spawn_pos = scene.spawns.get("default", (0, 0))
     # First-session onboarding: the only place the game teaches its
     # controls. A gentle one-liner shown before the player moves; the
@@ -221,18 +219,9 @@ def bedroom_on_update(game, scene, dt):
     p = game.player
     if p is None:
         return
-    # First-movement gate. The wake notice + the watcher manifest
-    # only after the player has actually input movement, so the
-    # opening line lands as the character noticing what the
-    # player just noticed (not a frame-one overlay).
-    sx, sy = scene._spawn_pos
-    moved = (abs(p.x - sx) + abs(p.y - sy)) > 6
-    if slots["wake_notice_armed"] and moved:
-        slots["wake_notice_armed"] = False
-        game.show_notice(
-            "You wake up.",
-            duration=5.0,
-        )
+    # (The old "You wake up." first-step notice was CUT, 2026-07 quality
+    # sprint: the room, the light, and the muffled wake audio already say
+    # it; the narrator stating it was noise.)
     # Door-stuck recoil: when begin_transition rejects the first
     # attempt to leave, it sets `_door_stuck_recoil` on the
     # scene. We dip the candle once in response so the player

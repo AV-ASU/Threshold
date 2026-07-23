@@ -1942,6 +1942,60 @@ def _wall_slab(scene, tx, ty):
     return rects
 
 
+def _gap_slab(scene, tx, ty):
+    """The thin-slab footprint THROUGH a non-wall gap tile (a doorway or a
+    window) sitting in a wall run -- a list of tile-local rects like
+    _wall_slab's, or None (non-slab scene, or no wall neighbour carries a
+    band through this tile). Without this, a door/window tile in a thin-slab
+    wall extruded as a FULL-tile box and jutted from the wall line as a dark
+    monolith (the 2026-07 quality sprint's "glitched door" / "wrong windows"
+    playtest finds). Same cross() rules as _wall_slab, so the gap band meets
+    its flanking wall bands flush."""
+    style = _wall_style(scene)
+    if style is None:
+        return None
+    W, H = scene.w, scene.h
+
+    def _c(x, y):
+        if scene.wrap_x:
+            x %= W
+        if scene.wrap_y:
+            y %= H
+        if 0 <= x < W and 0 <= y < H:
+            return scene.objects[y][x]
+        return None
+
+    cN, cS = _c(tx, ty - 1), _c(tx, ty + 1)
+    cE, cW = _c(tx + 1, ty), _c(tx - 1, ty)
+    wN, wS = cN in _WALL_CHARS, cS in _WALL_CHARS
+    wE, wW = cE in _WALL_CHARS, cW in _WALL_CHARS
+    oN, oS = cN is not None, cS is not None
+    oE, oW = cE is not None, cW is not None
+    T = TILE
+    th = T * style["thick"]
+    p = T - th
+
+    def cross(open_neg, open_pos):
+        if open_neg and open_pos:
+            return p / 2.0, T - p / 2.0
+        if not open_neg:
+            return 0.0, th
+        if not open_pos:
+            return p, T
+        return p / 2.0, T - p / 2.0
+
+    # The band runs ALONG the wall it gaps: E/W wall neighbours carry a
+    # horizontal band through the tile, N/S a vertical one. A straight run
+    # (both flanking walls present) wins over a corner-adjacent single.
+    if (wE and wW) or ((wE or wW) and not (wN or wS)):
+        y0, y1 = cross(oN, oS)
+        return [(0.0, y0, T, y1)]
+    if wN or wS:
+        x0, x1 = cross(oW, oE)
+        return [(x0, 0.0, x1, T)]
+    return None
+
+
 # --- Rounded wall outline (2026-07, maintainer "rounded corners where the walls
 # connect") ------------------------------------------------------------------
 # The thin bands (_wall_slab) still meet at square 90deg corners. Round the FREE
@@ -3234,6 +3288,12 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                                    or ch in _COUNTER_CHARS
                                    or ch in _RACK_CHARS):
                 continue                     # stood up as a 3D box/standee under tilt
+            if (skip_billboard and ch in _WINDOW_CHARS
+                    and _gap_slab(scene, tx, ty) is not None):
+                # Thin-slab scene: the 3D band + set-in pane carry the whole
+                # window read; the flat full-tile art would peek out past the
+                # thin band as a lit strip at the wall's foot.
+                continue
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
@@ -3715,9 +3775,26 @@ def _tilt_door_box(surf, camera, scene, tx, ty):
     """A doorway in the extruded wall: a lintel BEAM spanning the top of the
     tile (head->rise) with the passage open below. The flanking wall tiles
     supply the jambs; a swung leaf hangs in the opening. Faces abutting walls
-    OR other doors are culled so a multi-tile gate reads as one clean opening."""
-    _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD, _TILT_WALL_RISE,
-                 neigh=_WALL_CHARS | _DOOR_CHARS)
+    OR other doors are culled so a multi-tile gate reads as one clean opening.
+    In a slab scene the lintel takes the wall's slab footprint through the gap
+    (_gap_slab) and the wall's material tint, so the doorway sits IN the thin
+    wall line instead of jutting from it as a full-tile monolith."""
+    wtx = tx % scene.w if scene.wrap_x else tx
+    wty = ty % scene.h if scene.wrap_y else ty
+    bands = _gap_slab(scene, wtx, wty)
+    if bands:
+        face_col, top_col = _tilt_wall_tint(scene, tx, ty)
+        tint = _wall_tint_for(scene)
+        fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP,
+                       _wall_top_tint_for(scene))
+        for band in bands:
+            _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD,
+                         _TILT_WALL_RISE, neigh=_WALL_CHARS | _DOOR_CHARS,
+                         face_col=fc, top_col=tc, foot=band)
+    else:
+        _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD, _TILT_WALL_RISE,
+                     neigh=_WALL_CHARS | _DOOR_CHARS)
     _draw_doorway(surf, camera, scene, tx, ty)
 
 
@@ -4120,16 +4197,22 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
                   area=pygame.Rect(i, 0, 1, card.get_height()))
 
 
-def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False):
-    """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
+def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False,
+                      face_off=None, daylight=False):
+    """A glazed pane set into one wall face: wood frame, glass, a lighter
     core and a muntin cross. `(ndx, ndy)` is the exposed face direction.
-    `broken` (a thrown stone, TODO #5) swaps the lit glass for a dark hole
-    with shard teeth left in the frame -- the light is out for the run."""
+    `face_off` is the distance from the tile centre to that face's true
+    plane (a thin-slab wall's face is NOT the tile edge); None keeps the
+    full-tile face. `daylight` swaps the warm lit-from-within amber for flat
+    overcast daylight (interior scenes look OUT at the grey sky; the warm
+    glass belongs on the town's facades, DESIGN.md §6). `broken` (a thrown
+    stone, TODO #5) swaps the glass for a dark hole with shard teeth left in
+    the frame -- the light is out for the run."""
     hw = TILE / 2
     pv = (-ndy, ndx)                 # along-wall axis on this face
     ph = hw * 0.60                   # half pane width
     z0, z1 = 7.0, 19.0
-    off = hw * 0.99                  # sit just proud of the face
+    off = hw * 0.99 if face_off is None else face_off
 
     def Q(u, z):
         return camera.project(wx + ndx * off + pv[0] * u,
@@ -4150,30 +4233,68 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False):
         return
     core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
             Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
-    pygame.draw.polygon(surf, (138, 104, 50), glass)
-    pygame.draw.polygon(surf, (170, 138, 78), core)
+    if daylight:
+        pygame.draw.polygon(surf, (96, 100, 94), glass)
+        pygame.draw.polygon(surf, (124, 128, 120), core)
+    else:
+        pygame.draw.polygon(surf, (138, 104, 50), glass)
+        pygame.draw.polygon(surf, (170, 138, 78), core)
     pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
     pygame.draw.line(surf, (74, 54, 34), Q(-ph, (z0 + z1) / 2), Q(ph, (z0 + z1) / 2), 1)
     pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
 
 
 def _tilt_window_box(surf, camera, scene, tx, ty):
-    """A window is a SOLID wall tile, so it extrudes as a full wall box; a lit
-    pane is then set into each camera-facing exposed face (dark + shard-toothed
-    once a thrown stone has broken it -- scene._broken_windows)."""
-    _tilt_wall_box(surf, camera, scene, tx, ty)
+    """A window is a SOLID wall tile, so it extrudes as a wall box -- the
+    wall's slab footprint in a slab scene (_gap_slab), full-tile elsewhere. A
+    pane is then set into each camera-facing exposed face ON that face's true
+    plane (dark + shard-toothed once a thrown stone has broken it --
+    scene._broken_windows). Glazing reads by scene: an INTERIOR scene's
+    windows hold flat overcast DAYLIGHT (the dim room looks out at the grey
+    sky); an exterior facade keeps the warm lit-from-within glass (the town
+    keeping its lights on, DESIGN.md §6)."""
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
+    bands = _gap_slab(scene, wtx, wty)
+    if bands:
+        face_col, top_col = _tilt_wall_tint(scene, tx, ty)
+        tint = _wall_tint_for(scene)
+        fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP,
+                       _wall_top_tint_for(scene))
+        for band in bands:
+            _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                         neigh=_WALL_CHARS, face_col=fc, top_col=tc,
+                         foot=band)
+    else:
+        _tilt_wall_box(surf, camera, scene, tx, ty)
     broken = (wtx, wty) in getattr(scene, "_broken_windows", ())
+    try:
+        from systems.config import SEAMLESS_WORLD_SCENES as _SWS
+        daylight = getattr(scene, "key", None) not in _SWS
+    except Exception:
+        daylight = False
     cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
     for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
         if _is_wall(scene, tx + ndx, ty + ndy):
             continue                                     # buried face
         if camera.depth(wx + ndx * hw, wy + ndy * hw, _TILT_WALL_RISE / 2) <= cd:
             continue                                     # faces away from camera
-        _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken)
+        face_off = None
+        if bands:
+            b = bands[0]
+            if ndy > 0:
+                face_off = (b[3] - hw) + 0.5
+            elif ndy < 0:
+                face_off = (hw - b[1]) + 0.5
+            elif ndx > 0:
+                face_off = (b[2] - hw) + 0.5
+            else:
+                face_off = (hw - b[0]) + 0.5
+        _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken,
+                          face_off=face_off, daylight=daylight)
 
 
 _WALL_BOX_CACHE = {}
