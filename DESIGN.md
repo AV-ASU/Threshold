@@ -69,16 +69,22 @@ not on that path: he honors `player.hidden` (stepping into corn OR an enclosed
 hide drops his hunt to searching, guarded by `tests/king_roam.py`), though he
 re-finds you rather than losing you for good, and his catch is birth-gated.
 
-**The flashlight (`[F]`) is the player's hand on that meter.** Found in
-the woodshed (beside the axe), it casts a long beam **cone** in
+**The flashlight (`[F]`) is the player's hand on that meter.** The PI's
+own kit, taken off the bedroom desk in the opening close-up (beside the
+pistol; it moved there from the woodshed in the 2026-07 light pass — light
+is the game's spine, so the player's hand on it starts in the first
+close-up). It casts a long beam **cone** in
 the facing direction through `DARK_SCENES` — the only way to read a black
 room far enough ahead to navigate it. But it is **double-edged**: a light
 in the dark is a thing that can be seen, so while it burns visibility
 *climbs* (`VIS_LIT_RISE`, ~30s of held light alone is enough to erupt the
 King). See more / be seen more. The cellar (`DIM_SAFE_SCENES`) is the one
-exception — the beam is free there, your room to read by. In the deep cult
-sites (`CULT_DARK_SCENES`) the beam won't catch at all: that dark is not
-the kind light fixes, and the dread aperture rules instead.
+exception — the beam is free there, your room to read by. **The beam works
+everywhere dark, the deep included** (the old `CULT_DARK_SCENES` beam-off
+is retired, 2026-07 light-pass ruling: a deliberate mechanic that read as
+a bug to its only player IS a bug; the deep's dread is what light costs
+and attracts, not a dead switch). `CULT_DARK_SCENES` keeps its deepest
+gloom tier and the cult sites stay lit by the cult's own ritual fires.
 
 **Investigating arms the threat.** The lethal apex is gated behind the
 case:
@@ -616,11 +622,11 @@ Built into the procedural draw layer (`scenes/base.py`,
     room, so any real fixture -- a cult brazier, a Sign-Chamber candle, a
     town yard light, a genset work-bulb -- lights the dark it stands in. One
     table drives the surface (if it ever darkens) and the deep, with no
-    per-scene special-casing. The **deep still swallows the flashlight**
-    (`CULT_DARK_SCENES`, DESIGN §1's deliberate dread is preserved): the cult
-    sites are lit by the cult's OWN ritual fires now, not by your beam. Fully
-    retiring the "special darkness" beam-off is a separate dread decision
-    (`TODO.md`), not folded in here.
+    per-scene special-casing. **The beam works in the deep too** (the old
+    `CULT_DARK_SCENES` beam-off was retired, 2026-07 light pass — see the
+    flashlight note in §1); the cult sites keep the deepest gloom tier and
+    stay lit by the cult's OWN ritual fires, with your beam a priced
+    option on top.
   - **The light is 3D, and it interacts (2026-07 light-model pass).** Each
     emitter carries a real world SOURCE HEIGHT (`src_z`) and a screen-relative
     gooseneck offset (`arm`): a yard-light head rides high on its pole, a

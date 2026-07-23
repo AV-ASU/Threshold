@@ -121,6 +121,30 @@ def draw_desk_tableau(surf, t, state):
         clean = pygame.transform.rotate(clean, 13)
         surf.blit(clean, (gx + 18, gy + 8))
 
+    # --- the flashlight, his own kit, in the desk's lower corner ---
+    flx, fly = int(W * 0.12), int(H * 0.76)
+    if state.get("fl_present", True):
+        f = pygame.Surface((200, 90), pygame.SRCALPHA)
+        pygame.draw.rect(f, (72, 76, 84), (30, 34, 118, 24), border_radius=10)
+        pygame.draw.rect(f, (96, 100, 110), (30, 34, 118, 8), border_radius=6)
+        for kx in range(46, 140, 12):                      # knurled grip
+            pygame.draw.line(f, (52, 55, 62), (kx, 36), (kx, 56), 1)
+        pygame.draw.rect(f, (88, 92, 102), (140, 28, 26, 36), border_radius=6)
+        pygame.draw.ellipse(f, (150, 158, 130), (158, 32, 10, 28))   # lens
+        pygame.draw.ellipse(f, (222, 226, 192), (160, 38, 5, 12))    # glint
+        pygame.draw.rect(f, (46, 48, 54), (24, 38, 8, 16))           # tailcap
+        f = pygame.transform.rotate(f, -9)
+        fsh = pygame.Surface(f.get_size(), pygame.SRCALPHA)
+        pygame.draw.ellipse(fsh, (0, 0, 0, 80), (18, 52, 170, 26))
+        surf.blit(fsh, (flx - 4, fly + 10))
+        surf.blit(f, (flx, fly))
+    else:
+        clean = pygame.Surface((150, 46), pygame.SRCALPHA)
+        clean.fill((255, 220, 150, 12))
+        pygame.draw.rect(clean, (255, 225, 160, 22), (0, 0, 150, 46), 2)
+        clean = pygame.transform.rotate(clean, -9)
+        surf.blit(clean, (flx + 14, fly + 14))
+
     # --- vignette to hold the eye on the lit pool ---
     vig = pygame.Surface((W, H), pygame.SRCALPHA)
     cx, cy = int(W * 0.42), int(H * 0.5)

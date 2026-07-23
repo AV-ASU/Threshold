@@ -468,6 +468,25 @@
   at) and ~1/3 BARE deciduous (trunk + seeded branch strokes, nothing
   leafed). Seasonally true and darker on the skyline.
 
+## The light pillar (2026-07, wave 1)
+
+- **2026-07 — The flashlight opens on the PI's desk.** Moved from the
+  woodshed stump to the bedroom desk tableau, beside the pistol: the
+  maintainer's light-pillar mandate makes light the game's spine, so the
+  player's hand on it starts in the opening close-up (and a PI carries
+  his own light; finding it in a shed was always a little false). New
+  menu option + close-up art + `desk_flashlight_taken` flag; the
+  woodshed keeps the axe.
+- **2026-07 — The deep beam-off retired.** `CULT_DARK_SCENES` swallowed
+  the flashlight by design ("the dark here is not the kind light
+  fixes"), and TODO #21 carried "retire this?" as an open dread
+  decision. The maintainer's playtest verdict settled it: it read as
+  broken, not dreadful, and a deliberate mechanic that reads as a bug to
+  its only player is a bug. Light works everywhere now; the deep keeps
+  its deepest gloom tier + the cult's own fires, and the beam stays
+  priced (visibility burn). The beam-off notice + HUD line were cut with
+  it.
+
 ## Lighting
 
 - **2026-07 — Two-family light model + shared fixture table.** Brimley's

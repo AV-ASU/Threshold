@@ -69,13 +69,20 @@ class TableauMixin:
             self.audio.room_tone(tone[0], tone[1])
 
     def _open_desk_tableau(self):
-        """The spare-room writing desk: pistol + case file under the lamp."""
+        """The spare-room writing desk: pistol + flashlight + case file
+        under the lamp (the PI's own kit, laid out the night he checked
+        in; the flashlight moved here from the woodshed in the 2026-07
+        light pass -- light is the game's spine, so the player's hand on
+        it starts in the opening close-up)."""
         self._tableau = {
             "kind": "desk",
             "t": 0.0,
             "cursor": 0,
             "reading": None,
-            "state": {"gun_present": not self.save.flag("desk_pistol_taken")},
+            "state": {
+                "gun_present": not self.save.flag("desk_pistol_taken"),
+                "fl_present": not self.save.flag("desk_flashlight_taken"),
+            },
         }
         self._tableau_open_audio("desk")
 
@@ -424,6 +431,8 @@ class TableauMixin:
         opts = []
         if tb["state"].get("gun_present"):
             opts.append(("Take the pistol", self._tableau_take_gun))
+        if tb["state"].get("fl_present"):
+            opts.append(("Take the flashlight", self._tableau_take_flashlight))
         opts.append(("Read the case file", self._tableau_read_case))
         opts.append(("Step back", self._close_tableau))
         return opts
@@ -440,6 +449,16 @@ class TableauMixin:
         self.player.inventory.equipped["weapon"] = "pistol"
         self.audio.play("pickup", 0.7)
         self.show_notice("You take your pistol off the desk.")
+        tb["cursor"] = 0
+
+    def _tableau_take_flashlight(self):
+        tb = self._tableau
+        tb["state"]["fl_present"] = False
+        self.save.set_flag("desk_flashlight_taken", True)
+        self.player.inventory.add("flashlight", 1)
+        self.audio.play("pickup", 0.7)
+        self.show_notice("Your flashlight. Press [F] in the dark, "
+                         "but light draws the eye.")
         tb["cursor"] = 0
 
     def _tableau_read_case(self):

@@ -2027,8 +2027,6 @@ class RenderMixin:
                 and self.player.inventory.has("flashlight")):
             if self._flashlight_lit():
                 lbl, col = "light, lit  (f)", (210, 180, 90)
-            elif self.scene.key in CULT_DARK_SCENES:
-                lbl, col = "the light will not catch here", (70, 66, 78)
             else:
                 lbl, col = "light, dark  (f)", (96, 92, 108)
             ls = self.fonts["serif_tiny"].render(lbl, True, col)

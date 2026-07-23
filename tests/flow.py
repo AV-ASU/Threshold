@@ -636,11 +636,24 @@ def main():
     check("lodge" not in _greet_text and "looking for" not in _greet_text,
           "kid: the greeting does not pre-know the case")
 
-    # --- 11. The flashlight: found, toggles, double-edged in the dark ---
+    # --- 11. The flashlight: the PI's own kit, toggles, double-edged ---
+    # (2026-07 light pass: it moved from the woodshed stump to the bedroom
+    # desk tableau, beside the pistol -- light is the game's spine, so the
+    # player's hand on it starts in the opening close-up.)
     gf = new_game()
-    fire(gf, "woodshed", "_flash_pos")
+    gf.load_scene_now("bedroom")
+    gf.save.set_flag("wake_up", True)
+    gf._open_desk_tableau()
+    check(any(lbl == "Take the flashlight"
+              for lbl, _cb in gf._tableau_options()),
+          "flashlight: offered on the bedroom desk tableau")
+    gf._tableau_take_flashlight()
     check(gf.player.inventory.has("flashlight"),
-          "flashlight: picked up in the woodshed")
+          "flashlight: taken from the desk close-up")
+    check(not any(lbl == "Take the flashlight"
+                  for lbl, _cb in gf._tableau_options()),
+          "flashlight: the taken light drops off the desk menu")
+    gf._close_tableau()
     # In a dark, non-safe scene the beam lights and burns the meter.
     gf.load_scene_now("well_passage")
     ready(gf)
@@ -661,12 +674,14 @@ def main():
         gf._tick_visibility(0.1)
     check(gf.visibility < off0,
           "flashlight: beam off, the meter bleeds back down")
-    # Cult-dark swallows the beam regardless of the switch.
+    # The deep no longer swallows the beam (2026-07 light pass: light
+    # works everywhere; the deep's dread is what light costs and
+    # attracts, not a dead switch).
     gf.load_scene_now("dark")
     ready(gf)
     gf.flashlight_on = True
-    check(not gf._flashlight_lit(),
-          "flashlight: cult-dark scenes force the beam off")
+    check(gf._flashlight_lit(),
+          "flashlight: the beam works in the deep (beam-off retired)")
 
     # --- 12. Purged items stay purged (no defs, no icons) ---
     from systems.items import ITEM_DEFS

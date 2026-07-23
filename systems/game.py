@@ -2851,8 +2851,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return False
         if self.scene.key not in DARK_SCENES:
             return False
-        if self.scene.key in CULT_DARK_SCENES:
-            return False
+        # (The old CULT_DARK beam-off is RETIRED, 2026-07 light pass:
+        # light works everywhere; the deep's dread is what light costs
+        # and attracts, not a dead switch.)
         return True
 
     def _toggle_flashlight(self):
@@ -2868,11 +2869,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.flashlight_on = not self.flashlight_on
         self.audio.play("blip_low" if self.flashlight_on else "bump", 0.6)
         if (self.flashlight_on and self.scene is not None
-                and self.scene.key in CULT_DARK_SCENES):
-            self.show_notice("The beam dies the moment it leaves the lens. "
-                             "The dark here is not the kind light fixes.",
-                             duration=2.6)
-        elif (self.flashlight_on and self.scene is not None
                 and self.scene.key not in DARK_SCENES):
             # A lit room: the beam does nothing here (it only bites in the
             # dark), so tell the player rather than click a dead switch.

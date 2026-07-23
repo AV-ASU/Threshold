@@ -616,10 +616,11 @@ def build_dark():
     sc.add_exit("D", "threshold", "from_dark")
     sc.set_spawn("default",    6, 1)
     sc.set_spawn("from_stair", 6, 1)
-    # The hive. The flashlight is force-off here (CULT_DARK_SCENES) so the
-    # dread aperture's clear circle is the only light -- you find the
-    # congregation a face at a time. They're NPCs, not enemies: no chase,
-    # no contact penalty. The room's whole work is the recognition.
+    # The hive (CULT_DARK_SCENES: the deepest gloom tier). The beam works
+    # here since the 2026-07 light pass, at the usual price; unlit, the
+    # dread aperture's clear circle finds the congregation a face at a
+    # time. They're NPCs, not enemies: no chase, no contact penalty. The
+    # room's whole work is the recognition.
     def _murmur(game, npc):
         game.dialog.show(
             ["[c=dim]The kneeler doesn't stir. Its lips move, no sound.[/c]"],

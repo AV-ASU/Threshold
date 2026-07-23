@@ -262,28 +262,38 @@ set-pieces (their lines + palettes are canon), so this is a
 re-presentation question, not a gap. Do not start without a fresh
 maintainer decision; land each ending only through a VISION.md look pass.
 
-### 21. **[Opus + Fable]** Light-driven dread — the blackout + watcher storm
+### 21. **[Opus + Fable]** LIGHT IS THE PILLAR — the perfected system
 
-The lighting foundation, the interior lighting pass, and the "no light =
-danger" Watcher extension all landed (`CHANGELOG.md`, "Lighting"). **Still
-open, all gated on a fresh maintainer go (design-only as of the 2026-07
-discussion):**
-- **The moth blackout.** A moth flare knocks out the lights (kill a
-  genset node / drop the yard-light pools), the screen dims, and the cult
-  camp forms a procession to the flash and fans out to search. Needs: a
-  genset→fixtures power link, a scene-level "blackout" state, procession
-  staging.
+**Maintainer mandate (2026-07 QC discussion): after the quality-floor
+sprint, light is the ONE system to perfect** — the game's missing
+mastery verb. The doctrine that keeps it coherent with everything
+shipped: **light is safety from the small things and a beacon to the big
+one** (Watchers die in it; the flashlight burn + the King's attention
+still price it). Landed already: the lighting foundation, interior
+lighting, `WATCHER_LIGHT_BURN`, the beam-off retirement (light works
+everywhere), and the flashlight opening on the PI's desk
+(`CHANGELOG.md`, "Lighting" / "The light pillar"). Open, in build order:
+- **The light-security loop (the core).** Buildings' fixtures can be
+  restored/switched; lit rooms are SECURED against Watchers; lights decay
+  or fail over time; gasoline for the gensets is the cost (canon-ready:
+  the fold cut the grid, the town runs on gensets, `generator` props
+  front the doors). Needs: a genset→fixtures power link, per-scene light
+  state, a fuel item + siphon/refill verb. Keep the tension: a lit town
+  is a town He can see.
+- **Watcher variety.** Wildly different silhouettes per canon (each is a
+  different cross-section of the same higher-dimensional gaze —
+  NARRATIVE §4 makes this free). Fast/skittery movement prototyped ONE
+  design at a time through the creature-design loop; dark-only existence.
+- **The moth blackout.** A moth flare knocks out a genset (drop the
+  yard-light pools), the screen dims, the cult camp processes to the
+  flash and fans out. Rides the power link above.
 - **A full Watchers-in-the-dark rework** (they can open in any room but
-  only EXIST in the dark) — couples with the blackout into "a perfect
-  storm." A real rework of `_tick_watchers`, not a tuning pass; keep the
-  below-3 threat role.
-- **Retire the "special darkness" beam-off?** The deep (`CULT_DARK_SCENES`)
-  still swallows the flashlight by design and reads well (lit by the
-  cult's own ritual fires). Whether to fully retire this so light works
-  everywhere is the open dread decision — do not flip without a
-  maintainer call, it softens a deliberate choice.
+  only EXIST in the dark) — couples with the blackout into the perfect
+  storm. A real rework of `_tick_watchers`; keep the below-3 threat role.
 - The **capture→King-unleashed** thread and **procession-across-scenes**
-  staging were sketched the same session and sit here too, unscoped.
+  staging sit here too, unscoped. The **capture fork** (hard run-end with
+  scarier cultists vs capture-as-continuation waking in the cells) is a
+  standing maintainer decision still open from the QC discussion.
 
 ### 16. **[Opus]** Ship track — packaging
 
