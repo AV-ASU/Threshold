@@ -293,6 +293,15 @@ CULTIST_SCENES = {
     "brimley", "country_lane",
     "gravel_road_north", "backwoods_cabin",
     "cornfield_maze",
+    # The LOST SPACES (TODO #26). They must be cult scenes or _tick_cultists
+    # SWEEPS every cult-tagged NPC out of them every frame. Their population
+    # is NOT the town's evidence ramp, though: each field sets
+    # `cult_target = 0` so `_ensure_cultists` never tops them up, and drives
+    # its own occupied-camp crew from the scene's on_update instead (the
+    # fields hang off no evidence, so the town's ladder has nothing to say
+    # here). Everything else -- gaze, suspicion, the Talk, the two-touch
+    # grab -- is the ordinary cult behaviour, unchanged.
+    "lost_space", "lost_corn", "lost_forest", "lost_road",
 }
 # (The old GAZE_BIND high-visibility trigger was retired in the play-notes
 # Watcher rework: Watchers now open on EXPOSURE from WATCHER_WAKE_EV evidence,

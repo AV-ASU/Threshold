@@ -424,13 +424,13 @@ hand-authored lit focal island in a generated dark sea, and what they are
 made of: `CHANGELOG.md`, "The shadows program"). It exists to be judged by
 feel, not to ship as is.
 
-**OPEN, in build order:** (1) **CULT PRESENCE in the fields** (maintainer ask,
-next up): roaming cultists carrying light, so a glow in the dark is ambiguous
-(the exit, or a hunter?), and **occupied cult camps** you can stumble into --
-the inversion of the abandoned corn camp, where a warm fire reads as haven
-until you are close enough to see the figures standing at it. Needs a
-self-contained driver (spawn on proximity, despawn far, capped) rather than the
-town's evidence/King wiring, since the fields hang off nothing yet;
+**OPEN, in build order:** (1) **CULT PRESENCE, remainder.** The **occupied
+camp** landed (`CHANGELOG.md`): a second, manned fire on a hashed bearing
+26-36 tiles out, its crew spawned on approach and released when you leave.
+Still open: **roaming light-carriers** -- a cultist walking the dark with a
+lantern, so a distant glow is genuinely ambiguous (the exit, or a hunter
+coming?). That ambiguity is the point of putting light in their hands, and it
+only pays off once more than one moving glow can exist at a time;
 (2) the **safe path + yard + one lost space** vertical
 slice, wired so you walk interior -> yard -> path -> fall off a dark edge into
 the lost space -> hunt the light -> climb out (the real LOOP, not just the

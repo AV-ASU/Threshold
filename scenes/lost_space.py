@@ -60,6 +60,15 @@ _MIN_EXIT = 6              # tiles: the exit never sits closer (always a hunt)
 _MAX_EXIT = 20             # tiles: nor farther (always escapable)
 _REACH = 2.2              # tiles: this close to the exit = you climbed out
 
+# the occupied camp: far enough out to be stumbled into while hunting the
+# exit, never the light you land in
+_CAMP_RING_MIN = 26.0      # tiles from the focal island
+_CAMP_RING_MAX = 36.0
+_CAMP_CREW = 3             # bodies standing at that fire
+_CAMP_STAND = 2.4          # tiles: how far off the flame they stand
+_CAMP_WAKE = 24.0          # tiles: crew exists inside this
+_CAMP_SLEEP = 34.0         # tiles: released beyond this (hysteresis)
+
 # per-biome focal + haven geometry (tiles). `haven_r` is how far the island's
 # light protects (leave it and the exit hunt begins); `spawn_off` drops the
 # player that many tiles SOUTH of the focal centre so they face the island.
@@ -110,7 +119,73 @@ class LostSpace(Scene):
         self._scatter_things(count=84, radius=72)
         self._exit_light = None                   # spawns only once you leave
         self._hunting = False
+        # THE OCCUPIED CAMP (the inversion). Its fire is raised at build time
+        # so the glow is out there in the black from the moment you arrive;
+        # the CREW is spawned on approach and released when you leave, so a
+        # 400-tile field never simulates a crowd. `cult_target = 0` keeps the
+        # town's evidence-gated top-up (`_ensure_cultists`) out of the field:
+        # this population is the scene's own.
+        self.cult_target = 0
+        self._camp_pos = self._raise_occupied_camp()
+        self._camp_crew = []
         self.on_update_fn = self._tick
+
+    # ================= THE OCCUPIED CAMP (the inversion) =====================
+    def _raise_occupied_camp(self):
+        """A SECOND fire out in the black, and this one is manned.
+
+        The field teaches you that light is orienting: you land in a lit
+        haven, and the way out is a light you hunt. This camp spends that
+        lesson. From a distance its glow is just another warm light in a dark
+        field, indistinguishable from the exit; you close on it because
+        closing on light is what the space has trained you to do, and the
+        figures standing at it only resolve once you are near enough for them
+        to resolve you.
+
+        Placed on a hashed bearing at `_CAMP_RING` tiles: outside the haven
+        (so it is never the thing you land in) and inside the wandering you do
+        while hunting the exit (so it is genuinely stumbled into). Returns the
+        camp's world centre."""
+        a = self._hash01(3, 91, salt=21) * math.tau
+        r = (_CAMP_RING_MIN + self._hash01(7, 41, salt=22)
+             * (_CAMP_RING_MAX - _CAMP_RING_MIN)) * TILE
+        cx = self._fx + math.cos(a) * r
+        cy = self._fy + math.sin(a) * r
+        # the fire is the lure, so it burns from the start (a camp_fire is in
+        # both light tables: it casts a real pool AND gives real cover)
+        self.add_decoration(Decoration(cx, cy, "camp_fire", seed=53))
+        # lived-in, not abandoned: bedrolls in use, seats pulled to the flame
+        for i, (dx, dy, kind) in enumerate((
+                (-40, -14, "bedroll"), (34, -20, "bedroll"), (6, 40, "bedroll"),
+                (44, 16, "log_seat"), (-46, 20, "log_seat"))):
+            self.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=i + 30))
+        return (cx, cy)
+
+    def _tick_camp(self, game):
+        """Spawn the camp's crew when the player nears, release them when the
+        player is long gone. They are ordinary cult regulars: the standard
+        gaze, suspicion, Talk and two-touch grab all apply untouched. The only
+        bespoke part is WHERE they come from and when they exist."""
+        p = game.player
+        cx, cy = self._camp_pos
+        d = math.hypot(p.x - cx, p.y - cy)
+        live = [n for n in self._camp_crew
+                if n in self.npcs and getattr(n, "alive", True)]
+        self._camp_crew = live
+        if d < _CAMP_WAKE * TILE and len(live) < _CAMP_CREW:
+            for i in range(_CAMP_CREW - len(live)):
+                a = self._hash01(i, 17, salt=23) * math.tau
+                at = (cx + math.cos(a) * _CAMP_STAND * TILE,
+                      cy + math.sin(a) * _CAMP_STAND * TILE)
+                n = game._spawn_cultist("cult_regular", "cultist",
+                                        speed=0.95, gaze_range=180, at=at)
+                if n is not None:
+                    self._camp_crew.append(n)
+        elif d > _CAMP_SLEEP * TILE and live:
+            # walked away for good: let the field go quiet again rather than
+            # simulate a crew nobody is near
+            self.npcs = [n for n in self.npcs if n not in live]
+            self._camp_crew = []
 
     # ================= the focal islands (hand-authored) =====================
     def _build_corn_camp(self):
@@ -426,6 +501,9 @@ class LostSpace(Scene):
         p = game.player
         if p is None:
             return
+        # the manned fire runs wherever you are: its whole job is to be out
+        # there in the dark while you are busy hunting a different light
+        self._tick_camp(game)
         haven = self._cfg["haven_r"] * TILE
         d_haven = math.hypot(p.x - self._fx, p.y - self._fy)
         if d_haven < haven:

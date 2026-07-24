@@ -16,6 +16,9 @@ stops taking, the run FAILS instead of handing back four norths.
 
 `--bright` drops the sight cone + film grade for clean geometry inspection;
 without it you get the real player view (dark overlay, fog, grade).
+`--tick N` runs the scene's on_update N times first, so content that only
+exists once the scene has updated (spawned crews, relocating lights) is
+actually in frame instead of silently absent.
 """
 import os
 import sys
@@ -41,7 +44,8 @@ FACINGS = (("N", -math.pi / 2, (0, -1)), ("E", 0.0, (1, 0)),
 SEED = 7
 
 
-def capture(g, key, heading, facing_vec, px=None, py=None, bright=False):
+def capture(g, key, heading, facing_vec, px=None, py=None, bright=False,
+            ticks=0):
     random.seed(SEED)
     try:
         import numpy as np
@@ -62,6 +66,14 @@ def capture(g, key, heading, facing_vec, px=None, py=None, bright=False):
         g.player.x = px
     if py is not None:
         g.player.y = py
+    # Some content only exists after the scene's own update has run (spawned
+    # crews, relocating lights, anything driven by on_update). Tick it at the
+    # player's final position BEFORE drawing, or the capture shows an empty
+    # world and quietly lies about what the player would meet.
+    for _ in range(ticks):
+        fn = getattr(g.scene, "on_update_fn", None)
+        if fn:
+            fn(g, g.scene, 0.1)
     g._update_camera(snap=True)
     g.camera.yaw = g.look.cam_yaw          # re-assert (snap may re-run lerps)
     if bright:
@@ -94,6 +106,9 @@ def main():
     ap.add_argument("--px", type=float, default=None)
     ap.add_argument("--py", type=float, default=None)
     ap.add_argument("--bright", action="store_true")
+    ap.add_argument("--tick", type=int, default=0,
+                    help="run the scene's on_update N times before drawing "
+                         "(for spawned/driven content)")
     ap.add_argument("--tag", default="look")
     args = ap.parse_args()
 
@@ -103,7 +118,7 @@ def main():
     shots = {}
     for name, heading, fv in FACINGS:
         shots[name] = capture(g, args.scene, heading, fv,
-                              args.px, args.py, args.bright)
+                              args.px, args.py, args.bright, args.tick)
         pygame.image.save(shots[name], f"{out}/{args.scene}_{name}.png")
         print(f"  wrote {out}/{args.scene}_{name}.png")
 
