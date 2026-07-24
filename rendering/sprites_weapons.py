@@ -16,8 +16,12 @@ def _axe_swing_angle(prog, sweep):
     in this short window, cubic-fast -- the snap. FOLLOW-THROUGH
     (0.55..1): overshoot past the end, then settle back. Returns
     (angle_off_start, reach_scale, lift_px)."""
-    WIND, STRIKE = 0.28, 0.55
-    back = math.radians(20)               # pull-back past the start side
+    # Retuned (2026-07 "try again"): the first cut gave the wind-up 28%
+    # of a 0.34s swing -- laggy on the press, and dead frames bracketed
+    # the arc. The cock is a FLICK now (~50ms), the strike is the blur,
+    # and the weight lives in the long settle.
+    WIND, STRIKE = 0.15, 0.45
+    back = math.radians(24)               # pull-back past the start side
     over = math.radians(14)               # overshoot past the end
     if prog < WIND:
         t = prog / WIND
@@ -30,8 +34,17 @@ def _axe_swing_angle(prog, sweep):
         return (-back + (sweep + back + over) * e,
                 0.83 + 0.27 * e, 4.0 * (1 - e))
     t = (prog - STRIKE) / (1 - STRIKE)
-    e = 1 - (1 - t) * (1 - t)                         # ease-out settle
-    return (sweep + over - over * e, 1.10 - 0.18 * e, 0.0)
+    if t < 0.5:                                       # the weighted settle
+        e = 1 - (1 - t / 0.5) ** 2
+        return (sweep + over - over * e, 1.10 - 0.18 * e, 0.0)
+    # ...then RAISE back to the carry: the last half of the recover blends
+    # angle + reach into draw_axe_held's exact rest pose, so the held draw
+    # takes over with no pop (the old settle ended at the feet and the
+    # carry snapped in level).
+    u = (t - 0.5) / 0.5
+    u = u * u * (3 - 2 * u)
+    return (sweep + (sweep / 2 - sweep) * u,
+            0.92 + (17.0 / 21.0 - 0.92) * u, 0.0)
 
 
 def draw_axe_swing(surf, px, py, facing, prog):
@@ -53,21 +66,26 @@ def draw_axe_swing(surf, px, py, facing, prog):
     ox = px + math.cos(base) * 3                  # pivot just ahead of hands
     oy = py + math.sin(base) * 3
     hx, hy = ox + math.cos(a) * R, oy + math.sin(a) * R - lift
-    # Motion smear, STRIKE phase only: the recent path of the head as two
-    # plies -- a bold bright inner pass and a faint wide ghost -- so the
-    # snap reads as speed, not as a wiper trail.
-    if 0.28 <= prog <= 0.72:
-        for ply, (lag, col, w) in enumerate(
-                (((0.10), (232, 236, 242), 2), ((0.22), (150, 148, 142), 1))):
-            pts = []
-            for k in range(6):
-                pp = max(0.0, prog - lag * (k / 5.0))
-                aoff, rr, ll = _axe_swing_angle(pp, sweep)
-                aa = start + aoff
-                pts.append((int(ox + math.cos(aa) * 21 * rr),
-                            int(oy + math.sin(aa) * 21 * rr - ll)))
-            if len(pts) >= 2:
-                pygame.draw.lines(surf, col, False, pts, w)
+    # Motion smear, STRIKE phase only: a DETACHED trail of the head's
+    # recent path (never joined to the live head -- joined, it read as a
+    # bent haft), bright near the head, fading behind, with the angular
+    # spread clamped so it can never bow into a whip.
+    if 0.15 <= prog <= 0.62:
+        pts = []
+        for k in range(1, 9):
+            pp = prog - 0.028 * k
+            if pp < 0.12:
+                break
+            aoff, rr, ll = _axe_swing_angle(pp, sweep)
+            if off - aoff > math.radians(75):
+                break
+            aa = start + aoff
+            pts.append((int(ox + math.cos(aa) * 21 * rr),
+                        int(oy + math.sin(aa) * 21 * rr - ll)))
+        if len(pts) >= 2:
+            pygame.draw.lines(surf, (222, 226, 232), False, pts[:4], 2)
+            if len(pts) >= 5:
+                pygame.draw.lines(surf, (142, 140, 136), False, pts[3:], 1)
     # Haft (wood), dark edge under a lit core.
     pygame.draw.line(surf, (70, 48, 28), (int(ox), int(oy)), (int(hx), int(hy)), 4)
     pygame.draw.line(surf, (128, 92, 54), (int(ox), int(oy)), (int(hx), int(hy)), 2)
