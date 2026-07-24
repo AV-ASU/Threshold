@@ -210,13 +210,18 @@ it renders the procedural sprites to a labelled PNG strip.
     clearing + a corn-wall ring + an abandoned cult camp lit by a wide
     `haven_fire`); forest = a **pond** (animated water + a see-over solid
     barrier, a near-bank `camp_fire` + far-shore lanterns, reeds + mist); road =
-    a derelict **gas station** you can't enter (the `gas_station` solid = store +
-    canopy + pumps + a cold `neon` glow). The island light is the haven; the
+    a fenced filling-station **lot** (you land under a tall bright `neon_pylon`
+    at the driveway; the sealed `gas_station` building + its own pump canopy sit
+    NW, `parking_bay` decals + `chain_fence` panels dress the lot, and a winding
+    paved road generated river-style runs past the east edge, drifting west as it
+    goes north). The island light is the haven; the
     hunted exit lantern is HELD until you leave that glow, then held 6-20 tiles
     off (`lit_at` reads deco positions live). All three sit in
     `LOST_SPACE_SCENES` (a `DARK_SCENES` subset with a heavier gloom so the
-    island pops). New light kinds `haven_fire` + `gas_station` live in
-    `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`.
+    island pops). New light kinds `haven_fire` + `neon_pylon` live in
+    `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`; the road also adds
+    non-light solids `gas_station` / `chain_fence` / `boulder` and the
+    `parking_bay` floor decal.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,

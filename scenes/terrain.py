@@ -4038,6 +4038,9 @@ _FLOOR_DECAL_KINDS = frozenset((
     # lie flat on the ground and warp onto the floor under tilt (the lit
     # `camp_fire` centrepiece is a SOLID volume instead).
     "bedroll", "log_seat",
+    # The lost ROAD station (2026-07): painted parking-bay stall lines lie flat
+    # on the lot and warp onto the ground under tilt.
+    "parking_bay",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped

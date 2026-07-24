@@ -112,7 +112,10 @@ FIXTURE_POOLS = {
     # the derelict station's NEON: a saturated cold sign-glow (a SIGN is
     # allowed colour where room-light isn't). Elevated on its pole, so the
     # pool falls on the forecourt in front of the dark station.
-    "gas_station":  (256,  (120, 216, 255),   96,   60,    0,   0.07, 16.0),
+    # the derelict station's NEON PYLON: a saturated cold sign-glow (a SIGN is
+    # allowed colour where room-light isn't), thrown from high on its pole so
+    # the pool floods the whole lot you land on.
+    "neon_pylon":   (280,  (120, 216, 255),  104,   96,    0,   0.06, 16.0),
     "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),

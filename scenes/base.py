@@ -474,7 +474,7 @@ class Scene:
     # LOOKS lit IS lit to the stealth model.
     _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
                     "campfire": 80.0, "camp_fire": 88.0,
-                    "haven_fire": 200.0, "gas_station": 180.0,
+                    "haven_fire": 200.0, "neon_pylon": 190.0,
                     "lantern": 60.0, "candle": 55.0,
                     "yard_light": 85.0, "generator": 42.0,
                     "wall_lamp": 62.0, "drop_bulb": 58.0,

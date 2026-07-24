@@ -394,17 +394,22 @@ hand-authored FOCAL ISLAND with its own light:
 - **forest** -- a still **POND** (animated water, a see-over solid so you can't
   wade in) on a mossy bank, lit by a fisher's `camp_fire` on the near bank +
   lanterns on the far shore, dressed with reeds and a low mist.
-- **road** -- a derelict filling **STATION** you cannot enter (a solid footprint;
-  the `gas_station` solid draws the store + canopy + two dead pumps) with a cold
-  buzzing **neon** sign for light, an asphalt forecourt, roadside wrecks, weeds
-  reclaiming the cracked road.
+- **road** -- a fenced filling-station **LOT** (built to a maintainer sketch):
+  you land under a tall bright **neon pylon** at the driveway; the sealed
+  `gas_station` building + its own pump canopy over three dead pumps sit at the
+  lot's NW, painted `parking_bay` decals + a `chain_fence` perimeter dress the
+  lot, and a **winding paved road** (river-style value-noise meander + a westward
+  drift going north) runs past the east edge with wrecks stalled on it.
 
 The island light is the haven (lit + orienting, NOT a true refuge); the **hunted
 exit lantern is held until you leave that glow** (the lit place is a dead end --
 you escape into the dark, hunting a light held 6-20 tiles off). New light kinds:
-`haven_fire` (the wide crop-circle bonfire) + `gas_station` (the neon glow), each
-in `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`. Preview: the three focal-island shots
-(dark + bright). Full gate green.
+`haven_fire` (the wide crop-circle bonfire) + `neon_pylon` (the station beacon),
+each in `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`; the road also adds `gas_station` /
+`chain_fence` / `boulder` solids + the `parking_bay` floor decal. NEXT for the
+road: cult presence -- roaming cultists + occupied cult camps the player can
+stumble into (maintainer ask; see the field-liveness open item). Preview: the
+three focal-island shots (dark + bright). Full gate green.
 
 **OPEN, in build order:** (1) the **safe path + yard + one lost space** vertical
 slice, wired so you walk interior -> yard -> path -> fall off a dark edge into

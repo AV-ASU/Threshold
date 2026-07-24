@@ -2373,26 +2373,22 @@ def _draw_boulder_solid(surf, cam, deco):
 
 
 def _draw_gas_station_solid(surf, cam, deco):
-    """A derelict roadside filling station at FULL BUILDING scale -- the ROAD
-    lost-space's focal island. A block STORE at the back with big dead
-    storefront glass, a wide flat CANOPY on four posts over three prominent
-    dead PUMPS, and a tall roadside NEON PYLON that towers over it all, buzzing
-    cold (the zone's light). Cannot be entered (the store footprint is a solid
-    in the object grid). Faces SOUTH -- the forecourt (where you land) and the
-    road are toward the camera. deco anchor = forecourt centre; the whole
-    station is built around it."""
+    """The station BUILDING + its pump CANOPY + PUMPS (the ROAD lost-space
+    focal). A tall sealed STORE block at the back (dead storefront glass, a
+    shut service door) with a SEPARATE flat canopy standing in FRONT of it
+    (south, lower, so the store rises behind it) over three dead PUMPS. The
+    tall neon pylon is a SEPARATE deco (`neon_pylon`). Cannot be entered (the
+    store footprint is a solid in the object grid). Faces SOUTH."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
-    t = getattr(deco, "t", 0.0)
 
-    # ============ the STORE block at the back (north) ============
-    byc = wy - 95 * s                     # store centre (well north of anchor)
+    # ============ the STORE block at the back (north), tall ============
+    byc = wy - 46 * s
     stucco = (156, 146, 126)
     bpal = {"top": _shade(stucco, 1.12), "side": _shade(stucco, 0.82),
             "dark": _shade(stucco, 0.62)}
-    bw, bd, bh = 152 * s, 62 * s, 76 * s
+    bw, bd, bh = 150 * s, 54 * s, 86 * s
     draw_box(surf, cam, wx, byc, bw, bd, bh, bpal)
-    # a flat parapet lip capping the roof
     draw_box(surf, cam, wx, byc - 2 * s, bw + 4 * s, bd + 4 * s, 7 * s,
              {"top": _shade(stucco, 0.72), "side": _shade(stucco, 0.5),
               "dark": _shade(stucco, 0.4)})
@@ -2400,23 +2396,20 @@ def _draw_gas_station_solid(surf, cam, deco):
     def NF(lx, lz):                       # a point on the store's near (S) face
         p = cam.project(wx + lx, byc + bd / 2 - 0.3, lz)
         return (int(p[0]), int(p[1]))
-    # a bright sign band across the storefront fascia
-    pygame.draw.polygon(surf, (44, 52, 60), [
+    pygame.draw.polygon(surf, (44, 52, 60), [       # dead sign band
         NF(-bw / 2 + 6 * s, bh - 20 * s), NF(bw / 2 - 6 * s, bh - 20 * s),
         NF(bw / 2 - 6 * s, bh - 8 * s), NF(-bw / 2 + 6 * s, bh - 8 * s)])
-    # two big dead storefront windows (black glass) flanking a service door
     for wx0, wx1 in ((-bw / 2 + 8 * s, -14 * s), (14 * s, bw / 2 - 8 * s)):
-        pygame.draw.polygon(surf, (12, 15, 18), [
+        pygame.draw.polygon(surf, (12, 15, 18), [   # black storefront glass
             NF(wx0, 6 * s), NF(wx1, 6 * s),
             NF(wx1, bh - 24 * s), NF(wx0, bh - 24 * s)])
         pygame.draw.polygon(surf, (46, 50, 56), [
             NF(wx0, 6 * s), NF(wx1, 6 * s),
             NF(wx1, bh - 24 * s), NF(wx0, bh - 24 * s)], 1)
-        # a cross muntin so the glass reads as a shop window
         pygame.draw.line(surf, (30, 34, 40), NF((wx0 + wx1) / 2, 6 * s),
                          NF((wx0 + wx1) / 2, bh - 24 * s), 1)
     door = (58, 46, 36)
-    pygame.draw.polygon(surf, door, [
+    pygame.draw.polygon(surf, door, [               # shut service door
         NF(-11 * s, 0), NF(11 * s, 0),
         NF(11 * s, bh - 22 * s), NF(-11 * s, bh - 22 * s)])
     pygame.draw.polygon(surf, _shade(door, 0.55), [
@@ -2424,93 +2417,131 @@ def _draw_gas_station_solid(surf, cam, deco):
         NF(11 * s, bh - 22 * s), NF(-11 * s, bh - 22 * s)], 1)
     pygame.draw.line(surf, (18, 20, 24), NF(0, 0), NF(0, bh - 22 * s), 1)
 
-    # ============ the forecourt CANOPY: a wide flat roof on four posts ========
-    cyf = wy - 18 * s                     # canopy centre, out over the forecourt
-    cz = 70 * s                           # canopy underside height
-    post = (78, 76, 80)
-    for pxl in (-92 * s, 92 * s):
-        for pyl in (-36 * s, 36 * s):
+    # ============ the pump CANOPY in front (south), lower than the store ======
+    cyf = wy + 40 * s                     # canopy centre, out over the pumps
+    cz = 54 * s                           # canopy underside (below the store top)
+    post = (80, 78, 82)
+    for pxl in (-70 * s, 70 * s):
+        for pyl in (-28 * s, 28 * s):
             a = cam.project(wx + pxl, cyf + pyl, 0)
             b = cam.project(wx + pxl, cyf + pyl, cz)
             pygame.draw.line(surf, post, a, b, max(3, int(5 * s)))
             pygame.draw.line(surf, _shade(post, 1.4), a, b, 1)
-    slab = {"top": (78, 76, 82), "side": (54, 52, 56), "dark": (36, 34, 38)}
-    draw_box(surf, cam, wx, cyf, 208 * s, 88 * s, 10 * s, slab)
-    # a bright red fascia band along the canopy's near (S) edge
-    def CF(lx, lz):
-        p = cam.project(wx + lx, cyf + 44 * s - 0.3, lz)
-        return (int(p[0]), int(p[1]))
-    pygame.draw.polygon(surf, (166, 52, 44), [
-        CF(-104 * s, cz), CF(104 * s, cz),
-        CF(104 * s, cz + 8 * s), CF(-104 * s, cz + 8 * s)])
-    pygame.draw.polygon(surf, (206, 92, 78), [
-        CF(-104 * s, cz + 7 * s), CF(104 * s, cz + 7 * s),
-        CF(104 * s, cz + 8 * s), CF(-104 * s, cz + 8 * s)])
+    slab = {"top": (80, 78, 84), "side": (54, 52, 56), "dark": (34, 32, 36)}
+    draw_box(surf, cam, wx, cyf, 158 * s, 68 * s, 9 * s, slab)
 
-    # ============ three prominent dead PUMPS under the canopy ============
-    for pxl in (-58 * s, 0, 58 * s):
+    def CF(lx, lz):                       # canopy near (S) fascia
+        p = cam.project(wx + lx, cyf + 34 * s - 0.3, lz)
+        return (int(p[0]), int(p[1]))
+    pygame.draw.polygon(surf, (170, 54, 46), [
+        CF(-79 * s, cz), CF(79 * s, cz),
+        CF(79 * s, cz + 8 * s), CF(-79 * s, cz + 8 * s)])
+    pygame.draw.polygon(surf, (210, 96, 82), [
+        CF(-79 * s, cz + 7 * s), CF(79 * s, cz + 7 * s),
+        CF(79 * s, cz + 8 * s), CF(-79 * s, cz + 8 * s)])
+
+    # three prominent dead PUMPS on the island under the canopy
+    for pxl in (-46 * s, 0, 46 * s):
         ppal = {"top": (196, 190, 176), "side": (156, 150, 138),
                 "dark": (92, 88, 80)}
-        draw_box(surf, cam, wx + pxl, cyf + 6 * s, 20 * s, 16 * s, 42 * s, ppal)
+        draw_box(surf, cam, wx + pxl, cyf + 2 * s, 18 * s, 15 * s, 40 * s, ppal)
 
-        def PF(lx, lz, px=pxl):           # the pump's near (S) face
-            p = cam.project(wx + px + lx, cyf + 6 * s + 8 * s - 0.3, lz)
+        def PF(lx, lz, px=pxl):
+            p = cam.project(wx + px + lx, cyf + 2 * s + 7.5 * s - 0.3, lz)
             return (int(p[0]), int(p[1]))
-        # red header panel + black metered display
         pygame.draw.polygon(surf, (162, 54, 46),
-                            [PF(-8 * s, 32 * s), PF(8 * s, 32 * s),
-                             PF(8 * s, 42 * s), PF(-8 * s, 42 * s)])
+                            [PF(-7 * s, 30 * s), PF(7 * s, 30 * s),
+                             PF(7 * s, 40 * s), PF(-7 * s, 40 * s)])
         pygame.draw.polygon(surf, (10, 14, 18),
-                            [PF(-6 * s, 18 * s), PF(6 * s, 18 * s),
-                             PF(6 * s, 28 * s), PF(-6 * s, 28 * s)])
-        pygame.draw.polygon(surf, (40, 60, 44),   # a dead green digit row
-                            [PF(-5 * s, 20 * s), PF(-1 * s, 20 * s),
-                             PF(-1 * s, 24 * s), PF(-5 * s, 24 * s)])
-        # the nozzle + hose slung on the west flank
+                            [PF(-5 * s, 17 * s), PF(5 * s, 17 * s),
+                             PF(5 * s, 26 * s), PF(-5 * s, 26 * s)])
+        pygame.draw.polygon(surf, (40, 60, 44),
+                            [PF(-4 * s, 19 * s), PF(-1 * s, 19 * s),
+                             PF(-1 * s, 23 * s), PF(-4 * s, 23 * s)])
         hz = (20, 18, 22)
-        pygame.draw.line(surf, hz, PF(-8 * s, 30 * s), PF(-12 * s, 26 * s), 2)
-        pygame.draw.line(surf, hz, PF(-12 * s, 26 * s), PF(-12 * s, 12 * s), 2)
+        pygame.draw.line(surf, hz, PF(-7 * s, 28 * s), PF(-11 * s, 24 * s), 2)
+        pygame.draw.line(surf, hz, PF(-11 * s, 24 * s), PF(-11 * s, 11 * s), 2)
 
-    # ============ the NEON PYLON: tall roadside beacon (the zone light) =======
-    sx, syb = wx - 108 * s, wy + 14 * s   # front-left, out at the road edge
-    pole_h = 176 * s
-    a = cam.project(sx, syb, 0)
-    b = cam.project(sx, syb, pole_h)
-    pygame.draw.line(surf, (70, 70, 76), a, b, max(3, int(6 * s)))
-    pygame.draw.line(surf, (32, 32, 36), a, b, 1)
+
+def _draw_neon_pylon_solid(surf, cam, deco):
+    """The tall roadside NEON PYLON -- the ROAD lost-space's beacon + light.
+    A steel pole carrying a BIG bright sign box near the top that buzzes cold
+    in the dark. You land right under it. Faces SOUTH."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    pole_h = 168 * s
+    a = cam.project(wx, wy, 0)
+    b = cam.project(wx, wy, pole_h)
+    pygame.draw.line(surf, (74, 74, 80), a, b, max(3, int(7 * s)))
+    pygame.draw.line(surf, (34, 34, 38), a, b, 1)
     # buzz: the tubes gutter but stay BRIGHT (an occasional dying-tube dropout)
-    buzz = 0.72 + 0.28 * math.sin(t * 14.0 + deco.seed)
+    buzz = 0.78 + 0.22 * math.sin(t * 14.0 + deco.seed)
     if (int(t * 3) + deco.seed) % 19 == 0:
-        buzz *= 0.4
-    neon = (int(150 + 105 * buzz), int(220 + 35 * buzz), 255)
-    halo = (int(70 * buzz), int(150 * buzz), int(190 * buzz))
-    bw2, bh2 = 30 * s, 26 * s              # a BIG sign box
-    bcz = pole_h - bh2 + 4 * s             # board centre height (near the top)
+        buzz *= 0.45
+    neon = (int(160 + 95 * buzz), int(222 + 33 * buzz), 255)
+    bw2, bh2 = 46 * s, 38 * s              # a BIG sign box
+    bcz = pole_h - bh2 + 2 * s
 
     def SB(lx, lz):                        # sign-board point (faces south)
-        p = cam.project(sx + lx, syb - 0.3, bcz + lz)
+        p = cam.project(wx + lx, wy - 0.3, bcz + lz)
         return (int(p[0]), int(p[1]))
     board = [SB(-bw2, -bh2), SB(bw2, -bh2), SB(bw2, bh2), SB(-bw2, bh2)]
-    # a strong RECTANGULAR halo bleeding off the whole board
     glow = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
     xs = [p[0] for p in board]; ys = [p[1] for p in board]
-    gpad = int(16 * s)
+    gpad = int(26 * s)
     grect = pygame.Rect(min(xs) - gpad, min(ys) - gpad,
                         max(xs) - min(xs) + 2 * gpad,
                         max(ys) - min(ys) + 2 * gpad)
-    pygame.draw.rect(glow, (*neon, int(90 * buzz)), grect, border_radius=int(10 * s))
-    pygame.draw.rect(glow, (*neon, int(40 * buzz)),
-                     grect.inflate(gpad, gpad), border_radius=int(14 * s))
+    pygame.draw.rect(glow, (*neon, int(120 * buzz)), grect, border_radius=int(14 * s))
+    pygame.draw.rect(glow, (*neon, int(56 * buzz)),
+                     grect.inflate(gpad, gpad), border_radius=int(20 * s))
     surf.blit(glow, (0, 0))
-    # the board: a glowing neon panel (bright fill) with a hot border
-    pygame.draw.polygon(surf, (int(30 + 40 * buzz), int(70 + 60 * buzz),
-                               int(96 + 60 * buzz)), board)
-    pygame.draw.polygon(surf, neon, board, max(3, int(3 * s)))
-    # big neon word-tubes across the panel (a wordless, glaring sign)
-    for i, ly in enumerate((-11 * s, 0, 11 * s)):
-        pygame.draw.line(surf, (235, 250, 255),
-                         SB(-bw2 + 6 * s, ly),
-                         SB(bw2 - 6 * s - i * 8 * s, ly), max(3, int(4 * s)))
+    pygame.draw.polygon(surf, (int(42 + 54 * buzz), int(86 + 70 * buzz),
+                               int(112 + 60 * buzz)), board)
+    pygame.draw.polygon(surf, neon, board, max(4, int(5 * s)))
+    for i, ly in enumerate((-16 * s, 0, 16 * s)):
+        pygame.draw.line(surf, (238, 250, 255),
+                         SB(-bw2 + 8 * s, ly),
+                         SB(bw2 - 8 * s - i * 11 * s, ly), max(4, int(5 * s)))
+
+
+def _draw_chain_fence_solid(surf, cam, deco):
+    """A chain-link FENCE panel -- see-through by construction (opaque thin
+    wires, no fill). `kwargs`: run='h'|'v' (the panel's axis) + len (px). Place
+    a line of these to fence the station lot. A `torn` kwarg drops the top
+    rail + sags the mesh so a stretch reads as pulled down."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    run = kw.get("run", "h")
+    ln = kw.get("len", 32) * s
+    torn = kw.get("torn", False)
+    fz = (14 if torn else 27) * s
+    dx, dy = (ln, 0) if run == "h" else (0, ln)
+    x0, y0 = wx - dx / 2, wy - dy / 2
+    x1, y1 = wx + dx / 2, wy + dy / 2
+    steel = (98, 100, 106)
+    bl = cam.project(x0, y0, 0); br = cam.project(x1, y1, 0)
+    tl = cam.project(x0, y0, fz); tr = cam.project(x1, y1, fz)
+    # posts at each end
+    for g, tp in ((bl, tl), (br, tr)):
+        pygame.draw.line(surf, steel, g, tp, max(2, int(2 * s)))
+        pygame.draw.line(surf, _shade(steel, 1.3), g, tp, 1)
+    if not torn:
+        pygame.draw.line(surf, _shade(steel, 1.15), tl, tr, max(2, int(2 * s)))
+    pygame.draw.line(surf, _shade(steel, 0.8), bl, br, 1)   # bottom rail
+    # vertical wires + a couple of diagonals => a see-through mesh
+    n = max(2, int(ln / 6))
+    for i in range(1, n):
+        f = i / n
+        wa = (bl[0] + (br[0] - bl[0]) * f, bl[1] + (br[1] - bl[1]) * f)
+        wb = (tl[0] + (tr[0] - tl[0]) * f, tl[1] + (tr[1] - tl[1]) * f)
+        if torn:
+            wb = (wa[0] + (wb[0] - wa[0]) * 0.6, wa[1] + (wb[1] - wa[1]) * 0.6)
+        pygame.draw.line(surf, steel, wa, wb, 1)
+    for (pa, pb) in ((bl, tr), (tl, br)):
+        pygame.draw.line(surf, _shade(steel, 0.85), pa, pb, 1)
 
 
 def _draw_news_rack_solid(surf, cam, deco):
@@ -3795,6 +3826,8 @@ SOLID_PROPS = {
     "camp_fire":     _draw_camp_fire_solid,
     "haven_fire":    _draw_camp_fire_solid,   # lost-space bonfire (scaled up)
     "gas_station":   _draw_gas_station_solid,
+    "neon_pylon":    _draw_neon_pylon_solid,
+    "chain_fence":   _draw_chain_fence_solid,
     "boulder":       _draw_boulder_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,

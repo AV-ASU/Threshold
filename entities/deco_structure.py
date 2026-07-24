@@ -223,20 +223,53 @@ class DecoStructureMixin:
         pygame.draw.rect(surf, (220, 200, 80), (x - 3, y - 14, 6, 2))
 
     def _draw_gas_station(self, surf, x, y):
-        """A derelict filling station (the ROAD lost-space focal). The tilt
-        view draws the full volume (rendering.props._draw_gas_station_solid);
-        this flat fallback is a plain elevation for pitch-0 tools/previews: a
-        block store, a canopy, and a buzzing cold neon sign on a pole."""
-        stucco = (150, 140, 120)
-        pygame.draw.rect(surf, stucco, (x - 22, y - 14, 44, 22))
-        pygame.draw.rect(surf, (96, 92, 84), (x - 22, y - 14, 44, 22), 1)
-        pygame.draw.rect(surf, (14, 16, 18), (x - 18, y - 10, 14, 14))   # window
-        pygame.draw.rect(surf, (54, 42, 34), (x + 2, y - 8, 12, 16))      # door
-        pygame.draw.rect(surf, (60, 58, 62), (x - 30, y - 34, 4, 34))     # pole
-        buzz = 0.55 + 0.45 * math.sin(self.t * 14 + self.seed)
-        neon = (int(120 + 120 * buzz), int(210 + 40 * buzz), 255)
-        pygame.draw.rect(surf, (26, 28, 32), (x - 40, y - 44, 24, 14))    # board
-        pygame.draw.rect(surf, neon, (x - 38, y - 42, 20, 10), 2)
+        """The station BUILDING + pump canopy (the ROAD lost-space focal). The
+        tilt view draws the full volume (props._draw_gas_station_solid); this
+        flat fallback is a plain elevation for pitch-0 tools/previews."""
+        stucco = (152, 142, 122)
+        pygame.draw.rect(surf, stucco, (x - 26, y - 18, 52, 24))          # store
+        pygame.draw.rect(surf, (96, 92, 84), (x - 26, y - 18, 52, 24), 1)
+        pygame.draw.rect(surf, (14, 16, 18), (x - 22, y - 12, 16, 14))    # glass
+        pygame.draw.rect(surf, (14, 16, 18), (x + 6, y - 12, 16, 14))     # glass
+        pygame.draw.rect(surf, (54, 42, 34), (x - 4, y - 10, 8, 16))      # door
+        pygame.draw.rect(surf, (78, 76, 82), (x - 24, y + 8, 48, 4))      # canopy
+        pygame.draw.rect(surf, (170, 54, 46), (x - 24, y + 11, 48, 2))    # fascia
+        for px in (-16, 0, 16):                                           # pumps
+            pygame.draw.rect(surf, (180, 174, 160), (x + px - 3, y + 12, 6, 8))
+
+    def _draw_neon_pylon(self, surf, x, y):
+        """The tall roadside neon pylon (props._draw_neon_pylon_solid draws
+        the tilt volume). Flat fallback: a pole with a big bright sign box."""
+        pygame.draw.rect(surf, (60, 58, 62), (x - 2, y - 44, 4, 50))      # pole
+        buzz = 0.7 + 0.3 * math.sin(self.t * 14 + self.seed)
+        neon = (int(150 + 105 * buzz), int(220 + 35 * buzz), 255)
+        pygame.draw.rect(surf, (30, 62, 92), (x - 15, y - 62, 30, 24))    # board
+        pygame.draw.rect(surf, neon, (x - 15, y - 62, 30, 24), 3)
+        for dy in (-56, -50, -44):
+            pygame.draw.line(surf, (238, 250, 255), (x - 11, y + dy),
+                             (x + 11, y + dy), 3)
+
+    def _draw_chain_fence(self, surf, x, y):
+        """A chain-link fence panel (props._draw_chain_fence_solid draws the
+        tilt volume). Flat fallback: two posts + a see-through wire mesh."""
+        steel = (98, 100, 106)
+        ln = int(self.kwargs.get("len", 32) * (self.scale or 1.0))
+        h = 22
+        pygame.draw.rect(surf, steel, (x - ln // 2 - 1, y - h, 2, h))
+        pygame.draw.rect(surf, steel, (x + ln // 2 - 1, y - h, 2, h))
+        pygame.draw.line(surf, steel, (x - ln // 2, y - h), (x + ln // 2, y - h), 1)
+        for i in range(1, ln // 6):
+            wx = x - ln // 2 + i * 6
+            pygame.draw.line(surf, steel, (wx, y - h), (wx, y), 1)
+
+    def _draw_parking_bay(self, surf, x, y):
+        """A painted parking-bay marking on the lot -- a faded white U of
+        stall lines. Registered as a FLOOR DECAL so it warps onto the ground
+        under the tilt (not a standee)."""
+        paint = self.kwargs.get("paint", (214, 210, 186))
+        pygame.draw.line(surf, paint, (x - 15, y - 18), (x - 15, y + 18), 3)
+        pygame.draw.line(surf, paint, (x + 15, y - 18), (x + 15, y + 18), 3)
+        pygame.draw.line(surf, paint, (x - 15, y + 18), (x + 15, y + 18), 3)
 
     def _draw_payphone(self, surf, x, y):
         """1990s glass-walled phone booth. Vertical box with metal

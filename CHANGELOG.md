@@ -154,19 +154,22 @@
   by a see-over invisible solid (`x`) so you can't wade in — on a mossy bank, lit
   by a fisher's `camp_fire` on the near bank (offset so the player lands behind
   it, not on it) + lanterns on the far shore, dressed with reeds and a low mist,
-  framed by dense generated trees. **Road** is a derelict filling **station** you
-  cannot enter (a solid footprint in the object grid; the `gas_station` solid
-  draws a full building-scale store + a forecourt canopy + prominent pumps + a
-  tall cold-buzzing **neon** pylon for light) sitting on a **winding paved road**
-  generated river-style (a low-freq value-noise meander of the centre column, so
-  the dashed road wanders forever in X as you walk N-S and never repeats), with
-  roadside wrecks and weeds reclaiming the cracked edges. Flat `R`-tile "rocks"
-  (a plain 2D floor disc, a VISION violation) were replaced by a real 3D
-  `boulder` solid (a squat faceted shaded stone). NOTE: the station's internal
-  layout (building/canopy/pumps/lot) is being reworked to a maintainer sketch (a
-  full lot with a separate pump canopy, parking bays, a perimeter fence, and the
-  road running alongside via a driveway) -- this entry will be reconciled when
-  that lands. Two new light kinds —
+  framed by dense generated trees. **Road** is a fenced filling-station **lot** built to a
+  maintainer sketch: you land under a tall bright **neon pylon** (`neon_pylon`, a
+  separate solid carrying the zone light) at the **driveway**; the sealed store +
+  its own pump **canopy** over three dead pumps (`gas_station`, a building-scale
+  solid, the canopy standing IN FRONT of and lower than the store so it stops
+  eating it) sit at the lot's north-west; painted **parking bays** (`parking_bay`
+  floor decals) mark the asphalt; a **chain-link fence** (`chain_fence`,
+  see-through wire panels, solid `x` tiles) rings the lot with a gap at the
+  driveway; and the **winding paved road** runs past the east edge, generated
+  river-style (a low-freq value-noise meander PLUS a steady westward drift going
+  north, so the endless dashed road trends north-AND-west if you follow it).
+  Wrecks stall on the road and in a bay. Flat `R`-tile "rocks" (a plain 2D floor
+  disc, a VISION violation) were replaced by a real 3D `boulder` solid (a squat
+  faceted shaded stone), used on the forest pond bank + as roadside debris. New
+  kinds: `neon_pylon` (+ the light moved here from `gas_station`), `chain_fence`,
+  `parking_bay`, `boulder`, all tilt-registered. Two new light kinds —
   `haven_fire` (the crop-circle bonfire) and `gas_station` (the neon glow) —
   were added to `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`, and a new
   `LOST_SPACE_SCENES` gating set gives every lost field a HEAVIER `_draw_dark`

@@ -66,8 +66,8 @@ _REACH = 2.2              # tiles: this close to the exit = you climbed out
 _BIOME = {
     "corn":   {"clear_r": 4.5, "ring_w": 2.5, "haven_r": 8.5, "spawn_off": 3.0},
     "forest": {"pond_r": 4.2, "haven_r": 7.0, "spawn_off": 6.5},
-    "road":   {"court_r": 4.5, "haven_r": 8.0, "spawn_off": 6.5,
-               "road_amp": 9.0, "road_half": 2.6},
+    "road":   {"haven_r": 9.0, "spawn_off": 0.6, "road_amp": 8.0,
+               "road_half": 2.6, "road_off": 4.0, "road_drift": 0.14},
 }
 
 
@@ -90,10 +90,14 @@ class LostSpace(Scene):
         # the lit island centre (world coords) -- the haven-glow anchor
         self._fx = self._cx * TILE + TILE // 2
         self._fy = self._cy * TILE + TILE // 2
-        # the ROAD's meander is anchored so the paved centreline passes through
-        # the focal column at the focal row -> the station always sits ON it.
-        self._road_n0 = (self._vnoise(self._cy * 0.035 + 13, 4.0, salt=15)
-                         if self._biome == "road" else 0.0)
+        # the ROAD's meander anchor + the fenced station LOT it sits beside.
+        self._road_n0 = 0.0
+        self._lot = None
+        if self._biome == "road":
+            self._road_n0 = self._vnoise(self._cy * 0.035 + 13, 4.0, salt=15)
+            # lot rectangle in TILES (x0,x1,y0,y1), west+north of the pylon at
+            # the focal; the road runs past its east edge via the driveway.
+            self._lot = (self._cx - 9, self._cx + 1, self._cy - 9, self._cy + 2)
         # spawn the player a few tiles south of the island, facing it
         sx = self._fx
         sy = self._fy + int(self._cfg["spawn_off"] * TILE)
@@ -149,18 +153,44 @@ class LostSpace(Scene):
                                        w=int(pr * 2.2), h=int(pr * 1.6)))
 
     def _build_road_station(self):
-        """ROAD: the full-building filling station (can't enter -- the store's
-        footprint is solid) built around the forecourt anchor: store block to
-        the north, a wide canopy over three pumps on the apron, a tall neon
-        pylon towering at the road edge. It sits ON the winding road."""
+        """ROAD: a fenced filling-station LOT beside the winding road. You land
+        under the tall NEON PYLON at the driveway; the sealed store + its pump
+        canopy sit at the lot's north-west, parking bays are painted on the
+        lot, a chain-link fence rings it (open at the driveway), and wrecks are
+        stalled on the road and in a bay."""
+        T = TILE
         cx, cy = self._fx, self._fy
-        self.add_decoration(Decoration(cx, cy, "gas_station", seed=3))
-        # abandoned vehicles stalled on the road + boulders of debris shed onto
-        # the shoulder (real 3D rocks, not flat discs)
-        self.add_decoration(Decoration(cx + 26, cy + 150, "rust_sedan", seed=9))
-        self.add_decoration(Decoration(cx - 40, cy - 150, "rust_van", seed=12))
-        self.add_decoration(Decoration(cx + 132, cy + 54, "boulder", seed=5))
-        self.add_decoration(Decoration(cx - 138, cy + 120, "boulder", seed=8))
+        cxi, cyi = self._cx, self._cy
+
+        def W(txo, tyo):                   # tile-offset (from focal) -> world px
+            return ((cxi + txo) * T + T // 2, (cyi + tyo) * T + T // 2)
+
+        # the neon pylon = the beacon you spawn under (the driveway corner)
+        self.add_decoration(Decoration(cx, cy, "neon_pylon", seed=3))
+        # the sealed building + its pump canopy at the lot's north-west
+        self.add_decoration(Decoration(*W(-4, -4), "gas_station", seed=4))
+        # painted parking bays across the open asphalt south of the pumps + a
+        # car nosed into one
+        for i, txo in enumerate((-8, -6, -4, -2)):
+            self.add_decoration(Decoration(*W(txo, 0), "parking_bay", seed=i))
+        self.add_decoration(Decoration(*W(-6, 0), "rust_wagon", seed=7))
+        # wrecks stalled on the road (north up it, and south by the driveway)
+        self.add_decoration(Decoration(*W(4, -5), "rust_van", seed=12))
+        self.add_decoration(Decoration(*W(3, 6), "rust_sedan", seed=9))
+        # the chain-link perimeter fence (skips the driveway gap via _on_fence)
+        x0, x1, y0, y1 = self._lot
+        for tx in range(x0, x1 + 1):
+            for ty in (y0, y1):
+                if self._on_fence(tx, ty):
+                    self.add_decoration(Decoration(
+                        tx * T + T // 2, ty * T + T // 2, "chain_fence",
+                        seed=tx * 7 + ty, run="h", len=T))
+        for ty in range(y0 + 1, y1):
+            for tx in (x0, x1):
+                if self._on_fence(tx, ty):
+                    self.add_decoration(Decoration(
+                        tx * T + T // 2, ty * T + T // 2, "chain_fence",
+                        seed=tx * 3 + ty, run="v", len=T))
 
     # ================= the generator: deterministic per world tile ===========
     def _hash01(self, a, b, salt=0):
@@ -191,11 +221,37 @@ class LostSpace(Scene):
     def _road_x(self, ty):
         """The winding road's centre COLUMN at row ty (tiles). A smooth
         low-freq value-noise meander (the maintainer's 'generate it like a
-        river' idea): the road wanders forever in X as you walk N-S, never
-        repeating, and is anchored to pass through the focal column at the
-        focal row so the station sits on it."""
+        river' idea) PLUS a steady westward drift going north, so the endless
+        road trends north-AND-west if you follow it. Runs a few tiles EAST of
+        the station lot; the driveway bridges them at the focal row."""
         n = self._vnoise(ty * 0.035 + 13, 4.0, salt=15)
-        return self._cx + (n - self._road_n0) * self._cfg["road_amp"]
+        meander = (n - self._road_n0) * self._cfg["road_amp"]
+        drift = self._cfg["road_drift"] * (self._cy - ty)   # north -> west
+        return self._cx + self._cfg["road_off"] + meander - drift
+
+    def _in_lot(self, tx, ty):
+        x0, x1, y0, y1 = self._lot
+        return x0 <= tx <= x1 and y0 <= ty <= y1
+
+    def _in_driveway(self, tx, ty):
+        # the paved apron bridging the lot's east edge to the road centreline
+        return (self._cy - 1 <= ty <= self._cy + 1
+                and self._lot[1] <= tx <= self._road_x(ty) + 0.5)
+
+    def _on_fence(self, tx, ty):
+        # the chain-link perimeter, minus the driveway gap on the east edge
+        x0, x1, y0, y1 = self._lot
+        edge = ((tx in (x0, x1) and y0 <= ty <= y1)
+                or (ty in (y0, y1) and x0 <= tx <= x1))
+        if tx == x1 and self._cy - 2 <= ty <= self._cy + 1:
+            return False                  # the driveway opening
+        return edge
+
+    def _building_solid(self, tx, ty):
+        # the sealed store block at the lot's north-west (matches the
+        # gas_station deco placed at (cx-4, cy-4) tiles; see _build_road_station)
+        return (self._cx - 6.3 <= tx <= self._cx - 1.7
+                and self._cy - 6.4 <= ty <= self._cy - 4.5)
 
     def _corn_here(self, tx, ty):
         # sparse corn CLUMPS in the field: a low-freq gate so corn appears in
@@ -224,9 +280,13 @@ class LostSpace(Scene):
             gg = self._vnoise(tx * 0.09 + 3, ty * 0.09 - 5, salt=6)
             return "G" if gg > 0.5 else "g"   # mossy forest floor
         elif b == "road":
-            if r <= self._cfg["court_r"]:
-                return "P"                # the station's asphalt apron
-            # the WINDING paved road (river-style meander)
+            # the fenced station LOT + its driveway: paved (gravel at the rim)
+            if self._in_lot(tx, ty) or self._in_driveway(tx, ty):
+                x0, x1, y0, y1 = self._lot
+                if tx in (x0, x0 + 1) or ty in (y1, y1 - 1):
+                    return "d"            # gravel skirt at the lot's near edges
+                return "P"               # asphalt lot
+            # the WINDING paved road (river-style meander, drifting west north)
             rhalf = self._cfg["road_half"]
             dxr = abs(tx - self._road_x(ty))
             if dxr < 0.7:
@@ -281,12 +341,11 @@ class LostSpace(Scene):
                     return "T" if self._hash01(tx, ty, salt=6) > 0.35 else "p"
             return "."
         if b == "road":
-            # the STORE block sits ~3 tiles north of the focal: a full-building
-            # solid footprint you cannot enter (the deco supplies the art). The
-            # canopy / pumps / forecourt to the south stay walkable.
-            if -4.4 <= (ty - self._cy) <= -1.8 and abs(tx - self._cx) <= 2.5:
-                return "X"
-            return "."                    # wrecks + boulders are real 3D decos
+            if self._building_solid(tx, ty):
+                return "X"                # the sealed store (can't enter)
+            if self._on_fence(tx, ty):
+                return "x"                # chain-link: blocks the body, see over
+            return "."                    # canopy/pumps/wrecks are 3D decos
         return "."
 
     # ---- ground detailing in the lit clearing (finite, hash-placed) ---------
@@ -296,8 +355,8 @@ class LostSpace(Scene):
         elif self._biome == "forest":
             rad = (self._cfg["pond_r"] + 2.6) * TILE
         else:
-            rad = (self._cfg["court_r"] + 1.0) * TILE
-        n = 34 if self._biome != "road" else 14
+            rad = 7.0 * TILE              # weeds through the cracked lot/road
+        n = 34 if self._biome != "road" else 16
         for i in range(n):
             a = self._hash01(i, 511, salt=12) * math.tau
             rr = (0.8 + self._hash01(i, 733, salt=13) ** 0.5 * 0.9) * rad
