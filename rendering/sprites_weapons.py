@@ -4,10 +4,87 @@ import random
 import pygame
 from constants import C_BLACK
 
+# The carried axe droops this far below the facing line (down-screen,
+# mirrored with the swing's `sgn`): a dead-level carry pointed the bit
+# straight down-screen, the one angle where the head has no profile.
+_CARRY_TILT = math.radians(26)
+
 
 # ---------------------------------------------------------------------------
 # Player axe swing -- the one attack, gated on the splitting axe.
 # ---------------------------------------------------------------------------
+def _axe_haft(surf, ox, oy, hx, hy, lead=1):
+    """The haft as a curved, tapered wood polygon (2026-07 axe redesign:
+    'the design of the axe itself'). Slim under the head, swelling toward
+    the grip, bowed away from the bit side near the grip the way a real
+    haft sweeps back into the hands; a fawn's-foot swell closes the butt.
+    `lead` names the bit side so the bow bends the other way."""
+    dx, dy = hx - ox, hy - oy
+    ln = max(1.0, math.hypot(dx, dy))
+    px_, py_ = -dy / ln * lead, dx / ln * lead     # unit toward the bit
+    bow = ln * 0.06                                 # grip-end sweep-back
+    # centreline samples grip -> head, bowed off the bit side at the grip
+    ts = (0.0, 0.3, 0.6, 1.0)
+    widths = (2.1, 1.7, 1.45, 1.25)
+    cl = []
+    for t in ts:
+        b = bow * (1.0 - t) * (1.0 - t)             # bow dies by the head
+        cl.append((ox + dx * t - px_ * b, oy + dy * t - py_ * b))
+    left = [(x + px_ * w, y + py_ * w) for (x, y), w in zip(cl, widths)]
+    right = [(x - px_ * w, y - py_ * w) for (x, y), w in zip(cl, widths)]
+    poly = [(int(x), int(y)) for x, y in left + right[::-1]]
+    pygame.draw.polygon(surf, (112, 82, 48), poly)
+    pygame.draw.polygon(surf, (58, 40, 24), poly, 1)
+    # grain: a dark line chasing the bowed centreline
+    pygame.draw.lines(surf, (74, 52, 30), False,
+                      [(int(x), int(y)) for x, y in cl], 1)
+    # fawn's-foot: the butt swells so the grip end reads held, not cut off
+    bx, by = cl[0]
+    pygame.draw.circle(surf, (92, 64, 38), (int(bx), int(by)), 2)
+
+
+def _axe_head(surf, hx, hy, a, lead, s=1.0):
+    """The splitting-axe head mounted at (hx, hy) on a haft at angle `a`.
+    `lead` (+1/-1) picks which perpendicular side the BIT faces (the edge
+    leads the swing). One real silhouette instead of stacked quads: a flat
+    poll, a waist at the eye, the cheek flaring to a bit with a raised toe
+    and a dropped heel, a concave underside, a bright honed edge with a
+    slight bulge, and the haft's wedged end proud through the eye.
+    Draw the haft FIRST; the head covers its end."""
+    ddx, ddy = math.cos(a), math.sin(a)                  # along the haft
+    pdx, pdy = -math.sin(a) * lead, math.cos(a) * lead   # toward the bit
+
+    def P(d_, p_):
+        return (int(hx + (ddx * d_ + pdx * p_) * s),
+                int(hy + (ddy * d_ + pdy * p_) * s))
+    # one continuous silhouette (d = along haft, p = toward the bit). The
+    # bit is WIDER along the haft than the head is long, the flanks sweep
+    # CONCAVE from a narrow waist out to the toe and heel (straight
+    # diverging sides read as a lampshade), and a squared poll steps out
+    # behind: the fire-axe profile.
+    sil = [(1.9, -4.6), (2.0, -1.0), (2.2, 1.2), (2.5, 4.4),   # poll -> toe
+           (5.8, 7.2),
+           (-6.4, 7.2),                                        # heel
+           (-2.9, 4.6), (-2.4, 1.2), (-2.0, -1.0), (-1.9, -4.6)]
+    body = [P(d_, p_) for d_, p_ in sil]
+    pygame.draw.polygon(surf, (104, 109, 119), body)
+    # the poll a darker struck steel, so the silhouette reads asymmetric
+    pygame.draw.polygon(surf, (76, 78, 86),
+                        [P(1.9, -4.6), P(-1.9, -4.6), P(-2.0, -1.0), P(2.0, -1.0)])
+    # the eye band where the haft mounts
+    pygame.draw.line(surf, (34, 30, 26), P(-1.6, 0.2), P(1.8, 0.2), 2)
+    pygame.draw.polygon(surf, (42, 44, 50), body, 1)
+    if s >= 1.0:
+        # one light streak down the cheek, full size only (noise smaller;
+        # and never a lit band at the wide end: that is the funnel read)
+        pygame.draw.line(surf, (150, 156, 168), P(1.6, 2.6), P(3.6, 5.6), 1)
+    # the honed edge: bright, slightly convex (toe -> bulge -> heel); at
+    # the carried scale it thins to 1px so the rim never outshines the head
+    pygame.draw.lines(surf, (240, 244, 250), False,
+                      [P(5.8, 7.7), P(-0.3, 8.6), P(-6.4, 7.7)],
+                      2 if s >= 1.0 else 1)
+
+
 def _axe_swing_angle(prog, sweep):
     """The swing's three phases mapped onto prog 0..1 (2026-07 redesign,
     TODO #25: the old constant-speed sweep read as a windscreen wiper).
@@ -38,12 +115,12 @@ def _axe_swing_angle(prog, sweep):
         e = 1 - (1 - t / 0.5) ** 2
         return (sweep + over - over * e, 1.10 - 0.18 * e, 0.0)
     # ...then RAISE back to the carry: the last half of the recover blends
-    # angle + reach into draw_axe_held's exact rest pose, so the held draw
-    # takes over with no pop (the old settle ended at the feet and the
-    # carry snapped in level).
+    # angle + reach into draw_axe_held's exact rest pose (facing plus the
+    # carry droop), so the held draw takes over with no pop (the old
+    # settle ended at the feet and the carry snapped in level).
     u = (t - 0.5) / 0.5
     u = u * u * (3 - 2 * u)
-    return (sweep + (sweep / 2 - sweep) * u,
+    return (sweep + (sweep / 2 + _CARRY_TILT - sweep) * u,
             0.92 + (17.0 / 21.0 - 0.92) * u, 0.0)
 
 
@@ -59,9 +136,12 @@ def draw_axe_swing(surf, px, py, facing, prog):
         fy = 1.0
     base = math.atan2(fy, fx)
     sweep = math.radians(150)
-    start = base - sweep / 2
+    # The arc mirrors for west-ish facings (sgn) so the bit always leads
+    # the travel AND settles edge-DOWN-screen into the carry: without the
+    # mirror a westward carry hung edge-up and read as a bowl.
+    sgn = -1 if fx < 0 else 1
     off, reach, lift = _axe_swing_angle(prog, sweep)
-    a = start + off
+    a = base + sgn * (off - sweep / 2)
     R = 21 * reach                                # haft reach breathes
     ox = px + math.cos(base) * 3                  # pivot just ahead of hands
     oy = py + math.sin(base) * 3
@@ -79,33 +159,16 @@ def draw_axe_swing(surf, px, py, facing, prog):
             aoff, rr, ll = _axe_swing_angle(pp, sweep)
             if off - aoff > math.radians(75):
                 break
-            aa = start + aoff
+            aa = base + sgn * (aoff - sweep / 2)
             pts.append((int(ox + math.cos(aa) * 21 * rr),
                         int(oy + math.sin(aa) * 21 * rr - ll)))
         if len(pts) >= 2:
             pygame.draw.lines(surf, (222, 226, 232), False, pts[:4], 2)
             if len(pts) >= 5:
                 pygame.draw.lines(surf, (142, 140, 136), False, pts[3:], 1)
-    # Haft (wood), dark edge under a lit core.
-    pygame.draw.line(surf, (70, 48, 28), (int(ox), int(oy)), (int(hx), int(hy)), 4)
-    pygame.draw.line(surf, (128, 92, 54), (int(ox), int(oy)), (int(hx), int(hy)), 2)
-    # Steel head: a wedge perpendicular at the haft end.
-    pdx, pdy = -math.sin(a), math.cos(a)          # perpendicular
-    ddx, ddy = math.cos(a), math.sin(a)           # along the haft
-    bw, bl = 6, 8                                 # blade half-width, reach
-    quad = [
-        (hx + pdx * bw, hy + pdy * bw),
-        (hx - pdx * bw, hy - pdy * bw),
-        (hx + ddx * bl - pdx * (bw - 2), hy + ddy * bl - pdy * (bw - 2)),
-        (hx + ddx * bl + pdx * (bw - 2), hy + ddy * bl + pdy * (bw - 2)),
-    ]
-    quad = [(int(x), int(y)) for x, y in quad]
-    pygame.draw.polygon(surf, (170, 176, 186), quad)
-    pygame.draw.polygon(surf, (232, 238, 246), quad, 1)
-    # Bright leading edge catching the light.
-    pygame.draw.line(surf, (245, 248, 252),
-                     (int(hx + ddx * bl), int(hy + ddy * bl)),
-                     (int(hx + pdx * bw), int(hy + pdy * bw)), 1)
+    # Wood haft under the head, bit facing the direction of travel.
+    _axe_haft(surf, ox, oy, hx, hy, lead=sgn)
+    _axe_head(surf, hx, hy, a, lead=sgn, s=1.0)
 
 
 def draw_axe_held(surf, px, py, facing):
@@ -117,23 +180,17 @@ def draw_axe_held(surf, px, py, facing):
         fy = 1.0
     base = math.atan2(fy, fx)
     ox, oy = px + math.cos(base) * 3, py + math.sin(base) * 3
+    # Same axe as the swing, carried: a touch smaller so it reads
+    # 'in hand' not 'striking'. Same mirrored lead side as the swing so
+    # the recover blend hands off without the head flipping, the edge
+    # hangs down-screen, and the haft droops off the facing line so the
+    # head sits in three-quarter (the level carry had no profile).
+    sgn = -1 if fx < 0 else 1
+    a = base + sgn * _CARRY_TILT
     R = 17
-    hx, hy = ox + math.cos(base) * R, oy + math.sin(base) * R
-    # haft (wood): dark edge under a lit core
-    pygame.draw.line(surf, (70, 48, 28), (int(ox), int(oy)), (int(hx), int(hy)), 4)
-    pygame.draw.line(surf, (128, 92, 54), (int(ox), int(oy)), (int(hx), int(hy)), 2)
-    # steel head: a wedge perpendicular at the haft end (resting, smaller than
-    # the swing so it reads as 'carried' not 'striking')
-    pdx, pdy = -math.sin(base), math.cos(base)
-    ddx, ddy = math.cos(base), math.sin(base)
-    bw, bl = 5, 7
-    quad = [(hx + pdx * bw, hy + pdy * bw),
-            (hx - pdx * bw, hy - pdy * bw),
-            (hx + ddx * bl - pdx * (bw - 2), hy + ddy * bl - pdy * (bw - 2)),
-            (hx + ddx * bl + pdx * (bw - 2), hy + ddy * bl + pdy * (bw - 2))]
-    quad = [(int(x), int(y)) for x, y in quad]
-    pygame.draw.polygon(surf, (150, 156, 166), quad)
-    pygame.draw.polygon(surf, (214, 220, 230), quad, 1)
+    hx, hy = ox + math.cos(a) * R, oy + math.sin(a) * R
+    _axe_haft(surf, ox, oy, hx, hy, lead=sgn)
+    _axe_head(surf, hx, hy, a, lead=sgn, s=0.85)
 
 
 # ---------------------------------------------------------------------------

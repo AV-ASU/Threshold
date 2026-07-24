@@ -403,6 +403,26 @@
   Haft reach breathes with the phases. Same signature, same call sites,
   same chop-stun timing (error class 9 untouched); verified on a
   nine-phase headless strip.
+- **2026-07 — Swing retune + the axe OBJECT redesigned (maintainer:
+  "it's the design of the axe itself").** Retune first: the wind-up cut
+  to a ~50ms flick, the smear detached from the live head (joined, it
+  read as a bent haft) with its angular spread clamped, and the recover's
+  last half blends angle+reach into the held pose so the carry takes over
+  with no pop. Then the object: the old bare-line haft + symmetric pale
+  wedge (a spade) was replaced by shared `_axe_haft`/`_axe_head` helpers
+  used by both `draw_axe_swing` and `draw_axe_held` -- a curved tapered
+  haft with a fawn's-foot butt, and a one-silhouette fire-axe head (flat
+  squared poll in darker struck steel, waist at the eye, CONCAVE flanks
+  flaring to a bit WIDER than the head is long, a bright slightly-convex
+  honed edge). Iteration notes that cost renders: straight diverging
+  flanks or a lit band at the wide end read as a lampshade/bell; a bit
+  longer than wide reads as a funnel. The arc + carry side now MIRROR for
+  west-ish facings (`sgn`) so the bit always leads the travel and the
+  edge never hangs up-screen (the bowl read), and the carry droops
+  `_CARRY_TILT` (~26 degrees) off the facing line so the head sits in
+  three-quarter (a dead-level carry pointed the bit straight down-screen,
+  the one angle with no profile). Verified on 4-facing held + 8-phase
+  swing sheets at 5x and 2x, plus the swing GIF.
 
 ## The interiors pilot (2026-07, TODO #24)
 
