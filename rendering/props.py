@@ -2372,44 +2372,116 @@ def _draw_boulder_solid(surf, cam, deco):
           r0 * 0.32, r0 * 0.26, _shade(base, 1.2))
 
 
-_NEON_NAME_CACHE = {}
 STATION_NAME = "CASSILDA'S"
 
+# ---- a procedural NEON-TUBE alphabet (NO fonts; every glyph is drawn geometry)
+# Each glyph is a list of STROKES (polylines) in a unit cell, (0,0) bottom-left
+# .. (1,1) top-right. Drawn as glowing tubes projected onto a wall plane, so
+# the letters foreshorten WITH the surface under the tilt.
+_GLYPH = {
+    "C": [[(0.90, 0.80), (0.34, 0.98), (0.06, 0.70), (0.06, 0.30),
+           (0.34, 0.02), (0.90, 0.20)]],
+    "A": [[(0.05, 0.0), (0.5, 1.0), (0.95, 0.0)], [(0.24, 0.34), (0.76, 0.34)]],
+    "S": [[(0.90, 0.84), (0.32, 0.99), (0.06, 0.74), (0.46, 0.55),
+           (0.92, 0.40), (0.66, 0.03), (0.10, 0.16)]],
+    "I": [[(0.5, 0.0), (0.5, 1.0)], [(0.26, 1.0), (0.74, 1.0)],
+          [(0.26, 0.0), (0.74, 0.0)]],
+    "L": [[(0.22, 1.0), (0.22, 0.04), (0.9, 0.04)]],
+    "D": [[(0.14, 0.02), (0.14, 0.98), (0.5, 0.98), (0.86, 0.70),
+           (0.86, 0.30), (0.5, 0.02), (0.14, 0.02)]],
+    "'": [[(0.52, 1.0), (0.4, 0.66)]],
+    " ": [],
+    "0": [[(0.5, 0.98), (0.14, 0.72), (0.14, 0.28), (0.5, 0.02),
+           (0.86, 0.28), (0.86, 0.72), (0.5, 0.98)]],
+    "1": [[(0.30, 0.76), (0.54, 0.98), (0.54, 0.02)], [(0.28, 0.02), (0.8, 0.02)]],
+    "9": [[(0.84, 0.42), (0.84, 0.72), (0.5, 0.98), (0.16, 0.72),
+           (0.5, 0.52), (0.84, 0.42), (0.68, 0.06), (0.3, 0.02)]],
+    ".": [[(0.44, 0.02), (0.58, 0.02), (0.58, 0.16), (0.44, 0.16), (0.44, 0.02)]],
+}
 
-def _neon_name_surf(text, color, px):
-    """A cached neon-tube word: the store name rendered bold with a soft glow,
-    on transparent. `px` is the target cap height in pixels."""
-    key = (text, color, px)
-    surf = _NEON_NAME_CACHE.get(key)
-    if surf is None:
-        if not pygame.font.get_init():
-            pygame.font.init()
-        f = pygame.font.SysFont("dejavusans", max(10, int(px)), bold=True)
-        base = f.render(text, True, color)
-        pad = max(3, px // 4)
-        surf = pygame.Surface((base.get_width() + pad * 2,
-                               base.get_height() + pad * 2), pygame.SRCALPHA)
-        halo = f.render(text, True, color); halo.set_alpha(70)
-        for dx, dy in ((-2, 0), (2, 0), (0, -2), (0, 2), (-2, -2), (2, 2)):
-            surf.blit(halo, (pad + dx, pad + dy))
-        surf.blit(base, (pad, pad))
-        _NEON_NAME_CACHE[key] = surf
-    return surf
 
-
-def _blit_south_band(surf, cam, wx, wyface, xl, xr, z0, z1, art, alpha=255):
-    """Blit a pre-rendered card onto a horizontal band of a SOUTH-facing wall
-    (yaw 0): at yaw 0 the face's screen band is an axis-aligned rectangle (x
-    from wx, y from z only), so we just scale the card into it."""
-    tl = cam.project(wx + xl, wyface, z1)
-    br = cam.project(wx + xr, wyface, z0)
-    rw, rh = int(abs(br[0] - tl[0])), int(abs(br[1] - tl[1]))
-    if rw < 2 or rh < 2:
+def _draw_neon_word(surf, proj, x0, x1, zb, zt, text, core, glow, hot, s):
+    """Spell `text` in neon TUBES between local wall coords x0..x1 (across) and
+    zb..zt (height), via `proj(lx, lz) -> screen point`. Each stroke is a soft
+    wide glow line + a bright colour core + a thin hot centre."""
+    n = len(text)
+    if n < 1:
         return
-    card = pygame.transform.smoothscale(art, (rw, rh))
-    if alpha < 255:
-        card = card.copy(); card.set_alpha(alpha)
-    surf.blit(card, (int(min(tl[0], br[0])), int(min(tl[1], br[1]))))
+    cw = (x1 - x0) / n
+    padx = cw * 0.14
+    tube = max(2, int(3.0 * s))
+    for i, ch in enumerate(text):
+        g = _GLYPH.get(ch.upper())
+        if not g:
+            continue
+        gx0, gx1 = x0 + i * cw + padx, x0 + (i + 1) * cw - padx
+        for stroke in g:
+            pts = [proj(gx0 + ux * (gx1 - gx0), zb + uz * (zt - zb))
+                   for (ux, uz) in stroke]
+            if len(pts) < 2:
+                continue
+            pygame.draw.lines(surf, glow, False, pts, tube + 5)
+            pygame.draw.lines(surf, core, False, pts, tube + 1)
+            pygame.draw.lines(surf, hot, False, pts, max(1, tube - 1))
+
+
+def _face_vis(cam, nx, ny):
+    """True if a wall face with horizontal outward normal (nx, ny) faces the
+    camera (drawn), given the camera yaw -- so a box shows its RIGHT faces from
+    any heading instead of always its south face."""
+    c, sn = cam._cy, cam._sy
+    return (-nx * sn + ny * c) > -0.03
+
+
+def _draw_fuel_pump(surf, cam, wx, wy, s, red, seed=0):
+    """A 1990s fuel dispenser (proper form, not a plain box): a concrete curb,
+    a cream cabinet with a red kick-panel, a display HEAD that overhangs with a
+    dark metered window + green digits, a red topper, and a nozzle on a hose
+    slung into a boot on the west flank. Detailed on the front AND the flank."""
+    cream = {"top": (208, 204, 194), "side": (170, 166, 156), "dark": (118, 114, 106)}
+    steel = (150, 150, 158)
+    hw, hd = 8 * s, 6 * s
+    # concrete curb pad
+    draw_box(surf, cam, wx, wy, 22 * s, 15 * s, 3 * s,
+             {"top": (100, 100, 106), "side": (74, 74, 80), "dark": (52, 52, 56)})
+    # cabinet body (z 3..30) + overhanging display head (z 30..46) + topper
+    _vbox(surf, cam, wx, wy, 16 * s, 12 * s, 3 * s, 30 * s, cream)
+    _vbox(surf, cam, wx, wy, 18 * s, 13 * s, 30 * s, 46 * s, cream)
+    _vbox(surf, cam, wx, wy, 18 * s, 13 * s, 46 * s, 50 * s,
+          {"top": _shade(red, 1.1), "side": red, "dark": _shade(red, 0.7)})
+
+    def PF(lx, lz):                       # the pump's near (S) face
+        p = cam.project(wx + lx, wy + hd - 0.3, lz)
+        return (int(p[0]), int(p[1]))
+    # red kick panel + a vertical brand stripe on the cabinet
+    pygame.draw.polygon(surf, red, [PF(-hw, 3 * s), PF(hw, 3 * s),
+                                    PF(hw, 9 * s), PF(-hw, 9 * s)])
+    pygame.draw.line(surf, red, PF(0, 9 * s), PF(0, 30 * s), max(2, int(2 * s)))
+    # metered DISPLAY window on the head with green digits + a price row
+    pygame.draw.polygon(surf, (10, 14, 18), [PF(-8 * s, 33 * s), PF(8 * s, 33 * s),
+                                             PF(8 * s, 44 * s), PF(-8 * s, 44 * s)])
+    pygame.draw.polygon(surf, (60, 62, 68), [PF(-8 * s, 33 * s), PF(8 * s, 33 * s),
+                                             PF(8 * s, 44 * s), PF(-8 * s, 44 * s)], 1)
+    for dx in (-6, -3, 0, 3):             # dead green seven-seg ticks
+        pygame.draw.line(surf, (46, 96, 56), PF(dx * s, 39 * s),
+                         PF((dx + 2) * s, 39 * s), max(1, int(2 * s)))
+    pygame.draw.line(surf, (150, 120, 60), PF(-6 * s, 35 * s), PF(4 * s, 35 * s), 1)
+    # card slot + two grade buttons on the cabinet face
+    pygame.draw.line(surf, (40, 40, 46), PF(-5 * s, 20 * s), PF(5 * s, 20 * s), max(1, int(2 * s)))
+    for bx in (-4, 4):
+        pygame.draw.circle(surf, (90, 40, 38),
+                           PF(bx * s, 15 * s), max(1, int(1.6 * s)))
+    # nozzle boot + hose on the WEST flank
+    bootx = -hw
+    b0 = cam.project(wx + bootx, wy - 2 * s, 6 * s)
+    b1 = cam.project(wx + bootx - 4 * s, wy - 2 * s, 16 * s)
+    hz = (26, 24, 28)
+    # hose: from the head down into the boot, a slack curve
+    h_top = cam.project(wx + bootx, wy + 1 * s, 30 * s)
+    h_mid = cam.project(wx + bootx - 6 * s, wy - 1 * s, 16 * s)
+    pygame.draw.lines(surf, hz, False, [h_top, h_mid, b1], max(2, int(2 * s)))
+    pygame.draw.line(surf, steel, b1, b0, max(2, int(3 * s)))   # nozzle body
+    pygame.draw.circle(surf, (40, 40, 46), (int(b0[0]), int(b0[1])), max(1, int(2 * s)))
 
 
 def _draw_gas_station_solid(surf, cam, deco):
@@ -2423,103 +2495,134 @@ def _draw_gas_station_solid(surf, cam, deco):
     s = (getattr(deco, "scale", 1.0) or 1.0)
     t = getattr(deco, "t", 0.0)
     BW, BD, WH = 210 * s, 96 * s, 84 * s
+    hbw, hbd = BW / 2, BD / 2
     stucco = (172, 160, 136); brick = (116, 62, 50); red = (172, 46, 40)
     glass = (20, 24, 30); trim = (52, 50, 54); cream = (202, 192, 168)
+    side_c = _shade(stucco, 0.78)
+    WA, GLZ0, GLZ1, FZ0 = 26 * s, 26 * s, 66 * s, 68 * s
+    buzz = 0.72 + 0.28 * math.sin(t * 13.0 + deco.seed)
+    if (int(t * 3) + deco.seed) % 23 == 0:
+        buzz *= 0.5
+    ncore = (int(120 + 110 * buzz), int(34 + 30 * buzz), int(42 + 26 * buzz))
+    nglow = (70, 22, 28); nhot = (int(200 + 55 * buzz), 120, 128)
 
-    # ---- the main mass (cream stucco walls, flat tar roof) ----
-    bpal = {"top": (86, 82, 76), "side": _shade(stucco, 0.78),
-            "dark": _shade(stucco, 0.64)}
-    draw_box(surf, cam, wx, wy, BW, BD, WH, bpal)
-    # roof coping (a pale rim round the roof edge) + roofing seams
-    rtl = cam.project(wx - BW / 2, wy - BD / 2, WH)
-    rtr = cam.project(wx + BW / 2, wy - BD / 2, WH)
-    rbr = cam.project(wx + BW / 2, wy + BD / 2, WH)
-    rbl = cam.project(wx - BW / 2, wy + BD / 2, WH)
+    def wainscot(P, u0, u1):              # brick lower band + fascia parapet
+        pygame.draw.polygon(surf, brick, [P(u0, 0), P(u1, 0), P(u1, WA), P(u0, WA)])
+        for cz in range(5, 26, 6):
+            pygame.draw.line(surf, _shade(brick, 0.7), P(u0, cz * s), P(u1, cz * s), 1)
+        span = abs(u1 - u0)
+        for k in range(1, int(span // (14 * s)) + 1):
+            jx = u0 + (14 * s if u1 > u0 else -14 * s) * k
+            pygame.draw.line(surf, _shade(brick, 0.7), P(jx, 0), P(jx, WA), 1)
+        pygame.draw.polygon(surf, cream, [P(u0, FZ0), P(u1, FZ0), P(u1, WH), P(u0, WH)])
+        pygame.draw.polygon(surf, _shade(cream, 0.7),
+                            [P(u0, FZ0), P(u1, FZ0), P(u1, WH), P(u0, WH)], 1)
+
+    def base_wall(P, uh, nx, ny):
+        pygame.draw.polygon(surf, _shade(side_c, 1.0),
+                            [P(-uh, 0), P(uh, 0), P(uh, WH), P(-uh, WH)])
+
+    # ---- SOUTH: the storefront ----
+    def face_S(P, uh):
+        base_wall(P, uh, 0, 1)
+        wainscot(P, -uh, uh)
+        wx0, wx1 = -uh + 9 * s, 38 * s               # glazing run
+        pygame.draw.polygon(surf, glass, [P(wx0, GLZ0), P(wx1, GLZ0),
+                                          P(wx1, GLZ1), P(wx0, GLZ1)])
+        pygame.draw.polygon(surf, trim, [P(wx0, GLZ0), P(wx1, GLZ0),
+                                         P(wx1, GLZ1), P(wx0, GLZ1)], 2)
+        for i in range(1, 6):
+            mx = wx0 + (wx1 - wx0) * i / 6
+            pygame.draw.line(surf, trim, P(mx, GLZ0), P(mx, GLZ1), 2)
+        pygame.draw.line(surf, trim, P(wx0, GLZ1 - 8 * s), P(wx1, GLZ1 - 8 * s), 2)
+        for gx in (wx0 + 12 * s, wx0 + 46 * s):
+            pygame.draw.line(surf, (40, 46, 54), P(gx, GLZ0 + 3 * s), P(gx + 6 * s, GLZ1 - 6 * s), 1)
+        ex0, ex1 = 46 * s, 72 * s                    # recessed double-door entry
+        pygame.draw.polygon(surf, _shade(red, 0.8), [P(ex0 - 3 * s, 0), P(ex1 + 3 * s, 0),
+                            P(ex1 + 3 * s, GLZ1 + 2 * s), P(ex0 - 3 * s, GLZ1 + 2 * s)])
+        pygame.draw.polygon(surf, (12, 15, 19), [P(ex0, 0), P(ex1, 0), P(ex1, GLZ1), P(ex0, GLZ1)])
+        pygame.draw.line(surf, trim, P((ex0 + ex1) / 2, 0), P((ex0 + ex1) / 2, GLZ1), 2)
+        for dx in (ex0 + 4 * s, ex1 - 4 * s):
+            pygame.draw.line(surf, (46, 52, 60), P(dx, 6 * s), P(dx, GLZ1 - 6 * s), 1)
+        iw0, iw1 = 80 * s, uh - 10 * s               # ice/merch window
+        pygame.draw.polygon(surf, glass, [P(iw0, WA + 6 * s), P(iw1, WA + 6 * s),
+                                          P(iw1, GLZ1 - 4 * s), P(iw0, GLZ1 - 4 * s)])
+        pygame.draw.polygon(surf, trim, [P(iw0, WA + 6 * s), P(iw1, WA + 6 * s),
+                                         P(iw1, GLZ1 - 4 * s), P(iw0, GLZ1 - 4 * s)], 2)
+        # red AWNING projecting south over the storefront + entry
+        aw_z = GLZ1 + 2 * s
+        b0 = cam.project(wx - uh + 4 * s, wy + hbd - 0.3, aw_z)
+        b1 = cam.project(wx + ex1 + 5 * s, wy + hbd - 0.3, aw_z)
+        f0 = cam.project(wx - uh + 4 * s, wy + hbd + 13 * s, aw_z - 6 * s)
+        f1 = cam.project(wx + ex1 + 5 * s, wy + hbd + 13 * s, aw_z - 6 * s)
+        pygame.draw.polygon(surf, red, [b0, b1, f1, f0])
+        pygame.draw.polygon(surf, _shade(red, 1.2), [b0, b1, f1, f0], 1)
+        for i in range(1, 8):
+            fr = i / 8
+            pygame.draw.line(surf, _shade(red, 0.7),
+                             (b0[0] + (b1[0] - b0[0]) * fr, b0[1] + (b1[1] - b0[1]) * fr),
+                             (f0[0] + (f1[0] - f0[0]) * fr, f0[1] + (f1[1] - f0[1]) * fr), 1)
+        # the NEON NAME on the fascia -- drawn glyphs, no fonts
+        _draw_neon_word(surf, P, -uh + 12 * s, uh - 12 * s, FZ0 + 3 * s, WH - 3 * s,
+                        STATION_NAME, ncore, nglow, nhot, s)
+
+    # ---- SIDES (E/W): wainscot, stucco, two clerestory windows, a downpipe ----
+    def face_side(P, uh):
+        base_wall(P, uh, 1, 0)
+        wainscot(P, -uh, uh)
+        for cx in (-uh * 0.5, uh * 0.3):             # high clerestory windows
+            pygame.draw.polygon(surf, glass, [P(cx - 9 * s, 46 * s), P(cx + 9 * s, 46 * s),
+                                              P(cx + 9 * s, 60 * s), P(cx - 9 * s, 60 * s)])
+            pygame.draw.polygon(surf, trim, [P(cx - 9 * s, 46 * s), P(cx + 9 * s, 46 * s),
+                                             P(cx + 9 * s, 60 * s), P(cx - 9 * s, 60 * s)], 2)
+            pygame.draw.line(surf, trim, P(cx, 46 * s), P(cx, 60 * s), 1)
+        pygame.draw.line(surf, (70, 66, 60), P(uh - 6 * s, 0), P(uh - 6 * s, FZ0), 2)  # downpipe
+
+    # ---- NORTH (back): wainscot, a service door, a meter box, roof vents ----
+    def face_N(P, uh):
+        base_wall(P, uh, 0, -1)
+        wainscot(P, -uh, uh)
+        pygame.draw.polygon(surf, (58, 46, 36), [P(-24 * s, 0), P(-6 * s, 0),   # service door
+                            P(-6 * s, 42 * s), P(-24 * s, 42 * s)])
+        pygame.draw.polygon(surf, _shade((58, 46, 36), 0.6), [P(-24 * s, 0), P(-6 * s, 0),
+                            P(-6 * s, 42 * s), P(-24 * s, 42 * s)], 1)
+        pygame.draw.polygon(surf, (86, 88, 92), [P(20 * s, 30 * s), P(34 * s, 30 * s),  # meter box
+                            P(34 * s, 46 * s), P(20 * s, 46 * s)])
+        pygame.draw.line(surf, (60, 60, 64), P(27 * s, 46 * s), P(27 * s, FZ0), 2)      # conduit
+        pygame.draw.line(surf, (70, 66, 60), P(uh - 8 * s, 0), P(uh - 8 * s, FZ0), 2)   # downpipe
+
+    def PS(u, z): return (lambda p: (int(p[0]), int(p[1])))(cam.project(wx + u, wy + hbd - 0.3, z))
+    def PN(u, z): return (lambda p: (int(p[0]), int(p[1])))(cam.project(wx - u, wy - hbd + 0.3, z))
+    def PE(u, z): return (lambda p: (int(p[0]), int(p[1])))(cam.project(wx + hbw - 0.3, wy + u, z))
+    def PW(u, z): return (lambda p: (int(p[0]), int(p[1])))(cam.project(wx - hbw + 0.3, wy - u, z))
+
+    # draw only the camera-facing walls (each decorated), THEN the roof on top
+    if _face_vis(cam, 0, -1):
+        face_N(PN, hbw)
+    if _face_vis(cam, 1, 0):
+        face_side(PE, hbd)
+    if _face_vis(cam, -1, 0):
+        face_side(PW, hbd)
+    if _face_vis(cam, 0, 1):
+        face_S(PS, hbw)
+    # ---- the flat tar ROOF + coping + HVAC + vent ----
+    rtl = cam.project(wx - hbw, wy - hbd, WH); rtr = cam.project(wx + hbw, wy - hbd, WH)
+    rbr = cam.project(wx + hbw, wy + hbd, WH); rbl = cam.project(wx - hbw, wy + hbd, WH)
+    pygame.draw.polygon(surf, (86, 82, 76), [rtl, rtr, rbr, rbl])
     pygame.draw.polygon(surf, (150, 146, 138), [rtl, rtr, rbr, rbl], 2)
     for i in range(1, 4):
-        f = i / 4
+        fr = i / 4
         pygame.draw.line(surf, _shade((86, 82, 76), 0.85),
-                         (rtl[0] + (rtr[0] - rtl[0]) * f, rtl[1] + (rtr[1] - rtl[1]) * f),
-                         (rbl[0] + (rbr[0] - rbl[0]) * f, rbl[1] + (rbr[1] - rbl[1]) * f), 1)
-    # a rooftop HVAC unit + a vent pipe set back on the roof
+                         (rtl[0] + (rtr[0] - rtl[0]) * fr, rtl[1] + (rtr[1] - rtl[1]) * fr),
+                         (rbl[0] + (rbr[0] - rbl[0]) * fr, rbl[1] + (rbr[1] - rbl[1]) * fr), 1)
     draw_box(surf, cam, wx + 54 * s, wy - 26 * s, 38 * s, 26 * s, WH + 14 * s,
              {"top": (104, 106, 112), "side": (74, 76, 82), "dark": (48, 50, 54)})
     vp = cam.project(wx - 52 * s, wy - 24 * s, WH)
     vt = cam.project(wx - 52 * s, wy - 24 * s, WH + 18 * s)
     pygame.draw.line(surf, (78, 80, 84), vp, vt, max(2, int(3 * s)))
     pygame.draw.circle(surf, (60, 62, 66), (int(vt[0]), int(vt[1])), max(2, int(3 * s)))
-    hh = wy + BD / 2 - 0.3                 # the south wall's face plane
 
-    def F(lx, lz):
-        p = cam.project(wx + lx, hh, lz)
-        return (int(p[0]), int(p[1]))
-    xl, xr = -BW / 2, BW / 2
-    WA, GLZ0, GLZ1 = 26 * s, 26 * s, 66 * s        # wainscot top / glass band
-    # brick WAINSCOT (lower band) with mortar courses
-    pygame.draw.polygon(surf, brick, [F(xl, 0), F(xr, 0), F(xr, WA), F(xl, WA)])
-    for cz in range(5, 26, 6):
-        pygame.draw.line(surf, _shade(brick, 0.7), F(xl, cz * s), F(xr, cz * s), 1)
-    for i in range(int(BW // (14 * s)) + 1):      # vertical brick joints
-        jx = xl + 7 * s + i * 14 * s
-        pygame.draw.line(surf, _shade(brick, 0.7), F(jx, 0), F(jx, WA), 1)
-    # STOREFRONT: a long run of tall dead-glass windows on the left + centre
-    win_x0, win_x1 = xl + 9 * s, 38 * s
-    pygame.draw.polygon(surf, glass, [
-        F(win_x0, GLZ0), F(win_x1, GLZ0), F(win_x1, GLZ1), F(win_x0, GLZ1)])
-    pygame.draw.polygon(surf, trim, [
-        F(win_x0, GLZ0), F(win_x1, GLZ0), F(win_x1, GLZ1), F(win_x0, GLZ1)], 2)
-    nwin = 6
-    for i in range(1, nwin):                      # window mullions
-        mx = win_x0 + (win_x1 - win_x0) * i / nwin
-        pygame.draw.line(surf, trim, F(mx, GLZ0), F(mx, GLZ1), 2)
-    pygame.draw.line(surf, trim, F(win_x0, GLZ1 - 8 * s), F(win_x1, GLZ1 - 8 * s), 2)  # transom
-    for gx in (win_x0 + 12 * s, win_x0 + 46 * s):    # faint dead-glass gleams
-        pygame.draw.line(surf, (40, 46, 54), F(gx, GLZ0 + 3 * s), F(gx + 6 * s, GLZ1 - 6 * s), 1)
-    # recessed ENTRY: double glass doors in a red surround, right of the glass
-    ex0, ex1 = 46 * s, 72 * s
-    pygame.draw.polygon(surf, _shade(red, 0.8), [
-        F(ex0 - 3 * s, 0), F(ex1 + 3 * s, 0),
-        F(ex1 + 3 * s, GLZ1 + 2 * s), F(ex0 - 3 * s, GLZ1 + 2 * s)])   # surround
-    pygame.draw.polygon(surf, (12, 15, 19), [
-        F(ex0, 0), F(ex1, 0), F(ex1, GLZ1), F(ex0, GLZ1)])            # recessed dark
-    pygame.draw.line(surf, trim, F((ex0 + ex1) / 2, 0), F((ex0 + ex1) / 2, GLZ1), 2)
-    for dx in (ex0 + 4 * s, ex1 - 4 * s):
-        pygame.draw.line(surf, (46, 52, 60), F(dx, 6 * s), F(dx, GLZ1 - 6 * s), 1)
-    # a single window right of the entry (an ice box / merch window)
-    iw0, iw1 = 80 * s, xr - 10 * s
-    pygame.draw.polygon(surf, glass, [
-        F(iw0, WA + 6 * s), F(iw1, WA + 6 * s), F(iw1, GLZ1 - 4 * s), F(iw0, GLZ1 - 4 * s)])
-    pygame.draw.polygon(surf, trim, [
-        F(iw0, WA + 6 * s), F(iw1, WA + 6 * s), F(iw1, GLZ1 - 4 * s), F(iw0, GLZ1 - 4 * s)], 2)
-    # a red AWNING projecting over the whole storefront + entry
-    aw_z = GLZ1 + 2 * s
-    a_l, a_r = xl + 4 * s, ex1 + 5 * s
-    b0 = cam.project(wx + a_l, hh, aw_z); b1 = cam.project(wx + a_r, hh, aw_z)
-    f0 = cam.project(wx + a_l, hh + 13 * s, aw_z - 6 * s)
-    f1 = cam.project(wx + a_r, hh + 13 * s, aw_z - 6 * s)
-    pygame.draw.polygon(surf, red, [b0, b1, f1, f0])
-    pygame.draw.polygon(surf, _shade(red, 1.2), [b0, b1, f1, f0], 1)
-    for i in range(1, 8):                         # awning scallop ribs
-        f = i / 8
-        ax = (b0[0] + (b1[0] - b0[0]) * f, b0[1] + (b1[1] - b0[1]) * f)
-        bx = (f0[0] + (f1[0] - f0[0]) * f, f0[1] + (f1[1] - f0[1]) * f)
-        pygame.draw.line(surf, _shade(red, 0.7), ax, bx, 1)
-    # the FASCIA parapet (cream) above the awning, carrying the NEON name
-    FZ0 = 68 * s
-    pygame.draw.polygon(surf, cream, [
-        F(xl, FZ0), F(xr, FZ0), F(xr, WH), F(xl, WH)])
-    pygame.draw.polygon(surf, _shade(cream, 0.7), [
-        F(xl, FZ0), F(xr, FZ0), F(xr, WH), F(xl, WH)], 1)
-    buzz = 0.72 + 0.28 * math.sin(t * 13.0 + deco.seed)
-    if (int(t * 3) + deco.seed) % 23 == 0:
-        buzz *= 0.5
-    neon = (int(150 + 105 * buzz), int(60 + 40 * buzz), int(70 + 40 * buzz))
-    name = _neon_name_surf(STATION_NAME, neon, 30)
-    _blit_south_band(surf, cam, wx, hh, xl + 12 * s, xr - 12 * s,
-                     FZ0 + 1.5 * s, WH - 1.5 * s, name,
-                     alpha=int(255 * (0.6 + 0.4 * buzz)))
-
-    # ============ the pump CANOPY in front (south), well clear of the store ===
+    # ============ the pump CANOPY (south, clear of the store) + PUMPS =========
     cyf = wy + 128 * s
     cz = 56 * s
     post = (82, 80, 84)
@@ -2540,27 +2643,8 @@ def _draw_gas_station_solid(surf, cam, deco):
     pygame.draw.polygon(surf, _shade(red, 1.25), [
         CF(-82 * s, cz + 8 * s), CF(82 * s, cz + 8 * s),
         CF(82 * s, cz + 9 * s), CF(-82 * s, cz + 9 * s)])
-
     for pxl in (-48 * s, 0, 48 * s):
-        ppal = {"top": (198, 192, 178), "side": (158, 152, 140),
-                "dark": (92, 88, 80)}
-        draw_box(surf, cam, wx + pxl, cyf + 2 * s, 18 * s, 15 * s, 40 * s, ppal)
-
-        def PF(lx, lz, px=pxl):
-            p = cam.project(wx + px + lx, cyf + 2 * s + 7.5 * s - 0.3, lz)
-            return (int(p[0]), int(p[1]))
-        pygame.draw.polygon(surf, red,
-                            [PF(-7 * s, 30 * s), PF(7 * s, 30 * s),
-                             PF(7 * s, 40 * s), PF(-7 * s, 40 * s)])
-        pygame.draw.polygon(surf, (10, 14, 18),
-                            [PF(-5 * s, 17 * s), PF(5 * s, 17 * s),
-                             PF(5 * s, 26 * s), PF(-5 * s, 26 * s)])
-        pygame.draw.polygon(surf, (40, 60, 44),
-                            [PF(-4 * s, 19 * s), PF(-1 * s, 19 * s),
-                             PF(-1 * s, 23 * s), PF(-4 * s, 23 * s)])
-        hz = (20, 18, 22)
-        pygame.draw.line(surf, hz, PF(-7 * s, 28 * s), PF(-11 * s, 24 * s), 2)
-        pygame.draw.line(surf, hz, PF(-11 * s, 24 * s), PF(-11 * s, 11 * s), 2)
+        _draw_fuel_pump(surf, cam, wx + pxl, cyf + 2 * s, s, red, seed=deco.seed + int(pxl))
 
 
 def _draw_neon_pylon_solid(surf, cam, deco):
@@ -2600,17 +2684,23 @@ def _draw_neon_pylon_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (int(42 + 54 * buzz), int(86 + 70 * buzz),
                                int(112 + 60 * buzz)), board)
     pygame.draw.polygon(surf, neon, board, max(4, int(5 * s)))
-    pygame.draw.line(surf, neon, SB(-bw2 + 6 * s, -8 * s),   # name/price divider
-                     SB(bw2 - 6 * s, -8 * s), max(2, int(2 * s)))
-    # the store NAME big on the upper board + a 1994 fuel PRICE below
-    nm = _neon_name_surf(STATION_NAME, (238, 250, 255), 30)
-    _blit_south_band(surf, cam, wx, wy - 0.3, -bw2 + 6 * s, bw2 - 6 * s,
-                     bcz - 5 * s, bcz + bh2 - 5 * s, nm,
-                     alpha=int(255 * (0.55 + 0.45 * buzz)))
-    price = _neon_name_surf("1.09", (255, 210, 90), 18)
-    _blit_south_band(surf, cam, wx, wy - 0.3, -bw2 + 20 * s, bw2 - 20 * s,
-                     bcz - bh2 + 6 * s, bcz - 10 * s, price,
-                     alpha=int(255 * (0.55 + 0.45 * buzz)))
+    # the store NAME big across the board (drawn neon TUBES, no fonts), and a
+    # small period fuel PRICE plate at the foot
+    def SBp(u, z):                         # projector for _draw_neon_word
+        return SB(u, z - bcz)
+    core = (int(150 + 90 * buzz), int(220 + 30 * buzz), 255)
+    glow = (30, 70, 96); hot = (238, 250, 255)
+    _draw_neon_word(surf, SBp, -bw2 + 8 * s, bw2 - 8 * s, bcz - bh2 + 16 * s,
+                    bcz + bh2 - 6 * s, STATION_NAME, core, glow, hot, s * 1.15)
+    # a small "1.09" price plate below the board
+    ppz = -bh2 - 15 * s
+    plate = [SB(-24 * s, ppz), SB(24 * s, ppz),
+             SB(24 * s, ppz + 13 * s), SB(-24 * s, ppz + 13 * s)]
+    pygame.draw.polygon(surf, (18, 22, 28), plate)
+    pygame.draw.polygon(surf, _shade(neon, 0.7), plate, 1)
+    _draw_neon_word(surf, SBp, -20 * s, 20 * s, bcz + ppz + 2 * s,
+                    bcz + ppz + 11 * s, "1.09", (255, 210, 90), (90, 74, 30),
+                    (255, 240, 180), s * 0.7)
 
 
 def _draw_chain_fence_solid(surf, cam, deco):

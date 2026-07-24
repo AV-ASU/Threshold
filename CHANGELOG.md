@@ -139,27 +139,33 @@
 
 ## The shadows program (the amalgams)
 
-- **2026-07 — Lost road: the CASSILDA'S convenience store (maintainer art
-  pass).** The road station's building was a bland car-sized box; reworked into
-  a real Casey's-style convenience STORE that actually looks like a building
+- **2026-07 — Lost road: the CASSILDA'S convenience store, done right
+  (maintainer art pass, second round).** The road station's building was a
+  bland box; reworked into a real Casey's-style convenience STORE
   (maintainer: "your main job is making a building look good... focus on the
   building first"). Building-scale mass with a brick wainscot (mortar courses),
   a cream stucco upper, a full storefront of dead glass under a red awning, a
-  recessed double-door entry + a side merch window, a flat tar roof with pale
-  coping + a rooftop HVAC unit and vent pipe, and a **NEON name across the
-  fascia parapet**. The store is named **CASSILDA'S** (`STATION_NAME` in
-  `rendering/props.py`) -- a Casey's echo that is also a King in Yellow nod
-  (Cassilda, of the play), rendered as neon tubes via a cached
-  `_neon_name_surf` + a `_blit_south_band` helper that scales a card onto a
-  south wall's screen band (axis-aligned at yaw 0). The tall roadside
-  `neon_pylon` carries the same name over a period **1.09** fuel price. The
-  pump canopy was pushed clear of the store so it stops crowding it, and the
-  whole lot was moved further from the road (`road_off` 4 -> 6.5) so it no
-  longer crowds the shoulder. Iterated in an isolated tilt preview
-  (`tools`-style harness, pitch 55 / zoom 1.1) front + angled before wiring
-  back to the scene. NOTE: `CASSILDA'S` / `1.09` are player-facing art strings
-  in a prototype wired into nothing; if the lost road is wired in, the name
-  moves into `DIALOGUE.md` per its contract.
+  recessed double-door entry + a merch window, a flat tar roof with pale coping
+  + a rooftop HVAC unit and vent, and a **NEON name across the fascia**. The
+  store is named **CASSILDA'S** (`STATION_NAME`) -- a Casey's echo + a King in
+  Yellow nod (Cassilda, of the play). Key second-round fixes to maintainer
+  feedback: **(1) NO fonts** -- the name is spelled in a procedural neon-TUBE
+  alphabet (`_GLYPH` stroke table + `_draw_neon_word`), every letter drawn
+  geometry projected onto the wall so it foreshortens with the tilt (the old
+  `SysFont`/`_blit_south_band` path was cut); **(2) all four FACES decorated**
+  -- the building is drawn face-culled (`_face_vis` per wall by camera yaw), so
+  the sides get brick wainscot + clerestory windows + a downpipe and the back
+  gets a service door + a meter box + conduit, not a flat blank wall (verified
+  front / 3-4 / side / back in an isolated pitch-55 preview); **(3) real
+  PUMPS** -- `_draw_fuel_pump` is a proper 1990s dispenser (concrete curb, cream
+  cabinet with a red kick panel, an overhanging display head with a dark
+  metered window + green digits, a red topper, a hose slung into a nozzle boot
+  on the flank), not a plain box; **(4) the roadside `neon_pylon` reads the
+  NAME big** (same tube alphabet) over a small **1.09** price plate, not a
+  price where the name should be. The lot was also pushed further from the road
+  (`road_off` 6.5). NOTE: `CASSILDA'S` / `1.09` are player-facing art strings in
+  a prototype wired into nothing; if the lost road is wired in, the name moves
+  into `DIALOGUE.md` per its contract.
 - **2026-07 — Lost spaces: three biome FOCAL ISLANDS + a full-effort pass
   (`TODO.md` #26).** The prototype's single corn field grew into three
   biome-parameterized scenes — `lost_corn` / `lost_forest` / `lost_road`
