@@ -118,6 +118,48 @@ Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
   interior cover as styles land; extend `tests/stealth.py` §16; VISION
   toward the Darkwood organic read.
 
+### 27. **[Opus]** Remake the town sign (maintainer: "I want the town sign remade")
+
+The old-timey painted BRIMLEY board (WELCOME TO / NORTHERNMOST CORN / EST.
+1894) needs a redesign. It is also the game's **last font-rendered world
+lettering** (`rendering/props.py`, 3 of the 3 uses in `FONT_BUDGET`), so the
+remake is the chance to retire that: spell it in the procedural neon-tube
+alphabet's cousin, a **painted**-letter stroke set (`_GLYPH` +
+`_draw_neon_word` in `rendering/props.py` are the worked reference; a painted
+board wants flat opaque strokes with wear, not tube glow). Drop the file's
+`FONT_BUDGET` entry to 0 when it lands and the guard locks it shut.
+Verify with `tools/capture_facings.py` (a roadside board is read from the
+approach, so check the angles a driver/walker actually gets, not just N).
+**Reconcile:** the SPREAD ending's drive-out sign (`rendering/spread_drive.py
+_sign_back`) shares the board's shape and is already flagged under Optional
+polish; do both in one pass so they cannot disagree.
+
+### 28. **[Opus + Fable]** Cut the calendars (maintainer: "I hate it")
+
+**Maintainer ruling: remove the calendars from the game**, including the beat
+built entirely on one (Old Pell's) — explicitly acknowledged and accepted.
+This is a canon change, not just a prop deletion, so it needs a decision on
+the replacement before it is built:
+
+- **The prop.** The `calendar` decoration (`entities/deco_horror.py
+  _draw_calendar`, placed in `scenes/brimley.py` and read in the Vane
+  tableau's dressing). Removing it also clears that file's 3 `FONT_BUDGET`
+  entries (the month/day label), so the guard tightens for free.
+- **Pell's whole thread rides it** (`scenes/dialogue.py`, `scenes/brimley.py`):
+  the `beat_pell_coal` stoop line ("I've got the calendar where I want it.
+  Stopped."), the `beat_pell_marked` ripple after the newspaper, and the
+  `paper_pell` note ("He said he'd pencil today into his calendar"). His WANT
+  (`DESIGN.md` §8: legacy, the harvest endures) survives fine; what needs
+  reinventing is the **object that shows a man refusing to mark time**. Pick
+  the new carrier deliberately — it is his only mechanical beat.
+- **Canon to reconcile** (`NARRATIVE.md` §3 timeline, §4 chorus, and the
+  invariant "every calendar in town stops at Jan 15"): the seal's date is
+  load-bearing and is currently *shown* by the calendars. Decide what carries
+  the stopped-January fact instead (the frozen news rack already dates itself
+  Jan 15 and may be enough), then update NARRATIVE + DIALOGUE together.
+- **Guards:** `tests/flow.py` asserts several Pell/paper beats; expect to
+  update them in the same commit.
+
 ### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
 
 Promote Royce to the man who drove Brimley's supply run (Hettie's shelves
@@ -244,24 +286,169 @@ exemptions.
 - **23b. The town half (open).** The **yield**: a local a cult patrol
   passes steps off the lane, eyes down, waits, resumes; the cultist never
   acknowledges them. **Mundane witness reactions**: a local who sees the
-  drawn gun, a sprint, or a moth axed flinches or hurries indoors (rides
+  drawn gun or a sprint flinches or hurries indoors (rides
   homebody `_inside`); a kill nearby empties the street for the visit.
   Strictly mundane reactions only.
 - **23c. The mechanical pieces (open), sequenced for the #5 tuning
   pass.** SEARCH **sweep partition** (multiple searchers divide
   `sweep_points`, no duplicate checks); **room posture** (a per-scene
-  calm/uneasy/roused int raised by flares, shots, struggles, found bodies,
+  calm/uneasy/roused int raised by shots, struggles, found bodies,
   decaying; modulates walk speed, scan time, sweep budget — ship
   OFF-default behind config until the #5 tuning pass absorbs it); the
   **flank call** (a locked chaser pulls at most one nearby patrol to a
   flank point, same LOS/suspicion rules, normal search timer, never soft
   omniscience); **object-state investigation** (a left-on noisemaker, an
-  opened door, a moth husk: pause at it, mark the room uneasy).
+  opened door: pause at it, mark the room uneasy).
 - **23d. Content passes (open, anytime, Fable).** Fuller local **day-loops**
   on the JOBS `stations` plumbing (Pell to the field edge he doesn't look
   at, Calder to her gate, Royce circling his truck; door-anchor honesty
   rules apply); **disposition framing** read off existing save flags
   (mood, never a meter).
+
+### 25. **[Fable + Opus]** The King → the STORM (apex redesign, IN PROGRESS)
+
+Replacing THE UNFOLDING (`rendering/king_unfold.py`) with the shadow family's
+apex: the King is not one body, He is the **STORM** — His attention flooding
+the flat plane so every dark space erupts amalgam-cuts (portals with a part
+half-out). Locked with the maintainer this pass:
+- **No apex body.** The "bearer" is just another amalgam; nothing marks it but
+  the Mask.
+- **The Mask is a PART** (the 18th), surfaced from its own cut in the family
+  grammar, held by the flesh. His face made an object: **player scale** and a
+  **real 3D object** (`draw_pallid_3d`) that turns a full 360 — the carved face
+  toward the PI, the blank shell turned away, a curved lens at profile —
+  superseding the earlier always-camera-facing call so it respects the tilted
+  world. Timber is a bone↔wood blend (carved-pallid). No halo, no mouth, no nose.
+- **One Mask storm-wide, MIGRATING** — surfaces on one unit, is borne, sinks,
+  rises elsewhere (THE UNFOLDING's host/sink/rebond state, translated). It IS
+  the focal "Him" and keeps luck-not-omniscience: the Mask surfacing near you
+  is His attention finding you; while it is borne far off, His regard is
+  elsewhere.
+- **Light SLOWS the storm, never burns it** (burning stays the Watchers'
+  privilege); the AI avoids light regardless. He is survived, never dispelled.
+- **The storm fills ALL dark, corn included** ("no light = danger" taken to its
+  end). Rides the ev-driven outdoor darkening (#4/#21). Light = the last
+  refuge.
+- The idle horizon King is **CUT** (maintainer ruling); the storm is the
+  full-power apex at the source, so its overwhelm is the point.
+
+**LANDED (dormant, wired into NOTHING in the game):**
+- The **Mask part** in `rendering/amalgam.py`: `draw_pallid_3d` (the one
+  reusable 3D Mask — a single bent SHEET, the front cap of an ellipsoid, NOT a
+  closed egg; pale carved FACE on the front only: deep jagged sockets + gold,
+  seam, crack, NO eyes from behind; BOTH sides pale so from behind you see its
+  pale concave inside and it still reads as a mask; a bent-crescent profile)
+  driven through `draw_pallid_mask_part` + a `mask=` kwarg on
+  `draw_amalgam_sprite`, NEVER dealt by `assemble()`, so every ordinary amalgam
+  is byte-identical. Player scale (`STORM_MASK_R`). Previews
+  `tools/preview_mask_spin.py` (the full spin) + `tools/preview_bearer.py`.
+- The **bearer power-up** (drawn ONLY when the storm passes `mask=`): the
+  possessed amalgam is simply a **BIGGER** amalgam (`BEARER_SCALE`) wearing the
+  Mask + a **crown** of ember-cuts (`_bearer_crown`) — size is the tell, not a
+  busier body.
+- The **storm ENGINE** `systems/storm.py` (`Storm`): the single migrating Mask
+  bearer, units drifting to His **lagged sense** of the player (luck, not
+  omniscience), **light slows + repels, never burns**. Sim + draw helper only;
+  imported by nothing in the game. Preview `tools/preview_storm.py`.
+- The **storm's STAGE** — the ev-driven surface darkening (LIVE). `STORM_STAGE_SCENES`
+  (Brimley + `OUTDOOR_SCENES`) route through `_draw_dark` at a gloom that ramps
+  with the rot stage (`STORM_DARK_GLOOM = (0, 44, 92, 138)`): stage 0 is full
+  day (early-out, byte-identical), and by stage 3 it is night with the road
+  yard-lights as ISLANDS and the flashlight enabled outdoors (so the
+  light-draws-Him double-edge applies there too). This is world rot's LIGHT twin
+  (understanding, not a clock — the daytime invariant holds, NARRATIVE §canon).
+  VISUAL + flashlight only so far; no new threat mechanic yet — it is the STAGE
+  the storm fills.
+
+**OPEN, in build order:** (1) the **light/dark SPLIT as a MECHANIC** (the
+visual darkening landed, above; #4/#21) — outdoors, light pools = cover and the
+dark = exposure, so bring the surface storm-dark scenes into the shadow-cover
+(`SUS_CONCEAL_DARK`) + Watcher-dark rules the dim interiors already use, giving
+the storm a stage to open in; (2) **wire the storm engine in** — real scene
+dark-spots as anchors (off the darkening), tilt-camera projection, spawn density
+off evidence, and the **catch** (a bearer reaching you = the King-catch death);
+(3) **retire THE UNFOLDING** and rewire the catch / death card / Carcosa
+cutscene (flow-guarded) onto the storm; (4) reconcile canon (NARRATIVE §4/§8 the
+King, DESIGN §1 the apex) ONLY as each piece lands —
+the docs still describe THE UNFOLDING because that is what SHIPS until (3). Land
+each visual beat through a VISION look-pass.
+
+**The storm CUTS wear the rift's gold rim (approved 2026-07, option (a)+gold).**
+The amalgam apertures should read as the same portal family as the fold/King
+rift (`rendering/portal.py`): an **ANCHORED gold-rimmed cut** (not a billboard),
+but with the off-angle falloff FLOORED so a storm cut thins yet never fully
+vanishes (you always sense them). Same gold language as the rift's rim/pool, at
+aperture size (gold rim + motes, no expensive see-through — the rift stays the
+only full doorway). The maintainer weighed a "pool of water that faces you,
+things fade into it" presentation and chose anchored-never-vanish over a
+billboard (protects the pseudo-3D "object you can circle, not a billboard that
+swivels" canon, DESIGN §7). The **fade-until-gone dissolve is reserved for the
+CATCH/death beat** (a bearer reaches you → you fade into His portal), NOT
+routine crossing (folds stay "the crossing is nothing, the frame is the
+spectacle").
+
+**Fences:** Mask stays player-scale + a real 3D object (it turns to face you or
+away, never a billboard); one bearer at a time; the flood concentrates on His
+last *sense* of you, not your true position (luck-not-omniscience); the
+impossible count stays at one.
+
+### 26. **[Opus + Fable]** The in-between / lost spaces — Brimley restructure (EXPLORATION, prototype landed)
+
+**Maintainer idea (2026-07); the design conversation settled the MODEL, but it
+is NOT yet a committed canon decision.** Dissolve one-square Brimley into
+per-building scenes connected by a dark liminal IN-BETWEEN, so the fold is FELT
+moment to moment (you get lost) rather than told. This OVERTURNS the current
+preserve (NARRATIVE §5 / #4: "Brimley stays ONE square scene") and unparks the
+reshape (#8) in a new, engine-aligned form (a **scene graph + a generator**, not
+the parked heightfield / organic reshape). Reconcile NARRATIVE §5 + DESIGN §7
+ONLY if/when the restructure is committed and wired.
+
+**The model (locked in conversation):**
+- Three layers: **interior -> yard -> safe path <-> lost spaces**. Buildings hang
+  off a **safe lit PATH** (the paved road, lamp posts, NO tricks, navigable).
+- The **lost spaces** are the dark liminal fields (corn / forest / road) you fall
+  into off a **dark scene edge** (a lit edge is a wall, a dark edge is the mouth
+  -- light gates entry). They are **procedurally generated, NON-REPEATING**
+  (forward is always new ground, backrooms-style, NOT the torus wrap).
+- The **exit is a light you HUNT**: held 6-20 tiles off, relocating out of your
+  sight cone if you drift, so always escapable and always a search.
+- Manipulation lives in the dark: observer-dependent layout (space reshuffles
+  when unlooked-at), light = the only stable/true thing, asymmetric return (the
+  way back isn't the way you came), the space breathes with threat, evidence
+  swaps the field for a longer/warped/more-hostile version, odd landmarks for
+  variety.
+
+**Prototype LANDED and wired into NOTHING in-game** (`scenes/lost_space.py`;
+the three biome fields `lost_corn` / `lost_forest` / `lost_road`, each a
+hand-authored lit focal island in a generated dark sea, and what they are
+made of: `CHANGELOG.md`, "The shadows program"). It exists to be judged by
+feel, not to ship as is.
+
+**OPEN, in build order:** (1) **CULT PRESENCE in the fields** (maintainer ask,
+next up): roaming cultists carrying light, so a glow in the dark is ambiguous
+(the exit, or a hunter?), and **occupied cult camps** you can stumble into --
+the inversion of the abandoned corn camp, where a warm fire reads as haven
+until you are close enough to see the figures standing at it. Needs a
+self-contained driver (spawn on proximity, despawn far, capped) rather than the
+town's evidence/King wiring, since the fields hang off nothing yet;
+(2) the **safe path + yard + one lost space** vertical
+slice, wired so you walk interior -> yard -> path -> fall off a dark edge into
+the lost space -> hunt the light -> climb out (the real LOOP, not just the
+field); (3) the **dark manipulation layer** inside the lost space
+(observer-dependent geometry, asymmetric return, breathe-with-threat); (4)
+**per-chunk** landmark/exit generation + a silent **re-origin** for a truly
+endless walk (the prototype uses a large finite bound + spawn-at-centre); (5) the
+**ev-warp** variants (the field swaps for a longer / warped / more-hostile
+version with evidence) + richer linear field features (a river, fences, ruined
+buildings you can't enter); (6) IF the maintainer commits: the full Brimley
+**re-home** (the fences: the car, the well, the refuges, the descent chain) + the
+canon rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- this is
+a feel prototype to judge it.
+
+**Fences:** the safe path is never tricked; the lost space is always escapable
+(the exit light stays in the 6-20 band); a THREAT never blinks out via the
+observer trick (only geometry lies); keep the impossible count at one (the fold
+is the one phenomenon).
 
 ---
 
@@ -360,9 +547,11 @@ everywhere), and the flashlight opening on the PI's desk
   per-scene power state (`Scene.power_on`, `Game._tick_power`,
   `_genset_down` timers), the ELECTRIC kinds die in all three layers at
   once during a blackout (pool, `lit_at` gate, and the fixture art
-  itself goes dark; fire is exempt), a moth flare blacks its room out
-  for `BLACKOUT_DUR`, and the office radio's static crawl runs on
-  power (the appliance tell). Guarded by `tests/stealth.py` §17.
+  itself goes dark; fire is exempt) for `BLACKOUT_DUR`, and the office
+  radio's static crawl runs on power (the appliance tell). Guarded by
+  `tests/stealth.py` §17. **No live trigger fires a blackout now** — the
+  moth flare that used to was cut with the moths (2026-07); the gas
+  fuel/failure economy below is what will feed it.
   **Lit-rooms-SECURED landed via the 2026-07 Watcher spawn rule** (a
   Watcher opens only at a dark spot with line of sight to the player,
   so a fully lit room cannot open anything; `CHANGELOG.md`). **Still
@@ -374,11 +563,14 @@ everywhere), and the flashlight opening on the PI's desk
   open from the blessed idea set: the beam forcing individual PARTS to
   retract (per-part light burn), and the build-out reading the hold
   timer rather than a fixed ramp.
-- **The moth blackout — remaining staging.** The blackout itself landed
-  with the power link above (flare → the room's electric light dies).
-  Still open: the cult camp PROCESSES to the flash and fans out (a
-  staged response, rides #23), and any screen-dim beat beyond the
-  lights themselves dying.
+- **The blackout trigger + response — deferred to the gas system.** The
+  blackout machinery landed (a room's electric light dies), but its only
+  live trigger, the moth flare, was cut with the moths (2026-07), so
+  nothing fires a blackout in play yet. The gas-genset fuel/failure
+  economy (above) is the intended trigger. Riding on it when it lands:
+  the cult camp PROCESSES to a room going dark and fans out (a staged
+  response, rides #23), and any screen-dim beat beyond the lights
+  themselves dying.
 - **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
   line-of-sight spots only, 2026-07). Still open: dark-only EXISTENCE
   (a live Watcher caught by a room relighting should burn or flee, in
@@ -513,7 +705,7 @@ compression pass (#4b).
 Phase 1 landed (the threat section moved to DESIGN §1; `CHANGELOG.md`,
 "Documentation process"). Still open: CLAUDE.md's Layout section carries a
 tableau mega-paragraph and several system narrations (Casebook, dialogue
-channels, moth/stealth asides) that duplicate or should live in
+channels, stealth asides) that duplicate or should live in
 DESIGN/DIALOGUE; move each to its one home and leave a code-map pointer,
 one section per pass, keeping the every-turn read shrinking.
 

@@ -495,16 +495,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._heartbeat_t = 0.0
         self._king = None
         self._king_anchor = None
-        # The Moth FIELD: scene_key -> live moth count. Fed by the
-        # King's timed shedding (_tick_moth_shed, his room, ev3+) and
-        # the seeker drip (_tick_moth_seek, YOUR room, ev2+); thinned
-        # only by the player spending one (a pop / a flare's burn-out).
-        # Persistent for the run; wiped on New Game / Continue. ONE
-        # moth pre-drifts the King's own road from the first minute:
-        # the omen, and the safe lesson in the kindle rule.
-        self._moth_field = {KING_ROAM_START: 1}
-        self._moth_shed_t = 0.0
-        self._moth_seek_t = None      # rolled per spawn by _tick_moth_seek
         reset_king_fx()        # clear his render trail/particles across runs
         reset_king_unfold_fx() # and the UNFOLDING's mask-bond state with them
         self._reinforce_t = 0.0
@@ -975,10 +965,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Re-derive the world rot for this scene from the evidence
         # count (rot decals, the ambient air, the stage-3 Sheriff).
         self._apply_rot()
-        # The Moths (the King's heralds) seed with the scene:
-        # evidence-scaled on the open surface, a retinue in the
-        # King's own room (rot_mixin, MOTH_* config).
-        self._spawn_moths()
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -1630,14 +1616,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         in_dark = (self.scene.key in DARK_SCENES
                    and not self._flashlight_lit()
                    and not self.scene.lit_at(p.x, p.y))
-        if in_dark:
-            # a kindling/flaring Moth is a lamp: its pool breaks the
-            # gloom around the player (the alarm also UNHIDES you)
-            for m in (getattr(self.scene, "_moths", None) or []):
-                if (m["glow"] > 0.3 and self.scene.world_dist(
-                        m["x"], m["y"], p.x, p.y) < MOTH_LIGHT_R):
-                    in_dark = False
-                    break
         # Entering shadow cover is WORDLESS (2026-07 playtest ruling: no
         # narrator box on stealth entry; the old one-shot teach is cut).
         p._in_dark = in_dark
@@ -2853,7 +2831,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if not self.player.inventory.has("flashlight"):
             return False
         if self.scene.key not in DARK_SCENES:
-            return False
+            # the surface earns the beam only once the storm has darkened it
+            if not (self.scene.key in STORM_STAGE_SCENES
+                    and STORM_DARK_GLOOM[self._rot_stage()] > 0):
+                return False
         # (The old CULT_DARK beam-off is RETIRED, 2026-07 light pass:
         # light works everywhere; the deep's dread is what light costs
         # and attracts, not a dead switch.)
@@ -3084,9 +3065,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_doors(dt)
                 self._tick_bleed(dt)
                 self._tick_cultists(dt)
-                self._tick_moths(dt)
-                self._tick_moth_shed(dt)
-                self._tick_moth_seek(dt)
                 self._tick_power(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)

@@ -139,6 +139,210 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — Lost road: the CASSILDA'S convenience store, done right
+  (maintainer art pass, second round).** The road station's building was a
+  bland box; reworked into a real Casey's-style convenience STORE
+  (maintainer: "your main job is making a building look good... focus on the
+  building first"). Building-scale mass with a brick wainscot (mortar courses),
+  a cream stucco upper, a full storefront of dead glass under a red awning, a
+  recessed double-door entry + a merch window, a flat tar roof with pale coping
+  + a rooftop HVAC unit and vent, and a **NEON name across the fascia**. The
+  store is named **CASSILDA'S** (`STATION_NAME`) -- a Casey's echo + a King in
+  Yellow nod (Cassilda, of the play). Key second-round fixes to maintainer
+  feedback: **(1) NO fonts** -- the name is spelled in a procedural neon-TUBE
+  alphabet (`_GLYPH` stroke table + `_draw_neon_word`), every letter drawn
+  geometry projected onto the wall so it foreshortens with the tilt (the old
+  `SysFont`/`_blit_south_band` path was cut); **(2) all four FACES decorated**
+  -- the building is drawn face-culled (`_face_vis` per wall by camera yaw), so
+  the sides get brick wainscot + clerestory windows + a downpipe and the back
+  gets a service door + a meter box + conduit, not a flat blank wall (verified
+  front / 3-4 / side / back in an isolated pitch-55 preview); **(3) real
+  PUMPS** -- `_draw_fuel_pump` is a proper 1990s dispenser (concrete curb, cream
+  cabinet with a red kick panel, an overhanging display head with a dark
+  metered window + green digits, a red topper, a hose slung into a nozzle boot
+  on the flank), not a plain box; **(4) the roadside `neon_pylon`** was a plain
+  board -- replaced (third round, to a maintainer reference photo) with a
+  vintage GOOGIE / atomic-age STAR sign: a big bulb-lined yellow star
+  (`_neon_bulbs` chase marquee) behind two angled neon banners -- a red one
+  reading **CASSILDA'S**, a blue one **GAS FOR LESS** -- drawn with the tube
+  alphabet warped onto each banner's angle; its light pool went warm.
+  Third-round fixes too: the pump canopy + pumps were split OUT of the store
+  solid into a separate `pump_island` deco so they DEPTH-SORT at their own
+  position (the store is well north) -- the store no longer sorts on top of its
+  own forecourt; and the rooftop "chimney" (a tall dark box) became a low wide
+  curbed AC unit with grille fins. The lot was pushed further from the road
+  (`road_off` 6.5). Fourth round (in-game readbacks): the elevated neon sign was
+  being multiplied to black by the darkness overlay (it sits above its own
+  ground light pool -- it read as a bare triangle), so a `_draw_emissive_signs`
+  pass now REDRAWS the `neon_pylon` after `_draw_dark` to keep the neon bright
+  (and the sign was lowered for framing); the lot pavement now extends one tile
+  past the fence (`_in_lot_floor`) so the chain-link sits ON the lot instead of
+  floating on dirt; the road's scattered ground-detail weeds (brown decals that
+  read as "dirt on the road") were removed on the road biome; and the pump
+  island was moved SOUTH, clear of the storefront (the lot extended north to fit).
+  NOTE: `CASSILDA'S` / `GAS FOR LESS` are player-facing art
+  strings in a prototype wired into nothing; if the lost road is wired in, they
+  move into `DIALOGUE.md` per its contract.
+- **2026-07 — Lost spaces: three biome FOCAL ISLANDS + a full-effort pass
+  (`TODO.md` #26).** The prototype's single corn field grew into three
+  biome-parameterized scenes — `lost_corn` / `lost_forest` / `lost_road`
+  (`lost_space` kept as a back-compat alias → corn) — each a hand-authored lit
+  island in the sea of generation. **Corn** became a real **crop circle**: a
+  grass clearing ringed by a near-solid WALL of corn, isolated by an empty moat
+  so the circle READS as a circle (the field's scattered corn clumps resume only
+  well beyond it), with the abandoned cult camp at the centre and a new wide
+  `haven_fire` bonfire whose glow fills the whole ring (the maintainer's note:
+  "the fire should protect the entirety of the inside of the circle"); the
+  clearing floor is grass, not packed dirt, with grass-tuft + leaf-litter ground
+  detailing. **Forest** is a still **pond** — animated `~` water made a barrier
+  by a see-over invisible solid (`x`) so you can't wade in — on a mossy bank, lit
+  by a fisher's `camp_fire` on the near bank (offset so the player lands behind
+  it, not on it) + lanterns on the far shore, dressed with reeds and a low mist,
+  framed by dense generated trees. **Road** is a fenced filling-station **lot** built to a
+  maintainer sketch: you land under a tall bright **neon pylon** (`neon_pylon`, a
+  separate solid carrying the zone light) at the **driveway**; the sealed store +
+  its own pump **canopy** over three dead pumps (`gas_station`, a building-scale
+  solid, the canopy standing IN FRONT of and lower than the store so it stops
+  eating it) sit at the lot's north-west; painted **parking bays** (`parking_bay`
+  floor decals) mark the asphalt; a **chain-link fence** (`chain_fence`,
+  see-through wire panels, solid `x` tiles) rings the lot with a gap at the
+  driveway; and the **winding paved road** runs past the east edge, generated
+  river-style (a low-freq value-noise meander PLUS a steady westward drift going
+  north, so the endless dashed road trends north-AND-west if you follow it).
+  Wrecks stall on the road and in a bay. Flat `R`-tile "rocks" (a plain 2D floor
+  disc, a VISION violation) were replaced by a real 3D `boulder` solid (a squat
+  faceted shaded stone), used on the forest pond bank + as roadside debris. New
+  kinds: `neon_pylon` (+ the light moved here from `gas_station`), `chain_fence`,
+  `parking_bay`, `boulder`, all tilt-registered. Two new light kinds —
+  `haven_fire` (the crop-circle bonfire) and `gas_station` (the neon glow) —
+  were added to `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`, and a new
+  `LOST_SPACE_SCENES` gating set gives every lost field a HEAVIER `_draw_dark`
+  gloom (150) so the lit island pops against a black sea. Wells and straw dolls
+  were pulled from the scatter (they read as Brimley cult props, wrong for the
+  liminal fields; maintainer: "No wells or straw dolls here"). Guard:
+  `terrain._build_water_bank_edges` now early-outs on a `procedural` scene (the
+  pond hand-places its own bank reeds) so the forest doesn't full-scan a
+  400-tile field. Still wired into NOTHING in-game — a feel prototype. Full gate
+  green. Canon (NARRATIVE §5 / DESIGN §7) UNCHANGED until the restructure is
+  decided + wired.
+- **2026-07 — The LOST SPACES: a procedural non-repeating in-between (prototype,
+  `TODO.md` #26).** Groundwork for the maintainer's Brimley-restructure idea:
+  dissolve one-square Brimley into building scenes hung off a dark liminal
+  IN-BETWEEN where the fold is FELT (you get lost) rather than told. Two tiers:
+  a **safe lit PATH** (the road, no tricks) and the **lost spaces** you fall into
+  off a DARK edge — dark fields that GENERATE new ground as you walk
+  (backrooms-style: forward never repeats, not the torus wrap), the only way out
+  a **light you HUNT** (an exit lantern held 6-20 tiles off, relocating out of
+  your sight so it stays findable). Landed as a working prototype:
+  `scenes/lost_space.py` (`LostSpace`) — a `Scene` whose `floor`/`objects` are
+  generator-backed proxies over a hashed per-tile field, with a huge finite
+  `w/h` and the player at CENTRE so collision + sight + the tilt render work
+  unchanged and the map edge never enters the window (the engine map found the
+  tilt renderer is already a camera-window system and collision/sight route
+  through `char_*_at`, so a generator-backed scene needs no engine refactor).
+  `nav_path` returns None (straight-line chasers); `DARK_SCENES` member (dark,
+  flashlight works); the hunted exit lantern moves live (`lit_at` reads
+  positions live). The field is a **hand-made ISLAND in a sea of generation**
+  (the maintainer's model): mostly EMPTY ground (dead grass / dirt / mud) with
+  sparse corn CLUMPS and scattered uncanny things to find (derelict vehicles,
+  lone trees, scarecrows, standing stones, a well, a corn altar) -- emptiness +
+  the occasional wrong thing, never a wall of texture. At the centre sits the
+  corn biome's FOCAL POINT, an **abandoned cult camp** (the congregation went
+  below and left it: a still-burning `camp_fire` ringed by bedrolls + log seats
+  on worn dirt), whose fire lights the clearing -- a haven that is lit and
+  orienting but NOT a true refuge. The **exit light is held until you leave the
+  firelight**: the lit safe-feeling place is a dead end, and you escape by
+  walking out into the dark to hunt the way out. Registered as `lost_space`
+  but wired into NOTHING in-game (a feel prototype). Guarded: the scene is
+  `procedural=True` so smoke skips its flood-fill + full-grid scans (a 400-tile
+  field would otherwise hang them), and its grid proxies are bounded so stray
+  iteration terminates. Full gate green. The design model + the open decision
+  (whether to commit the restructure) live in `TODO.md` #26; canon (NARRATIVE §5
+  "one square scene", DESIGN §7 the fold) is UNCHANGED until it is decided + wired.
+- **2026-07 — The storm's STAGE: ev-driven surface darkening (`TODO.md` #25,
+  LIVE).** The first LIVE slice of the storm-King redesign, and the stage the
+  amalgam-cut flood will later fill. The surface world (`STORM_STAGE_SCENES`:
+  Brimley + `OUTDOOR_SCENES`) now DARKENS with the evidence count: `_draw_dark`
+  runs there too, at a gloom that ramps with the rot stage (`STORM_DARK_GLOOM =
+  (0, 44, 92, 138)`). Stage 0 is full day (gloom 0 → early-out, so ev0 is
+  byte-identical, `capture_world --diff` clean); by stage 3 it is night, the
+  civic yard-lights threading the roads become ISLANDS (the existing lightmap
+  clears a pool under each), and the flashlight is enabled outdoors
+  (`_flashlight_lit`) so its light-draws-Him double-edge (`VIS_LIT_RISE`)
+  applies there too. The whole-frame lightmap multiply darkens the sky for
+  free, and the blind-spot sight fog (`_draw_sight_fog`, drawn AFTER
+  `_draw_dark`) darkens + thickens with the same stage gloom so the UNSEEN
+  region matches the night instead of reading as a bright gray wash over a
+  dark town (the blind spot should be the darkest). Framed as world rot's
+  LIGHT twin (the ashfall's companion, DESIGN §2):
+  *understanding* thinning the veil, NOT a day/night cycle — the "one
+  continuous daytime state" invariant holds (no `day_phase`/`day_count`;
+  NARRATIVE reconciled). VISUAL + flashlight only; the light/dark COVER split
+  and the storm flood are the next slices (`TODO.md` #25). Full gate green.
+- **2026-07 — The Mask became a REAL 3D object + the bearer power-up settled
+  (dormant, `TODO.md` #25).** A visual pass on the storm-King's Mask. It had
+  been a flat billboard (a front card and a back card, foreshortened by a
+  horizontal squash) that collapsed to a straight sliver at profile and read
+  flat; a stopgap "edge crescent + nose" only made it worse. The maintainer's
+  call: "one object that rotates," no swapping between drawings, no nose.
+  Rebuilt as **`draw_pallid_3d`** — a single curved SHEET, the FRONT CAP of an
+  ellipsoid (semi-axes Rx<Ry, a REAL depth Rz), a bent oval of "paper", NOT a
+  closed egg — rotated by `yaw` and projected, so the face, the bent-crescent
+  profile (depth Rz, never a flat line and never a solid oval), and the pale
+  concave inside seen from behind all fall out of the SAME geometry. (A closed
+  ellipsoid was tried first; its dark FAR cap showed at profile and read as a
+  solid egg, so the far cap was dropped — the maintainer's "a mask is a bending
+  piece of paper.") This SUPERSEDES the earlier sub-player + "always
+  camera-facing" rule: the Mask is player-scale and a prop that turns to face
+  you or away, respecting the tilted world (the flat `carved_pallid_surface`
+  is kept only as the face-art reference; the transient
+  `carved_pallid_back_surface` / `_mask_edge_crescent` swap helpers were cut).
+  A follow-up pass gave it the 2D look: the carved face (pale plate, deep jagged
+  sockets + gold pupils, centre seam, hairline crack) is drawn as 3D-anchored
+  overlays on the FRONT face ONLY, so they cull as it turns — **no eyes from
+  behind**. BOTH sides render in the pale bone colour, so from behind it reads
+  as a mask (its pale concave inside), never a dark half; smoothed (high
+  ambient + resolution).
+  The **bearer power-up** also settled: the possessed amalgam is simply a
+  BIGGER amalgam (`BEARER_SCALE`) wearing the Mask + a crown of ember-cuts
+  (`_bearer_crown`) — size is the tell, not a busier body (an earlier chaotic
+  version with fused extra bodies, a gold rift, scattered eyes, and big
+  reaching arms was cut; the maintainer kept the crown, dropped the arms).
+  Still dormant (mask=None for every ordinary amalgam → byte-identical, full
+  gate green). Previews `tools/preview_mask_spin.py` (the full spin) +
+  `tools/preview_bearer.py`.
+- **2026-07 — The storm ENGINE (`systems/storm.py`), dormant.** The second
+  slice of the storm-King redesign (`TODO.md` #25): a standalone `Storm` sim
+  the game imports nowhere yet. It holds the single migrating Mask bearer (the
+  Mask sinks on one unit and rises from another, one storm-wide), units that
+  drift toward His **lagged sense** of the player (luck, not omniscience: the
+  sense snaps to your true position only every few seconds), and the
+  **light-slows-never-burns** rule (a lit unit is slowed to a fraction and
+  eases back out of the pool, but is never dispelled — that stays the
+  Watchers'). The Mask draws at **player scale** (the maintainer's "the full
+  1", revising the earlier sub-player sizing). Preview `tools/preview_storm.py`
+  runs it over time (the Mask migrating #5→#2→#0, the flood massing on the
+  refuge, the pool staying clear). Integration (real dark-spot anchors off the
+  darkening, tilt projection, the catch, retiring THE UNFOLDING) is #25's later
+  slices.
+- **2026-07 — The Pallid Mask part (the storm-King redesign's first slice,
+  dormant).** The maintainer began reworking the King away from THE UNFOLDING
+  (`rendering/king_unfold.py`, the 4D everting mass) toward the shadow family's
+  apex: the King as a **STORM** with no single body, His attention flooding the
+  dark, and the Mask carried through it as a **part**, not a face. Ran as a
+  concept loop in scratchpad (v1 floating mask → rejected; masked apex body →
+  "just another amalgam"; the mask-as-part with one migrating bearer →
+  approved). This slice landed the **art asset only, dormant**:
+  `carved_pallid_surface` (the bone↔wood carved-pallid mask, no halo/mouth,
+  deep recessed sockets, gold pinprick) + `draw_pallid_mask_part` (it rides
+  out of its own cut, held at the rim, **sub-player scale**, **always
+  camera-facing** — His regard, the one VISION exception) + a `mask=` kwarg on
+  `draw_amalgam_sprite`. It is NEVER dealt by `assemble()`, so every ordinary
+  amalgam is byte-identical (full gate green, `capture_world --diff` clean).
+  Preview `tools/preview_pallid_part.py`. The storm STATE (one migrating
+  bearer, light-slows-not-burns, corn-fills-with-dark, retiring THE UNFOLDING)
+  is designed but unbuilt — `TODO.md` #25 carries the locked decisions and the
+  build order; canon still describes THE UNFOLDING because that is what ships.
 - **2026-07 — The Watcher-variety program landed as THE AMALGAMS**
   (`rendering/amalgam.py`, `AMALGAM_CHANCE`, DESIGN.md §1). The program
   ran as a maintainer-driven concept loop in session scratchpad: a
@@ -173,6 +377,28 @@
 
 ## The King, the Moths, the evidence ladder
 
+- **2026-07 — The Moths were CUT entirely (reverses the addition below).**
+  The herald swarm was removed root and branch: the sim
+  (`_new_moth`/`_spawn_moths`/`_tick_moth_shed`/`_tick_moth_seek`/
+  `_moth_seek_spot`/`_tick_moths`/`_moth_spent`/`_log_moth_note` in
+  `rot_mixin`), the art (`rendering/moth.py`, deleted), the `MOTH_*` config
+  block and `MOTH_SCENES`, the `game._moth_field` init + the three per-frame
+  ticks, the render draw pass, the moth-lamp dark-cover break, the
+  `the_moths` case note, and `tests/stealth.py` §9. **Why:** the moths never
+  had a home in the fiction (NARRATIVE never named them — they were pure
+  mechanic); they doubled the Watchers' "His attention made local" job; and
+  they inverted the game's own light metaphor (light draws Him, yet a moth
+  is the thing drawn to light). The ladder's telegraph beats survive intact
+  as the `the_turning` (ev2) and `the_breath` (ev3) notes; nothing gated on
+  moths, so no progression changed. **One consequence:** the moth flare was
+  the blackout system's only live trigger. The blackout machinery
+  (`_tick_power`/`_genset_down`/`Scene.power_on`/`BLACKOUT_DUR`, DESIGN §6)
+  is KEPT as the light-pillar foundation, now trigger-less in play and
+  guarded synthetically by `tests/stealth.py` §17 (which drives
+  `_genset_down` directly); the gas-genset fuel/failure economy that will
+  fire it is deferred (`TODO.md` #21). Docs reconciled: DESIGN §1 ladder,
+  CLAUDE.md layout/code-map, TODO #21/#23, DIALOGUE.md Part B,
+  creature-design skill.
 - **2026-07 — The evidence ladder built out in full.** Ev 0: town reads
   wrong but no cult patrols spawn. Ev 1: cult wakes. Ev 2
   (`KING_TURNS_HEAD_EV`): a telegraph note ("the_turning") — his attention

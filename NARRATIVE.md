@@ -312,10 +312,19 @@ never predation.
   King-catch furnace, the BREAK blast) must read as the same place.
   Any pale-teal or green cast is off-model (open work: `TODO.md` #19).
 - **The names stay off the page.** *Carcosa*, *the King in Yellow*,
-  and *the Yellow King* never appear in player-facing text — Chambers
-  is the inspiration, never quoted. The SEAL ending's black stars and
-  twin suns are the one deliberate reference, and it stays imagery
-  only, unnamed (guarded: `tests/flow.py` §33).
+  and *the Yellow King* never appear in player-facing text — those
+  three strings exactly, and they are the ones guarded
+  (`tests/flow.py` §33). Chambers is the inspiration, not a quotation
+  to be spent: the SEAL ending's black stars and twin suns stay
+  imagery only, unnamed.
+  **One approved exception, and it proves the rule's shape:** the lost
+  road's filling station is named **CASSILDA'S** on its own signage
+  (`DIALOGUE.md`, "Lettering the player reads in the world"). It works
+  because it does not name the cosmology to anyone — it reads as an
+  ordinary family store, and a player who knows the play gets a chill
+  rather than an explanation. That is the whole test for any future
+  echo: **it must land as the mundane world first.** A name that only
+  pays off as a reference is a quotation, and those stay off the page.
 
 ---
 
@@ -571,7 +580,11 @@ purpose, and keep each one guarded where a guard exists.
 - **The car answers only to the Sign.** The fold killed it; nobody
   sabotaged it. → §1, §7
 - **The world holds one continuous daytime state** (no day/night
-  cycle). → `DESIGN.md`
+  cycle; no `day_phase` / `day_count`). The **surface darkens with the
+  evidence count** (the storm's stage, `TODO.md` #25) — but that is world
+  rot's LIGHT twin, *understanding* thinning the veil as His attention
+  gathers, never a clock: the daytime state does not oscillate and time is
+  not tracked. → `DESIGN.md` §2
 - **Item and scene keys are load-bearing** (logic + the one in-session
   save): `mom_notebook`, `pallid_mask`, `cult_calling`, `cult_bargain`,
   `cult_digging`, `cross`, `robe`, `unsent_letter`, `flashlight`,

@@ -474,14 +474,15 @@ class Scene:
     # LOOKS lit IS lit to the stealth model.
     _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
                     "campfire": 80.0, "camp_fire": 88.0,
+                    "haven_fire": 200.0, "neon_pylon": 190.0,
                     "lantern": 60.0, "candle": 55.0,
                     "yard_light": 85.0, "generator": 42.0,
                     "wall_lamp": 62.0, "drop_bulb": 58.0,
                     "kerosene_lamp": 40.0}
     # The genset-powered ELECTRIC subset: these emit (and gate) only while
     # the scene's power is on (`Scene.power_on`, maintained by
-    # Game._tick_power -- a moth flare blacks a room out for a spell).
-    # Fire keeps burning through a blackout.
+    # Game._tick_power off the `_genset_down` blackout timers). Fire keeps
+    # burning through a blackout.
     _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
 
     def light_sources(self):

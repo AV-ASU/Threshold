@@ -155,17 +155,21 @@ its head) and pings the cult to **investigate the body**, and the body
 > evidence-pickup autosave (`Game._autosave`, play-notes) persists it like
 > any other arg. Guarded: flow §27/§32.
 
-### The evidence ladder, the Moths, the Watchers, the deep-water WADE
+### The evidence ladder, the Watchers, the deep-water WADE
 
 > Moved whole from `CLAUDE.md` (2026-07 doc consolidation: one fact, one
 > home -- these systems' only full descriptions used to live in the entry
-> point instead of the design doc).
+> point instead of the design doc). The **Moths were cut (2026-07)**: the
+> King's herald swarm never had a home in the fiction (NARRATIVE never
+> named them), doubled the Watchers' "His attention made local" job, and
+> inverted the game's own light metaphor (light draws Him, yet a moth is
+> the thing drawn to light). Their telegraph beats survive as the
+> `the_turning` / `the_breath` notes; the ladder below reads without them.
 
 - **The evidence LADDER (2026-07)**: each surface beat flips a visible
   world state. **Ev 0**: the town is only wrong — **no cult patrols
   spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
-  far up the road, ONE omen moth pre-drifting his road
-  (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
+  far up the road. **Ev 1**: the
   cult wakes (patrols spawn). **Cultist spawn geography (2026-07):** a cult
   scene keeps `Scene.cult_target` roamers filled (default `CULT_REGULARS` 2),
   spawning them at the farthest unoccupied point in `Scene.cult_spawns` (a
@@ -176,36 +180,14 @@ its head) and pings the cult to **investigate the body**, and the body
   the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
   **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
   evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
-  attention finds YOU — a single SEEKER moth materialises in the player's
-  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
-  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
+  attention finds YOU — a one-time telegraph note lands
   (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
   but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
   (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
   its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
   NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
   window to reach the lodge for the Invitation before the hunt begins
-  (decouples the spike from progression). Then his shedding starts and the
-  seeker slows to `MOTH_SEEK3_*` (5-6 min).
-- **The Moths** (the King's heralds; `MOTH_*` config, sim in
-  `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
-  `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
-  billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
-  every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
-  moths into whatever room HE occupies (`_roam_king["scene"]`), plus
-  the player-seeker drip above. They **PERSIST and STACK per room**
-  (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
-  fill fuller and fuller, and the field only thins when the player
-  **spends** one (`_moth_spent`: a pop, or a flare burning out). So a
-  room whipping with fast fliers means *he keeps coming back here*.
-  Enter one's `MOTH_RADIUS` and it KINDLES (`MOTH_KINDLE` window: back
-  out, axe it quietly up close, or spend a round from range); the
-  window expiring is the **FLARE**: a `MOTH_REACH` noise the cult
-  converges on, a visibility spike capped under the King, the dark
-  broken around it (`_tick_dark_cover`) — it burns `MOTH_FLARE_DUR`,
-  then **falls** as a charred husk that stays for the visit. First
-  flare files a case NOTE (never evidence). Guarded by
-  `tests/stealth.py` §9.
+  (decouples the spike from progression).
 - **The Watchers** (His gaze made manifest; the play-notes rework made them
   **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
   `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
@@ -308,6 +290,20 @@ What rises with the stage:
   It is **the pressure of the vessel made visible** — His attention
   settling on you, not snow, not weather. Light at stage 1, a steady
   yellow drift by stage 3.
+- **The daylight drains — the surface darkens with the stage (the storm's
+  STAGE; TODO #25, LIVE).** The outdoor world (`STORM_STAGE_SCENES`: Brimley +
+  `OUTDOOR_SCENES`) dims monotonically with the rot stage, routed through the
+  same `_draw_dark` lightmap the dim interiors use at a gloom that ramps 0 → 138
+  (`STORM_DARK_GLOOM`): stage 0 is full day (early-out, byte-identical), stage 3
+  is night. The civic yard-lights threading the roads (§6) become ISLANDS, and
+  the flashlight earns its place outdoors (with its light-draws-Him cost, §1).
+  The blind-spot sight fog (`_draw_sight_fog`, drawn after `_draw_dark`) darkens
+  and thickens with the SAME stage gloom, so the unseen region is the darkest
+  part of the night rather than a bright gray wash floating over a dark town.
+  It is the ashfall's LIGHT twin — the veil thinning as His attention gathers,
+  never a day/night cycle (no `day_phase`/`day_count`; the daytime invariant
+  holds, NARRATIVE §canon). VISUAL + flashlight so far; it is the STAGE the
+  amalgam-cut storm (TODO #25) will fill (no light = danger, taken outdoors).
 - **The people do NOT change — the man hearing them does (TODO #22c,
   2026-07).** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the
@@ -638,6 +634,14 @@ Built into the procedural draw layer (`scenes/base.py`,
     century and are gone (the bridge keeps one hung lantern as a personal
     accent). Both prop kinds are anchored `SOLID_PROPS` volumes (never
     swiveling cards), verified in the 3D tilt.
+  - **A light kind lives in TWO tables, and the gate checks it.** The
+    MECHANICAL cover radius stealth reads (`Scene._LIGHT_KINDS`) and the
+    VISIBLE pool `_draw_dark` casts (`FIXTURE_POOLS`) must both carry any
+    emitting kind: in only the first it gates as lit but shines nothing, in
+    only the second it shines but gives no cover. `tests/conventions.py`
+    asserts the two agree, with the shipped disagreements named as explicit
+    exceptions to triage (`campfire`, the DEAD indoor scorch decal, currently
+    gates as lit; `burn_barrel` shines without giving cover).
   - **The shared light logic (the "carry it underground" foundation).**
     `_draw_dark` (`systems/render_mixin.py`) no longer special-cases
     `wall_torch`: it iterates **`FIXTURE_POOLS`** (the visible-light twin of
@@ -683,8 +687,11 @@ Built into the procedural draw layer (`scenes/base.py`,
     TODO #21 first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
     `wall_lamp`, `drop_bulb`, `yard_light`) emit only while their scene's
     power is on (`Scene.power_on`, maintained by `Game._tick_power` off
-    the `_genset_down` blackout timers). A **moth flare blacks its room
-    out** for `BLACKOUT_DUR`; during it the electric fixtures die in
+    the `_genset_down` blackout timers). A **blackout blacks its room
+    out** for `BLACKOUT_DUR` (no live trigger since the moths were cut,
+    2026-07 -- the gas-genset failure that will fire it is deferred,
+    TODO #21; the mechanism stands ready, guarded synthetically by
+    `tests/stealth.py` §17); during it the electric fixtures die in
     every layer at once -- no visible pool, no mechanical `lit_at` cover,
     and the fixture ART itself goes dark (a dead lamp is dark glass; the
     office radio's static crawl and creeping needle stop, the
@@ -940,10 +947,6 @@ HE made (it shuts behind you). The Threshold doorframe stays plain --
 the world's folds scream so that the real door's silence lands (NARRATIVE §2).
 
 ### The rift pane -- 4D construction and look
-
-> Folded in from the retired `PORTALS.md` (2026-07). Its "decisions
-> landed" material was already this section's "one phenomenon, two
-> presentations"; these are the parts unique to it.
 
 A portal is the edge of a 4D "pane" poking up into Brimley. Face it
 **head-on** and you see through it (the peek) and can step through; step to
@@ -1293,8 +1296,7 @@ sharpest knife in the game, and it cuts only the hand that holds it.
 
 ## 10. The tilted camera
 
-> Folded in from the retired `CAMERA.md` (2026-07). The oblique view is
-> the shipped default; this section is its source of truth.
+> The oblique view is the shipped camera; this section is its source of truth.
 
 Keep the game **100% procedural** (no image assets) but render **most
 objects as volumetric solids projected to 2D**, lock the camera to an
@@ -1403,7 +1405,18 @@ Optional `yaw` spins the world about the vertical axis (the head-turn).
 - **The tilt is the only camera.** There is no flat/pitch-0 view; the pitch
   is locked. Verify render changes with a before/after tilt capture
   (`tools/capture_world.py`), not just smoke.
-- **Keep it asset-free.** No PNGs, no bake step. Solids are math.
+- **Judge a scene from all four facings with the TOOL**
+  (`tools/capture_facings.py <scene> [--bright]`), never a hand-rolled
+  capture. `_update_camera` sets the camera POSITION only and never its yaw,
+  so an ad-hoc render silently produces the NORTH view four times; the tool
+  sets the yaw itself and fails if the facings do not differ. Most tilt
+  defects (a mirrored sign face, an undecorated flank, a swivelling card, a
+  floating portal base) are invisible from the one angle you would have
+  checked. See `VISION.md`.
+- **Keep it asset-free.** No PNGs, no bake step. Solids are math. World
+  lettering is drawn geometry too (`rendering/props.py` `_GLYPH` +
+  `_draw_neon_word`), not a system font; `tests/conventions.py` freezes the
+  remaining font uses by count so a new one fails the gate.
 - **Previews before live wiring.** Render to PNG/GIF headless, eyeball it,
   *then* touch `game.py`. Previews (headless, self-configure SDL dummy
   drivers): `tools/preview_{pseudo3d,tilt,skybox,occlusion,look_control,sight,blindspot_live}.py`.
@@ -1433,9 +1446,6 @@ continuous traversable z (a big collision/AI/depth-sort/save lift).
 ---
 
 ## 11. Audio
-
-> Folded in from the retired `AUDIO.md` (2026-07). The 2026-06 call-site
-> audit that also lived there was fully actioned and has been dropped.
 
 The game ships **zero audio assets**. Every sound -- foley, stings, beds,
 "music" -- is synthesized at startup in `systems/audio.py` (pure-Python
@@ -1568,10 +1578,8 @@ spending a voice blip on UI movement, and Mara's unmask carries a quiet
 
 ## 12. Stealth -- detection is graded
 
-> Folded in from the retired `STEALTH_REWORK.md` (2026-07). The mechanic is
-> BUILT and guarded end-to-end by `tests/stealth.py`; the replaced binary
-> `hidden`-flag system and the build-sequencing plan that also lived there
-> have been dropped as fossils. Tuning is the open item (`TODO.md` #5).
+> BUILT and guarded end-to-end by `tests/stealth.py`. Tuning is the open
+> item (`TODO.md` #5).
 
 Hiding is not an invisibility toggle; it is a **positional gamble**: cover
 lowers how detectable you are, distant enclosure is strong, a searcher

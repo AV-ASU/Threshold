@@ -1,30 +1,46 @@
 # THRESHOLD — Claude guide
 
-> **HARD RULE #0 — READ THE CANON IN FULL, EVERY TIME, BEFORE YOU ANSWER.**
-> Before responding to ANY request about THRESHOLD — a question, a review, a
-> design chat, a one-line edit, anything — you MUST read **`CLAUDE.md`,
-> `NARRATIVE.md`, `DESIGN.md`, `TODO.md`, `DIALOGUE.md`, and `VISION.md` IN
-> FULL**, from top to bottom, in this same turn.
-> Not a section. Not a grep. Not "I read them earlier." Not from memory or a
-> summary. All six, whole, every single time, no exceptions. Treat your
-> memory of them as STALE by default — the docs are the only source of truth,
-> they change, and answering from a half-remembered version is how canon gets
-> broken (it has been, repeatedly). If you have not read all six this turn,
-> you are not ready to answer: read them first, then answer. This is the
-> project's non-negotiable first step; do it automatically, never wait to be
-> asked, and never announce you are "about to" instead of doing it.
+> **HARD RULE #0 — READ THIS FILE EVERY TURN, AND THE DOC YOUR CHANGE
+> TOUCHES.** Before responding to ANY request about THRESHOLD, read
+> **`CLAUDE.md`** (this file) in full — it is the operating guide and the
+> index. Then read, IN FULL, whichever of the canon docs your work actually
+> touches:
 >
-> **The six docs are current-state only — history lives in
-> `CHANGELOG.md`, which is explicitly NOT part of this rule (2026-07
-> restructure).** Full-read-every-turn only stays affordable if there's
-> little to read. Each of the six states what IS true today, once, without
-> re-narrating how it got that way; the "2026-07 rework, superseded the
-> old X" story for any landed change belongs in `CHANGELOG.md` instead.
-> `CHANGELOG.md` is never required reading before answering — read it only
-> when you're chasing down *why* something is the way it is, or writing a
-> new entry for work you just landed. If a doc you're editing has drifted
-> back into narrating its own history inline, that's rot the same as a
-> stale fact: move the history out, leave the current state.
+> | If the turn touches… | Read in full |
+> |---|---|
+> | **any word the player reads** (a line, a notice, a name, on-screen lettering) | **`DIALOGUE.md`** — non-negotiable |
+> | **a fact the fiction asserts** (cast, place, timeline, evidence, endings) | **`NARRATIVE.md`** — non-negotiable |
+> | how a system behaves, or its code map | the relevant **`DESIGN.md`** section |
+> | how anything **looks** or is laid out | **`VISION.md`** (it is short; read it whole) |
+> | what to work on, or a ticket's scope | **`TODO.md`** |
+> | *why* something is the way it is | **`CHANGELOG.md`** (never required otherwise) |
+>
+> When in doubt, read it. Treat your memory of every doc as STALE — they
+> change, and answering from a half-remembered version is how canon gets
+> broken. The two rows marked non-negotiable are the ones that have actually
+> broken things: **if your diff writes text the player reads, or asserts a
+> fact about the fiction, the whole doc gets read, no exceptions.**
+>
+> **Why this is a router and not "read all six every time."** It used to be
+> all six, ~90k tokens, every turn. It was replaced because it did not work:
+> sessions that read the entire canon front to back still shipped a system
+> font into a procedural-only renderer, props that render as flat stains,
+> and a "verified all four facings" that was the same north view four times.
+> **Reading was never the failure — applying at the moment of action was.**
+> So the enforcement moved to where it can actually fire: **`tests/conventions.py`**,
+> in the gate, which fails on the mechanical half of these rules (fonts,
+> tilt-set registration, light-table pairing, dead doc references, scene-gate
+> typos, lost-space silence). The docs keep what a machine cannot judge:
+> canon facts, intent, taste, and why. **If you find yourself relying on
+> memory of a rule that a script could check, the fix is to write the check**
+> (see "Make the check, not the note" below).
+>
+> **The six docs are current-state only — history lives in `CHANGELOG.md`.**
+> Each states what IS true today, once, without re-narrating how it got that
+> way; the "2026-07 rework, superseded the old X" story for any landed change
+> belongs in `CHANGELOG.md` instead. If a doc you're editing has drifted back
+> into narrating its own history inline, that's rot the same as a stale fact:
+> move the history out, leave the current state.
 >
 > **The six-doc canon.** This file (`CLAUDE.md`) is the project's entry
 > point and operating guide, and now the first of the six you read in full;
@@ -49,12 +65,9 @@
 >   four facings for your own check; one angle when you show the maintainer)
 >   instead of trusting the code. Plus how to capture.
 >
-> These six files are the ENTIRE doc canon. The old per-topic docs
-> (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
-> audit files) were folded into them and deleted (2026-07); their substance
-> is indexed in `CHANGELOG.md` under the section it landed in. When you
-> change a canon fact, change it in its ONE home and reconcile the others:
-> a detail that is true in one doc and stale in another is rot.
+> These six files are the ENTIRE doc canon. When you change a canon fact,
+> change it in its ONE home and reconcile the others: a detail that is true
+> in one doc and stale in another is rot.
 >
 > **`README.md` is not canon, and is deliberately thin.** It's the public
 > front door (install/run/controls), kept short on purpose so there's
@@ -85,15 +98,30 @@ the lethal apex pursuer. (See the tilted-camera track below + `DESIGN.md §10`.)
 # Run (needs a display)
 python main.py
 
-# Full test gate — runs all six harnesses (smoke + flow + stealth +
-# fold_pursuit + king_roam + render_smoke) and exits nonzero if any fails.
-# Self-configures SDL dummy drivers, so no env vars needed. Run from repo
-# root before every commit/push.
+# Full test gate — runs all seven harnesses (conventions + smoke + flow +
+# stealth + fold_pursuit + king_roam + render_smoke) and exits nonzero if any
+# fails. Self-configures SDL dummy drivers, so no env vars needed. Run from
+# repo root before every commit/push.
 python tests/run_all.py
 
 # Or run a single harness (same drivers, standalone):
+python tests/conventions.py  # the prose rules, enforced (runs in <1s)
 python tests/smoke.py        # scene-builder / spawn / exit / drop-rate smoke
 python tests/flow.py         # story-beat integration + canon guards
+
+# WHAT TOOLS EXIST? Run this BEFORE writing a throwaway script -- there are
+# 40+ headless tools and the one you want probably already exists.
+python tools/index.py [word]
+
+# LOOK at a scene from all four facings (the VISION.md look pass). Sets the
+# camera yaw itself and ASSERTS the facings differ, so it cannot hand back
+# the same view four times the way a hand-rolled capture does.
+python tools/capture_facings.py <scene_key> [--bright]
+
+# LOOK at a prop kind in isolation before placing it (scene-dressing step 2),
+# and ask what it is registered as (tilt set, light tables, placements).
+python tools/preview_props_sheet.py <kind> [...]
+python tools/kind.py <kind> [...]        # also: --stains, --unplaced
 
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
@@ -112,7 +140,7 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Layout
 
 - `main.py` — entry point: `Game().run()`.
-- `systems/game.py` — the orchestrator (~3k lines). State machine
+- `systems/game.py` — the orchestrator. State machine
   (`title` / `playing` / `transition`), `step(dt)`, scene loading
   (`load_scene_now`), the core update/input loop, combat, and
   `_reset_run_state()` (wipes per-run state on New Game; the `Game` instance
@@ -130,8 +158,8 @@ it renders the procedural sprites to a labelled PNG strip.
     cultist + fold/portal pursuit, visibility + evidence floor, death.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
-  - `systems/rot_mixin.py` — world rot/ashfall + the moth sim + the
-    hunting sheriff + the genset power link (`_tick_power`).
+  - `systems/rot_mixin.py` — world rot/ashfall + the hunting sheriff +
+    the genset power link (`_tick_power`).
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
   - `systems/tableau_mixin.py` — the **close-up examine tableaux**
@@ -178,7 +206,7 @@ it renders the procedural sprites to a labelled PNG strip.
     `CHANGELOG.md`. See `DESIGN.md` §11. Player-facing text is in
     `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
-  (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
+  (`scenes/__init__.py`). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
   - `scenes/base.py` — the `Scene` class + scene-builder helpers
@@ -192,6 +220,41 @@ it renders the procedural sprites to a labelled PNG strip.
     `terrain.py` for draw code, `base.py` for the Scene model. terrain
     depends only on `constants` + lazy `scenes`/`rendering.*` imports,
     never on `Scene`, so there is no cycle.
+  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26
+    prototype, wired into nothing in-game yet): a procedurally-generated,
+    NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
+    renderer is already a camera-window system and collision/sight route through
+    `char_object_at`/`char_floor_at`: a `Scene` whose `floor`/`objects` are
+    generator-backed proxies (`_GenGrid`, bounded so stray full iteration stops)
+    over a hashed per-tile field, with a huge finite `w/h` and the player at
+    CENTRE (the edge never enters the window), gets collision + sight + render
+    for free. It sets **`self.procedural = True`** — smoke (`tests/smoke.py`)
+    skips flood-fill + full-grid scans for any `procedural` scene (an infinite
+    field would hang them; `terrain._build_water_bank_edges` also early-outs on
+    it). `nav_path` returns None (straight-line chasers). **Biome-parameterized**
+    into three registered scenes — `lost_corn` / `lost_forest` / `lost_road`
+    (plus `lost_space`, a back-compat alias → corn). Each is a hand-authored
+    lit FOCAL ISLAND in the sea of generation: corn = a **crop circle** (grass
+    clearing + a corn-wall ring + an abandoned cult camp lit by a wide
+    `haven_fire`); forest = a **pond** (animated water + a see-over solid
+    barrier, a near-bank `camp_fire` + far-shore lanterns, reeds + mist); road =
+    a fenced filling-station **lot** (you land under a tall bright `neon_pylon`
+    at the driveway; the sealed `gas_station` building -- a Casey's-style
+    convenience store, **CASSILDA'S**, `STATION_NAME` in props, face-culled with
+    every side dressed, brick wainscot + storefront + red awning + a
+    procedural-neon-tube name fascia -- with a separate `pump_island` (canopy +
+    pumps, split out so it depth-sorts on its own) sit NW, the `neon_pylon` is a
+    googie bulb-star sign, `parking_bay` decals + `chain_fence` panels dress the
+    lot, and a winding
+    paved road generated river-style runs past the east edge, drifting west as it
+    goes north). The island light is the haven; the
+    hunted exit lantern is HELD until you leave that glow, then held 6-20 tiles
+    off (`lit_at` reads deco positions live). All three sit in
+    `LOST_SPACE_SCENES` (a `DARK_SCENES` subset with a heavier gloom so the
+    island pops). New light kinds `haven_fire` + `neon_pylon` live in
+    `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`; the road also adds
+    non-light solids `gas_station` / `chain_fence` / `boulder` and the
+    `parking_bay` floor decal.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -220,8 +283,8 @@ it renders the procedural sprites to a labelled PNG strip.
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
   - `decoration.py` — the `Decoration` prop class. Its per-kind draw is
-    dispatched by `getattr(self, f"_draw_{kind}")`; since 2026-07 the
-    ~128 `_draw_*` methods are split by theme into **mixin siblings**
+    dispatched by `getattr(self, f"_draw_{kind}")`; the `_draw_*` methods
+    are split by theme into **mixin siblings**
     (`deco_furniture` / `deco_lighting` / `deco_nature` / `deco_structure`
     / `deco_mine` / `deco_horror`, mixed into `Decoration`), with shared
     lighting/compass helpers in `decoration_common.py`. Like the
@@ -266,15 +329,20 @@ it renders the procedural sprites to a labelled PNG strip.
     `scale_mul` depth-scale (`KING_TILT_DEPTH_*`, looms as he closes). Stateless
     except a one-time cached `_FORM` + `_MASK_SURF`. Preview:
     `tools/preview_king_unfold.py`.
-  - `moth.py` — **the Moth**, the King's herald + first flying entity
-    (`draw_moth(surf,x,y,t,spread,glow,seed,flap,husk)`): tented ragged
-    wings at rest, a limb-knot snap at the flare, a crumpled husk on the
-    ground. Sim + spawn live in `systems/rot_mixin.py` (below).
   - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
-    from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel)`):
+    from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel,mask)`):
     a seeded 3-5 part deal from a 17-part library, each part emerging
     from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
-    this skin, behavior unchanged (DESIGN.md §1).
+    this skin, behavior unchanged (DESIGN.md §1). The **Pallid Mask part**
+    (`draw_pallid_3d` — the one 3D shell — driven through
+    `draw_pallid_mask_part`; the storm-King redesign, `TODO.md` #25) is an 18th
+    part NEVER dealt by `assemble()`, driven ONLY by the `mask=` kwarg
+    (player-scale, a REAL 3D object that turns a full 360 with the carved face
+    on its front hemisphere only — no eyes from behind — one bearer storm-wide)
+    — dormant until the storm system lands, so ordinary amalgams stay
+    byte-identical. The possessed bearer is just a BIGGER amalgam + a crown
+    (`BEARER_SCALE` / `_bearer_crown`). `carved_pallid_surface` is retained as
+    the flat 2D face-art reference.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the ONLY camera; the
     pitch is locked, there is no flat/pitch-0 view):** `camera.py` (`Camera.project(wx,wy,wz)`,
@@ -390,8 +458,8 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Threat model — the code map
 
 **The full current-state description of every threat system lives in
-`DESIGN.md`** (§1 the model + the King + the evidence ladder + the Moths +
-the Watchers + WADE, §2 world rot + Vane's fall, §12 graded stealth). This
+`DESIGN.md`** (§1 the model + the King + the evidence ladder + the
+Watchers + WADE, §2 world rot + Vane's fall, §12 graded stealth). This
 section is the CODE MAP only — where each system lives:
 
 - **visibility** [0,1] — `threat_mixin._tick_visibility`; `VIS_*` config.
@@ -414,9 +482,6 @@ section is the CODE MAP only — where each system lives:
   `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
-- **Moths** — sim in `rot_mixin` (`_tick_moth_shed`/`_tick_moth_seek`/
-  `_spawn_moths`/`_tick_moths`, the per-room `_moth_field`), art
-  `rendering/moth.py draw_moth`; `MOTH_*` config; stealth §9.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config; light pools + the beam BURN them
   (`WATCHER_LIGHT_BURN`); stealth §11.
@@ -436,19 +501,12 @@ section is the CODE MAP only — where each system lives:
 
 ## Conventions & gotchas
 
-- **Open canon-alignment work lives in `TODO.md`.** A 2026-06 narrative-
-  alignment pass settled a batch of story decisions; the **code changes to
-  make the game match** were tracked in the former `GAME_CHANGES.md`, now
-  **folded into `TODO.md`** (2026-07) with its open items tagged
-  `(was GAME_CHANGES §N)`. `NARRATIVE.md` is the **story bible** and the
-  canon source of truth (rewritten 2026-07: it locks FACTS, never
+- **Open canon-alignment work lives in `TODO.md`.** `NARRATIVE.md` is the
+  **story bible** and the canon source of truth: it locks FACTS, never
   phrasings; states what IS, not what isn't; one fact, one home; canon
-  invariants indexed at the bottom). The systems/design material that
-  used to live in it (threat-model canon, world rot, the implementation
-  map, the Works level design, art direction, fold mechanics) moved to
-  **`DESIGN.md`** — code comments cite `NARRATIVE §n` / `DESIGN.md §n`
-  in the NEW numbering.
-  Highlights that override older code/comments: the
+  invariants indexed at the bottom. Systems/design material lives in
+  **`DESIGN.md`** — code comments cite `NARRATIVE §n` / `DESIGN.md §n`.
+  Canon facts that override older code/comments: the
   **Ledger is the boxed old registers in the PADLOCKED Lodge cellar**
   (2026-07 rework, superseding the 2026-06 front-desk placement: the
   cellar key hangs on a nail behind the house, the desk keeps the
@@ -587,6 +645,14 @@ section is the CODE MAP only — where each system lives:
   is a `DARK_SCENES` subset for the explorable non-refuge interiors: a LIGHTER
   gloom (72) so a ground-floor room reads dim-lit-by-bulbs, not pitch-black
   (`_draw_dark`); lit by the genset `wall_lamp` fixture (DESIGN §6).
+  `STORM_STAGE_SCENES` (Brimley + `OUTDOOR_SCENES`, 2026-07) is the surface
+  world that DARKENS with the evidence count (the storm's stage, TODO #25 /
+  DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
+  (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
+  become islands and the flashlight works outdoors. Understanding-driven, NOT a
+  day cycle. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
+  `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
+  island reads as a bright island in a black sea (TODO #26).
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.
@@ -677,8 +743,8 @@ section is the CODE MAP only — where each system lives:
      actually read the thing). When you add a trigger, state the exact beat it fires on
      and verify it.
   3. **Mechanics in player-facing text.** No name/description/note/caption may state a
-     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", the old
-     moth note's "kill them quiet" tail, cut in the 2026-07 dialogue audit). State the
+     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence" tell,
+     cut in the 2026-07 dialogue audit). State the
      FICTION; never the system. (Companion to
      the no-dashes HARD RULE: player-facing strings are held to a higher bar than code.)
   4. **Editorializing / over-written captions.** A narrator beat states the fact and
@@ -778,6 +844,33 @@ section is the CODE MAP only — where each system lives:
   stale in another is rot). A change is not "done" until its docs match it,
   so before you commit, ask which of the six canon docs (plus `README.md`)
   your diff just made stale and fix them in the same breath.
+- **MAKE THE CHECK, NOT THE NOTE (the highest-leverage habit here).** When
+  you break a rule, or the maintainer catches the same class of mistake
+  twice, the fix is **not** another paragraph in a doc. Prose rules on this
+  project have a measurable failure rate: the conventions that never regress
+  (no dashes, no phantom furniture tiles, no diagonal wall joins) are the ones
+  a harness asserts; the ones that regress are the ones written down and
+  remembered. So:
+  - If it can be **grepped, counted, loaded, or diffed**, it belongs in
+    **`tests/conventions.py`** (in the gate, runs in under a second). Adding a
+    check there is usually ~15 lines and permanently retires the mistake.
+  - If it is about **how something LOOKS**, it belongs in a capture tool that
+    fails loudly — `tools/capture_facings.py` asserts the four facings
+    actually differ, because the eye demonstrably does not catch it.
+  - **Prove the check can fail.** Introduce the violation, watch it go red,
+    then revert. A check that cannot fail is not a check — this exact
+    omission is what let a "verified four facings" ship twice.
+  - **Freeze by COUNT, not by filename,** when allowlisting shipped
+    exceptions (see `FONT_BUDGET`): allowlisting a whole file lets a new
+    violation slip in beside an old one.
+  - Then, and only then, write the one-line rule in the doc and point it at
+    the check.
+  - **Check the shelf before you hand-roll.** `python tools/index.py` lists
+    every tool with its job. A session once wrote four scratchpad scripts to
+    preview a prop, capture four facings, and inspect a light while
+    `preview_props_sheet.py`, `capture_facings.py`, and `light_audit.py` sat
+    in `tools/` doing each better. If the tool you need is genuinely missing,
+    **write it into `tools/`, not the scratchpad**, so it exists next time.
 - **CONSOLIDATE RULE LISTS, DON'T JUST APPEND.** The PLAYTEST ERROR CLASSES
   and SCENE-DRESSING PROCESS lists below exist because specific failures
   happened; that's healthy. But a list that only ever grows by appending a
@@ -797,8 +890,8 @@ section is the CODE MAP only — where each system lives:
   merge it into `main`** in the same action — not to stop after creating the
   PR and ask. Don't ask for a second confirmation.
 - **Verify before you commit.** Run compile + `python tests/run_all.py` (the
-  full gate: smoke + flow + stealth + fold_pursuit + king_roam + render_smoke) and confirm green
-  BEFORE `git commit`/`push`. A commit was pushed twice this project with a
+  full gate: conventions + smoke + flow + stealth + fold_pursuit + king_roam +
+  render_smoke) and confirm green BEFORE `git commit`/`push`. A commit was pushed twice this project with a
   `NameError` because edits were batched and not re-verified. For
   rendering/refactor work also run the byte-identity gate
   (`tools/capture_world.py --tag before/after`, then `--diff`). CI also runs

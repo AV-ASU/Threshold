@@ -22,7 +22,6 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_revolver_held, draw_gun_fire,
                                draw_king_death, view_from_facing, KING_UNFOLD)
 from rendering.king_unfold import draw_unfold_catch
-from rendering.moth import draw_moth
 from rendering.transform import draw_vessel_bloom
 from rendering.furniture import FURNITURE as _FURN_SPECS
 from systems.config import *        # noqa: F401,F403
@@ -105,6 +104,18 @@ FIXTURE_POOLS = {
     "brazier":      (106,  (255, 150, 56),   76,   12,    0,   0.16, 6.0),
     "burn_barrel":  (94,   (255, 150, 56),   68,   16,    0,   0.16, 6.0),
     "camp_fire":    (106,  (255, 158, 60),   76,   4,     0,   0.18, 5.0),
+    # the lost-space CROP-CIRCLE bonfire: a wide, high-peak warm pool that
+    # fills the whole grass clearing inside the corn ring (the fire "protects
+    # the entirety of the circle"). Bigger than a cult camp_fire on purpose --
+    # the lit haven you fall into, not a background campsite.
+    "haven_fire":   (250,  (255, 156, 58),  112,   6,     0,   0.16, 4.5),
+    # the derelict station's NEON: a saturated cold sign-glow (a SIGN is
+    # allowed colour where room-light isn't). Elevated on its pole, so the
+    # pool falls on the forecourt in front of the dark station.
+    # the derelict station's NEON PYLON: a saturated cold sign-glow (a SIGN is
+    # allowed colour where room-light isn't), thrown from high on its pole so
+    # the pool floods the whole lot you land on.
+    "neon_pylon":   (280,  (255, 226, 168),  104,   96,    0,   0.06, 15.0),
     "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
@@ -469,6 +480,15 @@ class RenderMixin:
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
                                      SIGHT_ANG_FEATHER, LOS_STEP)
         aim = self.look.aim
+        # On the storm-darkened surface (TODO #25) the fog must darken WITH the
+        # scene: it is drawn AFTER _draw_dark, so a fixed gray reads too bright
+        # over a night town. Pull it toward black and thicken it by the stage
+        # gloom (the blind spot is UNSEEN -> it should be the darkest). ev0 gloom
+        # 0 leaves the cold thin gray unchanged (byte-identical); scoped to storm
+        # scenes so the DARK interiors keep their fog.
+        storm_scene = (self.scene is not None
+                       and self.scene.key in STORM_STAGE_SCENES)
+        fog_gloom = STORM_DARK_GLOOM[self._rot_stage()] if storm_scene else 0
         # The fog layer is a pure function of the player's ground point, the
         # aim heading, the camera pose, and the scene. All of those hold still
         # whenever the player is settled (standing, reading, in dialogue) --
@@ -481,7 +501,7 @@ class RenderMixin:
         fkey = (self.screen.get_size(),
                 int(self.player.x / 3), int(self.player.y / 3),
                 int(aim * 100), int(cam.cam_x / 3), int(cam.cam_y / 3),
-                round(cam.yaw, 3), round(cam.scale, 3))
+                round(cam.yaw, 3), round(cam.scale, 3), fog_gloom)
         fc = self._sight_fog_cache
         # Identity-held scene ref (not id(): a freed scene's id can recycle).
         if (fc.get("key") == fkey and fc.get("scene") is self.scene
@@ -491,7 +511,12 @@ class RenderMixin:
         fog = fc.get("surf")
         if fog is None or fog.get_size() != self.screen.get_size():
             fog = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
+        fr, fg, fb, fa = 58, 60, 66, SIGHT_FOG_ALPHA    # cold, thin gray
+        if fog_gloom > 0:                               # match the darkened night
+            darken = 1.0 - min(0.72, fog_gloom / 255.0 * 1.3)
+            fr, fg, fb = int(fr * darken), int(fg * darken), int(fb * darken)
+            fa = min(205, SIGHT_FOG_ALPHA + int(fog_gloom * 0.72))
+        fog.fill((fr, fg, fb, fa))
         # The sight math is ground-plane WORLD space; the apex is the player's
         # ground point. Cast a fan of rays across the cone, marching each one
         # out until it crosses a solid (Scene.blocks_sight, the same predicate
@@ -595,6 +620,21 @@ class RenderMixin:
         self._overlay_dark_used += used
         return used
 
+    def _draw_emissive_signs(self):
+        """Redraw self-lit SIGNS (the lost-road neon pylon) AFTER the darkness
+        overlay, so their neon reads bright instead of being multiplied toward
+        black -- an elevated sign sits above its own ground light pool and would
+        otherwise darken to a bare silhouette."""
+        if self.scene is None:
+            return
+        key = self.scene.key
+        if key not in DARK_SCENES and key not in STORM_STAGE_SCENES:
+            return
+        from rendering.props import draw_prop_solid
+        for d in getattr(self.scene, "decorations", []):
+            if getattr(d, "kind", None) == "neon_pylon":
+                draw_prop_solid(self.screen, self.camera, d)
+
     def _draw_dark(self):
         """Dark interiors/underground (DARK_SCENES) render as a navigable
         gloom: a moderate black tint over the whole scene so it reads
@@ -608,7 +648,9 @@ class RenderMixin:
         and sit a touch heavier."""
         if self.scene is None or self.player is None:
             return
-        if self.scene.key not in DARK_SCENES:
+        key = self.scene.key
+        storm_scene = key in STORM_STAGE_SCENES
+        if key not in DARK_SCENES and not storm_scene:
             return
         psx, psy = self._player_screen()
         lit = self._flashlight_lit()
@@ -671,9 +713,17 @@ class RenderMixin:
         # overlapping pools genuinely brighten their shared floor, and the
         # seams are gone. The colored pools still ADD on top; shadows
         # still SUB.
-        gloom = (130 if self.scene.key in CULT_DARK_SCENES
-                 else 72 if self.scene.key in DIM_INTERIOR_SCENES
-                 else 100)
+        if storm_scene:
+            # the surface darkens with understanding, not a clock (TODO #25):
+            # gloom ramps with the rot stage; stage 0 is full day (early-out).
+            gloom = STORM_DARK_GLOOM[self._rot_stage()]
+            if gloom <= 0:
+                return
+        else:
+            gloom = (150 if key in LOST_SPACE_SCENES
+                     else 130 if key in CULT_DARK_SCENES
+                     else 72 if key in DIM_INTERIOR_SCENES
+                     else 100)
         amb = 255 - gloom
         lm = getattr(self, "_lightmap_surf", None)
         if lm is None or lm.get_size() != self.screen.get_size():
@@ -1538,44 +1588,6 @@ class RenderMixin:
                       lambda a=a, sx=sx, sy=sy, fn=_draw_enemy:
                       draw_with_alpha(self.screen, a, fn,
                                       rect=(sx - 110, sy - 160, 220, 250)))
-        # The Moths -- the first flying entity: a hovering billboard with
-        # a slow bob, sight-gated like every other actor. A faint cold
-        # smudge marks the ground point (never an honest shadow).
-        for m in (getattr(self.scene, "_moths", None) or []):
-            for ox, oy in _offsets:
-                sx, sy = self.camera.project(m["x"] + ox, m["y"] + oy)
-                if not _on_screen(sx, sy):
-                    continue
-                a = _vis_alpha(m["x"] + ox, m["y"] + oy)
-                if a is None:
-                    continue
-                # hover collapses to the ground as a burnt-out moth FALLS;
-                # a newly ARRIVED seeker drops in from above while it
-                # fades up (the "b" ramp)
-                hf = m.get("h", 1.0)
-                bm = m.get("b", 1.0)
-                hover = ((34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0)
-                         * hf * (1.0 + 2.2 * (1.0 - bm)))
-
-                def _draw_moth_e(s, m=m, sx=sx, sy=sy, hover=hover):
-                    gy = sy - actor_lift
-                    husk = m["state"] == "husk"
-                    if not husk:
-                        smw = 20 + int(6 * m["glow"])
-                        smudge = pygame.Surface((smw * 2, 8),
-                                                pygame.SRCALPHA)
-                        pygame.draw.ellipse(smudge, (8, 7, 12, 80),
-                                            (0, 0, smw * 2, 8))
-                        s.blit(smudge, (sx - smw, gy - 4))
-                    draw_moth(s, sx, gy - hover, m["t"],
-                              spread=m["spread"], glow=m["glow"],
-                              seed=m["seed"],
-                              flap=(1.0 if m.get("fast") else 0.2),
-                              husk=husk)
-                _emit(self.camera.depth(m["x"] + ox, m["y"] + oy),
-                      lambda a=a * bm, sx=sx, sy=sy, fn=_draw_moth_e:
-                      draw_with_alpha(self.screen, a, fn,
-                                      rect=(sx - 70, sy - 180, 140, 230)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             _emit(self.camera.depth(p.x, p.y),
@@ -1963,6 +1975,7 @@ class RenderMixin:
         self._overlay_dark_used = 0
         self._draw_brimley_haze()
         self._draw_dark()
+        self._draw_emissive_signs()
         self._draw_sight_fog()
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()

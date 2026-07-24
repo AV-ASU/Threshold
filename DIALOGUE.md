@@ -723,15 +723,6 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   "The road has gone still, all at once. No wind, no birds. The whole town
   holding its breath." / "I have what I came for. I should not be standing
   in the open when it lets that breath go."
-- **`the_moths`** (`_log_moth_note`, `systems/rot_mixin.py`; the first
-  flare): "Something hanging in the air out past the fences. Folded up
-  like a dead spider, drifting. I took it for a rag on the wind until it
-  turned against the wind." / "I got close and it opened. Lit up gold and
-  screamed, and every hooded thing in earshot turned my way at once. Then
-  it was not there anymore." / "A moth, then. A moth that works for
-  whatever owns this town." *(2026-07 audit: the old third line's "Keep
-  clear of them or kill them quiet." tail was CUT as a playtest error
-  class 3 leak, a verb stated in a note.)*
 - **`cult_calling`** (Scriptorium, note): "Every hand different. Every one
   of them grateful. I keep waiting for the page where somebody admits they
   were tricked. It isn't here." Pickup notice: "The Calling. Their own
@@ -1263,3 +1254,29 @@ The remaining one-line routine examines (headstones, `scarecrow`,
 and the HUD/system notice layer (see Coverage) stay indexed: the code is
 authoritative for their exact words, and the contract still binds (touch
 one, update the other).
+
+## Lettering the player reads in the world
+
+Text that is ART rather than narration: words built into a prop and read off
+the object itself. They carry no voice and fire no beat, but the player reads
+them, so the contract binds them like any other line.
+
+- **CASSILDA'S** and **GAS FOR LESS** (`STATION_NAME` + the tagline banner in
+  `rendering/props.py`; the lost road's filling station). The store name burns
+  in neon across the shop fascia and again on the roadside pylon's red banner,
+  the tagline on the pylon's blue banner below it. Both are spelled in the
+  procedural neon-tube alphabet (`_GLYPH`), never a font. The name is the one
+  deliberate Chambers echo in the world's own signage (approved by the
+  maintainer): it reads as an ordinary family store to anyone who does not
+  know the play, so it never states the cosmology. The three barred names
+  (*Carcosa*, *the King in Yellow*, *the Yellow King*) stay off the page as
+  ever (NARRATIVE §5, guarded `tests/flow.py` §33).
+
+## The lost spaces carry NO narration (maintainer ruling)
+
+The lost fields (`lost_corn` / `lost_forest` / `lost_road`) ship **no narrator
+boxes, no notices, and no case-notebook writes at all**. The dark, the hunted
+exit light, and the world changing around you are the whole text. The one
+notice that existed (on reaching the exit light) was CUT: a caption there
+explains away the only beat the space has. If a lost-space beat ever seems to
+want words, that is the signal it needs better staging, not a line.

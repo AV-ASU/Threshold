@@ -178,47 +178,15 @@ KING_LUNGE_GATHER = 0.30     # crawl multiplier during the telegraph
 KING_LUNGE_CD_LO = 3.5       # s between lunges (randomised)
 KING_LUNGE_CD_HI = 6.0
 
-# ---- the Moths (2026-07): the King's heralds, the first flying entity.
-# ONE source (the 2026-07-03 clarity rework): from MOTH_SHED_EV evidence
-# on, every MOTH_SHED_EVERY seconds the King sheds MOTH_SHED_COUNT moths
-# into whatever room HE currently occupies (the roam sim's scene). They
-# PERSIST and STACK per room (game._moth_field, capped at
-# MOTH_STACK_CAP): a room he lingers in fills with them, and the field
-# only thins when the player SPENDS one (a pop, or a flare burning out
-# into its husk). A player inside MOTH_RADIUS starts the KINDLE window
-# (the counterplay: back out past the radius, or kill it -- the axe up
-# close, a round from range); the window expiring is the FLARE: a
-# MOTH_REACH noise every cult ear converges on, a visibility spike, the
-# dark broken around it, then the husk falls and that moth is spent.
-MOTH_SHED_EV = 3             # evidence gate: HIS-room shedding starts once
-                             # he walks (the roam arms at the same gate)
-MOTH_SHED_EVERY = 90.0       # seconds between sheds (his current room)
-MOTH_SHED_COUNT = 2          # moths per shed
-MOTH_STACK_CAP = 10          # per-room ceiling (fairness + draw cost)
-# His attention finds YOU before his body does (the evidence-2 beat):
-# from 2 evidence a single moth materialises in the PLAYER'S room every
-# few minutes (never at a door), joining that room's field; once he
-# walks at 3 the seeker eases to a slow drip on top of his own shedding.
-MOTH_SEEK2_LO = 120.0        # ev2 seeker interval (s), rolled per spawn
-MOTH_SEEK2_HI = 180.0
-MOTH_SEEK3_LO = 300.0        # ev3+ seeker interval (s)
-MOTH_SEEK3_HI = 360.0
-MOTH_SPEED = 26.0            # drift speed px/s
-MOTH_SEEK_BIAS = 0.35        # chance a fresh waypoint aims near the player
-MOTH_RADIUS = 96.0           # trigger radius around the player
-MOTH_KINDLE = 0.8            # seconds of kindle before the flare
-MOTH_FLARE_DUR = 2.0         # seconds the flare burns before it falls
-MOTH_FALL_DUR = 0.6          # seconds the burnt-out husk takes to drop
-MOTH_FAST_MULT = 3.0         # the King's shed moths fly this much faster
-MOTH_REACH = 620.0           # cult hearing reach of the flare noise
-MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
-MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
-BLACKOUT_DUR = 45.0          # a moth flare kills the room's genset this long
-                             # (the electric fixtures die; fire keeps burning;
-                             # power returns on its own -- TODO #21 first slice)
-# MOTH_SCENES (where they fly) is defined next to KING_ROAM_SCENES
-# below: the moths' ground IS the King's ground, so his shedding can
-# fill any room he can walk.
+# ---- the genset blackout (the light-security loop, TODO #21) ---------
+# `_genset_down` (systems/rot_mixin._tick_power) holds per-scene blackout
+# timers; while one runs the scene's ELECTRIC fixtures die in every layer
+# at once (Scene.power_on gates lit_at, _draw_dark skips their pools, the
+# fixture art goes dark). Fire is exempt. No live trigger sets a timer
+# yet -- the trigger that used to fire it was cut (2026-07) and the
+# gas-genset failure meant to replace it is deferred (TODO #21); the
+# duration below is what a future trigger will use.
+BLACKOUT_DUR = 45.0          # seconds a blacked-out genset stays dark
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -240,7 +208,15 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
                "the_sump", "the_cells", "the_old_stores",
-               "dark", "threshold"} | DIM_INTERIOR_SCENES
+               "dark", "threshold",
+               "lost_space", "lost_corn", "lost_forest",
+               "lost_road"} | DIM_INTERIOR_SCENES
+
+# The LOST SPACES (TODO #26): the liminal in-between fields. A DARK_SCENES
+# subset that sits HEAVIER than an ordinary dark room so the hand-authored
+# focal island (the crop-circle bonfire, the pond lanterns, the station neon)
+# reads as a bright island in a black sea, and the sight-cone dark presses in.
+LOST_SPACE_SCENES = {"lost_space", "lost_corn", "lost_forest", "lost_road"}
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
 # mechanically disabled and the dread aperture closes regardless
@@ -288,6 +264,21 @@ KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold", "maras_room"}
 # suppressed so the navigation read stays usable. Hide vignette
 # still runs (cover here is meaningful).
 DIM_SAFE_SCENES = {"lodge_cellar"}
+
+# ---- The storm's STAGE: evidence-driven surface darkening (TODO #25) ----
+# The surface world DARKENS as the PI understands more -- the daylight draining
+# under His gathering attention. This is world-rot's LIGHT twin (DESIGN.md §2:
+# the veil thinning, the pale-yellow ashfall), driven by the SAME rot stage
+# (min(3, evidence)) and NOT a day/night cycle: the "one continuous daytime
+# state" invariant holds (no day_phase / day_count) -- the darkening is
+# UNDERSTANDING, not a clock. At stage 0 the town is full day (gloom 0 ->
+# _draw_dark early-outs, byte-identical). By stage 3 it is night, and the few
+# civic yard lights threading the roads (cold electric on the gensets) become
+# the ISLANDS of safety while the flashlight earns its place outdoors. This is
+# the STAGE the storm (the amalgam-cut flood) will later fill: no light =
+# danger, taken outdoors.
+STORM_STAGE_SCENES = {"brimley"} | OUTDOOR_SCENES
+STORM_DARK_GLOOM = (0, 44, 92, 138)     # darkness amount by rot stage 0..3
 
 # ---- THRESHOLD: cult geography + threat tuning ----
 # Regular cultists roam every outdoor scene; the safe lodge interiors
@@ -363,9 +354,6 @@ CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
 # travels only the edges BETWEEN these (passages + folds); a door/ladder into
 # an interior is the player's escape, never his.
 KING_ROAM_SCENES = (SEAMLESS_WORLD_SCENES - {"clearing"}) - SAFE_SCENES
-# The Moths fly exactly the King's ground (they are his heralds): every
-# room he can enter is a room his shed pair can attend.
-MOTH_SCENES = set(KING_ROAM_SCENES)
 KING_ROAM_START = "arrival_road"   # idle home: the looping road W of the Lodge
 KING_HOP_INTERVAL = 6.0      # s between adjacent-scene hops while off-camera
 KING_HOP_TOWARD = 0.55       # chance a search hop steps toward the player (lucky,

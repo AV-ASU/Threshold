@@ -855,10 +855,10 @@ class CutsceneMixin:
                                      2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
-        # (The road King and the herald moths were CUT from the drive,
-        # 2026-07: the arrival shows nothing supernatural. The dread is
-        # implicit -- the engine that won't catch, the radio going dead.
-        # The idle King lives on the town's north road in play, not here.)
+        # (The road King was CUT from the drive, 2026-07: the arrival
+        # shows nothing supernatural. The dread is implicit -- the engine
+        # that won't catch, the radio going dead. The idle King lives on
+        # the town's north road in play, not here.)
 
         # Dust drifting up through the headlight beam -- a little life in
         # the only light for miles. Rises toward the beam's reach and

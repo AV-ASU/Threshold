@@ -665,150 +665,6 @@ def main():
         g.update_player(1 / 30.0, fk)
     check((p.x, p.y) != (x0, y0), "beat: movement returns after the beat")
 
-    # --- 9. the Moths (the King's heralds; MOTH_* config) ----------------
-    # The 2026-07 ladder: ONE omen pre-drifts HIS road from minute one;
-    # at 2 evidence the SEEKER finds the player's room every few minutes
-    # (never at a door); at 3 his own MOTH_SHED_EVERY shedding wakes in
-    # HIS room and the seeker slows. The field persists per room and
-    # stacks to the cap, thinning only when a moth is SPENT (a pop / a
-    # flare's burn-out). Inside the radius: kindle -> FLARE = a
-    # MOTH_REACH noise the cult converges on, a visibility spike, the
-    # burn-out husk. Backing out aborts the kindle.
-    from systems.config import (MOTH_RADIUS, MOTH_KINDLE, MOTH_REACH,
-                                MOTH_SHED_EVERY, MOTH_SHED_COUNT,
-                                MOTH_STACK_CAP, MOTH_SEEK2_HI,
-                                MOTH_SEEK3_LO)
-    g = new_game()
-    check(g._moth_field == {"arrival_road": 1},
-          "moths: ONE omen pre-drifts the King's road from minute one")
-    g.load_scene_now("arrival_road", "default")
-    check(len(g.scene._moths) == 1,
-          "moths: the road omen is really there")
-    g.load_scene_now("brimley", "default")
-    check(len(g.scene._moths) == 0,
-          "moths: below the gates no other room grows any")
-    g._tick_moth_shed(MOTH_SHED_EVERY + 1)
-    g._moth_seek_t = 0.01
-    g._tick_moth_seek(0.02)
-    check(g._moth_field.get("brimley") is None,
-          "moths: neither source fires below 2 evidence")
-    # evidence 2: HIS shedding still sleeps; the SEEKER finds your room
-    ev = g.save.arg("evidence", [])
-    ev += [{"name": "maras_room", "lines": [], "weight": 0.1},
-           {"name": "the_ledger", "lines": [], "weight": 0.1}]
-    g.save.set_arg("evidence", ev)
-    g._roam_king["scene"] = "brimley"      # he is HERE (the player's room)
-    g._tick_moth_shed(MOTH_SHED_EVERY + 1)
-    check(g._moth_field.get("brimley") is None,
-          "moths: at 2 evidence the King himself sheds nothing yet")
-    g.player.x, g.player.y = 50 * TILE, 50 * TILE
-    g._moth_seek_t = 0.01
-    g._tick_moth_seek(0.02)
-    check(g._moth_field.get("brimley") == 1
-          and len(g.scene._moths) == 1,
-          "moths: at 2 evidence a SEEKER lands in the player's room")
-    mk = g.scene._moths[0]
-    check(mk.get("b", 1.0) < 1.0,
-          "moths: the seeker ARRIVES (drop-in ramp, not a pop-in)")
-    _exits = [(tx, ty) for ty in range(g.scene.h)
-              for tx in range(g.scene.w)
-              if g.scene.objects[ty][tx] in g.scene.exits]
-    mtx, mty = int(mk["x"] // TILE), int(mk["y"] // TILE)
-    check(all(abs(mtx - ex) > 3 or abs(mty - ey) > 3
-              for ex, ey in _exits),
-          "moths: a seeker never lands at a door")
-    check(MOTH_SEEK2_HI <= MOTH_SEEK3_LO,
-          "moths: the seeker slows once he walks (ev3 interval longer)")
-    # evidence 3: HIS 90s shedding wakes on top of the seeker
-    ev.append({"name": "the_preacher", "lines": [], "weight": 0.16})
-    g.save.set_arg("evidence", ev)
-    g._tick_moth_shed(MOTH_SHED_EVERY + 1)
-    check(g._moth_field.get("brimley") == 1 + MOTH_SHED_COUNT,
-          "moths: at 3 a shed lands in HIS room every interval")
-    check(len(g.scene._moths) == 1 + MOTH_SHED_COUNT
-          and all(m.get("fast") for m in g.scene._moths),
-          "moths: a co-located shed materialises live, flying fast")
-    g._tick_moth_shed(MOTH_SHED_EVERY)
-    check(g._moth_field.get("brimley") == 1 + MOTH_SHED_COUNT * 2,
-          "moths: the field STACKS shed over shed")
-    for _ in range(20):
-        g._tick_moth_shed(MOTH_SHED_EVERY)
-    check(g._moth_field.get("brimley") == MOTH_STACK_CAP,
-          "moths: the per-room stack respects the cap")
-    # persistence: leave and return; the field re-seeds the room
-    g.load_scene_now("country_lane", "default")
-    g.load_scene_now("brimley", "default")
-    check(len(g.scene._moths) == MOTH_STACK_CAP,
-          "moths: the field persists across the room's rebuilds")
-    g.load_scene_now("lodge", "default")
-    check(len(getattr(g.scene, "_moths", [])) == 0,
-          "moths: a safe room never grows them")
-    g.load_scene_now("brimley", "default")
-    clear_cult(g)
-    # Isolate the moth mechanics from Brimley's ambient cult: at 2 evidence the
-    # scene otherwise prefills its cult_target of roamers on the next tick
-    # (threat_mixin._ensure_cultists), which would re-populate what clear_cult
-    # just swept. Suppress the pool for this controlled moth stage.
-    g.scene.cult_target = 0
-    g._cult_prefilled = True
-    for mm in g.scene._moths:
-        mm["b"] = 1.0                 # settle any arrival ramps
-    m = g.scene._moths[0]
-    n = g._spawn_cultist("cult_regular", "cultist",
-                         at=(m["x"] + 400, m["y"]))
-    n.x, n.y = m["x"] + 400, m["y"]
-    n._cult_state = "scout"
-    n._suspicion = 0.0
-    n.facing = (0.0, -1.0)
-    g.player.x, g.player.y = m["x"] + 8, m["y"] + 8
-    g.player.hidden = None
-    g.visibility = 0.2
-    v0 = g.visibility
-    flared = False
-    for _ in range(int((MOTH_KINDLE + 0.4) * 30)):
-        tick(g, 1)
-        if m["state"] == "flare":
-            flared = True
-            break
-    check(flared, "moths: standing in the radius kindles into the flare")
-    check(g.visibility > v0, "moths: the flare spikes visibility")
-    for _ in range(90):
-        tick(g, 1)
-        if n._cult_state == "investigate":
-            break
-    check(n._cult_state == "investigate"
-          and abs(n._last_seen_pos[0] - m["x"]) < MOTH_REACH,
-          "moths: a cultist 400px out converges on the flare")
-    for _ in range(150):
-        tick(g, 1)
-        if m["state"] == "husk":
-            break
-    check(m["state"] == "husk" and m in g.scene._moths
-          and m.get("h", 1.0) <= 0.0 and m["glow"] <= 0.0,
-          "moths: the flare burns ~2s, then the husk falls to the ground")
-    check(g._moth_field.get("brimley") == MOTH_STACK_CAP - 1,
-          "moths: a burn-out SPENDS the moth off the room's field")
-    st = m["state"]
-    g.player.x, g.player.y = m["x"] + 5, m["y"] + 5
-    tick(g, 8)
-    check(m["state"] == st, "moths: a fallen husk never kindles again")
-    check(any(nn.get("name") == "the_moths"
-              for nn in g.save.arg("notes", [])),
-          "moths: the first flare files a case NOTE (never evidence)")
-    check(not any(e.get("name") == "the_moths"
-                  for e in g.save.arg("evidence", [])),
-          "moths: the note stays out of the evidence log")
-    m2 = next(mm for mm in g.scene._moths if mm["state"] == "drift")
-    g.player.x, g.player.y = m2["x"] + 20, m2["y"]
-    for _ in range(6):
-        tick(g, 1)
-    check(m2["state"] == "kindle", "moths: entering the radius kindles")
-    g.player.x = m2["x"] + MOTH_RADIUS * 2.0
-    for _ in range(8):
-        tick(g, 1)
-    check(m2["state"] == "drift" and m2 in g.scene._moths,
-          "moths: backing out aborts the kindle (the counterplay)")
-
     # --- 10. the cult WAKES at 1 evidence (CULT_WAKE_EV) -----------------
     # Below the first find the surface spawns NO patrol: the town is
     # only wrong, not yet hostile. The first evidence raises the hoods.
@@ -1476,6 +1332,21 @@ def main():
           "broken: the shop carries its burned-out pendants")
     check(sc.power_on and not sc.lit_at(12 * TILE + 16, 6 * TILE + 16),
           "broken: a burned-out pendant's spot stays dark on full power")
+
+    # ---- §18: the storm's STAGE -- ev-driven surface darkening (TODO #25) --
+    # The daytime invariant: stage 0 is FULL DAY (no darkening, byte-identical),
+    # and the gloom only ever deepens with the rot stage -- never a day cycle.
+    from systems.config import STORM_DARK_GLOOM, STORM_STAGE_SCENES
+    print("[18] storm stage: ev0 full day, gloom monotonic, Brimley staged")
+    check(STORM_DARK_GLOOM[0] == 0,
+          "storm stage: gloom is 0 at ev0 (full day, _draw_dark early-outs)")
+    check(all(STORM_DARK_GLOOM[i] <= STORM_DARK_GLOOM[i + 1]
+              for i in range(len(STORM_DARK_GLOOM) - 1)),
+          "storm stage: gloom monotonic non-decreasing with the stage")
+    check(len(STORM_DARK_GLOOM) == 4 and STORM_DARK_GLOOM[3] > 0,
+          "storm stage: four stages, night by stage 3")
+    check("brimley" in STORM_STAGE_SCENES,
+          "storm stage: Brimley is a staged surface scene")
 
     print()
     if FAILS:

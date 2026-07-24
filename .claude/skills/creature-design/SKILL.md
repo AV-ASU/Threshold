@@ -95,9 +95,5 @@ clear message, push. Do not open a PR unless asked.
   everting wet-flesh mass, the Pallid Mask bonded to a host facet
   (surfaces/sinks with the churn), a gape-lunge telegraph, the
   throat-swallow catch. The old BROKEN BODY brief is superseded.
-- **The Moth** (`rendering/moth.py`): the King's herald, first flying
-  entity -- tented ragged wings at rest, kindle -> flare alarm -> falls
-  as a husk. Sim in `systems/rot_mixin.py`.
-
 No active job. When the user asks for a new creature, start at step 1
 (concept sheet) and converge before wiring.
