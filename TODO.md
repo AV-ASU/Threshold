@@ -377,14 +377,21 @@ ONLY if/when the restructure is committed and wired.
   variety.
 
 **LANDED (prototype, wired into NOTHING in-game):** `scenes/lost_space.py`
-(`LostSpace`) -- a generator-backed non-repeating dark corn field that renders +
+(`LostSpace`) -- a generator-backed non-repeating dark field that renders +
 collides through the real engine (`floor`/`objects` are bounded proxies over a
 hashed per-tile generator; a huge finite `w/h` with the player at CENTRE so the
 edge never enters the tilt window; `nav_path` None; `DARK_SCENES`;
-`procedural=True` so smoke skips its flood/full-scan; the hunted exit lantern
-moves live; odd landmarks). The engine map (the workflow that grounded this) is
-in the session transcript. Preview: the walk strip (non-repeat proof) + the
-exit-light band. Full gate green.
+`procedural=True` so smoke skips its flood/full-scan). Built as the **hand-made
+ISLAND in a sea of generation**: a mostly-EMPTY field (dead grass / dirt / mud)
+with sparse corn CLUMPS + scattered things to find (derelict vehicles, lone
+trees, scarecrows, standing stones, a well, a corn altar), and at the centre the
+corn biome's FOCAL POINT -- an **abandoned cult camp** (a still-burning
+`camp_fire` ringed by bedrolls + log seats on worn dirt, reusing brimley's camp
+dressing). The fire is the haven light (lit + orienting, NOT a true refuge); the
+**hunted exit lantern is held until you leave the firelight** (the lit place is a
+dead end -- you escape into the dark). The engine map (the workflow that grounded
+this) is in the session transcript. Preview: the camp focal shot + the walk
+strip (sparse field + non-repeat + exit-on-leaving). Full gate green.
 
 **OPEN, in build order:** (1) the **safe path + yard + one lost space** vertical
 slice, wired so you walk interior -> yard -> path -> fall off a dark edge into

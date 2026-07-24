@@ -155,8 +155,18 @@
   tilt renderer is already a camera-window system and collision/sight route
   through `char_*_at`, so a generator-backed scene needs no engine refactor).
   `nav_path` returns None (straight-line chasers); `DARK_SCENES` member (dark,
-  flashlight works); odd landmarks scattered for variety; the hunted exit
-  lantern moves live (`lit_at` reads positions live). Registered as `lost_space`
+  flashlight works); the hunted exit lantern moves live (`lit_at` reads
+  positions live). The field is a **hand-made ISLAND in a sea of generation**
+  (the maintainer's model): mostly EMPTY ground (dead grass / dirt / mud) with
+  sparse corn CLUMPS and scattered uncanny things to find (derelict vehicles,
+  lone trees, scarecrows, standing stones, a well, a corn altar) -- emptiness +
+  the occasional wrong thing, never a wall of texture. At the centre sits the
+  corn biome's FOCAL POINT, an **abandoned cult camp** (the congregation went
+  below and left it: a still-burning `camp_fire` ringed by bedrolls + log seats
+  on worn dirt), whose fire lights the clearing -- a haven that is lit and
+  orienting but NOT a true refuge. The **exit light is held until you leave the
+  firelight**: the lit safe-feeling place is a dead end, and you escape by
+  walking out into the dark to hunt the way out. Registered as `lost_space`
   but wired into NOTHING in-game (a feel prototype). Guarded: the scene is
   `procedural=True` so smoke skips its flood-fill + full-grid scans (a 400-tile
   field would otherwise hang them), and its grid proxies are bounded so stray
