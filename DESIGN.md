@@ -634,6 +634,14 @@ Built into the procedural draw layer (`scenes/base.py`,
     century and are gone (the bridge keeps one hung lantern as a personal
     accent). Both prop kinds are anchored `SOLID_PROPS` volumes (never
     swiveling cards), verified in the 3D tilt.
+  - **A light kind lives in TWO tables, and the gate checks it.** The
+    MECHANICAL cover radius stealth reads (`Scene._LIGHT_KINDS`) and the
+    VISIBLE pool `_draw_dark` casts (`FIXTURE_POOLS`) must both carry any
+    emitting kind: in only the first it gates as lit but shines nothing, in
+    only the second it shines but gives no cover. `tests/conventions.py`
+    asserts the two agree, with the shipped disagreements named as explicit
+    exceptions to triage (`campfire`, the DEAD indoor scorch decal, currently
+    gates as lit; `burn_barrel` shines without giving cover).
   - **The shared light logic (the "carry it underground" foundation).**
     `_draw_dark` (`systems/render_mixin.py`) no longer special-cases
     `wall_torch`: it iterates **`FIXTURE_POOLS`** (the visible-light twin of
@@ -1397,7 +1405,18 @@ Optional `yaw` spins the world about the vertical axis (the head-turn).
 - **The tilt is the only camera.** There is no flat/pitch-0 view; the pitch
   is locked. Verify render changes with a before/after tilt capture
   (`tools/capture_world.py`), not just smoke.
-- **Keep it asset-free.** No PNGs, no bake step. Solids are math.
+- **Judge a scene from all four facings with the TOOL**
+  (`tools/capture_facings.py <scene> [--bright]`), never a hand-rolled
+  capture. `_update_camera` sets the camera POSITION only and never its yaw,
+  so an ad-hoc render silently produces the NORTH view four times; the tool
+  sets the yaw itself and fails if the facings do not differ. Most tilt
+  defects (a mirrored sign face, an undecorated flank, a swivelling card, a
+  floating portal base) are invisible from the one angle you would have
+  checked. See `VISION.md`.
+- **Keep it asset-free.** No PNGs, no bake step. Solids are math. World
+  lettering is drawn geometry too (`rendering/props.py` `_GLYPH` +
+  `_draw_neon_word`), not a system font; `tests/conventions.py` freezes the
+  remaining font uses by count so a new one fails the gate.
 - **Previews before live wiring.** Render to PNG/GIF headless, eyeball it,
   *then* touch `game.py`. Previews (headless, self-configure SDL dummy
   drivers): `tools/preview_{pseudo3d,tilt,skybox,occlusion,look_control,sight,blindspot_live}.py`.

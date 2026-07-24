@@ -1,0 +1,247 @@
+"""CONVENTIONS -- the project's prose rules, enforced as failures.
+
+Every check in here exists because a rule that lived only in a doc got broken
+by someone who had read the doc. The pattern is consistent across this
+project: the conventions that never regress (no dashes in player text, no
+phantom furniture tiles, no diagonal wall joins) are the ones a harness
+asserts. The ones that regress are the ones written down and remembered.
+
+So: if a convention CAN be machine-checked, it belongs here, not only in
+prose. The docs keep what cannot be automated -- canon facts, taste, intent.
+
+Each check prints what it verified and fails LOUD with the rule it enforces
+and where the violation is. Several carry an explicit ALLOWLIST of shipped
+exceptions: the point is to freeze today's surface so NEW drift fails, without
+relitigating deliberate old choices. Adding to an allowlist must be a
+decision, which is exactly what the failure forces.
+
+    python tests/conventions.py
+"""
+import os
+import re
+import sys
+
+os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
+os.chdir(_ROOT)
+
+FAILURES = []
+
+
+def check(label):
+    def deco(fn):
+        print(f"[..] {label}", flush=True)
+        try:
+            detail = fn()
+        except Exception as e:  # a broken check is a failing check
+            FAILURES.append(f"{label}: check itself raised {e!r}")
+            print(f"[!!] {label}: check raised {e!r}")
+            return fn
+        if detail:
+            FAILURES.append(f"{label}\n{detail}")
+            print(f"[!!] {label}\n{detail}")
+        else:
+            print(f"[ok] {label}")
+        return fn
+    return deco
+
+
+# ---------------------------------------------------------------- 1. fonts
+# THE RULE (CLAUDE.md): "Every sprite is drawn procedurally"; DESIGN.md §10:
+# "Keep it asset-free." A system font pasted into the world reads as UI text
+# lying on the scene, and it does not foreshorten with the tilt.
+# WHY THIS CHECK: a neon store sign shipped rendered in SysFont. Lettering in
+# the world is drawn geometry (see the `_GLYPH` neon-tube alphabet in
+# rendering/props.py for the worked example).
+# The budget is FROZEN PER FILE BY COUNT, not by filename: allowlisting a
+# whole file would let a new font slip in beside an old one (the first cut of
+# this check did exactly that and a fault-injection test caught it). To add a
+# font use you must raise a number here, which is the decision point.
+#   rendering/props.py     3 -- the BRIMLEY welcome board's three painted lines
+#   entities/deco_horror.py 3 -- the stopped-calendar month/day label
+#   entities/deco_structure.py 1 -- the tiny wall_sign label
+FONT_BUDGET = {
+    "rendering/props.py": 3,
+    "entities/deco_horror.py": 3,
+    "entities/deco_structure.py": 1,
+}
+FONT_SCAN_DIRS = ("rendering", "entities", "scenes")
+
+
+@check("no NEW system fonts in the world draw layer (procedural rule)")
+def _fonts():
+    bad = []
+    for d in FONT_SCAN_DIRS:
+        for root, _dirs, files in os.walk(d):
+            if "__pycache__" in root:
+                continue
+            for fn in sorted(files):
+                if not fn.endswith(".py"):
+                    continue
+                p = os.path.join(root, fn)
+                n = sum(1 for l in open(p)
+                        if "SysFont" in l or "pygame.font.Font" in l)
+                budget = FONT_BUDGET.get(p, 0)
+                if n > budget:
+                    bad.append(f"    {p}: {n} font use(s), budget {budget}")
+    if bad:
+        return ("  world lettering must be DRAWN geometry, not a font.\n"
+                "  See rendering/props.py `_GLYPH` + `_draw_neon_word` for the\n"
+                "  neon-tube alphabet. To add a deliberate label, raise its\n"
+                "  budget in FONT_BUDGET (that edit IS the decision).\n"
+                + "\n".join(bad))
+
+
+# ------------------------------------------------------------ 2. tilt sets
+# THE RULE (CLAUDE.md, "Adding a new decoration/prop kind under the tilt"):
+# register a kind in exactly ONE tilt set "or it renders as a flat stain on
+# the floor" under the only shipping camera.
+# WHY THIS CHECK: four kinds shipped into a new scene as flat stains because
+# they were placed by NAME without being rendered first.
+# ALLOWLIST = kinds with their own bespoke draw path, correctly in no set.
+TILT_EXEMPT = {
+    "dark_pool": "the REVERSE LIGHT: invisible by design (DESIGN.md §6)",
+    "water_channel": "has a dedicated draw pass in scenes/terrain.py",
+}
+
+
+@check("every placed decoration kind renders under the tilt")
+def _tilt_sets():
+    from scenes import SCENE_BUILDERS, load_scene
+    from rendering.props import SOLID_PROPS, _STANDEE_KINDS
+    from rendering.furniture import FURNITURE
+    from scenes.terrain import (_FLOOR_DECAL_KINDS, _SURFACE_DECAL_KINDS,
+                                _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
+    sets = (SOLID_PROPS, _STANDEE_KINDS, FURNITURE, _FLOOR_DECAL_KINDS,
+            _SURFACE_DECAL_KINDS, _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
+    orphan = {}
+    for key in sorted(SCENE_BUILDERS):
+        try:
+            sc = load_scene(key)
+        except Exception:
+            continue
+        for d in getattr(sc, "decorations", []):
+            k = getattr(d, "kind", None)
+            if k and k not in TILT_EXEMPT and not any(k in s for s in sets):
+                orphan.setdefault(k, set()).add(key)
+    if orphan:
+        rows = [f"    {k!r} placed in {sorted(v)[:4]}" for k, v in sorted(orphan.items())]
+        return ("  these draw as flat floor stains under the tilt. Put each in\n"
+                "  ONE tilt set (SOLID_PROPS / _STANDEE_KINDS / FURNITURE /\n"
+                "  _FLOOR_DECAL_KINDS / _WALL_DECO_KINDS / ...), and render it\n"
+                "  before placing it (CLAUDE.md SCENE-DRESSING #2).\n"
+                + "\n".join(rows))
+
+
+# --------------------------------------------------------- 3. light tables
+# THE RULE (CLAUDE.md): a light-emitting kind lives in TWO tables --
+# Scene._LIGHT_KINDS (the MECHANICAL cover radius stealth reads) and
+# FIXTURE_POOLS (the VISIBLE pool _draw_dark casts). A kind in only one is a
+# light that gates but does not shine, or shines but does not gate.
+# ALLOWLIST = two shipped disagreements, both suspected real bugs, left as
+# gameplay decisions for the maintainer rather than silently "fixed" here.
+LIGHT_EXEMPT = {
+    "campfire": "gates as lit but casts nothing -- it is the DEAD indoor "
+                "scorch decal, so arguably should not gate at all (triage)",
+    "burn_barrel": "casts light but gives no mechanical cover (triage)",
+}
+
+
+@check("light kinds agree across the mechanical + visible tables")
+def _light_tables():
+    from systems.render_mixin import FIXTURE_POOLS
+    from scenes.base import Scene
+    mech, vis = set(Scene._LIGHT_KINDS), set(FIXTURE_POOLS)
+    rows = []
+    for k in sorted(vis - mech):
+        if k not in LIGHT_EXEMPT:
+            rows.append(f"    {k!r}: in FIXTURE_POOLS, missing from Scene._LIGHT_KINDS "
+                        "(shines but gives no stealth cover)")
+    for k in sorted(mech - vis):
+        if k not in LIGHT_EXEMPT:
+            rows.append(f"    {k!r}: in Scene._LIGHT_KINDS, missing from FIXTURE_POOLS "
+                        "(gates as lit but casts no visible light)")
+    if rows:
+        return "\n".join(rows)
+
+
+# ------------------------------------------------------- 4. scene gate keys
+# THE RULE: the scene-gating sets in systems/config.py drive King safety,
+# darkness, storm stage, etc. A typo'd key silently gates NOTHING -- there is
+# no error, the scene just never gets the behavior.
+@check("every scene key in a config gating set is a registered scene")
+def _gate_keys():
+    import systems.config as C
+    from scenes import SCENE_BUILDERS
+    rows = []
+    for nm in dir(C):
+        if not nm.isupper() or "SCENE" not in nm:
+            continue
+        v = getattr(C, nm)
+        if isinstance(v, (set, frozenset)) and v and all(isinstance(x, str) for x in v):
+            miss = sorted(x for x in v if x not in SCENE_BUILDERS)
+            if miss:
+                rows.append(f"    {nm}: {miss} -- not in SCENE_BUILDERS (gates nothing)")
+    if rows:
+        return "\n".join(rows)
+
+
+# ----------------------------------------------------------- 5. doc refs
+# THE RULE (CLAUDE.md): a detail true in one doc and stale in another is rot.
+# WHY THIS CHECK: the canon accumulated six references to files that had been
+# deleted, including VISION.md pointing the four-facing workflow at a
+# scratchpad script that no longer existed.
+DOCS = ("CLAUDE.md", "NARRATIVE.md", "DESIGN.md", "TODO.md", "DIALOGUE.md",
+        "VISION.md")
+_PATH_RE = re.compile(r'`([A-Za-z_][\w/]*\.(?:py|md|sh))`')
+
+
+@check("every file the canon docs reference actually exists")
+def _doc_refs():
+    rows = []
+    for d in DOCS:
+        for ref in sorted(set(_PATH_RE.findall(open(d).read()))):
+            if os.path.exists(ref):
+                continue
+            base = os.path.basename(ref)
+            found = any(base in files
+                        for root, _dd, files in os.walk(".")
+                        if "__pycache__" not in root and not root.startswith("./.git"))
+            if not found:
+                rows.append(f"    {d} -> `{ref}` does not exist")
+    if rows:
+        return "\n".join(rows)
+
+
+# -------------------------------------------------- 6. lost spaces are mute
+# THE RULE (maintainer, DIALOGUE.md): the lost fields carry NO narrator boxes,
+# notices, or case-notebook writes. The dark and the hunted light are the
+# whole text.
+@check("the lost spaces ship no narration")
+def _lost_silent():
+    src = open("scenes/lost_space.py").read()
+    hits = [t for t in ("show_notice", "_evidence(", "_log_note", "DialogueBox",
+                        "show_dialog") if t in src]
+    if hits:
+        return (f"    scenes/lost_space.py uses {hits}.\n"
+                "    The lost spaces are wordless by ruling (DIALOGUE.md). If a\n"
+                "    beat there seems to want words, it needs staging, not a line.")
+
+
+def main():
+    print("THRESHOLD conventions guard\n")
+    for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,
+               _lost_silent):
+        pass  # checks already ran at import via the decorator
+    print()
+    if FAILURES:
+        print(f"FAILED: {len(FAILURES)} convention(s) violated.")
+        return 1
+    print("All conventions hold.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

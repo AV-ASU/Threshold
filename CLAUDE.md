@@ -1,30 +1,46 @@
 # THRESHOLD — Claude guide
 
-> **HARD RULE #0 — READ THE CANON IN FULL, EVERY TIME, BEFORE YOU ANSWER.**
-> Before responding to ANY request about THRESHOLD — a question, a review, a
-> design chat, a one-line edit, anything — you MUST read **`CLAUDE.md`,
-> `NARRATIVE.md`, `DESIGN.md`, `TODO.md`, `DIALOGUE.md`, and `VISION.md` IN
-> FULL**, from top to bottom, in this same turn.
-> Not a section. Not a grep. Not "I read them earlier." Not from memory or a
-> summary. All six, whole, every single time, no exceptions. Treat your
-> memory of them as STALE by default — the docs are the only source of truth,
-> they change, and answering from a half-remembered version is how canon gets
-> broken (it has been, repeatedly). If you have not read all six this turn,
-> you are not ready to answer: read them first, then answer. This is the
-> project's non-negotiable first step; do it automatically, never wait to be
-> asked, and never announce you are "about to" instead of doing it.
+> **HARD RULE #0 — READ THIS FILE EVERY TURN, AND THE DOC YOUR CHANGE
+> TOUCHES.** Before responding to ANY request about THRESHOLD, read
+> **`CLAUDE.md`** (this file) in full — it is the operating guide and the
+> index. Then read, IN FULL, whichever of the canon docs your work actually
+> touches:
 >
-> **The six docs are current-state only — history lives in
-> `CHANGELOG.md`, which is explicitly NOT part of this rule (2026-07
-> restructure).** Full-read-every-turn only stays affordable if there's
-> little to read. Each of the six states what IS true today, once, without
-> re-narrating how it got that way; the "2026-07 rework, superseded the
-> old X" story for any landed change belongs in `CHANGELOG.md` instead.
-> `CHANGELOG.md` is never required reading before answering — read it only
-> when you're chasing down *why* something is the way it is, or writing a
-> new entry for work you just landed. If a doc you're editing has drifted
-> back into narrating its own history inline, that's rot the same as a
-> stale fact: move the history out, leave the current state.
+> | If the turn touches… | Read in full |
+> |---|---|
+> | **any word the player reads** (a line, a notice, a name, on-screen lettering) | **`DIALOGUE.md`** — non-negotiable |
+> | **a fact the fiction asserts** (cast, place, timeline, evidence, endings) | **`NARRATIVE.md`** — non-negotiable |
+> | how a system behaves, or its code map | the relevant **`DESIGN.md`** section |
+> | how anything **looks** or is laid out | **`VISION.md`** (it is short; read it whole) |
+> | what to work on, or a ticket's scope | **`TODO.md`** |
+> | *why* something is the way it is | **`CHANGELOG.md`** (never required otherwise) |
+>
+> When in doubt, read it. Treat your memory of every doc as STALE — they
+> change, and answering from a half-remembered version is how canon gets
+> broken. The two rows marked non-negotiable are the ones that have actually
+> broken things: **if your diff writes text the player reads, or asserts a
+> fact about the fiction, the whole doc gets read, no exceptions.**
+>
+> **Why this is a router and not "read all six every time."** It used to be
+> all six, ~90k tokens, every turn. It was replaced because it did not work:
+> sessions that read the entire canon front to back still shipped a system
+> font into a procedural-only renderer, props that render as flat stains,
+> and a "verified all four facings" that was the same north view four times.
+> **Reading was never the failure — applying at the moment of action was.**
+> So the enforcement moved to where it can actually fire: **`tests/conventions.py`**,
+> in the gate, which fails on the mechanical half of these rules (fonts,
+> tilt-set registration, light-table pairing, dead doc references, scene-gate
+> typos, lost-space silence). The docs keep what a machine cannot judge:
+> canon facts, intent, taste, and why. **If you find yourself relying on
+> memory of a rule that a script could check, the fix is to write the check**
+> (see "Make the check, not the note" below).
+>
+> **The six docs are current-state only — history lives in `CHANGELOG.md`.**
+> Each states what IS true today, once, without re-narrating how it got that
+> way; the "2026-07 rework, superseded the old X" story for any landed change
+> belongs in `CHANGELOG.md` instead. If a doc you're editing has drifted back
+> into narrating its own history inline, that's rot the same as a stale fact:
+> move the history out, leave the current state.
 >
 > **The six-doc canon.** This file (`CLAUDE.md`) is the project's entry
 > point and operating guide, and now the first of the six you read in full;
@@ -82,15 +98,21 @@ the lethal apex pursuer. (See the tilted-camera track below + `DESIGN.md §10`.)
 # Run (needs a display)
 python main.py
 
-# Full test gate — runs all six harnesses (smoke + flow + stealth +
-# fold_pursuit + king_roam + render_smoke) and exits nonzero if any fails.
-# Self-configures SDL dummy drivers, so no env vars needed. Run from repo
-# root before every commit/push.
+# Full test gate — runs all seven harnesses (conventions + smoke + flow +
+# stealth + fold_pursuit + king_roam + render_smoke) and exits nonzero if any
+# fails. Self-configures SDL dummy drivers, so no env vars needed. Run from
+# repo root before every commit/push.
 python tests/run_all.py
 
 # Or run a single harness (same drivers, standalone):
+python tests/conventions.py  # the prose rules, enforced (runs in <1s)
 python tests/smoke.py        # scene-builder / spawn / exit / drop-rate smoke
 python tests/flow.py         # story-beat integration + canon guards
+
+# LOOK at a scene from all four facings (the VISION.md look pass). Sets the
+# camera yaw itself and ASSERTS the facings differ, so it cannot hand back
+# the same view four times the way a hand-rolled capture does.
+python tools/capture_facings.py <scene_key> [--bright]
 
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
@@ -813,6 +835,27 @@ section is the CODE MAP only — where each system lives:
   stale in another is rot). A change is not "done" until its docs match it,
   so before you commit, ask which of the six canon docs (plus `README.md`)
   your diff just made stale and fix them in the same breath.
+- **MAKE THE CHECK, NOT THE NOTE (the highest-leverage habit here).** When
+  you break a rule, or the maintainer catches the same class of mistake
+  twice, the fix is **not** another paragraph in a doc. Prose rules on this
+  project have a measurable failure rate: the conventions that never regress
+  (no dashes, no phantom furniture tiles, no diagonal wall joins) are the ones
+  a harness asserts; the ones that regress are the ones written down and
+  remembered. So:
+  - If it can be **grepped, counted, loaded, or diffed**, it belongs in
+    **`tests/conventions.py`** (in the gate, runs in under a second). Adding a
+    check there is usually ~15 lines and permanently retires the mistake.
+  - If it is about **how something LOOKS**, it belongs in a capture tool that
+    fails loudly — `tools/capture_facings.py` asserts the four facings
+    actually differ, because the eye demonstrably does not catch it.
+  - **Prove the check can fail.** Introduce the violation, watch it go red,
+    then revert. A check that cannot fail is not a check — this exact
+    omission is what let a "verified four facings" ship twice.
+  - **Freeze by COUNT, not by filename,** when allowlisting shipped
+    exceptions (see `FONT_BUDGET`): allowlisting a whole file lets a new
+    violation slip in beside an old one.
+  - Then, and only then, write the one-line rule in the doc and point it at
+    the check.
 - **CONSOLIDATE RULE LISTS, DON'T JUST APPEND.** The PLAYTEST ERROR CLASSES
   and SCENE-DRESSING PROCESS lists below exist because specific failures
   happened; that's healthy. But a list that only ever grows by appending a
@@ -832,8 +875,8 @@ section is the CODE MAP only — where each system lives:
   merge it into `main`** in the same action — not to stop after creating the
   PR and ask. Don't ask for a second confirmation.
 - **Verify before you commit.** Run compile + `python tests/run_all.py` (the
-  full gate: smoke + flow + stealth + fold_pursuit + king_roam + render_smoke) and confirm green
-  BEFORE `git commit`/`push`. A commit was pushed twice this project with a
+  full gate: conventions + smoke + flow + stealth + fold_pursuit + king_roam +
+  render_smoke) and confirm green BEFORE `git commit`/`push`. A commit was pushed twice this project with a
   `NameError` because edits were batched and not re-verified. For
   rendering/refactor work also run the byte-identity gate
   (`tools/capture_world.py --tag before/after`, then `--diff`). CI also runs
