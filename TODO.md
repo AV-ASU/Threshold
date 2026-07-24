@@ -272,9 +272,11 @@ half-out). Locked with the maintainer this pass:
 - **No apex body.** The "bearer" is just another amalgam; nothing marks it but
   the Mask.
 - **The Mask is a PART** (the 18th), surfaced from its own cut in the family
-  grammar, held by the flesh. His face made an object: **sub-player scale**,
-  **always camera-facing** (His regard; the one deliberate VISION exception).
-  Timber is a bone↔wood blend (carved-pallid). No halo, no mouth.
+  grammar, held by the flesh. His face made an object: **player scale** and a
+  **real 3D object** (`draw_pallid_3d`) that turns a full 360 — the carved face
+  toward the PI, the blank shell turned away, a curved lens at profile —
+  superseding the earlier always-camera-facing call so it respects the tilted
+  world. Timber is a bone↔wood blend (carved-pallid). No halo, no mouth, no nose.
 - **One Mask storm-wide, MIGRATING** — surfaces on one unit, is borne, sinks,
   rises elsewhere (THE UNFOLDING's host/sink/rebond state, translated). It IS
   the focal "Him" and keeps luck-not-omniscience: the Mask surfacing near you
@@ -289,12 +291,17 @@ half-out). Locked with the maintainer this pass:
   full-power apex at the source, so its overwhelm is the point.
 
 **LANDED (dormant, wired into NOTHING in the game):**
-- The **Mask part** in `rendering/amalgam.py` (`carved_pallid_surface` +
-  `draw_pallid_mask_part` + a `mask=` kwarg on `draw_amalgam_sprite`), NEVER
-  dealt by `assemble()`, so every ordinary amalgam is byte-identical. Preview
-  `tools/preview_pallid_part.py`. The Mask draws at **player scale**
-  (`STORM_MASK_R`, the maintainer's "the full 1" — revised up from the earlier
-  sub-player call).
+- The **Mask part** in `rendering/amalgam.py`: `draw_pallid_3d` (the one
+  reusable 3D shell — pale carved FACE on the front hemisphere only, deep
+  jagged sockets + gold, seam, crack; blank pale back, NO eyes from behind;
+  curved profile) driven through `draw_pallid_mask_part` + a `mask=` kwarg on
+  `draw_amalgam_sprite`, NEVER dealt by `assemble()`, so every ordinary amalgam
+  is byte-identical. Player scale (`STORM_MASK_R`). Previews
+  `tools/preview_mask_spin.py` (the full spin) + `tools/preview_bearer.py`.
+- The **bearer power-up** (drawn ONLY when the storm passes `mask=`): the
+  possessed amalgam is simply a **BIGGER** amalgam (`BEARER_SCALE`) wearing the
+  Mask + a **crown** of ember-cuts (`_bearer_crown`) — size is the tell, not a
+  busier body.
 - The **storm ENGINE** `systems/storm.py` (`Storm`): the single migrating Mask
   bearer, units drifting to His **lagged sense** of the player (luck, not
   omniscience), **light slows + repels, never burns**. Sim + draw helper only;
@@ -310,9 +317,24 @@ canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each piece lands
 the docs still describe THE UNFOLDING because that is what SHIPS until (3). Land
 each visual beat through a VISION look-pass.
 
-**Fences:** Mask stays sub-player + camera-facing; one bearer at a time; the
-flood concentrates on His last *sense* of you, not your true position
-(luck-not-omniscience); the impossible count stays at one.
+**The storm CUTS wear the rift's gold rim (approved 2026-07, option (a)+gold).**
+The amalgam apertures should read as the same portal family as the fold/King
+rift (`rendering/portal.py`): an **ANCHORED gold-rimmed cut** (not a billboard),
+but with the off-angle falloff FLOORED so a storm cut thins yet never fully
+vanishes (you always sense them). Same gold language as the rift's rim/pool, at
+aperture size (gold rim + motes, no expensive see-through — the rift stays the
+only full doorway). The maintainer weighed a "pool of water that faces you,
+things fade into it" presentation and chose anchored-never-vanish over a
+billboard (protects the pseudo-3D "object you can circle, not a billboard that
+swivels" canon, DESIGN §7). The **fade-until-gone dissolve is reserved for the
+CATCH/death beat** (a bearer reaches you → you fade into His portal), NOT
+routine crossing (folds stay "the crossing is nothing, the frame is the
+spectacle").
+
+**Fences:** Mask stays player-scale + a real 3D object (it turns to face you or
+away, never a billboard); one bearer at a time; the flood concentrates on His
+last *sense* of you, not your true position (luck-not-omniscience); the
+impossible count stays at one.
 
 ---
 

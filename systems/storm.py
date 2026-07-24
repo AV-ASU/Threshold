@@ -38,7 +38,7 @@ STORM_RISE_DUR = 0.6          # s to rise it on the new bearer
 STORM_BIRTH_DUR = 0.9         # s a unit takes to manifest
 # The Mask at ~PLAYER SCALE: face height ~= player height (the maintainer's
 # "the full 1", the preview's bottom row -- 2026-07, revising the earlier
-# sub-player call). carved_pallid_surface face height ~= 2.1*r, so on
+# sub-player call). draw_pallid_3d shell height ~= 2.1*r (Ry = 1.05*r), so on
 # integration r = player_sprite_height / 2.1 (~21 for the measured 45px).
 STORM_MASK_R = 21
 

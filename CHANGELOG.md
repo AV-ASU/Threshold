@@ -139,6 +139,34 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — The Mask became a REAL 3D object + the bearer power-up settled
+  (dormant, `TODO.md` #25).** A visual pass on the storm-King's Mask. It had
+  been a flat billboard (a front card and a back card, foreshortened by a
+  horizontal squash) that collapsed to a straight sliver at profile and read
+  flat; a stopgap "edge crescent + nose" only made it worse. The maintainer's
+  call: "one object that rotates," no swapping between drawings, no nose.
+  Rebuilt as **`draw_pallid_3d`** — a thin convex ellipsoid shell (semi-axes
+  Rx<Ry with a REAL depth Rz) whose whole mesh is rotated by `yaw`, projected,
+  and back-face culled, so the face, the curved edge-on profile (an ellipse
+  cross-section of depth Rz, never a flat line), and the back all fall out of
+  the SAME geometry. This SUPERSEDES the earlier sub-player + "always
+  camera-facing" rule: the Mask is player-scale and a prop that turns to face
+  you or away, respecting the tilted world (the flat `carved_pallid_surface`
+  is kept only as the face-art reference; the transient
+  `carved_pallid_back_surface` / `_mask_edge_crescent` swap helpers were cut).
+  A follow-up pass gave it the 2D look on the 3D body: the carved face (pale
+  plate, deep jagged sockets + gold pupils, centre seam, hairline crack) is
+  drawn as 3D-anchored overlays on the FRONT hemisphere ONLY, so they cull as
+  the shell turns — **no eyes from behind**, the back is a blank pale shell —
+  and the shell was smoothed (high ambient + resolution).
+  The **bearer power-up** also settled: the possessed amalgam is simply a
+  BIGGER amalgam (`BEARER_SCALE`) wearing the Mask + a crown of ember-cuts
+  (`_bearer_crown`) — size is the tell, not a busier body (an earlier chaotic
+  version with fused extra bodies, a gold rift, scattered eyes, and big
+  reaching arms was cut; the maintainer kept the crown, dropped the arms).
+  Still dormant (mask=None for every ordinary amalgam → byte-identical, full
+  gate green). Previews `tools/preview_mask_spin.py` (the full spin) +
+  `tools/preview_bearer.py`.
 - **2026-07 — The storm ENGINE (`systems/storm.py`), dormant.** The second
   slice of the storm-King redesign (`TODO.md` #25): a standalone `Storm` sim
   the game imports nowhere yet. It holds the single migrating Mask bearer (the

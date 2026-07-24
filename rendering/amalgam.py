@@ -51,6 +51,14 @@ def _clamp(v):
     return max(0.0, min(1.0, v))
 
 
+def _with_alpha(s, a):
+    """Fade a per-pixel-alpha surface by an overall factor a (0..255)."""
+    s = s.copy()
+    s.fill((255, 255, 255, max(0, min(255, int(a)))),
+           special_flags=pygame.BLEND_RGBA_MULT)
+    return s
+
+
 def _tent(s, pts, w0, w1, col=SHROUD):
     n = 36
     sm = []
@@ -592,13 +600,16 @@ def assemble(seed):
 # any other: it surfaces from its own free-form CUT, is HELD by the flesh at
 # the rim, and only ONE exists storm-wide at a time (the migrating bearer,
 # driven by the storm state -- NEVER dealt by assemble(), so every ordinary
-# amalgam is untouched). Two hard design rules: it draws SUB-PLAYER scale (the
-# same hand-object that rests on the altar, not a billboard head) and it is
-# ALWAYS CAMERA-FACING -- His regard faces the PI from any angle (the one
-# deliberate VISION exception, because it is a gaze, not a prop). The timber is
-# a bone<->wood blend: the drowned-white plate shape + the cult wood's carved
-# construction (pale plate, centre seam, brow + long nose, faint grain, deep
-# recessed sockets with the gold a pinprick far back, NO mouth, NO halo).
+# amalgam is untouched). It is a REAL 3D OBJECT: `yaw` turns it a full 360, His
+# carved face toward the PI on the near hemisphere and the hollow adzed BACK on
+# the far one, foreshortening to a sliver at profile (this SUPERSEDES the older
+# always-camera-facing call -- the maintainer wants it to respect the tilted
+# world, so it is a prop that turns, not a billboard). It draws at player scale
+# (STORM_MASK_R). The timber is a bone<->wood blend: the drowned-white plate
+# shape + the cult wood's carved construction (pale plate, centre seam, brow +
+# long nose, faint grain, deep recessed sockets with the gold a pinprick far
+# back, NO mouth, NO halo); the reverse is the unfinished hollow, adze-gouged,
+# a binding cord across it, the eye-holes leaking that same gold from behind.
 _PMASK_BONE = {"base": (204, 198, 186), "hi": (228, 222, 208), "lo": (152, 146, 132),
                "grain": (136, 128, 114), "edge": (82, 74, 62)}
 _PMASK_WOOD = {"base": (122, 92, 56), "hi": (154, 120, 76), "lo": (82, 60, 38),
@@ -623,7 +634,11 @@ def _pmask_jag(surf, cx, cy, rx, ry, col, seed, n=26, jit=0.04):
 
 def carved_pallid_surface(r, gaze=(0.0, 0.25), blend=0.5, seed=7, ember=1.0):
     """The carved-pallid Mask on its own square surface, centred and face-on.
-    `ember` 0..1 guts the gold as the mask sinks back into its cut."""
+    `ember` 0..1 guts the gold as the mask sinks back into its cut.
+
+    RETAINED as the flat 2D face-art REFERENCE only: the shipping Mask is the
+    3D `draw_pallid_3d` (whose front-hemisphere face echoes this art). Not on
+    any live draw path; kept for a possible future texture-map onto the shell."""
     r = max(4, int(r))
     P = _pmask_pal(blend)
     S = int(r * 2.6)
@@ -678,23 +693,167 @@ def carved_pallid_surface(r, gaze=(0.0, 0.25), blend=0.5, seed=7, ember=1.0):
     return m
 
 
+def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
+                   blend=0.5, seed=7, ember=1.0):
+    """The Pallid Mask as ONE real 3D object: a thin convex ellipsoid shell
+    (semi-axes Rx < Ry, and a REAL depth Rz). `yaw` rotates the whole mesh about
+    the vertical axis; it is projected and back-face culled, so the carved face,
+    the curved edge-on profile (an ellipse cross-section of depth Rz, never a
+    flat line), and the back ALL fall out of the same geometry -- no swapping
+    between drawings, no billboard, no nose. The carved FACE (pale plate, brow,
+    deep jagged sockets with a gold pinprick, centre seam, a hairline crack) is
+    drawn as 3D-anchored overlays that live on the FRONT hemisphere ONLY and cull
+    as it turns, so from behind it is a blank pale shell -- NO eyes on the back.
+    `lean` is a small in-plane roll; `gaze` aims the gold; `ember` its life."""
+    r = max(4, int(r))
+    P = _pmask_pal(blend)
+
+    def dk(c, f):
+        return tuple(max(0, min(255, int(x * f))) for x in c)
+
+    Rx, Ry, Rz = r * 0.78, r * 1.05, r * 0.42
+    amb = 0.58                                               # high -> smooth, pale like the 2D
+    Lx, Ly, Lz = -0.38, -0.52, 0.76
+    ll = math.sqrt(Lx * Lx + Ly * Ly + Lz * Lz)
+    Lx, Ly, Lz = Lx / ll, Ly / ll, Lz / ll
+    cpsi, spsi = math.cos(yaw), math.sin(yaw)
+    lrr = math.radians(lean)
+    cl, sl = math.cos(lrr), math.sin(lrr)
+    nphi, nth = 22, 48
+
+    def rp(x, y, z):                                          # rotate + roll -> screen
+        xr = x * cpsi + z * spsi
+        zr = -x * spsi + z * cpsi
+        return xr * cl - y * sl, xr * sl + y * cl, zr
+
+    # ---- the shell body: a smooth pale dome, a blank darker back ----
+    grid = []
+    for i in range(nphi + 1):
+        phi = math.pi * i / nphi
+        sp, cpp = math.sin(phi), math.cos(phi)
+        row = []
+        for j in range(nth + 1):
+            th = 2 * math.pi * j / nth
+            st, ct = math.sin(th), math.cos(th)
+            x, y, z = Rx * sp * ct, -Ry * cpp, Rz * sp * st
+            nx, ny, nz = sp * ct / Rx, -cpp / Ry, sp * st / Rz
+            nl = math.sqrt(nx * nx + ny * ny + nz * nz) + 1e-9
+            nx, ny, nz = nx / nl, ny / nl, nz / nl
+            sx, sy, zr = rp(x, y, z)
+            row.append((z, sx, sy, zr, nx * cpsi + nz * spsi, ny,
+                        -nx * spsi + nz * cpsi))
+        grid.append(row)
+
+    quads = []
+    for i in range(nphi):
+        for j in range(nth):
+            a, b = grid[i][j], grid[i][j + 1]
+            c2, e = grid[i + 1][j + 1], grid[i + 1][j]
+            nzr = (a[6] + b[6] + c2[6] + e[6]) * 0.25
+            if nzr <= 0.02:                                   # back-face cull
+                continue
+            nxr = (a[4] + b[4] + c2[4] + e[4]) * 0.25
+            nyr = (a[5] + b[5] + c2[5] + e[5]) * 0.25
+            lamb = max(0.0, nxr * Lx + nyr * Ly + nzr * Lz)
+            sh = amb + (1 - amb) * lamb
+            zc = (a[0] + b[0] + c2[0] + e[0]) * 0.25
+            base = P["base"] if zc >= 0.0 else dk(P["base"], 0.6)
+            col = dk(base, sh)
+            zavg = (a[3] + b[3] + c2[3] + e[3]) * 0.25
+            pts = [(int(cx + a[1]), int(cy + a[2])), (int(cx + b[1]), int(cy + b[2])),
+                   (int(cx + c2[1]), int(cy + c2[2])), (int(cx + e[1]), int(cy + e[2]))]
+            quads.append((zavg, pts, col))
+    quads.sort(key=lambda q: q[0])                            # painter: far first
+    for _, pts, col in quads:
+        pygame.draw.polygon(surf, col, pts)
+        pygame.draw.polygon(surf, col, pts, 1)               # cover facet seams
+
+    # ---- the carved FACE, anchored in 3D on the FRONT hemisphere ONLY, so it
+    # wraps with the shell and never shows from behind (no eyes on the back) ----
+    def shell_pt(lx, ly):
+        """Project a point on the oval face-plane onto the front bulge; return
+        screen (px, py) + the point's facing (rotated normal z, ~1 head-on)."""
+        u, v = lx / Rx, ly / Ry
+        s2 = min(1.0, u * u + v * v)
+        z = Rz * math.sqrt(max(0.0, 1.0 - s2))
+        sx, sy, _zr = rp(lx, ly, z)
+        nx, ny, nz = lx / (Rx * Rx), ly / (Ry * Ry), z / (Rz * Rz)
+        nl = math.sqrt(nx * nx + ny * ny + nz * nz) + 1e-9
+        return cx + sx, cy + sy, (-nx * spsi + nz * cpsi) / nl
+
+    seam = []                                                # the centre seam
+    for k in range(13):
+        px, py, f_ = shell_pt(0.0, -Ry * 0.72 + k / 12.0 * Ry * 1.48)
+        if f_ > 0.14:
+            seam.append((int(px), int(py)))
+    if len(seam) >= 2:
+        pygame.draw.lines(surf, P["grain"], False, seam, 2)
+
+    brow = []                                                # the brow ridge
+    for k in range(-6, 7):
+        fr = k / 6.0
+        px, py, f_ = shell_pt(fr * Rx * 0.52, -Ry * 0.30 + (fr * fr) * Ry * 0.05)
+        if f_ > 0.14:
+            brow.append((int(px), int(py)))
+    if len(brow) >= 2:
+        pygame.draw.lines(surf, dk(P["grain"], 0.85), False, brow, 2)
+
+    # the two DEEP jagged sockets + gold pupils (front hemisphere, gaze-aimed)
+    gx_, gy_ = max(-1, min(1, gaze[0])), max(-1, min(1, gaze[1]))
+    exl, eyl = Rx * 0.44, -Ry * 0.13
+    for sgn in (-1, 1):
+        px, py, fac = shell_pt(sgn * exl, eyl)
+        if fac <= 0.16:                                      # gone past the edge
+            continue
+        srx = max(1.0, r * 0.2 * (0.35 + 0.65 * fac))        # compresses toward profile
+        sry = max(1.0, r * 0.25)
+        for (rr, ccol) in ((1.0, (66, 55, 42)), (0.72, (34, 27, 20)), (0.44, (7, 6, 4))):
+            _pmask_jag(surf, px, py, srx * rr, sry * rr, ccol,
+                       seed + 11 + int(rr * 13), n=12, jit=0.18)
+        if ember > 0.05:
+            ppx = px + gx_ * r * 0.05 * fac
+            ppy = py + gy_ * r * 0.05
+            gs = int(r * 0.5) + 2
+            gl = pygame.Surface((gs, gs), pygame.SRCALPHA)
+            gr = gs // 2
+            pygame.draw.circle(gl, (*_PMASK_GOLD, int(60 * ember * fac)), (gr, gr),
+                               max(1, int(r * 0.1)))
+            surf.blit(gl, (int(ppx) - gr, int(ppy) - gr), special_flags=pygame.BLEND_RGBA_ADD)
+            gcol = tuple(int((60, 50, 24)[i] + (_PMASK_GOLD[i] - (60, 50, 24)[i]) * ember)
+                         for i in range(3))
+            pygame.draw.circle(surf, gcol, (int(ppx), int(ppy)), max(1, int(r * 0.045)))
+            if ember > 0.4:
+                pygame.draw.circle(surf, _PMASK_HOT, (int(ppx), int(ppy)), max(1, int(r * 0.02)))
+
+    crack = []                                               # a hairline crack, lower-right
+    for (lx, ly) in ((Rx * 0.34, Ry * 0.04), (Rx * 0.44, Ry * 0.40), (Rx * 0.30, Ry * 0.72)):
+        px, py, f_ = shell_pt(lx, ly)
+        if f_ > 0.14:
+            crack.append((int(px), int(py)))
+    if len(crack) >= 2:
+        pygame.draw.lines(surf, P["edge"], False, crack, 1)
+
+
 def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
-                          blend=0.5, seed=7, ang=1.2, side=-1, lean=8.0):
+                          blend=0.5, seed=7, ang=1.2, side=-1, lean=8.0,
+                          yaw=0.0):
     """The Mask as a PART: it rides out of its own cut (`deploy` 0..1) along
-    the cut normal, is held at the rim by shroud grips, and is drawn face-on
-    (camera-facing). `gaze` (gx, gy in -1..1) aims the pupils at the PI. The
-    caller enforces the one-bearer-at-a-time rule."""
+    the cut normal, held at the rim by shroud grips. `gaze` (gx, gy in -1..1)
+    aims the gold pupils. `yaw` turns it as ONE 3D object (`draw_pallid_3d`) --
+    His face, the curved edge-on profile, and the hollow back all fall out of
+    the same rotating shell, no swap. Caller enforces one-bearer-at-a-time."""
     d = max(0.0, min(1.0, deploy))
     dx_, dy_ = math.cos(ang), math.sin(ang)
     nx, ny = -dy_ * side, dx_ * side
     lay = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
     mcx = cx + nx * r * 0.9 * d
     mcy = cy + ny * r * 0.9 * d
-    ms = carved_pallid_surface(int(r), gaze, blend, seed, ember=0.25 + 0.75 * d)
-    if lean:
-        ms = pygame.transform.rotate(ms, lean)
-    lay.blit(ms, ms.get_rect(center=(int(mcx), int(mcy))))
-    # everything inside the cut line ends dead flat (the family grammar)
+    ember = 0.25 + 0.75 * d
+    # the Mask itself -- one rotating 3D shell, rendered onto its own layer
+    draw_pallid_3d(lay, mcx, mcy, r, yaw=yaw, lean=lean, gaze=gaze,
+                   blend=blend, seed=seed, ember=ember)
+    # clip whatever is still INSIDE the cut (the far side of the cut line) so it
+    # reads as rising from the slit; everything there ends dead flat (the grammar)
     p0 = (cx - dx_ * 400, cy - dy_ * 400); p1 = (cx + dx_ * 400, cy + dy_ * 400)
     p2 = (p1[0] - nx * 400, p1[1] - ny * 400); p3 = (p0[0] - nx * 400, p0[1] - ny * 400)
     pygame.draw.polygon(lay, (0, 0, 0, 0), [(int(a), int(b)) for a, b in (p0, p1, p2, p3)])
@@ -720,6 +879,32 @@ def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
         mxp = cx - nx * grng.uniform(3, 8) + grng.uniform(-2, 2)
         myp = cy - ny * grng.uniform(3, 8) + grng.uniform(-2, 2)
         pygame.draw.circle(surf, EMBER_G if k == 0 else SHROUD, (int(mxp), int(myp)), 1)
+
+
+# ---- the possessed BEARER (drawn ONLY on the Mask-bearer) -------------------
+# When the Mask jumps to an amalgam it POWERS IT UP -- and the power-up is
+# SIZE: the bearer is simply a BIGGER amalgam than the ordinary shadows
+# (BEARER_SCALE), not a busier one. Its one extra flourish is the CROWN -- an
+# arc of ember-cuts (watching apertures) over the Mask. No hitbox; dread only.
+BEARER_SCALE = 1.5
+
+
+def _bearer_crown(surf, mcx, mcy, mr, power, seed):
+    """An arc of ember-cuts over the Mask -- a crown of watching apertures."""
+    if power <= 0.05:
+        return
+    rng = random.Random(seed + 9)
+    n = 7
+    for i in range(n):
+        f = i / (n - 1)
+        a = math.pi * (1.12 + 0.76 * f)
+        cr = mr * (1.45 + 0.15 * power)
+        cx = mcx + math.cos(a) * cr
+        cy = mcy + math.sin(a) * cr * 0.85 - mr * 0.35
+        dd = power * (0.55 + 0.45 * rng.random())
+        _cut_line(surf, cx, cy, a + 1.57, mr * 0.55 * dd, alpha=dd, side=1)
+        if dd > 0.4:
+            _eye(surf, cx, cy, r=1)
 
 
 def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
@@ -766,7 +951,8 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
             _cut_line(lay, 75 + x0 + dx_, (y0 + dy_) - 44, 1.2, 10,
                       alpha=0.3, side=1)
     _GAZE = False
-    sc = 0.8
+    # THE BEARER is simply a BIGGER amalgam -- that size IS the power-up tell.
+    sc = 0.8 * (BEARER_SCALE if mask is not None else 1.0)
     sw, sh = int(LW * sc), int(LH * sc)
     scaled = pygame.transform.scale(lay, (sw, sh))
     base = int(GY * sc) + 2
@@ -777,16 +963,20 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     surf.blit(ghost, (int(x - sw // 2) - 3, int(y - base) - 1))
     scaled.set_alpha(int(230 * phase))
     surf.blit(scaled, (int(x - sw // 2), int(y - base)))
-    # THE MASK, when this unit is the bearer (storm state passes `mask`; None
-    # for every ordinary amalgam, so their draw is untouched). Surfaces from a
-    # senses-high cut, sub-player scale, always camera-facing.
+    # THE BEARER, when the storm passes `mask` (None for every ordinary
+    # amalgam, so their draw is byte-identical). The power-up is the BIGGER
+    # body drawn above; here we add the Mask itself + His crown of cuts.
     if mask is not None:
+        power = _clamp(mask.get("deploy", 1.0))
+        topy = y - base
+        # the Mask itself (its own cut + grips), player-scale, a 3D prop by `yaw`
         mr = mask.get("r", max(8, int(sh * 0.17)))
-        mcx = x + mask.get("dx", int(sw * 0.06))
-        mcy = (y - base) + mask.get("my", int(sh * 0.30))
+        mcx = x + mask.get("dx", int(sw * 0.04))
+        mcy = topy + mask.get("my", int(sh * 0.30))
         draw_pallid_mask_part(surf, mcx, mcy, mr,
-                              deploy=mask.get("deploy", 1.0),
-                              gaze=mask.get("gaze", (0.0, 0.3)),
+                              deploy=power, gaze=mask.get("gaze", (0.0, 0.3)),
                               blend=mask.get("blend", 0.5),
                               seed=mask.get("seed", 7),
-                              lean=mask.get("lean", 8.0))
+                              lean=mask.get("lean", 8.0), yaw=mask.get("yaw", 0.0))
+        # the crown of ember-cuts arcing over the Mask
+        _bearer_crown(surf, mcx, mcy - mr * 0.3, mr, power, seed)

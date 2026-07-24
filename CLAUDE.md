@@ -271,11 +271,15 @@ it renders the procedural sprites to a labelled PNG strip.
     a seeded 3-5 part deal from a 17-part library, each part emerging
     from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
     this skin, behavior unchanged (DESIGN.md §1). The **Pallid Mask part**
-    (`carved_pallid_surface` + `draw_pallid_mask_part`; the storm-King
-    redesign, `TODO.md` #25) is an 18th part NEVER dealt by `assemble()`,
-    driven ONLY by the `mask=` kwarg (sub-player, camera-facing, one bearer
-    storm-wide) — dormant until the storm system lands, so ordinary amalgams
-    stay byte-identical.
+    (`draw_pallid_3d` — the one 3D shell — driven through
+    `draw_pallid_mask_part`; the storm-King redesign, `TODO.md` #25) is an 18th
+    part NEVER dealt by `assemble()`, driven ONLY by the `mask=` kwarg
+    (player-scale, a REAL 3D object that turns a full 360 with the carved face
+    on its front hemisphere only — no eyes from behind — one bearer storm-wide)
+    — dormant until the storm system lands, so ordinary amalgams stay
+    byte-identical. The possessed bearer is just a BIGGER amalgam + a crown
+    (`BEARER_SCALE` / `_bearer_crown`). `carved_pallid_surface` is retained as
+    the flat 2D face-art reference.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the ONLY camera; the
     pitch is locked, there is no flat/pitch-0 view):** `camera.py` (`Camera.project(wx,wy,wz)`,
