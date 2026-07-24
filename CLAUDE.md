@@ -589,6 +589,12 @@ section is the CODE MAP only — where each system lives:
   is a `DARK_SCENES` subset for the explorable non-refuge interiors: a LIGHTER
   gloom (72) so a ground-floor room reads dim-lit-by-bulbs, not pitch-black
   (`_draw_dark`); lit by the genset `wall_lamp` fixture (DESIGN §6).
+  `STORM_STAGE_SCENES` (Brimley + `OUTDOOR_SCENES`, 2026-07) is the surface
+  world that DARKENS with the evidence count (the storm's stage, TODO #25 /
+  DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
+  (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
+  become islands and the flashlight works outdoors. Understanding-driven, NOT a
+  day cycle.
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.

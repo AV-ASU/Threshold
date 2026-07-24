@@ -2831,7 +2831,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if not self.player.inventory.has("flashlight"):
             return False
         if self.scene.key not in DARK_SCENES:
-            return False
+            # the surface earns the beam only once the storm has darkened it
+            if not (self.scene.key in STORM_STAGE_SCENES
+                    and STORM_DARK_GLOOM[self._rot_stage()] > 0):
+                return False
         # (The old CULT_DARK beam-off is RETIRED, 2026-07 light pass:
         # light works everywhere; the deep's dread is what light costs
         # and attracts, not a dead switch.)

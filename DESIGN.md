@@ -290,6 +290,17 @@ What rises with the stage:
   It is **the pressure of the vessel made visible** — His attention
   settling on you, not snow, not weather. Light at stage 1, a steady
   yellow drift by stage 3.
+- **The daylight drains — the surface darkens with the stage (the storm's
+  STAGE; TODO #25, LIVE).** The outdoor world (`STORM_STAGE_SCENES`: Brimley +
+  `OUTDOOR_SCENES`) dims monotonically with the rot stage, routed through the
+  same `_draw_dark` lightmap the dim interiors use at a gloom that ramps 0 → 138
+  (`STORM_DARK_GLOOM`): stage 0 is full day (early-out, byte-identical), stage 3
+  is night. The civic yard-lights threading the roads (§6) become ISLANDS, and
+  the flashlight earns its place outdoors (with its light-draws-Him cost, §1).
+  It is the ashfall's LIGHT twin — the veil thinning as His attention gathers,
+  never a day/night cycle (no `day_phase`/`day_count`; the daytime invariant
+  holds, NARRATIVE §canon). VISUAL + flashlight so far; it is the STAGE the
+  amalgam-cut storm (TODO #25) will fill (no light = danger, taken outdoors).
 - **The people do NOT change — the man hearing them does (TODO #22c,
   2026-07).** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the

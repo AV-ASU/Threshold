@@ -139,6 +139,22 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — The storm's STAGE: ev-driven surface darkening (`TODO.md` #25,
+  LIVE).** The first LIVE slice of the storm-King redesign, and the stage the
+  amalgam-cut flood will later fill. The surface world (`STORM_STAGE_SCENES`:
+  Brimley + `OUTDOOR_SCENES`) now DARKENS with the evidence count: `_draw_dark`
+  runs there too, at a gloom that ramps with the rot stage (`STORM_DARK_GLOOM =
+  (0, 44, 92, 138)`). Stage 0 is full day (gloom 0 → early-out, so ev0 is
+  byte-identical, `capture_world --diff` clean); by stage 3 it is night, the
+  civic yard-lights threading the roads become ISLANDS (the existing lightmap
+  clears a pool under each), and the flashlight is enabled outdoors
+  (`_flashlight_lit`) so its light-draws-Him double-edge (`VIS_LIT_RISE`)
+  applies there too. The whole-frame lightmap multiply darkens the sky for
+  free. Framed as world rot's LIGHT twin (the ashfall's companion, DESIGN §2):
+  *understanding* thinning the veil, NOT a day/night cycle — the "one
+  continuous daytime state" invariant holds (no `day_phase`/`day_count`;
+  NARRATIVE reconciled). VISUAL + flashlight only; the light/dark COVER split
+  and the storm flood are the next slices (`TODO.md` #25). Full gate green.
 - **2026-07 — The Mask became a REAL 3D object + the bearer power-up settled
   (dormant, `TODO.md` #25).** A visual pass on the storm-King's Mask. It had
   been a flat billboard (a front card and a back card, foreshortened by a

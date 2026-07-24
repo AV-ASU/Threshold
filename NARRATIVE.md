@@ -571,7 +571,11 @@ purpose, and keep each one guarded where a guard exists.
 - **The car answers only to the Sign.** The fold killed it; nobody
   sabotaged it. → §1, §7
 - **The world holds one continuous daytime state** (no day/night
-  cycle). → `DESIGN.md`
+  cycle; no `day_phase` / `day_count`). The **surface darkens with the
+  evidence count** (the storm's stage, `TODO.md` #25) — but that is world
+  rot's LIGHT twin, *understanding* thinning the veil as His attention
+  gathers, never a clock: the daytime state does not oscillate and time is
+  not tracked. → `DESIGN.md` §2
 - **Item and scene keys are load-bearing** (logic + the one in-session
   save): `mom_notebook`, `pallid_mask`, `cult_calling`, `cult_bargain`,
   `cult_digging`, `cross`, `robe`, `unsent_letter`, `flashlight`,

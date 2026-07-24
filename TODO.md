@@ -308,14 +308,26 @@ half-out). Locked with the maintainer this pass:
   bearer, units drifting to His **lagged sense** of the player (luck, not
   omniscience), **light slows + repels, never burns**. Sim + draw helper only;
   imported by nothing in the game. Preview `tools/preview_storm.py`.
+- The **storm's STAGE** — the ev-driven surface darkening (LIVE). `STORM_STAGE_SCENES`
+  (Brimley + `OUTDOOR_SCENES`) route through `_draw_dark` at a gloom that ramps
+  with the rot stage (`STORM_DARK_GLOOM = (0, 44, 92, 138)`): stage 0 is full
+  day (early-out, byte-identical), and by stage 3 it is night with the road
+  yard-lights as ISLANDS and the flashlight enabled outdoors (so the
+  light-draws-Him double-edge applies there too). This is world rot's LIGHT twin
+  (understanding, not a clock — the daytime invariant holds, NARRATIVE §canon).
+  VISUAL + flashlight only so far; no new threat mechanic yet — it is the STAGE
+  the storm fills.
 
-**OPEN, in build order:** (1) the outdoor **ev-driven darkening + the
-light/dark split** (the storm's stage; #4/#21) FIRST; (2) **wire the storm
-engine in** — real scene dark-spots as anchors (off the darkening), tilt-camera
-projection, spawn density off evidence, and the **catch** (a bearer reaching
-you = the King-catch death); (3) **retire THE UNFOLDING** and rewire the catch
-/ death card / Carcosa cutscene (flow-guarded) onto the storm; (4) reconcile
-canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each piece lands —
+**OPEN, in build order:** (1) the **light/dark SPLIT as a MECHANIC** (the
+visual darkening landed, above; #4/#21) — outdoors, light pools = cover and the
+dark = exposure, so bring the surface storm-dark scenes into the shadow-cover
+(`SUS_CONCEAL_DARK`) + Watcher-dark rules the dim interiors already use, giving
+the storm a stage to open in; (2) **wire the storm engine in** — real scene
+dark-spots as anchors (off the darkening), tilt-camera projection, spawn density
+off evidence, and the **catch** (a bearer reaching you = the King-catch death);
+(3) **retire THE UNFOLDING** and rewire the catch / death card / Carcosa
+cutscene (flow-guarded) onto the storm; (4) reconcile canon (NARRATIVE §4/§8 the
+King, DESIGN §1 the apex) ONLY as each piece lands —
 the docs still describe THE UNFOLDING because that is what SHIPS until (3). Land
 each visual beat through a VISION look-pass.
 

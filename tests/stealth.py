@@ -1333,6 +1333,21 @@ def main():
     check(sc.power_on and not sc.lit_at(12 * TILE + 16, 6 * TILE + 16),
           "broken: a burned-out pendant's spot stays dark on full power")
 
+    # ---- §18: the storm's STAGE -- ev-driven surface darkening (TODO #25) --
+    # The daytime invariant: stage 0 is FULL DAY (no darkening, byte-identical),
+    # and the gloom only ever deepens with the rot stage -- never a day cycle.
+    from systems.config import STORM_DARK_GLOOM, STORM_STAGE_SCENES
+    print("[18] storm stage: ev0 full day, gloom monotonic, Brimley staged")
+    check(STORM_DARK_GLOOM[0] == 0,
+          "storm stage: gloom is 0 at ev0 (full day, _draw_dark early-outs)")
+    check(all(STORM_DARK_GLOOM[i] <= STORM_DARK_GLOOM[i + 1]
+              for i in range(len(STORM_DARK_GLOOM) - 1)),
+          "storm stage: gloom monotonic non-decreasing with the stage")
+    check(len(STORM_DARK_GLOOM) == 4 and STORM_DARK_GLOOM[3] > 0,
+          "storm stage: four stages, night by stage 3")
+    check("brimley" in STORM_STAGE_SCENES,
+          "storm stage: Brimley is a staged surface scene")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

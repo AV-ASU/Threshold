@@ -257,6 +257,21 @@ KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold", "maras_room"}
 # still runs (cover here is meaningful).
 DIM_SAFE_SCENES = {"lodge_cellar"}
 
+# ---- The storm's STAGE: evidence-driven surface darkening (TODO #25) ----
+# The surface world DARKENS as the PI understands more -- the daylight draining
+# under His gathering attention. This is world-rot's LIGHT twin (DESIGN.md §2:
+# the veil thinning, the pale-yellow ashfall), driven by the SAME rot stage
+# (min(3, evidence)) and NOT a day/night cycle: the "one continuous daytime
+# state" invariant holds (no day_phase / day_count) -- the darkening is
+# UNDERSTANDING, not a clock. At stage 0 the town is full day (gloom 0 ->
+# _draw_dark early-outs, byte-identical). By stage 3 it is night, and the few
+# civic yard lights threading the roads (cold electric on the gensets) become
+# the ISLANDS of safety while the flashlight earns its place outdoors. This is
+# the STAGE the storm (the amalgam-cut flood) will later fill: no light =
+# danger, taken outdoors.
+STORM_STAGE_SCENES = {"brimley"} | OUTDOOR_SCENES
+STORM_DARK_GLOOM = (0, 44, 92, 138)     # darkness amount by rot stage 0..3
+
 # ---- THRESHOLD: cult geography + threat tuning ----
 # Regular cultists roam every outdoor scene; the safe lodge interiors
 # (SAFE_SCENES) are the only refuge.

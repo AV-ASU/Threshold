@@ -607,7 +607,9 @@ class RenderMixin:
         and sit a touch heavier."""
         if self.scene is None or self.player is None:
             return
-        if self.scene.key not in DARK_SCENES:
+        key = self.scene.key
+        storm_scene = key in STORM_STAGE_SCENES
+        if key not in DARK_SCENES and not storm_scene:
             return
         psx, psy = self._player_screen()
         lit = self._flashlight_lit()
@@ -670,9 +672,16 @@ class RenderMixin:
         # overlapping pools genuinely brighten their shared floor, and the
         # seams are gone. The colored pools still ADD on top; shadows
         # still SUB.
-        gloom = (130 if self.scene.key in CULT_DARK_SCENES
-                 else 72 if self.scene.key in DIM_INTERIOR_SCENES
-                 else 100)
+        if storm_scene:
+            # the surface darkens with understanding, not a clock (TODO #25):
+            # gloom ramps with the rot stage; stage 0 is full day (early-out).
+            gloom = STORM_DARK_GLOOM[self._rot_stage()]
+            if gloom <= 0:
+                return
+        else:
+            gloom = (130 if key in CULT_DARK_SCENES
+                     else 72 if key in DIM_INTERIOR_SCENES
+                     else 100)
         amb = 255 - gloom
         lm = getattr(self, "_lightmap_surf", None)
         if lm is None or lm.get_size() != self.screen.get_size():
