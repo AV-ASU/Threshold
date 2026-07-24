@@ -344,14 +344,10 @@ everywhere), and the flashlight opening on the PI's desk
   the dev design surface: mechanical radius + visible pool + the hatched
   dark map per scene) and the COLD ruling (wall_lamp cold blue-white;
   fire demoted to prop). Next placement passes run through the audit.
-- **CONE FIXTURES (maintainer, 2026-07): light is not only a circle.**
-  A fixture may project a directional CONE/FAN: per-deco kwargs
-  `cone=(dir_x, dir_y, half_angle)` honored by all THREE layers -- the
-  visible pool draw (`_draw_dark` casts a foreshortened fan, not an
-  ellipse), the mechanical gate (`Scene.lit_at` adds the angular test),
-  and the audit overlay (fan outline). A wall lamp aims away from its
-  wall; a hooded work light throws a tight cone; the flashlight already
-  proves the read. Build with the genset link (next lighting commit).
+- **LANDED en route: cone fixtures** (`cone=(dir_x, dir_y, half_deg)`
+  per-deco kwarg in all three layers, pilot on the shop's hooded east
+  lamp; `CHANGELOG.md` "Lighting"). Aim further lamps per room as each
+  placement pass reaches it.
 - **The light-security loop (the core).** Buildings' fixtures can be
   restored/switched; lit rooms are SECURED against Watchers; lights decay
   or fail over time; gasoline for the gensets is the cost (canon-ready:

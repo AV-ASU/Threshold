@@ -125,6 +125,19 @@ FIXTURE_POOLS = {
     "kerosene_lamp": (48,  (255, 186, 96),   44,   14,    0,   0.12, 8.0),
 }
 
+def _deco_cone(d):
+    """A fixture deco's optional cone kwarg `cone=(dir_x, dir_y, half_deg)`
+    normalized to (nx, ny, half_rad), or None for an omni pool. The SAME
+    kwarg drives all three layers (TODO #21): the visible fan here, the
+    mechanical gate (Scene.light_sources/lit_at), and the audit overlay."""
+    raw = getattr(d, "kwargs", {}).get("cone")
+    if not raw:
+        return None
+    dx, dy, half = raw
+    n = math.hypot(dx, dy) or 1.0
+    return (dx / n, dy / n, math.radians(half))
+
+
 # Additive floor light pools, cached per shape. A tilt-foreshortened ellipse
 # whose RGB carries color*falloff (blit with BLEND_RGB_ADD, so pools SUM where
 # they overlap and lift whatever they lie on -- lights interacting with each
@@ -614,9 +627,11 @@ class RenderMixin:
             if spec is None:
                 continue
             radius, color, peak, src_z, arm, famp, fspd = spec
-            cx, cy = self.camera.project(d.x + ax * arm, d.y + ay * arm, 0)
+            wx, wy = d.x + ax * arm, d.y + ay * arm
+            cx, cy = self.camera.project(wx, wy, 0)
             fl = (1.0 - famp) + famp * math.sin(tnow * fspd + d.x * 0.25)
-            fixtures.append((int(cx), int(cy), radius, color, peak, fl))
+            fixtures.append((int(cx), int(cy), radius, color, peak, fl,
+                             wx, wy, _deco_cone(d)))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         # The far points are laid out in WORLD space around the player's feet
         # and projected through the camera, so the cone lies FLAT on the ground
@@ -655,34 +670,75 @@ class RenderMixin:
                 aa = int(gloom * i / (n - 1))         # 0 centre -> gloom at rim
                 pygame.draw.ellipse(overlay, (0, 0, 0, aa),
                                     (cx - rx, cy - ry, rx * 2, ry * 2))
+        def _fan_pts(wx, wy, cn, rr):
+            # a directional fixture's fan, laid out in WORLD space and
+            # projected -- like the flashlight cone, it foreshortens with
+            # the floor instead of being a screen-space shape
+            nx, ny, half = cn
+            a0 = math.atan2(ny, nx)
+            pts = [self.camera.project(wx, wy, 0)]
+            steps = 9
+            for i in range(steps + 1):
+                a = a0 - half + (2 * half) * i / steps
+                pts.append(self.camera.project(wx + rr * math.cos(a),
+                                               wy + rr * math.sin(a), 0))
+            return pts
+
         _carve(psx, psy, 118)
-        for cx, cy, radius, color, peak, fl in fixtures:
-            _carve(cx, cy, int(radius * fl))
+        for cx, cy, radius, color, peak, fl, wx, wy, cn in fixtures:
+            if cn is None:
+                _carve(cx, cy, int(radius * fl))
+            else:
+                # carve the gloom along the fan, deepest at the apex
+                n = 6
+                for i in range(n - 1, -1, -1):
+                    rr = radius * fl * (0.22 + 0.78 * i / (n - 1))
+                    aa = int(gloom * i / (n - 1))
+                    pygame.draw.polygon(overlay, (0, 0, 0, aa),
+                                        _fan_pts(wx, wy, cn, rr))
         if cone:
             # Carve the beam clear of the gloom (alpha 0 inside the cone).
             pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
         self.screen.blit(overlay, (0, 0))
         # ADDITIVE light on top: the player's own pool + every fixture's, each
-        # a floor ellipse under its source. They SUM where they overlap and
-        # brighten the walls / props / actors they lie on.
+        # a floor ellipse (or fan) under its source. They SUM where they
+        # overlap and brighten the walls / props / actors they lie on.
         pcol = (240, 226, 165) if lit else (120, 128, 156)
         ppk, pr = (64 if lit else 70), 112
         self.screen.blit(_floor_pool_surf(pr, squash, pcol, ppk),
                          (psx - pr, psy - int(pr * squash)),
                          special_flags=pygame.BLEND_RGB_ADD)
-        for cx, cy, radius, color, peak, fl in fixtures:
+        fan_add = None
+        for cx, cy, radius, color, peak, fl, wx, wy, cn in fixtures:
             r = max(2, int(radius * fl))
-            self.screen.blit(_floor_pool_surf(r, squash, color,
-                                              int(peak * fl)),
-                             (cx - r, cy - int(r * squash)),
-                             special_flags=pygame.BLEND_RGB_ADD)
+            if cn is None:
+                self.screen.blit(_floor_pool_surf(r, squash, color,
+                                                  int(peak * fl)),
+                                 (cx - r, cy - int(r * squash)),
+                                 special_flags=pygame.BLEND_RGB_ADD)
+            else:
+                # nested fan fills stepping down in brightness = the
+                # directional pool (shared scratch surface, ADD once)
+                if fan_add is None:
+                    fan_add = pygame.Surface(self.screen.get_size())
+                fan_add.fill((0, 0, 0))
+                n = 4
+                for i in range(n, 0, -1):
+                    rr = r * i / n
+                    f = (peak * fl / 255.0) * (1.0 - (i - 1) / n) * 0.9
+                    col = (int(color[0] * f), int(color[1] * f),
+                           int(color[2] * f))
+                    pygame.draw.polygon(fan_add, col,
+                                        _fan_pts(wx, wy, cn, rr))
+                self.screen.blit(fan_add, (0, 0),
+                                 special_flags=pygame.BLEND_RGB_ADD)
         # CAST SHADOWS: every solid caster throws a soft shadow across the
         # floor AWAY from each nearby source -- the light interacting with the
         # object. A LOW source (a candle near the floor) throws a long shadow,
         # a HIGH one (a yard-light head) a short one; under several lights an
         # object throws several shadows, one per light.
         from rendering.props import is_solid_prop
-        srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3])
+        srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3], _deco_cone(d))
                 for d in getattr(self.scene, "decorations", [])
                 for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),) if s]
         if srcs:
@@ -697,11 +753,20 @@ class RenderMixin:
                 if k not in FIXTURE_POOLS and is_solid_prop(k):
                     casters.append((d.x, d.y, 8))
             for ox, oy, foot in casters:
-                for sx, sy, radius, src_z in srcs:
+                for sx, sy, radius, src_z, cn in srcs:
                     dx, dy = ox - sx, oy - sy
                     dist = math.hypot(dx, dy)
                     if dist < 2.0 or dist > radius:
                         continue
+                    if cn is not None:
+                        # a caster outside a hooded lamp's fan stands in
+                        # its dark: no light on it, no shadow from it
+                        nx, ny, half = cn
+                        ca = math.acos(max(-1.0, min(1.0,
+                                                     (dx * nx + dy * ny)
+                                                     / dist)))
+                        if ca > half:
+                            continue
                     # A shadow is ABSENCE of light: SUBTRACT the pool's glow
                     # where the object blocks it (a cool-grey sub), so it reads
                     # as dark floor -- not a black-over-warm brown stain.

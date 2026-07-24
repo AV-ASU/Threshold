@@ -559,6 +559,16 @@
 
 ## Lighting
 
+- **2026-07 — Cone fixtures (light is not only a circle).** A fixture
+  deco may carry `cone=(dir_x, dir_y, half_deg)`; the SAME kwarg drives
+  all three layers (the maintainer's ask): `_draw_dark` carves + adds a
+  world-space projected FAN instead of an ellipse (nested fills stepping
+  down in brightness; apex at the fixture), `Scene.light_sources`/
+  `lit_at` add the angular test (behind a hooded lamp is honest dark,
+  and the stealth shadow-cover gate agrees), the cast-shadow pass skips
+  casters outside the fan, and `tools/light_audit.py` outlines the fan.
+  Pilot: the shop's east bulkhead lamp aims west into the room, so its
+  own wall keeps the dark. Aim further lamps room by room per audit.
 - **2026-07 — The shop light pass (the first audit-designed room) +
   `drop_bulb` + the kerosene pool.** First placement pass run through
   `tools/light_audit.py` end to end. New `drop_bulb` fixture (a bare

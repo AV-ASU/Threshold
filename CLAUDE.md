@@ -613,6 +613,9 @@ section is the CODE MAP only — where each system lives:
   cast on the floor UNDER the 3D source, pools blend ADDITIVELY (they combine
   + lift the objects they lie on), and solid casters throw SUBTRACTIVE cast
   shadows away from each source (DESIGN §6, the 3D light-interaction model).
+  An optional per-deco `cone=(dir_x, dir_y, half_deg)` kwarg turns the pool
+  into a directional FAN in all three layers at once (visible draw,
+  `Scene.lit_at` gate, audit overlay).
   Cold electric (`yard_light`) vs warm fire is a colour choice in that table.
   **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
   MAN-MADE things** (they read as flat cards that swivel to face the camera

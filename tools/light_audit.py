@@ -27,15 +27,35 @@ import random
 import pygame
 
 
-def _ground_ring(surf, cam, wx, wy, r, col, width=0, alpha=None):
-    pts = [cam.project(wx + r * math.cos(a), wy + r * math.sin(a), 0)
-           for a in [i * math.pi / 24.0 for i in range(48)]]
+def _ground_ring(surf, cam, wx, wy, r, col, width=0, alpha=None, cone=None):
+    """Ground-projected outline of a pool: a full ring, or -- for a cone
+    fixture -- the FAN (apex + arc), so a directional light audits as the
+    fan it actually throws."""
+    if cone is not None:
+        nx, ny, half = cone
+        a0 = math.atan2(ny, nx)
+        pts = [cam.project(wx, wy, 0)]
+        pts += [cam.project(wx + r * math.cos(a0 - half + 2 * half * i / 20),
+                            wy + r * math.sin(a0 - half + 2 * half * i / 20),
+                            0) for i in range(21)]
+    else:
+        pts = [cam.project(wx + r * math.cos(a), wy + r * math.sin(a), 0)
+               for a in [i * math.pi / 24.0 for i in range(48)]]
     if alpha is not None:
         tmp = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
         pygame.draw.polygon(tmp, (*col, alpha), pts, width)
         surf.blit(tmp, (0, 0))
     else:
         pygame.draw.polygon(surf, col, pts, width)
+
+
+def _cone_of(d):
+    raw = getattr(d, "kwargs", {}).get("cone")
+    if not raw:
+        return None
+    dx, dy, half = raw
+    n = math.hypot(dx, dy) or 1.0
+    return (dx / n, dy / n, math.radians(half))
 
 
 def audit(g, key):
@@ -66,9 +86,20 @@ def audit(g, key):
             cx, cy = tx * TILE + 16, ty * TILE + 16
             lit = False
             for d, mr in emitters:
-                if mr and (d.x - cx) ** 2 + (d.y - cy) ** 2 <= mr * mr:
-                    lit = True
-                    break
+                if not (mr and
+                        (d.x - cx) ** 2 + (d.y - cy) ** 2 <= mr * mr):
+                    continue
+                cn = _cone_of(d)
+                if cn is not None:
+                    dxv, dyv = cx - d.x, cy - d.y
+                    dist = math.hypot(dxv, dyv)
+                    if dist > 2.0:
+                        ca = math.acos(max(-1.0, min(
+                            1.0, (dxv * cn[0] + dyv * cn[1]) / dist)))
+                        if ca > cn[2]:
+                            continue
+                lit = True
+                break
             if lit:
                 continue
             p = cam.project(cx, cy, 0)
@@ -79,12 +110,15 @@ def audit(g, key):
     font = pygame.font.SysFont(None, 22)
     for d, mr in emitters:
         pool = FIXTURE_POOLS.get(d.kind)
+        cn = _cone_of(d)
         if mr:
             _ground_ring(surf, cam, d.x, d.y, mr, (250, 245, 200),
-                         width=0, alpha=42)
-            _ground_ring(surf, cam, d.x, d.y, mr, (250, 245, 200), width=1)
+                         width=0, alpha=42, cone=cn)
+            _ground_ring(surf, cam, d.x, d.y, mr, (250, 245, 200), width=1,
+                         cone=cn)
         if pool:
-            _ground_ring(surf, cam, d.x, d.y, pool[0], pool[1], width=2)
+            _ground_ring(surf, cam, d.x, d.y, pool[0], pool[1], width=2,
+                         cone=cn)
         p = cam.project(d.x, d.y, 0)
         surf.blit(font.render(d.kind, True, (255, 255, 160)),
                   (int(p[0]) + 6, int(p[1]) - 18))

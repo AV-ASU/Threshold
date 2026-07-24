@@ -644,6 +644,11 @@ Built into the procedural draw layer (`scenes/base.py`,
     (`BLEND_RGB_SUB`, a cool-grey) rather than painting black over it -- black
     over warm light reads as a brown STAIN, subtraction reads as dark floor.
     Both the pool and the shadow are cached per shape (`_floor_pool_surf`).
+    **Light is not only a circle:** a fixture deco may carry
+    `cone=(dir_x, dir_y, half_deg)` and throw a directional FAN instead --
+    the one kwarg drives the visible fan (`_draw_dark`), the mechanical
+    gate (`Scene.lit_at`'s angular test: behind a hooded lamp is honest
+    dark), the cast-shadow pass, and the audit overlay's outline.
   - **The interior light is COLD, and darkness is designed (2026-07
     light ruling).** No warm-lamp cosiness indoors: `wall_lamp` casts cold
     blue-white (the maintainer's "LED" read; in 1994 the same light is a

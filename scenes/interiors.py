@@ -247,7 +247,10 @@ def build_shop():
     # N facing -- three things reading as three things, not one blob)
     sc.add_decoration(Decoration(9 * TILE + 0, 9 * TILE + 24, "drop_bulb",
                                  z=42))
-    sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp"))
+    # (the bulkhead lamp is HOODED: its fan aims west into the room, so the
+    # wall behind it stays honest dark -- the cone-fixture pilot, TODO #21)
+    sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp",
+                                 cone=(-1, 0, 55)))
     # A kerosene lamp on the counter is the backup for when the gas runs low.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,
                                  "kerosene_lamp"))

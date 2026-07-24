@@ -480,24 +480,46 @@ class Scene:
                     "kerosene_lamp": 40.0}
 
     def light_sources(self):
-        """Cached [(x, y, r)] of the scene's light-emitting decorations
-        (see _LIGHT_KINDS). Rebuilt when the decoration count changes
-        (world rot adds decals at load; nothing removes lights)."""
+        """Cached [(x, y, r, cone)] of the scene's light-emitting decorations
+        (see _LIGHT_KINDS). `cone` is None for an omni pool, else
+        (nx, ny, half_rad) from the deco's `cone=(dir_x, dir_y, half_deg)`
+        kwarg -- a DIRECTIONAL fixture lights (and gates) only inside its
+        fan (TODO #21 cone fixtures). Rebuilt when the decoration count
+        changes (world rot adds decals at load; nothing removes lights)."""
         cache = getattr(self, "_light_cache", None)
         if cache is not None and cache[0] == len(self.decorations):
             return cache[1]
-        srcs = [(d.x, d.y, self._LIGHT_KINDS[d.kind])
-                for d in self.decorations if d.kind in self._LIGHT_KINDS]
+        srcs = []
+        for d in self.decorations:
+            if d.kind not in self._LIGHT_KINDS:
+                continue
+            cone = None
+            raw = getattr(d, "kwargs", {}).get("cone")
+            if raw:
+                cx_, cy_, half = raw
+                n = math.hypot(cx_, cy_) or 1.0
+                cone = (cx_ / n, cy_ / n, math.radians(half))
+            srcs.append((d.x, d.y, self._LIGHT_KINDS[d.kind], cone))
         self._light_cache = (len(self.decorations), srcs)
         return srcs
 
     def lit_at(self, x, y):
         """True when world (x, y) stands inside any light pool -- the
         darkness-concealment gate (a player beside a torch reads as lit
-        however dark the room is)."""
-        for lx, ly, r in self.light_sources():
-            if self.world_dist(x, y, lx, ly) <= r:
-                return True
+        however dark the room is). A cone fixture only lights inside its
+        fan: behind a hooded lamp is honest dark."""
+        for lx, ly, r, cone in self.light_sources():
+            d = self.world_dist(x, y, lx, ly)
+            if d > r:
+                continue
+            if cone is not None and d > 2.0:
+                nx, ny, half = cone
+                dx, dy = x - lx, y - ly
+                ang = math.acos(max(-1.0, min(1.0,
+                                              (dx * nx + dy * ny) / d)))
+                if ang > half:
+                    continue
+            return True
         return False
 
     def add_cult_station(self, x, y, pose=None, face=None,
