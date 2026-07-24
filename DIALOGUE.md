@@ -559,8 +559,8 @@ intro:" / "Opener photo:").
   "[c=dim]She has gone back to the kneeling. She won't look at you
   again.[/c]"
 - **The lure-chain caption** (queued behind the tableau, only if the PI
-  lived the dream, `flashback_seen`; TODO #7 fence, felt once, never
-  stated): (narrator) "[c=dim](A door in your sleep, a year back. Then a
+  lived the dream, `flashback_seen`; the lure-chain standing fence in
+  `TODO.md`, felt once, never stated): (narrator) "[c=dim](A door in your sleep, a year back. Then a
   grief job you had no reason to take, and an itch that drove you north
   with it.)[/c]" / "[c=dim](And every road in handed you here. To her,
   kneeling. You start the arithmetic of that, and you put it down. Some

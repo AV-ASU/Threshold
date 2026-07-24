@@ -21,111 +21,23 @@
 > **Model tags** (2026-07): each ticket is marked **[Opus]** (systems
 > reasoning, geometry, rendering, correctness) or **[Fable]** (prose, voice,
 > atmosphere). A few straddle and say so. Routing hint, not a rule.
+>
+> **A numbering note (2026-07).** A ticket's number is assigned once and
+> normally kept even after the ticket lands and is deleted from this file,
+> because `CHANGELOG.md` and other docs sometimes cite a ticket by number
+> as history (`TODO #21`, `TODO #23a`...). Gaps in the sequence (no #3,
+> #9, #10...) are landed tickets, not missing work. A few old citations
+> elsewhere already point at a number that has since drifted (a real but
+> separate cleanup) — fix one on sight if you find it, same as any other
+> doc-rot. **The number itself carries no priority. Position does:**
+> within each section below, items are listed highest priority first.
 
 ---
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — remaining revisit-nudges
-
-The ask-questions conversation engine shipped for all five principals plus
-the chorus (`CHANGELOG.md`, "Close-up tableaux & the dialogue verb").
-**Still open:** `_REVISIT_NUDGES` entries for Hettie, Toby, and Crane as
-their case hooks land — a discovery should nudge the PI back to ask them
-about it, the way `the_preacher` already points back to Vane.
-
-### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
-
-The newspaper's one-copy, six-recipient choice shipped as the pilot
-(`CHANGELOG.md`). Still open, direction-stage only:
-- **Requests variant (same engine):** a local asks for a thing → fulfill /
-  refuse / SUBVERT (use it another way) → the town feels it.
-- **Fences to hold if this grows:** rewards stay **incommensurable** (no
-  dominant pick); **never evidence**; the ripple is **mood, not a meter**;
-  it **never gates an ending**; **existing verbs only** (give via E /
-  dialog).
-
-### 4. **[Fable]** Outdoor dread — the composition pass
-
-Open ground is the game's weakest dread zone (long sightlines, reads as an
-open field). The heavy-tech answers (a Brimley reshape, a general ground
-floor-roll) are parked on purpose — see `CHANGELOG.md`, "Brimley
-geography" — because the tilt camera + blind-spot sight-gating already buy
-most of the geometry illusion for free. The lever is **composition** with
-tools already shipped:
-- **Corn + treeline as outdoor walls.** Denser stands, winding corn lanes
-  that break the long shot, a treeline that closes the rim. Draw +
-  placement only; the standee billboards + `_corn_runs` LOD already exist.
-- **Fog / mist volume** between the player and the distance, shortening
-  the effective sightline. Rides the skybox/void rim, already ~80% there.
-- **Landmark repetition + same-scene silent folds** (`Game.cross_fold`,
-  draw-only) for the "handed back / the town rearranges" uncanny with no
-  sim change.
-- **Turf HILLS + unified roof caps** (shipped 2026-07 for the grove mine
-  mouth): the `turf` wall material (grass top, stone sides, via `top_tint`) +
-  the `hill_cap` dome prop raise a grassy hill from the game's OWN wall
-  geometry — real occlusion + relief for an outdoor scene, static/correct
-  from every facing, WITHOUT the parked heightfield floor-roll. A new lever
-  for this pass (`rendering/props.py`, `scenes/terrain.py _WALL_STYLES`).
-
-**To turn into work: name ONE scene and the ONE composition it gets** (this
-sightline broken by this corn lane, this landmark passed twice in fog). Do
-not start against the abstract goal. Keep the sim Euclidean-honest so
-stealth distance-falloff + NPC nav stay true under any presentation lie.
-**Preserve (load-bearing) if the scene is Brimley:** it stays ONE square
-scene (do not split, do not reshape); the fold road + Royce/Garrick
-looping-roads lines; the well as dread set-dressing (never the way down);
-all exits/locals/cult stations; in player-facing text call it a bounded
-fog-edge / void-ringed town, never "island."
-
-### 4b. **[Opus]** Brimley river-centered rebuild, both banks
-
-**Concept approved 2026-07, not yet built.** A top-down layout check found
-6 of 7 buildings on one bank with the river as an unused spine. Approved
-fix: redistribute the 7 buildings tight on BOTH banks around the river +
-bridge — a redistribution, not a shape/boundary change (Brimley still
-stays one square scene with the torus wrap; see #4).
-
-- **Flow, from the real topology:** the player enters from the EAST (the
-  Arcadia sits off-map via the east lodge road), so the near bank is
-  first-contact town (shop, barn, Toby's house) and the sheriff sits on
-  the FAR bank — "cross the river to reach the law" falls out of geography
-  with no gate needed.
-- **Acceptance test:** everything fits IN SCALE on the 60x60 map at real
-  building footprints, with cover lanes per bank, NPC/King nav across the
-  torus wrap, the fold-road E-W loop, homebody door anchors, and every
-  exit/spawn reconciled; reachability re-checked with smoke's flood-fill.
-- Its own build, scoped to run after the conversation/tableau work so two
-  big changes are never in the air at once.
-
-### 4c. **[Opus]** Wall program — Phase 4 (freeform walls)
-
-The **interior-door rollout is COMPLETE** (`CHANGELOG.md`, "Walls & interior
-geometry"): the shop pilot, the church vestry, the barn, the abandoned
-farmhouse, the sheriff's office, and Toby's closet are all doored, and the
-schoolhouse + the Lodge interiors were assessed and deliberately left whole as
-authentic open spaces (a one-room schoolhouse with the rite fold in the open
-floor; an open-plan lodge common room; a hall of separate room-scenes; a
-single-room cellar). The **wall-material rollout program** (thin-slab + rounded
-+ per-material styles) has landed Phase 2 (every above-ground interior) and
-Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
-- **Phase 4 — freeform walls** (the north star): a wall SEGMENT primitive
-  off the tile grid, unlocking diagonal walls, a curved church apse, a
-  round silo/tower. Prototype ONE curved feature first.
-- **Deferred church shapes** (the curved apse / arched-window geometry)
-  wait on Phase 4.
-- **Cross-cutting every phase:** thinner walls occlude less, so re-derive
-  interior cover as styles land; extend `tests/stealth.py` §16; VISION
-  toward the Darkwood organic read.
-
-### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
-
-Promote Royce to the man who drove Brimley's supply run (Hettie's shelves
-are bare because *his* deliveries stopped). **[Fable]** a small dialogue
-nudge (he ran the route, goods in and out) — his newspaper exchange
-already carries some of this; confirm it's enough or add the nudge.
-**[Opus]** place his picked-clean semi rusting at the town edge (optional
-light scavenge, never evidence). Reconcile with his worker job-loop.
+*(Highest priority first: quick wins, then in-flight programs, then the
+bigger or more speculative pushes.)*
 
 ### 13b. **[Fable]** Interior voice — quiet the routine reactions
 
@@ -153,7 +65,32 @@ Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
 assert on several of these captions/notes) and update the ones whose
 behavior legitimately changes.
 
+### 1. **[Fable]** Investigation dialogue verb — remaining revisit-nudges
+
+The ask-questions conversation engine shipped for all five principals plus
+the chorus (`CHANGELOG.md`, "Close-up tableaux & the dialogue verb").
+**Still open:** `_REVISIT_NUDGES` entries for Hettie, Toby, and Crane as
+their case hooks land — a discovery should nudge the PI back to ask them
+about it, the way `the_preacher` already points back to Vane. *(Decide
+this alongside #13b above: if the revisit-nudges get cut as "the game
+doing the thinking for you," this ticket is moot.)*
+
+### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
+
+Promote Royce to the man who drove Brimley's supply run (Hettie's shelves
+are bare because *his* deliveries stopped). **[Fable]** a small dialogue
+nudge (he ran the route, goods in and out) — his newspaper exchange
+already carries some of this; confirm it's enough or add the nudge.
+**[Opus]** place his picked-clean semi rusting at the town edge (optional
+light scavenge, never evidence). Reconcile with his worker job-loop.
+
 ### 24. **[Opus + Fable]** INTERIORS PROGRAM — ensembles, floor plans, the prop fifteen
+
+**Status: mid-rollout.** Wave 1 (the lodge common room) and Wave 2's shop
+stockroom + sheriff's office quads are landed; next up is the office's
+booking/waiting corners if they earn it, then the church vestry. The
+library and rules below stay as the reference every remaining room rolls
+out against.
 
 **Maintainer directive (2026-07 playtest): "props seem scattered without
 any purpose... treat what you have as multiple props touching each other
@@ -263,6 +200,94 @@ exemptions.
   rules apply); **disposition framing** read off existing save flags
   (mood, never a meter).
 
+### 4. **[Fable]** Outdoor dread — the composition pass
+
+Open ground is the game's weakest dread zone (long sightlines, reads as an
+open field). The heavy-tech answers (a Brimley reshape, a general ground
+floor-roll) are parked on purpose — see `CHANGELOG.md`, "Brimley
+geography" — because the tilt camera + blind-spot sight-gating already buy
+most of the geometry illusion for free. The lever is **composition** with
+tools already shipped:
+- **Corn + treeline as outdoor walls.** Denser stands, winding corn lanes
+  that break the long shot, a treeline that closes the rim. Draw +
+  placement only; the standee billboards + `_corn_runs` LOD already exist.
+- **Fog / mist volume** between the player and the distance, shortening
+  the effective sightline. Rides the skybox/void rim, already ~80% there.
+- **Landmark repetition + same-scene silent folds** (`Game.cross_fold`,
+  draw-only) for the "handed back / the town rearranges" uncanny with no
+  sim change.
+- **Turf HILLS + unified roof caps** (shipped 2026-07 for the grove mine
+  mouth): the `turf` wall material (grass top, stone sides, via `top_tint`) +
+  the `hill_cap` dome prop raise a grassy hill from the game's OWN wall
+  geometry — real occlusion + relief for an outdoor scene, static/correct
+  from every facing, WITHOUT the parked heightfield floor-roll. A new lever
+  for this pass (`rendering/props.py`, `scenes/terrain.py _WALL_STYLES`).
+
+**To turn into work: name ONE scene and the ONE composition it gets** (this
+sightline broken by this corn lane, this landmark passed twice in fog). Do
+not start against the abstract goal. Keep the sim Euclidean-honest so
+stealth distance-falloff + NPC nav stay true under any presentation lie.
+**Preserve (load-bearing) if the scene is Brimley:** it stays ONE square
+scene (do not split, do not reshape); the fold road + Royce/Garrick
+looping-roads lines; the well as dread set-dressing (never the way down);
+all exits/locals/cult stations; in player-facing text call it a bounded
+fog-edge / void-ringed town, never "island." *(This also carries the
+former standing "liminal-composition" direction: composed emptiness, long
+sightlines, and uncanny repetition apply beyond just outdoor scenes, but
+it never had a home separate from this ticket's own "name ONE scene"
+rule, so it lives here now instead of as its own retired entry.)*
+
+### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
+
+The newspaper's one-copy, six-recipient choice shipped as the pilot
+(`CHANGELOG.md`). Still open, direction-stage only:
+- **Requests variant (same engine):** a local asks for a thing → fulfill /
+  refuse / SUBVERT (use it another way) → the town feels it.
+- **Fences to hold if this grows:** rewards stay **incommensurable** (no
+  dominant pick); **never evidence**; the ripple is **mood, not a meter**;
+  it **never gates an ending**; **existing verbs only** (give via E /
+  dialog).
+
+### 4c. **[Opus]** Wall program — Phase 4 (freeform walls)
+
+The **interior-door rollout is COMPLETE** (`CHANGELOG.md`, "Walls & interior
+geometry"): the shop pilot, the church vestry, the barn, the abandoned
+farmhouse, the sheriff's office, and Toby's closet are all doored, and the
+schoolhouse + the Lodge interiors were assessed and deliberately left whole as
+authentic open spaces (a one-room schoolhouse with the rite fold in the open
+floor; an open-plan lodge common room; a hall of separate room-scenes; a
+single-room cellar). The **wall-material rollout program** (thin-slab + rounded
++ per-material styles) has landed Phase 2 (every above-ground interior) and
+Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
+- **Phase 4 — freeform walls** (the north star): a wall SEGMENT primitive
+  off the tile grid, unlocking diagonal walls, a curved church apse, a
+  round silo/tower. Prototype ONE curved feature first.
+- **Deferred church shapes** (the curved apse / arched-window geometry)
+  wait on Phase 4.
+- **Cross-cutting every phase:** thinner walls occlude less, so re-derive
+  interior cover as styles land; extend `tests/stealth.py` §16; VISION
+  toward the Darkwood organic read.
+
+### 4b. **[Opus]** Brimley river-centered rebuild, both banks
+
+**Concept approved 2026-07, not yet built.** A top-down layout check found
+6 of 7 buildings on one bank with the river as an unused spine. Approved
+fix: redistribute the 7 buildings tight on BOTH banks around the river +
+bridge — a redistribution, not a shape/boundary change (Brimley still
+stays one square scene with the torus wrap; see #4).
+
+- **Flow, from the real topology:** the player enters from the EAST (the
+  Arcadia sits off-map via the east lodge road), so the near bank is
+  first-contact town (shop, barn, Toby's house) and the sheriff sits on
+  the FAR bank — "cross the river to reach the law" falls out of geography
+  with no gate needed.
+- **Acceptance test:** everything fits IN SCALE on the 60x60 map at real
+  building footprints, with cover lanes per bank, NPC/King nav across the
+  torus wrap, the fold-road E-W loop, homebody door anchors, and every
+  exit/spawn reconciled; reachability re-checked with smoke's flood-fill.
+- Its own build, scoped to run after the conversation/tableau work so two
+  big changes are never in the air at once.
+
 ---
 
 ## Blocked on a human at the keys
@@ -302,15 +327,6 @@ horror, not despite it.
 
 ## Deferred / north star
 
-### 7. **[Fable]** The liminal-composition pass
-
-Not a discrete ticket — a standing direction for per-scene level-design
-polish: composed emptiness, long sightlines, uncanny repetition.
-Inherently iterative. **To turn it into work, name ONE scene and the ONE
-composition it gets** (this sightline, this repeated landmark); do not
-start against the abstract goal. *(The buildable-now #4 is this pass aimed
-specifically at outdoor dread — start there.)*
-
 ### 8. Parked — terrain & reshape megabuilds
 
 Do NOT pull forward without a set-piece that demands it AND a fresh
@@ -337,6 +353,11 @@ re-presentation question, not a gap. Do not start without a fresh
 maintainer decision; land each ending only through a VISION.md look pass.
 
 ### 21. **[Opus + Fable]** LIGHT IS THE PILLAR — the perfected system
+
+**Status: foundation landed.** The genset power link, the light audit
+tool, `WATCHER_LIGHT_BURN`, the beam-off retirement, and the flashlight's
+opening placement are built. Open work is the player-facing verbs (below)
+and the still-unscoped capture/procession thread at the bottom.
 
 **Maintainer mandate (2026-07 QC discussion): after the quality-floor
 sprint, light is the ONE system to perfect** — the game's missing
