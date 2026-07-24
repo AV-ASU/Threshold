@@ -71,28 +71,30 @@ reveal each wall face, not just dead-on.
   game, captures a small scene list at the default facing, writes
   `/tmp/world_<t>/<scene>.png`. Use `--diff a b` for the byte-identity gate on
   render refactors. It only covers a handful of scenes.
-- **Any scene, any facing** (ad-hoc): boot the game headless
-  (`SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy`), `load_scene_now(key)`, set
-  `player.x/y` + `player.facing` + `look.body`/`look.aim` + `look.cam_yaw` to
-  the facing, **then set `game.camera.yaw = game.look.cam_yaw` yourself**, snap
-  the camera position (`_update_camera(snap=True)`), draw to an offscreen
-  `Surface` (`draw_world`), and `pygame.image.save`.
-  **CRUCIAL, and learned the hard way (2026-07): `_update_camera` sets the
-  camera POSITION only, NEVER its yaw.** The yaw is copied from `look.cam_yaw`
-  in `_update_look` (the live input loop), which the ad-hoc render path does
-  not run, so if you skip the explicit `camera.yaw = ...` the view stays at
-  **yaw 0 (the NORTH facing) for every "facing" you set**, and a four-facing
-  sheet is just north four times. This exact omission shipped a whole session
-  of "verified four facings" that were all north, hiding an E/W-broken prop.
-  For a facing heading `h` (N `= -pi/2`, E `= 0`, S `= pi/2`, W `= pi`):
-  `look.body = look.aim = h`, and `camera.yaw = look.cam_yaw = h + pi/2`.
-  Confirm the fix works by eyeballing that the room actually ROTATES between
-  the four panels (props move to a different corner); if all four look
-  identical, the yaw never took. For CLEAN inspection stub
-  `rendering.sight.visible_factor -> 1.0` (drop the cone) and
-  `scenes.base.apply_grade -> None` (drop the film grade); for the REAL player
-  view leave both on. A working template lives in the session scratchpad
-  (`cap5.py`); keep one around.
+- **Any scene, all four facings — USE THE TOOL, don't hand-roll it:**
+
+  ```bash
+  python tools/capture_facings.py <scene_key> [--px X --py Y] [--bright]
+  ```
+
+  It writes the four PNGs plus a labelled contact sheet, and it **asserts the
+  facings actually differ**, exiting nonzero if they don't. `--bright` drops
+  the sight cone + film grade for clean geometry reading; without it you get
+  the real player view.
+
+  **Why the tool exists, and why hand-rolling this keeps failing:**
+  `_update_camera` sets the camera POSITION only, **never its yaw**. The yaw is
+  copied from `look.cam_yaw` inside `_update_look` (the live input loop), which
+  no offline render path runs. Skip the explicit `camera.yaw = ...` and every
+  "facing" renders at **yaw 0 — north, four times**. This has now shipped
+  TWICE as "verified all four facings": once hiding an E/W-broken prop, once
+  hiding a mirror-reversed neon sign and a field of black holes in the ground.
+  Both times the sheet looked plausible and nobody noticed the panels were
+  identical. That is exactly why the check is now machine-enforced instead of
+  left to the eye: **a look pass that cannot fail is not a look pass.** If you
+  must render a facing by hand, the contract is
+  `look.body = look.aim = h` and `camera.yaw = look.cam_yaw = h + pi/2`
+  (N `= -pi/2`, E `= 0`, S `= pi/2`, W `= pi`) — and then diff the frames.
 - **Props in isolation** before placing: `tools/preview_props_sheet.py <kind>`
   (never place a kind by its name; render it first, `CLAUDE.md` SCENE-DRESSING).
 - **Cutscenes / tableaux**: step the draw fn over `t` and save frames (as with

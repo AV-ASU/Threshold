@@ -940,10 +940,6 @@ the world's folds scream so that the real door's silence lands (NARRATIVE §2).
 
 ### The rift pane -- 4D construction and look
 
-> Folded in from the retired `PORTALS.md` (2026-07). Its "decisions
-> landed" material was already this section's "one phenomenon, two
-> presentations"; these are the parts unique to it.
-
 A portal is the edge of a 4D "pane" poking up into Brimley. Face it
 **head-on** and you see through it (the peek) and can step through; step to
 the **side** and a pane seen edge-on is a thin line, nearly invisible;
@@ -1292,8 +1288,7 @@ sharpest knife in the game, and it cuts only the hand that holds it.
 
 ## 10. The tilted camera
 
-> Folded in from the retired `CAMERA.md` (2026-07). The oblique view is
-> the shipped default; this section is its source of truth.
+> The oblique view is the shipped camera; this section is its source of truth.
 
 Keep the game **100% procedural** (no image assets) but render **most
 objects as volumetric solids projected to 2D**, lock the camera to an
@@ -1433,9 +1428,6 @@ continuous traversable z (a big collision/AI/depth-sort/save lift).
 
 ## 11. Audio
 
-> Folded in from the retired `AUDIO.md` (2026-07). The 2026-06 call-site
-> audit that also lived there was fully actioned and has been dropped.
-
 The game ships **zero audio assets**. Every sound -- foley, stings, beds,
 "music" -- is synthesized at startup in `systems/audio.py` (pure-Python
 sample loops or numpy), optionally post-processed by `systems/dsp.py`
@@ -1567,10 +1559,8 @@ spending a voice blip on UI movement, and Mara's unmask carries a quiet
 
 ## 12. Stealth -- detection is graded
 
-> Folded in from the retired `STEALTH_REWORK.md` (2026-07). The mechanic is
-> BUILT and guarded end-to-end by `tests/stealth.py`; the replaced binary
-> `hidden`-flag system and the build-sequencing plan that also lived there
-> have been dropped as fossils. Tuning is the open item (`TODO.md` #5).
+> BUILT and guarded end-to-end by `tests/stealth.py`. Tuning is the open
+> item (`TODO.md` #5).
 
 Hiding is not an invisibility toggle; it is a **positional gamble**: cover
 lowers how detectable you are, distant enclosure is strong, a searcher

@@ -376,51 +376,29 @@ ONLY if/when the restructure is committed and wired.
   swaps the field for a longer/warped/more-hostile version, odd landmarks for
   variety.
 
-**LANDED (prototype, wired into NOTHING in-game):** `scenes/lost_space.py`
-(`LostSpace`, biome-parameterized: `lost_corn` / `lost_forest` / `lost_road`) --
-a generator-backed non-repeating dark field that renders + collides through the
-real engine (`floor`/`objects` are bounded proxies over a hashed per-tile
-generator; a huge finite `w/h` with the player at CENTRE so the edge never
-enters the tilt window; `nav_path` None; `DARK_SCENES` + `LOST_SPACE_SCENES` --
-a heavier gloom so the lit island pops against a black sea; `procedural=True` so
-smoke skips its flood/full-scan). Each biome is a **hand-made ISLAND in a sea of
-generation** -- a mostly-EMPTY field (dead grass / dirt / mud) with sparse
-biome landmarks (derelict vehicles, lone trees, standing stones) around a
-hand-authored FOCAL ISLAND with its own light:
-- **corn** -- a **CROP CIRCLE**: a grass clearing ringed by a near-solid WALL of
-  corn (isolated by an empty moat so it reads as a circle), an **abandoned cult
-  camp** at the centre, and a big `haven_fire` bonfire whose glow fills the whole
-  circle. Ground detail (grass tufts + leaf litter) breaks up the clearing floor.
-- **forest** -- a still **POND** (animated water, a see-over solid so you can't
-  wade in) on a mossy bank, lit by a fisher's `camp_fire` on the near bank +
-  lanterns on the far shore, dressed with reeds and a low mist.
-- **road** -- a fenced filling-station **LOT** (built to a maintainer sketch):
-  you land under a tall bright **neon pylon** at the driveway; the sealed
-  `gas_station` building + its own pump canopy over three dead pumps sit at the
-  lot's NW, painted `parking_bay` decals + a `chain_fence` perimeter dress the
-  lot, and a **winding paved road** (river-style value-noise meander + a westward
-  drift going north) runs past the east edge with wrecks stalled on it.
+**Prototype LANDED and wired into NOTHING in-game** (`scenes/lost_space.py`;
+the three biome fields `lost_corn` / `lost_forest` / `lost_road`, each a
+hand-authored lit focal island in a generated dark sea, and what they are
+made of: `CHANGELOG.md`, "The shadows program"). It exists to be judged by
+feel, not to ship as is.
 
-The island light is the haven (lit + orienting, NOT a true refuge); the **hunted
-exit lantern is held until you leave that glow** (the lit place is a dead end --
-you escape into the dark, hunting a light held 6-20 tiles off). New light kinds:
-`haven_fire` (the wide crop-circle bonfire) + `neon_pylon` (the station beacon),
-each in `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`; the road also adds `gas_station` /
-`chain_fence` / `boulder` solids + the `parking_bay` floor decal. NEXT for the
-road: cult presence -- roaming cultists + occupied cult camps the player can
-stumble into (maintainer ask; see the field-liveness open item). Preview: the
-three focal-island shots (dark + bright). Full gate green.
-
-**OPEN, in build order:** (1) the **safe path + yard + one lost space** vertical
+**OPEN, in build order:** (1) **CULT PRESENCE in the fields** (maintainer ask,
+next up): roaming cultists carrying light, so a glow in the dark is ambiguous
+(the exit, or a hunter?), and **occupied cult camps** you can stumble into --
+the inversion of the abandoned corn camp, where a warm fire reads as haven
+until you are close enough to see the figures standing at it. Needs a
+self-contained driver (spawn on proximity, despawn far, capped) rather than the
+town's evidence/King wiring, since the fields hang off nothing yet;
+(2) the **safe path + yard + one lost space** vertical
 slice, wired so you walk interior -> yard -> path -> fall off a dark edge into
 the lost space -> hunt the light -> climb out (the real LOOP, not just the
-field); (2) the **dark manipulation layer** inside the lost space
-(observer-dependent geometry, asymmetric return, breathe-with-threat); (3)
+field); (3) the **dark manipulation layer** inside the lost space
+(observer-dependent geometry, asymmetric return, breathe-with-threat); (4)
 **per-chunk** landmark/exit generation + a silent **re-origin** for a truly
-endless walk (the prototype uses a large finite bound + spawn-at-centre); (4) the
+endless walk (the prototype uses a large finite bound + spawn-at-centre); (5) the
 **ev-warp** variants (the field swaps for a longer / warped / more-hostile
 version with evidence) + richer linear field features (a river, fences, ruined
-buildings you can't enter); (5) IF the maintainer commits: the full Brimley
+buildings you can't enter); (6) IF the maintainer commits: the full Brimley
 **re-home** (the fences: the car, the well, the refuges, the descent chain) + the
 canon rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- this is
 a feel prototype to judge it.

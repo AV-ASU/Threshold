@@ -49,12 +49,9 @@
 >   four facings for your own check; one angle when you show the maintainer)
 >   instead of trusting the code. Plus how to capture.
 >
-> These six files are the ENTIRE doc canon. The old per-topic docs
-> (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
-> audit files) were folded into them and deleted (2026-07); their substance
-> is indexed in `CHANGELOG.md` under the section it landed in. When you
-> change a canon fact, change it in its ONE home and reconcile the others:
-> a detail that is true in one doc and stale in another is rot.
+> These six files are the ENTIRE doc canon. When you change a canon fact,
+> change it in its ONE home and reconcile the others: a detail that is true
+> in one doc and stale in another is rot.
 >
 > **`README.md` is not canon, and is deliberately thin.** It's the public
 > front door (install/run/controls), kept short on purpose so there's
@@ -112,7 +109,7 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Layout
 
 - `main.py` — entry point: `Game().run()`.
-- `systems/game.py` — the orchestrator (~3k lines). State machine
+- `systems/game.py` — the orchestrator. State machine
   (`title` / `playing` / `transition`), `step(dt)`, scene loading
   (`load_scene_now`), the core update/input loop, combat, and
   `_reset_run_state()` (wipes per-run state on New Game; the `Game` instance
@@ -178,7 +175,7 @@ it renders the procedural sprites to a labelled PNG strip.
     `CHANGELOG.md`. See `DESIGN.md` §11. Player-facing text is in
     `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
-  (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
+  (`scenes/__init__.py`). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
   - `scenes/base.py` — the `Scene` class + scene-builder helpers
@@ -255,8 +252,8 @@ it renders the procedural sprites to a labelled PNG strip.
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
   - `decoration.py` — the `Decoration` prop class. Its per-kind draw is
-    dispatched by `getattr(self, f"_draw_{kind}")`; since 2026-07 the
-    ~128 `_draw_*` methods are split by theme into **mixin siblings**
+    dispatched by `getattr(self, f"_draw_{kind}")`; the `_draw_*` methods
+    are split by theme into **mixin siblings**
     (`deco_furniture` / `deco_lighting` / `deco_nature` / `deco_structure`
     / `deco_mine` / `deco_horror`, mixed into `Decoration`), with shared
     lighting/compass helpers in `decoration_common.py`. Like the
@@ -473,19 +470,12 @@ section is the CODE MAP only — where each system lives:
 
 ## Conventions & gotchas
 
-- **Open canon-alignment work lives in `TODO.md`.** A 2026-06 narrative-
-  alignment pass settled a batch of story decisions; the **code changes to
-  make the game match** were tracked in the former `GAME_CHANGES.md`, now
-  **folded into `TODO.md`** (2026-07) with its open items tagged
-  `(was GAME_CHANGES §N)`. `NARRATIVE.md` is the **story bible** and the
-  canon source of truth (rewritten 2026-07: it locks FACTS, never
+- **Open canon-alignment work lives in `TODO.md`.** `NARRATIVE.md` is the
+  **story bible** and the canon source of truth: it locks FACTS, never
   phrasings; states what IS, not what isn't; one fact, one home; canon
-  invariants indexed at the bottom). The systems/design material that
-  used to live in it (threat-model canon, world rot, the implementation
-  map, the Works level design, art direction, fold mechanics) moved to
-  **`DESIGN.md`** — code comments cite `NARRATIVE §n` / `DESIGN.md §n`
-  in the NEW numbering.
-  Highlights that override older code/comments: the
+  invariants indexed at the bottom. Systems/design material lives in
+  **`DESIGN.md`** — code comments cite `NARRATIVE §n` / `DESIGN.md §n`.
+  Canon facts that override older code/comments: the
   **Ledger is the boxed old registers in the PADLOCKED Lodge cellar**
   (2026-07 rework, superseding the 2026-06 front-desk placement: the
   cellar key hangs on a nail behind the house, the desk keeps the
