@@ -1889,3 +1889,102 @@ No narrator boxes, no notices, no case-notebook writes, no place name. The
 dark and the hunted light are the entire text; a caption would explain away
 the one beat the space exists to deliver. Enforced by
 `tests/conventions.py` check 6.
+
+---
+
+## 14. The safe path -- the lit spine (TODO #26)
+
+The middle of the three layers: **interior -> yard -> SAFE PATH <-> lost
+spaces** (`scenes/safe_path.py`). A path scene is a wide paved road under
+civic lamps, and it is the one part of the outdoors that does not lie. Its
+arms go where they say, its geometry never rearranges, and nothing on the
+asphalt moves when you look away. It is Garrick's standing advice made into
+level geometry: *"Stay on the roads. People who go off the roads come out
+wrong-side of where they went in."*
+
+### The road is safe because it is LIT
+
+This is the whole design, and it is why the layer needed no new rule. §13's
+mouth only opens where the ground is dark and unlit, so a road whose lamps
+cover it end to end is a road the world cannot take you off. The paving, the
+shoulders and the verge are therefore not dressing, they are the mechanism:
+
+* **On the crown of the road** you are safe, always, at any evidence count.
+* **Off the shoulder, past the last pole**, the verge is as dark as any other
+  flank and lets go exactly like one.
+* **The lamps are on the town's gensets** (`street_lamp` is in
+  `Scene._ELECTRIC_KINDS`), so a blackout does not merely dim the safe path,
+  it OPENS it. That is the only way the layer's promise can be taken away,
+  and it is deliberate.
+
+`street_lamp` (`rendering/props.py`) is the fixture: the same cold
+mercury-vapor head the town hangs in its yards, up a tall galvanized mast
+with a long gooseneck over the carriageway and a poured footing. It gates as
+lit out to 150px, and `LAMP_OFF` / `LAMP_STEP` in `safe_path.py` are a
+SAFETY MARGIN rather than a look -- they were swept until no asphalt tile in
+any path scene was unlit, and `tests/flow.py` §34 fails if one ever is.
+
+### Shapes: I, L and T
+
+A path is built from ARMS, a subset of "nesw" around one junction at the
+scene's centre. Two opposite arms is an **I** (a straight run), two adjacent
+an **L** (the road turns), three a **T** (a junction). `build_path` lays the
+surface, the lamps, the verge, the exits and the mouths from that alone, so a
+new segment is a call rather than a hand-drawn grid.
+
+Arms are painted in two passes -- every arm's gravel, then every arm's
+asphalt on top -- so a junction comes out surfaced rather than quartered by
+whichever arm was drawn last. The dashed centre lane stops at the junction
+box, because a real crossroads has no line through it. `"Y"` is the N-S
+centre lane and `"-"` the E-W one; they are two floor chars rather than one
+neighbour-aware char because floor tiles are cached BY CHAR.
+
+**Not too thin** (maintainer). Five tiles of asphalt inside a nine-tile
+corridor with the shoulders. The road it replaced was a three-tile dirt strip
+in a twelve-tile scene, which read as a corridor rather than a road you can
+stand in the middle of.
+
+### Every side is a mouth, and the biome is a rule
+
+Every side of a path scene opens on a lost space, arms included: the grass
+either side of an arm's end is as dark as a flank's. The road exit wins where
+it is laid (`Game._tick_lost_edge` refuses on an exit tile, and a path's
+exits span the whole corridor including both shoulders), so the rule the
+player learns is the true one -- **the asphalt carries you on, everything
+beside it lets go.**
+
+WHICH lost space is derived, not authored: a flank opens on whatever its
+verge is planted with (`_VERGE_LOST`: pine -> `lost_forest`, dead corn ->
+`lost_corn`), and an arm's end opens on `lost_road`, because what you stepped
+off there was a roadside. Hand-picking per scene is how you end up pushing
+through a wall of corn and landing in a pine wood.
+
+### The river
+
+The river is the artery of the whole nightmare (NARRATIVE §2) and it has to
+be visible from the path, so `build_path` takes a channel and keeps
+`RIVER_BANK` tiles of open bank clear of verge growth either side of it --
+at full density the trees close over the water and bury it. Water is `~`
+floor over the see-over solid `x` (the lost-space pond precedent): it blocks
+the body but not the sight cone, so the far bank shows across it.
+
+Where a road arm crosses the channel it becomes a **bridge**: the deck is
+paved across the whole corridor (a deck that stopped at the asphalt would
+leave two dirt strips walking over open water) and `_rail_the_deck` runs a
+timber parapet down both exposed lips. The rail is not trim -- under the tilt
+a bridge without one is a brown patch of ground that happens to sit on water.
+
+### The shipping network
+
+Three segments east and north of town, one of each shape, closing a loop with
+the two roads that were already there:
+
+| scene | shape | arms | what it is |
+|---|---|---|---|
+| `country_lane` | **T** | W / E / N | the junction east of town: Brimley west, the arrival road east, the river run north. Dead corn to the shoulder on its one flank. |
+| `river_road` | **I** | S / N | a straight run north with the water off the east shoulder the whole way. Pine going black to the west. |
+| `river_bend` | **L** | S / E | the road turns east and crosses the river on the planks. |
+
+`gravel_road_north` gained a west turnout onto the bend so the loop closes;
+it is itself still an old thin road and is queued for the same treatment
+(`TODO.md` #26).

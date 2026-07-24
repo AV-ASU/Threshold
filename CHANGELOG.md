@@ -139,6 +139,76 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- THE SAFE PATH: the lit spine (`TODO.md` #26 step 1,
+  `DESIGN.md` §14).** The middle of the three layers, and the last one
+  missing after the mouth closed the loop. The maintainer asked for "safe
+  paths that lead to yards and the lost paths. T and L and I shaped areas...
+  Not too thin... We need the river seen in the safe paths."
+  **The design finding is that the layer needed no new rule.** §13's mouth
+  only opens on dark, unlit ground, so a road whose lamps cover it end to end
+  is already a road the world cannot take you off. That turns the paving, the
+  shoulders and the verge from dressing into the mechanism: safe on the
+  crown, gone off the shoulder, and -- because `street_lamp` is an ELECTRIC
+  fixture -- a genset blackout does not dim the safe path, it OPENS it. It
+  also lands Garrick's 2026-06 line ("stay on the roads") as level geometry
+  instead of advice.
+  `scenes/safe_path.py` builds a scene from ARMS, a subset of "nesw" around
+  one junction: two opposite is an I, two adjacent an L, three a T. Five
+  lanes of asphalt in a nine-tile corridor answers "not too thin" (the road
+  it replaced was a three-tile dirt strip in a twelve-tile scene). Shipping
+  network: `country_lane` rebuilt as the T, plus `river_road` (the I, with
+  the water off its shoulder the whole way) and `river_bend` (the L, crossing
+  on the planks); `gravel_road_north` gained a west turnout so the loop
+  closes.
+  Two things became RULES rather than per-scene decisions, both because
+  authoring them by hand is how they go wrong: every side of a path is a
+  mouth with the road exit winning (so the player learns one true rule --
+  asphalt carries you on, everything beside it lets go), and WHICH lost space
+  a side opens on is derived from what its verge is planted with, so you can
+  never push through a wall of dead corn and land in a pine wood.
+  New props: `street_lamp` (the town's mercury-vapor head up a galvanized
+  highway mast, in both light tables and `_ELECTRIC_KINDS`) and `bridge_rail`
+  (a timber parapet). Both were needed rather than wanted -- yard lights left
+  84% of the road dark, and a deck without a rail reads under the tilt as a
+  brown patch of ground that happens to sit on water. New floor char `"-"`,
+  the E-W dashed centre lane, because the existing `"Y"` dash is hardcoded
+  vertical and floor tiles cache BY CHAR.
+  **Four defects were caught by looking rather than by reading the code,**
+  which is the entire argument for the VISION rule: the north arm's gravel
+  shoulders painted straight across the east-west carriageway (fixed by
+  painting all gravel then all asphalt); the flank fence ran down the middle
+  of a carriageway (the arm code's `vertical` flag reused for a
+  perpendicular run); the arm-protection bands cleared a bare grass lane
+  across the half of every L and T the road never reaches (now derived from
+  the tiles the road actually covers); and the verge trees closed over the
+  river and buried it, which is the one thing the maintainer explicitly asked
+  for.
+  Guards, `tests/flow.py` §34: the shape vocabulary is actually used, no
+  asphalt tile in any path scene is unlit, every side opens on a lost space,
+  the river is wide and blocking and visible from the road, and the deck is
+  railed on both lips. The lamp geometry was SWEPT rather than guessed. The
+  blackout case is tested end to end and is also the only way to exercise
+  exit-beats-mouth (with the lamps burning the road is lit and the gate
+  refuses anyway) -- which is how the first version of that test was found to
+  be passing for the wrong reason.
+  **The yard count, audited for the maintainer:** Brimley has seven enterable
+  buildings, grouping by shared frontage into FOUR yards (church+barn,
+  shop+school, sheriff+farmhouse, Toby alone) plus the Lodge's existing one.
+  The table is in `TODO.md` #26, where the yard layer is now step 1.
+
+- **2026-07 -- The north road out of Brimley was never walkable (bug, found
+  while building the safe path).** `Scene.find_exit_at` reads the tile the
+  player is STANDING ON, so an exit char that is solid in `OBJECT_DEFS` is an
+  exit nobody can take -- no error, no tell, the passage just reads as a wall
+  you bump into. Brimley registered its `gravel_road_north` exit as `"R"`,
+  which is a solid ROCK char, and had shipped that way; the road out the top
+  of town could not be entered on foot. Found by walking the map in a harness
+  rather than by reading it, and two more of the same slipped into the new
+  path network in the same session before the pattern was obvious. All three
+  now use `"^"` (an outdoor_passage, like every other road exit), Brimley's
+  passage widened from one tile to three so it does not need threading, and
+  `tests/conventions.py` check 7 fails on any solid exit char anywhere.
+
 - **2026-07 — THE MOUTH: the lost-space loop closes (`TODO.md` #26 step 2,
   `DESIGN.md` §13).** The three biome fields had been built and wired into
   nothing: reachable only by loading the scene key directly. This landed the

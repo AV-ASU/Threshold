@@ -114,11 +114,17 @@ FLOOR_DEFS = {
     # outdoor scene (replaces the round-4 stone corridor). Soft ochre so
     # it reads as packed dirt next to grass without going full road.
     "d": {"color": (96, 76, 52),   "step": "step_grass"},
-    # Paved asphalt -- THE road (arrival_road): the one paved road in the game,
-    # west of the start, where the King idles. Cold grey aggregate. "Y" is the
-    # centre lane and paints the faded dashed centreline. Other roads stay dirt.
+    # Paved asphalt -- the SAFE PATH surface (arrival_road and the path
+    # network, DESIGN.md §14). Cold grey aggregate. "Y" and "-" are the centre
+    # lane, painting the faded dashed centreline: "Y" for a road running
+    # NORTH-SOUTH (dashes along the column) and "-" for one running EAST-WEST
+    # (dashes along the row). Two chars rather than one neighbour-aware char
+    # because floor tiles are CACHED BY CHAR -- a tile that looked at its
+    # neighbours would render whichever orientation was rasterised first and
+    # then reuse it everywhere. Dirt tracks stay "d".
     "P": {"color": (44, 42, 47),   "step": "step_stone"},
     "Y": {"color": (44, 42, 47),   "step": "step_stone"},
+    "-": {"color": (44, 42, 47),   "step": "step_stone"},
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
     # Smooth flat grey stone -- NO texture at all (no mottle, grout, jitter, or
     # macro shadow). The Threshold apron: an impossibly even, man-made-looking
@@ -950,10 +956,11 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 44, 28),
                              (rx + (seed * 3 % 22) + 4,
                               ry + (seed * 7 % 22) + 4, 4, 3))
-    elif ch in ("P", "Y"):
+    elif ch in ("P", "Y", "-"):
         # Paved asphalt -- cold grey aggregate speckle, the odd hairline crack
-        # and a tar-dark patch. "Y" is the centre lane: it paints the faded
-        # dashed centreline so the run of tiles reads as one paved road.
+        # and a tar-dark patch. "Y" / "-" are the centre lane: they paint the
+        # faded dashed centreline (N-S / E-W respectively) so the run of tiles
+        # reads as one paved road.
         seed = tx * 31 + ty * 17
         for i in range(4):
             sx = rx + ((seed * (i + 1)) % 26) + 3
@@ -968,9 +975,12 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             cx, cy = rx + (seed % 18) + 5, ry + 3
             pygame.draw.line(surf, (24, 23, 26), (cx, cy),
                              (cx + (seed % 6) - 3, cy + TILE - 6), 1)
-        if ch == "Y" and (ty % 2 == 0):            # faded dashed centreline
+        if ch == "Y" and (ty % 2 == 0):            # faded dash, N-S road
             pygame.draw.rect(surf, (150, 138, 86),
                              (rx + TILE // 2 - 1, ry + 6, 2, TILE - 12))
+        elif ch == "-" and (tx % 2 == 0):          # faded dash, E-W road
+            pygame.draw.rect(surf, (150, 138, 86),
+                             (rx + 6, ry + TILE // 2 - 1, TILE - 12, 2))
     elif ch == ";":
         # Marsh mud -- wet, churned ground. Dark puddle blotches with a
         # cold standing-water glint, dead reeds, hairline mud cracks.
@@ -1078,6 +1088,11 @@ DISPLAY_NAMES = {
     "graveyard":            "the Graveyard",
     "country_lane":         "the Country Lane",
     "gravel_road_north":    "the Gravel Road",
+    # the safe path east and north of town (DESIGN.md §14). Plain road names,
+    # the kind a county puts on a sign, so the lit spine reads as ordinary
+    # infrastructure and not as somewhere the game is steering you.
+    "river_road":           "River Road",
+    "river_bend":           "the River Bend",
     "backwoods_cabin":      "the Backwoods Cabin",
     "backwoods_cabin_interior": "the Cabin",
     "bell_tower":           "the Bell Tower",

@@ -426,21 +426,46 @@ and its code map are `DESIGN.md` §13, how it landed is `CHANGELOG.md`. It
 is still here to be judged by FEEL: one mouth on one scene is a vertical
 slice, not the restructure.
 
-**OPEN, in build order:** (1) the **SAFE PATH** layer -- the loop reaches
-the lost spaces through the yard's treeline today, but the lit, tricked-by
--nothing paved road with lamp posts that buildings are supposed to hang off
-does not exist yet; without it the three layers are two, and "get back to
-the path" has nowhere to mean; (2) the rest of the **dark manipulation
-layer**: the observer-dependent reshuffle landed, but the **asymmetric
-return** (the way back is not the way you came) and **breathe-with-threat**
-(the space stretching as the meter fills) have not; (3) **per-chunk**
-landmark/exit generation + a silent **re-origin** for a truly endless walk
-(today: a large finite bound + spawn-at-centre); (4) the **ev-warp**
-variants (the field swaps for a longer / warped / more-hostile version with
-evidence) + richer linear field features (a river, fences, ruined buildings
-you can't enter); (5) more mouths -- one scene opts in today, and each new
-one is a deliberate choice of which edge of the authored world stops
-holding; (6) IF the maintainer commits: the full Brimley **re-home** (the
+**The SAFE PATH layer landed** (`DESIGN.md` §14, `scenes/safe_path.py`): the
+I / L / T shape vocabulary, a five-lane road in a nine-tile corridor, lamps
+that keep the whole carriageway lit (which is what makes it safe, since the
+mouth only opens on dark ground), and the river both seen and crossed.
+Shipping network: `country_lane` (T) / `river_road` (I) / `river_bend` (L).
+So two of the three layers exist. The missing one is the YARD.
+
+**THE YARD COUNT (the maintainer's question, audited 2026-07).** Brimley has
+**seven enterable buildings**, and their doors group cleanly by the street
+they front, so the answer is **four yards, not seven** -- plus the Lodge's
+existing one, **five in all**:
+
+| yard | holds | frontage |
+|---|---|---|
+| north | church (door E) + barn (door W) | face each other across the west spine, rows 8-12 |
+| main street | shop (door S) + schoolhouse (door S) | side by side on the E-W drag, rows 18-22 |
+| south | sheriff's office (door E) + farmhouse (door W) | face each other across the spine, rows 44-48 |
+| east | Toby's house (door N) | alone on the east bank, its own access road |
+| (lodge) | the Arcadia + the woodshed | `lodge_yard`, already built |
+
+A yard holds a building's own ground -- its porch, its fence, its junk -- and
+two buildings that face each other across a street share that street, not
+their yards; but at this scale a facing pair reads as one place and splitting
+it would buy four extra loads for nothing. Toby's house is the one that
+genuinely stands alone.
+
+**OPEN, in build order:** (1) the **YARDS**, per the table above: the layer
+that hangs buildings off the path, generalising what `lodge_yard` does by
+hand. Each yard's non-road edges are mouths like a path's flanks; (2) the
+rest of the **dark manipulation layer**: the observer-dependent reshuffle
+landed, but the **asymmetric return** (the way back is not the way you came)
+and **breathe-with-threat** (the space stretching as the meter fills) have
+not; (3) **per-chunk** landmark/exit generation + a silent **re-origin** for
+a truly endless walk (today: a large finite bound + spawn-at-centre); (4) the
+**ev-warp** variants (the field swaps for a longer / warped / more-hostile
+version with evidence) + richer linear field features (fences, ruined
+buildings you can't enter); (5) the two remaining OLD thin roads --
+`gravel_road_north` (which now carries a west turnout onto the bend) and
+`arrival_road` -- rebuilt as safe paths, so the layer is consistent rather
+than patchy; (6) IF the maintainer commits: the full Brimley **re-home** (the
 fences: the car, the well, the refuges, the descent chain) + the canon
 rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- the
 mouth is opt-in per scene precisely so judging the feel costs no canon.

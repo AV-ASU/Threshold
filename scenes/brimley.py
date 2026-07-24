@@ -323,7 +323,7 @@ def build_brimley():
         if tx in (35, 36, 37) and ty <= 6:
             return True                                  # cornfield_path arrival
         if tx in (49, 50, 51) and ty <= 6:
-            return True                                  # gravel road 'R'
+            return True                                  # gravel road '^'
         if ty in (24, 25, 26) and (tx <= 6 or tx >= 53):
             return True                                  # fold-road wrap ends + lodge lane
         if tx >= 47 and 12 <= ty <= 28:
@@ -536,14 +536,20 @@ def build_brimley():
     sc.add_exit("y", "sheriff_office",    "from_brimley")
     sc.add_exit("D", "shop",              "from_brimley")
     sc.add_exit("B", "schoolhouse",       "from_brimley")
-    sc.add_exit("R", "gravel_road_north", "from_brimley")
+    # NOTE the char: "R" is a SOLID rock in OBJECT_DEFS, so using it as an
+    # exit made the north road out of town an invisible wall you bumped into
+    # rather than a passage you walked onto (2026-07: found by walking it).
+    # "^" is an outdoor_passage, like every other road exit in the game.
+    sc.add_exit("^", "gravel_road_north", "from_brimley")
     sc.add_exit("M", "cornfield_maze",    "from_brimley_south")
 
     clearing_tx, clearing_ty = 10, 50
     objects_list = [list(r) for r in objects]
     objects_list[clearing_ty][clearing_tx] = "j"
-    # Gravel road passage (north) -- single 'R' tile on the east bank.
-    objects_list[0][50] = "R"
+    # Gravel road passage (north) on the east bank. Three tiles wide so you
+    # can walk onto it without threading a needle, like the other passages.
+    for _rx in (49, 50, 51):
+        objects_list[0][_rx] = "^"
     # The fold road -- gaps in both tree walls at row 25 so the road can be
     # walked across the map east-to-west; wrap_x carries the seam.
     objects_list[25][0] = "."

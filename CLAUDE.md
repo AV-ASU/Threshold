@@ -221,6 +221,28 @@ it renders the procedural sprites to a labelled PNG strip.
     `terrain.py` for draw code, `base.py` for the Scene model. terrain
     depends only on `constants` + lazy `scenes`/`rendering.*` imports,
     never on `Scene`, so there is no cycle.
+  - `scenes/safe_path.py` — **the SAFE PATH** (`SafePath` / `build_path`;
+    the SYSTEM is `DESIGN.md` §14): the lit paved spine, middle of the three
+    layers (interior → yard → PATH ↔ lost spaces). A scene is built from
+    ARMS (a subset of `"nesw"` around one centre junction): two opposite =
+    an **I**, two adjacent = an **L**, three = a **T**. `build_path` lays the
+    surface, lamps, verge, exits and mouths from that alone. **The road is
+    safe because it is LIT** — §13's mouth only opens on dark unlit ground,
+    so lamps covering the asphalt end to end make the road immune while the
+    verge beside it lets go exactly like any flank. `LAMP_OFF`/`LAMP_STEP`
+    are a SAFETY MARGIN, swept until no road tile is unlit and guarded by
+    `tests/flow.py` §34; `street_lamp` (a new `SOLID_PROPS` volume, in BOTH
+    light tables and in `_ELECTRIC_KINDS`) is the fixture, so a genset
+    blackout OPENS the path rather than just dimming it. Arms paint in two
+    passes (all gravel, then all asphalt) so a junction is surfaced, not
+    quartered; the dashed centre lane (`"Y"` N-S, `"-"` E-W — two floor chars
+    because tiles cache BY CHAR) stops at the junction box. Every side is a
+    mouth including the arms, with the road exit winning (exits span the full
+    corridor, and `_tick_lost_edge` refuses on an exit tile); WHICH lost space
+    is derived from the verge (`_VERGE_LOST`), never hand-picked. A `river=`
+    channel keeps `RIVER_BANK` tiles of bank clear so the water is SEEN, and a
+    crossing gets a paved deck plus a `bridge_rail` parapet down both lips.
+    Ships `country_lane` (T) / `river_road` (I) / `river_bend` (L).
   - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
     the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt

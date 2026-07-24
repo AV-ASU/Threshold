@@ -119,6 +119,12 @@ FIXTURE_POOLS = {
     "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
+    # the SAFE PATH's highway lamp (DESIGN.md §14): the same cold head as the
+    # yard light, up a tall mast with a long gooseneck, throwing far enough
+    # that poles every few tiles keep the WHOLE carriageway inside a pool --
+    # which is the mechanism, not the mood (an unlit stretch of safe path is a
+    # stretch you can fall out of the world on).
+    "street_lamp":  (196,  (200, 222, 255),  72,   78,    26,  0.04, 2.0),
     "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
     # COLD electric (2026-07 light ruling: no warm-lamp cosiness indoors;
     # the civic light is cold blue-white -- the maintainer's "LED" read,

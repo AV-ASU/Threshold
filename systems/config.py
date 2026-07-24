@@ -63,7 +63,10 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "country_lane", "cornfield_maze",
                   "arrival_road",
                   "gravel_road_north",
-                  "backwoods_cabin"}
+                  "backwoods_cabin"} | {
+    # THE SAFE PATH network (DESIGN.md §14): the lit paved spine east and
+    # north of town. `country_lane` above is one of these too -- it is the T.
+    "river_road", "river_bend"}
 
 # The continuous outside world. Crossing between any two of these is
 # a seamless transition: no fade, no door sound, the player position

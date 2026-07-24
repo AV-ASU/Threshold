@@ -487,14 +487,16 @@ class Scene:
                     "camp_fire": 88.0, "burn_barrel": 80.0,
                     "haven_fire": 200.0, "neon_pylon": 190.0,
                     "lantern": 60.0, "candle": 55.0,
-                    "yard_light": 85.0, "generator": 42.0,
+                    "yard_light": 85.0, "street_lamp": 150.0,
+                    "generator": 42.0,
                     "wall_lamp": 62.0, "drop_bulb": 58.0,
                     "kerosene_lamp": 40.0}
     # The genset-powered ELECTRIC subset: these emit (and gate) only while
     # the scene's power is on (`Scene.power_on`, maintained by
     # Game._tick_power off the `_genset_down` blackout timers). Fire keeps
     # burning through a blackout.
-    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
+    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light",
+                                 "street_lamp"})
 
     def light_sources(self):
         """Cached [(deco, r, cone, elec)] of the scene's light-emitting

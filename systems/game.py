@@ -707,6 +707,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             side = "e"
         if side is None:
             return False
+        # AN EXIT IS NEVER A MOUTH. A side can carry both: the safe path's
+        # arms end at a road exit spanning the carriageway, with the dark
+        # verge on either flank of it. The road always wins, so walking out
+        # along the asphalt carries you on and walking out through the grass
+        # beside it does not -- which is the rule the whole layer runs on.
+        if sc.find_exit_at(p.x, p.y, facing=None) is not None:
+            return False
         if self.scene_gloom() < LOST_EDGE_GLOOM:
             return False              # a lit world has no edge to fall off
         if sc.lit_at(p.x, p.y) or self._flashlight_lit():

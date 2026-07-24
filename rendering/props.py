@@ -2770,6 +2770,50 @@ def _draw_neon_pylon_solid(surf, cam, deco):
            (150, 212, 255), (28, 58, 110), (242, 250, 255))
 
 
+def _draw_bridge_rail_solid(surf, cam, deco):
+    """The SAFE PATH bridge's timber parapet (DESIGN.md §14): squared posts,
+    a top rail and a mid rail, run along the deck edge.
+
+    A road bridge is a STRUCTURE, and the deck planks alone are a floor
+    texture: under the tilt a bridge with no rail is a brown patch of ground
+    that happens to sit on water, which is exactly how the first cut of the
+    river crossing read. The rail is what puts it above the river and gives
+    the crossing a silhouette to walk between. `kwargs`: run='h'|'v' (the
+    parapet's axis) + len (px). Weathered creosote timber, town-built, and
+    long past anybody maintaining it -- posts lean by a seeded jitter."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    run = kw.get("run", "h")
+    ln = kw.get("len", 32) * s
+    seed = int(abs(wx) * 7 + abs(wy) * 13)
+    rail_z = 22 * s
+    dx, dy = (ln, 0) if run == "h" else (0, ln)
+    x0, y0 = wx - dx / 2, wy - dy / 2
+    x1, y1 = wx + dx / 2, wy + dy / 2
+    tim = (78, 60, 40)
+    tim_hi = (108, 86, 58)
+    tim_lo = (46, 35, 22)
+    # posts: squared timber, a real little volume so they catch the tilt
+    n = max(2, int(ln / 16))
+    for i in range(n + 1):
+        f = i / n
+        px = x0 + (x1 - x0) * f
+        py = y0 + (y1 - y0) * f
+        lean = ((seed + i * 37) % 5 - 2) * 0.35 * s
+        draw_solid(surf, cam, px + lean * 0.4, py,
+                   [(0.0, 1.9 * s, 1.9 * s), (rail_z + 2 * s, 1.6 * s, 1.6 * s)],
+                   {"body": tim, "lo": tim_lo, "rim": tim_hi})
+    # top rail + mid rail, drawn as lines along the run at their own heights
+    for rz, wgt, col in ((rail_z, max(2, int(2.4 * s)), tim_hi),
+                         (rail_z * 0.55, max(1, int(1.6 * s)), tim)):
+        a = cam.project(x0, y0, rz)
+        b = cam.project(x1, y1, rz)
+        pygame.draw.line(surf, col, a, b, wgt)
+        pygame.draw.line(surf, tim_lo,
+                         (a[0], a[1] + wgt), (b[0], b[1] + wgt), 1)
+
+
 def _draw_chain_fence_solid(surf, cam, deco):
     """A chain-link FENCE panel -- see-through by construction (opaque thin
     wires, no fill). `kwargs`: run='h'|'v' (the panel's axis) + len (px). Place
@@ -3635,29 +3679,42 @@ def _draw_valve_solid(surf, cam, deco):
                        cam.project(wx + 8 * s, wy + 5 * s, 0)], max(2, int(2 * s)))
 
 
-def _draw_yard_light_solid(surf, cam, deco):
+def _draw_yard_light_solid(surf, cam, deco, pole_h=46.0, arm_len=13.0,
+                           mast=False):
     """A rural dusk-to-dawn yard light: a tall wood pole, a downswept
     gooseneck arm, a shallow galvanized reflector hood, and a cold mercury-
     vapor lamp burning under it. The period-correct town light -- 1994
     northern Minnesota ran on these, not lanterns -- and its glow is COLD
     blue-white, the deliberate opposite of the warm fire the town huddles
     at (burn barrels, braziers, candles). Runs off the generators now the
-    fold cut the grid (NARRATIVE §1)."""
+    fold cut the grid (NARRATIVE §1).
+
+    `street_lamp` (DESIGN.md §14) reuses this at highway proportions: the
+    same town's hardware on a taller GALVANIZED mast with a long gooseneck
+    reaching out over the carriageway, so the safe path's lighting reads as
+    the same municipality that hung the yard lights, one size up."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
-    wood = (74, 60, 44)
-    wood_hi = (104, 86, 62)
+    wood = (74, 60, 44) if not mast else (96, 98, 108)
+    wood_hi = (104, 86, 62) if not mast else (132, 136, 148)
     galv = (120, 122, 130)
     galv_lo = (70, 72, 80)
-    pole_h = 46 * s
+    pole_h = pole_h * s
     base = cam.project(wx, wy, 0)
     top = cam.project(wx, wy, pole_h)
-    pygame.draw.line(surf, wood, base, top, max(2, int(3 * s)))
+    pygame.draw.line(surf, wood, base, top, max(2, int((4 if mast else 3) * s)))
     pygame.draw.line(surf, wood_hi, base, top, max(1, int(1 * s)))
+    if mast:
+        # a poured concrete footing + the base hand-hole cover: the tell that
+        # says highway standard rather than a pole somebody sank in a yard
+        draw_solid(surf, cam, wx, wy,
+                   [(0.0, 3.4 * s, 3.4 * s), (5.0 * s, 3.0 * s, 3.0 * s)],
+                   {"body": (78, 76, 74), "lo": (44, 43, 42),
+                    "rim": (104, 102, 98)})
     # a gooseneck arm: UP off the pole and OUT to one side (screen-relative to
     # the yaw, so the head stays anchored off the pole from any facing, never a
     # billboard), then a short drop to the lamp head
-    arm_len = 13 * s
+    arm_len = arm_len * s
     ax = math.cos(cam.yaw + math.pi / 2)
     ay = math.sin(cam.yaw + math.pi / 2)
     hx = wx + ax * arm_len
@@ -3702,6 +3759,18 @@ def _draw_yard_light_solid(surf, cam, deco):
     else:
         pygame.draw.circle(surf, (60, 64, 72), (int(lamp[0]), int(lamp[1])),
                            lr)
+
+
+def _draw_street_lamp_solid(surf, cam, deco):
+    """The SAFE PATH's highway lamp (DESIGN.md §14): the same cold mercury-
+    vapor head the town hangs in its yards, up on a tall galvanized mast with
+    a long gooseneck out over the carriageway and a poured footing at its
+    base. It exists because the safe path's safety IS its lighting -- the
+    mouth only opens where the ground is unlit, so a road lit by yard lights
+    would have been a road with dark gaps you fall through. Bigger throw,
+    fewer poles, and it reads as municipal rather than domestic."""
+    _draw_yard_light_solid(surf, cam, deco, pole_h=78.0, arm_len=26.0,
+                           mast=True)
 
 
 def _draw_generator_solid(surf, cam, deco):
@@ -4093,6 +4162,7 @@ SOLID_PROPS = {
     "pump_island":   _draw_pump_island_solid,
     "neon_pylon":    _draw_neon_pylon_solid,
     "chain_fence":   _draw_chain_fence_solid,
+    "bridge_rail":   _draw_bridge_rail_solid,
     "boulder":       _draw_boulder_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,
@@ -4121,6 +4191,7 @@ SOLID_PROPS = {
     "kerosene_lamp": _draw_kerosene_lamp_solid,
     "lantern":       _draw_lantern_solid,
     "yard_light":    _draw_yard_light_solid,
+    "street_lamp":   _draw_street_lamp_solid,
     "generator":     _draw_generator_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,

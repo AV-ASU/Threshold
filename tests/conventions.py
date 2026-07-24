@@ -244,7 +244,39 @@ def _lost_silent():
                 "    scene_display_name honours; None falls back to the key).")
 
 
-# ------------------------------------------------------- 7. TOOLS.md fresh
+# --------------------------------------------------- 7. exits are walkable
+# THE RULE: an exit fires from the tile the player is STANDING ON
+# (`Scene.find_exit_at` off `char_object_at`), so an exit char that is SOLID
+# in OBJECT_DEFS is an exit nobody can ever take. There is no error and no
+# visible tell: the passage simply reads as a wall you bump into.
+# WHY THIS CHECK: Brimley's north road to `gravel_road_north` used "R", which
+# is a solid ROCK char. It shipped that way and the road out the top of town
+# was unreachable until somebody walked it in a test harness. Two more of the
+# same slipped into the safe-path network in the same session, which is the
+# tell that this needs a machine and not a memo.
+@check("every exit char is walkable (an exit you cannot stand on is a wall)")
+def _exit_chars_walkable():
+    from scenes import SCENE_BUILDERS, load_scene
+    from scenes.terrain import is_object_solid
+    rows = []
+    for key in sorted(SCENE_BUILDERS):
+        try:
+            sc = load_scene(key)
+        except Exception:
+            continue
+        if getattr(sc, "procedural", False):
+            continue
+        for ch in sorted(sc.exits):
+            if is_object_solid(ch):
+                rows.append(f"    {key}: exit {ch!r} -> {sc.exits[ch][0]!r} "
+                            "is a SOLID char, so the passage is a wall")
+    if rows:
+        return ("  pick a non-solid char (an 'outdoor_passage' or 'door' kind\n"
+                "  in scenes/terrain.py OBJECT_DEFS) for any exit the player\n"
+                "  walks onto.\n" + "\n".join(rows))
+
+
+# ------------------------------------------------------- 8. TOOLS.md fresh
 # THE RULE: TOOLS.md is GENERATED from each tool's own docstring
 # (`python tools/index.py --md`) precisely so a hand-maintained list of 40+
 # tools cannot rot the way the canon's dead file references did. This check

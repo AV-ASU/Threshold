@@ -1281,7 +1281,13 @@ notice that existed (on reaching the exit light) was CUT: a caption there
 explains away the only beat the space has. If a lost-space beat ever seems to
 want words, that is the signal it needs better staging, not a line.
 
-**They carry no PLACE NAME either.** Every other scene labels itself in the
+The SAFE PATH is the deliberate opposite and its names say so: "the Country
+Lane", "River Road", "the River Bend" (`DISPLAY_NAMES`, `scenes/terrain.py`)
+are plain road names, the kind a county puts on a sign. A road that names
+itself in ordinary language is a road telling the truth, which is the whole
+contract of that layer (`DESIGN.md` §14).
+
+**The lost fields carry no PLACE NAME either.** Every other scene labels itself in the
 HUD's lower-left corner ("the Yard", "General Store"); the lost fields set
 `display_name = ""` so that corner stays blank. The default would have
 titlecased the scene key into "Lost Forest" and told the player exactly what
