@@ -270,6 +270,11 @@ it renders the procedural sprites to a labelled PNG strip.
     (`draw_moth(surf,x,y,t,spread,glow,seed,flap,husk)`): tented ragged
     wings at rest, a limb-knot snap at the flare, a crumpled husk on the
     ground. Sim + spawn live in `systems/rot_mixin.py` (below).
+  - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
+    from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel)`):
+    a seeded 3-5 part deal from a 17-part library, each part emerging
+    from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
+    this skin, behavior unchanged (DESIGN.md §1).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the ONLY camera; the
     pitch is locked, there is no flat/pitch-0 view):** `camera.py` (`Camera.project(wx,wy,wz)`,

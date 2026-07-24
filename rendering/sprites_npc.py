@@ -879,6 +879,15 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         surf.blit(layer, (ox - sway * 3 - 1, oy - 2))
         layer.set_alpha(int(230 * phase))
         surf.blit(layer, (ox, oy))
+    elif kind == "amalgam":
+        # A Watcher-family shadow assembled from parts, each emerging from
+        # its own cut (rendering/amalgam.py; DESIGN.md §1). `seed` picks the
+        # assembly, `birth` drives the staggered build-out on manifest, and
+        # `gait` carries the gaze-dispel fraction (the peeling) -- both are
+        # presentation-only attrs the watcher ticks maintain.
+        from rendering.amalgam import draw_amalgam_sprite
+        draw_amalgam_sprite(surf, x, y, seed=seed, gaze=gaze,
+                            birth=birth, dispel=gait)
     else:
         # generic placeholder
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))

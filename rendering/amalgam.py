@@ -1,0 +1,644 @@
+"""THE AMALGAMS -- the Watcher-family shadows assembled from parts.
+
+A shadow here is not one body: it is 3-5 PARTS, each emerging from its own
+free-form CUT (a small aperture in the world, the same grammar at every
+part: flesh clipped dead flat against the line, the rim lip on the absent
+side, gold motes bleeding off it). Nothing touches anything else -- the
+parts hang in formation around one anchor, thin haze threads the only
+tissue, and the brain stitches "one creature" out of their synchrony.
+
+Assembly is DATA: `assemble(seed)` deals 3-5 parts from the 17-part
+library under the composition rules (at least one weight-bearing part on
+the ground, masses centre, senses high, and ALWAYS at least one
+eye-bearing part -- every amalgam watches). A different seed is a
+different creature; the same seed always rebuilds the same one.
+
+Behavior is the OG Watcher's, unchanged (spawn rules, hold, gaze/axe/
+round/light dispel). What this module adds is presentation only:
+- MANIFEST is a staggered build-out (parts enter cut by cut, driven by
+  the spawn ramp passed as `birth`);
+- the GAZE-DISPEL is a peeling (parts retract into their cuts in reverse,
+  driven by the dispel fraction passed as `dispel`);
+- IDLE is alive (masses breathe, limbs shift weight, the gut sac drips,
+  eyes drift; every cut wanders a pixel around its offset).
+
+Entry point: `draw_amalgam_sprite(surf, x, y, seed, gaze, birth, dispel)`
+-- dispatched from `draw_npc_sprite` for `kind == "amalgam"`, feet at
+(x, y), half-there phase + after-image like the Watcher. DESIGN.md §1.
+"""
+import math
+import random
+
+import pygame
+
+SHROUD = (24, 22, 28)
+SHROUD_LO = (12, 11, 15)
+VOID = (6, 6, 9)
+RIM = (46, 46, 60)
+EMBER_G = (54, 46, 20)
+EMBER = (110, 88, 30)
+EMBER_DIM = (90, 74, 27)
+
+GY = 96                      # the internal floor row of the part space
+_GAZE = False                # stared-at: every ember goes dark (family rule)
+
+
+def _ease(d):
+    return d * d * (3 - 2 * d)
+
+
+def _clamp(v):
+    return max(0.0, min(1.0, v))
+
+
+def _tent(s, pts, w0, w1, col=SHROUD):
+    n = 36
+    sm = []
+    for i in range(n + 1):
+        f = i / n
+        seg = f * (len(pts) - 1)
+        k = min(int(seg), len(pts) - 2)
+        lf = seg - k
+        ax, ay = pts[k]
+        bx, by = pts[k + 1]
+        sm.append((ax + (bx - ax) * lf, ay + (by - ay) * lf))
+    for i, (px, py) in enumerate(sm):
+        r = w0 + (w1 - w0) * (i / n)
+        pygame.draw.circle(s, col, (int(px), int(py)), max(1, int(round(r))))
+
+
+def _lump(s, cx, cy, rx, ry, lo=True):
+    if rx < 1 or ry < 1:
+        return
+    pygame.draw.ellipse(s, SHROUD, (int(cx - rx), int(cy - ry),
+                                    int(rx * 2), int(ry * 2)))
+    if lo:
+        pygame.draw.arc(s, SHROUD_LO, (int(cx - rx), int(cy - ry),
+                                       int(rx * 2), int(ry * 2)),
+                        math.pi * 1.15, math.pi * 1.95, 2)
+
+
+def _eye(s, x, y, dim=False, r=1):
+    pygame.draw.circle(s, EMBER_G, (int(x), int(y)), r + 2)
+    if _GAZE:
+        pygame.draw.circle(s, VOID, (int(x), int(y)), r)   # stared dark
+    else:
+        pygame.draw.circle(s, EMBER_DIM if dim else EMBER,
+                           (int(x), int(y)), r)
+
+
+def _haze(s, cx, cy, r, a):
+    g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+    pygame.draw.circle(g, (40, 38, 50, int(a)), (int(cx), int(cy)), int(r))
+    s.blit(g, (0, 0))
+
+
+def _clip_half(lay, cx, cy, ang, side):
+    """Erase everything on one side of the cut line -- the flesh ends DEAD
+    FLAT against its aperture, the whole grammar in one operation."""
+    dx, dy = math.cos(ang), math.sin(ang)
+    nx, ny = -dy * side, dx * side
+    p0 = (cx - dx * 200, cy - dy * 200)
+    p1 = (cx + dx * 200, cy + dy * 200)
+    p2 = (p1[0] + nx * 200, p1[1] + ny * 200)
+    p3 = (p0[0] + nx * 200, p0[1] + ny * 200)
+    pygame.draw.polygon(lay, (0, 0, 0, 0),
+                        [(int(a), int(b)) for a, b in (p0, p1, p2, p3)])
+
+
+def _cut_line(s, cx, cy, ang, ln, alpha=1.0, side=1):
+    """The cut itself: VOID core on the line, RIM lip offset onto the
+    absent side, motes; a partially-open (or dying) cut smokes."""
+    if alpha <= 0.02 or ln <= 1:
+        return
+    dx, dy = math.cos(ang), math.sin(ang)
+    p0 = (cx - dx * ln / 2, cy - dy * ln / 2)
+    p1 = (cx + dx * ln / 2, cy + dy * ln / 2)
+    nx, ny = -dy * side, dx * side
+    g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+    a = int(255 * alpha)
+    pygame.draw.line(g, VOID + (a,), (p0[0], p0[1]), (p1[0], p1[1]), 1)
+
+    def lp(f, off):
+        return (p0[0] + (p1[0] - p0[0]) * f + nx * off,
+                p0[1] + (p1[1] - p0[1]) * f + ny * off)
+    pygame.draw.line(g, RIM + (a,), lp(0.02, 1.5), lp(0.42, 1.5), 2)
+    pygame.draw.line(g, RIM + (a,), lp(0.56, 1.5), lp(0.98, 1.5), 2)
+    s.blit(g, (0, 0))
+    rng = random.Random(int(cx * 7 + cy * 13) & 0xffff)
+    for k in range(2):
+        mx = cx + nx * rng.uniform(3, 8) + rng.uniform(-2, 2)
+        my = cy + ny * rng.uniform(3, 8) + rng.uniform(-2, 2)
+        pygame.draw.circle(s, EMBER_G if k == 0 else SHROUD,
+                           (int(mx), int(my)), 1)
+    if 0.05 < alpha < 0.95:
+        _haze(s, cx + nx * 4, cy + ny * 4, 4, (1 - alpha) * 55)
+        _haze(s, cx - dx * 5, cy - dy * 5, 3, (1 - alpha) * 40)
+
+
+def _part(s, cx, cy, ang, side, draw_fn):
+    lay = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+    draw_fn(lay)
+    _clip_half(lay, cx, cy, ang, side)
+    s.blit(lay, (0, 0))
+
+
+def _cl(d):
+    """A part's cut-life from its deploy: opens ahead of the flesh."""
+    return min(1.0, 0.35 + 0.8 * d)
+
+
+# ============================= THE 17 PARTS ==================================
+# Each: (surf, x, y, d, mode, k) -- d deploy 0..1, mode "enter"/"idle"/
+# "leave", k a continuous 0..1 idle phase. Limbs lead with their extremity
+# and walk or fold home; masses inflate, breathe, and can breathe shut.
+
+def f_support_arm(s, x, y, d, mode, k):
+    cx, cy = x + 8, y - 54
+    gy = GY
+    r = _ease(d)
+    bend = (0.35 + 0.5 * k) if mode == "idle" else (0.2 if mode == "enter"
+                                                    else 0.55)
+    hx = cx - 17 * r
+    hy = gy - 2 - (3 if (mode == "leave" and d > 0.4) else 0)
+    if mode == "leave" and d > 0.4:
+        hx += 5                                   # mid backwards-step
+
+    def dd(lay):
+        _lump(lay, cx + 1, cy + 3, 9 * min(1, r * 1.5), 8 * min(1, r * 1.5))
+        _lump(lay, cx - 3 * r, cy + 9 * r, 7 * r, 6 * r, lo=False)
+        sh_ = (cx - 2 * r, cy + 6 * r)
+        elbow = ((sh_[0] + hx) / 2 - 4 * r, (sh_[1] + gy) / 2 - 9 * bend)
+        _tent(lay, [sh_, elbow, (hx + 4, hy - 6), (hx, hy)],
+              5.4 * (0.6 + 0.4 * r), 1.8)
+        if d > 0.6:
+            _lump(lay, (sh_[0] + elbow[0]) / 2, (sh_[1] + elbow[1]) / 2,
+                  4, 3, lo=False)                                # the muscle
+        if d > 0.35:
+            spl = 1.3 if mode == "enter" else (0.6 if mode == "leave" else 1.0)
+            for j in range(3):
+                _tent(lay, [(hx, hy), (hx - (5 + j * 2) * spl,
+                                       hy + 2 + (j % 2))], 2.0, 1.0)
+        if d > 0.5:
+            _eye(lay, cx - 2, cy + 7, dim=True)
+    _part(s, cx, cy, 1.2, -1, dd)
+    _cut_line(s, cx, cy, 1.2, 26 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_crawl_hand(s, x, y, d, mode, k):
+    cx, cy = x - 8, y - 24
+    gy = GY
+    r = _ease(d)
+    reach = (14 + 4 * k) if mode == "idle" else 14 * r + 2
+
+    def dd(lay):
+        _lump(lay, cx + 2, cy, 5 * min(1, r * 1.6), 5 * min(1, r * 1.6),
+              lo=False)
+        wx = cx + reach * 0.6
+        tip = (cx + reach, gy - 3)
+        _tent(lay, [(cx + 1, cy), (wx, gy - 8 - 2 * k), tip], 4.4, 1.7)
+        _lump(lay, tip[0], tip[1] - 1, 3, 2, lo=False)           # knuckles
+        spl = 1.2 if mode == "enter" else (0.5 if mode == "leave" else 1.0)
+        for j in range(3):
+            _tent(lay, [tip, (tip[0] + (5 + j * 2) * spl,
+                              gy - (j % 2) - (2 if mode == "leave" else 0))],
+                  2.0, 1.0)
+    _part(s, cx, cy, 1.05, 1, dd)
+    _cut_line(s, cx, cy, 1.05, 20 * _cl(d), alpha=_cl(d), side=1)
+
+
+def f_leg(s, x, y, d, mode, k):
+    cx, cy = x - 2, y - 56
+    gy = GY
+    r = _ease(d)
+    kb = 3 * k if mode == "idle" else 0
+    lift = 4 if (mode == "leave" and d > 0.4) else (
+        3 if (mode == "enter" and d < 0.75) else 0)
+    fx = cx + 5 * r + (4 if (mode == "leave" and d > 0.4) else 0)
+
+    def L(px, py):
+        return (cx + (px - cx) * r, cy + (py - cy) * r)
+
+    def dd(lay):
+        _lump(lay, cx + 2, cy + 3, 8 * min(1, r * 1.5), 7 * min(1, r * 1.5))
+        knee = L(cx + 9, (cy + gy) // 2 - 2 + kb)
+        foot = L(fx, gy - 2 - lift)
+        _tent(lay, [L(cx, cy + 4), knee,
+                    ((knee[0] + foot[0]) / 2, (knee[1] + foot[1]) / 2 + 3),
+                    foot], 5.0 * (0.6 + 0.4 * r), 2.0)
+        _lump(lay, (knee[0] + foot[0]) / 2 - 1, (knee[1] + foot[1]) / 2,
+              3 * r, 4 * r, lo=False)                            # the calf
+        if d > 0.7 and lift == 0:
+            for j in range(2):
+                _tent(lay, [foot, (foot[0] + 4 + j * 3, gy - (j % 2))],
+                      2.2, 1.2)
+    _part(s, cx, cy, 1.2, -1, dd)
+    if d > 0.7 and lift == 0:
+        g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+        pygame.draw.ellipse(g, (0, 0, 0, 40), (int(fx - 8), gy - 4, 16, 7))
+        s.blit(g, (0, 0))
+    _cut_line(s, cx, cy, 1.2, 22 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_elbow_prop(s, x, y, d, mode, k):
+    cx, cy = x + 4, y - 50
+    gy = GY
+    r = _ease(d)
+    settle = 2 * k if mode == "idle" else 0
+    ex_ = cx - 10 * r
+    ey_ = cy + (gy - 3 - cy) * r + settle
+
+    def dd(lay):
+        _lump(lay, cx + 1, cy + 3, 8 * min(1, r * 1.5), 7 * min(1, r * 1.5))
+        _tent(lay, [(cx, cy + 4), (cx - 7 * r, cy + (gy - cy) * r * 0.55),
+                    (ex_, ey_)], 5.6 * (0.6 + 0.4 * r), 3.0)
+        _lump(lay, ex_, ey_ - 1, 5 * r, (4 - settle * 0.5) * r, lo=False)
+        fold = 0.55 if mode == "leave" else (0.7 + 0.3 * r)
+        _tent(lay, [(ex_, ey_ - 2), (ex_ + 2, (cy + ey_) / 2 + 4),
+                    (cx - 3 * fold, cy + 14 * fold)], 3.4 * r, 1.6)
+        if d > 0.6:
+            pygame.draw.arc(lay, SHROUD_LO,
+                            (int(ex_ - 5), int(ey_ - 8), 10, 8), 0.3, 2.8, 1)
+            pygame.draw.line(lay, RIM, (int(ex_ - 3), int(ey_ - 4)),
+                             (int(ex_ + 2), int(ey_ - 5)), 1)
+    _part(s, cx, cy, 1.25, -1, dd)
+    _cut_line(s, cx, cy, 1.25, 24 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_reacher(s, x, y, d, mode, k):
+    cx, cy = x + 16, y - 52
+    gy = GY
+    r = _ease(d)
+    sweep = -8 + 16 * k if mode == "idle" else 0
+    curl = mode == "leave"
+
+    def dd(lay):
+        _lump(lay, cx - 1, cy + 2, 6 * min(1, r * 1.6), 6 * min(1, r * 1.6),
+              lo=False)
+        tip = (cx - 40 * r + sweep, gy - 2 - (6 * r if curl else 0))
+        _tent(lay, [(cx, cy + 2), (cx - 12 * r, cy + 12 * r),
+                    (cx - 22 * r, gy - 8 * r - (gy - cy - 20) * (1 - r)),
+                    (cx - 32 * r + sweep * 0.6,
+                     gy - 3 - (3 * r if curl else 0)), tip],
+              3.4 * (0.6 + 0.4 * r), 1.1)
+        if d > 0.5 and not curl:
+            for j in range(2):
+                _tent(lay, [tip, (tip[0] - 5 - j * 3, gy - (j % 2))],
+                      1.6, 1.0)
+        if curl:
+            _tent(lay, [tip, (tip[0] + 3, tip[1] - 4)], 1.6, 1.0)
+        if d > 0.6:
+            pygame.draw.line(lay, RIM, (int(cx - 10 * r), int(cy + 9 * r)),
+                             (int(cx - 16 * r), int(cy + 14 * r)), 1)
+    _part(s, cx, cy, 1.4, -1, dd)
+    _cut_line(s, cx, cy, 1.4, 16 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_stump(s, x, y, d, mode, k):
+    cx, cy = x - 2, y - 52
+    gy = GY
+    r = _ease(d)
+    tilt = -2 + 4 * k if mode == "idle" else 0
+    hike = 6 if (mode == "leave" and d > 0.4) else (
+        4 if (mode == "enter" and d < 0.75) else 0)
+
+    def dd(lay):
+        _lump(lay, cx + 1, cy + 3, 8 * min(1, r * 1.5), 7 * min(1, r * 1.5))
+        base = (cx + 4 * r + tilt, cy + (gy - 4 - cy) * r - hike)
+        _tent(lay, [(cx, cy + 3), (cx + 3 * r + tilt * 0.5,
+                                   (cy + base[1]) / 2), base],
+              6.0 * (0.6 + 0.4 * r), 3.4)
+        _lump(lay, base[0], base[1] + 1, 5 * r, 3 * r, lo=False)
+        if d > 0.6:
+            pygame.draw.arc(lay, SHROUD_LO,
+                            (int(base[0] - 5), int(base[1] - 4), 10, 6),
+                            3.3, 6.1, 1)
+    _part(s, cx, cy, 1.3, -1, dd)
+    if d > 0.7 and hike == 0:
+        g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+        pygame.draw.ellipse(g, (0, 0, 0, 40),
+                            (int(cx + 4 * r + tilt - 7), gy - 4, 14, 6))
+        s.blit(g, (0, 0))
+    _cut_line(s, cx, cy, 1.3, 22 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_finger_fan(s, x, y, d, mode, k):
+    cx, cy = x - 8, y - 40
+    r = _ease(d)
+    n = max(1, int(5 * d + 0.5))
+    wave = 0.12 * k if mode == "idle" else 0
+    curlm = 0.65 if mode == "leave" else 1.0
+
+    def dd(lay):
+        _lump(lay, cx + 1, cy + 2, 4 * min(1, r * 1.6), 6 * min(1, r * 1.6),
+              lo=False)
+        F = ((-0.85, 17), (-0.45, 20), (-0.05, 19), (0.35, 16), (0.75, 12))
+        for j, (fa, ln) in enumerate(F[:n]):
+            fa += wave * (1 if j % 2 else -1)
+            ln = ln * r * curlm
+            rooty = cy - 4 + j * 3
+            exx = cx + math.cos(fa) * ln
+            eyy = rooty + math.sin(fa) * ln + (3 if mode == "leave" else 0)
+            _tent(lay, [(cx + 1, rooty),
+                        (cx + math.cos(fa) * ln * 0.6,
+                         rooty + math.sin(fa) * ln * 0.6 - 2),
+                        (exx, eyy), (exx + 2, eyy + 2)], 1.8, 1.0)
+    _part(s, cx, cy, 1.1, 1, dd)
+    _cut_line(s, cx, cy, 1.1, 18 * _cl(d), alpha=_cl(d), side=1)
+
+
+def f_tail(s, x, y, d, mode, k):
+    cx, cy = x + 10, y - 42
+    gy = GY
+    r = _ease(d)
+    sway = -3 + 6 * k if mode == "idle" else 0
+    tiplift = 4 if mode == "leave" else 0
+
+    def L(px, py):
+        return (cx + (px - cx) * r, cy + (py - cy) * r)
+
+    def dd(lay):
+        _lump(lay, cx - 2, cy + 2, 6 * min(1, r * 1.6), 6 * min(1, r * 1.6),
+              lo=False)
+        _tent(lay, [L(cx, cy + 2), L(cx - 12, gy - 10),
+                    L(cx - 22, gy - 3), L(cx - 32 + sway, gy - 2 - tiplift)],
+              4.6 * (0.6 + 0.4 * r), 1.0)
+    _part(s, cx, cy, 0.9, -1, dd)
+    _cut_line(s, cx, cy, 0.9, 20 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_wing_stub(s, x, y, d, mode, k):
+    cx, cy = x - 8, y - 48
+    r = _ease(d)
+    if mode == "enter" and d < 0.5:
+        spread = 1.4                              # snaps OPEN first
+    elif mode == "leave":
+        spread = 0.7
+    else:
+        spread = 1.0 + 0.12 * k                   # the idle twitch
+
+    def dd(lay):
+        _lump(lay, cx + 1, cy + 2, 5 * min(1, r * 1.6), 5 * min(1, r * 1.6),
+              lo=False)
+        sp = spread * r * 1.3
+        pts = [(cx + 2, cy), (cx + 14 * sp, cy - 8 * sp),
+               (cx + 20 * sp, cy + 2 * sp), (cx + 15 * sp, cy + 5 * sp),
+               (cx + 17 * sp, cy + 10 * sp), (cx + 10 * sp, cy + 8 * sp),
+               (cx + 4 * sp, cy + 10 * sp)]
+        ipts = [(int(a), int(b)) for a, b in pts]
+        pygame.draw.polygon(lay, SHROUD_LO, ipts)
+        pygame.draw.lines(lay, VOID, True, ipts, 1)
+        if d > 0.5:
+            pygame.draw.line(lay, VOID, (int(cx + 4 * sp), cy + 2),
+                             (int(cx + 15 * sp), cy - 2), 1)     # membrane rib
+            pygame.draw.line(lay, RIM, ipts[1], ipts[2], 1)
+    _part(s, cx, cy, 0.8, -1, dd)
+    _cut_line(s, cx, cy, 0.8, 16 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_haunch(s, x, y, d, mode, k):
+    cx, cy = x, y - 40
+    br = k if mode == "idle" else 0.4
+    sc = _ease(d) * (0.93 + 0.10 * br)
+
+    def dd(lay):
+        _lump(lay, cx - 4 * sc, cy + 7 * sc, 12 * sc, 10 * sc)
+        _lump(lay, cx + 4 * sc, cy + 12 * sc, 9 * sc, 7 * sc, lo=False)
+        if sc > 0.5:
+            pygame.draw.arc(lay, VOID, (int(cx - 9 * sc), int(cy + 5 * sc),
+                                        int(16 * sc), int(9 * sc)),
+                            3.5, 5.4, 1)
+            pygame.draw.arc(lay, SHROUD_LO,
+                            (int(cx - 6 * sc), int(cy + 11 * sc),
+                             int(14 * sc), int(8 * sc)), 3.6, 5.6, 1)
+        if sc > 0.55:
+            _eye(lay, cx - 4 * sc, cy + 9 * sc, dim=True)
+    _part(s, cx, cy, 0.45, -1, dd)
+    _cut_line(s, cx, cy, 0.45, 26 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_hump(s, x, y, d, mode, k):
+    cx, cy = x, y - 46
+    br = k if mode == "idle" else 0.4
+    sc = _ease(d) * (0.93 + 0.10 * br)
+
+    def dd(lay):
+        _lump(lay, cx - 3 * sc, cy + 5 * sc, 11 * sc, 9 * sc)
+        _lump(lay, cx + 6 * sc, cy + 8 * sc, 8 * sc, 6 * sc, lo=False)
+        if sc > 0.5:
+            pygame.draw.line(lay, RIM, (int(cx - 12 * sc), int(cy + 6 * sc)),
+                             (int(cx - 13 * sc), int(cy + 12 * sc)), 1)
+    _part(s, cx, cy, 0.3, -1, dd)
+    _cut_line(s, cx, cy, 0.3, 24 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_rib_flank(s, x, y, d, mode, k):
+    cx, cy = x, y - 42
+    br = (1 - k) if mode == "idle" else 0.5       # exhale surfaces the ribs
+    sc = _ease(d) * (0.93 + 0.10 * (1 - br))
+
+    def dd(lay):
+        _lump(lay, cx - 2 * sc, cy + 8 * sc, 16 * sc, 9 * sc)
+        _lump(lay, cx + 8 * sc, cy + 12 * sc, 10 * sc, 6 * sc, lo=False)
+        if sc > 0.5:
+            ribs = 4 if br < 0.5 else 2
+            for j in range(ribs):
+                rx_ = cx + (-10 + j * 6) * sc
+                pygame.draw.arc(lay, SHROUD_LO,
+                                (int(rx_), int(cy + 3 * sc),
+                                 int(7 * sc), int(12 * sc)),
+                                math.pi * 0.6, math.pi * 1.5, 1)
+            pygame.draw.line(lay, RIM, (int(cx - 14 * sc), int(cy + 4 * sc)),
+                             (int(cx - 6 * sc), int(cy + 2 * sc)), 1)
+        if sc > 0.55:
+            _eye(lay, cx + 11 * sc, cy + 9 * sc, dim=True)
+    _part(s, cx, cy, 0.35, -1, dd)
+    _cut_line(s, cx, cy, 0.35, 30 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_gut_sac(s, x, y, d, mode, k):
+    cx, cy = x, y - 62
+    r = _ease(d)
+    swing = -2 + 4 * k if mode == "idle" else 0
+    drawn = 0.6 if mode == "leave" else 1.0       # drawn up on leave
+    sag = r * drawn
+
+    def dd(lay):
+        _lump(lay, cx - 1, cy + 6 * sag, 7 * r, 6 * r, lo=False)
+        _lump(lay, cx + swing, cy + 14 * sag, 9 * r, 10 * sag)
+        _lump(lay, cx + 1 + swing, cy + 21 * sag, 6 * r, 6 * sag, lo=False)
+        if r > 0.5:
+            pygame.draw.arc(lay, SHROUD_LO,
+                            (int(cx - 7 + swing), int(cy + 12 * sag),
+                             14, max(2, int(10 * sag))), 3.4, 5.8, 1)
+            pygame.draw.arc(lay, RIM, (int(cx - 5), int(cy + 8 * sag), 8, 6),
+                            1.6, 2.9, 1)
+        if r > 0.7 and mode == "idle" and k > 0.7:
+            _tent(lay, [(cx + 1 + swing, cy + 26 * sag),
+                        (cx + 2 + swing, cy + 30 * sag)], 1.6, 1.0)
+            _lump(lay, cx + 2 + swing, cy + 31 * sag, 1, 1, lo=False)
+    _part(s, cx, cy, 0.1, -1, dd)
+    _cut_line(s, cx, cy, 0.1, 20 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_spine_ridge(s, x, y, d, mode, k):
+    cx, cy = x - 10, y - 52
+    n = max(1, int(4.2 * d))                      # the chain pulls out
+    wave = 1.5 * k if mode == "idle" else 0
+
+    def dd(lay):
+        pts = [(cx - 2, cy + 4), (cx + 6, cy - 4), (cx + 14, cy - 5),
+               (cx + 21, cy + 1), (cx + 26, cy + 10)]
+        use = pts[:n + 1]
+        _tent(lay, use, 3.0, 1.6)
+        for j, (px, py) in enumerate(use[:-1][:n]):
+            off = wave * (1 if j % 2 else -1)
+            _lump(lay, px, py - 5 + off, 3, 3, lo=False)
+            pygame.draw.line(lay, RIM, (int(px - 1), int(py - 9 + off)),
+                             (int(px + 1), int(py - 9 + off)), 1)
+        if n >= 4:
+            _lump(lay, cx + 26, cy + 12, 3, 2, lo=False)
+    _part(s, cx, cy, 1.05, 1, dd)
+    _cut_line(s, cx, cy, 1.05, 22 * _cl(d), alpha=_cl(d), side=1)
+
+
+def f_eye_bulge(s, x, y, d, mode, k):
+    cx, cy = x, y - 52
+    br = k if mode == "idle" else 0.4
+    sc = _ease(d) * (0.93 + 0.10 * br)
+    eyes_on = (d > 0.75) if mode == "enter" else (d > 0.6)
+
+    def dd(lay):
+        _lump(lay, cx - 2 * sc, cy + 5 * sc, 8 * sc, 7 * sc, lo=False)
+        _lump(lay, cx + 4 * sc, cy + 9 * sc, 6 * sc, 5 * sc, lo=False)
+        if eyes_on:
+            dr = (-1.5 + 3 * k) if mode == "idle" else 0
+            _eye(lay, cx - 4 * sc + dr, cy + 5 * sc, r=2)
+            _eye(lay, cx + 3 * sc, cy + 9 * sc + dr * 0.5, dim=True)
+            _eye(lay, cx - 1 * sc, cy + 3 * sc, dim=True)
+    _part(s, cx, cy, 0.15, -1, dd)
+    _cut_line(s, cx, cy, 0.15, 22 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_vent(s, x, y, d, mode, k):
+    cx, cy = x, y - 50
+    nsm = max(1, int(11 * d))
+    breathe = 1.0 + 0.35 * k if mode == "idle" else 1.0
+    for j in range(nsm):
+        _haze(s, cx - 1 + (j % 3) * 4 + j, cy + 2 + j * 4 * breathe,
+              (5 + j * 0.7) * breathe, max(30, (90 - j * 7) * d))
+    _cut_line(s, cx, cy, 1.4, 18 * _cl(d), alpha=_cl(d), side=1)
+    rng = random.Random(7)
+    for j in range(max(1, int(5 * d))):
+        pygame.draw.circle(s, EMBER_G if j % 2 else SHROUD,
+                           (int(cx + rng.uniform(-3, 10)),
+                            int(cy + 2 + rng.uniform(0, 20))), 1)
+
+
+def f_ember_pair(s, x, y, d, mode, k):
+    cx, cy = x, y - 44
+    ang = 1.35
+    dx, dy = math.cos(ang), math.sin(ang)
+    nx, ny = -dy, dx
+    w = 3 * _ease(d)
+    ln = 10 * (0.5 + 0.5 * d)
+    pts = [(cx - dx * ln, cy - dy * ln),
+           (cx - dx * ln * 0.4 + nx * w, cy - dy * ln * 0.4 + ny * w),
+           (cx + dx * ln * 0.5 + nx * w, cy + dy * ln * 0.5 + ny * w),
+           (cx + dx * ln, cy + dy * ln),
+           (cx + dx * ln * 0.5 - nx * w, cy + dy * ln * 0.5 - ny * w),
+           (cx - dx * ln * 0.4 - nx * w, cy - dy * ln * 0.4 - ny * w)]
+    pygame.draw.polygon(s, VOID, [(int(a), int(b)) for a, b in pts])
+    pygame.draw.lines(s, RIM, True, [(int(a), int(b)) for a, b in pts], 1)
+    blink = (mode == "idle" and k > 0.75)
+    if d > 0.5:
+        _eye(s, cx - dx * 4, cy - dy * 4, r=2, dim=blink)
+        if d > 0.8 or mode != "leave":
+            _eye(s, cx + dx * 4, cy + dy * 4, r=2, dim=blink)
+
+
+WEIGHT = [("leg", f_leg), ("stump", f_stump), ("elbow", f_elbow_prop),
+          ("arm", f_support_arm), ("hand", f_crawl_hand)]
+MASS = [("haunch", f_haunch), ("hump", f_hump), ("rib", f_rib_flank),
+        ("gut", f_gut_sac), ("spine", f_spine_ridge)]
+SENSE = [("eyes", f_eye_bulge), ("pair", f_ember_pair), ("vent", f_vent),
+         ("fan", f_finger_fan), ("tail", f_tail), ("wing", f_wing_stub)]
+
+
+def assemble(seed):
+    """Deal a creature: 3-5 parts under the composition rules. The prefix
+    (weights + masses) caps at 4 so there is ALWAYS room for the first
+    sense slot, which is always an eye-bearing part: every amalgam
+    watches. Same seed, same creature."""
+    rng = random.Random(seed)
+    parts = []
+    nw = rng.choice((1, 2, 2, 3))
+    for x0 in rng.sample([-28, -14, 2, 16, 30], nw):
+        nm, fn = rng.choice(WEIGHT)
+        parts.append((nm, fn, x0, 96 + rng.randint(-8, 2)))
+    for _ in range(rng.choice((1, 1, 2))):
+        nm, fn = rng.choice(MASS)
+        parts.append((nm, fn, rng.randint(-12, 12), 96 - rng.randint(6, 24)))
+    parts = parts[:4]
+    ns = rng.choice((1, 2, 2))
+    for i in range(ns):
+        nm, fn = (rng.choice(SENSE[:2]) if i == 0 else rng.choice(SENSE))
+        parts.append((nm, fn, rng.randint(-22, 22), 96 - rng.randint(12, 32)))
+    return parts[:5]
+
+
+def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
+                        dispel=None):
+    """Feet at (x, y). `birth` 0..1 is the manifest ramp (parts build out
+    staggered); `dispel` 0..1 is the gaze-dispel fraction (parts peel back
+    into their cuts in reverse); `gaze` darkens every ember while the
+    player stares (the family rule)."""
+    global _GAZE
+    t = pygame.time.get_ticks() / 1000.0
+    b = 1.0 if birth is None else _clamp(birth)
+    g = 0.0 if dispel is None else _clamp(dispel)
+    parts = assemble(seed)
+    n = len(parts)
+    LW, LH = 150, 104
+    lay = pygame.Surface((LW, LH), pygame.SRCALPHA)
+    _GAZE = gaze
+    rng = random.Random(seed * 7 + 3)
+    anc = [(75 + p[2], (p[3] - 40)) for p in parts]
+    for i in range(len(anc) - 1):
+        a0, b0 = anc[i], anc[i + 1]
+        for k in range(3):
+            f = k / 2.0
+            hx = a0[0] + (b0[0] - a0[0]) * f + rng.uniform(-2, 2)
+            hy = a0[1] + (b0[1] - a0[1]) * f + rng.uniform(-2, 2)
+            _haze(lay, hx, hy, 3 + rng.uniform(0, 2), 26)
+    for idx, (nm, fn, x0, y0) in enumerate(parts):
+        if g > 0.0:
+            # the peeling: last parts first, each back into its cut
+            dg = _clamp((g - (n - 1 - idx) * 0.13) / 0.48)
+            d, mode = 1.0 - dg, "leave"
+        elif b < 1.0:
+            d, mode = _clamp((b - idx * 0.13) / 0.48), "enter"
+        else:
+            d, mode = 1.0, "idle"
+        k = 0.5 + 0.5 * math.sin(t * (0.9 + 0.13 * (idx % 3))
+                                 + idx * 1.7 + seed)
+        dx_ = math.sin(t * 0.6 + idx * 2.1 + seed) * 1.2
+        dy_ = math.cos(t * 0.5 + idx * 1.3) * 1.0
+        if d > 0.01:
+            fn(lay, 75 + x0 + dx_, y0 + dy_, d, mode, k)
+        else:
+            # its cut alone, dying
+            _cut_line(lay, 75 + x0 + dx_, (y0 + dy_) - 44, 1.2, 10,
+                      alpha=0.3, side=1)
+    _GAZE = False
+    sc = 0.8
+    sw, sh = int(LW * sc), int(LH * sc)
+    scaled = pygame.transform.scale(lay, (sw, sh))
+    base = int(GY * sc) + 2
+    phase = 0.42 + 0.45 * (math.sin(t * 1.1 + seed) * 0.5 + 0.5)
+    phase *= (1.0 - 0.5 * g)                      # thins as it is stared apart
+    ghost = scaled.copy()
+    ghost.set_alpha(int(230 * phase * 0.45))
+    surf.blit(ghost, (int(x - sw // 2) - 3, int(y - base) - 1))
+    scaled.set_alpha(int(230 * phase))
+    surf.blit(scaled, (int(x - sw // 2), int(y - base)))

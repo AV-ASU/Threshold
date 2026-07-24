@@ -800,6 +800,10 @@ class ThreatMixin:
             return
         # Drop any swept on load/death.
         self._watchers = [w for w in self._watchers if w in self.scene.npcs]
+        for w in self._watchers:
+            # presentation only: the manifest ramp the amalgam build-out
+            # reads (draw-side; the threat states never touch it)
+            w._birth = min(1.0, getattr(w, "_birth", 1.0) + dt / 2.2)
         key = self.scene.key
         # The domain watches once the thread is pulled -- never in a safe /
         # King-free room, never inside a surface building, never before the
@@ -885,12 +889,19 @@ class ThreatMixin:
                 break
         if spot is None:
             return
-        w = NPC(spot[0], spot[1], "", "watcher",
+        # The shadow FAMILY: some of His gaze manifests as the OG Watcher,
+        # some as an AMALGAM -- a seeded assembly of parts, each emerging
+        # from its own cut (rendering/amalgam.py). Same behavior end to end
+        # (this spawn rule, the hold, every dispel); only the flesh differs.
+        kind = "amalgam" if random.random() < AMALGAM_CHANCE else "watcher"
+        w = NPC(spot[0], spot[1], "", kind,
                 voice="blip_low", portrait="watcher",
                 movement="watch", speed=0.0,
                 no_prompt=True, solid=False)
         w.tag = "watcher"
         w.dialogue_fn = None
+        w.sprite_seed = random.randint(1, 99999)   # the assembly deal
+        w._birth = 0.0                             # the staggered build-out
         scene.add_npc(w)
         self._watchers.append(w)
         self.visibility = min(1.0, self.visibility + 0.03)
@@ -935,6 +946,9 @@ class ThreatMixin:
             else:
                 gt = max(0.0, gt - dt * 1.5)
             w._gaze_dispel_t = gt
+            # presentation only: the dispel FRACTION drives the amalgam's
+            # peel (parts retract in reverse as you stare it apart)
+            w._gait = min(1.0, gt / WATCHER_GAZE_DISPEL)
 
     def _dispel_watcher(self, w, reason="gaze"):
         """Dissolve one Watcher. If it was the last one and we're not merely

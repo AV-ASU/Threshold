@@ -137,6 +137,40 @@
   threat state. Station authoring for the remaining patrolled rooms is
   still open.
 
+## The shadows program (the amalgams)
+
+- **2026-07 — The Watcher-variety program landed as THE AMALGAMS**
+  (`rendering/amalgam.py`, `AMALGAM_CHANCE`, DESIGN.md §1). The program
+  ran as a maintainer-driven concept loop in session scratchpad: a
+  15-design "Watcher variants" sheet (rejected: "shapes with eyes"), a
+  pivot to motion-first SHADOWS (octopus/cockroach gaits, then chimeras),
+  the approved BONELESS STILTER glide rig, a fusion round (portal-stuck /
+  goop-of-eyes / mothman seeds), and the PORTAL GUY -- a torso wedged at
+  a razor cut, relocating by crawling back through it -- whose BACK view
+  (a smoke body with working arms) sparked the breakthrough pitch: **stop
+  designing individual shadows; build creatures out of MULTIPLE cuts.**
+  ("Fuck creating shadows, we make amalgams now.") The portal guy and the
+  earlier one-off designs were retired into the system: a 17-part library
+  (9 limbs, 6 body masses, 2 bare apertures), one grammar throughout
+  (flesh clipped dead flat against a free-form cut, rim lip on the absent
+  side, shroud palette, ember eyes, haze tissue), every part carrying its
+  own enter/leave (limbs walk backwards into their cuts -- the portal
+  guy's trick generalized; masses breathe themselves shut) and idle
+  (breath, weight-shift, drips, drifting eyes). An amalgam is DATA: a
+  seeded 3-5 part deal under composition rules (>=1 weight part grounded,
+  masses centre, senses high, ALWAYS >=1 eye-bearing part -- an eyeless
+  line-up next to the OG Watcher caught the generator truncating the eye
+  slot, and the dim-ember tone was brightened to survive game scale).
+  Behavior is deliberately untouched (the family contract: every shadow
+  acts exactly like the OG Watcher -- spawn rules, hold, gaze/axe/round/
+  light dispel); the wiring adds presentation only: `AMALGAM_CHANCE` of
+  `_spawn_watcher` manifestations wear the amalgam skin, `npc._birth`
+  drives a staggered part-by-part build-out, and the gaze-dispel fraction
+  (`npc._gait`) plays the dispel as a PEELING. Blessed-but-open ideas
+  live in `TODO.md` #21: per-part beam burn, hold-timer build-out. The
+  FRAME idea (one huge empty cut as a super-rare shadow) was pitched and
+  retired ("doesn't fit here").
+
 ## The King, the Moths, the evidence ladder
 
 - **2026-07 — The evidence ladder built out in full.** Ev 0: town reads

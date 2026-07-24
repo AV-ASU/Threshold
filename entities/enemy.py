@@ -28,7 +28,8 @@ def _is_cultist(obj):
 # interact-markers, and the various non-corporeal apparitions. Everything
 # NOT in this set -- the human locals and the cult -- is flesh and can be
 # shot. The player CAN now gun down innocent locals; the cult reacts.
-_BULLET_PHANTOM = frozenset({"_invisible", "yellow_king", "watcher"})
+_BULLET_PHANTOM = frozenset({"_invisible", "yellow_king", "watcher",
+                             "amalgam"})
 
 
 def _is_shootable(obj):

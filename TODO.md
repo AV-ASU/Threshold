@@ -369,10 +369,11 @@ everywhere), and the flashlight opening on the PI's desk
   open:** player verbs (restore/switch a fixture), the fuel item +
   siphon/refill economy, and lights decaying/failing on their own.
   Keep the tension: a lit town is a town He can see.
-- **Watcher variety.** Wildly different silhouettes per canon (each is a
-  different cross-section of the same higher-dimensional gaze —
-  NARRATIVE §4 makes this free). Fast/skittery movement prototyped ONE
-  design at a time through the creature-design loop; dark-only existence.
+- **Watcher variety — LANDED as the AMALGAMS** (`rendering/amalgam.py`,
+  DESIGN.md §1; history in `CHANGELOG.md` "The shadows program"). Still
+  open from the blessed idea set: the beam forcing individual PARTS to
+  retract (per-part light burn), and the build-out reading the hold
+  timer rather than a fixed ramp.
 - **The moth blackout — remaining staging.** The blackout itself landed
   with the power link above (flare → the room's electric light dies).
   Still open: the cult camp PROCESSES to the flash and fans out (a

@@ -238,7 +238,23 @@ its head) and pings the cult to **investigate the body**, and the body
   `tests/stealth.py` §11). The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
-  high-visibility trigger is retired.) The gun and axe **share one weapon slot** (left-click
+  high-visibility trigger is retired.) **The gaze wears two skins (the
+  shadow family):** a manifestation arrives as the OG shroud Watcher or,
+  with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
+  seeded assembly of 3-5 parts from a 17-part library, each part emerging
+  from its own free-form CUT (flesh clipped dead flat against the line,
+  rim lip on the absent side, haze the only tissue; nothing touches).
+  Composition rules bind every deal: at least one weight-bearing part on
+  the ground, masses centre, and ALWAYS at least one eye-bearing part
+  (every amalgam watches; the dim-ember tone is bright enough to survive
+  game scale). Behavior is the Watcher's, identical (this spawn rule, the
+  hold, gaze/axe/round/light dispel); the amalgam adds presentation only:
+  a staggered part-by-part BUILD-OUT on manifest (`npc._birth`, ticked in
+  `_tick_watchers`), and the gaze-dispel plays as a PEELING -- parts
+  retract into their cuts in reverse while you stare (`npc._gait`, the
+  dispel fraction, set in `_tick_watcher_gaze`; both attrs are draw-only).
+  Limbs walk backwards into their cuts; masses breathe themselves shut; a
+  dying cut smokes. The gun and axe **share one weapon slot** (left-click
   to use; switch which is equipped from the inventory screen).
 - **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
   flooded deep works (`WADE_SCENES` = works_cistern / the_sump /

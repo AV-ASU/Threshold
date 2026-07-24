@@ -1482,7 +1482,7 @@ class RenderMixin:
                         # A Watcher being stared down: its eyes go dark (gaze)
                         # and it fades as the dispel timer fills, so the cure
                         # reads.
-                        w_gaze = (npc.sprite_kind == "watcher"
+                        w_gaze = (npc.sprite_kind in ("watcher", "amalgam")
                                   and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
                         nview = "front"
                         if self._tilt_on():

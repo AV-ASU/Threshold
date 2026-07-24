@@ -155,7 +155,8 @@ TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 SIGHT_FOG_ALPHA = 96
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
-TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
+TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20,
+             "amalgam": 20}
 # The world projection is orthographic, so the King -- the apex -- gets a
 # deliberate perspective-style depth scale under tilt: he LOOMS larger as he
 # closes the view-depth gap toward the camera and shrinks as he hangs back, so a
@@ -339,6 +340,10 @@ WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
+AMALGAM_CHANCE = 0.5          # fraction of Watcher manifestations that arrive
+                              # as an AMALGAM (a seeded parts assembly,
+                              # rendering/amalgam.py) instead of the OG shroud;
+                              # behavior is identical either way
 # Walking through a rift FOLD has this chance to open an extra Watcher on the
 # far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
 FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal
