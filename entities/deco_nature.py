@@ -99,6 +99,20 @@ class DecoNatureMixin:
         pygame.draw.ellipse(surf, (96, 74, 48), (x + 11, y - 6, 8, 12), 1)
         pygame.draw.ellipse(surf, (120, 94, 62), (x + 13, y - 3, 4, 6), 1)  # rings
 
+    def _draw_boulder(self, surf, x, y):
+        """A 3D rock. The tilt view draws a shaded body-of-revolution
+        (rendering.props._draw_boulder_solid); this flat fallback is a
+        shaded lump (still not a plain disc) for pitch-0 tools/previews."""
+        r = int(11 * (self.scale or 1.0))
+        base = (92, 92, 100)
+        pygame.draw.circle(surf, (40, 40, 46), (x, y + 3), r + 1)      # shadow
+        pygame.draw.circle(surf, base, (x, y), r)
+        pygame.draw.circle(surf, (128, 128, 138), (x - r // 3, y - r // 3),
+                           max(2, r // 3))                             # lit cap
+        pygame.draw.circle(surf, (54, 54, 60), (x, y), r, 1)
+        pygame.draw.line(surf, (54, 54, 60), (x - r // 2, y),
+                         (x + r // 3, y + r // 2), 1)                  # crack
+
     def _draw_bush(self, surf, x, y):
         """A dense leafy bush -- walkable, but if the floor under it
         is corn-cover (':') the player hides in it. Used in the

@@ -48,7 +48,7 @@ _SCATTER = {
     "forest": ("creepy_tree", "creepy_tree", "creepy_tree", "creepy_tree",
                "tall_grass", "grass_tuft", "standing_stone", "log_seat"),
     "road": ("rust_sedan", "rust_wagon", "rust_van", "rust_coupe",
-             "wheelbarrow", "standing_stone", "creepy_tree"),
+             "wheelbarrow", "standing_stone", "creepy_tree", "boulder"),
 }
 # ground detailing scattered across the lit clearing so the flat floor breaks
 # up (small blades + leaf litter). Standees + a floor decal, all tilt-safe.
@@ -66,7 +66,8 @@ _REACH = 2.2              # tiles: this close to the exit = you climbed out
 _BIOME = {
     "corn":   {"clear_r": 4.5, "ring_w": 2.5, "haven_r": 8.5, "spawn_off": 3.0},
     "forest": {"pond_r": 4.2, "haven_r": 7.0, "spawn_off": 6.5},
-    "road":   {"court_r": 5.0, "haven_r": 7.0, "spawn_off": 6.0},
+    "road":   {"court_r": 4.5, "haven_r": 8.0, "spawn_off": 6.5,
+               "road_amp": 9.0, "road_half": 2.6},
 }
 
 
@@ -89,6 +90,10 @@ class LostSpace(Scene):
         # the lit island centre (world coords) -- the haven-glow anchor
         self._fx = self._cx * TILE + TILE // 2
         self._fy = self._cy * TILE + TILE // 2
+        # the ROAD's meander is anchored so the paved centreline passes through
+        # the focal column at the focal row -> the station always sits ON it.
+        self._road_n0 = (self._vnoise(self._cy * 0.035 + 13, 4.0, salt=15)
+                         if self._biome == "road" else 0.0)
         # spawn the player a few tiles south of the island, facing it
         sx = self._fx
         sy = self._fy + int(self._cfg["spawn_off"] * TILE)
@@ -131,26 +136,31 @@ class LostSpace(Scene):
             lx = cx + math.cos(a) * (pr + 26)
             ly = cy + math.sin(a) * (pr + 26)
             self.add_decoration(Decoration(lx, ly, "lantern", seed=int(a * 40)))
-        # reeds + a fallen log on the bank
+        # reeds + a fallen log + real 3D boulders on the bank
         for i, (dx, dy, kind) in enumerate((
                 (-8, -pr - 18, "tall_grass"), (24, -pr - 10, "tall_grass"),
                 (pr + 20, 10, "log_seat"), (-pr - 24, -6, "tall_grass"),
                 (18, pr + 24, "tall_grass"), (-34, pr + 18, "grass_tuft"),
-                (pr + 30, -34, "creepy_tree"), (-pr - 36, 30, "creepy_tree"))):
+                (pr + 16, -30, "boulder"), (-pr - 20, 34, "boulder"),
+                (pr + 34, -40, "creepy_tree"), (-pr - 40, 28, "creepy_tree"))):
             self.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=i + 20))
         # a breathing mist lying on the water
         self.add_decoration(Decoration(cx, cy, "mist", seed=5,
                                        w=int(pr * 2.2), h=int(pr * 1.6)))
 
     def _build_road_station(self):
-        """ROAD: the derelict filling station (can't enter -- its footprint is
-        solid) with its buzzing neon and two dead pumps out front."""
+        """ROAD: the full-building filling station (can't enter -- the store's
+        footprint is solid) built around the forecourt anchor: store block to
+        the north, a wide canopy over three pumps on the apron, a tall neon
+        pylon towering at the road edge. It sits ON the winding road."""
         cx, cy = self._fx, self._fy
-        # the station sits a little NORTH so the forecourt opens toward spawn
-        self.add_decoration(Decoration(cx, cy - 20, "gas_station", seed=3))
-        # roadside dressing: a wreck nosed onto the forecourt, an oil drum
-        self.add_decoration(Decoration(cx + 70, cy + 30, "rust_sedan", seed=9))
-        self.add_decoration(Decoration(cx - 78, cy + 18, "wheelbarrow", seed=4))
+        self.add_decoration(Decoration(cx, cy, "gas_station", seed=3))
+        # abandoned vehicles stalled on the road + boulders of debris shed onto
+        # the shoulder (real 3D rocks, not flat discs)
+        self.add_decoration(Decoration(cx + 26, cy + 150, "rust_sedan", seed=9))
+        self.add_decoration(Decoration(cx - 40, cy - 150, "rust_van", seed=12))
+        self.add_decoration(Decoration(cx + 132, cy + 54, "boulder", seed=5))
+        self.add_decoration(Decoration(cx - 138, cy + 120, "boulder", seed=8))
 
     # ================= the generator: deterministic per world tile ===========
     def _hash01(self, a, b, salt=0):
@@ -177,6 +187,15 @@ class LostSpace(Scene):
     def _rt(self, tx, ty):
         """distance from the focal centre, in tiles."""
         return math.hypot(tx - self._cx, ty - self._cy)
+
+    def _road_x(self, ty):
+        """The winding road's centre COLUMN at row ty (tiles). A smooth
+        low-freq value-noise meander (the maintainer's 'generate it like a
+        river' idea): the road wanders forever in X as you walk N-S, never
+        repeating, and is anchored to pass through the focal column at the
+        focal row so the station sits on it."""
+        n = self._vnoise(ty * 0.035 + 13, 4.0, salt=15)
+        return self._cx + (n - self._road_n0) * self._cfg["road_amp"]
 
     def _corn_here(self, tx, ty):
         # sparse corn CLUMPS in the field: a low-freq gate so corn appears in
@@ -206,14 +225,21 @@ class LostSpace(Scene):
             return "G" if gg > 0.5 else "g"   # mossy forest floor
         elif b == "road":
             if r <= self._cfg["court_r"]:
-                return "P"                # the asphalt forecourt
-            if r <= self._cfg["court_r"] + 2.0:
+                return "P"                # the station's asphalt apron
+            # the WINDING paved road (river-style meander)
+            rhalf = self._cfg["road_half"]
+            dxr = abs(tx - self._road_x(ty))
+            if dxr < 0.7:
+                return "Y"                # faded dashed centreline
+            if dxr < rhalf:
+                return "P"                # asphalt
+            if dxr < rhalf + 1.6:
                 return "d"                # gravel shoulder
-            # cracked road giving way to weeds reclaiming it
+            # off the road: weeds reclaiming the cracked ground
             rr = self._vnoise(tx * 0.06 + 11, ty * 0.06 + 2, salt=7)
-            if rr > 0.62:
+            if rr > 0.58:
                 return "g"
-            return "P" if rr < 0.34 else "d"
+            return "d" if rr > 0.3 else ";"
         # the shared EMPTY field: dead grass / mud / bare dirt so the nothing
         # still reads varied, not one flat colour.
         g = self._vnoise(tx * 0.05 + 40, ty * 0.05 - 17, salt=3)
@@ -255,16 +281,12 @@ class LostSpace(Scene):
                     return "T" if self._hash01(tx, ty, salt=6) > 0.35 else "p"
             return "."
         if b == "road":
-            court = self._cfg["court_r"]
-            # the station block sits just north of centre: a solid footprint you
-            # cannot enter (the deco supplies the building art).
-            if -2.6 <= (ty - self._cy) <= -0.2 and abs(tx - self._cx) <= 2.4:
+            # the STORE block sits ~3 tiles north of the focal: a full-building
+            # solid footprint you cannot enter (the deco supplies the art). The
+            # canopy / pumps / forecourt to the south stay walkable.
+            if -4.4 <= (ty - self._cy) <= -1.8 and abs(tx - self._cx) <= 2.5:
                 return "X"
-            if r > court + 3.0:
-                # roadside junk: the odd rusted hulk of debris to weave past
-                if self._hash01(tx, ty, salt=9) > 0.985:
-                    return "R"
-            return "."
+            return "."                    # wrecks + boulders are real 3D decos
         return "."
 
     # ---- ground detailing in the lit clearing (finite, hash-placed) ---------

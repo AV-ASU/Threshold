@@ -155,10 +155,18 @@
   by a fisher's `camp_fire` on the near bank (offset so the player lands behind
   it, not on it) + lanterns on the far shore, dressed with reeds and a low mist,
   framed by dense generated trees. **Road** is a derelict filling **station** you
-  cannot enter (a solid footprint in the object grid; a new `gas_station` solid
-  draws the store block + forecourt canopy on posts + two dead pumps + a cold
-  buzzing **neon** sign on a roadside pole) over an asphalt forecourt, with
-  roadside wrecks and weeds reclaiming the cracked road. Two new light kinds —
+  cannot enter (a solid footprint in the object grid; the `gas_station` solid
+  draws a full building-scale store + a forecourt canopy + prominent pumps + a
+  tall cold-buzzing **neon** pylon for light) sitting on a **winding paved road**
+  generated river-style (a low-freq value-noise meander of the centre column, so
+  the dashed road wanders forever in X as you walk N-S and never repeats), with
+  roadside wrecks and weeds reclaiming the cracked edges. Flat `R`-tile "rocks"
+  (a plain 2D floor disc, a VISION violation) were replaced by a real 3D
+  `boulder` solid (a squat faceted shaded stone). NOTE: the station's internal
+  layout (building/canopy/pumps/lot) is being reworked to a maintainer sketch (a
+  full lot with a separate pump canopy, parking bays, a perimeter fence, and the
+  road running alongside via a driveway) -- this entry will be reconciled when
+  that lands. Two new light kinds —
   `haven_fire` (the crop-circle bonfire) and `gas_station` (the neon glow) —
   were added to `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`, and a new
   `LOST_SPACE_SCENES` gating set gives every lost field a HEAVIER `_draw_dark`
