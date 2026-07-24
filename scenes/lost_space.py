@@ -69,6 +69,14 @@ _CAMP_STAND = 2.4          # tiles: how far off the flame they stand
 _CAMP_WAKE = 24.0          # tiles: crew exists inside this
 _CAMP_SLEEP = 34.0         # tiles: released beyond this (hysteresis)
 
+# the lamp-carriers: cultists walking the dark with a light in hand. The
+# whole point is that a MOVING warm glow is indistinguishable from the
+# stationary warm glow you are hunting, until it moves.
+_ROAM_CREW = 2             # carriers abroad in the field at once
+_ROAM_MIN = 18.0           # tiles: never spawned closer than this
+_ROAM_MAX = 30.0           # tiles: nor farther (they must be SEEN)
+_ROAM_RELEASE = 52.0       # tiles: released once you are long gone
+
 # per-biome focal + haven geometry (tiles). `haven_r` is how far the island's
 # light protects (leave it and the exit hunt begins); `spawn_off` drops the
 # player that many tiles SOUTH of the focal centre so they face the island.
@@ -128,6 +136,7 @@ class LostSpace(Scene):
         self.cult_target = 0
         self._camp_pos = self._raise_occupied_camp()
         self._camp_crew = []
+        self._roamers = []                        # (cultist, carried lantern)
         self.on_update_fn = self._tick
 
     # ================= THE OCCUPIED CAMP (the inversion) =====================
@@ -186,6 +195,58 @@ class LostSpace(Scene):
             # simulate a crew nobody is near
             self.npcs = [n for n in self.npcs if n not in live]
             self._camp_crew = []
+
+    # ================= THE LAMP-CARRIERS (the ambiguous glow) ================
+    def _tick_roamers(self, game):
+        """Cultists walking the dark with a lantern in hand.
+
+        The field's exit is a warm lantern held 6-20 tiles off. So is this.
+        The only thing that tells them apart is that one of them MOVES, and by
+        the time you are sure which you are looking at, the question has
+        usually answered itself. It also puts the two threats in their proper
+        jobs: the Watchers FIND you, the cult CATCHES you.
+
+        The carried light is a real emitter parented to the body -- the
+        lightmap reads live deco positions every frame and `light_sources`
+        caches the deco LIST rather than positions, so a moving source lights
+        and gates correctly with no special case."""
+        p = game.player
+        # they walk the dark you walk: abroad only once you have left the
+        # island's glow and the hunt is on
+        hunting = math.hypot(p.x - self._fx, p.y - self._fy) >= \
+            self._cfg["haven_r"] * TILE
+        live = []
+        for npc, lamp in self._roamers:
+            gone = (npc not in self.npcs or not getattr(npc, "alive", True)
+                    or getattr(npc, "_is_corpse", False))
+            far = math.hypot(npc.x - p.x, npc.y - p.y) > _ROAM_RELEASE * TILE
+            if gone or far or not hunting:
+                if npc in self.npcs and (far or not hunting) and not gone:
+                    self.npcs.remove(npc)
+                try:
+                    self.decorations.remove(lamp)
+                except ValueError:
+                    pass
+                continue
+            lamp.x, lamp.y = npc.x, npc.y        # the light rides the body
+            live.append((npc, lamp))
+        self._roamers = live
+        if not hunting:
+            return
+        for i in range(_ROAM_CREW - len(live)):
+            a = self._hash01(int(p.x) + i, int(p.y), salt=31 + i) * math.tau
+            d = (_ROAM_MIN + self._hash01(int(p.y) + i, int(p.x), salt=41)
+                 * (_ROAM_MAX - _ROAM_MIN)) * TILE
+            at = (p.x + math.cos(a) * d, p.y + math.sin(a) * d)
+            if self.is_solid_at(*at):
+                continue
+            npc = game._spawn_cultist("cult_regular", "cultist",
+                                      speed=0.95, gaze_range=180, at=at)
+            if npc is None:
+                continue
+            lamp = Decoration(npc.x, npc.y, "lantern", seed=(i * 7) & 0xffff)
+            self.add_decoration(lamp)
+            self._roamers.append((npc, lamp))
 
     # ================= the focal islands (hand-authored) =====================
     def _build_corn_camp(self):
@@ -504,6 +565,7 @@ class LostSpace(Scene):
         # the manned fire runs wherever you are: its whole job is to be out
         # there in the dark while you are busy hunting a different light
         self._tick_camp(game)
+        self._tick_roamers(game)
         haven = self._cfg["haven_r"] * TILE
         d_haven = math.hypot(p.x - self._fx, p.y - self._fy)
         if d_haven < haven:

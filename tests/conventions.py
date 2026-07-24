@@ -140,13 +140,11 @@ def _tilt_sets():
 # Scene._LIGHT_KINDS (the MECHANICAL cover radius stealth reads) and
 # FIXTURE_POOLS (the VISIBLE pool _draw_dark casts). A kind in only one is a
 # light that gates but does not shine, or shines but does not gate.
-# ALLOWLIST = two shipped disagreements, both suspected real bugs, left as
-# gameplay decisions for the maintainer rather than silently "fixed" here.
-LIGHT_EXEMPT = {
-    "campfire": "gates as lit but casts nothing -- it is the DEAD indoor "
-                "scorch decal, so arguably should not gate at all (triage)",
-    "burn_barrel": "casts light but gives no mechanical cover (triage)",
-}
+# No exemptions. The two this check found on its first run were real bugs and
+# are fixed: `campfire` (the COLD indoor scorch decal) was handing out an 80px
+# light-cover radius while casting nothing, and `burn_barrel` was casting a
+# visible pool while giving no cover at all. Keep this empty if you can.
+LIGHT_EXEMPT = {}
 
 
 @check("light kinds agree across the mechanical + visible tables")

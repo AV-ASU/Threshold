@@ -80,9 +80,15 @@ def main():
     from systems.audio import Audio
     audio = Audio()
 
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ModuleNotFoundError:
+        print("This tool needs matplotlib for its plots:\n"
+              "    pip install matplotlib\n"
+              "(optional dependency -- nothing else in the project uses it.)")
+        return 1
 
     cues = CUE_SETS[args.set]
     n_cues = len(cues)

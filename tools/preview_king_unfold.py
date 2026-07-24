@@ -67,7 +67,13 @@ def frame(t, threat):
 
 
 def arc_mp4():
-    import imageio.v2 as imageio
+    try:
+        import imageio.v2 as imageio
+    except ModuleNotFoundError:
+        print("The mp4 arc needs imageio:\n"
+              "    pip install imageio imageio-ffmpeg\n"
+              "(optional -- the PNG strips above are already written.)")
+        return
     reset_king_unfold_fx()
     fps = 30
     frames = []
