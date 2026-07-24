@@ -41,7 +41,7 @@ pygame.init()
 pygame.display.set_mode((1, 1))
 from rendering.sprites import draw_npc_sprite
 
-DEFAULT_KINDS = ["cultist", "watcher", "yellow_king"]
+DEFAULT_KINDS = ["cultist", "watcher", "amalgam", "yellow_king"]
 
 
 def parse_args():

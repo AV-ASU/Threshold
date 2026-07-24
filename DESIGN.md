@@ -69,16 +69,22 @@ not on that path: he honors `player.hidden` (stepping into corn OR an enclosed
 hide drops his hunt to searching, guarded by `tests/king_roam.py`), though he
 re-finds you rather than losing you for good, and his catch is birth-gated.
 
-**The flashlight (`[F]`) is the player's hand on that meter.** Found in
-the woodshed (beside the axe), it casts a long beam **cone** in
+**The flashlight (`[F]`) is the player's hand on that meter.** The PI's
+own kit, taken off the bedroom desk in the opening close-up (beside the
+pistol; it moved there from the woodshed in the 2026-07 light pass — light
+is the game's spine, so the player's hand on it starts in the first
+close-up). It casts a long beam **cone** in
 the facing direction through `DARK_SCENES` — the only way to read a black
 room far enough ahead to navigate it. But it is **double-edged**: a light
 in the dark is a thing that can be seen, so while it burns visibility
 *climbs* (`VIS_LIT_RISE`, ~30s of held light alone is enough to erupt the
 King). See more / be seen more. The cellar (`DIM_SAFE_SCENES`) is the one
-exception — the beam is free there, your room to read by. In the deep cult
-sites (`CULT_DARK_SCENES`) the beam won't catch at all: that dark is not
-the kind light fixes, and the dread aperture rules instead.
+exception — the beam is free there, your room to read by. **The beam works
+everywhere dark, the deep included** (the old `CULT_DARK_SCENES` beam-off
+is retired, 2026-07 light-pass ruling: a deliberate mechanic that read as
+a bug to its only player IS a bug; the deep's dread is what light costs
+and attracts, not a dead switch). `CULT_DARK_SCENES` keeps its deepest
+gloom tier and the cult sites stay lit by the cult's own ritual fires.
 
 **Investigating arms the threat.** The lethal apex is gated behind the
 case:
@@ -148,6 +154,119 @@ its head) and pings the cult to **investigate the body**, and the body
 > even by dying (NARRATIVE §5); a New Game clears the ledger, and the
 > evidence-pickup autosave (`Game._autosave`, play-notes) persists it like
 > any other arg. Guarded: flow §27/§32.
+
+### The evidence ladder, the Moths, the Watchers, the deep-water WADE
+
+> Moved whole from `CLAUDE.md` (2026-07 doc consolidation: one fact, one
+> home -- these systems' only full descriptions used to live in the entry
+> point instead of the design doc).
+
+- **The evidence LADDER (2026-07)**: each surface beat flips a visible
+  world state. **Ev 0**: the town is only wrong — **no cult patrols
+  spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
+  far up the road, ONE omen moth pre-drifting his road
+  (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
+  cult wakes (patrols spawn). **Cultist spawn geography (2026-07):** a cult
+  scene keeps `Scene.cult_target` roamers filled (default `CULT_REGULARS` 2),
+  spawning them at the farthest unoccupied point in `Scene.cult_spawns` (a
+  hand-placed spawn-anchor pool) else the map corners — `_spawn_cultist(...,
+  from_pool=True)`. On the first awake tick after a load the scene is
+  PREFILLED straight to target (`_cult_prefilled`, reset per load) so it reads
+  populated the moment you enter; killed cultists then respawn one at a time on
+  the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
+  **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
+  evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
+  attention finds YOU — a single SEEKER moth materialises in the player's
+  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
+  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
+  (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
+  but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
+  (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
+  its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
+  NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
+  window to reach the lodge for the Invitation before the hunt begins
+  (decouples the spike from progression). Then his shedding starts and the
+  seeker slows to `MOTH_SEEK3_*` (5-6 min).
+- **The Moths** (the King's heralds; `MOTH_*` config, sim in
+  `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
+  `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
+  billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
+  every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
+  moths into whatever room HE occupies (`_roam_king["scene"]`), plus
+  the player-seeker drip above. They **PERSIST and STACK per room**
+  (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
+  fill fuller and fuller, and the field only thins when the player
+  **spends** one (`_moth_spent`: a pop, or a flare burning out). So a
+  room whipping with fast fliers means *he keeps coming back here*.
+  Enter one's `MOTH_RADIUS` and it KINDLES (`MOTH_KINDLE` window: back
+  out, axe it quietly up close, or spend a round from range); the
+  window expiring is the **FLARE**: a `MOTH_REACH` noise the cult
+  converges on, a visibility spike capped under the King, the dark
+  broken around it (`_tick_dark_cover`) — it burns `MOTH_FLARE_DUR`,
+  then **falls** as a charred husk that stays for the visit. First
+  flare files a case NOTE (never evidence). Guarded by
+  `tests/stealth.py` §9.
+- **The Watchers** (His gaze made manifest; the play-notes rework made them
+  **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
+  `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
+  in cover / a safe room), the domain **opens** a Watcher on a timer:
+  `WATCHER_GRACE` (6s) before the FIRST of a wave (and after you clear one),
+  then the **evidence-scaled** interval between the rest
+  (`_watcher_spawn_interval`: `WATCHER_SPAWN_BASE` shaved per further
+  evidence down to `WATCHER_SPAWN_MIN` — the King floods them deep). Each live
+  Watcher **HOLDS you while you are exposed and drives visibility UP** by
+  `WATCHER_GAZE`/s (the active climb — `_watcher_gaze`, the main visibility
+  driver below the cult), on top of a small residual `WATCHER_FLOOR` (summed,
+  capped `VIS_FLOOR_TOTAL_CAP` 0.92, just under the King). Ignore them and it
+  **snowballs** (more open, faster); it caps at `WATCHER_MAX` (5). You clear
+  them (`_dispel_watcher`): hold one in your **gaze** `WATCHER_GAZE_DISPEL` s
+  (its eyes go dark, then it dissolves), or the **axe** / a **round**.
+  **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
+  `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
+  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
+  in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
+  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
+  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
+  the flashlight is the cover, and a Watcher caught in a pool / the beam
+  **BURNS** out (`WATCHER_LIGHT_BURN`). **A Watcher can only OPEN at a spot
+  that is DARK and holds LINE OF SIGHT to the player (2026-07 spawn rule,
+  `_spawn_watcher`):** it manifests where you could answer it with your
+  gaze, never in a sealed room or an out-of-bounds pocket, so there is no
+  unanswerable accumulation -- and the corollary is the light-security
+  promise: a room with no dark spot in view of you cannot open anything.
+  **A fully lit room is SECURED; a blackout un-secures it** (guarded,
+  `tests/stealth.py` §11). The **true refuges stay gaze-free**
+  (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
+  sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
+  high-visibility trigger is retired.) **The gaze wears two skins (the
+  shadow family):** a manifestation arrives as the OG shroud Watcher or,
+  with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
+  seeded assembly of 3-5 parts from a 17-part library, each part emerging
+  from its own free-form CUT (flesh clipped dead flat against the line,
+  rim lip on the absent side, haze the only tissue; nothing touches).
+  Composition rules bind every deal: at least one weight-bearing part on
+  the ground, masses centre, and ALWAYS at least one eye-bearing part
+  (every amalgam watches; the dim-ember tone is bright enough to survive
+  game scale). Behavior is the Watcher's, identical (this spawn rule, the
+  hold, gaze/axe/round/light dispel); the amalgam adds presentation only:
+  a staggered part-by-part BUILD-OUT on manifest (`npc._birth`, ticked in
+  `_tick_watchers`), and the gaze-dispel plays as a PEELING -- parts
+  retract into their cuts in reverse while you stare (`npc._gait`, the
+  dispel fraction, set in `_tick_watcher_gaze`; both attrs are draw-only).
+  Limbs walk backwards into their cuts; masses breathe themselves shut; a
+  dying cut smokes. The gun and axe **share one weapon slot** (left-click
+  to use; switch which is equipped from the inventory screen).
+- **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
+  flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
+  depths_threshing) stand in walkable `~` water. Wading a water tile
+  **halves the player's speed** (sprint can't clear it) and throws a
+  **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via
+  `Scene.emit_noise` kind `"splash"`) that searchers converge on, so
+  standing water is a routing risk, not just dressing. No new AI (rides
+  the existing `stealth.hear_noise` ear); the Brimley river is **excluded**
+  (not a WADE scene, keeps its own in/out rules). Water is authored per
+  scene with the `_flood` helper (`scenes/depths.py`); guarded by
+  `tests/stealth.py` §10.
 
 ---
 
@@ -478,6 +597,18 @@ Built into the procedural draw layer (`scenes/base.py`,
   bevel where both would apply (`_bevel_corners` returns 0 in a slab scene).
   Cache-safe throughout (pure functions of the tile + its neighbour chars +
   the gate). Roll `_SLAB_STYLE` out one interior at a time per VISION.
+  **Doors and windows take the slab THROUGH the gap (`_gap_slab`).** A
+  door/window tile is not a wall char, so `_wall_slab` returns None for it;
+  `_gap_slab` carries the flanking walls' band through the gap tile instead
+  (same `cross()` rules, so it meets the neighbour bands flush). The door's
+  lintel box, the window's box, and the window pane's face plane all read
+  it, in the wall's material tint -- without it they extruded as full-tile
+  near-black monoliths jutting from the thin wall line. Under tilt a slab
+  scene also skips the flat full-tile window art (the 3D band + set-in pane
+  carry the read). **Window glazing reads by scene:** an interior scene's
+  panes hold flat overcast DAYLIGHT (a dim room looking out at the grey
+  sky); an exterior facade keeps the warm lit-from-within amber (the town
+  keeping its lights on, §6 lighting).
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.
@@ -514,21 +645,28 @@ Built into the procedural draw layer (`scenes/base.py`,
     room, so any real fixture -- a cult brazier, a Sign-Chamber candle, a
     town yard light, a genset work-bulb -- lights the dark it stands in. One
     table drives the surface (if it ever darkens) and the deep, with no
-    per-scene special-casing. The **deep still swallows the flashlight**
-    (`CULT_DARK_SCENES`, DESIGN §1's deliberate dread is preserved): the cult
-    sites are lit by the cult's OWN ritual fires now, not by your beam. Fully
-    retiring the "special darkness" beam-off is a separate dread decision
-    (`TODO.md`), not folded in here.
+    per-scene special-casing. **The beam works in the deep too** (the old
+    `CULT_DARK_SCENES` beam-off was retired, 2026-07 light pass — see the
+    flashlight note in §1); the cult sites keep the deepest gloom tier and
+    stay lit by the cult's OWN ritual fires, with your beam a priced
+    option on top.
   - **The light is 3D, and it interacts (2026-07 light-model pass).** Each
     emitter carries a real world SOURCE HEIGHT (`src_z`) and a screen-relative
     gooseneck offset (`arm`): a yard-light head rides high on its pole, a
     candle sits at the floor. `_draw_dark` casts each pool onto the ground
     UNDER that 3D source as a **tilt-foreshortened ellipse** (not a flat
-    screen circle -- a floor disc squashes by `Camera.ground_squash()`), and
-    the pools blend **additively** (`BLEND_RGB_ADD`), so two lights SUM where
-    they overlap (warm + cold pool toward white) and every pool lifts the
-    walls / props / actors standing in it -- **light interacting with light,
-    and with objects.** On top, a **cast-shadow** pass throws a soft shadow
+    screen circle -- a floor disc squashes by `Camera.ground_squash()`).
+    **The darkness itself composes through a LIGHTMAP (2026-07 rework):**
+    every source (pools, fans, the flashlight cone, the player's bubble)
+    accumulates additively into ONE luminance field over the room's
+    ambient floor, and the frame is multiplied by it once -- so two
+    overlapping pools genuinely BRIGHTEN their shared floor and no pool
+    ever re-darkens a neighbour's centre (the old per-pool alpha carve
+    was painter's-order and left ring seams between adjacent pendants).
+    The **colored** pools then blend additively on top (`BLEND_RGB_ADD`,
+    warm + cold summing toward white), lifting the walls / props /
+    actors standing in them -- **light interacting with light, and with
+    objects.** On top, a **cast-shadow** pass throws a soft shadow
     across the floor AWAY from each source for every solid caster in range
     (player, NPCs, solid props): a LOW source (a candle) throws a long shadow,
     a HIGH one (a yard-light head) a short one, and under several lights an
@@ -536,6 +674,88 @@ Built into the procedural draw layer (`scenes/base.py`,
     (`BLEND_RGB_SUB`, a cool-grey) rather than painting black over it -- black
     over warm light reads as a brown STAIN, subtraction reads as dark floor.
     Both the pool and the shadow are cached per shape (`_floor_pool_surf`).
+    **Light is not only a circle:** a fixture deco may carry
+    `cone=(dir_x, dir_y, half_deg)` and throw a directional FAN instead --
+    the one kwarg drives the visible fan (`_draw_dark`), the mechanical
+    gate (`Scene.lit_at`'s angular test: behind a hooded lamp is honest
+    dark), the cast-shadow pass, and the audit overlay's outline.
+  - **Electric light runs on the gensets, LIVE (the power link;
+    TODO #21 first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
+    `wall_lamp`, `drop_bulb`, `yard_light`) emit only while their scene's
+    power is on (`Scene.power_on`, maintained by `Game._tick_power` off
+    the `_genset_down` blackout timers). A **moth flare blacks its room
+    out** for `BLACKOUT_DUR`; during it the electric fixtures die in
+    every layer at once -- no visible pool, no mechanical `lit_at` cover,
+    and the fixture ART itself goes dark (a dead lamp is dark glass; the
+    office radio's static crawl and creeping needle stop, the
+    world-state-through-an-appliance tell). Fire is exempt throughout:
+    candles, kerosene, and braziers burn on, so a blackout hands the
+    room to the warm accents. Power returns on its own; wordless by
+    design (the lights dying IS the tell). Guarded by
+    `tests/stealth.py` §17.
+  - **The interior light is COLD, and darkness is designed (2026-07
+    light ruling).** No warm-lamp cosiness indoors: `wall_lamp` casts cold
+    blue-white (the maintainer's "LED" read; in 1994 the same light is a
+    fluorescent tube / cold bulb, so the period holds) with a fast shallow
+    shimmer instead of a candle flicker, and **`drop_bulb`** is its
+    ceiling-hung sibling: a simple PENDANT (drop cord into a steel dish
+    shade, the bulb glowing under the lip -- the dark shade silhouette
+    is what sells 'fixture'; a bare glow read as a floating orb,
+    2026-07 maintainer catch). Per-placement hang height via the `z`
+    kwarg -- hang it above head height or it vanishes into whoever
+    stands at the counter. A dead pendant keeps its dish (dark enamel,
+    dark glass), so a blackout leaves visible dead fixtures, never
+    vanished lights. Fire
+    (candles, kerosene, the hearth) is a PROP with a small warm pool,
+    never a room's light source; the **kerosene lamp emits** that small
+    warm accent (its draw burns a live flame everywhere, so a poolless
+    one was a lie). Fixtures are placed by COVERAGE across different
+    walls, and **`tools/light_audit.py`** is the design surface: it
+    overlays every emitter's mechanical `lit_at` radius (filled), its
+    visible pool (ring, in the fixture's colour), and cross-hatches
+    everywhere no radius reaches -- THE DARK as a reviewable shape --
+    and prints COVERAGE (% of walkable floor inside a visible pool /
+    inside a mechanical radius). **The 90% rule (maintainer, 2026-07):
+    with every light on, at least 90% of a dim interior's walkable floor
+    sits inside a visible pool; the ~10% dark is chosen, not left over.**
+    All five `DIM_INTERIOR_SCENES` hold it (drop cords strung through
+    the roof beams are the workhorse), which is what makes a genset
+    blackout dramatic: a 90%-lit room falls back to its two flames. Run
+    the audit before and after placing any fixture. **And the pendants
+    hang in ROWS (maintainer, 2026-07): lights run on one axis at even
+    spacing, never scatter** -- cords come off joists and joists run
+    parallel, so an open hall gets a straight run down its length (or
+    matched runs over its seating/beds), a small room gets ONE centered
+    fixture, and adjacent rooms share a pendant line where the framing
+    would carry it (the sheriff's north line runs three cords through
+    two rooms). Scatter is the light placement's version of the grid
+    lockstep failure, inverted: props break the grid, wiring obeys it.
+    **The REVERSE LIGHT (maintainer, 2026-07):** an invisible `dark_pool`
+    deco (kwargs `r`, `depth`) SUBTRACTS from the lightmap AFTER every
+    light has added -- placed darkness that always wins where it contends
+    with a lamp, blacker than the room's ambient, with no texture because
+    it is only darkness. The audit draws it as a deep-blue ring. Draw-layer
+    only (the mechanical `lit_at` gate is untouched); it is the tool for
+    authoring blackness exactly where the design wants it (the shop
+    pantry's cult tells sit in one). **Moving light sources are expected**
+    (not just the flashlight): the visible lightmap rebuilds from live
+    deco positions every frame, and `Scene.light_sources` caches the deco
+    LIST, never positions, so a carried or swinging source gates
+    correctly in the mechanical layer too.
+    **And every room carries 1-2 BROKEN lights (maintainer, 2026-07):**
+    a `broken=True` fixture kwarg kills it in every layer at once (no
+    pool, no `lit_at`, dead in the audit -- which marks it a red X) and
+    its art shows WHY (a shattered stub for a bulb, the dish knocked
+    askew, the cord's dead kink). Provenance: no deliveries means no
+    replacement bulbs, so a dead gap in a straight run is the town
+    failing in miniature -- the 90% target is the WIRING's design, and
+    the burnouts carve the lived-in dark below it (rooms sit at ~81-88%
+    live). Guarded by `tests/stealth.py` §17. **The shop is the first audit-designed room:** lit on
+    purpose at the counter (Hettie's kept bulb over the till, the warm
+    kerosene accent inside its cold pool) and the east floor
+    (`wall_lamp`); dark on purpose in the north aisle, the stove corner,
+    the office nook, and the stockroom->pantry chain (candle, then pitch
+    black for the cult tells).
   - **Interiors run on the gensets too (2026-07 interior lighting pass).** The
     explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
     schoolhouse, sheriff's office) are `DARK_SCENES` at a **lighter gloom**
@@ -1093,6 +1313,14 @@ the live render path under tilt, not isolated scaffolding.
 ### Decisions (locked with the user)
 
 - **Pitch:** fixed oblique, target **~55°**. Not free-pitch.
+- **Scale: sprite-native (`TILT_ZOOM` 1.10).** Sprites draw at fixed pixel
+  size (they do not scale with the camera), so the camera scale IS the
+  body:world proportion. The tilt originally shipped zoomed out to 0.72 to
+  show more world, which shrank rooms/doors/buildings against the bodies
+  (the "world feels too small compared to the player" playtest verdict) and
+  left most of the frame as void. 1.10 restores the drawn proportions and
+  tightens the visible window; the sight cone (360 world px) still fits the
+  frame with margin.
 - **Default camera:** glued **behind the player's facing** -- whatever
   compass direction the player faces is "forward / camera home."
 - **Rotation = a head-turn, not an orbit.** Free-smooth yaw, **clamped to
@@ -1103,6 +1331,16 @@ the live render path under tilt, not isolated scaffolding.
   `overcast` sallow sky for Brimley daytime, a near-black `void` surround
   for interiors/underground. It is a *skybox*, never a roof over the play
   area or the UI.
+- **The void surround (the map's edge under tilt).** Off-map tiles are
+  never rastered as floor (they used to paint as an endless "." default
+  floor plain -- the checkered void around every interior). Instead the
+  floor raster skips them and `_void_surround_pass` (`scenes/terrain.py`)
+  composes the edge: a three-tile rim continues the nearest in-bounds
+  ground under a deepening dark veil, then near-black -- the world's edge
+  reads as ground falling away into the dark. Wrapped axes have no off-map;
+  seamless neighbor strips paint real neighbor terrain OVER the fade where
+  a `world_neighbors` entry exists (and the strip painter now fills true
+  N/S/E/W edge strips, not just diagonal corners).
 - **Blind-spot vision (Phase 4).** When the head turns, the **terrain**
   behind/around the player is revealed (it just draws), but **NPCs and
   the world-rot decals stay hidden until actually looked at** -- gated
@@ -1306,7 +1544,10 @@ tunes; silence is a move):
   **`talk_breath`** (two slow breath cycles behind wood that does not
   move), the pedestal **`altar_air`** (the house tritone, 41 + 58 Hz, at
   whisper level, breathing once per loop on the daubed Sign's painted
-  period). Every tone is mixed UNDER the caption voice blips (peaks
+  period), and the bedroom desk **`desk_air`** (2026-07 quality sprint:
+  the Arcadia keeping its hours around the spare room -- near-still air, a
+  soft warm body, one distant floor settle; deliberately the plainest of
+  the set). Every tone is mixed UNDER the caption voice blips (peaks
   0.05-0.13), loop-seam crossfaded, and modulated on whole cycles so
   `loops=-1` never clicks. **Mara's seat carries NO tone on purpose:**
   `_mara_voice` force-silences the room, and her confrontation plays

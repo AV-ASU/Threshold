@@ -170,6 +170,13 @@ def build_shop():
         "W..............W",   # 11
         "WWWWWWWWDWWWWWWW",   # 12  D = exit door back to the field (col 8)
     ]
+    # The stockroom receiving-corner ensemble's footprint (see below): the
+    # same tiles its old separate crates/table/barrel occupied, as see-over
+    # solids, so reachability and the door approaches don't move.
+    _rows = [list(r) for r in objects]
+    for _sx, _sy in ((1, 4), (1, 5), (3, 6), (4, 7)):
+        _rows[_sy][_sx] = "x"
+    objects = ["".join(r) for r in _rows]
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
@@ -194,6 +201,7 @@ def build_shop():
               "Hettie", "hettie", voice="blip_high",
               portrait="hettie",
               dialogue_fn=hettie_dialogue, movement="worker")
+    het.talk_reach = 56          # a counter seat: reachable across the till
     # Her JOB (the JOBS layer): the counter mostly, a pass along the empty goods
     # shelves (dusting stock that never comes), and a trip back into the
     # stockroom -- which walks her THROUGH the plank door, so she opens her own
@@ -231,9 +239,53 @@ def build_shop():
     # stopped coming before the trucks did.
     sc.add_decoration(Decoration(14 * TILE + 10, 10 * TILE + 8,
                                  "butter_churn"))
-    # The genset-electric MAIN light: a bulkhead lamp on the east wall over the
-    # shop floor. "I keep the lights on. So they know." (2026-07 interior pass.)
-    sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp"))
+    # THE LIGHT IS DESIGNED (2026-07 shop pass, per tools/light_audit.py).
+    # Lit on purpose: the COUNTER, under Hettie's one kept bulb (the tableau's
+    # "one kept bulb burning over the counter" made world-real -- a drop_bulb
+    # hung over the till, cold genset electric), with the counter kerosene
+    # lamp a small WARM accent inside the cold pool (the additive overlap);
+    # and the east shop floor under the bulkhead wall_lamp. Dark on purpose:
+    # the NORTH AISLE (the bare dust-ghost shelves half-seen over the lit
+    # counter), the stove corner (ember-warm fiction, no pool), the office
+    # nook, and the stockroom->pantry chain (candle only, then pitch dark:
+    # the cult tells behind two doors read by flashlight or not at all).
+    # (hung over the counter's front-centre air: the kerosene lamp keeps the
+    # west end, the till the east, and the bulb clears Hettie's body on the
+    # N facing -- three things reading as three things, not one blob)
+    sc.add_decoration(Decoration(9 * TILE + 0, 9 * TILE + 24, "drop_bulb",
+                                 z=42))
+    # (the bulkhead lamp is HOODED: its fan aims west into the room, so the
+    # wall behind it stays honest dark -- the cone-fixture pilot, TODO #21)
+    sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp",
+                                 cone=(-1, 0, 55)))
+    # The 90% rule (maintainer, 2026-07): with every light on, >=90% of the
+    # walkable floor sits in a visible pool -- and the pendants hang in
+    # ROWS (maintainer: lights run on one axis, never scatter; cords come
+    # off joists and joists run parallel). The shop strings three E-W
+    # runs: the main-floor row (the counter bulb is its middle), the
+    # mid-floor pair, and the aisle single, plus one centered fixture per
+    # service room. The PANTRY is the chosen dark (the cult tells behind
+    # two doors read by flashlight or not at all).
+    # -- the main-floor row, y = 9*T+24 (the counter bulb above is its
+    #    middle at x = 9*T). The WEST one is burned out (the 1-2 broken
+    #    rule: no deliveries means no replacement bulbs; Hettie keeps the
+    #    counter and aisle burning, the ones people see)
+    sc.add_decoration(Decoration(4 * TILE + 16, 9 * TILE + 24, "drop_bulb",
+                                 z=38, broken=True))
+    sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 24, "drop_bulb",
+                                 z=38))
+    # -- the mid-floor row, y = 6*T+16; the EAST one is dead too
+    sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 6 * TILE + 16, "drop_bulb",
+                                 z=38, broken=True))
+    # -- the back-shop aisle single + one centered per service room
+    sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "drop_bulb",
+                                 z=38))
     # A kerosene lamp on the counter is the backup for when the gas runs low.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,
                                  "kerosene_lamp"))
@@ -253,12 +305,17 @@ def build_shop():
                                  wall="N"))
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
-    # --- The stockroom (west, first door): dry-goods overstock ---
-    sc.add_furniture("crate", [(1, 4)], seed=4)
-    sc.add_furniture("crate", [(1, 5)], seed=5)
-    sc.add_furniture("barrel", [(4, 7)])     # kept off the (5,5) door approach
-    sc.add_furniture("table", [(3, 6)], w=30, h=30)
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "candle"))
+    # --- The stockroom (west, first door): THE RECEIVING CORNER (Wave 2
+    # ensemble; TODO #24): crate stack + check table + flour barrel composed
+    # as ONE object with its wear (the dust ghost of sold-out stock, the
+    # stopped tally, the shipped twin's ring stain). The candle stays its
+    # own deco, SEATED on the check table, so it keeps emitting. Footprint
+    # tiles ('x' stamps below) match the old separates exactly, so
+    # reachability + Hettie's (2,5) station are untouched.
+    sc.add_decoration(Decoration(1 * TILE + 16, 5 * TILE + 0,
+                                 "stockroom_corner", seed=12))
+    sc.add_decoration(Decoration(3 * TILE + 24, 6 * TILE + 8, "candle",
+                                 z=27))
     sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",
                                  ang=0.0))
     # --- The cold pantry (nested, two doors deep): preserves + the cult tells ---
@@ -266,6 +323,11 @@ def build_shop():
     # the contents have all gone the same murky shade.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22,
                                  "preserve_shelf", seed=17))
+    # A placed DARK SOURCE deepens the pantry past the room's ambient (the
+    # reverse light, 2026-07): the cult tells sit in blackness blacker
+    # than the gloom, and the flashlight beam is the only honest read.
+    sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 16, "dark_pool",
+                                 r=84, depth=52))
     # The cult tells, hidden in the pantry (the true blind spot, out of the
     # shop's sight): the mirror that shows the wrong silhouette, the wrong_photo.
     sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 16, "mirror"))
@@ -368,8 +430,28 @@ def build_barn():
     # Genset-electric main light on the main-floor north wall (the lantern +
     # candle are backup). (2026-07 interior pass.)
     sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # The 90% rule + the ROW rule (lights run on one axis, never scatter):
+    # the commune strung ONE straight run down the dormitory's length,
+    # three pendants at even spacing, plus one centered over the workroom
+    # bench (Mara's journal corner). The chosen dark is the dormitory's
+    # SE corner.
+    # (the run's MIDDLE bulb is burned out -- the 1-2 broken rule: a dead
+    # gap in the dead commune's row)
+    sc.add_decoration(Decoration(3 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38, broken=True))
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+                                 z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
+    # The dormitory's SE corner is a placed dark source (the reverse
+    # light): the chosen dark made blacker than ambient, where the dead
+    # run's gap points.
+    sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 16, "dark_pool",
+                                 r=76, depth=42))
     # Northern-MN lodge dressing: a mounted buck + trophy walleye on the
     # north wall, cobwebs in the high corners, an antler coat-rack on
     # the west wall, and a split-wood stack in the SW corner. The floor

@@ -1,12 +1,14 @@
-"""Game state + the cot's disk save.
+"""Game state + the evidence-checkpoint disk save.
 
 The in-memory store for the flags / args / scene-visit counts the
-runtime reads and writes during a run, plus ONE disk slot (2026-07,
-the shipping persistence pass). The typewriter rule holds: the only
-thing that ever writes the slot is SLEEPING AT THE COT
-(Game._sleep_at_cot), which snapshots the run and lands the wake-up
-back at the cot. Continue on the title menu reads it back; a death or
-a quit costs everything since the last sleep, never the whole run.
+runtime reads and writes during a run, plus ONE disk slot (2026-07).
+The only writer of the slot is EVIDENCE PICKUP (Game._autosave, fired
+from _evidence's canonical branch: the clue IS the checkpoint), which
+snapshots hp / inventory / the current scene and a cooled visibility.
+Continue on the title menu reads it back and wakes at the scene the
+last clue was found in; a death or a quit costs everything since the
+last clue, never the whole run. The cot is a pure REST (heal +
+visibility cool), not a save.
 
 The slot lives in a per-user data dir (THRESHOLD_SAVE_DIR overrides
 it for tests); writes are atomic (tmp + replace); a missing or corrupt

@@ -1284,25 +1284,749 @@ def _draw_staircase_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (10, 8, 12), mouth)
 
 
+def _draw_lawman_wall_solid(surf, cam, deco):
+    """THE LAWMAN'S QUARTERS WALL (Wave 2, the sheriff's office; TODO #24):
+    the west-wall run composed as ONE object -- Vane lives at his desk now,
+    and this is the proof. His cot with the blanket tucked army-tight, his
+    boots squared under it, the washstand with its basin and hung towel,
+    and the antler rack carrying his winter coat. Wear: the walked line
+    along the run, the washstand's drip stain, the worn pale sit-spot on
+    the cot's edge. Anchor = the cot's head; the run extends SOUTH (+y);
+    the wall is WEST (-x)."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (96, 74, 46), "side": (70, 54, 34), "dark": (44, 32, 20)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- UNDER-LAYER: the walked line along the run, the drip stain
+    _wline(wx + 20, wy - 10, 0.2, wx + 20, wy + 116, 0.2, (56, 44, 30))
+    _wline(wx + 23, wy + 4, 0.2, wx + 23, wy + 108, 0.2, (50, 40, 28))
+    _ell(wx + 6, wy + 66, 0.25, 5.5, 3.5, (42, 40, 44))     # washstand drip
+    _ell(wx + 5, wy + 68, 0.3, 3.0, 2.0, (54, 52, 58))
+
+    # --- the COT (two tiles): frame, legs, the army-tight blanket
+    for lx, ly in ((-10, -24), (10, -24), (-10, 24), (10, 24)):
+        _wline(wx + lx, wy + ly, 0, wx + lx, wy + ly, 8, (44, 32, 20), 2)
+    _vbox(surf, cam, wx, wy, 24, 54, 8, 12, wood, yaw=0.02)
+    # blanket: olive-drab, tucked square, a fold line; the flat pillow
+    _vbox(surf, cam, wx, wy + 4, 22, 42, 12, 15,
+          {"top": (76, 80, 66), "side": (58, 62, 50), "dark": (40, 43, 34)},
+          yaw=0.02)
+    _wline(wx - 10, wy + 12, 15.3, wx + 10, wy + 12, 15.3, (52, 56, 44))
+    _vbox(surf, cam, wx, wy - 19, 16, 9, 12, 15,
+          {"top": (166, 158, 142), "side": (128, 122, 110),
+           "dark": (86, 82, 74)}, yaw=-0.03)
+    # the sit-spot: the blanket's edge worn pale where he sits to boot up
+    _ell(wx + 10, wy + 14, 15.4, 5, 3, (96, 100, 84))
+    # his boots, squared toes-out under the cot's foot
+    for bxo in (-6, 3):
+        _vbox(surf, cam, wx + bxo, wy + 30, 7, 12, 0, 6,
+              {"top": (48, 40, 32), "side": (36, 30, 24), "dark": (22, 18, 14)},
+              yaw=0.04 if bxo < 0 else -0.05)
+
+    # --- the WASHSTAND (+64): stand, basin, hung towel
+    sy = wy + 64
+    for lx, ly in ((-8, -7), (8, -7), (-8, 7), (8, 7)):
+        _wline(wx + lx, sy + ly, 0, wx + lx, sy + ly, 20, (44, 32, 20), 2)
+    _vbox(surf, cam, wx, sy, 20, 17, 20, 24, wood, yaw=-0.03)
+    _ell(wx, sy - 1, 24.4, 7, 5, (140, 144, 150))           # basin rim
+    _ell(wx, sy - 1, 24.5, 5, 3.4, (94, 108, 118))          # standing water
+    _ell(wx - 2, sy - 2, 24.6, 1.4, 0.9, (170, 184, 194))   # the glint
+    # towel over the south rail, hanging past the top
+    tw = [cam.project(wx - 2, sy + 9, 22), cam.project(wx + 8, sy + 9, 22),
+          cam.project(wx + 8, sy + 9, 10), cam.project(wx - 2, sy + 9, 10)]
+    pygame.draw.polygon(surf, (150, 144, 130), tw)
+    pygame.draw.polygon(surf, (104, 100, 90), tw, 1)
+    _wline(wx + 3, sy + 9, 21, wx + 3, sy + 9, 11, (118, 114, 102))
+
+    # --- the ANTLER RACK (+96): board on the wall, prongs, the coat
+    ry_ = wy + 96
+    rb = [cam.project(wx - 14, ry_ - 10, 26), cam.project(wx - 14, ry_ + 10, 26),
+          cam.project(wx - 14, ry_ + 10, 32), cam.project(wx - 14, ry_ - 10, 32)]
+    pygame.draw.polygon(surf, (70, 54, 34), rb)
+    pygame.draw.polygon(surf, (44, 32, 20), rb, 1)
+    for pyo, tip in ((-6, -4), (0, 2), (6, -2)):            # three prongs
+        _wline(wx - 14, ry_ + pyo, 29, wx - 8, ry_ + pyo + tip, 31,
+               (150, 140, 120), 2)
+    # his winter coat on the middle prong: a hung mass reaching low
+    ct = [cam.project(wx - 9, ry_ - 5, 30), cam.project(wx - 4, ry_ + 7, 29),
+          cam.project(wx - 3, ry_ + 6, 8), cam.project(wx - 10, ry_ - 6, 9)]
+    pygame.draw.polygon(surf, (66, 58, 48), ct)
+    pygame.draw.polygon(surf, (40, 35, 29), ct, 1)
+    _wline(wx - 7, ry_ - 2, 26, wx - 6, ry_ + 3, 12, (48, 42, 35))
+    # the empty prongs say the hat and belt are ON him: the rack half-bare
+
+
+def _draw_lawman_desk_solid(surf, cam, deco):
+    """THE LAWMAN'S DESK (Wave 2, the sheriff's office; TODO #24): Vane's
+    working desk composed as ONE object -- the two-tile desk with its
+    modesty panel, the radio he half-listens to at the back corner, the
+    case files stacked square, the tin mug on its years of rings, the
+    chair yaw-tucked at the working side. Provenance: the town's one real
+    investigator, still working it. Anchor = the desk's centre; the
+    working (south) face is where Vane stands."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (98, 76, 48), "side": (72, 56, 36), "dark": (46, 33, 21)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # boot scuffs at the working side, where he stands over the files
+    _wline(wx - 8, wy + 18, 0.2, wx + 4, wy + 21, 0.2, (56, 44, 30))
+    _wline(wx - 4, wy + 21, 0.2, wx + 8, wy + 19, 0.2, (50, 40, 28))
+
+    # the desk: legs, body, top, a modesty panel on the north face
+    for lx, ly in ((-26, -11), (26, -11), (-26, 11), (26, 11)):
+        _wline(wx + lx, wy + ly, 0, wx + lx, wy + ly, 20, (44, 32, 20), 2)
+    _vbox(surf, cam, wx, wy, 58, 26, 20, 26, wood, yaw=0.015)
+    pn = [cam.project(wx - 26, wy - 11, 20), cam.project(wx + 26, wy - 11, 20),
+          cam.project(wx + 26, wy - 11, 6), cam.project(wx - 26, wy - 11, 6)]
+    pygame.draw.polygon(surf, (60, 46, 30), pn)
+    pygame.draw.polygon(surf, (40, 30, 19), pn, 1)
+    _wline(wx - 26, wy + 2, 26.3, wx + 26, wy + 1, 26.3, (52, 38, 24))
+
+    # ON the desk, west to east: the case files, the mug + rings, the radio
+    _vbox(surf, cam, wx - 17, wy - 2, 15, 11, 26, 30,
+          {"top": (172, 164, 144), "side": (140, 132, 116),
+           "dark": (96, 90, 78)}, yaw=0.05)
+    _wline(wx - 23, wy - 4, 28, wx - 11, wy - 3, 28, (110, 102, 88))
+    _ell(wx - 2, wy + 3, 26.4, 2.6, 1.8, (54, 40, 26), 1)   # old rings
+    _ell(wx + 2, wy - 5, 26.4, 2.4, 1.6, (54, 40, 26), 1)
+    draw_solid(surf, cam, wx - 1, wy + 1,                   # the tin mug
+               [(26.4, 2.2, 2.2), (30.5, 2.4, 2.4)],
+               {"body": (128, 130, 136), "lo": (84, 86, 92),
+                "rim": (168, 170, 176)})
+    # the radio at the back-east corner: box, grille lines, dial, antenna
+    _vbox(surf, cam, wx + 17, wy - 4, 16, 9, 26, 34,
+          {"top": (94, 66, 46), "side": (78, 54, 38), "dark": (52, 36, 26)},
+          yaw=-0.04)
+    for gy_ in (28.5, 30.5, 32.5):
+        _wline(wx + 11, wy + 0.8, gy_, wx + 17, wy + 0.8, gy_, (46, 32, 24))
+    _ell(wx + 21, wy + 0.9, 30.5, 1.3, 1.3, (170, 160, 130))
+    _wline(wx + 24, wy - 8, 34, wx + 28, wy - 10, 42, (150, 150, 160))
+    # the chair, yaw-tucked half under the desk's SE working corner
+    cx_, cy_ = wx + 20, wy + 16
+    for lx, ly in ((-7, -6), (7, -6), (-7, 6), (7, 6)):
+        _wline(cx_ + lx * 0.9, cy_ + ly * 0.9, 0,
+               cx_ + lx, cy_ + ly, 12, (44, 32, 20), 1)
+    _vbox(surf, cam, cx_, cy_, 16, 14, 12, 15, wood, yaw=0.35)
+    bk = [cam.project(cx_ + 5, cy_ + 8, 15), cam.project(cx_ + 12, cy_ + 4, 15),
+          cam.project(cx_ + 13, cy_ + 5, 30), cam.project(cx_ + 6, cy_ + 9, 30)]
+    pygame.draw.polygon(surf, (72, 56, 36), bk)
+    pygame.draw.polygon(surf, (46, 33, 21), bk, 1)
+
+
+def _draw_stockroom_corner_solid(surf, cam, deco):
+    """THE STOCKROOM CORNER (Wave 2, the shop; TODO #24 ensemble rule):
+    the shop's receiving corner composed as ONE object against the west
+    wall -- what used to be two loose crates, a table, and a barrel in
+    prop soup. A crate stack (two high, a third askew beside), the check
+    table where goods were tallied (paper sacks, the ledger; the candle
+    deco seats on it separately so it keeps EMITTING), and the flour
+    barrel with the ring-stain ghost of its shipped twin. Provenance:
+    the last delivery was months ago -- half the corner is dust ghosts
+    and tally marks for stock that never came. Anchor = the crate
+    stack's floor point; the run extends SOUTH (+y); the wall is WEST."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (100, 78, 48), "side": (74, 56, 36), "dark": (46, 33, 21)}
+    wood_d = {"top": (84, 64, 40), "side": (60, 46, 30), "dark": (38, 28, 18)}
+    oak = {"body": (88, 66, 40), "lo": (56, 42, 26), "rim": (118, 92, 58)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- UNDER-LAYER: the years on the floor, drawn first.
+    # The dust ghost north of the crates, where the winter's stock stood
+    # before it sold down to nothing (paler: feet never cross it now).
+    gh = [cam.project(wx - 13, wy - 46, 0.2), cam.project(wx + 9, wy - 44, 0.2),
+          cam.project(wx + 10, wy - 26, 0.2), cam.project(wx - 12, wy - 27, 0.2)]
+    pygame.draw.polygon(surf, (96, 84, 60), gh)
+    pygame.draw.polygon(surf, (70, 60, 42), gh, 1)
+    # drag scuffs from the stockroom door toward the check table
+    _wline(wx + 96, wy + 14, 0.2, wx + 72, wy + 34, 0.2, (58, 44, 28))
+    _wline(wx + 92, wy + 20, 0.2, wx + 70, wy + 38, 0.2, (52, 40, 26))
+    # the shipped twin barrel's ring stain, and the dry spill at the live one
+    _ell(wx + 74, wy + 88, 0.25, 8.5, 5.5, (40, 32, 22), 1)
+    _ell(wx + 74, wy + 88, 0.25, 6.0, 3.8, (54, 44, 30), 1)
+    for gx, gy, gr in ((88, 70, 2.4), (95, 76, 1.8), (84, 78, 2.0),
+                       (92, 64, 1.6), (98, 71, 2.2)):
+        _ell(wx + gx, wy + gy, 0.3, gr, gr * 0.7, (150, 132, 92))
+
+    # --- the CRATE STACK against the west wall (tiles r4-r5)
+    _vbox(surf, cam, wx + 2, wy - 12, 20, 18, 0, 15, wood, yaw=0.06)
+    _vbox(surf, cam, wx + 1, wy - 13, 14, 13, 15, 26, wood_d, yaw=-0.12)
+    _vbox(surf, cam, wx + 3, wy + 14, 17, 16, 0, 13, wood, yaw=0.10)
+    # board seams on the east faces (the faces the camera reads)
+    for bx, by, bz0, bz1 in ((12, -18, 4, 11), (12, -6, 4, 11),
+                             (8, -13, 18, 24), (12, 9, 3, 10), (12, 19, 3, 10)):
+        _wline(wx + bx, wy + by, bz0, wx + bx, wy + by, bz1, (46, 33, 21))
+    # chalk tally on the wall over the stack: the receiving count, stopped
+    for i, ty_ in enumerate((-22, -17, -12, -7)):
+        _wline(wx - 15, wy + ty_, 11, wx - 15, wy + ty_, 17, (168, 166, 152))
+    _wline(wx - 15, wy - 24, 11, wx - 15, wy - 5, 17, (168, 166, 152))
+    for i, ty_ in enumerate((6, 11, 16)):                 # an older, fainter set
+        _wline(wx - 15, wy + ty_, 11, wx - 15, wy + ty_, 16, (118, 114, 102))
+
+    # --- the CHECK TABLE (tile r6 c3): plank top on legs, the tally goods
+    tx_, ty2 = wx + 66, wy + 48
+    for lx, ly in ((-12, -8), (12, -8), (-12, 8), (12, 8)):
+        _wline(tx_ + lx, ty2 + ly, 0, tx_ + lx, ty2 + ly, 22, (48, 34, 22), 2)
+    _vbox(surf, cam, tx_, ty2, 32, 22, 22, 26, wood, yaw=0.03)
+    _wline(tx_ - 14, ty2 - 2, 26.3, tx_ + 14, ty2 - 1, 26.3, (52, 38, 24))
+    # paper sacks stacked at the table's west end
+    _vbox(surf, cam, tx_ - 8, ty2 - 2, 10, 8, 26, 33,
+          {"top": (128, 112, 86), "side": (104, 90, 68), "dark": (70, 60, 44)},
+          yaw=0.08)
+    _vbox(surf, cam, tx_ - 7, ty2 - 1, 9, 7, 33, 39,
+          {"top": (120, 104, 80), "side": (96, 84, 64), "dark": (64, 54, 40)},
+          yaw=-0.10)
+    # the receiving ledger, flat on the east half, a pencil across it
+    lg = [cam.project(tx_ + 4, ty2 - 6, 26.5), cam.project(tx_ + 13, ty2 - 5, 26.5),
+          cam.project(tx_ + 12, ty2 + 3, 26.5), cam.project(tx_ + 3, ty2 + 2, 26.5)]
+    pygame.draw.polygon(surf, (176, 168, 148), lg)
+    pygame.draw.polygon(surf, (110, 102, 88), lg, 1)
+    _wline(tx_ + 5, ty2 - 1, 26.7, tx_ + 11, ty2 - 2, 26.7, (92, 74, 50))
+
+    # --- the FLOUR BARREL (tile r7 c4): staves, hoops, chalked lid
+    bx_, by_ = wx + 96, wy + 80
+    draw_solid(surf, cam, bx_, by_,
+               [(0, 8, 8), (4, 9.2, 9.2), (12, 9.2, 9.2), (16, 8, 8)], oak)
+    for hz in (4, 12):
+        _disc(surf, cam, bx_, by_, hz, 9.3, 9.3, (76, 78, 84),
+              fill=False, width=1)
+    _disc(surf, cam, bx_, by_, 16.2, 7.6, 7.6, (112, 88, 56))
+    _wline(bx_ - 3, by_ - 2, 16.4, bx_ + 4, by_ + 1, 16.4, (168, 166, 152))
+    # the scoop, dropped at the spill
+    sp = [cam.project(bx_ - 10, by_ + 8, 0.6), cam.project(bx_ - 5, by_ + 6, 0.6),
+          cam.project(bx_ - 4, by_ + 10, 0.4), cam.project(bx_ - 9, by_ + 12, 0.4)]
+    pygame.draw.polygon(surf, (128, 118, 100), sp)
+    pygame.draw.polygon(surf, (78, 72, 60), sp, 1)
+    _wline(bx_ - 4, by_ + 8, 0.6, bx_ + 2, by_ + 6, 0.8, (98, 90, 76))
+
+
+def _draw_kitchen_wall_solid(surf, cam, deco):
+    """THE KITCHEN WALL (interiors pilot, TODO #24): the lodge's cooking
+    run composed as ONE object against a west wall. Cookstove on legs
+    with its pipe climbing past the eave, a counter run north of it with
+    the pot shelf over, three hung pots, the house ham on the shelf's
+    end hook, a wood crate under the counter lip. Provenance: Sable
+    keeps a working kitchen for a full house that no longer comes.
+    Anchor = the stove's floor point; the run extends NORTH (-y); the
+    wall is WEST (-x)."""
+    wx, wy = deco.x, deco.y
+    iron = {"top": (56, 56, 62), "side": (40, 40, 46), "dark": (24, 24, 28)}
+    iron_d = {"top": (44, 44, 50), "side": (30, 30, 36), "dark": (18, 18, 22)}
+    wood = {"top": (104, 80, 50), "side": (78, 58, 38), "dark": (48, 34, 22)}
+    wood_d = {"top": (86, 66, 42), "side": (62, 46, 30), "dark": (40, 28, 18)}
+    T = 32
+    rng = random.Random(int(wx * 7 + wy * 13) & 0xffff)
+
+    # World-space helpers: everything on a surface is projected geometry
+    # (a plate is a circle in the WORLD's plane, foreshortened by the
+    # camera), never a screen-aligned mark -- error class 7.
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- the UNDER-LAYER (drawn first, beneath everything): the years on
+    # the floor and the wall. A working kitchen stains its room.
+    sy0_pre = wy - T * 2.1
+    # grease + ash staining around the stove's feet, in the floor plane
+    for _ in range(4):
+        _ell(wx + rng.uniform(-6, 16), wy + rng.uniform(-12, 14), 0.2,
+             rng.uniform(4, 8), rng.uniform(2.5, 5), (24, 20, 16))
+    # the worn pale path where feet stood at the counter, years of it
+    _ell(wx + 16, sy0_pre + T * 1.0, 0.2, 12, 7, (96, 76, 50))
+    _ell(wx + 16, sy0_pre + T * 1.0, 0.3, 7, 4, (104, 84, 56))
+    # soot fan up the wall behind the pipe (the wall's vertical plane)
+    pygame.draw.polygon(surf, (16, 15, 16), [
+        cam.project(wx - 10, wy - 7, 26), cam.project(wx - 10, wy - 9, 40),
+        cam.project(wx - 10, wy + 4, 42), cam.project(wx - 10, wy + 6, 26)])
+
+    # --- the pot shelf (wall-most, drawn first): a thin plank at z26
+    sy0 = wy - T * 2.1          # shelf spans the counter run
+    _vbox(surf, cam, wx - 6, sy0 + T * 0.9, 14, T * 2.2, 26, 29, wood_d)
+    # two iron shelf brackets against the wall
+    for by in (sy0 + 4, sy0 + T * 1.7):
+        _vbox(surf, cam, wx - 9, by, 3, 3, 20, 26, iron_d, outline=False)
+
+    # --- the stovepipe: up from the stove top, elbow into the wall
+    _vbox(surf, cam, wx - 2, wy - 2, 6, 6, 24, 46, iron_d, outline=False)
+    _vbox(surf, cam, wx - 8, wy - 2, 10, 6, 40, 46, iron_d, outline=False)
+    # pipe collar
+    _vbox(surf, cam, wx - 2, wy - 2, 8, 8, 24, 26, iron, outline=False)
+
+    # --- the counter run (two tiles north of the stove; the darker
+    # palette keeps it welded to the ensemble instead of popping loose)
+    _vbox(surf, cam, wx - 1, sy0 + T * 0.95, 22, T * 1.9, 0, 15, wood_d)
+    # counter-top dressing: a stew bowl and a cutting board with cleaver
+    _ell(wx - 3, sy0 + T * 0.5, 15, 5, 5, (140, 132, 116))
+    _ell(wx - 3, sy0 + T * 0.5, 15, 5, 5, (86, 80, 68), 1)
+    _ell(wx - 3, sy0 + T * 0.5, 15.5, 3, 3, (96, 78, 58))
+    bd = [cam.project(wx - 6, sy0 + T * 1.22, 15),
+          cam.project(wx + 6, sy0 + T * 1.18, 15),
+          cam.project(wx + 7, sy0 + T * 1.44, 15),
+          cam.project(wx - 5, sy0 + T * 1.48, 15)]
+    pygame.draw.polygon(surf, (116, 92, 60), bd)
+    pygame.draw.polygon(surf, (74, 56, 36), bd, 1)
+    _wline(wx - 2, sy0 + T * 1.28, 15.5, wx + 5, sy0 + T * 1.34, 15.5,
+           (150, 152, 158), 2)                       # the cleaver blade
+    _wline(wx - 5, sy0 + T * 1.26, 15.5, wx - 2, sy0 + T * 1.28, 15.5,
+           (70, 52, 32), 2)                          # its wood handle
+
+    # --- the cookstove: legs, body, top plates, fire door
+    for lx, ly in ((-9, -8), (9, -8), (-9, 8), (9, 8)):
+        _vbox(surf, cam, wx + lx, wy + ly, 3, 3, 0, 4, iron_d, outline=False)
+    _vbox(surf, cam, wx, wy, 24, 20, 4, 24, iron)
+    for py_ in (-5, 5):          # two round plates on the top
+        pp = cam.project(wx + 2, wy + py_, 24)
+        pygame.draw.ellipse(surf, (26, 26, 30),
+                            (int(pp[0]) - 4, int(pp[1]) - 2, 9, 5))
+        pygame.draw.ellipse(surf, (70, 70, 78),
+                            (int(pp[0]) - 4, int(pp[1]) - 2, 9, 5), 1)
+    # fire door on the ROOM (+x) face, ember glow behind the grate
+    d0 = cam.project(wx + 12, wy - 6, 8)
+    d1 = cam.project(wx + 12, wy + 6, 8)
+    d2 = cam.project(wx + 12, wy + 6, 19)
+    d3 = cam.project(wx + 12, wy - 6, 19)
+    pygame.draw.polygon(surf, (16, 16, 20), [d0, d1, d2, d3])
+    pygame.draw.polygon(surf, (60, 60, 68), [d0, d1, d2, d3], 1)
+    gm = cam.project(wx + 12, wy, 13)
+    for gi, (gox, goy) in enumerate(((-3, 0), (0, 1), (3, 0), (-1, -2))):
+        pygame.draw.rect(surf, (168 - gi * 18, 74 - gi * 10, 24),
+                         (int(gm[0]) + gox, int(gm[1]) + goy, 2, 1))
+
+    # --- three pots hung under the shelf: real hanging VOLUMES (small
+    # kettle boxes with flared world-plane rims), never screen ellipses
+    for i, py_ in enumerate((0.35, 0.95, 1.55)):
+        hy = sy0 + T * py_
+        r = 3.0 + (i % 2)
+        _wline(wx - 3, hy, 26, wx - 3, hy, 23 - i % 2, (150, 150, 160))
+        pot = {"top": (44, 44, 50), "side": (32, 32, 38),
+               "dark": (20, 20, 24)}
+        _vbox(surf, cam, wx - 3, hy, r * 2, r * 2, 17 - (i % 2),
+              23 - i % 2, pot, outline=False)
+        _ell(wx - 3, hy, 23 - i % 2, r + 1, r + 1, (66, 66, 74), 1)
+
+    # --- the ham on the shelf's north end hook: a hanging body drawn in
+    # the world's vertical plane (a y-z circle sweep), netted
+    hx, hy2 = wx - 3, sy0 - 2
+    _wline(hx, hy2, 26, hx, hy2, 23, (150, 150, 160))
+    for rz, rr, col in ((17.5, 4.6, (118, 62, 50)),
+                        (17.5, 4.6, None)):
+        pts = [cam.project(hx, hy2 + rr * math.cos(a),
+                           rz + 5.5 * math.sin(a))
+               for a in [i2 * math.pi / 6.0 for i2 in range(12)]]
+        if col:
+            pygame.draw.polygon(surf, col, pts)
+        else:
+            pygame.draw.polygon(surf, (86, 44, 36), pts, 1)
+    for nz in (15.0, 18.0, 21.0):    # the net, wrapped in world space
+        _wline(hx, hy2 - 4.4, nz, hx, hy2 + 4.4, nz, (170, 154, 128))
+
+    # --- the wood crate under the counter's south lip
+    _vbox(surf, cam, wx - 1, wy + T * 0.75, 18, 14, 0, 11, wood_d)
+    cp = cam.project(wx + 8, wy + T * 0.75, 6)
+    for lox in (-3, 2):
+        pygame.draw.circle(surf, (120, 96, 62),
+                           (int(cp[0]) + lox, int(cp[1])), 2)
+        pygame.draw.circle(surf, (70, 52, 32),
+                           (int(cp[0]) + lox, int(cp[1])), 2, 1)
+
+    # --- THE WEAR + THE MESS, all WORLD-SPACE (2026-07 rework: the first
+    # pass drew screen-aligned marks -- error class 7, "props face the
+    # camera" -- and too many same-weight specks. Fewer, BIGGER objects,
+    # each in its true plane, each distinguishable at arm's length).
+    # rust bleeding down the stove's room face: world-vertical streaks
+    for _ in range(4):
+        ry_ = wy + rng.uniform(-8, 8)
+        rz0 = rng.uniform(14, 20)
+        _wline(wx + 12.4, ry_, rz0, wx + 12.4, ry_,
+               rz0 - rng.uniform(4, 8), (96, 60, 40))
+    # THE SKILLET on the stove's front plate: big black iron, its handle
+    # swung toward the room -- the one object the eye lands on first
+    _ell(wx + 2, wy + 5, 24.6, 6.5, 6.5, (26, 26, 30))
+    _ell(wx + 2, wy + 5, 24.6, 6.5, 6.5, (74, 74, 82), 1)
+    _ell(wx + 2, wy + 5, 25.0, 4.2, 4.2, (38, 36, 40))
+    _wline(wx + 7, wy + 8, 24.6, wx + 14, wy + 12, 24.6, (30, 30, 34), 2)
+    # ash spilled from the fire door onto the boards, a smeared fan
+    _ell(wx + 15, wy + 1, 0.4, 5.5, 3.5, (58, 56, 54))
+    _ell(wx + 18, wy + 2, 0.3, 3.0, 2.0, (42, 40, 39))
+    # soot rings where the pipe sections join (bands around the pipe)
+    for jz in (28.0, 38.0):
+        _wline(wx - 5, wy - 2, jz, wx + 1, wy - 2, jz, (14, 14, 16), 2)
+    # counter top: three long knife scratches + two cup rings, in-plane
+    for _ in range(3):
+        sx0 = wx + rng.uniform(-6, 0)
+        sy_ = sy0 + T * rng.uniform(0.4, 1.5)
+        _wline(sx0, sy_, 15.2, sx0 + rng.uniform(5, 9),
+               sy_ + rng.uniform(-2, 3), 15.2, (58, 42, 26))
+    for ry2 in (0.6, 1.1):
+        _ell(wx - 3, sy0 + T * ry2, 15.2, 2.6, 2.6, (52, 38, 24), 1)
+    # THE DISH STACK: two full-size plates, rims ringed, slightly offset
+    for i, pr in enumerate((6.0, 5.2)):
+        _ell(wx - 3 + i, sy0 + T * 0.8, 15.0 + i * 1.4, pr, pr,
+             (168, 160, 146))
+        _ell(wx - 3 + i, sy0 + T * 0.8, 15.0 + i * 1.4, pr, pr,
+             (104, 98, 86), 1)
+        _ell(wx - 3 + i, sy0 + T * 0.8, 15.1 + i * 1.4, pr * 0.55,
+             pr * 0.55, (140, 132, 118), 1)
+    # the tin mug: a real little cylinder with a world-space handle
+    mug = {"top": (138, 142, 148), "side": (112, 116, 124),
+           "dark": (84, 88, 96)}
+    _vbox(surf, cam, wx + 1, sy0 + T * 1.0, 4, 4, 15, 20, mug,
+          outline=False)
+    _wline(wx + 4, sy0 + T * 1.0, 19, wx + 6, sy0 + T * 1.0, 17,
+           (112, 116, 124))
+    # silverware: ONE fork, ONE spoon, laid in-plane by the board; one
+    # more spoon dropped to the floorboards mid-room
+    _wline(wx - 5, sy0 + T * 1.6, 15.2, wx + 1, sy0 + T * 1.62, 15.2,
+           (154, 156, 162))
+    for pxo in (-0.8, 0.0, 0.8):
+        _wline(wx + 1 + pxo, sy0 + T * 1.62, 15.2,
+               wx + 2.4 + pxo, sy0 + T * 1.63, 15.2, (154, 156, 162))
+    _wline(wx - 4, sy0 + T * 1.75, 15.2, wx + 1, sy0 + T * 1.76, 15.2,
+           (154, 156, 162))
+    _ell(wx + 2, sy0 + T * 1.76, 15.2, 1.4, 1.4, (154, 156, 162))
+    _wline(wx + 13, sy0 + T * 1.9, 0.3, wx + 18, sy0 + T * 1.95, 0.3,
+           (128, 130, 136))
+    _ell(wx + 19, sy0 + T * 1.95, 0.3, 1.4, 1.4, (128, 130, 136))
+    # the rag draped over the counter's room edge: top flap in the
+    # counter plane, hanging flap down the face
+    rgx, rgy = wx + 9, sy0 + T * 1.3
+    pygame.draw.polygon(surf, (140, 126, 104), [
+        cam.project(rgx - 4, rgy - 3, 15.2),
+        cam.project(rgx + 1, rgy + 4, 15.2),
+        cam.project(rgx + 2, rgy + 4, 15.2),
+        cam.project(rgx - 2, rgy - 3, 15.2)])
+    pygame.draw.polygon(surf, (128, 114, 94), [
+        cam.project(rgx + 1, rgy - 2, 15.0),
+        cam.project(rgx + 1, rgy + 3, 15.0),
+        cam.project(rgx + 1, rgy + 3, 8.0),
+        cam.project(rgx + 1, rgy - 2, 9.0)])
+    # a chipped plate leaning against the wall on the shelf: a circle in
+    # the world's VERTICAL plane, so it turns honestly with the camera
+    lpx, lpy = wx - 5, sy0 + T * 0.55
+    lpp = [cam.project(lpx, lpy + 4.2 * math.cos(a),
+                       29.0 + 4.2 * (1 + math.sin(a)))
+           for a in [i2 * math.pi / 6.0 for i2 in range(12)]]
+    pygame.draw.polygon(surf, (160, 152, 138), lpp)
+    pygame.draw.polygon(surf, (104, 98, 86), lpp, 1)
+
+
+def _draw_dining_set_solid(surf, cam, deco):
+    """THE DINING SET (interiors pilot, TODO #24, ensemble 2): the lodge
+    common room's table composed as one object. A plank table on four
+    legs, two chairs tucked at lived angles, and ONE place set clean and
+    waiting: Sable keeps the room ready for the full house that no
+    longer comes. The second seat's place is bare wood. Wear layer per
+    the #24 rule: cup rings, scuffed floor where chairs drag, a splinted
+    leg, seat centres worn pale. All world-space geometry."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (100, 76, 48), "side": (72, 54, 34), "dark": (44, 32, 20)}
+    wood_d = {"top": (80, 60, 38), "side": (58, 42, 28), "dark": (36, 26, 16)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- floor wear first: drag scuffs where the chairs live
+    for cxo in (-14, 14):
+        _wline(wx + cxo - 4, wy + 22, 0.2, wx + cxo + 5, wy + 26, 0.2,
+               (58, 44, 28))
+        _wline(wx + cxo - 2, wy + 25, 0.2, wx + cxo + 6, wy + 28, 0.2,
+               (52, 40, 26))
+
+    # --- two chairs, tucked at slightly different angles (yaw'd volumes)
+    for cxo, cyaw in ((-14, 0.18), (14, -0.30)):
+        cx = wx + cxo
+        cy = wy + 24
+        _vbox(surf, cam, cx, cy, 13, 12, 0, 10, wood_d, yaw=cyaw)
+        _vbox(surf, cam, cx, cy + 5, 13, 3, 10, 24, wood_d, yaw=cyaw,
+              outline=False)
+        # the seat's centre worn pale by years of sitting
+        _ell(cx, cy - 1, 10.3, 3.5, 3.0, (96, 74, 48))
+
+    # --- the table: four legs, then the plank top with overhang
+    for lx, ly in ((-22, -12), (22, -12), (-22, 12), (22, 12)):
+        _vbox(surf, cam, wx + lx, wy + ly, 4, 4, 0, 13, wood_d,
+              outline=False)
+    # the splinted leg: a paler new batten strapped to the NE leg
+    _wline(wx + 24, wy - 12, 2, wx + 24, wy - 12, 11, (128, 104, 66), 2)
+    _vbox(surf, cam, wx, wy, 56, 32, 13, 16, wood)
+    # plank seams along the top, in the table's plane
+    for py_ in (-8, 0, 8):
+        _wline(wx - 27, wy + py_, 16.2, wx + 27, wy + py_, 16.2,
+               (58, 44, 28))
+    # table wear: two old cup rings + a long scratch, bare of any cloth
+    _ell(wx + 12, wy - 4, 16.2, 2.6, 2.6, (56, 42, 26), 1)
+    _ell(wx + 15, wy - 2, 16.2, 2.6, 2.6, (56, 42, 26), 1)
+    _wline(wx - 20, wy + 5, 16.2, wx - 4, wy + 7, 16.2, (58, 44, 28))
+
+    # --- THE ONE SET PLACE (the west seat): plate, fork, knife, folded
+    # cloth, all squared and clean. Nobody has eaten off it in months.
+    px_, py2 = wx - 14, wy - 2
+    _ell(px_, py2, 16.4, 5.6, 5.6, (176, 168, 152))
+    _ell(px_, py2, 16.4, 5.6, 5.6, (110, 104, 92), 1)
+    _ell(px_, py2, 16.5, 3.4, 3.4, (150, 142, 128), 1)
+    _wline(px_ - 9, py2 - 4, 16.4, px_ - 9, py2 + 4, 16.4,
+           (158, 160, 166))                      # the fork, squared
+    for pxo in (-0.9, 0.0, 0.9):
+        _wline(px_ - 9 + pxo, py2 - 6, 16.4, px_ - 9 + pxo, py2 - 4,
+               16.4, (158, 160, 166))
+    _wline(px_ + 9, py2 - 4, 16.4, px_ + 9, py2 + 4, 16.4,
+           (158, 160, 166))                      # the knife
+    _wline(px_ + 10.2, py2 - 4, 16.4, px_ + 10.2, py2 + 1, 16.4,
+           (128, 130, 136))
+    cl = [cam.project(px_ - 3, py2 + 7, 16.4),
+          cam.project(px_ + 4, py2 + 7, 16.4),
+          cam.project(px_ + 5, py2 + 10, 16.4),
+          cam.project(px_ - 2, py2 + 10, 16.4)]
+    pygame.draw.polygon(surf, (150, 138, 116), cl)  # the folded cloth
+    pygame.draw.polygon(surf, (108, 98, 82), cl, 1)
+    # the OTHER seat's place: bare wood, and the faint clean rectangle
+    # where a second setting once lay (the dust remembers it)
+    dr2 = [cam.project(wx + 8, wy - 8, 16.15),
+           cam.project(wx + 21, wy - 8, 16.15),
+           cam.project(wx + 21, wy + 4, 16.15),
+           cam.project(wx + 8, wy + 4, 16.15)]
+    pygame.draw.polygon(surf, (106, 82, 52), dr2)
+
+
+def _draw_bar_dressing_solid(surf, cam, deco):
+    """THE SERVICE BAR dressing (interiors pilot, TODO #24, ensemble 3):
+    what lives on the lodge's pass-through counter run. The counter tiles
+    themselves stay the '5' boxes (collision + see-over unchanged); this
+    deco lays Sable's service along the top, world-space, with its wear:
+    a water pitcher, the tray of upturned glasses kept ready, folded
+    towels, ONE used glass at the far end (the only guest in months
+    drank from it), ring stains down the service edge, and a towel over
+    the lip. Anchor = the run's centre; the run extends north-south."""
+    wx, wy = deco.x, deco.y
+    Z = 15.2                      # the counter top plane (_COUNTER_RISE)
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # ring stains wandering down the service (east) edge, years of cups
+    for oy, orr in ((-52, 2.4), (-20, 2.8), (18, 2.2), (44, 2.6)):
+        _ell(wx + 4, wy + oy, Z, orr, orr, (54, 40, 26), 1)
+    # the worn pale patch where Sable's hand rests at the pass-through
+    _ell(wx + 2, wy + 58, Z, 6, 4, (112, 88, 56))
+
+    # the pitcher at the north end: a real vessel with a lip and handle
+    pit = {"top": (146, 150, 156), "side": (116, 120, 128),
+           "dark": (86, 90, 98)}
+    _vbox(surf, cam, wx - 1, wy - 52, 6, 6, 15, 25, pit, outline=False)
+    _ell(wx - 1, wy - 52, 25, 3.4, 3.4, (86, 90, 98), 1)
+    _wline(wx + 3, wy - 55, 24, wx + 5, wy - 52, 21, (116, 120, 128))
+
+    # the tray of upturned glasses, squared and READY (the host's habit)
+    tr = [cam.project(wx - 6, wy - 34, Z), cam.project(wx + 6, wy - 34, Z),
+          cam.project(wx + 6, wy - 16, Z), cam.project(wx - 6, wy - 16, Z)]
+    pygame.draw.polygon(surf, (96, 74, 46), tr)
+    pygame.draw.polygon(surf, (58, 44, 28), tr, 1)
+    for gy in (-30, -25, -20):
+        for gx in (-3, 2):
+            _ell(wx + gx, wy + gy, Z + 3.5, 1.8, 1.8, (150, 154, 160), 1)
+
+    # folded towels mid-run: two clean stacked quads
+    for i in range(2):
+        tw = [cam.project(wx - 5, wy - 2 + i, Z + i * 1.2),
+              cam.project(wx + 4, wy - 3 + i, Z + i * 1.2),
+              cam.project(wx + 5, wy + 6 + i, Z + i * 1.2),
+              cam.project(wx - 4, wy + 7 + i, Z + i * 1.2)]
+        pygame.draw.polygon(surf, (152, 140, 118) if i else (138, 126, 106),
+                            tw)
+        pygame.draw.polygon(surf, (104, 94, 78), tw, 1)
+
+    # THE ONE USED GLASS at the south end, its ring beside it: the only
+    # guest in months set it down here
+    gl = {"top": (150, 154, 160), "side": (122, 126, 134),
+          "dark": (94, 98, 106)}
+    _vbox(surf, cam, wx - 2, wy + 34, 3.6, 3.6, 15, 20, gl, outline=False)
+    _ell(wx - 2, wy + 34, 20, 2.2, 2.2, (94, 98, 106), 1)
+    _ell(wx + 3, wy + 38, Z, 2.4, 2.4, (54, 40, 26), 1)
+
+    # the towel over the counter's west lip, top flap + hanging face
+    pygame.draw.polygon(surf, (140, 126, 104), [
+        cam.project(wx - 8, wy + 12, Z), cam.project(wx - 2, wy + 12, Z),
+        cam.project(wx - 2, wy + 20, Z), cam.project(wx - 8, wy + 20, Z)])
+    pygame.draw.polygon(surf, (124, 110, 90), [
+        cam.project(wx - 8, wy + 13, Z), cam.project(wx - 8, wy + 19, Z),
+        cam.project(wx - 8, wy + 19, 7.0), cam.project(wx - 8, wy + 13, 8.0)])
+
+
+def _draw_hearth_mass_solid(surf, cam, deco):
+    """THE HEARTH (interiors pilot, TODO #24, ensemble 4): the lodge's
+    freestanding fireplace composed as one masonry object. A stone
+    firebox with an arched ember mouth facing the sitting rug, the
+    chimney breast rising past the eave, a wood mantle wrapping the
+    south face, fire tools leaning at one flank and the log basket at
+    the other, the buck's antlers rehung on the breast. Wear per the
+    #24 rule: soot up the face, ash spilled on the hearthstone, mortar
+    lines aged dark. World-space throughout."""
+    wx, wy = deco.x, deco.y
+    stone = {"top": (96, 94, 96), "side": (74, 72, 76), "dark": (52, 50, 54)}
+    stone_d = {"top": (80, 78, 80), "side": (60, 58, 62),
+               "dark": (42, 40, 44)}
+    wood = {"top": (98, 74, 46), "side": (72, 54, 34), "dark": (44, 32, 20)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # the hearthstone apron on the rug side, ash-dusted
+    ap = [cam.project(wx - 16, wy + 12, 0.2), cam.project(wx + 16, wy + 12, 0.2),
+          cam.project(wx + 14, wy + 22, 0.2), cam.project(wx - 14, wy + 22, 0.2)]
+    pygame.draw.polygon(surf, (88, 86, 88), ap)
+    pygame.draw.polygon(surf, (58, 56, 60), ap, 1)
+    _ell(wx + 2, wy + 16, 0.3, 6, 3, (60, 58, 56))          # spilled ash
+    _ell(wx - 6, wy + 18, 0.3, 3, 2, (48, 46, 45))
+
+    # the firebox, then the breast rising past the eave
+    _vbox(surf, cam, wx, wy, 30, 24, 0, 22, stone)
+    _vbox(surf, cam, wx, wy - 1, 20, 16, 22, 48, stone_d)
+    # mortar courses in the faces' world planes
+    for mz in (7, 14):
+        _wline(wx - 15, wy + 12, mz, wx + 15, wy + 12, mz, (52, 50, 54))
+    for mz in (28, 35, 42):
+        _wline(wx - 10, wy + 7, mz, wx + 10, wy + 7, mz, (44, 42, 46))
+    # the arched mouth on the south face, embers banked low inside
+    mo = [cam.project(wx - 8, wy + 12.2, 2), cam.project(wx + 8, wy + 12.2, 2),
+          cam.project(wx + 6, wy + 12.2, 14), cam.project(wx + 2, wy + 12.2, 17),
+          cam.project(wx - 2, wy + 12.2, 17), cam.project(wx - 6, wy + 12.2, 14)]
+    pygame.draw.polygon(surf, (14, 12, 12), mo)
+    for gi, gox in enumerate((-4, 0, 4)):
+        gp = cam.project(wx + gox, wy + 11, 2.5)
+        pygame.draw.rect(surf, (176 - gi * 20, 78 - gi * 12, 26),
+                         (int(gp[0]), int(gp[1]), 2, 1))
+    # soot licking up from the mouth over the breast
+    st = [cam.project(wx - 5, wy + 12.1, 17), cam.project(wx + 5, wy + 12.1, 17),
+          cam.project(wx + 3, wy + 7.1, 34), cam.project(wx - 3, wy + 7.1, 30)]
+    pygame.draw.polygon(surf, (24, 22, 24), st)
+
+    # the mantle shelf wrapping the south face
+    _vbox(surf, cam, wx, wy + 9, 36, 8, 23, 26, wood)
+    # the buck's antlers rehung on the breast above it
+    bp = cam.project(wx, wy + 6.9, 36)
+    pygame.draw.circle(surf, (96, 78, 58), (int(bp[0]), int(bp[1])), 2)
+    for sgn in (-1, 1):
+        _wline(wx + sgn * 1, wy + 6.9, 37, wx + sgn * 5, wy + 6.9, 41,
+               (150, 138, 116))
+        _wline(wx + sgn * 5, wy + 6.9, 41, wx + sgn * 8, wy + 6.9, 40,
+               (150, 138, 116))
+        _wline(wx + sgn * 4, wy + 6.9, 40, wx + sgn * 5, wy + 6.9, 43,
+               (150, 138, 116))
+
+    # fire tools leaning at the east flank: poker + shovel
+    _wline(wx + 17, wy + 8, 0, wx + 19, wy + 6, 19, (70, 70, 78), 2)
+    _wline(wx + 20, wy + 9, 0, wx + 22, wy + 7, 17, (70, 70, 78))
+    sh = cam.project(wx + 20, wy + 9, 1)
+    pygame.draw.rect(surf, (82, 82, 90), (int(sh[0]) - 2, int(sh[1]), 4, 3))
+    # the log basket at the west flank, split wood ends showing
+    _vbox(surf, cam, wx - 21, wy + 8, 12, 10, 0, 9,
+          {"top": (92, 70, 44), "side": (68, 52, 32), "dark": (42, 32, 20)})
+    for lox, loy in ((-24, 6), (-20, 7), (-18, 9)):
+        lp2 = cam.project(wx + lox, wy + loy, 9)
+        pygame.draw.circle(surf, (128, 102, 66), (int(lp2[0]), int(lp2[1])), 2)
+        pygame.draw.circle(surf, (74, 56, 36), (int(lp2[0]), int(lp2[1])), 2, 1)
+
+
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
-    floor (not a flat decal), cross-boarded and nailed shut, an iron pull-ring
-    on top. (The flat pitch-0 view uses the 2D sprite.)"""
+    floor (not a flat decal), an iron pull-ring on top. Default lid is
+    cross-boarded and nailed shut (the barn/farmhouse sealed hatches);
+    kwargs: `padlock=True` swaps the cross-boards for a hasp + hanging lock
+    (the Lodge's freshly-oiled padlock), `open=True` draws the frame's dark
+    mouth with the lid thrown back (the unlocked way down). (The flat
+    pitch-0 view uses the 2D sprite.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {}) or {}
     w, d, rim = 26 * s, 24 * s, 6 * s
     pal = {"top": (120, 86, 50), "side": (84, 58, 34), "dark": (58, 40, 22)}
-    _vbox(surf, cam, wx, wy, w, d, 0, rim, pal)
     hw, hd = w / 2, d / 2
+    if kw.get("open"):
+        # the frame's rim, the dark mouth below, the lid thrown back
+        _vbox(surf, cam, wx, wy, w, d, 0, rim * 0.5, pal)
+        z = rim * 0.5
+        mouth = [cam.project(wx - hw + 3 * s, wy - hd + 3 * s, z),
+                 cam.project(wx + hw - 3 * s, wy - hd + 3 * s, z),
+                 cam.project(wx + hw - 3 * s, wy + hd - 3 * s, z),
+                 cam.project(wx - hw + 3 * s, wy + hd - 3 * s, z)]
+        pygame.draw.polygon(surf, (10, 8, 8), mouth)
+        lid = [cam.project(wx - hw, wy - hd, z),
+               cam.project(wx + hw, wy - hd, z),
+               cam.project(wx + hw, wy - hd + 4 * s, z + 20 * s),
+               cam.project(wx - hw, wy - hd + 4 * s, z + 20 * s)]
+        pygame.draw.polygon(surf, pal["side"], lid)
+        pygame.draw.polygon(surf, pal["dark"], lid, 1)
+        return
+    _vbox(surf, cam, wx, wy, w, d, 0, rim, pal)
     tl, tr = cam.project(wx - hw, wy - hd, rim), cam.project(wx + hw, wy - hd, rim)
     bl, br = cam.project(wx - hw, wy + hd, rim), cam.project(wx + hw, wy + hd, rim)
-    # plank seams + the cross-boards nailed over the lid (shut)
+    # plank seams
     for f in (0.33, 0.66):
         a = (tl[0] + (bl[0] - tl[0]) * f, tl[1] + (bl[1] - tl[1]) * f)
         b = (tr[0] + (br[0] - tr[0]) * f, tr[1] + (br[1] - tr[1]) * f)
         pygame.draw.line(surf, pal["dark"], a, b, 1)
-    pygame.draw.line(surf, _shade(pal["top"], 1.1), tl, br, max(2, int(2 * s)))
-    pygame.draw.line(surf, _shade(pal["top"], 1.1), tr, bl, max(2, int(2 * s)))
+    if kw.get("padlock"):
+        # hasp over the front edge + the padlock hanging on it
+        hp = cam.project(wx, wy + hd - 2 * s, rim)
+        pygame.draw.rect(surf, (70, 70, 82),
+                         (int(hp[0]) - int(4 * s), int(hp[1]) - int(2 * s),
+                          int(8 * s), int(4 * s)))
+        lk = cam.project(wx, wy + hd, rim * 0.35)
+        r = max(2, int(3 * s))
+        pygame.draw.circle(surf, (118, 112, 96), (int(lk[0]), int(lk[1])), r)
+        pygame.draw.circle(surf, (46, 44, 40), (int(lk[0]), int(lk[1])), r, 1)
+    else:
+        # the cross-boards nailed over the lid (shut for good)
+        pygame.draw.line(surf, _shade(pal["top"], 1.1), tl, br,
+                         max(2, int(2 * s)))
+        pygame.draw.line(surf, _shade(pal["top"], 1.1), tr, bl,
+                         max(2, int(2 * s)))
     for c in (tl, tr, bl, br):                                  # nail heads
         pygame.draw.circle(surf, (54, 52, 58), (int(c[0]), int(c[1])), max(1, int(1.5 * s)))
     ring = cam.project(wx, wy, rim)                             # iron pull-ring
@@ -1717,14 +2441,96 @@ def _draw_wall_lamp_solid(surf, cam, deco):
                 (mount_h, 1.4 * s, 1.4 * s)],
                {"body": (150, 146, 140), "lo": (92, 88, 84),
                 "rim": (178, 174, 168)})
-    # the steady warm bulb glowing at the shade's lower lip
+    # the steady bulb at the shade's lower lip -- glowing only while the
+    # genset runs (the power link's _powered flag); dead, it reads as
+    # dark glass under the shade
     lamp = cam.project(wx, wy + 1.8 * s, mount_h - 3.4 * s)
     lr = max(2, int(2.2 * s * cam.scale))
-    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
-    pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
-    pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
-    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
-    pygame.draw.circle(surf, (255, 230, 182), (int(lamp[0]), int(lamp[1])), lr)
+    if (getattr(deco, "_powered", True)
+            and not getattr(deco, "kwargs", {}).get("broken")):
+        glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
+        pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
+        surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+        pygame.draw.circle(surf, (255, 230, 182),
+                           (int(lamp[0]), int(lamp[1])), lr)
+    else:
+        pygame.draw.circle(surf, (66, 68, 74),
+                           (int(lamp[0]), int(lamp[1])), lr)
+
+
+def _draw_drop_bulb_solid(surf, cam, deco):
+    """A simple ceiling PENDANT light (2026-07 rework, maintainer: 'those
+    need to look like lights, not glowing orbs in space'): a drop cord out
+    of the unrendered dark overhead into a steel DISH SHADE, the bulb
+    glowing under its lip. The dark shade silhouette is what sells
+    'fixture' -- the glow alone read as a floating orb. Sways just barely.
+    Camera-facing on purpose: a hanging cord + a dish of revolution + a
+    glow (VISION trap #1's sanctioned cases -- it IS a lampshade).
+    Game._draw_dark casts its cold pool (FIXTURE_POOLS)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    # hang height is per-placement (kwargs z): high enough to clear the
+    # heads standing around it, or it vanishes into whoever tends the counter
+    z_bulb = float(getattr(deco, "kwargs", {}).get("z", 30.0)) * s
+    broken = bool(getattr(deco, "kwargs", {}).get("broken"))
+    # a broken pendant hangs DEAD: no sway animation, a fixed kink in the
+    # cord where something (or someone) caught it
+    sway = (2.2 * s if broken
+            else math.sin(t * 1.1 + seed) * 1.5 * s)
+    z_shade = z_bulb + 1.6 * s                     # the dish sits over the bulb
+    # cord: a heavier line stepping dark into the unlit height overhead,
+    # so the eye can track the hang
+    steps = [(0.0, (56, 54, 52)), (7.0, (40, 40, 40)), (13.0, (29, 29, 30))]
+    top = 20.0
+    for i in range(len(steps)):
+        z0f, col = steps[i]
+        z1f = steps[i + 1][0] if i + 1 < len(steps) else top
+        f0 = 1.0 - z0f / top
+        f1 = 1.0 - z1f / top
+        p0 = cam.project(wx + sway * f0, wy, z_shade + 6.4 * s + z0f * s)
+        p1 = cam.project(wx + sway * f1, wy, z_shade + 6.4 * s + z1f * s)
+        pygame.draw.line(surf, col, p0, p1, 2 if i == 0 else 1)
+    powered = getattr(deco, "_powered", True) and not broken
+    bx = wx + sway
+    # the bulb glows UNDER the shade lip (drawn before the dish, so the
+    # shade's dark rim always cuts the glow -- the fixture over the light)
+    bp = cam.project(bx, wy + 1.2 * s, z_bulb)
+    br = max(2, int(2.2 * s * cam.scale))
+    if powered:
+        glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (205, 218, 240, 52), (br * 3, br * 3), br * 3)
+        pygame.draw.circle(glow, (222, 232, 248, 100), (br * 3, br * 3), br * 2)
+        surf.blit(glow, (int(bp[0] - br * 3), int(bp[1] - br * 3)))
+        pygame.draw.circle(surf, (238, 244, 252), (int(bp[0]), int(bp[1])), br)
+    elif broken:
+        # the SHATTERED bulb: no glass ball, just the jagged stub under
+        # the socket -- the reason this one will never come back on
+        for ja, jl in ((-0.6, 2.2), (0.3, 1.6), (1.2, 2.0)):
+            pygame.draw.line(surf, (96, 98, 106), (int(bp[0]), int(bp[1] - 2)),
+                             (int(bp[0] + math.cos(ja) * jl * s),
+                              int(bp[1] + math.sin(ja) * jl * s + 1)), 1)
+    else:
+        pygame.draw.circle(surf, (56, 58, 64), (int(bp[0]), int(bp[1])), br)
+        pygame.draw.circle(surf, (82, 84, 92), (int(bp[0]), int(bp[1])), br, 1)
+    # the steel dish shade: a cone opening downward over the bulb -- the
+    # simple ceiling light's whole silhouette. Slightly lit inside-lip when
+    # burning; dead enamel when the genset is down; a broken one hangs its
+    # dish ASKEW off the cord line, knocked and never righted.
+    lip = (132, 136, 144) if powered else (86, 88, 96)
+    sx_off = 1.6 * s if broken else 0.0
+    draw_solid(surf, cam, bx + sx_off, wy,
+               [(z_shade, 6.4 * s, 6.4 * s),
+                (z_shade + 2.6 * s, 4.4 * s, 4.4 * s),
+                (z_shade + 5.2 * s, 1.8 * s, 1.8 * s),
+                (z_shade + 6.4 * s, 0.9 * s, 0.9 * s)],
+               {"body": (72, 74, 82), "lo": (46, 48, 54), "rim": lip})
+    # the shade's underside rim catches the burning bulb
+    if powered:
+        _disc(surf, cam, bx, wy, z_shade + 0.2 * s, 6.2 * s, 6.2 * s,
+              (188, 198, 216), fill=False, width=1)
 
 
 def _draw_smoke_solid(surf, cam, deco):
@@ -2281,14 +3087,23 @@ def _draw_wrong_radio_solid(surf, cam, deco):
     _qp(surf, P, [(-9 * s, hD, z0 + 2 * s), (-1 * s, hD, z0 + 2 * s),        # grille
                   (-1 * s, hD, z0 + H - 2 * s), (-9 * s, hD, z0 + H - 2 * s)],
         (20, 18, 22))
-    for i in range(3):
-        sz = z0 + 2 * s + (t * 6 + i * 3) % (H - 4 * s)
-        _lp(surf, P, (-8.5 * s, hD, sz), (-1.5 * s, hD, sz), (110, 130, 110), 1)
+    # the static crawl + creeping needle are the radio's LIVE face, and
+    # they run on genset power (the power link's _powered flag): in a
+    # blackout the crawl stops and the needle stands where it died --
+    # the world's state showing through an appliance, wordless
+    powered = getattr(deco, "_powered", True)
+    if powered:
+        for i in range(3):
+            sz = z0 + 2 * s + (t * 6 + i * 3) % (H - 4 * s)
+            _lp(surf, P, (-8.5 * s, hD, sz), (-1.5 * s, hD, sz),
+                (110, 130, 110), 1)
     _qp(surf, P, [(1 * s, hD, z0 + 3 * s), (8 * s, hD, z0 + 3 * s),          # dial
                   (8 * s, hD, z0 + H - 3 * s), (1 * s, hD, z0 + H - 3 * s)],
         (20, 18, 22))
-    nx = 1 * s + (math.sin(t * 0.4 + seed) + 1) * 3.4 * s
-    _lp(surf, P, (nx, hD, z0 + 3 * s), (nx, hD, z0 + H - 3 * s), (220, 60, 60), 1)
+    nx = (1 * s + (math.sin(t * 0.4 + seed) + 1) * 3.4 * s if powered
+          else 1 * s + 3.4 * s)
+    ncol = (220, 60, 60) if powered else (110, 46, 46)
+    _lp(surf, P, (nx, hD, z0 + 3 * s), (nx, hD, z0 + H - 3 * s), ncol, 1)
     _lp(surf, P, (8 * s, hD, z0 + H), (12 * s, hD, z0 + H + 8 * s),          # antenna
         (180, 180, 200), 1)
     _lp(surf, P, (-W / 2, hD, z0 + H), (-W / 2 - 4 * s, hD, z0 + H * 0.4),   # strap
@@ -2400,21 +3215,29 @@ def _draw_yard_light_solid(surf, cam, deco):
     pc = cam.project(hx, hy, hood_z + 4.6 * s)
     pygame.draw.circle(surf, galv_lo, (int(pc[0]), int(pc[1])),
                        max(1, int(1.2 * s)))
-    # a faint cold spill on the ground under the head (always on, so the
-    # fixture reads as CASTING light even in daylight; the real navigable
-    # pool is punched by _draw_dark when the scene is dark)
-    _disc(surf, cam, hx, hy + 1.0 * s, 0.2 * s, 7.0 * s, 5.0 * s,
-          (150, 176, 210))
-    # the cold mercury-vapor lamp poking out the hood's lower FRONT lip
+    # the cold mercury-vapor lamp poking out the hood's lower FRONT lip --
+    # burning only while the genset runs (the power link's _powered flag);
+    # a blacked-out head is dark glass under the hood
     lamp = cam.project(hx, hy + 3.0 * s, hood_z - 1.6 * s)
     lr = max(2, int(2.4 * s * cam.scale))
-    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
-    pygame.draw.circle(glow, (200, 224, 255, 60), (lr * 3, lr * 3), lr * 3)
-    pygame.draw.circle(glow, (216, 232, 255, 120), (lr * 3, lr * 3), lr * 2)
-    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
-    pygame.draw.circle(surf, (232, 242, 255), (int(lamp[0]), int(lamp[1])), lr)
-    pygame.draw.circle(surf, (255, 255, 255), (int(lamp[0]), int(lamp[1])),
-                       max(1, lr // 2))
+    if (getattr(deco, "_powered", True)
+            and not getattr(deco, "kwargs", {}).get("broken")):
+        # a faint cold spill on the ground under the head (so the fixture
+        # reads as CASTING light even in daylight; the real navigable pool
+        # is punched by _draw_dark when the scene is dark)
+        _disc(surf, cam, hx, hy + 1.0 * s, 0.2 * s, 7.0 * s, 5.0 * s,
+              (150, 176, 210))
+        glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (200, 224, 255, 60), (lr * 3, lr * 3), lr * 3)
+        pygame.draw.circle(glow, (216, 232, 255, 120), (lr * 3, lr * 3), lr * 2)
+        surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+        pygame.draw.circle(surf, (232, 242, 255),
+                           (int(lamp[0]), int(lamp[1])), lr)
+        pygame.draw.circle(surf, (255, 255, 255), (int(lamp[0]), int(lamp[1])),
+                           max(1, lr // 2))
+    else:
+        pygame.draw.circle(surf, (60, 64, 72), (int(lamp[0]), int(lamp[1])),
+                           lr)
 
 
 def _draw_generator_solid(surf, cam, deco):
@@ -2774,6 +3597,13 @@ SOLID_PROPS = {
     "shaft_ladder":  _draw_shaft_ladder_solid,
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
+    "kitchen_wall":  _draw_kitchen_wall_solid,
+    "stockroom_corner": _draw_stockroom_corner_solid,
+    "lawman_wall":   _draw_lawman_wall_solid,
+    "lawman_desk":   _draw_lawman_desk_solid,
+    "dining_set":    _draw_dining_set_solid,
+    "bar_dressing":  _draw_bar_dressing_solid,
+    "hearth_mass":   _draw_hearth_mass_solid,
     "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
@@ -2825,6 +3655,7 @@ SOLID_PROPS = {
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
     "wall_lamp":     _draw_wall_lamp_solid,
+    "drop_bulb":     _draw_drop_bulb_solid,
     "smoke":         _draw_smoke_solid,
     "wisp":          _draw_wisp_solid,
     "rope":          _draw_rope_solid,

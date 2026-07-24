@@ -476,27 +476,68 @@ class Scene:
                     "campfire": 80.0, "camp_fire": 88.0,
                     "lantern": 60.0, "candle": 55.0,
                     "yard_light": 85.0, "generator": 42.0,
-                    "wall_lamp": 62.0}
+                    "wall_lamp": 62.0, "drop_bulb": 58.0,
+                    "kerosene_lamp": 40.0}
+    # The genset-powered ELECTRIC subset: these emit (and gate) only while
+    # the scene's power is on (`Scene.power_on`, maintained by
+    # Game._tick_power -- a moth flare blacks a room out for a spell).
+    # Fire keeps burning through a blackout.
+    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
 
     def light_sources(self):
-        """Cached [(x, y, r)] of the scene's light-emitting decorations
-        (see _LIGHT_KINDS). Rebuilt when the decoration count changes
-        (world rot adds decals at load; nothing removes lights)."""
+        """Cached [(deco, r, cone, elec)] of the scene's light-emitting
+        decorations (see _LIGHT_KINDS). `cone` is None for an omni pool,
+        else (nx, ny, half_rad) from the deco's `cone=(dir_x, dir_y,
+        half_deg)` kwarg -- a DIRECTIONAL fixture lights (and gates) only
+        inside its fan (TODO #21 cone fixtures). The cache holds the
+        FILTERED DECO LIST, never positions: readers take x/y live off the
+        deco, so a MOVING light source (a carried lantern, a swinging
+        pendant) gates correctly (2026-07, maintainer: expect moving
+        lights). Rebuilt when the decoration count changes (world rot adds
+        decals at load; nothing removes lights)."""
         cache = getattr(self, "_light_cache", None)
         if cache is not None and cache[0] == len(self.decorations):
             return cache[1]
-        srcs = [(d.x, d.y, self._LIGHT_KINDS[d.kind])
-                for d in self.decorations if d.kind in self._LIGHT_KINDS]
+        srcs = []
+        for d in self.decorations:
+            if d.kind not in self._LIGHT_KINDS:
+                continue
+            if getattr(d, "kwargs", {}).get("broken"):
+                continue        # a burned-out fixture never lights anything
+            cone = None
+            raw = getattr(d, "kwargs", {}).get("cone")
+            if raw:
+                cx_, cy_, half = raw
+                n = math.hypot(cx_, cy_) or 1.0
+                cone = (cx_ / n, cy_ / n, math.radians(half))
+            srcs.append((d, self._LIGHT_KINDS[d.kind], cone,
+                         d.kind in self._ELECTRIC_KINDS))
         self._light_cache = (len(self.decorations), srcs)
         return srcs
 
     def lit_at(self, x, y):
         """True when world (x, y) stands inside any light pool -- the
         darkness-concealment gate (a player beside a torch reads as lit
-        however dark the room is)."""
-        for lx, ly, r in self.light_sources():
-            if self.world_dist(x, y, lx, ly) <= r:
-                return True
+        however dark the room is). A cone fixture only lights inside its
+        fan: behind a hooded lamp is honest dark. An ELECTRIC source
+        counts only while the scene's power is on. Positions read LIVE
+        off the deco, so moving sources gate correctly."""
+        power = getattr(self, "power_on", True)
+        for src, r, cone, elec in self.light_sources():
+            if elec and not power:
+                continue
+            lx, ly = src.x, src.y
+            d = self.world_dist(x, y, lx, ly)
+            if d > r:
+                continue
+            if cone is not None and d > 2.0:
+                nx, ny, half = cone
+                dx, dy = x - lx, y - ly
+                ang = math.acos(max(-1.0, min(1.0,
+                                              (dx * nx + dy * ny) / d)))
+                if ang > half:
+                    continue
+            return True
         return False
 
     def add_cult_station(self, x, y, pose=None, face=None,

@@ -153,6 +153,80 @@ Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
 assert on several of these captions/notes) and update the ones whose
 behavior legitimately changes.
 
+### 24. **[Opus + Fable]** INTERIORS PROGRAM — ensembles, floor plans, the prop fifteen
+
+**Maintainer directive (2026-07 playtest): "props seem scattered without
+any purpose... treat what you have as multiple props touching each other
+and make those into ONE new object with more handcrafted detail."** The
+rooms read as prop soup; the fix is composed ensembles, not more
+placement.
+
+- **THE ENSEMBLE RULE.** Props that touch each other or a shared wall
+  merge into ONE handcrafted multi-tile object (a `SOLID_PROPS` volume
+  with a designed silhouette), authored for the projection, never
+  re-scattered as separates. Design each from the FIXED CAMERA's four
+  facings, E/W FIRST (the historically weakest angles).
+- **REAL FLOOR PLANS FIRST.** Before re-dressing a room, sketch it from a
+  real reference plan (1990s Minnesota cabin / small hotel / farmhouse):
+  work zones, walk lanes, furniture against walls, one focal wall using
+  volume and negative space. Provenance stays king (SCENE-DRESSING
+  PROCESS).
+- **The prop fifteen (reusable ensembles, build as a library):**
+  1. kitchen (wood stove + counter + stovepipe + hung pots),
+  2. hearth wall (fireplace + mantle + fire tools + log basket),
+  3. bearskin rug, 4. trophy wall (mounted wolf + buck + fish as ONE),
+  5. bed corner (bed + nightstand + wall pegs + underfoot rug),
+  6. writing nook (desk + chair + lamp + papers),
+  7. dining set (table + benches + settings),
+  8. wash corner (washstand + mirror + towel rail),
+  9. gun rack wall, 10. coat wall (pegs + coats + boots under),
+  11. pantry shelving (stocked and bare variants),
+  12. reading chair + side table + oil lamp,
+  13. workbench wall (hung tools + vise),
+  14. woodpile + stove pairing,
+  15. wardrobe with the robe made legible (Sable's closet: the tell
+      reads the moment you round the partition, no squinting).
+  Each through the render-first loop (preview sheet → approve → place).
+- **15 INSIDE + 15 OUTSIDE (maintainer refinement).** The fifteen above
+  are the INTERIOR library; a matching EXTERIOR fifteen follows (porch
+  ensemble, lean-to + stacked wood, clothesline, rain barrel + gutter,
+  fence-and-gate runs, mailbox post, burn barrel, machine shed face,
+  pump + trough, chicken wire pen, propane/fuel tank, junk pile, tarped
+  equipment, porch chair + rifle, antler-over-door). Same rules.
+- **USE ALL SIX SURFACES.** This is a 3D environment: on top of, next
+  to, underneath, hung from walls, standing on floors, and dropped from
+  ceilings/rooflines are all placement options. An ensemble is allowed
+  to span floor-to-ceiling (stovepipe up through the roof, hams hung
+  from beams, a wall of pelts reaching the eave).
+- **ANIMATE WHERE IT EARNS IT.** Each ensemble asks: could a part move,
+  and does the world state show through it (a TV that plays static only
+  while the genset runs, a stovepipe that smokes when lit, a fan that
+  turns)? Powered behavior rides the light pillar's genset link (#21).
+  Not everything can or should move; a still room with ONE moving thing
+  is scarier than a busy one.
+- **EVERY ENSEMBLE SHIPS ITS WEAR LAYER, WORLD-SPACE.** The object's
+  years (rust, soot, scratches), its stains on the surfaces around it
+  (the floor wears where feet stood), and at least one piece of honest
+  mess -- with FEW, BIG, DISTINGUISHABLE items, never same-weight
+  speckle. Every mark is projected geometry in its true plane (a plate
+  is a world-plane circle); screen-aligned marks are error class 7.
+  The floors set the bar; the decor rises to it.
+- **Rug rework rides along:** the rug must read from every facing (its
+  pattern/fringe currently only reads from N).
+- **Blank building faces:** E/W exterior shells (the backwoods cabin is
+  a bare grey slab from the side) need relief — windows, timber framing,
+  a lean-to, stacked wood — via the exterior library, not one-offs.
+- **Pilot: the LODGE COMMON ROOM** — LANDED (kitchen wall, dining set,
+  hearth mass, the host's desk + key wall; `CHANGELOG.md`). **Wave 2
+  rollout underway:** the shop's stockroom receiving corner landed
+  (crate stack + check table + flour barrel as ONE object with its
+  wear; the candle stays a separate emitter seated on the table).
+  The sheriff's OFFICE quad landed next (the lawman's wall: cot +
+  washstand + coat rack as one west-wall run; the lawman's desk: desk +
+  radio + files + mug + tucked chair as one working surface). Next
+  rooms: the office's booking/waiting corners if they earn it, then
+  the church vestry.
+
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 
 Built in pilots, inside hard fences: systemic not scripted; the people do
@@ -262,28 +336,60 @@ set-pieces (their lines + palettes are canon), so this is a
 re-presentation question, not a gap. Do not start without a fresh
 maintainer decision; land each ending only through a VISION.md look pass.
 
-### 21. **[Opus + Fable]** Light-driven dread — the blackout + watcher storm
+### 21. **[Opus + Fable]** LIGHT IS THE PILLAR — the perfected system
 
-The lighting foundation, the interior lighting pass, and the "no light =
-danger" Watcher extension all landed (`CHANGELOG.md`, "Lighting"). **Still
-open, all gated on a fresh maintainer go (design-only as of the 2026-07
-discussion):**
-- **The moth blackout.** A moth flare knocks out the lights (kill a
-  genset node / drop the yard-light pools), the screen dims, and the cult
-  camp forms a procession to the flash and fans out to search. Needs: a
-  genset→fixtures power link, a scene-level "blackout" state, procession
-  staging.
-- **A full Watchers-in-the-dark rework** (they can open in any room but
-  only EXIST in the dark) — couples with the blackout into "a perfect
-  storm." A real rework of `_tick_watchers`, not a tuning pass; keep the
-  below-3 threat role.
-- **Retire the "special darkness" beam-off?** The deep (`CULT_DARK_SCENES`)
-  still swallows the flashlight by design and reads well (lit by the
-  cult's own ritual fires). Whether to fully retire this so light works
-  everywhere is the open dread decision — do not flip without a
-  maintainer call, it softens a deliberate choice.
+**Maintainer mandate (2026-07 QC discussion): after the quality-floor
+sprint, light is the ONE system to perfect** — the game's missing
+mastery verb. The doctrine that keeps it coherent with everything
+shipped: **light is safety from the small things and a beacon to the big
+one** (Watchers die in it; the flashlight burn + the King's attention
+still price it). Landed already: the lighting foundation, interior
+lighting, `WATCHER_LIGHT_BURN`, the beam-off retirement (light works
+everywhere), and the flashlight opening on the PI's desk
+(`CHANGELOG.md`, "Lighting" / "The light pillar"). Open, in build order:
+- **LANDED en route: the light audit overlay** (`tools/light_audit.py`,
+  the dev design surface: mechanical radius + visible pool + the hatched
+  dark map per scene) and the COLD ruling (wall_lamp cold blue-white;
+  fire demoted to prop). Next placement passes run through the audit.
+- **LANDED en route: cone fixtures** (`cone=(dir_x, dir_y, half_deg)`
+  per-deco kwarg in all three layers, pilot on the shop's hooded east
+  lamp; `CHANGELOG.md` "Lighting"). Aim further lamps per room as each
+  placement pass reaches it.
+- **The light-security loop (the core).** The FIRST SLICE landed
+  (`CHANGELOG.md` "Lighting"): the genset→fixtures power link exists —
+  per-scene power state (`Scene.power_on`, `Game._tick_power`,
+  `_genset_down` timers), the ELECTRIC kinds die in all three layers at
+  once during a blackout (pool, `lit_at` gate, and the fixture art
+  itself goes dark; fire is exempt), a moth flare blacks its room out
+  for `BLACKOUT_DUR`, and the office radio's static crawl runs on
+  power (the appliance tell). Guarded by `tests/stealth.py` §17.
+  **Lit-rooms-SECURED landed via the 2026-07 Watcher spawn rule** (a
+  Watcher opens only at a dark spot with line of sight to the player,
+  so a fully lit room cannot open anything; `CHANGELOG.md`). **Still
+  open:** player verbs (restore/switch a fixture), the fuel item +
+  siphon/refill economy, and lights decaying/failing on their own.
+  Keep the tension: a lit town is a town He can see.
+- **Watcher variety — LANDED as the AMALGAMS** (`rendering/amalgam.py`,
+  DESIGN.md §1; history in `CHANGELOG.md` "The shadows program"). Still
+  open from the blessed idea set: the beam forcing individual PARTS to
+  retract (per-part light burn), and the build-out reading the hold
+  timer rather than a fixed ramp.
+- **The moth blackout — remaining staging.** The blackout itself landed
+  with the power link above (flare → the room's electric light dies).
+  Still open: the cult camp PROCESSES to the flash and fans out (a
+  staged response, rides #23), and any screen-dim beat beyond the
+  lights themselves dying.
+- **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
+  line-of-sight spots only, 2026-07). Still open: dark-only EXISTENCE
+  (a live Watcher caught by a room relighting should burn or flee, in
+  any scene, not just the dim interiors) and opening them in every
+  non-refuge room type. Keep the below-3 threat role.
 - The **capture→King-unleashed** thread and **procession-across-scenes**
-  staging were sketched the same session and sit here too, unscoped.
+  staging sit here too, unscoped. **The capture fork is RULED (2026-07,
+  maintainer): capture is GAME OVER** — the CAPTURED card stays a hard
+  run-end, no capture-as-continuation. The corollary work item: cultists
+  must EARN that ending (the "cultists feel too weak" playtest note) —
+  lands through the #5/#6 tuning loop, not a new system.
 
 ### 16. **[Opus]** Ship track — packaging
 
@@ -401,6 +507,15 @@ compression pass (#4b).
 ---
 
 ## Process
+
+### D. **[Fable]** Doc consolidation — remainder
+
+Phase 1 landed (the threat section moved to DESIGN §1; `CHANGELOG.md`,
+"Documentation process"). Still open: CLAUDE.md's Layout section carries a
+tableau mega-paragraph and several system narrations (Casebook, dialogue
+channels, moth/stealth asides) that duplicate or should live in
+DESIGN/DIALOGUE; move each to its one home and leave a code-map pointer,
+one section per pass, keeping the every-turn read shrinking.
 
 ### R. **[Fable]** Cross-model review gate
 

@@ -299,6 +299,17 @@ def main():
     gl = new_game()
     gl.load_scene_now("lodge")
     ready(gl)
+    # Counter-aware talk reach (2026-07 quality sprint): pressed flat
+    # against the desk FRONT, E must reach Sable across the counter (the
+    # old flat 40px reach fell ~8px short, so E fell through to the
+    # register and Sable could never be spoken to from the front).
+    gl.player.x, gl.player.y = 288, 97
+    gl.try_interact()
+    check(gl._tableau is not None and gl._tableau.get("kind") == "sable",
+          "lodge: E across the front desk reaches Sable's talk")
+    gl._close_tableau()
+    gl._convo = None
+    ready(gl)
     gl.player.x, gl.player.y = gl.scene._frontdesk_pos
     gl.scene.on_interact_fn(gl)                      # first press: sign
     check(gl.save.flag("register_signed"),
@@ -625,11 +636,24 @@ def main():
     check("lodge" not in _greet_text and "looking for" not in _greet_text,
           "kid: the greeting does not pre-know the case")
 
-    # --- 11. The flashlight: found, toggles, double-edged in the dark ---
+    # --- 11. The flashlight: the PI's own kit, toggles, double-edged ---
+    # (2026-07 light pass: it moved from the woodshed stump to the bedroom
+    # desk tableau, beside the pistol -- light is the game's spine, so the
+    # player's hand on it starts in the opening close-up.)
     gf = new_game()
-    fire(gf, "woodshed", "_flash_pos")
+    gf.load_scene_now("bedroom")
+    gf.save.set_flag("wake_up", True)
+    gf._open_desk_tableau()
+    check(any(lbl == "Take the flashlight"
+              for lbl, _cb in gf._tableau_options()),
+          "flashlight: offered on the bedroom desk tableau")
+    gf._tableau_take_flashlight()
     check(gf.player.inventory.has("flashlight"),
-          "flashlight: picked up in the woodshed")
+          "flashlight: taken from the desk close-up")
+    check(not any(lbl == "Take the flashlight"
+                  for lbl, _cb in gf._tableau_options()),
+          "flashlight: the taken light drops off the desk menu")
+    gf._close_tableau()
     # In a dark, non-safe scene the beam lights and burns the meter.
     gf.load_scene_now("well_passage")
     ready(gf)
@@ -650,12 +674,14 @@ def main():
         gf._tick_visibility(0.1)
     check(gf.visibility < off0,
           "flashlight: beam off, the meter bleeds back down")
-    # Cult-dark swallows the beam regardless of the switch.
+    # The deep no longer swallows the beam (2026-07 light pass: light
+    # works everywhere; the deep's dread is what light costs and
+    # attracts, not a dead switch).
     gf.load_scene_now("dark")
     ready(gf)
     gf.flashlight_on = True
-    check(not gf._flashlight_lit(),
-          "flashlight: cult-dark scenes force the beam off")
+    check(gf._flashlight_lit(),
+          "flashlight: the beam works in the deep (beam-off retired)")
 
     # --- 12. Purged items stay purged (no defs, no icons) ---
     from systems.items import ITEM_DEFS
@@ -873,6 +899,8 @@ def main():
     gsr.try_interact()
     check(gsr._tableau is not None and gsr._tableau["kind"] == "desk",
           "startroom: [E] at the desk opens the close-up examine tableau")
+    check(gsr.audio._room_tone == "desk_air",
+          "startroom: the desk close-up starts its room tone (the house)")
     _labels = [o[0] for o in gsr._tableau_options()]
     check("Take the pistol" in _labels and "Read the case file" in _labels
           and "Step back" in _labels,
@@ -1466,7 +1494,8 @@ def main():
     check(not gt.audio.enabled
           or all(k in gt.audio.sfx for k in
                  ("lean_in", "fan_air", "window_wind", "bulb_hum",
-                  "nave_air", "corn_hiss", "talk_breath", "altar_air")),
+                  "nave_air", "corn_hiss", "talk_breath", "altar_air",
+                  "desk_air")),
           "audio: the tableau cue set is built")
     check(gt.audio._room_tone == "fan_air",
           "audio: Sable's close-up starts its room tone (the fan)")

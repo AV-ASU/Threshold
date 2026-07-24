@@ -424,7 +424,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.save.data["spawn"] = "default"
         self.save.set_arg("visibility_at_sleep",
                           round(self.visibility * 0.5, 3))
-        self.save.write_disk()
+        if self.save.write_disk():
+            # The floppy toast: the one reliable "that just saved" tell
+            # (gated on the WRITE, so the icon never lies about a failed
+            # disk). Drawn beside the notebook scribble in render_mixin.
+            self._save_toast_t = SAVE_TOAST_DUR
 
     def _sleep_at_cot(self):
         """Rest in the spare-room cot. Saving moved to evidence pickup
@@ -456,6 +460,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
+        # Genset blackout timers (the power link, TODO #21): scene key ->
+        # seconds of blackout left. Cleared per run; _tick_power drains it.
+        self._genset_down = {}
         # The hide-check struggle (DESIGN.md §12): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None
@@ -561,6 +568,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._death_t = 0.0
         self._notebook_toast_t = 0.0   # case-book scribble toast timer
         self._notebook_toast_name = None   # the beat the scribble names
+        self._save_toast_t = 0.0       # floppy save-indicator toast timer
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -1884,7 +1892,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             if getattr(npc, "_inside", False):
                 continue        # homebody is behind their door
             d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
-            if d < bd and d < 40:
+            if d < bd and d < getattr(npc, "talk_reach", NPC_TALK_REACH):
                 bd = d; best = npc
         if best:
             self.audio.play("confirm", 0.6)
@@ -2846,8 +2854,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return False
         if self.scene.key not in DARK_SCENES:
             return False
-        if self.scene.key in CULT_DARK_SCENES:
-            return False
+        # (The old CULT_DARK beam-off is RETIRED, 2026-07 light pass:
+        # light works everywhere; the deep's dread is what light costs
+        # and attracts, not a dead switch.)
         return True
 
     def _toggle_flashlight(self):
@@ -2863,11 +2872,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.flashlight_on = not self.flashlight_on
         self.audio.play("blip_low" if self.flashlight_on else "bump", 0.6)
         if (self.flashlight_on and self.scene is not None
-                and self.scene.key in CULT_DARK_SCENES):
-            self.show_notice("The beam dies the moment it leaves the lens. "
-                             "The dark here is not the kind light fixes.",
-                             duration=2.6)
-        elif (self.flashlight_on and self.scene is not None
                 and self.scene.key not in DARK_SCENES):
             # A lit room: the beam does nothing here (it only bites in the
             # dark), so tell the player rather than click a dead switch.
@@ -2884,6 +2888,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_death(dt)
                 return
             self._notebook_toast_t = max(0.0, self._notebook_toast_t - dt)
+            self._save_toast_t = max(
+                0.0, getattr(self, "_save_toast_t", 0.0) - dt)
             self.update_player(dt, keys)
             # Any open modal (dialogue, inventory, notebook, text prompt)
             # FREEZES the world sim: NPC patrols, enemies, projectiles and
@@ -3081,6 +3087,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_moths(dt)
                 self._tick_moth_shed(dt)
                 self._tick_moth_seek(dt)
+                self._tick_power(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)

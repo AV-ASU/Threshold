@@ -131,7 +131,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
   - `systems/rot_mixin.py` — world rot/ashfall + the moth sim + the
-    hunting sheriff.
+    hunting sheriff + the genset power link (`_tick_power`).
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
   - `systems/tableau_mixin.py` — the **close-up examine tableaux**
@@ -270,6 +270,11 @@ it renders the procedural sprites to a labelled PNG strip.
     (`draw_moth(surf,x,y,t,spread,glow,seed,flap,husk)`): tented ragged
     wings at rest, a limb-knot snap at the flare, a crumpled husk on the
     ground. Sim + spawn live in `systems/rot_mixin.py` (below).
+  - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
+    from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel)`):
+    a seeded 3-5 part deal from a 17-part library, each part emerging
+    from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
+    this skin, behavior unchanged (DESIGN.md §1).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the ONLY camera; the
     pitch is locked, there is no flat/pitch-0 view):** `camera.py` (`Camera.project(wx,wy,wz)`,
@@ -330,7 +335,11 @@ it renders the procedural sprites to a labelled PNG strip.
     scene + a COOLED visibility (halved, so a reload never lands in a
     maxed-out death), atomic write to `~/.threshold` /
     `%APPDATA%\THRESHOLD` (`THRESHOLD_SAVE_DIR` overrides for tests), and
-    fires from `_evidence`'s canonical branch (`scenes/dialogue.py`).
+    fires from `_evidence`'s canonical branch (`scenes/dialogue.py`). A
+    successful write flashes the **floppy save toast** (`_draw_save_toast`
+    in `render_mixin`, a small 3.5in disk under the notebook scribble,
+    `SAVE_TOAST_DUR`): the one reliable "that just saved" tell, gated on
+    the write so it never lies about a failed disk.
     Continue reads it back and **wakes at the scene the last clue was
     found in** (its `default` spawn); a death or a quit costs everything
     since the last clue, never the run. The **cot** (`Game._sleep_at_cot`)
@@ -371,236 +380,59 @@ it renders the procedural sprites to a labelled PNG strip.
   `DialogueBox.show` does the routing. E answers the world first and only
   skims the caption when nothing else takes the press (last in
   `try_interact`). Replacing an active caption fires its pending
-  `on_complete` early rather than dropping it.
+  `on_complete` early rather than dropping it. **Conversation menus mark
+  SPENT questions** (2026-07): every finished exchange sets its asked flag;
+  re-askable spent rows render dimmed in both menu presentations, the
+  cursor opens on the first fresh row, and a tableau menu swallows confirms
+  for its first `CONVO_MENU_GUARD` beat so the E that skimmed the last
+  caption can never pick an option unread.
 
-## Threat model (the core mechanic, in `systems/threat_mixin.py`)
+## Threat model — the code map
 
-- **`visibility`** ∈ [0, 1] (`_tick_visibility`): Watchers + cultist gaze
-  raise it; hiding (`VIS_HIDE_BLEED`) and idle decay (`VIS_IDLE_DECAY`)
-  lower it. Tuning lives in the `VIS_*` constant block.
-- **Detection is GRADED (2026-07 stealth rework; `DESIGN.md §12`).**
-  Binary invisibility is gone. Each cultist carries a per-enemy
-  **suspicion** ∈ [0, 1] filled per tick by a detection **score** =
-  `los * distance_falloff * facing_cone * concealment`
-  (`systems/stealth.py` — one source for both cult machines,
-  `entities/npc.py` surface + `entities/enemy.py` underground; tuning in
-  the `SUS_*` config block). Only a FULL bar locks the CHASE; at
-  `SUS_NOTICE` the cultist stops and turns toward you (the rising "?"
-  tell, `_draw_sus_tell` in `render_mixin`). Walls/solid props still
-  occlude absolutely (`Scene.clear_sight_line`, wrap-aware; windows +
-  water do not block). **Two cover classes:** CONCEALMENT — corn: mobile
-  and leaky (`SUS_CONCEAL_CORN` scales score + gaze; a far cultist barely
-  reads you, a near one still fills, and a LOCKED chaser can grab you in
-  the stalks) — vs ENCLOSED — the `"under"`/`"in"` E-press hides: rooted,
-  zero score/gaze, but a SEARCHING cultist **sweeps and CHECKS** nearby
-  hides (`sweep_points`) → the timed **struggle**
-  (`_tick_struggle`/`_struggle_win` in `threat_mixin`, `STRUGGLE_*`
-  config): mash E to burst out (the checker staggers; a LOUD noise event
-  converges the room) or the window expires into the CAPTURED death.
-  `_tick_visibility` reads the concealment-weighted gaze; only an
-  enclosed hide keeps the strong `VIS_HIDE_BLEED` drain (corn gets idle
-  decay). **The stealth economy (2026-07 first human tuning pass,
-  DESIGN.md §12, stealth §13):** the speed ladder is King > sprint >
-  locked chase (`CULT_CHASE_MULT`) > walk > scout, sprint in LOS
-  multiplies the detection score (`SUS_SPRINT_MULT`), every grab site
-  reaches `CULT_GRAB_REACH`, cover entry is WORDLESS (the teach notices
-  are cut), and bare `:` cover tiles render as tall-grass tufts under
-  the tilt so concealment is visible. **River stones** (`STONE_*`,
-  item `stone`, right-click) are the placed-noise distraction verb:
-  they turn idle scouts, never divert a sighting-born search -- except
-  through a WINDOW (`GLASS_*`: the smash diverts even a search, and the
-  pane stays broken for the run, the `broken_windows` ledger) -- and a
-  stone dropped down the dead well rattles the whole square with no
-  bottom ever sounding (`WELL_ECHO_*`; stealth §14). The **hollow Sheriff**
-  (`_force_chase`) is **exempt** — it bypasses
-  suspicion and cover entirely. The roaming **King** honors `player.hidden`
-  (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);
-  he is relentless in re-finding you, not in seeing through cover. Guarded
-  end-to-end by `tests/stealth.py`. (The Pillar-2 "peek" verb is
-  deliberately deferred — free look under tilt already gives the
-  information function; revisit in the human-tuning pass.)
-- **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
-  flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
-  depths_threshing) stand in walkable `~` water. Wading a water tile
-  **halves the player's speed** (sprint can't clear it) and throws a
-  **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via
-  `Scene.emit_noise` kind `"splash"`) that searchers converge on, so
-  standing water is a routing risk, not just dressing. No new AI (rides
-  the existing `stealth.hear_noise` ear); the Brimley river is **excluded**
-  (not a WADE scene, keeps its own in/out rules). Water is authored per
-  scene with the `_flood` helper (`scenes/depths.py`); guarded by
-  `tests/stealth.py` §10.
-- **King in Yellow** (`systems/king_roam_mixin.py` `_tick_king_roam`, the
-  sole King tick): the roam **arms at `KING_GATE_EVIDENCE` (3)** — he
-  walks scene to scene, concrete in the player's room, abstract elsewhere,
-  and hunts on sight. Below the gate a maxed meter (`visibility >= 1.0`,
-  cult awake) musters a cultist wave at `_king_anchor` instead
-  (`_muster_reinforcements`). He catches at `KING_CATCH_DIST` (24 px)
-  **only once `_birth >= 1.0`** (the eruption is the grace window).
-  `KING_FREE_SCENES` (the safe rooms + dark/threshold) never host him.
-- **The evidence LADDER (2026-07)**: each surface beat flips a visible
-  world state. **Ev 0**: the town is only wrong — **no cult patrols
-  spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
-  far up the road, ONE omen moth pre-drifting his road
-  (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
-  cult wakes (patrols spawn). **Cultist spawn geography (2026-07):** a cult
-  scene keeps `Scene.cult_target` roamers filled (default `CULT_REGULARS` 2),
-  spawning them at the farthest unoccupied point in `Scene.cult_spawns` (a
-  hand-placed spawn-anchor pool) else the map corners — `_spawn_cultist(...,
-  from_pool=True)`. On the first awake tick after a load the scene is
-  PREFILLED straight to target (`_cult_prefilled`, reset per load) so it reads
-  populated the moment you enter; killed cultists then respawn one at a time on
-  the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
-  **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
-  evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
-  attention finds YOU — a single SEEKER moth materialises in the player's
-  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
-  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
-  (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
-  but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
-  (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
-  its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
-  NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
-  window to reach the lodge for the Invitation before the hunt begins
-  (decouples the spike from progression). Then his shedding starts and the
-  seeker slows to `MOTH_SEEK3_*` (5-6 min).
-- **The Moths** (the King's heralds; `MOTH_*` config, sim in
-  `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
-  `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
-  billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
-  every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
-  moths into whatever room HE occupies (`_roam_king["scene"]`), plus
-  the player-seeker drip above. They **PERSIST and STACK per room**
-  (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
-  fill fuller and fuller, and the field only thins when the player
-  **spends** one (`_moth_spent`: a pop, or a flare burning out). So a
-  room whipping with fast fliers means *he keeps coming back here*.
-  Enter one's `MOTH_RADIUS` and it KINDLES (`MOTH_KINDLE` window: back
-  out, axe it quietly up close, or spend a round from range); the
-  window expiring is the **FLARE**: a `MOTH_REACH` noise the cult
-  converges on, a visibility spike capped under the King, the dark
-  broken around it (`_tick_dark_cover`) — it burns `MOTH_FLARE_DUR`,
-  then **falls** as a charred husk that stays for the visit. First
-  flare files a case NOTE (never evidence). Guarded by
-  `tests/stealth.py` §9.
-- **The Watchers** (His gaze made manifest; the play-notes rework made them
-  **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
-  `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
-  in cover / a safe room), the domain **opens** a Watcher on a timer:
-  `WATCHER_GRACE` (6s) before the FIRST of a wave (and after you clear one),
-  then the **evidence-scaled** interval between the rest
-  (`_watcher_spawn_interval`: `WATCHER_SPAWN_BASE` shaved per further
-  evidence down to `WATCHER_SPAWN_MIN` — the King floods them deep). Each live
-  Watcher **HOLDS you while you are exposed and drives visibility UP** by
-  `WATCHER_GAZE`/s (the active climb — `_watcher_gaze`, the main visibility
-  driver below the cult), on top of a small residual `WATCHER_FLOOR` (summed,
-  capped `VIS_FLOOR_TOTAL_CAP` 0.92, just under the King). Ignore them and it
-  **snowballs** (more open, faster); it caps at `WATCHER_MAX` (5). You clear
-  them (`_dispel_watcher`): hold one in your **gaze** `WATCHER_GAZE_DISPEL` s
-  (its eyes go dark, then it dissolves), or the **axe** / a **round**.
-  **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
-  `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
-  `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
-  in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
-  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
-  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
-  the flashlight is the cover, and a Watcher caught in a pool / the beam
-  **BURNS** out (`WATCHER_LIGHT_BURN`). The **true refuges stay gaze-free**
-  (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
-  sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
-  high-visibility trigger is retired.) The gun and axe **share one weapon slot** (left-click
-  to use; switch which is equipped from the inventory screen).
-- **Killing locals**: the gun is *not* cult-only. A clean round drops any
-  living **local** instantly (lethal regardless of the evidence stagger
-  gate, which only ever protected the cult — see `Projectile._strike` /
-  `_BULLET_PHANTOM`). A local kill spikes `visibility`
-  (`LOCAL_KILL_VIS_SPIKE`, capped just under the King), pings the cult to
-  investigate the body, and leaves a corpse **for the rest of the run**
-  (`_kill_npc` returns keep → `_make_corpse`, and writes the kill to the
-  `dead_locals` ledger; `_apply_dead_locals` lays the body back down on
-  every re-entry — 2026-07 ruling: dead locals stay dead, flow §32; a
-  dead Vane also suppresses the hollow-turn `sheriff_hunt` spawn). **Cultists
-  leave bodies too** (override of the old "the cult reclaims its own"
-  sweep): NPC cultists keep via `_kill_npc` (no visibility spike — that's
-  local-only), and **enemy** cultists (well/depths, `kind="cultist"`)
-  synthesize a corpse NPC in `_kill_enemy` so the npc-corpse draw path
-  renders them. Cultist bodies are the one exception to persistence:
-  they last only the visit (patrols are dynamic spawns and respawn by
-  design).
-- **World rot** (`_apply_rot`, called from `load_scene_now`):
-  the world rots as a pure, monotonic function of evidence —
-  `_rot_stage()` = `min(3, evidence)`, **front-loaded** so the surface
-  peaks as the player commits underground at 3. Scenes rebuild each load,
-  so the pass is deterministic + additive (never accumulates). It (a)
-  scatters escalating rot decals (`_rot_decals`, seeded; surface +
-  safe-rooms-at-3 + underground, which is baseline-rotted from ev0), (b)
-  escalates the **ambient air** to match (`_apply_ambient_air`:
-  `drip`/`flies`/`whisper` + `rot_throb` by stage, same SAFE_SCENES-at-3
-  rule as the decals; DESIGN.md §11). **The people do NOT change**
-  (2026-07 rework, TODO #22c): the town stays visually ordinary end to
-  end. The old people-transform layer was CUT —
-  `_convert_local` / `_turned_local_dialogue` / `ROT_TURN_LINES` /
-  `_rot_locals` / `_spawn_counter_eater` and the `ROT_CONVERT` / `ROT_TURN`
-  config are gone (as was the earlier `_mutated` body-horror overlay —
-  `draw_infested_overlay` / `_draw_infested_portrait` / the `infested=True`
-  `show()` path — TODO #9; `sprites_wound.py` keeps only the shared
-  `_gold_in_wound` helper the corpse art still uses). What rots now is the
-  **investigator**: the four-tier conversation framing
-  (`_pi_tier` / `_pi_framing` / `_PI_WEATHER` in `scenes/dialogue.py`) keyed
-  to evidence (0 / 1-2 / 3 / 4+) gives each principal's opening framing the
-  PI's deepening interior weather while the NPC's own words never change —
-  the wrongness is the *place* and the man hearing it, never the people
-  (NARRATIVE §2/§6, DESIGN.md §9).
-  Sheriff Vane is exempt from the rot pass: his fall is
-  **player-driven (TODO #2a, 2026-07)** — a hidden despair/hope ledger
-  (`vane_despair`, the `VANE_*` config block; `_vane_ledger`/`_vane_share`
-  in `scenes/dialogue.py`) surfaced only as his MOOD (the convo's framing
-  line + the beats, never a number). Sharing a discovery with him is both
-  the hope currency and the TRUST that opens his blind-cultist thread; the
-  preacher's murder (+1) and the newspaper give (+2, his break lever) are
-  the despair acts; net `VANE_HOLLOW_AT` (3) **latches `vane_hollow`**
-  (once hollow, no return), and the **neglect override**
-  (`_vane_is_hollow`, rot_mixin) hollows him regardless at 3 evidence
-  with fewer than `VANE_MIN_INFORMED` (1) discoveries shared. Once
-  hollow, the next office load turns it into a **unique threat**:
-  `_spawn_hunting_sheriff`
-  (`sheriff_hollow` sprite) holds for an intro beat then force-chases
-  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`; the spawn is
-  skipped if the player already killed Vane (dead locals stay dead — his
-  body holds the office). Guarded by flow §17f. Player-killed
-  locals are drawn by `draw_npc_corpse` at **`mold=0`** (a clean fresh
-  kill) — the body persists across loads (the `dead_locals` ledger) but
-  no rot stage accumulates on it. (`draw_npc_corpse` still *accepts* a `mold` 0..3 and
-  the fold-claim art — `_CORPSE_CLAIM` for named resisters, `_CORPSE_ECHO`
-  compulsion echoes — survives in `sprites.py` as reusable art, just no
-  longer driven by an accumulating stage.)
-- A pursuer reaching the player triggers the **death** sequence
-  (`_trigger_death(kind)` → `_tick_death`). **THE TALK (2026-07): the
-  FIRST cult grab of a run is a warning, not a capture** — `_cult_talk`
-  (threat_mixin) plays the courteous warning as the **grip close-up
-  tableau** (`_open_talk_tableau`, art `ui/tableau.draw_talk_tableau`;
-  one reach-for-the-revolver choice if the PI carries it, Escape pages
-  instead of aborting), stands the room down, grants a short re-grab
-  grace, and files a NOTE (flag `cult_talk_given`; gates every grab
-  site, struggle losses included). After the Talk, the
-  cult grab is **TWO-TOUCH** (play-notes): the FIRST grab of an encounter
-  shoves the PI free (`_cult_shrug_off` — grabbers stagger `STRUGGLE_STUN`,
-  he tears loose on a `STRUGGLE_BURST_T` burst with `CULT_SHRUG_INVULN`
-  grace); only a SECOND grab before he reaches a `SAFE_SCENE` is the
-  capture (`_cult_touch_count`, reset on a safe-scene load, no time decay,
-  so a swarm or a corner still takes you). The cult CAPTURES, it does not
-  kill. Then `kind="cultist"` shows the **CAPTURED** card (taken alive for
-  the hive); `kind="sheriff"` the
-  **TAKEN INTO CUSTODY** card (the hollow lawman); `kind="king"` plays the
-  **Carcosa** mask-furnace cutscene. All end the run and return to title.
-- **The calling-out (2026-07):** Mara kneels among the Sign Chamber
-  congregation (`works_sign`, set-piece NPCs, no cult tag). First entry
-  stages it (`_call_out` trigger + `_sign_update` in `scenes/well.py`):
-  the kneelers rise, one says her name, she walks to the player and her
-  canon-guarded exchange fires (Mara is **proof, not evidence** since the
-  TODO #22 rework: the calling-out still fires but no longer counts toward
-  the gate; the deep hive `dark` keeps a nameless congregation). Flow §28b
-  guards it.
+**The full current-state description of every threat system lives in
+`DESIGN.md`** (§1 the model + the King + the evidence ladder + the Moths +
+the Watchers + WADE, §2 world rot + Vane's fall, §12 graded stealth). This
+section is the CODE MAP only — where each system lives:
+
+- **visibility** [0,1] — `threat_mixin._tick_visibility`; `VIS_*` config.
+- **Graded detection / suspicion** — `systems/stealth.py`, ONE source for
+  both cult machines (`entities/npc.py` surface `_cult_tick`,
+  `entities/enemy.py` underground); `SUS_*` config; the struggle
+  `_tick_struggle`/`_struggle_win` + `STRUGGLE_*`; stones / glass / the
+  well `STONE_*` / `GLASS_*` / `WELL_ECHO_*`; cult-liveness beats
+  `stealth.sync_pause`/`handoff_step` (`CULT_SYNC_*`/`CULT_HANDOFF_*`).
+  Guarded end-to-end by `tests/stealth.py`.
+- **Deep-water WADE** — `Game._wading`, `WADE_*` config, the `_flood`
+  helper (`scenes/depths.py`); stealth §10.
+- **King roam** — `king_roam_mixin._tick_king_roam` (the SOLE King tick):
+  arms at `KING_GATE_EVIDENCE` (3), catch birth-gated at
+  `KING_CATCH_DIST`, `KING_FREE_SCENES` never host him; below the gate a
+  maxed meter musters cultists (`_muster_reinforcements`). `KING_*` config.
+- **Evidence ladder** (ev0 quiet town → ev1 cult wakes → ev2 he turns his
+  head → ev3 he walks, after `KING_ARM_GRACE`) — gates in
+  `_ensure_cultists` + `_tick_king_roam`; spawn geography
+  `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
+  (threat_mixin; prefill `_cult_prefilled`, top-up
+  `CULT_TOPUP_INTERVAL`).
+- **Moths** — sim in `rot_mixin` (`_tick_moth_shed`/`_tick_moth_seek`/
+  `_spawn_moths`/`_tick_moths`, the per-room `_moth_field`), art
+  `rendering/moth.py draw_moth`; `MOTH_*` config; stealth §9.
+- **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
+  (threat_mixin); `WATCHER_*` config; light pools + the beam BURN them
+  (`WATCHER_LIGHT_BURN`); stealth §11.
+- **Killing locals / corpses** — `_kill_npc` → `_make_corpse` + the
+  `dead_locals` ledger, laid back down by `_apply_dead_locals` on every
+  load; enemy cultists synthesize a corpse in `_kill_enemy`. Flow
+  §27/§32.
+- **World rot** — `rot_mixin._apply_rot` + `_apply_ambient_air` (stage =
+  `min(3, evidence)`); the PI's four-tier register
+  `_pi_tier`/`_pi_framing`/`_PI_WEATHER` (`scenes/dialogue.py`); Vane's
+  ledger `VANE_*` + `_vane_ledger`/`_vane_share`/`_vane_is_hollow` +
+  `_spawn_hunting_sheriff`; flow §17f.
+- **Death / capture** — `_trigger_death(kind)` → `_tick_death`; THE TALK
+  `_cult_talk` → `_open_talk_tableau` + two-touch `_cult_shrug_off`
+  (threat_mixin); the calling-out `scenes/well.py _call_out`/
+  `_sign_update`; flow §28b.
 
 ## Conventions & gotchas
 
@@ -786,6 +618,9 @@ it renders the procedural sprites to a labelled PNG strip.
   cast on the floor UNDER the 3D source, pools blend ADDITIVELY (they combine
   + lift the objects they lie on), and solid casters throw SUBTRACTIVE cast
   shadows away from each source (DESIGN §6, the 3D light-interaction model).
+  An optional per-deco `cone=(dir_x, dir_y, half_deg)` kwarg turns the pool
+  into a directional FAN in all three layers at once (visible draw,
+  `Scene.lit_at` gate, audit overlay).
   Cold electric (`yard_light`) vs warm fire is a colour choice in that table.
   **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
   MAN-MADE things** (they read as flat cards that swivel to face the camera
@@ -867,7 +702,10 @@ it renders the procedural sprites to a labelled PNG strip.
      lockstep (no perfect straight prop rows); decorate more than just the one north wall
      face; beds/furniture sit in the room's back, not across the door. **VIEW EVERY ROOM
      FROM ALL FOUR N/E/S/W FACINGS before calling it done** (`tools/capture_world.py` per
-     facing) -- most of these hide on the one facing you happened to check.
+     facing) -- most of these hide on the one facing you happened to check. **Check E/W
+     FIRST** (2026-07 playtest): the art was habitually authored for the N read, so the
+     rotated facings are where floors go stripey, rugs stop reading, and building shells
+     go blank.
   9. **Threat pacing.** Speed ratios are intentional (player sprint below the King so a
      locked apex can't be outrun but CAN be hidden from); pursuit rules, apex spawn
      placement (never on the player's exit tile), and monster visibility/design must

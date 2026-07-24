@@ -195,9 +195,7 @@ def bedroom_on_enter(game, scene):
     # fires once per session. `_opening_t` ticks up in
     # bedroom_on_update; the slots check thresholds.
     scene._opening_t = 0.0
-    scene._opening_slots = {
-        "wake_notice_armed":   True,    # fires on first step
-    }
+    scene._opening_slots = {}
     scene._spawn_pos = scene.spawns.get("default", (0, 0))
     # First-session onboarding: the only place the game teaches its
     # controls. A gentle one-liner shown before the player moves; the
@@ -221,18 +219,9 @@ def bedroom_on_update(game, scene, dt):
     p = game.player
     if p is None:
         return
-    # First-movement gate. The wake notice + the watcher manifest
-    # only after the player has actually input movement, so the
-    # opening line lands as the character noticing what the
-    # player just noticed (not a frame-one overlay).
-    sx, sy = scene._spawn_pos
-    moved = (abs(p.x - sx) + abs(p.y - sy)) > 6
-    if slots["wake_notice_armed"] and moved:
-        slots["wake_notice_armed"] = False
-        game.show_notice(
-            "You wake up.",
-            duration=5.0,
-        )
+    # (The old "You wake up." first-step notice was CUT, 2026-07 quality
+    # sprint: the room, the light, and the muffled wake audio already say
+    # it; the narrator stating it was noise.)
     # Door-stuck recoil: when begin_transition rejects the first
     # attempt to leave, it sets `_door_stuck_recoil` on the
     # scene. We dip the candle once in response so the player
@@ -351,6 +340,12 @@ def build_lodge():
     # first crossing.
     sc._hatch_pos = (3 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._hatch_pos[0], sc._hatch_pos[1], 40)
+    # The hatch is a real raised VOLUME under the tilt (2026-07 quality
+    # sprint: it rendered flat -- a raw 'L' object tile, playtest error
+    # class 7). Draw-only: 'L' keeps the walk-over exit + the gate above;
+    # house_on_enter mirrors the padlock/open state onto the lid.
+    sc.add_decoration(Decoration(sc._hatch_pos[0], sc._hatch_pos[1],
+                                 "cellar_hatch", padlock=True))
 
     def _house_gate(game, ch):
         if ch != "L":
@@ -371,27 +366,71 @@ def build_lodge():
     # props below sit on top of it.
     sc.add_decoration(Decoration(11 * TILE + 24, 7 * TILE + 12, "rug",
                                  w=140, h=92, color=(70, 58, 40), seed=23))
-    # Sized darkwood kitchen furniture (decorations over invisible
-    # collision tiles): a 2-tile dining table + two chairs, the range.
-    # The counter bar/cabinets stay as object tiles.
-    sc.add_furniture("table", [(2, 3), (3, 3)], w=58, h=40)
-    sc.add_furniture("chair", [(2, 4)], w=22, h=28)
-    sc.add_furniture("chair", [(3, 4)], w=22, h=28)
+    # THE DINING SET (interiors pilot, TODO #24, ensemble 2): table + two
+    # tucked chairs + the ONE set place composed as one object -- Sable
+    # keeps the room ready for the full house that no longer comes; the
+    # second seat's place is bare wood with the dust-shadow of a setting
+    # that once lay there. Same 'x'-stamp collision as the kitchen wall.
+    sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 16, "dining_set"))
+    # (The bar_dressing ensemble left with the sideways desk; the draw
+    # stays in the library for a real bar elsewhere.)
+    # LIGHT FIXTURES, placed by COVERAGE not wall habit (2026-07 ruling:
+    # cold electric only, distributed across THREE walls -- reception N,
+    # kitchen W, sitting-area E -- so their pools meet mid-room and the
+    # dark gaps are designed, not accidental; tools/light_audit.py shows
+    # both radii + the dark map).
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(1 * TILE + 8, 4 * TILE, "wall_lamp"))
+    sc.add_decoration(Decoration(16 * TILE + 24, 6 * TILE, "wall_lamp"))
     # Against the west wall -- the oven door faces east, into the kitchen.
-    sc.add_furniture("stove", [(2, 5)], w=30, h=40, wall="W")
+    # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
+    # the north-wall ham composed into ONE ensemble against the west
+    # wall -- cookstove + pipe past the eave, counter run + pot shelf,
+    # the ham on the shelf hook, a wood crate under. Collision is the
+    # car pattern: a SOLID_PROPS volume over raw 'x' see-over stamps.
+    sc.add_decoration(Decoration(30, 5 * TILE + 16, "kitchen_wall"))
+    _objs = [list(r) for r in sc.objects] if isinstance(sc.objects[0], str) \
+        else sc.objects
+    for _ky in (3, 4, 5, 6):
+        _objs[_ky][1] = "x"
+    _objs[5][2] = "."      # the old map's raw stove tile, now open floor
+    for _kx in (2, 3):     # the dining set: table row + chair row
+        _objs[3][_kx] = "x"
+        _objs[4][_kx] = "x"
+    # The SIDEWAYS DESK is CUT (2026-07 maintainer ruling): the old col-7
+    # counter run read as a second desk floating mid-room. The reception
+    # counter alone is the front of house; the floor it stood on opens up.
+    for _ky in (3, 4, 5, 6):
+        _objs[_ky][7] = "."
+    sc.objects = _objs
     # The sitting-room FIREPLACE: a real stone furniture volume (2026-07
     # audit fix: it was a raw 'f' object tile, which no tilt set draws, so
     # the hearth was an invisible collision block; the candle "on the
     # fireplace" floated over bare floor).
-    sc.add_furniture("fireplace", [(12, 4)], w=34, h=30)
+    # THE HEARTH (ensemble 4): the freestanding fireplace composed as a
+    # real masonry object -- firebox + chimney breast past the eave,
+    # mantle, tools, log basket, the antlers rehung on the breast. 'X'
+    # stamp: a chimney column blocks the body AND the sight line.
+    sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 16,
+                                 "hearth_mass"))
+    _o2 = [list(r) for r in sc.objects] if isinstance(sc.objects[0], str) \
+        else sc.objects
+    _o2[4][12] = "X"
+    sc.objects = _o2
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
-    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 22, "meat"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 14, "candle"))  # on table
+    # (The hung meat moved into the kitchen-wall ensemble, 2026-07.)
+    # The table candle stays a LIVE deco (it flickers; the one moving
+    # thing on a still table, per the #24 animate-where-earned rule),
+    # seated on the ensemble's tabletop via the z kwarg.
+    sc.add_decoration(Decoration(3 * TILE, 3 * TILE + 10, "candle", z=16))
     # (The old west-wall banner was CUT, 2026-07 audit: E/W wall faces are
     # edge-on to the tilt, so it was invisible from every reachable angle.)
-    sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
+    # The hearth candle lives ON the mantle now (live flicker, seated at
+    # the shelf's height; the one moving thing on the masonry).
+    sc.add_decoration(Decoration(12 * TILE + 20, 4 * TILE + 26, "candle",
+                                 z=26))
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
@@ -409,7 +448,8 @@ def build_lodge():
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
     sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 8, "place_setting"))
+    # (The loose place_setting deco was absorbed into the dining-set
+    # ensemble, 2026-07: the one set place is drawn in the table's plane.)
     sc.add_decoration(Decoration(13 * TILE + 16, 6 * TILE + 16, "overturned_chair"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "small_chair"))
     sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16, "small_chair"))
@@ -449,8 +489,8 @@ def build_lodge():
     # Trophy mounts flush on the NORTH wall (row 0), facing down into the
     # room -- the buck replaces the old generic photo; a walleye on the
     # kitchen-side wall. (The "wrong" taxidermy lives underground now.)
-    sc.add_decoration(Decoration(15 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
+    # (The buck rehung onto the hearth's chimney breast, 2026-07 -- the
+    # trophy lives where a lodge would actually hang it.)
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24, "mounted_fish"))
     sc.add_decoration(Decoration(2 * TILE + 14, 6 * TILE + 2, "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
@@ -500,6 +540,12 @@ def house_on_enter(game, scene):
                   if getattr(n, "tag", None) not in
                   ("host_innkeeper",)]
     scene._key_hook_pos = None
+    # Mirror the padlock state onto the hatch lid: the unlock notice says
+    # "the hatch swings up", so the world shows it swung up.
+    for d in scene.decorations:
+        if d.kind == "cellar_hatch" and game.save.flag("cellar_unlocked"):
+            d.kwargs["open"] = True
+            d.kwargs["padlock"] = False
     # The trap-keeper at his post: standing BEHIND the front-desk
     # register (north of it, against the wall), facing south into the
     # room. The desk volume sits between him and the player, so he reads
@@ -515,6 +561,11 @@ def house_on_enter(game, scene):
                movement="watch", speed=0.6, radius=320)
     host.facing = (0, 1)
     host.tag = "host_innkeeper"
+    # The desk between you outranges the default talk reach: pressed flat
+    # against the counter the PI still stands ~48px from Sable, so E fell
+    # through to the register beat and he could never be spoken to from
+    # the front (2026-07 quality sprint). A counter seat gets a long arm.
+    host.talk_reach = 56
     # He carries the way down. Kill him before he hands over the
     # Invitation and it drops with the body (dialogue.sable_on_death);
     # if he already gave it, there is nothing to loot.
@@ -819,18 +870,27 @@ def build_clerk_room():
     # priority and made the only "the Clerk is one of them" clue
     # unreachable. (clerk_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
-        (1 * TILE + 24, 6 * TILE + 24, "under"),   # the bed's walkable lip
+        (1 * TILE + 24, 3 * TILE + 8, "under"),    # the bed's walkable lip
     ]
     # [E] cue for the robe closet (the tell). The dresser is bare and has
     # no handler in clerk_room_interact, so it gets no [E] prompt (C14a).
     sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)
 
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
-    # -> _closet_pos), a low dresser (bare -> _dresser_pos).
-    sc.add_furniture("bed", [(2, 6), (3, 6), (2, 7), (3, 7)], w=56, h=56)
-    sc.add_furniture("nightstand", [(4, 6)], w=26, h=30)   # bedside stand
+    # -> _closet_pos), a low dresser (bare -> _dresser_pos). The bed sits
+    # in the room's BACK, headboard under the dormer window (2026-07
+    # quality sprint; it used to straddle the door column at the room's
+    # front -- playtest error class 8), and the south half is dressed so
+    # the loft doesn't read as a bare box.
+    sc.add_furniture("bed", [(1, 1), (2, 1), (1, 2), (2, 2)], w=56, h=56)
+    sc.add_furniture("nightstand", [(3, 1)], w=26, h=30)   # bedside stand
     sc.add_furniture("wardrobe", [(10, 2), (10, 3)], w=26, h=54)
     sc.add_furniture("table", [(5, 7), (6, 7)], w=54, h=32)
+    sc.add_furniture("chair", [(6, 6)], w=22, h=28)        # his morning seat
+    # A worn rug mid-room, off-grid, under nothing -- the open floor the
+    # old layout left bare now reads furnished.
+    sc.add_decoration(Decoration(4 * TILE + 8, 5 * TILE + 24, "rug",
+                                 w=110, h=70, color=(74, 48, 44), seed=23))
 
     # Wall items mounted on the NORTH wall (row 0). Lodge dressing: a
     # mounted buck (replaces the old generic photo) and a trophy
@@ -846,8 +906,9 @@ def build_clerk_room():
     sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 2,
                                  "kerosene_lamp"))
     # The Clerk's washstand against the west wall -- he keeps himself
-    # presentable for the desk.
-    sc.add_decoration(Decoration(1 * TILE + 18, 2 * TILE + 16, "washstand"))
+    # presentable for the desk. (South of the bed since the 2026-07
+    # layout fix moved the bed into the room's back corner.)
+    sc.add_decoration(Decoration(1 * TILE + 18, 4 * TILE + 16, "washstand"))
     for i in range(4):
         sc.add_decoration(Decoration(40 + i * 60,
                                      200 + (i % 2) * 40, "mote"))

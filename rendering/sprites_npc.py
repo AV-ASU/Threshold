@@ -637,14 +637,26 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.line(surf, (132, 98, 98), (x + s, hcy + 6), (x + 3 * s, hcy + 6), 1)  # smile
         else:
             _grim_body(surf, x, y, vest, view=view)
-            pygame.draw.rect(surf, (198, 196, 194), (x - 4, y - 2, 8, 16))     # wide shirt-front
-            pygame.draw.line(surf, (22, 20, 25), (x - 4, y - 2), (x - 3, y + 1), 2)  # open-coat lapels
-            pygame.draw.line(surf, (22, 20, 25), (x + 3, y - 2), (x + 2, y + 1), 2)
+            # The shirt is a tapering V under the coat, not a full white
+            # column (2026-07 playtest: head + wide shirt merged into one
+            # pale blob behind the desk; the face must own the white).
+            pygame.draw.polygon(surf, (188, 186, 184), [
+                (x - 4, y - 2), (x + 4, y - 2), (x + 2, y + 8), (x - 2, y + 8)])
+            pygame.draw.line(surf, (22, 20, 25), (x - 4, y - 2), (x - 2, y + 8), 2)  # coat lapels
+            pygame.draw.line(surf, (22, 20, 25), (x + 4, y - 2), (x + 2, y + 8), 2)
             pygame.draw.rect(surf, (120, 30, 36), (x - 1, y - 1, 2, 6))        # short red tie
             pygame.draw.rect(surf, (94, 22, 28), (x - 1, y - 1, 2, 2))         # the knot
+            # the host's watch chain, a gold glint across the vest
+            pygame.draw.line(surf, (188, 160, 92), (x + 2, y + 9), (x + 5, y + 7), 1)
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink,
                         mouth=False, brows="thin", view=view)
             pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 7))       # neat dark hair
+            pygame.draw.line(surf, part, (x + 1, y - 20), (x + 1, y - 16), 1)  # the part
+            pygame.draw.line(surf, grey, (x - HN + 1, y - 16), (x - HN + 1, y - 13), 1)  # grey temples
+            pygame.draw.line(surf, grey, (x + HN - 2, y - 16), (x + HN - 2, y - 13), 1)
+            # the level smile that never reaches the eyes (the sides had
+            # it; the front -- the desk view -- was blank-mouthed)
+            pygame.draw.line(surf, (132, 98, 98), (x - 2, y - 9), (x + 2, y - 9), 1)
             pygame.draw.line(surf, part, (x + 2, y - 20), (x + 2, y - 15), 1)  # side part
             pygame.draw.line(surf, grey, (x - HN + 1, y - 16), (x - HN + 1, y - 15), 1)  # grey temples
             pygame.draw.line(surf, grey, (x + HN - 2, y - 16), (x + HN - 2, y - 15), 1)
@@ -867,6 +879,15 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         surf.blit(layer, (ox - sway * 3 - 1, oy - 2))
         layer.set_alpha(int(230 * phase))
         surf.blit(layer, (ox, oy))
+    elif kind == "amalgam":
+        # A Watcher-family shadow assembled from parts, each emerging from
+        # its own cut (rendering/amalgam.py; DESIGN.md §1). `seed` picks the
+        # assembly, `birth` drives the staggered build-out on manifest, and
+        # `gait` carries the gaze-dispel fraction (the peeling) -- both are
+        # presentation-only attrs the watcher ticks maintain.
+        from rendering.amalgam import draw_amalgam_sprite
+        draw_amalgam_sprite(surf, x, y, seed=seed, gaze=gaze,
+                            birth=birth, dispel=gait)
     else:
         # generic placeholder
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))

@@ -34,6 +34,14 @@ class DecoLightingMixin:
         pygame.draw.ellipse(surf, (255, 236, 175),
                             (bx - 1, int(y - 13 - fh * 0.45), 3, int(fh * 0.45)))     # core
 
+    def _draw_dark_pool(self, surf, x, y):
+        # The REVERSE LIGHT (2026-07, maintainer): a placed dark source.
+        # Deliberately draws NOTHING -- it has no texture because it is
+        # only darkness; its whole existence is the SUB pass in the
+        # lightmap (systems/render_mixin._draw_dark) and its ring in
+        # tools/light_audit.py.
+        pass
+
     def _draw_wall_lamp(self, surf, x, y):
         # A period interior electric wall fixture: conduit + bracket + frosted
         # shade + a STEADY warm bulb (no flame). The 1994 indoor twin of the

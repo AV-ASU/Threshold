@@ -451,7 +451,11 @@ def build_arrival_road():
     for cx in (car_tx - 1, car_tx):                   # footprint runs N-S now
         for cy in (car_ty - 1, car_ty, car_ty + 1):   # (the car points up-road)
             if 0 <= cx < sc.w and 0 <= cy < sc.h:
-                objs[cy][cx] = "X"
+                # see-over solid ('x', the counter precedent): a sedan is
+                # waist-high, so it blocks the body but not the sight cone
+                # (the tall 'X' carved a hard black wedge behind the car,
+                # 2026-07 quality sprint).
+                objs[cy][cx] = "x"
     sc.objects = objs
 
     def _road_interact(game):
@@ -543,8 +547,8 @@ def build_woodshed():
     """The Arcadia woodshed -- in the SW of the Lodge yard, west of the
     Lodge (it used to sit clear across town; consolidated here so the tools
     are where you'd expect). Single room: splitting axe on the wall, a coil
-    of old chain on the workbench, the flashlight on a chopping stump in
-    the centre. Locked from outside; the key is in the Lodge cellar."""
+    of old chain on the workbench. Locked from outside; the key is in the
+    Lodge cellar."""
     floor = ["=" * 12 for _ in range(9)]
     objects = [
         "WWWWWWWWWWWW",   # 0
@@ -566,10 +570,10 @@ def build_woodshed():
 
     # The splitting axe hangs in the back tool nook -- behind the partition,
     # so the weapon is an indoor blind spot you have to round the wall for.
+    # (The flashlight LEFT the woodshed in the 2026-07 light pass: it is
+    # the PI's own kit on the bedroom desk now, beside the pistol.)
     axe_pos    = (8 * TILE + 16, 1 * TILE + 16)
-    flash_pos  = (4 * TILE + 16, 5 * TILE + 16)   # on the chopping stump
     sc._axe_pos  = axe_pos
-    sc._flash_pos = flash_pos
     # Sized workbench.
     sc.add_furniture("table", [(2, 2)], w=54, h=36)
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
@@ -598,28 +602,15 @@ def build_woodshed():
                 game.show_notice("Splitting axe.")
                 game.scene.clear_ground_marker(*axe_pos)
                 return
-        # Flashlight left on the chopping stump in the centre.
-        if abs(px - flash_pos[0]) < 36 and abs(py - flash_pos[1]) < 36:
-            if not game.save.flag("flashlight_taken"):
-                game.save.set_flag("flashlight_taken", True)
-                game.player.inventory.add("flashlight", 1)
-                game.audio.play("pickup_rare", 0.7)
-                game.show_notice("A flashlight. Press [F] in the dark, "
-                                 "but light draws the eye.")
-                game.scene.clear_ground_marker(*flash_pos)
-                return
     sc.on_interact_fn = _woodshed_interact
 
     def _woodshed_on_enter(game, scene):
-        # The axe and flashlight had no world object AND no [E] cue --
-        # critical items you'd walk right past. Glimmer-mark each one
-        # still on offer and register it for the [E] prompt; drop the
-        # marker once it's been taken. (The rope is CUT: the descent is
-        # the rite now, not a climb.)
-        for pos, flag in ((axe_pos, "axe_taken"),
-                          (flash_pos, "flashlight_taken")):
-            if not game.save.flag(flag):
-                scene.add_decoration(Decoration(pos[0], pos[1], "item_drop"))
-                scene.add_interactable(pos[0], pos[1], 36)
+        # The axe had no world object AND no [E] cue -- a critical item
+        # you'd walk right past. Glimmer-mark it while still on offer and
+        # register it for the [E] prompt; drop the marker once taken.
+        if not game.save.flag("axe_taken"):
+            scene.add_decoration(Decoration(axe_pos[0], axe_pos[1],
+                                            "item_drop"))
+            scene.add_interactable(axe_pos[0], axe_pos[1], 36)
     sc.on_enter_fn = _woodshed_on_enter
     return sc

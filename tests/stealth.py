@@ -917,7 +917,10 @@ def main():
     tick(g, 30)
     g.save.set_arg("evidence", [{"name": f"w{i}"}
                                 for i in range(WATCHER_WAKE_EV)])
-    dark_x, dark_y = 2 * TILE + 16, 9 * TILE + 16     # far from every fixture
+    # A mech-dark spot on the OPEN shop floor (the spawn rule needs a dark
+    # spot WITH line of sight to the player, so the exposure test stands
+    # in the open, not the sealed pantry).
+    dark_x, dark_y = 6 * TILE + 16, 5 * TILE + 16
     assert not g.scene.lit_at(dark_x, dark_y)
     for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
         g.player.x, g.player.y = dark_x, dark_y
@@ -927,9 +930,24 @@ def main():
             break
     check(bool(g._watchers),
           "watchers: standing in the dark of a non-refuge interior opens one")
+    # The spawn rules themselves (maintainer, 2026-07): every opened
+    # Watcher stands in the DARK with LINE OF SIGHT to the player...
+    check(all((not g.scene.lit_at(w.x, w.y))
+              and g.scene.clear_sight_line(w.x, w.y, dark_x, dark_y)
+              for w in g._watchers),
+          "watchers: every spawn is dark AND holds line of sight")
+    # ...and the sealed pantry (shut doors, no dark spot in view) can
+    # open NOTHING: no unanswerable accumulation, and a fully lit or
+    # sealed room is secured.
+    g.player.x, g.player.y = 2 * TILE + 16, 1 * TILE + 16
+    n0 = len(g._watchers)
+    g._spawn_watcher()
+    check(len(g._watchers) == n0,
+          "watchers: no dark spot with sight of you = nothing opens "
+          "(the sealed pantry)")
     # Step into a light POOL: exposure drops, so the wave stops driving
     # visibility (the hold releases).
-    lit_x, lit_y = 13 * TILE + 16, 8 * TILE + 16       # under the wall_lamp
+    lit_x, lit_y = 12 * TILE + 16, 9 * TILE + 16   # inside the hooded fan
     assert g.scene.lit_at(lit_x, lit_y)
     g.player.x, g.player.y = lit_x, lit_y
     g.player.hidden = None
@@ -1416,6 +1434,48 @@ def main():
     check(_terr._wall_style(load_scene("well_passage"))
           is _terr._WALL_STYLES["rock"],
           "rock: the shipped mine (well_passage) renders the rock style")
+
+    # ---- §17: the genset power link (TODO #21 first slice) --------------
+    # A blackout kills the ELECTRIC fixtures in every layer at once: the
+    # mechanical lit_at gate goes dark at the lamp, fire keeps burning,
+    # and power comes back on its own when the timer drains.
+    print("[17] power link: blackout kills electric light, fire survives, "
+          "power returns")
+    g = new_game()
+    g.load_scene_now("shop")
+    tick(g, 3)
+    sc = g.scene
+    lamp = next(d for d in sc.decorations if d.kind == "drop_bulb")
+    wlamp = next(d for d in sc.decorations if d.kind == "wall_lamp")
+    cand = next(d for d in sc.decorations if d.kind == "candle")
+    # a spot only the hooded east wall_lamp reaches (inside its west fan,
+    # clear of the counter's kerosene flame and the stockroom candle)
+    fan_x, fan_y = wlamp.x - 40, wlamp.y
+    check(sc.power_on and sc.lit_at(fan_x, fan_y),
+          "power on: the wall lamp lights its fan")
+    g._genset_down[sc.key] = 5.0
+    tick(g, 2)
+    check(not sc.power_on, "blackout: the scene's power_on drops")
+    check(not sc.lit_at(fan_x, fan_y),
+          "blackout: the electric lamp's fan goes mechanically dark")
+    check(sc.lit_at(lamp.x, lamp.y),
+          "blackout: the counter spot stays lit by the kerosene FLAME "
+          "(fire is exempt)")
+    check(sc.lit_at(cand.x, cand.y),
+          "blackout: the stockroom candle still lights (fire is exempt)")
+    check(getattr(lamp, "_powered", True) is False,
+          "blackout: the fixture art reads unpowered (_powered False)")
+    g._genset_down[sc.key] = 0.5
+    tick(g, 60)
+    check(sc.power_on and sc.lit_at(fan_x, fan_y),
+          "recovery: the timer drains and the lamp lights again")
+    # A BROKEN fixture (the 1-2 per room rule) never lights, even with
+    # the genset running: the shop's dead mid-floor pendant.
+    check(any(getattr(d, "kwargs", {}).get("broken")
+              for d in sc.decorations if d.kind == "drop_bulb"),
+          "broken: the shop carries its burned-out pendants")
+    check(sc.power_on and not sc.lit_at(12 * TILE + 16, 6 * TILE + 16),
+          "broken: a burned-out pendant's spot stays dark on full power")
 
     print()
     if FAILS:

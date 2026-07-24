@@ -122,10 +122,32 @@ MOVE_SMOOTH_TAU = 0.12
 # cycling twice as fast as the ground covered.
 WALK_ANIM_RATE = 10.0
 
+# NPC talk reach (px, player centre to npc centre). Per-NPC override via
+# npc.talk_reach: a counter seat (Sable's desk, Hettie's till) needs a
+# longer arm than the default or the furniture between you outranges the
+# talk and E falls through to the prop behind them.
+NPC_TALK_REACH = 40
+
+# Conversation-menu input guard (s): the E that skims a talk's last
+# caption opens the question menu in the SAME press chain, so a held or
+# spammed E used to pick an option the player never read. Confirms are
+# swallowed for this long after a menu opens (arrows still move).
+CONVO_MENU_GUARD = 0.30
+
+# The save toast (s): a small floppy-disk glyph beside the notebook
+# scribble whenever evidence pickup writes the disk slot (the clue IS the
+# checkpoint; the icon is the one reliable "that just saved" tell).
+SAVE_TOAST_DUR = 2.2
+
 # Oblique-camera tilt (DESIGN.md §10). The tilt is the ONLY camera; the
 # pitch is locked to TILT_PITCH_DEG for the life of the Game. No flat view.
 TILT_PITCH_DEG = 55
-TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
+TILT_ZOOM = 1.10             # camera scale at full tilt (1.0 = sprite-native)
+# 2026-07 scale pass: 0.72 zoomed the WORLD out while sprites stayed
+# fixed-size, so rooms/doors/buildings read cramped against the bodies (the
+# maintainer's "world feels too small compared to the player"). 1.10 restores
+# sprite-native proportions and tightens the visible window (less info on
+# screen = more dread); the sight cone (360 world px) still fits the frame.
 TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 # Blind-spot fog: thin cold gray veiling the AREA outside the forward sight
 # cone under tilt (the cone itself is punched clear). Low alpha so off-cone
@@ -133,7 +155,8 @@ TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 SIGHT_FOG_ALPHA = 96
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
-TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
+TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20,
+             "amalgam": 20}
 # The world projection is orthographic, so the King -- the apex -- gets a
 # deliberate perspective-style depth scale under tilt: he LOOMS larger as he
 # closes the view-depth gap toward the camera and shrinks as he hangs back, so a
@@ -190,6 +213,9 @@ MOTH_FAST_MULT = 3.0         # the King's shed moths fly this much faster
 MOTH_REACH = 620.0           # cult hearing reach of the flare noise
 MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
 MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
+BLACKOUT_DUR = 45.0          # a moth flare kills the room's genset this long
+                             # (the electric fixtures die; fire keeps burning;
+                             # power returns on its own -- TODO #21 first slice)
 # MOTH_SCENES (where they fly) is defined next to KING_ROAM_SCENES
 # below: the moths' ground IS the King's ground, so his shedding can
 # fill any room he can walk.
@@ -314,6 +340,10 @@ WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
+AMALGAM_CHANCE = 0.5          # fraction of Watcher manifestations that arrive
+                              # as an AMALGAM (a seeded parts assembly,
+                              # rendering/amalgam.py) instead of the OG shroud;
+                              # behavior is identical either way
 # Walking through a rift FOLD has this chance to open an extra Watcher on the
 # far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
 FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal

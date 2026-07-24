@@ -24,6 +24,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
 from rendering.king_unfold import draw_unfold_catch
 from rendering.moth import draw_moth
 from rendering.transform import draw_vessel_bloom
+from rendering.furniture import FURNITURE as _FURN_SPECS
 from systems.config import *        # noqa: F401,F403
 
 # The "?" tell card, pre-rendered once per alpha bucket (8 buckets) --
@@ -108,8 +109,36 @@ FIXTURE_POOLS = {
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
     "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
-    "wall_lamp":    (80,   (255, 208, 150),  60,   20,    3,   0.04, 3.0),
+    # COLD electric (2026-07 light ruling: no warm-lamp cosiness indoors;
+    # the civic light is cold blue-white -- the maintainer's "LED" read,
+    # delivered in 1994 by fluorescent tube/cold bulb -- with a fast
+    # shallow shimmer instead of a candle flicker. Fire is a PROP now,
+    # never the room's light.)
+    "wall_lamp":    (88,   (205, 218, 240),  62,   20,    3,   0.05, 13.0),
+    # a bare bulb on a drop cord (the ceiling workhorse of the 90% rule): the
+    # same cold family, hung high, the barest shimmer. The VISIBLE pool is
+    # wide (a bare bulb floods its room); the mechanical gate stays the
+    # tighter _LIGHT_KINDS radius, so stealth cover doesn't move with it.
+    "drop_bulb":    (108,  (205, 218, 240),  56,   30,    0,   0.06, 11.0),
+    # the brass oil lamp burns a real flame everywhere it is drawn, so it
+    # emits everywhere too -- a small WARM accent pool, never a room's light
+    # (2026-07 shop pass; the warm+cold overlap at Hettie's counter is the
+    # additive-interaction showcase)
+    "kerosene_lamp": (48,  (255, 186, 96),   44,   14,    0,   0.12, 8.0),
 }
+
+def _deco_cone(d):
+    """A fixture deco's optional cone kwarg `cone=(dir_x, dir_y, half_deg)`
+    normalized to (nx, ny, half_rad), or None for an omni pool. The SAME
+    kwarg drives all three layers (TODO #21): the visible fan here, the
+    mechanical gate (Scene.light_sources/lit_at), and the audit overlay."""
+    raw = getattr(d, "kwargs", {}).get("cone")
+    if not raw:
+        return None
+    dx, dy, half = raw
+    n = math.hypot(dx, dy) or 1.0
+    return (dx / n, dy / n, math.radians(half))
+
 
 # Additive floor light pools, cached per shape. A tilt-foreshortened ellipse
 # whose RGB carries color*falloff (blit with BLEND_RGB_ADD, so pools SUM where
@@ -594,15 +623,23 @@ class RenderMixin:
         # under the source, and the pools ADD (combine where they overlap and
         # lift the walls/props/actors they lie on). FIXTURE_POOLS drives it --
         # any fixture, not just wall_torch.
+        from scenes.base import Scene as _Scene
+        powered = getattr(self.scene, "power_on", True)
         fixtures = []
         for d in getattr(self.scene, "decorations", []):
             spec = FIXTURE_POOLS.get(getattr(d, "kind", None))
             if spec is None:
                 continue
+            if not powered and d.kind in _Scene._ELECTRIC_KINDS:
+                continue                    # a blacked-out genset lights nothing
+            if getattr(d, "kwargs", {}).get("broken"):
+                continue                    # a burned-out bulb casts nothing
             radius, color, peak, src_z, arm, famp, fspd = spec
-            cx, cy = self.camera.project(d.x + ax * arm, d.y + ay * arm, 0)
+            wx, wy = d.x + ax * arm, d.y + ay * arm
+            cx, cy = self.camera.project(wx, wy, 0)
             fl = (1.0 - famp) + famp * math.sin(tnow * fspd + d.x * 0.25)
-            fixtures.append((int(cx), int(cy), radius, color, peak, fl))
+            fixtures.append((int(cx), int(cy), radius, color, peak, fl,
+                             wx, wy, _deco_cone(d)))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         # The far points are laid out in WORLD space around the player's feet
         # and projected through the camera, so the cone lies FLAT on the ground
@@ -623,54 +660,128 @@ class RenderMixin:
             left = _far(ang - spread)
             right = _far(ang + spread)
             cone = [(psx, psy), left, tip, right]
-        # GLOOM: dim the whole room, then carve elliptical holes under the
-        # player + every pool so the objects standing in the light show
-        # through (the navigable read; the additive colour lands on top).
+        # GLOOM as a LIGHTMAP (2026-07 rework, maintainer: "the lights
+        # aren't interacting with each other properly"). The old pass
+        # punched per-pool alpha holes in a dark overlay, painter's-order:
+        # where pools overlapped, the later pool's dim rim OVERWROTE the
+        # earlier pool's bright centre, so every pendant kept a visible
+        # ring seam. Now every source ACCUMULATES additively into one
+        # luminance field (base = the room's ambient, sources clamp toward
+        # full bright), and the frame is multiplied by it once -- two
+        # overlapping pools genuinely brighten their shared floor, and the
+        # seams are gone. The colored pools still ADD on top; shadows
+        # still SUB.
         gloom = (130 if self.scene.key in CULT_DARK_SCENES
                  else 72 if self.scene.key in DIM_INTERIOR_SCENES
                  else 100)
-        overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, gloom))
+        amb = 255 - gloom
+        lm = getattr(self, "_lightmap_surf", None)
+        if lm is None or lm.get_size() != self.screen.get_size():
+            lm = self._lightmap_surf = pygame.Surface(self.screen.get_size())
+        lm.fill((amb, amb, amb))
 
-        def _carve(cx, cy, r):
-            n = 8
-            for i in range(n - 1, -1, -1):            # largest (dimmest) first
-                rr = r * (0.24 + 0.76 * i / (n - 1))
-                rx = int(rr)
-                ry = max(1, int(rr * squash))
-                aa = int(gloom * i / (n - 1))         # 0 centre -> gloom at rim
-                pygame.draw.ellipse(overlay, (0, 0, 0, aa),
-                                    (cx - rx, cy - ry, rx * 2, ry * 2))
-        _carve(psx, psy, 118)
-        for cx, cy, radius, color, peak, fl in fixtures:
-            _carve(cx, cy, int(radius * fl))
+        def _fan_pts(wx, wy, cn, rr):
+            # a directional fixture's fan, laid out in WORLD space and
+            # projected -- like the flashlight cone, it foreshortens with
+            # the floor instead of being a screen-space shape
+            nx, ny, half = cn
+            a0 = math.atan2(ny, nx)
+            pts = [self.camera.project(wx, wy, 0)]
+            steps = 9
+            for i in range(steps + 1):
+                a = a0 - half + (2 * half) * i / steps
+                pts.append(self.camera.project(wx + rr * math.cos(a),
+                                               wy + rr * math.sin(a), 0))
+            return pts
+
+        # the player's own dark-adapted bubble
+        lm.blit(_floor_pool_surf(118, squash, (255, 255, 255), gloom),
+                (psx - 118, psy - int(118 * squash)),
+                special_flags=pygame.BLEND_RGB_ADD)
+        fan_tmp = None
+        for cx, cy, radius, color, peak, fl, wx, wy, cn in fixtures:
+            r = max(2, int(radius * fl))
+            lum = int(gloom * fl)
+            if cn is None:
+                lm.blit(_floor_pool_surf(r, squash, (255, 255, 255), lum),
+                        (cx - r, cy - int(r * squash)),
+                        special_flags=pygame.BLEND_RGB_ADD)
+            else:
+                if fan_tmp is None:
+                    fan_tmp = pygame.Surface(self.screen.get_size())
+                fan_tmp.fill((0, 0, 0))
+                n = 5
+                for i in range(n, 0, -1):
+                    v = int(lum * (1.0 - (i - 1) / n))
+                    pygame.draw.polygon(fan_tmp, (v, v, v),
+                                        _fan_pts(wx, wy, cn, r * i / n))
+                lm.blit(fan_tmp, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
         if cone:
-            # Carve the beam clear of the gloom (alpha 0 inside the cone).
-            pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
-        self.screen.blit(overlay, (0, 0))
+            # the flashlight beam clears its cone to full bright
+            if fan_tmp is None:
+                fan_tmp = pygame.Surface(self.screen.get_size())
+            fan_tmp.fill((0, 0, 0))
+            pygame.draw.polygon(fan_tmp, (gloom, gloom, gloom), cone)
+            lm.blit(fan_tmp, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+        # DARK SOURCES (maintainer, 2026-07): the reverse light. An
+        # invisible `dark_pool` deco SUBTRACTS from the lightmap AFTER
+        # every light has added, so where placed darkness and a lamp
+        # contend, the dark wins -- blackness blacker than the room's
+        # ambient, put exactly where the design wants it. No texture by
+        # design: it is only darkness.
+        for d in getattr(self.scene, "decorations", []):
+            if getattr(d, "kind", None) != "dark_pool":
+                continue
+            dr = int(getattr(d, "kwargs", {}).get("r", 90))
+            dd = int(getattr(d, "kwargs", {}).get("depth", 46))
+            dcx, dcy = self.camera.project(d.x, d.y, 0)
+            lm.blit(_floor_pool_surf(dr, squash, (255, 255, 255), dd),
+                    (int(dcx) - dr, int(dcy) - int(dr * squash)),
+                    special_flags=pygame.BLEND_RGB_SUB)
+        self.screen.blit(lm, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
         # ADDITIVE light on top: the player's own pool + every fixture's, each
-        # a floor ellipse under its source. They SUM where they overlap and
-        # brighten the walls / props / actors they lie on.
+        # a floor ellipse (or fan) under its source. They SUM where they
+        # overlap and brighten the walls / props / actors they lie on.
         pcol = (240, 226, 165) if lit else (120, 128, 156)
         ppk, pr = (64 if lit else 70), 112
         self.screen.blit(_floor_pool_surf(pr, squash, pcol, ppk),
                          (psx - pr, psy - int(pr * squash)),
                          special_flags=pygame.BLEND_RGB_ADD)
-        for cx, cy, radius, color, peak, fl in fixtures:
+        fan_add = None
+        for cx, cy, radius, color, peak, fl, wx, wy, cn in fixtures:
             r = max(2, int(radius * fl))
-            self.screen.blit(_floor_pool_surf(r, squash, color,
-                                              int(peak * fl)),
-                             (cx - r, cy - int(r * squash)),
-                             special_flags=pygame.BLEND_RGB_ADD)
+            if cn is None:
+                self.screen.blit(_floor_pool_surf(r, squash, color,
+                                                  int(peak * fl)),
+                                 (cx - r, cy - int(r * squash)),
+                                 special_flags=pygame.BLEND_RGB_ADD)
+            else:
+                # nested fan fills stepping down in brightness = the
+                # directional pool (shared scratch surface, ADD once)
+                if fan_add is None:
+                    fan_add = pygame.Surface(self.screen.get_size())
+                fan_add.fill((0, 0, 0))
+                n = 4
+                for i in range(n, 0, -1):
+                    rr = r * i / n
+                    f = (peak * fl / 255.0) * (1.0 - (i - 1) / n) * 0.9
+                    col = (int(color[0] * f), int(color[1] * f),
+                           int(color[2] * f))
+                    pygame.draw.polygon(fan_add, col,
+                                        _fan_pts(wx, wy, cn, rr))
+                self.screen.blit(fan_add, (0, 0),
+                                 special_flags=pygame.BLEND_RGB_ADD)
         # CAST SHADOWS: every solid caster throws a soft shadow across the
         # floor AWAY from each nearby source -- the light interacting with the
         # object. A LOW source (a candle near the floor) throws a long shadow,
         # a HIGH one (a yard-light head) a short one; under several lights an
         # object throws several shadows, one per light.
         from rendering.props import is_solid_prop
-        srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3])
+        srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3], _deco_cone(d))
                 for d in getattr(self.scene, "decorations", [])
-                for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),) if s]
+                for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),)
+                if s and (powered or d.kind not in _Scene._ELECTRIC_KINDS)
+                and not getattr(d, "kwargs", {}).get("broken")]
         if srcs:
             casters = [(self.player.x, self.player.y, 8)]
             for n in getattr(self.scene, "npcs", []):
@@ -683,11 +794,20 @@ class RenderMixin:
                 if k not in FIXTURE_POOLS and is_solid_prop(k):
                     casters.append((d.x, d.y, 8))
             for ox, oy, foot in casters:
-                for sx, sy, radius, src_z in srcs:
+                for sx, sy, radius, src_z, cn in srcs:
                     dx, dy = ox - sx, oy - sy
                     dist = math.hypot(dx, dy)
                     if dist < 2.0 or dist > radius:
                         continue
+                    if cn is not None:
+                        # a caster outside a hooded lamp's fan stands in
+                        # its dark: no light on it, no shadow from it
+                        nx, ny, half = cn
+                        ca = math.acos(max(-1.0, min(1.0,
+                                                     (dx * nx + dy * ny)
+                                                     / dist)))
+                        if ca > half:
+                            continue
                     # A shadow is ABSENCE of light: SUBTRACT the pool's glow
                     # where the object blocks it (a cool-grey sub), so it reads
                     # as dark floor -- not a black-over-warm brown stain.
@@ -929,14 +1049,16 @@ class RenderMixin:
         psy -= int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
         return psx, psy
 
-    def _draw_solid_prop(self, d, ox=0.0, oy=0.0):
+    def _draw_solid_prop(self, d, ox=0.0, oy=0.0, target=None):
         """Draw one solid furniture/prop by blitting a cached card. Solid props
         (headstones, signs, the flagpole, lamps, furniture boxes) are STATIC --
         none animate -- and their shape relative to the ground point depends
         only on the camera angle, never on where the camera is panned to. So
         render the 3D prop once per (prop, angle) into a card and blit it at the
         projected base, exactly like the trees. The wrap offset (ox, oy) only
-        moves the base, so every wrap-clone shares one card."""
+        moves the base, so every wrap-clone shares one card. `target` lets the
+        per-actor occlusion fade route the blit through draw_with_alpha's
+        scratch (screen-aligned) instead of the screen."""
         cam = self.camera
         bx, by = cam.project(d.x + ox, d.y + oy)
         # Yaw-invariant props build once (no yaw in the key) and live in their
@@ -963,7 +1085,8 @@ class RenderMixin:
                 cache.pop(order.pop(0), None)
         card, ax, ay = entry
         if card is not None:
-            self.screen.blit(card, (bx - ax, by - ay))
+            (target if target is not None else self.screen).blit(
+                card, (bx - ax, by - ay))
 
     def _invalidate_prop_card(self, deco):
         """Drop any cached solid-prop card for `deco` so its next draw rebuilds
@@ -1359,7 +1482,7 @@ class RenderMixin:
                         # A Watcher being stared down: its eyes go dark (gaze)
                         # and it fades as the dispel timer fills, so the cure
                         # reads.
-                        w_gaze = (npc.sprite_kind == "watcher"
+                        w_gaze = (npc.sprite_kind in ("watcher", "amalgam")
                                   and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
                         nview = "front"
                         if self._tilt_on():
@@ -1693,9 +1816,42 @@ class RenderMixin:
                             # every other prop is unaffected.
                             _dbias = float(getattr(d, "kwargs", {})
                                            .get("depth_bias", 0.0))
-                            _emit(self.camera.depth(d.x + ox, d.y + oy) + _dbias,
-                                  lambda d=d, ox=ox, oy=oy:
-                                  self._draw_solid_prop(d, ox, oy))
+                            # Per-actor occlusion fade, the same primitive
+                            # the walls use (2026-07 quality sprint: the
+                            # prop emit never faded, so the car and any
+                            # tall furniture blanketed whoever stood
+                            # behind them despite DESIGN.md's claim).
+                            # Heights are REAL per kind: a waist-high
+                            # see-over piece never fades (a generic tall
+                            # box made Sable's own desk vanish for Sable,
+                            # standing forever behind it).
+                            pa = 255
+                            _fh = 25.0
+                            _fsp = _FURN_SPECS.get(d.kind)
+                            if _fsp:
+                                _fh = float(_fsp[2]) * (getattr(
+                                    d, "scale", 1.0) or 1.0)
+                            if _focus_pre and _fh >= 18.0:
+                                _pod = self.camera.depth(d.x + ox, d.y + oy)
+                                _pos = _screen_span(self.camera, d.x + ox,
+                                                    d.y + oy, _fh, 20)
+                                for _pd, _ps in _focus_pre:
+                                    pa = min(pa, occluder_alpha_box(
+                                        _pod, _pos, _pd, _ps))
+                                    if pa <= 60:
+                                        break
+                            def _prop_fn(d=d, ox=ox, oy=oy, pa=pa,
+                                         psx=psx, psy=psy):
+                                if pa >= 255:
+                                    self._draw_solid_prop(d, ox, oy)
+                                else:
+                                    draw_with_alpha(
+                                        self.screen, pa,
+                                        lambda s: self._draw_solid_prop(
+                                            d, ox, oy, target=s),
+                                        rect=(psx - 90, psy - 140, 180, 200))
+                            _emit(self.camera.depth(d.x + ox, d.y + oy)
+                                  + _dbias, _prop_fn)
             # Surface props seated ON furniture (a ledger, plate, lamp on a
             # desk/table): lifted to the prop height (deco kwarg `z`) and
             # depth-sorted at the SOUTH EDGE of their host tile, not their own
@@ -1848,6 +2004,7 @@ class RenderMixin:
         self._draw_interact_prompt()
         self._draw_hud()
         self._draw_notebook_toast()
+        self._draw_save_toast()
         # Floating NPC speech (above the speaker's head, non-modal, not
         # sight-gated) sits under the modal dialog box -- the two are
         # mutually exclusive in practice, but a scripted modal always wins.
@@ -1944,7 +2101,8 @@ class RenderMixin:
                 if (getattr(npc, "no_prompt", False)
                         or getattr(npc, "_inside", False)):
                     continue
-                if math.hypot(npc.x - px, npc.y - py) < 40:
+                if (math.hypot(npc.x - px, npc.y - py)
+                        < getattr(npc, "talk_reach", NPC_TALK_REACH)):
                     target = (npc.x, npc.y)
                     break
         # 5. A scene interactable (on_interact_fn readable/pickup -- the
@@ -1998,8 +2156,6 @@ class RenderMixin:
                 and self.player.inventory.has("flashlight")):
             if self._flashlight_lit():
                 lbl, col = "light, lit  (f)", (210, 180, 90)
-            elif self.scene.key in CULT_DARK_SCENES:
-                lbl, col = "the light will not catch here", (70, 66, 78)
             else:
                 lbl, col = "light, dark  (f)", (96, 92, 108)
             ls = self.fonts["serif_tiny"].render(lbl, True, col)
@@ -2207,6 +2363,49 @@ class RenderMixin:
         ttl.set_alpha(int(255 * a))
         self.screen.blit(lbl, (tx, oy + 8))
         self.screen.blit(ttl, (tx, oy + 8 + lbl.get_height() + 2))
+
+    def _draw_save_toast(self):
+        """A small 3.5in floppy in the corner while the evidence autosave
+        writes the disk slot (the clue IS the checkpoint; this is the one
+        reliable 'that just saved' tell). Period-perfect for 1994, UI-layer
+        only (never fiction), procedurally drawn. Sits BELOW the notebook
+        scribble so the two coexist on a canonical evidence beat."""
+        tt = getattr(self, "_save_toast_t", 0.0)
+        if tt <= 0:
+            return
+        frac = max(0.0, min(1.0, (SAVE_TOAST_DUR - tt) / SAVE_TOAST_DUR))
+        if frac < 0.10:
+            a = frac / 0.10
+        elif frac > 0.80:
+            a = max(0.0, (1.0 - frac) / 0.20)
+        else:
+            a = 1.0
+        if a <= 0.0:
+            return
+        ox, oy = 16, 16 + 56 + 10          # under the scribble leaf
+        S = 30
+        disk = pygame.Surface((S, S), pygame.SRCALPHA)
+
+        def C(r, g, b, al=255):
+            return (r, g, b, int(al * a))
+        # shell (clipped top-right corner), steel shutter, label, hub notch
+        pygame.draw.polygon(disk, C(52, 56, 78), [
+            (2, 2), (S - 8, 2), (S - 3, 7), (S - 3, S - 3), (2, S - 3)])
+        pygame.draw.polygon(disk, C(24, 26, 38), [
+            (2, 2), (S - 8, 2), (S - 3, 7), (S - 3, S - 3), (2, S - 3)], 1)
+        pygame.draw.rect(disk, C(148, 152, 164), (9, 2, 12, 9))    # shutter
+        pygame.draw.rect(disk, C(60, 62, 74), (14, 4, 4, 5))       # its slot
+        pygame.draw.rect(disk, C(206, 200, 184), (7, 15, S - 14, 10))  # label
+        pygame.draw.line(disk, C(120, 114, 100), (9, 19), (S - 9, 19), 1)
+        pygame.draw.line(disk, C(120, 114, 100), (9, 22), (S - 12, 22), 1)
+        self.screen.blit(disk, (ox, oy))
+        lbl = self.fonts["serif_tiny"].render("Saved", True, (168, 176, 198))
+        lbl.set_alpha(int(255 * a))
+        wash = pygame.Surface((lbl.get_width() + 12,
+                               lbl.get_height() + 6), pygame.SRCALPHA)
+        wash.fill((8, 7, 12, int(150 * a)))
+        self.screen.blit(wash, (ox + S + 6, oy + 6))
+        self.screen.blit(lbl, (ox + S + 12, oy + 9))
 
     def _draw_notice(self):
         s = self.fonts["serif"].render(self.notice_text, True, C_WHITE)

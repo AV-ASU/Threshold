@@ -182,9 +182,9 @@ OBJECT_DEFS = {
     # notice. The wall blocks movement so the player can't just walk
     # through an unlocked-looking door.
     "z": {"solid": True,  "kind": "door"},   # door to locked_house (red herring)
-    # Door "1" -> the Clerk's room (key 'clerk_room'), an unconditional
-    # exit off the ground floor. ("2" is a vestigial tile from a cut
-    # scene; no active map places it.)
+    # Door "1" -> lives in clerk_room as the stair head DOWN to the guest
+    # hall (the loft route: hall staircase 'U' up, this door back down).
+    # ("2" is a vestigial tile from a cut scene; no active map places it.)
     "1": {"solid": False, "kind": "door"},   # door to clerk_room (Clerk's room)
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
@@ -667,16 +667,41 @@ def draw_object(surf, ch, rx, ry, tx, ty):
 def draw_floor(surf, ch, rx, ry, tx, ty):
     fd = FLOOR_DEFS.get(ch, FLOOR_DEFS["."])
     base = fd["color"]
-    # Per-tile value jitter so adjacent tiles never read identical -- the
-    # cheapest break of the grid lockstep (cached per (ch,tx,ty), so free
-    # after the first draw). Animated floors (~,@) skip it: they reseed each
-    # frame and a jitter would shimmer as you walk.
-    if ch not in _ANIM_FLOOR and ch != "0":
-        jv = (_vary(tx * 8009 + ty, 0) % 13) - 6        # -6..6, value only
-        base = (max(0, min(255, base[0] + jv)),
-                max(0, min(255, base[1] + jv)),
-                max(0, min(255, base[2] + jv)))
-    pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
+    # Sub-tile value noise + the macro shadow, evaluated per 8px cell and
+    # BILINEAR across tile corners (corner hashes are shared with the
+    # neighbouring tiles), so ground brightness rolls smoothly ACROSS tile
+    # edges. The old whole-tile jitter + per-tile shadow alpha stepped at
+    # every tile boundary and read as a checkerboard of 32px squares (the
+    # 2026-07 quality sprint's "square patches of grass"). Cost lands only
+    # on the first draw (tiles are cached); animated floors (~,@) keep the
+    # flat fill + the per-tile tail shadow (they redraw every frame).
+    smooth = ch not in _ANIM_FLOOR and ch != "0"
+    if smooth:
+        def _cj(cx, cy):
+            return (_vary(cx * 8009 + cy * 7919, 0) % 15) - 7
+        c00, c10 = _cj(tx, ty), _cj(tx + 1, ty)
+        c01, c11 = _cj(tx, ty + 1), _cj(tx + 1, ty + 1)
+        cell = TILE // 4
+        for syc in range(4):
+            v = (syc + 0.5) / 4.0
+            for sxc in range(4):
+                u = (sxc + 0.5) / 4.0
+                jv = ((c00 * (1 - u) + c10 * u) * (1 - v)
+                      + (c01 * (1 - u) + c11 * u) * v)
+                # Amplitude tuned DOWN with the smoothing (2026-07): the
+                # old per-tile stepping read as texture, but a smooth
+                # -58-value blob read as the hard shadow of nothing (the
+                # playtest's "weird dark patch outside the cabin").
+                sh = (math.sin((tx + u) * 0.23 + (ty + v) * 0.15)
+                      + 0.6 * math.sin((tx + u) * 0.09 - (ty + v) * 0.19))
+                lv = jv - min(30.0, max(0.0, -sh) * 17.0)
+                col = (max(0, min(255, int(base[0] + lv))),
+                       max(0, min(255, int(base[1] + lv))),
+                       max(0, min(255, int(base[2] + lv))))
+                pygame.draw.rect(surf, col, (rx + sxc * cell,
+                                             ry + syc * cell, cell, cell))
+    else:
+        pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
     if ch == "0":
         # Smooth flat grey stone: a single flat fill, nothing else -- no detail,
         # no per-tile jitter, and NOT the macro shadow blotch below. Perfectly,
@@ -742,23 +767,46 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         # slightly different tone (keyed to its global board row) so
         # long planks read across the room -- shadowed seams, a lit
         # edge under each, staggered end-joints, knots.
+        # The boards must vary ALONG their length too, or an E/W facing
+        # (boards rotated to vertical) reads as long uniform stripes
+        # (2026-07 playtest: "the floor on the east/west looks like
+        # straight lines"). Per-tile grain patches + end-joints every ~3
+        # tiles of run give the cross-grain rhythm; the macro shadow is
+        # folded into the board shade (these rects overdraw the smooth
+        # base cells, which used to silently drop it).
+        msh = (math.sin((tx + 0.5) * 0.23 + (ty + 0.5) * 0.15)
+               + 0.6 * math.sin((tx + 0.5) * 0.09 - (ty + 0.5) * 0.19))
+        mdark = min(30.0, max(0.0, -msh) * 17.0)
         boards = ((0, 10), (10, 12), (22, 10))     # (y0, height) per board
         for b, (y0, bh) in enumerate(boards):
             row = ty * 3 + b
             v = ((row * 2654435761) & 0xff) / 255.0 - 0.5    # -0.5..0.5
-            shade = (max(0, min(255, int(88 + v * 26))),
-                     max(0, min(255, int(66 + v * 20))),
-                     max(0, min(255, int(42 + v * 16))))
+            g2 = (((row * 40503 + tx * 9176) & 0xff) / 255.0 - 0.5)
+            shade = (max(0, min(255, int(88 + v * 26 + g2 * 14 - mdark))),
+                     max(0, min(255, int(66 + v * 20 + g2 * 10 - mdark))),
+                     max(0, min(255, int(42 + v * 16 + g2 * 8 - mdark * 0.8))))
             pygame.draw.rect(surf, shade, (rx, ry + y0, TILE, bh))
+            # A part-tile grain patch so one board's tone shifts mid-run.
+            if (row * 13 + tx * 5) % 3 == 0:
+                px0 = rx + ((row * 17 + tx * 23) % 16)
+                pw = 10 + ((row + tx) % 8)
+                patch = tuple(max(0, min(255,
+                                         c + (6 if (row + tx) % 2 else -6)))
+                              for c in shade)
+                pygame.draw.rect(surf, patch, (px0, ry + y0 + 1, pw, bh - 2))
             pygame.draw.line(surf, (52, 36, 22),
                              (rx, ry + y0), (rx + TILE, ry + y0), 1)
             pygame.draw.line(surf, (104, 80, 52),
                              (rx, ry + y0 + 1), (rx + TILE, ry + y0 + 1), 1)
-            # Staggered end-joint -- only some boards, so planks run long.
-            if (tx * 3 + row) % 5 == 0:
+            # Staggered end-joints every ~3 tiles of board run (a lit edge
+            # beside each so the butt reads under the tilt).
+            if (row * 7 + tx * 3) % 3 == 0:
                 jx = rx + ((row * 11 + tx * 7) % (TILE - 6)) + 3
                 pygame.draw.line(surf, (50, 34, 20),
                                  (jx, ry + y0 + 1), (jx, ry + y0 + bh - 1), 1)
+                pygame.draw.line(surf, (110, 86, 56),
+                                 (jx + 1, ry + y0 + 1),
+                                 (jx + 1, ry + y0 + bh - 1), 1)
         # Dark knots, sparse.
         seed = tx * 31 + ty * 17
         if seed % 6 == 0:
@@ -960,14 +1008,14 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         if seed % 9 == 0:
             pygame.draw.rect(surf, (24, 22, 30),
                              (rx + (seed * 3 % 24) + 2, ry + (seed * 5 % 24) + 2, 4, 3))
-    # Macro shadow blotches: a low-frequency, world-anchored darkening
-    # that rolls across many tiles at once, so the floor stops reading
-    # as a grid of identical cells. Two cheap sine layers, darken-only.
-    shade = (math.sin(tx * 0.23 + ty * 0.15)
-             + 0.6 * math.sin(tx * 0.09 - ty * 0.19))
-    a = int(max(0.0, -shade) * 30)
-    if a:
-        surf.blit(_dark_tile(min(58, a)), (rx, ry))
+    # Macro shadow blotches for the ANIMATED floors only (the smooth cells
+    # above already folded the shadow into the static tiles per sub-cell).
+    if not smooth:
+        shade = (math.sin(tx * 0.23 + ty * 0.15)
+                 + 0.6 * math.sin(tx * 0.09 - ty * 0.19))
+        a = int(max(0.0, -shade) * 30)
+        if a:
+            surf.blit(_dark_tile(min(58, a)), (rx, ry))
 
 
 def is_floor_solid(ch):
@@ -1030,7 +1078,7 @@ DISPLAY_NAMES = {
     "graveyard":            "the Graveyard",
     "country_lane":         "the Country Lane",
     "gravel_road_north":    "the Gravel Road",
-    "backwoods_cabin":      "the Hunter's Cabin",
+    "backwoods_cabin":      "the Backwoods Cabin",
     "backwoods_cabin_interior": "the Cabin",
     "bell_tower":           "the Bell Tower",
     "cornfield_maze":       "the Cornfield",
@@ -1284,42 +1332,69 @@ def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
                 (trunk_h * 0.5, trunk_r, trunk_r),
                 (trunk_h, trunk_r * 0.86, trunk_r * 0.86)],
                trunk_pal)
-    # Canopy -- stacked elliptical sections form a tapered sphere
-    canopy_pal = {
-        "body": (24 + g, 54 + g, 30 + g // 2),
-        "lo":   (14 + g // 2, 36 + g, 20 + g // 2),
-        "rim":  (44 + g, 80 + g, 48 + g),
-    }
-    z0 = trunk_h * 0.80
-    h = canopy_h
-    if far:
-        # Far LOD: a 3-ring canopy lobe instead of 6. Same silhouette envelope
-        # (base/widest/crown), half the polygon + ellipse work.
-        canopy_sections = [
-            (z0,             canopy_r * 0.32, canopy_r * 0.32),
-            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
-            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
+    # The stand is NORTH-WOODS APRIL (2026-07 quality sprint; the old
+    # summer-green canopy blobs read as "weird shaped trees" -- a smooth
+    # body of revolution at this size is a lampshade). Two species by
+    # seed: ~2/3 boreal SPRUCE -- a ragged dark cone of stacked, jittered
+    # tiers, the shape this renderer is genuinely good at -- and ~1/3
+    # BARE deciduous, a taller trunk with seeded branch strokes and no
+    # canopy at all (the sealed winter only just let go; nothing has
+    # leafed). Seasonally true (NARRATIVE §3: April, last year's corn
+    # dead standing) and darker on the skyline than the green ever was.
+    species = _vary(seed, 6) % 3
+    if species < 2:
+        # SPRUCE: stacked drooping tiers, each ring jittered so no two
+        # trees repeat and no tier is a clean circle.
+        spruce_pal = {
+            "body": (18 + g // 2, 38 + g // 2, 26 + g // 3),
+            "lo":   (10 + g // 3, 24 + g // 3, 16 + g // 3),
+            "rim":  (32 + g // 2, 56 + g // 2, 38 + g // 2),
+        }
+        z0 = trunk_h * 0.55
+        h = canopy_h * 1.15
+        tiers = 2 if far else 3 + (_vary(seed, 7) % 2)
+        for i in range(tiers):
+            t = i / max(1, tiers - 1)              # 0 bottom .. 1 top
+            jr = 0.82 + (_vary(seed, 8 + i) % 9) * 0.045   # 0.82..1.18
+            rr = canopy_r * (1.05 - 0.62 * t) * jr
+            tz = z0 + h * (0.06 + 0.86 * t)
+            th = h * (0.34 if i < tiers - 1 else 0.26)
+            jx = ((_vary(seed, 12 + i) % 7) - 3) * 0.5
+            draw_solid(surf, camera, wx + lean_x + jx, wy,
+                       [(tz, rr, rr),
+                        (tz + th * 0.55, rr * 0.62, rr * 0.62),
+                        (tz + th, rr * 0.22, rr * 0.22)],
+                       spruce_pal)
     else:
-        canopy_sections = [
-            (z0,             canopy_r * 0.32, canopy_r * 0.32),
-            (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
-            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
-            (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
-            (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
-            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
-    draw_solid(surf, camera, wx + lean_x, wy, canopy_sections, canopy_pal)
-    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric. The
-    # back ranks (far LOD) skip it -- it's a subtle asymmetry lost at range.
-    if not far and (_vary(seed, 6) % 3) == 0:
-        ox = ((_vary(seed, 7) % 11) - 5) * 0.9
-        oy = ((_vary(seed, 8) % 7) - 3) * 0.45
-        zoff = h * 0.22
-        rr = canopy_r * 0.55
-        draw_solid(surf, camera, wx + lean_x + ox, wy + oy,
-                   [(z0 + zoff,            rr * 0.4, rr * 0.4),
-                    (z0 + zoff + rr,       rr,       rr),
-                    (z0 + zoff + rr * 2.2, rr * 0.3, rr * 0.3)],
-                   canopy_pal)
+        # BARE: the trunk carries on past its bole into a leader + seeded
+        # branch strokes. Projected as world lines at build time (the card
+        # is yaw-keyless like every tree; branch parallax across a head
+        # turn is background-subtle).
+        bare = (54 + g // 3, 40 + g // 4, 28 + g // 4)
+        top_h = trunk_h + canopy_h * 0.9
+        p0 = camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.8)
+        p1 = camera.project(wx + lean_x, wy, top_h)
+        pygame.draw.line(surf, bare, p0, p1, 2)
+        n_br = 3 if far else 5 + (_vary(seed, 7) % 3)
+        for i in range(n_br):
+            fz = 0.35 + 0.6 * ((_vary(seed, 8 + i) % 97) / 97.0)
+            bz = trunk_h * 0.8 + (top_h - trunk_h * 0.8) * fz
+            ang = ((_vary(seed, 16 + i) % 628) / 100.0)
+            ln = canopy_r * (0.55 + (_vary(seed, 24 + i) % 7) * 0.09) \
+                * (1.0 - 0.5 * fz)
+            bx0 = wx + lean_x * fz
+            q0 = camera.project(bx0, wy, bz)
+            q1 = camera.project(bx0 + math.cos(ang) * ln,
+                                wy + math.sin(ang) * ln * 0.5,
+                                bz + ln * 0.7)
+            pygame.draw.line(surf, bare, q0, q1, 1)
+            if not far and i % 2 == 0:
+                q2 = camera.project(bx0 + math.cos(ang) * ln * 1.25,
+                                    wy + math.sin(ang) * ln * 0.6,
+                                    bz + ln * 1.05)
+                pygame.draw.line(
+                    surf, (bare[0] - 12, bare[1] - 10, bare[2] - 8),
+                    q1, q2, 1)
 
 
 # Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster
@@ -1940,6 +2015,60 @@ def _wall_slab(scene, tx, ty):
         hx1 = T if wE else (vx1 if v_present else T)
         rects.append((hx0, hy0, hx1, hy1))
     return rects
+
+
+def _gap_slab(scene, tx, ty):
+    """The thin-slab footprint THROUGH a non-wall gap tile (a doorway or a
+    window) sitting in a wall run -- a list of tile-local rects like
+    _wall_slab's, or None (non-slab scene, or no wall neighbour carries a
+    band through this tile). Without this, a door/window tile in a thin-slab
+    wall extruded as a FULL-tile box and jutted from the wall line as a dark
+    monolith (the 2026-07 quality sprint's "glitched door" / "wrong windows"
+    playtest finds). Same cross() rules as _wall_slab, so the gap band meets
+    its flanking wall bands flush."""
+    style = _wall_style(scene)
+    if style is None:
+        return None
+    W, H = scene.w, scene.h
+
+    def _c(x, y):
+        if scene.wrap_x:
+            x %= W
+        if scene.wrap_y:
+            y %= H
+        if 0 <= x < W and 0 <= y < H:
+            return scene.objects[y][x]
+        return None
+
+    cN, cS = _c(tx, ty - 1), _c(tx, ty + 1)
+    cE, cW = _c(tx + 1, ty), _c(tx - 1, ty)
+    wN, wS = cN in _WALL_CHARS, cS in _WALL_CHARS
+    wE, wW = cE in _WALL_CHARS, cW in _WALL_CHARS
+    oN, oS = cN is not None, cS is not None
+    oE, oW = cE is not None, cW is not None
+    T = TILE
+    th = T * style["thick"]
+    p = T - th
+
+    def cross(open_neg, open_pos):
+        if open_neg and open_pos:
+            return p / 2.0, T - p / 2.0
+        if not open_neg:
+            return 0.0, th
+        if not open_pos:
+            return p, T
+        return p / 2.0, T - p / 2.0
+
+    # The band runs ALONG the wall it gaps: E/W wall neighbours carry a
+    # horizontal band through the tile, N/S a vertical one. A straight run
+    # (both flanking walls present) wins over a corner-adjacent single.
+    if (wE and wW) or ((wE or wW) and not (wN or wS)):
+        y0, y1 = cross(oN, oS)
+        return [(0.0, y0, T, y1)]
+    if wN or wS:
+        x0, x1 = cross(oW, oE)
+        return [(x0, 0.0, x1, T)]
+    return None
 
 
 # --- Rounded wall outline (2026-07, maintainer "rounded corners where the walls
@@ -3074,6 +3203,58 @@ def _round_water_corners(surf, scene, tx, ty, rx, ry):
             pygame.draw.circle(surf, mud, (cxp, cyp), r, 1)
 
 
+# The VOID SURROUND (2026-07): alpha veil per tile past the map's edge. Three
+# rim tiles continue the nearest in-bounds ground under a deepening veil, then
+# the flat build's near-black takes over -- the world's edge reads as ground
+# falling away into dark, not a hard cut or a tiling artifact.
+_VOID_RIM_FADE = (150, 200, 236)
+_VOID_VEILS = {}
+
+
+def _void_rim_veil(alpha):
+    v = _VOID_VEILS.get(alpha)
+    if v is None:
+        v = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+        v.fill((6, 6, 10, alpha))
+        _VOID_VEILS[alpha] = v
+    return v
+
+
+def _void_surround_pass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Compose what lies past the map's edge (the tilt window's off-map area).
+
+    The floor raster skips off-map tiles (draw_scene_terrain used to paint
+    them as endless "." floor -- the checkered void around every interior).
+    This pass draws the edge instead: for _VOID_RIM_FADE's few tiles past the
+    bounds, the rim continues the nearest in-bounds floor char under a
+    deepening dark veil, so the ground visibly falls away into the void's
+    near-black. Wrapped axes never reach here (no off-map exists there);
+    seamless neighbor strips paint real world content OVER this fade where a
+    neighbor exists (draw_terrain_tilted runs them after this pass)."""
+    W, H = scene.w, scene.h
+    wx = scene.wrap_x
+    fade = _VOID_RIM_FADE
+    depth = len(fade)
+    for ty in range(y0, y1):
+        ty2 = scene.render_row(ty)
+        for tx in range(x0, x1):
+            tx2 = tx % W if wx else tx
+            if 0 <= ty2 < H and 0 <= tx2 < W:
+                continue
+            cy2 = min(max(ty2, 0), H - 1)
+            cx2 = min(max(tx2, 0), W - 1)
+            d = max(abs(ty2 - cy2), abs(tx2 - cx2))
+            if d > depth:
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            ch = scene.floor[cy2][cx2]
+            if ch in _ANIM_FLOOR:
+                ch = "."           # the rim ghost never animates
+            draw_floor(surf, ch, rx, ry, tx, ty)
+            surf.blit(_void_rim_veil(fade[d - 1]), (rx, ry))
+
+
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                        skip_billboard=False, skip_roofs=False,
                        bake_static=False):
@@ -3119,8 +3300,20 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
         _CORN_RUN_CACHE.clear()      # corn-run LOD decomposition is per scene
         _PATH_FRINGE_CACHE.clear()   # path-edge fringe cards are scene-keyed
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
+    def _off_map(ty, tx):
+        # Mirrors _lookup_floor's wrap handling: a tile is off-map only after
+        # the wrap axes have had their say. Off-map tiles are NOT rastered as
+        # "." floor anymore (that painted the endless phantom-tile plain the
+        # maintainer called the checkered void); _void_surround_pass composes
+        # the world's edge instead.
+        ty = scene.render_row(ty)
+        if wx:
+            tx %= W
+        return not (0 <= ty < H and 0 <= tx < W)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
+            if _off_map(ty, tx):
+                continue
             ch = _lookup_floor(ty, tx)
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
@@ -3170,6 +3363,12 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                                    or ch in _COUNTER_CHARS
                                    or ch in _RACK_CHARS):
                 continue                     # stood up as a 3D box/standee under tilt
+            if (skip_billboard and ch in _WINDOW_CHARS
+                    and _gap_slab(scene, tx, ty) is not None):
+                # Thin-slab scene: the 3D band + set-in pane carry the whole
+                # window read; the flat full-tile art would peek out past the
+                # thin band as a lit strip at the wall's foot.
+                continue
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
@@ -3651,9 +3850,26 @@ def _tilt_door_box(surf, camera, scene, tx, ty):
     """A doorway in the extruded wall: a lintel BEAM spanning the top of the
     tile (head->rise) with the passage open below. The flanking wall tiles
     supply the jambs; a swung leaf hangs in the opening. Faces abutting walls
-    OR other doors are culled so a multi-tile gate reads as one clean opening."""
-    _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD, _TILT_WALL_RISE,
-                 neigh=_WALL_CHARS | _DOOR_CHARS)
+    OR other doors are culled so a multi-tile gate reads as one clean opening.
+    In a slab scene the lintel takes the wall's slab footprint through the gap
+    (_gap_slab) and the wall's material tint, so the doorway sits IN the thin
+    wall line instead of jutting from it as a full-tile monolith."""
+    wtx = tx % scene.w if scene.wrap_x else tx
+    wty = ty % scene.h if scene.wrap_y else ty
+    bands = _gap_slab(scene, wtx, wty)
+    if bands:
+        face_col, top_col = _tilt_wall_tint(scene, tx, ty)
+        tint = _wall_tint_for(scene)
+        fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP,
+                       _wall_top_tint_for(scene))
+        for band in bands:
+            _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD,
+                         _TILT_WALL_RISE, neigh=_WALL_CHARS | _DOOR_CHARS,
+                         face_col=fc, top_col=tc, foot=band)
+    else:
+        _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD, _TILT_WALL_RISE,
+                     neigh=_WALL_CHARS | _DOOR_CHARS)
     _draw_doorway(surf, camera, scene, tx, ty)
 
 
@@ -4056,16 +4272,22 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
                   area=pygame.Rect(i, 0, 1, card.get_height()))
 
 
-def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False):
-    """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
+def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False,
+                      face_off=None, daylight=False):
+    """A glazed pane set into one wall face: wood frame, glass, a lighter
     core and a muntin cross. `(ndx, ndy)` is the exposed face direction.
-    `broken` (a thrown stone, TODO #5) swaps the lit glass for a dark hole
-    with shard teeth left in the frame -- the light is out for the run."""
+    `face_off` is the distance from the tile centre to that face's true
+    plane (a thin-slab wall's face is NOT the tile edge); None keeps the
+    full-tile face. `daylight` swaps the warm lit-from-within amber for flat
+    overcast daylight (interior scenes look OUT at the grey sky; the warm
+    glass belongs on the town's facades, DESIGN.md §6). `broken` (a thrown
+    stone, TODO #5) swaps the glass for a dark hole with shard teeth left in
+    the frame -- the light is out for the run."""
     hw = TILE / 2
     pv = (-ndy, ndx)                 # along-wall axis on this face
     ph = hw * 0.60                   # half pane width
     z0, z1 = 7.0, 19.0
-    off = hw * 0.99                  # sit just proud of the face
+    off = hw * 0.99 if face_off is None else face_off
 
     def Q(u, z):
         return camera.project(wx + ndx * off + pv[0] * u,
@@ -4086,30 +4308,68 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False):
         return
     core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
             Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
-    pygame.draw.polygon(surf, (138, 104, 50), glass)
-    pygame.draw.polygon(surf, (170, 138, 78), core)
+    if daylight:
+        pygame.draw.polygon(surf, (96, 100, 94), glass)
+        pygame.draw.polygon(surf, (124, 128, 120), core)
+    else:
+        pygame.draw.polygon(surf, (138, 104, 50), glass)
+        pygame.draw.polygon(surf, (170, 138, 78), core)
     pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
     pygame.draw.line(surf, (74, 54, 34), Q(-ph, (z0 + z1) / 2), Q(ph, (z0 + z1) / 2), 1)
     pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
 
 
 def _tilt_window_box(surf, camera, scene, tx, ty):
-    """A window is a SOLID wall tile, so it extrudes as a full wall box; a lit
-    pane is then set into each camera-facing exposed face (dark + shard-toothed
-    once a thrown stone has broken it -- scene._broken_windows)."""
-    _tilt_wall_box(surf, camera, scene, tx, ty)
+    """A window is a SOLID wall tile, so it extrudes as a wall box -- the
+    wall's slab footprint in a slab scene (_gap_slab), full-tile elsewhere. A
+    pane is then set into each camera-facing exposed face ON that face's true
+    plane (dark + shard-toothed once a thrown stone has broken it --
+    scene._broken_windows). Glazing reads by scene: an INTERIOR scene's
+    windows hold flat overcast DAYLIGHT (the dim room looks out at the grey
+    sky); an exterior facade keeps the warm lit-from-within glass (the town
+    keeping its lights on, DESIGN.md §6)."""
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
+    bands = _gap_slab(scene, wtx, wty)
+    if bands:
+        face_col, top_col = _tilt_wall_tint(scene, tx, ty)
+        tint = _wall_tint_for(scene)
+        fc = _tint_col(face_col if face_col else _WALL_FACE, tint)
+        tc = _tint_col(top_col if top_col else _WALL_TOP,
+                       _wall_top_tint_for(scene))
+        for band in bands:
+            _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                         neigh=_WALL_CHARS, face_col=fc, top_col=tc,
+                         foot=band)
+    else:
+        _tilt_wall_box(surf, camera, scene, tx, ty)
     broken = (wtx, wty) in getattr(scene, "_broken_windows", ())
+    try:
+        from systems.config import SEAMLESS_WORLD_SCENES as _SWS
+        daylight = getattr(scene, "key", None) not in _SWS
+    except Exception:
+        daylight = False
     cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
     for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
         if _is_wall(scene, tx + ndx, ty + ndy):
             continue                                     # buried face
         if camera.depth(wx + ndx * hw, wy + ndy * hw, _TILT_WALL_RISE / 2) <= cd:
             continue                                     # faces away from camera
-        _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken)
+        face_off = None
+        if bands:
+            b = bands[0]
+            if ndy > 0:
+                face_off = (b[3] - hw) + 0.5
+            elif ndy < 0:
+                face_off = (hw - b[1]) + 0.5
+            elif ndx > 0:
+                face_off = (b[2] - hw) + 0.5
+            else:
+                face_off = (hw - b[0]) + 0.5
+        _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken,
+                          face_off=face_off, daylight=daylight)
 
 
 _WALL_BOX_CACHE = {}
@@ -4367,11 +4627,14 @@ def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
         # target world point = host world point + (offset_dx, offset_dy)
         tw, th = tgt.w, tgt.h
         for ty in range(y0, y1):
-            if 0 <= ty < H:
-                continue                     # host renders this row
+            ty_in = 0 <= ty < H
             for tx in range(x0, x1):
-                if 0 <= tx < W:
-                    continue                 # host renders this column
+                # Skip only tiles the HOST actually renders (both coords in
+                # bounds). The old per-axis skips dropped every N/S and E/W
+                # edge strip -- only diagonal corners ever painted, so the
+                # seamless seam never actually showed the neighbor.
+                if ty_in and 0 <= tx < W:
+                    continue
                 nx_px = tx * TILE + TILE // 2 + n.offset_dx
                 ny_px = ty * TILE + TILE // 2 + n.offset_dy
                 ntx = int(nx_px // TILE)
@@ -4473,18 +4736,23 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             _blit_window_wrapped(flat, full, bx0, by0,
                                  scene.wrap_x, scene.wrap_y)
             _overlay_anim_water(flat, scene, water, bx0, by0, span_b)
+            # A one-axis wrap scene (the Yard's E-W loop) still has off-map
+            # past its non-wrapped edges; compose that edge too.
+            if not (scene.wrap_x and scene.wrap_y):
+                _void_surround_pass(flat, scene, bx0, by0,
+                                    tx0, ty0, tx1, ty1)
         else:
-            # Phase 2 of the seamless-world neighbor strip: when the player is
-            # near a non-wrap host's edge and the visible tile range extends
-            # past the world's bounds, fill the OUT-OF-BOUNDS tiles with the
-            # neighbor scene's floor content (per world_neighbors). The
-            # in-bounds area is overdrawn with the host's tiles below, so the
-            # strip shows only where the host doesn't reach -- a seamless seam.
+            draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
+                               skip_billboard=True, skip_roofs=True)
+            _void_surround_pass(flat, scene, bx0, by0, tx0, ty0, tx1, ty1)
+            # Seamless-world neighbor strips: where the visible window extends
+            # past a non-wrap host's bounds AND a neighbor exists there
+            # (per world_neighbors), paint the neighbor scene's floor content
+            # OVER the rim fade -- real world beyond the seam. Elsewhere the
+            # fade stays: ground falling away into the dark.
             if not (scene.wrap_x or scene.wrap_y):
                 _draw_neighbor_strips(flat, scene, bx0, by0,
                                       tx0, ty0, tx1, ty1)
-            draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
-                               skip_billboard=True, skip_roofs=True)
         warped = _tilt_warp(flat, camera, fast=fast_look)
         _fc["key"] = fkey
         _fc["surf"] = warped

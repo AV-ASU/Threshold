@@ -119,6 +119,20 @@ def build_schoolhouse():
     # (the guttered candles are what the commune bedded down by). (2026-07.)
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # The 90% rule + the ROW rule (lights run on one axis, never scatter):
+    # the commune strung two straight N-S runs over the cot banks, three
+    # pendants each at even spacing -- barracks wiring. The chosen dark is
+    # the piled-desks SE corner (the school's own furniture, shoved into
+    # shadow).
+    # (two burned out on the diagonal -- the 1-2 broken rule: nobody has
+    # changed a bulb since the commune went below)
+    for _by in (3, 6, 9):
+        sc.add_decoration(Decoration(4 * TILE + 16, _by * TILE + 16,
+                                     "drop_bulb", z=38,
+                                     broken=(_by == 9)))
+        sc.add_decoration(Decoration(11 * TILE + 16, _by * TILE + 16,
+                                     "drop_bulb", z=38,
+                                     broken=(_by == 3)))
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "bloodstain",
                                  scale=1.6))
 
@@ -578,13 +592,15 @@ def build_gravel_road_north():
 
 
 def build_backwoods_cabin():
-    """The Hunter's bunkhouse. Small log cabin sitting in a clearing
-    at the north end of the gravel road. Door is a facade `l` --
-    the cabin doesn't model an interior. Tally-marks on the wall
-    (decoration) and a notepad on a stump out front (interactable
-    evidence). Behind the cabin: a stack of cordwood (visible
-    cover) and a hide spot. The Hunter patrol prefers this scene
-    when it's roaming -- the cabin is its home base."""
+    """The backwoods cabin: a deer-camp shack in a clearing at the north
+    end of the gravel road, its owner long gone with the rest of the
+    town's outer life. Door is a facade `l` -- the cabin doesn't model
+    an interior. Tally-marks on the wall (decoration) and a notepad on a
+    stump out front (interactable). Behind the cabin: a stack of
+    cordwood (visible cover) and a hide spot. (The old capital-H
+    "Hunter patrol / home base" framing was rot from a cut design,
+    scrubbed 2026-07; the lowercase hunter who LIVED here stays mundane
+    provenance for the antler rack + cordwood.)"""
     W, H = 16, 12
     floor_rows = []
     for y in range(H):

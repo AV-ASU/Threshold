@@ -126,6 +126,25 @@ def build_church():
     # Genset-electric main light on the nave's north wall by the chancel (the
     # altar candles are the devotion, not the wiring). (2026-07 interior pass.)
     sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # The 90% rule + the ROW rule (lights run on one axis, never scatter):
+    # two straight runs over the pew banks, the way a wired church hangs
+    # them over the seating, two pendants each on matched columns -- a
+    # clean 2x2 -- plus one centered in the vestry. The chosen dark is
+    # the nave's far corners past the pew banks.
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(11 * TILE + 16, 4 * TILE + 16, "drop_bulb",
+                                 z=38))
+    # (the SW pew pendant is burned out -- the 1-2 broken rule; the
+    # back-left pews sit in its gloom)
+    sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38, broken=True))
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(8 * TILE + 0, 10 * TILE + 0, "drop_bulb",
+                                 z=38))
     # The parsonage's hunting-country dressing lives in the VESTRY (the
     # preacher's living quarters), not over the altar: a mounted buck on the
     # vestry's north wall. (The cobweb + desk lamp are added below.)
@@ -209,6 +228,12 @@ def build_sheriff_office():
         "W.....W.....W..W",   # 10
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
+    # The office ensembles' footprints (see below): the same tiles the old
+    # separate cot/washstand/rack/desk occupied, as see-over solids.
+    _rows = [list(r) for r in objects]
+    for _sx, _sy in ((1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 3)):
+        _rows[_sy][_sx] = "x"
+    objects = ["".join(r) for r in _rows]
     sc = Scene("sheriff_office", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank; its door opens back onto
     # the field.
@@ -239,17 +264,26 @@ def build_sheriff_office():
                        voice="blip_gruff", portrait="sheriff",
                        dialogue_fn=sheriff_dialogue, movement="watch"))
 
-    # ---- OFFICE (NW): Vane's working room ----
-    # His desk (radio on it), the cot + washstand tucked along the west wall
-    # (he lives at his desk now), and the antler coat-rack.
-    sc.add_furniture("table", [(3, 3), (4, 3)], w=54, h=36)   # Vane's desk
-    sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=56)     # his cot, W wall
-    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
+    # ---- OFFICE (NW): Vane's working room (Wave 2 ensembles, TODO #24) ----
+    # Two composed objects instead of six separates: the LAWMAN'S WALL (his
+    # cot, washstand, and coat rack down the west wall -- he lives at his
+    # desk now, blanket tucked army-tight, boots squared under the frame)
+    # and the LAWMAN'S DESK (desk + radio + case files + tin mug + the
+    # tucked chair as one working surface). Footprint 'x' stamps below
+    # match the old separates' tiles, so reachability doesn't move.
+    sc.add_decoration(Decoration(1 * TILE + 16, 1 * TILE + 32, "lawman_wall",
+                                 seed=7))
+    sc.add_decoration(Decoration(4 * TILE + 0, 3 * TILE + 16, "lawman_desk",
+                                 seed=8))
     sc.add_furniture("bookshelf", [(4, 5), (5, 5)], w=58, h=18, seed=6)  # law books
-    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 8, "radio"))
-    sc.add_decoration(Decoration(1 * TILE + 20, 3 * TILE + 8, "washstand"))
-    # Genset-electric main light + a backup candle Vane keeps oiled.
+    # Genset-electric main light + a backup candle Vane keeps oiled, and a
+    # drop cord over the desk itself (the 90% rule: the lawman does not
+    # work his own files in the dark).
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # (on the building's NORTH pendant line, y = 3*T+16, shared with the
+    # records-room cord -- the row rule: lights run on one axis)
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=42))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 8, "candle"))
     # Hunting-country office: a mounted buck + the trophy walleye over the desk
     # (N wall, the pair), the calendar of months he stopped reporting (stopped
@@ -272,6 +306,10 @@ def build_sheriff_office():
                                  seed=9))
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 10 * TILE + 24, "lantern"))
+    # (burned out -- the 1-2 broken rule: the public face decays first;
+    # the door lantern still burns)
+    sc.add_decoration(Decoration(3 * TILE + 0, 9 * TILE + 16, "drop_bulb",
+                                 z=38, broken=True))
 
     # ---- RECORDS (NE): the back file room ----
     # The case board of the disappeared Vane can't file on (polaroid wall), the
@@ -285,8 +323,14 @@ def build_sheriff_office():
     sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # Genset light for the file room.
+    # Genset light for the file room + two drop cords on the building's
+    # NORTH pendant line (y = 3*T+16, shared with the office cord: one
+    # straight three-light run across the building -- the row rule).
     sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=38))
     # Mara's booking slip, in the records-room filing table (a surface trail
     # beat; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not on Vane --
     # reachable whether he is alive, dead, or never spoken to (world-persistent;
@@ -305,6 +349,13 @@ def build_sheriff_office():
     sc.add_furniture("table", [(8, 8), (9, 8)], w=54, h=36)   # booking desk
     sc.add_furniture("chair", [(8, 9)], w=22, h=28)
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
+    # Drop cords over the cell approach and the booking floor (the 90%
+    # rule): the law lights its own bars. The chosen dark is the cell's
+    # inner corner.
+    sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
     sc.add_decoration(Decoration(13 * TILE + 20, 10 * TILE + 24, "bloodstain",
                                  scale=1.4))
     sc.add_decoration(Decoration(14 * TILE + 26, 8 * TILE + 6, "cobweb",

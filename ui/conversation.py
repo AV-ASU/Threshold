@@ -150,6 +150,11 @@ class Conversation:
         # spoken line.
         labels = ([ex.get("label", ex["q"]) for ex in avail]
                   + [self.convo.get("leave", "Leave.")])
+        # Which rows are SPENT (asked before, still re-askable): rendered
+        # dim, skipped by the opening cursor, never dropped. Authored order
+        # is kept (indices are load-bearing for scripted drives).
+        spent = [bool(self.game.save.flag(self._asked_flag(ex["key"])))
+                 for ex in avail] + [False]
 
         # The framing line may be authored as a callable(game) -> str so a
         # conversation can read MOOD into it (Vane's despair/hope ledger,
@@ -190,11 +195,12 @@ class Conversation:
             self._step()
 
         if self.tableau:
-            self.game._tableau_choices(prompt, labels, _pick)
+            self.game._tableau_choices(prompt, labels, _pick, spent=spent)
         else:
             self.game.dialog.show_choice(
                 prompt, labels, _pick,
-                speaker="", voice="blip_soft", portrait="narrator")
+                speaker="", voice="blip_soft", portrait="narrator",
+                spent=spent)
 
     # ---- beat playback --------------------------------------------------
     def _speaker(self, who):
@@ -233,7 +239,11 @@ class Conversation:
             # (or close the talk outright for an "ends" exchange).
             if self.current is not None:
                 ex = self._find(self.current)
-                if ex and ex.get("once"):
+                if ex:
+                    # EVERY finished exchange marks itself asked. once:True
+                    # still uses the flag to DROP from the menu; a
+                    # re-askable question keeps its slot but renders SPENT
+                    # (dimmed) so a fresh menu reads at a glance.
                     self.game.save.set_flag(self._asked_flag(self.current), True)
                 ended = bool(ex and ex.get("ends"))
                 self.current = None

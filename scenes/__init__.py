@@ -44,7 +44,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   haunted_house -> abandoned_farmhouse.
 #   bedroom            -> the player's room at the Arcadia (the cot)
 #   lodge              -> the Arcadia ground floor (Clerk's desk + floor)
-#   clerk_room         -> the Clerk's room (locked; flavor: his cult robe)
+#   clerk_room         -> the Clerk's loft room (flavor: his cult robe)
 #   lodge_cellar       -> the Arcadia cellar (the Ledger #3; the workbench)
 #   lodge_yard         -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
 #   toby_house         -> Toby's house (drawings on walls)

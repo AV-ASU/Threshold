@@ -137,6 +137,40 @@
   threat state. Station authoring for the remaining patrolled rooms is
   still open.
 
+## The shadows program (the amalgams)
+
+- **2026-07 — The Watcher-variety program landed as THE AMALGAMS**
+  (`rendering/amalgam.py`, `AMALGAM_CHANCE`, DESIGN.md §1). The program
+  ran as a maintainer-driven concept loop in session scratchpad: a
+  15-design "Watcher variants" sheet (rejected: "shapes with eyes"), a
+  pivot to motion-first SHADOWS (octopus/cockroach gaits, then chimeras),
+  the approved BONELESS STILTER glide rig, a fusion round (portal-stuck /
+  goop-of-eyes / mothman seeds), and the PORTAL GUY -- a torso wedged at
+  a razor cut, relocating by crawling back through it -- whose BACK view
+  (a smoke body with working arms) sparked the breakthrough pitch: **stop
+  designing individual shadows; build creatures out of MULTIPLE cuts.**
+  ("Fuck creating shadows, we make amalgams now.") The portal guy and the
+  earlier one-off designs were retired into the system: a 17-part library
+  (9 limbs, 6 body masses, 2 bare apertures), one grammar throughout
+  (flesh clipped dead flat against a free-form cut, rim lip on the absent
+  side, shroud palette, ember eyes, haze tissue), every part carrying its
+  own enter/leave (limbs walk backwards into their cuts -- the portal
+  guy's trick generalized; masses breathe themselves shut) and idle
+  (breath, weight-shift, drips, drifting eyes). An amalgam is DATA: a
+  seeded 3-5 part deal under composition rules (>=1 weight part grounded,
+  masses centre, senses high, ALWAYS >=1 eye-bearing part -- an eyeless
+  line-up next to the OG Watcher caught the generator truncating the eye
+  slot, and the dim-ember tone was brightened to survive game scale).
+  Behavior is deliberately untouched (the family contract: every shadow
+  acts exactly like the OG Watcher -- spawn rules, hold, gaze/axe/round/
+  light dispel); the wiring adds presentation only: `AMALGAM_CHANCE` of
+  `_spawn_watcher` manifestations wear the amalgam skin, `npc._birth`
+  drives a staggered part-by-part build-out, and the gaze-dispel fraction
+  (`npc._gait`) plays the dispel as a PEELING. Blessed-but-open ideas
+  live in `TODO.md` #21: per-part beam burn, hold-timer build-out. The
+  FRAME idea (one huge empty cut as a super-rare shadow) was pitched and
+  retired ("doesn't fit here").
+
 ## The King, the Moths, the evidence ladder
 
 - **2026-07 — The evidence ladder built out in full.** Ev 0: town reads
@@ -212,6 +246,21 @@
   this one instance.
 
 ## Walls & interior geometry
+
+- **2026-07 — Doors and windows join the thin-slab walls (`_gap_slab`;
+  the "glitched door" / "wrong windows" playtest finds).** In slab scenes,
+  a door or window tile extruded as a FULL-tile box (its char isn't a wall
+  char, so `_wall_slab` returned None) while the wall around it was a
+  half-tile slab -- every doorway and window read as a near-black full-tile
+  monolith jutting from the thin wall line, with the pane floating on the
+  phantom face. New `_gap_slab` carries the flanking walls' band through
+  the gap tile; the door lintel, window box, and pane face-plane all take
+  it, in the wall's material tint. The flat full-tile window art is skipped
+  under tilt in slab scenes (it peeked out past the band as a lit strip at
+  the wall's foot), and interior panes now glaze with flat overcast
+  daylight instead of the facade's warm lit-from-within amber. Also cut in
+  the same sprint: the bedroom's "You wake up." first-step notice (the
+  room, the light, and the muffled wake audio already say it).
 
 - **2026-07 -- #4c interior-door rollout COMPLETE; four interiors left whole
   on purpose.** With the shop pilot, the church vestry, the barn, the abandoned
@@ -376,8 +425,328 @@
   office, schoolhouse, Toby's house, the Lodge) is still open per
   `TODO.md` #4c.
 
+## Combat feel
+
+- **2026-07 — The axe swing redesigned (TODO #25, landed).** The old
+  swing walked a constant-speed 150-degree arc with a faint trail -- a
+  windscreen wiper. The redesign maps three phases onto the same prog
+  window: a WIND-UP that pulls the head back past the start side and
+  lifts it off the shoulder (anticipation), a STRIKE that crosses the
+  whole arc in a sharpened smoothstep burst with a bold two-ply motion
+  smear (the snap), and a FOLLOW-THROUGH that overshoots and settles.
+  Haft reach breathes with the phases. Same signature, same call sites,
+  same chop-stun timing (error class 9 untouched); verified on a
+  nine-phase headless strip.
+- **2026-07 — Swing retune + the axe OBJECT redesigned (maintainer:
+  "it's the design of the axe itself").** Retune first: the wind-up cut
+  to a ~50ms flick, the smear detached from the live head (joined, it
+  read as a bent haft) with its angular spread clamped, and the recover's
+  last half blends angle+reach into the held pose so the carry takes over
+  with no pop. Then the object: the old bare-line haft + symmetric pale
+  wedge (a spade) was replaced by shared `_axe_haft`/`_axe_head` helpers
+  used by both `draw_axe_swing` and `draw_axe_held` -- a curved tapered
+  haft with a fawn's-foot butt, and a one-silhouette fire-axe head (flat
+  squared poll in darker struck steel, waist at the eye, CONCAVE flanks
+  flaring to a bit WIDER than the head is long, a bright slightly-convex
+  honed edge). Iteration notes that cost renders: straight diverging
+  flanks or a lit band at the wide end read as a lampshade/bell; a bit
+  longer than wide reads as a funnel. The arc + carry side now MIRROR for
+  west-ish facings (`sgn`) so the bit always leads the travel and the
+  edge never hangs up-screen (the bowl read), and the carry droops
+  `_CARRY_TILT` (~26 degrees) off the facing line so the head sits in
+  three-quarter (a dead-level carry pointed the bit straight down-screen,
+  the one angle with no profile). Verified on 4-facing held + 8-phase
+  swing sheets at 5x and 2x, plus the swing GIF.
+
+## The interiors pilot (2026-07, TODO #24)
+
+- **2026-07 — Wave 2 rollout: the sheriff's office quad.** Six
+  separates became two composed objects. The LAWMAN'S WALL (west-wall
+  run): his cot with the blanket tucked army-tight and a worn pale
+  sit-spot, boots squared toes-out under the frame, the washstand with
+  standing water and a hung towel over its rail, the antler rack
+  carrying his winter coat (the empty prongs say the hat and belt are
+  on him) -- plus the walked line along the run and the washstand's
+  drip stain. The LAWMAN'S DESK: the two-tile desk with its modesty
+  panel, case files squared, the tin mug on years of rings, the radio
+  with grille + dial + antenna at the back corner, the chair yaw-tucked
+  half under the working side, boot scuffs where he stands. Footprints
+  stamp the old separates' exact tiles. Verified on four-facing +
+  clean-inspection sheets.
+- **2026-07 — Wave 2 rollout: the shop's stockroom receiving corner.**
+  The stockroom's prop soup (two loose crates, a bare table, a barrel)
+  merged into ONE `stockroom_corner` ensemble per the rule: a yawed
+  crate stack against the west wall, the check table with paper sacks
+  and the receiving ledger, the flour barrel with a chalked lid and a
+  dropped scoop -- and its wear layer in world space (the dust ghost of
+  sold-out stock, the stopped chalk tally on the wall, the shipped twin
+  barrel's ring stain, drag scuffs, a dry grain spill). The candle
+  stays its OWN deco seated on the check table so it keeps emitting
+  (an ensemble must never swallow a light source into dead art). The
+  footprint stamps the exact tiles the old separates held, so
+  reachability and Hettie's stockroom station are untouched. Verified
+  on a four-facing in-room sheet.
+
+- **2026-07 — The lodge pilot COMPLETE (ensembles 2-4 + the host).**
+  The dining set (the one set place, the dust-shadow of the second, live
+  candle, yaw-tucked chairs, splinted leg); the service bar dressing
+  (pitcher, ready tray, towels, the one used glass) with the desk-to-bar
+  corner welded into a single front-of-house L; the hearth as a real
+  masonry mass (firebox + breast past the eave, mantle + candle, tools,
+  log basket, the buck's antlers rehung on the breast, soot + ash).
+  Sable's front view got the V shirt-front + smile + watch chain, his
+  key rack tripled to the pigeonholed wall of keys with ONE empty hook
+  (the PI's room), and a latent fade bug died: the prop occlusion fade
+  assumed a generic tall box, so an NPC behind their own counter faded
+  it permanently -- furniture now fades against its real spec height.
+- **2026-07 — The kitchen wall lands (the first ensemble).** The lodge's
+  loose stove + the north-wall ham + scattered kitchen intent composed
+  into ONE `SOLID_PROPS` object (`kitchen_wall`): cookstove on legs with
+  ember grate, stovepipe climbing past the eave with a wall elbow,
+  counter run with pot shelf over, three hung pots, the house ham on the
+  shelf hook, a wood crate under the lip. Placed on the west wall over
+  'x' see-over stamps (the car pattern); the old raw 'k' stove tile the
+  furniture stamp had been hiding was cleared (smoke [9/9] caught it).
+  Also scrubbed en route: the capital-H "Hunter" entity (a cut design)
+  from the backwoods cabin's display name + docstring.
+
+## The Lodge (2026-07 quality sprint)
+
+- **2026-07 — Sable reachable across his desk (counter-aware talk reach).**
+  The NPC-talk check was a bare 40px literal in two places (try_interact +
+  the [E] cue); pressed flat against the reception counter the PI still
+  stood ~48px from Sable, so E fell through to the register beat and the
+  host could never be spoken to from the front. New `NPC_TALK_REACH`
+  config default + per-NPC `npc.talk_reach` override; Sable and Hettie
+  (the two counter seats) get 56. Flow-guarded (E across the desk front
+  opens Sable's tableau).
+- **2026-07 — The padlocked cellar hatch is a real volume.** It was only
+  the flat 'L' exit tile (playtest error class 7: a raw object tile under
+  the tilt); the existing `cellar_hatch` SOLID_PROPS volume is now placed
+  over it, with new `padlock` / `open` lid states (the lodge's
+  freshly-oiled padlock; the lid swings up once unlocked, synced from the
+  `cellar_unlocked` flag on entry). Barn/farmhouse hatches keep the
+  nailed-shut cross-board default.
+- **2026-07 — Sable's loft room re-laid.** The bed straddled the door
+  column at the room's front (error class 8); it moved to the back corner
+  under the dormer window (nightstand beside it, washstand down the west
+  wall), and the bare south half gained his morning chair + a worn
+  off-grid rug. The registry's stale "(locked)" annotation and the door-'1'
+  comment were corrected en route.
+
+## Camera & the world's edge
+
+- **2026-07 — Sprite-native camera scale (`TILT_ZOOM` 0.72 → 1.10).** The
+  first-five-minutes quality sprint's opening move. The tilt shipped zoomed
+  out to 0.72 "to show more world", but sprites draw at fixed pixel size,
+  so the zoom-out shrank the WORLD against the BODIES: rooms read cramped,
+  props read as noise, and most of the frame was empty void — the
+  maintainer's "the world feels too small compared to the player" and "it
+  feels low quality" playtest verdicts in one constant. A headless A/B
+  (0.72 / 0.90 / 1.00 / 1.15) showed rooms filling the frame and Brimley's
+  props resolving into readable objects at ≥1.0; 1.10 shipped (slightly
+  past sprite-native, so the world reads a touch larger than the body —
+  the requested direction). Side effect: the visible window tightened
+  ~47%, which is dread-positive (less information on screen).
+- **2026-07 — The void surround: the map's edge composed
+  (`scenes/terrain.py`).** Off-map tiles rastered as an endless field of
+  `"."` default floor (per-tile jitter + macro shadow = the "checkered
+  void" around every interior), and outdoor scenes hard-cut to black past
+  their bounds (the maintainer: "all of the space outside the scene is
+  black and it takes away from the scene"). The floor raster now skips
+  off-map tiles; a new `_void_surround_pass` draws a three-tile rim that
+  continues the nearest in-bounds ground under a deepening veil into
+  near-black. Also fixed en route: `_draw_neighbor_strips`' skip
+  conditions dropped every N/S and E/W edge strip (only diagonal corners
+  ever painted), so the seamless-world seam never actually showed the
+  neighbor scene's terrain; strips now paint true edge strips, drawn over
+  the rim fade where a neighbor exists.
+
+## Terrain & prop read (2026-07 quality sprint)
+
+- **2026-07 — Plank floors read from E/W; macro shadow tamed.** Boards
+  varied only per ROW, so a rotated (E/W) facing showed long uniform
+  stripes ("the floor on the east/west looks like straight lines"); the
+  board rects also overdrew the new smooth base cells and silently
+  dropped the macro shadow indoors. Boards now carry along-the-run grain
+  patches + staggered end-joints every ~3 tiles, with the macro shadow
+  folded into the board shade. And the macro shadow's amplitude was cut
+  (58 → 30 max, gentler curve): the old per-tile stepping read as
+  texture, but once smoothed the full-strength blob read as the hard
+  shadow of nothing (the playtest's "weird dark patch outside the
+  cabin").
+
+- **2026-07 — Solid props fade for occluded actors (the car fix).** The
+  per-actor occlusion fade was wired only for wall tiles; the solid-prop
+  emit blitted every card at full opacity (despite docstrings claiming
+  otherwise), so the car -- the game's largest prop card -- blanketed
+  whoever stood behind it. The prop emit now runs the same
+  `occluder_alpha_box` fade the walls use. The car's footprint also went
+  `'X'` → `'x'` (see-over, the counter precedent): a sedan is waist-high
+  and should not carve a black wedge out of the sight cone.
+- **2026-07 — The ground stops checkerboarding.** Floor brightness was
+  three per-tile constants (base, ±6 whole-tile jitter, one macro-shadow
+  alpha), so every variation landed as a hard-edged 32px square.
+  `draw_floor` now evaluates sub-tile value noise + the macro shadow per
+  8px cell, bilinear across tile corners SHARED with neighbouring tiles,
+  so brightness rolls smoothly across tile edges. Cost only on first draw
+  (tiles are cached); animated water keeps the flat fill.
+- **2026-07 — North-woods April trees.** The old tree was a symmetric
+  green body-of-revolution canopy -- summer foliage in a fiction set the
+  week the ice went out, and it read as a faceted lampshade ("weird
+  shaped trees"). The stand is now ~2/3 boreal SPRUCE (ragged dark cones
+  of jittered stacked tiers -- the shape the renderer is genuinely good
+  at) and ~1/3 BARE deciduous (trunk + seeded branch strokes, nothing
+  leafed). Seasonally true and darker on the skyline.
+
+## The light pillar (2026-07, wave 1)
+
+- **2026-07 — The flashlight opens on the PI's desk.** Moved from the
+  woodshed stump to the bedroom desk tableau, beside the pistol: the
+  maintainer's light-pillar mandate makes light the game's spine, so the
+  player's hand on it starts in the opening close-up (and a PI carries
+  his own light; finding it in a shed was always a little false). New
+  menu option + close-up art + `desk_flashlight_taken` flag; the
+  woodshed keeps the axe.
+- **2026-07 — The deep beam-off retired.** `CULT_DARK_SCENES` swallowed
+  the flashlight by design ("the dark here is not the kind light
+  fixes"), and TODO #21 carried "retire this?" as an open dread
+  decision. The maintainer's playtest verdict settled it: it read as
+  broken, not dreadful, and a deliberate mechanic that reads as a bug to
+  its only player is a bug. Light works everywhere now; the deep keeps
+  its deepest gloom tier + the cult's own fires, and the beam stays
+  priced (visibility burn). The beam-off notice + HUD line were cut with
+  it.
+
 ## Lighting
 
+- **2026-07 — The reverse light, moving sources, and the Watcher spawn
+  rules (maintainer batch).** Three connected pieces. (1) The
+  `dark_pool` deco: an INVISIBLE placed dark source (kwargs `r`,
+  `depth`) that SUBTRACTS from the lightmap after every light has
+  added, so placed darkness always wins where it contends with a lamp
+  -- blackness blacker than ambient, authored exactly where the design
+  wants it (pilots: the shop pantry's cult tells, the barn's SE
+  corner); the audit draws it as a deep-blue ring. (2) Moving light
+  sources are expected: `Scene.light_sources` now caches the emitter
+  DECO LIST and readers take positions live, so a carried or swinging
+  source gates correctly in the mechanical layer (the visible lightmap
+  was already per-frame). (3) The Watcher spawn rules: a Watcher opens
+  only at a spot that is DARK (`lit_at`) and holds LINE OF SIGHT to
+  the player (`clear_sight_line`) -- never in a sealed room or
+  out-of-bounds pocket you cannot answer with your gaze, which kills
+  unanswerable accumulation AND delivers lit-rooms-secured for free (a
+  room with no dark spot in view of you cannot open anything; a
+  blackout un-secures it). Guarded by `tests/stealth.py` §11 (every
+  spawn dark + sighted; the sealed pantry opens nothing).
+- **2026-07 — The lightmap: darkness composes by accumulation
+  (maintainer: "the lights aren't interacting with each other
+  properly").** The gloom pass used to punch per-pool alpha holes in a
+  dark overlay, painter's-order -- where two pools overlapped, the
+  later pool's dim rim overwrote the earlier pool's bright centre, so
+  every pendant kept a visible ring seam and adjacent lights never
+  combined. Rebuilt as a true lightmap: every source (pools, cone
+  fans, the flashlight beam, the player's bubble) ADD-accumulates into
+  one luminance field over the room's ambient, and the frame is
+  multiplied by it once. Overlapping pools now genuinely brighten
+  their shared floor (the school's paired pendant runs pour into a
+  continuous band), seams are gone, and the falloff matches the
+  colored layer's shape so the whole light field reads as one system.
+  Same gloom extremes as before (ambient floor and full-bright centres
+  unchanged), cached surfaces, one full-screen MULT.
+- **2026-07 — Broken lights: 1-2 dead fixtures per room (maintainer).**
+  A `broken=True` fixture kwarg kills the light in every layer at once
+  (visible pool, `lit_at` gate, cast shadows, audit coverage -- the
+  audit marks it a red X + "(broken)" tag), independent of genset
+  power, and the pendant's art shows why: a shattered jagged stub where
+  the glass was, the dish knocked askew off the cord line, the dead
+  kink in the cord, no sway. Placements: the shop's main-row west +
+  mid-row east (Hettie keeps the counter and aisle burning, the ones
+  people see); the church's SW pew pendant; the barn run's MIDDLE bulb
+  (a dead gap in the dead commune's row); the school's diagonal pair;
+  the sheriff's front waiting room (the public face decays first, the
+  door lantern still burns). The 90% coverage stays the WIRING's
+  design number; live coverage sits at 81-88% with the burnouts, and
+  that dark is sanctioned. Guarded by `tests/stealth.py` §17.
+- **2026-07 — The row rule: pendants hang on one axis (maintainer:
+  "people have lights in a row; lights shouldn't look chaotic").** The
+  coverage-driven scatter was re-placed as straight runs at even
+  spacing: the shop's three E-W runs (the counter bulb the middle of
+  the main row) + one centered fixture per service room; the church's
+  2x2 over the pew banks + the vestry single; the barn's run of three
+  down the dormitory; the school's two runs of three over the cot
+  banks (barracks wiring); the sheriff's north pendant line running
+  three cords through two rooms + the south line of three. Coverage
+  IMPROVED under the discipline (shop 95 / church 92 / barn 92 /
+  school 97 / sheriff 90) -- rows tile a room better than scatter.
+  Rule codified in DESIGN §6: props break the grid, wiring obeys it.
+- **2026-07 — The drop bulb became a real pendant (maintainer: "those
+  need to look like lights, not glowing orbs in space").** The bare
+  bulb + halo read as a floating orb at game scale; the rework gives
+  the fixture a BODY: a heavier drop cord stepping dark into the
+  unrendered height, a steel dish shade (a cone of revolution -- the
+  one place a lampshade read is correct), and the bulb glowing UNDER
+  the lip so the dark rim always cuts the glow. Unpowered it keeps the
+  dish in dead enamel with dark glass, so a blackout shows dead
+  fixtures hanging rather than lights that vanished. Verified in-scene
+  on N/E facings, powered and blacked out.
+- **2026-07 — The 90% coverage rule + the five dim interiors relit.**
+  Maintainer mandate: with every light on, >=90% of an indoor room's
+  walkable floor sits inside a visible pool; the ~10% dark is chosen.
+  `tools/light_audit.py` now MEASURES it (walkable-floor coverage %,
+  pool + mechanical, printed on the sheet and stdout, cone-aware), and
+  all five `DIM_INTERIOR_SCENES` were relit to the target (shop 92 /
+  church 91 / barn 90 / schoolhouse 90 / sheriff's office 90) with
+  ceiling `drop_bulb` cords as the workhorse (the maintainer's
+  ceiling-source call: textured, never sourceless -- the light-security
+  verbs need findable fixtures). The bulb's VISIBLE pool widened to 108
+  (a bare bulb floods a room) while its mechanical `_LIGHT_KINDS`
+  radius stayed 58, so stealth cover didn't move. Chosen darks: the
+  shop pantry, the church's far nave corners, the barn's SE dormitory
+  corner, the school's piled-desks corner, the cell's inner corner.
+- **2026-07 — The genset power link, first slice (TODO #21
+  light-security).** Electric light is LIVE state now: the ELECTRIC
+  kinds (`Scene._ELECTRIC_KINDS`) emit only while their scene's power
+  is on. `Game._tick_power` drains per-scene `_genset_down` blackout
+  timers and stamps `Scene.power_on` + the per-deco `_powered` flag;
+  a moth FLARE sets its room's timer (`BLACKOUT_DUR` 45s) -- the moth
+  blackout ruling's core, wordless (the lights dying is the tell).
+  During a blackout the electric fixtures die in every layer at once:
+  no visible pool or fan, no mechanical `lit_at` cover, and the fixture
+  art goes dark (wall lamp + drop bulb + yard light draw dead glass;
+  the office radio's static crawl and creeping needle stop -- the
+  first world-state-through-an-appliance tell). Fire is exempt, so a
+  blackout hands the room to the warm accents (the stealth guard
+  proves the counter stays lit by the kerosene FLAME while the hooded
+  lamp's fan goes dark). Run-state, cleared on New Game; power returns
+  on its own. Guarded end to end by `tests/stealth.py` §17. Still open
+  in `TODO.md` #21: player restore/switch verbs, the fuel economy,
+  decay, lit-rooms-secured.
+- **2026-07 — Cone fixtures (light is not only a circle).** A fixture
+  deco may carry `cone=(dir_x, dir_y, half_deg)`; the SAME kwarg drives
+  all three layers (the maintainer's ask): `_draw_dark` carves + adds a
+  world-space projected FAN instead of an ellipse (nested fills stepping
+  down in brightness; apex at the fixture), `Scene.light_sources`/
+  `lit_at` add the angular test (behind a hooded lamp is honest dark,
+  and the stealth shadow-cover gate agrees), the cast-shadow pass skips
+  casters outside the fan, and `tools/light_audit.py` outlines the fan.
+  Pilot: the shop's east bulkhead lamp aims west into the room, so its
+  own wall keeps the dark. Aim further lamps room by room per audit.
+- **2026-07 — The shop light pass (the first audit-designed room) +
+  `drop_bulb` + the kerosene pool.** First placement pass run through
+  `tools/light_audit.py` end to end. New `drop_bulb` fixture (a bare
+  bulb on a drop cord, cold family, cord fading up into the unrendered
+  dark since interiors show no ceiling; per-placement hang height via
+  the `z` kwarg): Hettie's tableau's "one kept bulb burning over the
+  counter" made world-real over the till. `kerosene_lamp` joined both
+  emitter tables (small warm accent pool; its draw burns a live flame
+  everywhere, so a poolless one was a lie) -- the warm-in-cold overlap
+  at the counter is the additive-interaction showcase. Placement notes
+  that cost captures: the bulb 8px from the kerosene read as one blob
+  (moved to the counter's front-centre air), and at z=30 it vanished
+  into Hettie's body on the N facing (raised to z=42, above heads).
+  Dark chosen on purpose: north aisle, stove corner, office nook,
+  stockroom->pantry (candle, then pitch black for the cult tells).
 - **2026-07 — Two-family light model + shared fixture table.** Brimley's
   civic light was originally anachronistic (19th-century lampposts);
   replaced with period-correct 1994 electric (cold `yard_light` poles on
@@ -689,6 +1058,21 @@
 
 ## Save model
 
+- **2026-07 — The floppy save toast.** The evidence autosave wrote the
+  disk with no feedback at all (the scribble toast says NOTED, not SAVED,
+  and the quiet journal pickup showed nothing). A small procedurally-drawn
+  3.5in floppy + "Saved" now fades in under the scribble leaf whenever
+  `write_disk()` actually succeeds. Also fixed: `systems/save.py`'s
+  docstring still narrated the retired sleep-at-the-cot save model.
+- **2026-07 — Spent conversation questions + the menu guard.** E-spam
+  through a talk's captions could pick a menu option the player never
+  read (the caption→menu chain is synchronous), and re-askable questions
+  looked identical to fresh ones. Every finished exchange now marks
+  itself asked; spent rows dim in both menu presentations (authored order
+  kept — indices are load-bearing for scripted drives); the cursor opens
+  on the first fresh row; and tableau menus swallow confirm presses for
+  `CONVO_MENU_GUARD` (0.3s) after opening.
+
 - **2026-07 — Save model simplified to one disk slot, autosaved on
   evidence pickup.** Earlier iterations saved at the cot. The current
   model: the cot is a pure REST (heal + visibility cool, no save); the
@@ -735,6 +1119,17 @@
   asserting it).
 
 ## Documentation process
+
+- **2026-07 — CLAUDE.md threat section consolidated (the quality sprint's
+  doc pass, phase 1).** CLAUDE.md had grown into a second design doc: the
+  evidence ladder, the Moths, the Watchers, and the WADE had their ONLY
+  full descriptions in the entry point, while the rest of its threat
+  section duplicated DESIGN §1/§12 nearly verbatim. The four unique
+  blocks moved whole into DESIGN §1 ("The evidence ladder, the Moths,
+  the Watchers, the deep-water WADE"); CLAUDE.md's section shrank to a
+  pure code map (~15.6k → ~2.7k chars off the every-turn read).
+  Remainder (the tableau mega-paragraph and other Layout duplication)
+  ticketed in TODO.
 
 - **2026-07 — The six-doc canon consolidated from many per-topic docs.**
   `CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and two audit

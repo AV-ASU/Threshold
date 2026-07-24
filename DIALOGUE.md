@@ -1131,8 +1131,12 @@ text:
     axe mask-yank, then the Carcosa blast). Escape backs out (the mask stays
     on the altar, re-interactable).
 - **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
-  Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
-  file"**, **"Step back"**. Reading hint: "(walk away to close)".
+  Menu labels: **"Take the pistol"** (drops once taken), **"Take the
+  flashlight"** (drops once taken; the PI's own light moved here from the
+  woodshed in the 2026-07 light pass), **"Read the case file"**, **"Step
+  back"**. Reading hint: "(walk away to close)". Taking the flashlight
+  fires the notice "Your flashlight. Press [F] in the dark, but light
+  draws the eye."
   - **The case file** (`_tableau_read_case`, sets `read_journal`): "CLIENT:
     Walter Blaine. Wants his daughter found and brought home." / "MARA BLAINE,
     26. Cut ties, drove north, quit calling home. The trail runs cold at
@@ -1159,8 +1163,9 @@ pure control/feedback layer stays indexed; see Coverage):
 - **The gun at 3+ evidence:** "The shot barely staggers it now. You know
   too much. They won't die for you anymore." **The axe's first hit (the
   stun teach, once):** "You knock it back. It won't stay down. Run."
-- **The flashlight in the cult dark:** "The beam dies the moment it leaves
-  the lens. The dark here is not the kind light fixes."
+- *(The cult-dark beam-off notice, "The beam dies the moment it leaves the
+  lens...", was CUT with the 2026-07 light pass: light works everywhere
+  now; the deep's dread is what light costs and attracts.)*
 - **The church bell:** "You haul the rope. The bell swings out over the
   town." / "The bell is already swinging." / "The bell stops mid swing."
 - **The King's portal:** "The air begins to tear. Get out of sight." / "The
