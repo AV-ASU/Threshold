@@ -208,7 +208,8 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
                "the_sump", "the_cells", "the_old_stores",
-               "dark", "threshold"} | DIM_INTERIOR_SCENES
+               "dark", "threshold",
+               "lost_space"} | DIM_INTERIOR_SCENES
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
 # mechanically disabled and the dread aperture closes regardless

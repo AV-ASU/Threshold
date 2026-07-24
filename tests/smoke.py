@@ -152,6 +152,8 @@ def check_passability():
     errors = 0
     for key in SCENE_BUILDERS:
         sc = load_scene(key)
+        if getattr(sc, "procedural", False):
+            continue                    # infinite generator field: no flood-fill
         if not sc.spawns:
             continue
         start = sc.spawns.get("default") or next(iter(sc.spawns.values()))
@@ -389,6 +391,8 @@ def check_no_raw_furniture_tiles():
     errors = 0
     for key in SCENE_BUILDERS:
         sc = load_scene(key)
+        if getattr(sc, "procedural", False):
+            continue                    # infinite generator field: no full scan
         for ty, row in enumerate(sc.objects):
             rr = row if isinstance(row, str) else "".join(row)
             for tx, ch in enumerate(rr):

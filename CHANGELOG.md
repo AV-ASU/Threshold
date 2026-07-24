@@ -139,6 +139,30 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — The LOST SPACES: a procedural non-repeating in-between (prototype,
+  `TODO.md` #26).** Groundwork for the maintainer's Brimley-restructure idea:
+  dissolve one-square Brimley into building scenes hung off a dark liminal
+  IN-BETWEEN where the fold is FELT (you get lost) rather than told. Two tiers:
+  a **safe lit PATH** (the road, no tricks) and the **lost spaces** you fall into
+  off a DARK edge — dark fields that GENERATE new ground as you walk
+  (backrooms-style: forward never repeats, not the torus wrap), the only way out
+  a **light you HUNT** (an exit lantern held 6-20 tiles off, relocating out of
+  your sight so it stays findable). Landed as a working prototype:
+  `scenes/lost_space.py` (`LostSpace`) — a `Scene` whose `floor`/`objects` are
+  generator-backed proxies over a hashed per-tile field, with a huge finite
+  `w/h` and the player at CENTRE so collision + sight + the tilt render work
+  unchanged and the map edge never enters the window (the engine map found the
+  tilt renderer is already a camera-window system and collision/sight route
+  through `char_*_at`, so a generator-backed scene needs no engine refactor).
+  `nav_path` returns None (straight-line chasers); `DARK_SCENES` member (dark,
+  flashlight works); odd landmarks scattered for variety; the hunted exit
+  lantern moves live (`lit_at` reads positions live). Registered as `lost_space`
+  but wired into NOTHING in-game (a feel prototype). Guarded: the scene is
+  `procedural=True` so smoke skips its flood-fill + full-grid scans (a 400-tile
+  field would otherwise hang them), and its grid proxies are bounded so stray
+  iteration terminates. Full gate green. The design model + the open decision
+  (whether to commit the restructure) live in `TODO.md` #26; canon (NARRATIVE §5
+  "one square scene", DESIGN §7 the fold) is UNCHANGED until it is decided + wired.
 - **2026-07 — The storm's STAGE: ev-driven surface darkening (`TODO.md` #25,
   LIVE).** The first LIVE slice of the storm-King redesign, and the stage the
   amalgam-cut flood will later fill. The surface world (`STORM_STAGE_SCENES`:

@@ -26,6 +26,7 @@ from .villager_houses import (build_church, build_sheriff_office,
                               build_abandoned_farmhouse)
 from .brimley import build_brimley
 from .hidden_folds import build_effigy_grove
+from .lost_space import build_lost_space
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_country_lane,
                                 build_gravel_road_north,
@@ -117,6 +118,8 @@ SCENE_BUILDERS = {
     "cornfield_maze":     build_cornfield_maze,
     # Hidden fold scenes (direction-sensitive warps off the main world).
     "effigy_grove":        build_effigy_grove,
+    # The lost spaces (TODO #25 prototype): procedural non-repeating dark field.
+    "lost_space":          build_lost_space,
 }
 
 # DELETED (the prior combat/loot game -- removed wholesale, not just

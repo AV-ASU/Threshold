@@ -192,6 +192,18 @@ it renders the procedural sprites to a labelled PNG strip.
     `terrain.py` for draw code, `base.py` for the Scene model. terrain
     depends only on `constants` + lazy `scenes`/`rendering.*` imports,
     never on `Scene`, so there is no cycle.
+  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26
+    prototype, wired into nothing in-game yet): a procedurally-generated,
+    NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
+    renderer is already a camera-window system and collision/sight route through
+    `char_object_at`/`char_floor_at`: a `Scene` whose `floor`/`objects` are
+    generator-backed proxies (`_GenGrid`, bounded so stray full iteration stops)
+    over a hashed per-tile field, with a huge finite `w/h` and the player at
+    CENTRE (the edge never enters the window), gets collision + sight + render
+    for free. It sets **`self.procedural = True`** — smoke (`tests/smoke.py`)
+    skips flood-fill + full-grid scans for any `procedural` scene (an infinite
+    field would hang them). `nav_path` returns None (straight-line chasers). The
+    hunted exit lantern moves live (`lit_at` reads deco positions live).
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,

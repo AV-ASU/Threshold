@@ -350,6 +350,59 @@ away, never a billboard); one bearer at a time; the flood concentrates on His
 last *sense* of you, not your true position (luck-not-omniscience); the
 impossible count stays at one.
 
+### 26. **[Opus + Fable]** The in-between / lost spaces — Brimley restructure (EXPLORATION, prototype landed)
+
+**Maintainer idea (2026-07); the design conversation settled the MODEL, but it
+is NOT yet a committed canon decision.** Dissolve one-square Brimley into
+per-building scenes connected by a dark liminal IN-BETWEEN, so the fold is FELT
+moment to moment (you get lost) rather than told. This OVERTURNS the current
+preserve (NARRATIVE §5 / #4: "Brimley stays ONE square scene") and unparks the
+reshape (#8) in a new, engine-aligned form (a **scene graph + a generator**, not
+the parked heightfield / organic reshape). Reconcile NARRATIVE §5 + DESIGN §7
+ONLY if/when the restructure is committed and wired.
+
+**The model (locked in conversation):**
+- Three layers: **interior -> yard -> safe path <-> lost spaces**. Buildings hang
+  off a **safe lit PATH** (the paved road, lamp posts, NO tricks, navigable).
+- The **lost spaces** are the dark liminal fields (corn / forest / road) you fall
+  into off a **dark scene edge** (a lit edge is a wall, a dark edge is the mouth
+  -- light gates entry). They are **procedurally generated, NON-REPEATING**
+  (forward is always new ground, backrooms-style, NOT the torus wrap).
+- The **exit is a light you HUNT**: held 6-20 tiles off, relocating out of your
+  sight cone if you drift, so always escapable and always a search.
+- Manipulation lives in the dark: observer-dependent layout (space reshuffles
+  when unlooked-at), light = the only stable/true thing, asymmetric return (the
+  way back isn't the way you came), the space breathes with threat, evidence
+  swaps the field for a longer/warped/more-hostile version, odd landmarks for
+  variety.
+
+**LANDED (prototype, wired into NOTHING in-game):** `scenes/lost_space.py`
+(`LostSpace`) -- a generator-backed non-repeating dark corn field that renders +
+collides through the real engine (`floor`/`objects` are bounded proxies over a
+hashed per-tile generator; a huge finite `w/h` with the player at CENTRE so the
+edge never enters the tilt window; `nav_path` None; `DARK_SCENES`;
+`procedural=True` so smoke skips its flood/full-scan; the hunted exit lantern
+moves live; odd landmarks). The engine map (the workflow that grounded this) is
+in the session transcript. Preview: the walk strip (non-repeat proof) + the
+exit-light band. Full gate green.
+
+**OPEN, in build order:** (1) the **safe path + yard + one lost space** vertical
+slice, wired so you walk interior -> yard -> path -> fall off a dark edge into
+the lost space -> hunt the light -> climb out (the real LOOP, not just the
+field); (2) the **dark manipulation layer** inside the lost space
+(observer-dependent geometry, asymmetric return, breathe-with-threat); (3)
+**per-chunk** landmark/exit generation + a silent **re-origin** for a truly
+endless walk (the prototype uses a large finite bound + spawn-at-centre); (4) the
+**biome set** (forest, road) + the **ev-warp** variants; (5) IF the maintainer
+commits: the full Brimley **re-home** (the fences: the car, the well, the
+refuges, the descent chain) + the canon rewrite. **THE DECISION to restructure
+Brimley is NOT yet made** -- this is a feel prototype to judge it.
+
+**Fences:** the safe path is never tricked; the lost space is always escapable
+(the exit light stays in the 6-20 band); a THREAT never blinks out via the
+observer trick (only geometry lies); keep the impossible count at one (the fold
+is the one phenomenon).
+
 ---
 
 ## Blocked on a human at the keys
