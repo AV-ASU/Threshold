@@ -97,7 +97,7 @@ class LostSpace(Scene):
             self._road_n0 = self._vnoise(self._cy * 0.035 + 13, 4.0, salt=15)
             # lot rectangle in TILES (x0,x1,y0,y1), west+north of the pylon at
             # the focal; the road runs past its east edge via the driveway.
-            self._lot = (self._cx - 9, self._cx + 1, self._cy - 9, self._cy + 2)
+            self._lot = (self._cx - 9, self._cx + 1, self._cy - 10, self._cy + 2)
         # spawn the player a few tiles south of the island, facing it
         sx = self._fx
         sy = self._fy + int(self._cfg["spawn_off"] * TILE)
@@ -168,9 +168,9 @@ class LostSpace(Scene):
         # the neon pylon = the beacon you spawn under (the driveway corner)
         self.add_decoration(Decoration(cx, cy, "neon_pylon", seed=3))
         # the sealed store building at the lot's north-west
-        self.add_decoration(Decoration(*W(-4, -4), "gas_station", seed=4))
-        # the pump canopy + pumps as a SEPARATE deco (south of the store) so it
-        # depth-sorts at its own position, not the store's
+        self.add_decoration(Decoration(*W(-4, -5), "gas_station", seed=4))
+        # the pump canopy + pumps as a SEPARATE deco, set SOUTH of the store
+        # (clear of the storefront) so it also depth-sorts on its own
         self.add_decoration(Decoration(*W(-4, -1), "pump_island", seed=5))
         # painted parking bays across the open asphalt in front + a car in one
         for i, txo in enumerate((-8, -6, -4, -2)):
@@ -235,6 +235,12 @@ class LostSpace(Scene):
         x0, x1, y0, y1 = self._lot
         return x0 <= tx <= x1 and y0 <= ty <= y1
 
+    def _in_lot_floor(self, tx, ty):
+        # the PAVED area extends one tile beyond the fence on every side, so the
+        # chain-link sits ON the lot rather than floating on the dirt outside.
+        x0, x1, y0, y1 = self._lot
+        return x0 - 1 <= tx <= x1 + 1 and y0 - 1 <= ty <= y1 + 1
+
     def _in_driveway(self, tx, ty):
         # the paved apron bridging the lot's east edge to the road centreline
         return (self._cy - 1 <= ty <= self._cy + 1
@@ -251,9 +257,9 @@ class LostSpace(Scene):
 
     def _building_solid(self, tx, ty):
         # the sealed store block at the lot's north-west (matches the
-        # gas_station deco placed at (cx-4, cy-4) tiles; see _build_road_station)
+        # gas_station deco placed at (cx-4, cy-5) tiles; see _build_road_station)
         return (self._cx - 7.3 <= tx <= self._cx - 0.7
-                and self._cy - 5.6 <= ty <= self._cy - 2.4)
+                and self._cy - 6.6 <= ty <= self._cy - 3.4)
 
     def _corn_here(self, tx, ty):
         # sparse corn CLUMPS in the field: a low-freq gate so corn appears in
@@ -282,11 +288,12 @@ class LostSpace(Scene):
             gg = self._vnoise(tx * 0.09 + 3, ty * 0.09 - 5, salt=6)
             return "G" if gg > 0.5 else "g"   # mossy forest floor
         elif b == "road":
-            # the fenced station LOT + its driveway: paved (gravel at the rim)
-            if self._in_lot(tx, ty) or self._in_driveway(tx, ty):
+            # the fenced station LOT + its driveway: paved, extending one tile
+            # under/past the fence, gravel at the very rim
+            if self._in_lot_floor(tx, ty) or self._in_driveway(tx, ty):
                 x0, x1, y0, y1 = self._lot
-                if tx in (x0, x0 + 1) or ty in (y1, y1 - 1):
-                    return "d"            # gravel skirt at the lot's near edges
+                if not (x0 <= tx <= x1 and y0 <= ty <= y1) or ty >= y1 - 1:
+                    return "d"            # gravel skirt (outside the fence + near edge)
                 return "P"               # asphalt lot
             # the WINDING paved road (river-style meander, drifting west north)
             rhalf = self._cfg["road_half"]
@@ -352,13 +359,13 @@ class LostSpace(Scene):
 
     # ---- ground detailing in the lit clearing (finite, hash-placed) ---------
     def _scatter_ground_detail(self):
+        if self._biome == "road":
+            return                        # no scattered weeds on the paved lot/road
         if self._biome == "corn":
             rad = self._cfg["clear_r"] * TILE
-        elif self._biome == "forest":
-            rad = (self._cfg["pond_r"] + 2.6) * TILE
         else:
-            rad = 7.0 * TILE              # weeds through the cracked lot/road
-        n = 34 if self._biome != "road" else 16
+            rad = (self._cfg["pond_r"] + 2.6) * TILE
+        n = 34
         for i in range(n):
             a = self._hash01(i, 511, salt=12) * math.tau
             rr = (0.8 + self._hash01(i, 733, salt=13) ** 0.5 * 0.9) * rad

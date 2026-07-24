@@ -171,7 +171,16 @@
   position (the store is well north) -- the store no longer sorts on top of its
   own forecourt; and the rooftop "chimney" (a tall dark box) became a low wide
   curbed AC unit with grille fins. The lot was pushed further from the road
-  (`road_off` 6.5). NOTE: `CASSILDA'S` / `GAS FOR LESS` are player-facing art
+  (`road_off` 6.5). Fourth round (in-game readbacks): the elevated neon sign was
+  being multiplied to black by the darkness overlay (it sits above its own
+  ground light pool -- it read as a bare triangle), so a `_draw_emissive_signs`
+  pass now REDRAWS the `neon_pylon` after `_draw_dark` to keep the neon bright
+  (and the sign was lowered for framing); the lot pavement now extends one tile
+  past the fence (`_in_lot_floor`) so the chain-link sits ON the lot instead of
+  floating on dirt; the road's scattered ground-detail weeds (brown decals that
+  read as "dirt on the road") were removed on the road biome; and the pump
+  island was moved SOUTH, clear of the storefront (the lot extended north to fit).
+  NOTE: `CASSILDA'S` / `GAS FOR LESS` are player-facing art
   strings in a prototype wired into nothing; if the lost road is wired in, they
   move into `DIALOGUE.md` per its contract.
 - **2026-07 — Lost spaces: three biome FOCAL ISLANDS + a full-effort pass

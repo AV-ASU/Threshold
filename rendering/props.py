@@ -2696,22 +2696,23 @@ def _draw_neon_pylon_solid(surf, cam, deco):
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     t = getattr(deco, "t", 0.0)
-    pole_h = 150 * s
+    pole_h = 98 * s
+    scz_top = pole_h + 22 * s
     a = cam.project(wx, wy, 0)
-    b = cam.project(wx, wy, pole_h + 30 * s)
+    b = cam.project(wx, wy, scz_top)
     pygame.draw.line(surf, (22, 22, 24), a, b, max(4, int(8 * s)))
     pygame.draw.line(surf, (58, 58, 62), a, b, 1)
     buzz = 0.78 + 0.22 * math.sin(t * 14.0 + deco.seed)
     if (int(t * 3) + deco.seed) % 19 == 0:
         buzz *= 0.5
-    scz = pole_h + 30 * s                   # sign centre height
+    scz = pole_h + 22 * s                   # sign centre height
 
     def SB(u, z):                           # sign-plane point (faces south)
         p = cam.project(wx + u, wy - 0.3, scz + z)
         return (int(p[0]), int(p[1]))
     # ---- the STAR (5-point, bulb-lined yellow) -- BIG, points reach well past
     #      the banners that cross its middle ----
-    R = 96 * s
+    R = 84 * s
     star_uz = []
     for i in range(10):
         ang = -math.pi / 2 + i * math.pi / 5

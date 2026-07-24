@@ -620,6 +620,21 @@ class RenderMixin:
         self._overlay_dark_used += used
         return used
 
+    def _draw_emissive_signs(self):
+        """Redraw self-lit SIGNS (the lost-road neon pylon) AFTER the darkness
+        overlay, so their neon reads bright instead of being multiplied toward
+        black -- an elevated sign sits above its own ground light pool and would
+        otherwise darken to a bare silhouette."""
+        if self.scene is None:
+            return
+        key = self.scene.key
+        if key not in DARK_SCENES and key not in STORM_STAGE_SCENES:
+            return
+        from rendering.props import draw_prop_solid
+        for d in getattr(self.scene, "decorations", []):
+            if getattr(d, "kind", None) == "neon_pylon":
+                draw_prop_solid(self.screen, self.camera, d)
+
     def _draw_dark(self):
         """Dark interiors/underground (DARK_SCENES) render as a navigable
         gloom: a moderate black tint over the whole scene so it reads
@@ -1960,6 +1975,7 @@ class RenderMixin:
         self._overlay_dark_used = 0
         self._draw_brimley_haze()
         self._draw_dark()
+        self._draw_emissive_signs()
         self._draw_sight_fog()
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
