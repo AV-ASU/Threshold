@@ -232,6 +232,12 @@ class DecoLightingMixin:
         pygame.draw.circle(surf, (int(196 + 44 * f), 92, 32), (x, y), 4)
         pygame.draw.circle(surf, (250, int(168 + 22 * f), 68), (x, y), 2)
 
+    def _draw_haven_fire(self, surf, x, y):
+        """The lost-space crop-circle bonfire. The tilt view draws a scaled
+        `camp_fire` volume (rendering.props); this flat fallback reuses the
+        camp-fire art for pitch-0 tools/previews."""
+        self._draw_camp_fire(surf, x, y)
+
     def _draw_smoke(self, surf, x, y):
         for i in range(4):
             phase = (self.t * 0.6 + i * 0.4 + self.seed * 0.1) % 1.0

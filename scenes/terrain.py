@@ -2808,6 +2808,12 @@ def _build_water_bank_edges(scene):
     edges = getattr(scene, "_water_bank_edges", None)
     if edges is not None:
         return edges
+    if getattr(scene, "procedural", False):
+        # An unbounded generator field can't be full-scanned for "~" tiles
+        # (the lost-space pond hand-places its own bank reeds). Skip it.
+        scene._water_bank_edges = []
+        scene._water_bank_chunks = {}
+        return scene._water_bank_edges
     floor, h, w = scene.floor, scene.h, scene.w
     edges = []
     chunks = {}

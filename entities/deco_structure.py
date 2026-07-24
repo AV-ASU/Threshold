@@ -222,6 +222,22 @@ class DecoStructureMixin:
         # Logo decal
         pygame.draw.rect(surf, (220, 200, 80), (x - 3, y - 14, 6, 2))
 
+    def _draw_gas_station(self, surf, x, y):
+        """A derelict filling station (the ROAD lost-space focal). The tilt
+        view draws the full volume (rendering.props._draw_gas_station_solid);
+        this flat fallback is a plain elevation for pitch-0 tools/previews: a
+        block store, a canopy, and a buzzing cold neon sign on a pole."""
+        stucco = (150, 140, 120)
+        pygame.draw.rect(surf, stucco, (x - 22, y - 14, 44, 22))
+        pygame.draw.rect(surf, (96, 92, 84), (x - 22, y - 14, 44, 22), 1)
+        pygame.draw.rect(surf, (14, 16, 18), (x - 18, y - 10, 14, 14))   # window
+        pygame.draw.rect(surf, (54, 42, 34), (x + 2, y - 8, 12, 16))      # door
+        pygame.draw.rect(surf, (60, 58, 62), (x - 30, y - 34, 4, 34))     # pole
+        buzz = 0.55 + 0.45 * math.sin(self.t * 14 + self.seed)
+        neon = (int(120 + 120 * buzz), int(210 + 40 * buzz), 255)
+        pygame.draw.rect(surf, (26, 28, 32), (x - 40, y - 44, 24, 14))    # board
+        pygame.draw.rect(surf, neon, (x - 38, y - 42, 20, 10), 2)
+
     def _draw_payphone(self, surf, x, y):
         """1990s glass-walled phone booth. Vertical box with metal
         framing, clear glass body, a black handset on a chrome cord,

@@ -104,6 +104,15 @@ FIXTURE_POOLS = {
     "brazier":      (106,  (255, 150, 56),   76,   12,    0,   0.16, 6.0),
     "burn_barrel":  (94,   (255, 150, 56),   68,   16,    0,   0.16, 6.0),
     "camp_fire":    (106,  (255, 158, 60),   76,   4,     0,   0.18, 5.0),
+    # the lost-space CROP-CIRCLE bonfire: a wide, high-peak warm pool that
+    # fills the whole grass clearing inside the corn ring (the fire "protects
+    # the entirety of the circle"). Bigger than a cult camp_fire on purpose --
+    # the lit haven you fall into, not a background campsite.
+    "haven_fire":   (250,  (255, 156, 58),  112,   6,     0,   0.16, 4.5),
+    # the derelict station's NEON: a saturated cold sign-glow (a SIGN is
+    # allowed colour where room-light isn't). Elevated on its pole, so the
+    # pool falls on the forecourt in front of the dark station.
+    "gas_station":  (176,  (110, 214, 255),   70,   40,    0,   0.09, 15.0),
     "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
     "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
     "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
@@ -693,7 +702,8 @@ class RenderMixin:
             if gloom <= 0:
                 return
         else:
-            gloom = (130 if key in CULT_DARK_SCENES
+            gloom = (150 if key in LOST_SPACE_SCENES
+                     else 130 if key in CULT_DARK_SCENES
                      else 72 if key in DIM_INTERIOR_SCENES
                      else 100)
         amb = 255 - gloom

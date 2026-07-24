@@ -4,15 +4,23 @@ dark liminal field, land at a lit FOCAL POINT (a hand-authored island), and the
 only way out is a light you HUNT once you leave that island's glow.
 
 Design (the maintainer's model): a HAND-MADE ISLAND in a SEA OF GENERATION. The
-field is mostly EMPTY ground with sparse corn clumps and scattered uncanny
-things to find (the backrooms feeling is emptiness + the occasional wrong thing,
-never a wall of texture). At the centre sits the biome's focal point -- for the
-CORN field, an ABANDONED CULT CAMP with a still-burning ground fire that lights
-the clearing (a haven: lit, orienting, but NOT a true refuge). While you stand
-in the firelight there is no way out; leave the glow and the EXIT LIGHT appears
-in the dark, held 6-20 tiles off, relocating out of your sight so it stays
-findable. The lit safe-feeling place is a dead end; you escape by walking into
-the dark.
+field is mostly EMPTY ground with sparse, uncanny things to find (the backrooms
+feeling is emptiness + the occasional wrong thing, never a wall of texture). At
+the centre sits the biome's FOCAL ISLAND -- a lit safe-feeling place that is a
+dead end. Three biomes, each with its own island and its own light:
+
+  * CORN   -- a CROP CIRCLE: a grass clearing ringed by a full wall of corn,
+              with an ABANDONED CULT CAMP and a bonfire at the centre whose glow
+              fills the whole circle.
+  * FOREST -- a still, pretty POND on a mossy bank, lit by lanterns someone left
+              hanging on posts around the water.
+  * ROAD   -- a derelict filling STATION you cannot enter, its cold NEON sign
+              still buzzing over two dead pumps.
+
+While you stand in the island's light there is no way out; leave the glow and
+the EXIT LIGHT (a warm lantern) appears in the dark, held 6-20 tiles off,
+relocating out of your sight so it stays findable. You escape the lit dead end
+by walking into the dark and hunting the way out.
 
 Architecture (from the engine map): the tilt renderer is already a rolling
 window keyed on the camera, and collision/sight route through char_object_at /
@@ -30,58 +38,121 @@ import math
 from scenes.base import Scene, TILE
 from entities.decoration import Decoration
 
-# the corn field's scatter library -- sparse, uncanny, on-world (a dead corn
-# town's leavings). Weighted by repetition (lone trees are the commonest).
-_SCATTER = ("creepy_tree", "creepy_tree", "creepy_tree", "husk",
-            "wheelbarrow", "rust_sedan", "rust_wagon", "rust_van",
-            "standing_stone", "scarecrow", "well", "corn_altar", "log_seat")
+# per-biome scatter libraries -- ONLY tilt-safe kinds (SOLID_PROPS volumes or
+# grounded STANDEE cards; a kind in neither renders as a flat floor sticker
+# under the only shipping camera). Weighted by repetition.
+_SCATTER = {
+    "corn": ("creepy_tree", "creepy_tree", "creepy_tree", "wheelbarrow",
+             "rust_sedan", "rust_wagon", "rust_van", "standing_stone",
+             "corn_altar", "tall_grass"),
+    "forest": ("creepy_tree", "creepy_tree", "creepy_tree", "creepy_tree",
+               "tall_grass", "grass_tuft", "standing_stone", "log_seat"),
+    "road": ("rust_sedan", "rust_wagon", "rust_van", "rust_coupe",
+             "wheelbarrow", "standing_stone", "creepy_tree"),
+}
+# ground detailing scattered across the lit clearing so the flat floor breaks
+# up (small blades + leaf litter). Standees + a floor decal, all tilt-safe.
+_GROUND_DETAIL = ("grass_tuft", "grass_tuft", "tall_grass", "leaves")
 
 _EXIT_KIND = "lantern"     # the hunted way-out light (warm, non-electric)
 
-_HAVEN_R = 4               # tiles: the abandoned camp's clear dirt radius
-_HAVEN_LIGHT_R = 7.0       # tiles: leave the firelight and the exit hunt begins
 _MIN_EXIT = 6              # tiles: the exit never sits closer (always a hunt)
 _MAX_EXIT = 20             # tiles: nor farther (always escapable)
-_REACH = 2.2               # tiles: this close to the exit = you climbed out
+_REACH = 2.2              # tiles: this close to the exit = you climbed out
+
+# per-biome focal + haven geometry (tiles). `haven_r` is how far the island's
+# light protects (leave it and the exit hunt begins); `spawn_off` drops the
+# player that many tiles SOUTH of the focal centre so they face the island.
+_BIOME = {
+    "corn":   {"clear_r": 4.5, "ring_w": 2.5, "haven_r": 8.5, "spawn_off": 3.0},
+    "forest": {"pond_r": 4.2, "haven_r": 7.0, "spawn_off": 6.5},
+    "road":   {"court_r": 5.0, "haven_r": 7.0, "spawn_off": 6.0},
+}
 
 
 class LostSpace(Scene):
     """A generator-backed, non-repeating dark field with a lit focal island.
     See the module docstring."""
 
-    def __init__(self, key="lost_space", biome="corn", seed=1,
+    def __init__(self, key="lost_corn", biome="corn", seed=1,
                  size=400, exit_to="lodge_yard", music="village"):
         super().__init__(key, ["."], object_rows=["."], music=music)
         self._seed = seed & 0x7fffffff
-        self._biome = biome
+        self._biome = biome if biome in _BIOME else "corn"
+        self._cfg = _BIOME[self._biome]
         self._exit_to = exit_to
         self.w = self.h = size
         self.procedural = True                    # smoke skips flood/full scans
-        self._cx = self._cy = size // 2           # spawn tile (map centre)
+        self._cx = self._cy = size // 2           # focal centre tile (map centre)
         self.floor = _GenGrid(self._floor_at, size)
         self.objects = _GenGrid(self._obj_at, size)
-        sx = self._cx * TILE + TILE // 2
-        sy = self._cy * TILE + TILE // 2
+        # the lit island centre (world coords) -- the haven-glow anchor
+        self._fx = self._cx * TILE + TILE // 2
+        self._fy = self._cy * TILE + TILE // 2
+        # spawn the player a few tiles south of the island, facing it
+        sx = self._fx
+        sy = self._fy + int(self._cfg["spawn_off"] * TILE)
         self.spawns = {"default": (sx, sy)}
         self.skybox_kind = "void"                 # near-black surround, not sky
-        self._sx, self._sy = sx, sy
-        self._raise_abandoned_camp(sx, sy)
-        self._scatter_things(count=84, radius=70)
+        {"corn": self._build_corn_camp,
+         "forest": self._build_forest_pond,
+         "road": self._build_road_station}[self._biome]()
+        self._scatter_ground_detail()
+        self._scatter_things(count=84, radius=72)
         self._exit_light = None                   # spawns only once you leave
         self._hunting = False
         self.on_update_fn = self._tick
 
-    # ---- the abandoned cult camp: the lit FOCAL ISLAND (reuses brimley's) ----
-    def _raise_abandoned_camp(self, cx, cy):
-        self.add_decoration(Decoration(cx, cy, "camp_fire", seed=71))
+    # ================= the focal islands (hand-authored) =====================
+    def _build_corn_camp(self):
+        """CORN: the abandoned cult camp at the heart of the crop circle. A
+        bonfire (the zone's light) with bedrolls and log seats around it."""
+        cx, cy = self._fx, self._fy
+        self.add_decoration(Decoration(cx, cy, "haven_fire", seed=71, scale=1.5))
         for (dx, dy, kind, sd) in (
-                (-42, -4, "bedroll", 1), (36, -12, "bedroll", 2),
-                (-8, 40, "bedroll", 3), (44, 18, "log_seat", 4),
-                (-44, 22, "log_seat", 5), (10, -40, "log_seat", 6)):
+                (-46, -6, "bedroll", 1), (40, -14, "bedroll", 2),
+                (-10, 44, "bedroll", 3), (50, 22, "log_seat", 4),
+                (-52, 26, "log_seat", 5), (14, -46, "log_seat", 6),
+                (58, -30, "wheelbarrow", 7), (-60, -34, "corn_altar", 8)):
             self.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=sd))
-        self.add_decoration(Decoration(cx + 48, cy - 34, "lantern"))
 
-    # ---- the generator: deterministic per world tile, non-repeating ----------
+    def _build_forest_pond(self):
+        """FOREST: a still pond on a mossy bank. A fisher's fire someone left
+        burning on the near bank throws the light (and reflects in the water),
+        with lanterns on posts around the far shore, reeds, and a low mist."""
+        cx, cy = self._fx, self._fy
+        pr = self._cfg["pond_r"] * TILE
+        # the near-bank fire: the zone's warm light, mirrored in the pond. Set
+        # to one side of the bank so the player (who lands further back) sees
+        # it burning between them and the water, not standing on it.
+        self.add_decoration(Decoration(cx - 40, cy + pr + 4, "camp_fire", seed=17))
+        # lanterns on stub posts around the far/side banks
+        for a in (0.6, 2.1, 4.2):
+            lx = cx + math.cos(a) * (pr + 26)
+            ly = cy + math.sin(a) * (pr + 26)
+            self.add_decoration(Decoration(lx, ly, "lantern", seed=int(a * 40)))
+        # reeds + a fallen log on the bank
+        for i, (dx, dy, kind) in enumerate((
+                (-8, -pr - 18, "tall_grass"), (24, -pr - 10, "tall_grass"),
+                (pr + 20, 10, "log_seat"), (-pr - 24, -6, "tall_grass"),
+                (18, pr + 24, "tall_grass"), (-34, pr + 18, "grass_tuft"),
+                (pr + 30, -34, "creepy_tree"), (-pr - 36, 30, "creepy_tree"))):
+            self.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=i + 20))
+        # a breathing mist lying on the water
+        self.add_decoration(Decoration(cx, cy, "mist", seed=5,
+                                       w=int(pr * 2.2), h=int(pr * 1.6)))
+
+    def _build_road_station(self):
+        """ROAD: the derelict filling station (can't enter -- its footprint is
+        solid) with its buzzing neon and two dead pumps out front."""
+        cx, cy = self._fx, self._fy
+        # the station sits a little NORTH so the forecourt opens toward spawn
+        self.add_decoration(Decoration(cx, cy - 20, "gas_station", seed=3))
+        # roadside dressing: a wreck nosed onto the forecourt, an oil drum
+        self.add_decoration(Decoration(cx + 70, cy + 30, "rust_sedan", seed=9))
+        self.add_decoration(Decoration(cx - 78, cy + 18, "wheelbarrow", seed=4))
+
+    # ================= the generator: deterministic per world tile ===========
     def _hash01(self, a, b, salt=0):
         h = ((int(a) & 0xffff) * 73856093) ^ ((int(b) & 0xffff) * 19349663) \
             ^ (salt * 83492791) ^ (self._seed * 2654435761)
@@ -103,54 +174,135 @@ class LostSpace(Scene):
         return (v00 * (1 - fx) + v10 * fx) * (1 - fy) \
             + (v01 * (1 - fx) + v11 * fx) * fy
 
-    def _in_haven(self, tx, ty):
-        return abs(tx - self._cx) <= _HAVEN_R and abs(ty - self._cy) <= _HAVEN_R
+    def _rt(self, tx, ty):
+        """distance from the focal centre, in tiles."""
+        return math.hypot(tx - self._cx, ty - self._cy)
 
     def _corn_here(self, tx, ty):
-        # sparse corn CLUMPS: a low-freq gate so corn appears in scattered
-        # patches (~6-9 tile blobs) with big EMPTY between -- not a wall of it.
-        return self._vnoise(tx * 0.12 + 7, ty * 0.12 + 3, salt=8) > 0.74
+        # sparse corn CLUMPS in the field: a low-freq gate so corn appears in
+        # scattered patches with big EMPTY between -- not a wall of it.
+        return self._vnoise(tx * 0.12 + 7, ty * 0.12 + 3, salt=8) > 0.75
 
     def _floor_at(self, tx, ty):
-        if self._in_haven(tx, ty):
-            return "d"                    # the camp's worn packed dirt
-        if self._corn_here(tx, ty):
-            return ":"                    # corn cover (inside a clump)
-        # the field is mostly EMPTY ground -- big regions of dead grass / dirt /
-        # mud so the nothing still reads varied, not one flat colour.
+        r = self._rt(tx, ty)
+        b = self._biome
+        if b == "corn":
+            cr = self._cfg["clear_r"]
+            rw = self._cfg["ring_w"]
+            if r <= cr:
+                return "g"                # the crop-circle CLEARING: grass
+            if r <= cr + rw:
+                return ":"                # the corn RING floor
+            # a clean MOAT of empty ground isolates the circle, then the
+            # field's scattered corn clumps resume well beyond it.
+            if r > cr + rw + 5 and self._corn_here(tx, ty):
+                return ":"                # a field corn clump
+        elif b == "forest":
+            if r <= self._cfg["pond_r"]:
+                return "~"                # the POND (animated water)
+            if r <= self._cfg["pond_r"] + 1.4:
+                return "d"                # muddy bank ring
+            gg = self._vnoise(tx * 0.09 + 3, ty * 0.09 - 5, salt=6)
+            return "G" if gg > 0.5 else "g"   # mossy forest floor
+        elif b == "road":
+            if r <= self._cfg["court_r"]:
+                return "P"                # the asphalt forecourt
+            if r <= self._cfg["court_r"] + 2.0:
+                return "d"                # gravel shoulder
+            # cracked road giving way to weeds reclaiming it
+            rr = self._vnoise(tx * 0.06 + 11, ty * 0.06 + 2, salt=7)
+            if rr > 0.62:
+                return "g"
+            return "P" if rr < 0.34 else "d"
+        # the shared EMPTY field: dead grass / mud / bare dirt so the nothing
+        # still reads varied, not one flat colour.
         g = self._vnoise(tx * 0.05 + 40, ty * 0.05 - 17, salt=3)
         if g > 0.60:
-            return "g"                    # dead grass
+            return "g"
         if g < 0.36:
-            return ";"                    # mud
-        return "d"                        # bare dirt (the "patches of nothing")
+            return ";"
+        return "d"
 
     def _obj_at(self, tx, ty):
-        if self._in_haven(tx, ty):
-            return "."                    # clear (the camp decos sit on top)
-        if self._corn_here(tx, ty):
-            v = self._vnoise(tx * 0.36, ty * 0.36, salt=2) * 0.72 \
-                + self._hash01(tx, ty, salt=5) * 0.28
-            if v > 0.56:
-                return "C"                # solid stalk (weave around)
-            if v > 0.36:
-                return "A"                # passable stalk (push through)
+        r = self._rt(tx, ty)
+        b = self._biome
+        if b == "corn":
+            cr = self._cfg["clear_r"]
+            rw = self._cfg["ring_w"]
+            if r < 1.3:
+                return "X"                # the bonfire footprint (don't stand in it)
+            if r <= cr:
+                return "."                # clear (camp decos + ground detail on top)
+            if r <= cr + rw:
+                # the RING: a near-solid WALL of corn you push OUT through (a
+                # few passable gaps so the circle can be left anywhere).
+                return "A" if self._hash01(tx, ty, salt=5) > 0.84 else "C"
+            if r > cr + rw + 5 and self._corn_here(tx, ty):
+                v = self._vnoise(tx * 0.36, ty * 0.36, salt=2) * 0.72 \
+                    + self._hash01(tx, ty, salt=5) * 0.28
+                if v > 0.56:
+                    return "C"
+                if v > 0.36:
+                    return "A"
             return "."
-        return "."                        # EMPTY -- the vast majority
+        if b == "forest":
+            if r <= self._cfg["pond_r"]:
+                return "x"                # water: solid to the body, see over it
+            # dark woods: dense tree clumps in the sea, an open bank near the pond
+            if r > self._cfg["pond_r"] + 2.2:
+                tv = self._vnoise(tx * 0.14 + 2, ty * 0.14 + 9, salt=4)
+                if tv > 0.70:
+                    return "T" if self._hash01(tx, ty, salt=6) > 0.35 else "p"
+            return "."
+        if b == "road":
+            court = self._cfg["court_r"]
+            # the station block sits just north of centre: a solid footprint you
+            # cannot enter (the deco supplies the building art).
+            if -2.6 <= (ty - self._cy) <= -0.2 and abs(tx - self._cx) <= 2.4:
+                return "X"
+            if r > court + 3.0:
+                # roadside junk: the odd rusted hulk of debris to weave past
+                if self._hash01(tx, ty, salt=9) > 0.985:
+                    return "R"
+            return "."
+        return "."
 
-    # ---- scattered things to FIND (the exploration; sparse) ------------------
+    # ---- ground detailing in the lit clearing (finite, hash-placed) ---------
+    def _scatter_ground_detail(self):
+        if self._biome == "corn":
+            rad = self._cfg["clear_r"] * TILE
+        elif self._biome == "forest":
+            rad = (self._cfg["pond_r"] + 2.6) * TILE
+        else:
+            rad = (self._cfg["court_r"] + 1.0) * TILE
+        n = 34 if self._biome != "road" else 14
+        for i in range(n):
+            a = self._hash01(i, 511, salt=12) * math.tau
+            rr = (0.8 + self._hash01(i, 733, salt=13) ** 0.5 * 0.9) * rad
+            lx = self._fx + math.cos(a) * rr
+            ly = self._fy + math.sin(a) * rr
+            if math.hypot(lx - self._fx, ly - self._fy) < 1.4 * TILE:
+                continue                  # keep the immediate focal spot clear
+            k = _GROUND_DETAIL[int(self._hash01(i, 88, salt=14)
+                                   * len(_GROUND_DETAIL)) % len(_GROUND_DETAIL)]
+            self.add_decoration(Decoration(lx, ly, k,
+                                           seed=(self._seed + i * 13) & 0xffff))
+
+    # ---- scattered things to FIND in the sea (the exploration; sparse) -------
     def _scatter_things(self, count, radius):
+        lib = _SCATTER[self._biome]
+        inner = self._cfg["haven_r"] + 3
         for i in range(count):
             a = self._hash01(i, 777, salt=9) * math.tau
-            rr = (_HAVEN_LIGHT_R + 3
-                  + self._hash01(i, 313, salt=1) * (radius - _HAVEN_LIGHT_R - 3)) * TILE
-            lx = self._sx + math.cos(a) * rr
-            ly = self._sy + math.sin(a) * rr
-            k = _SCATTER[int(self._hash01(i, 42, salt=4) * len(_SCATTER)) % len(_SCATTER)]
+            rr = (inner + self._hash01(i, 313, salt=1)
+                  * (radius - inner)) * TILE
+            lx = self._fx + math.cos(a) * rr
+            ly = self._fy + math.sin(a) * rr
+            k = lib[int(self._hash01(i, 42, salt=4) * len(lib)) % len(lib)]
             self.add_decoration(Decoration(lx, ly, k,
                                            seed=(self._seed + i * 17) & 0xffff))
 
-    # ---- the hunted exit light (spawns only OUTSIDE the haven's glow) --------
+    # ================= the hunted exit light =================================
     def _relocate_exit(self, game):
         px, py = game.player.x, game.player.y
         aim = getattr(getattr(game, "look", None), "aim", 0.0) or 0.0
@@ -180,9 +332,10 @@ class LostSpace(Scene):
         p = game.player
         if p is None:
             return
-        d_haven = math.hypot(p.x - self._sx, p.y - self._sy)
-        if d_haven < _HAVEN_LIGHT_R * TILE:
-            self._drop_exit()             # in the firelight: no way out yet
+        haven = self._cfg["haven_r"] * TILE
+        d_haven = math.hypot(p.x - self._fx, p.y - self._fy)
+        if d_haven < haven:
+            self._drop_exit()             # in the island's light: no way out yet
             return
         if self._exit_light is None:      # just left the glow -> the hunt begins
             self._exit_light = Decoration(p.x, p.y, _EXIT_KIND)
@@ -246,5 +399,18 @@ class _GenGrid:
         return self._n
 
 
+def build_lost_corn():
+    return LostSpace("lost_corn", biome="corn", exit_to="lost_forest")
+
+
+def build_lost_forest():
+    return LostSpace("lost_forest", biome="forest", exit_to="lost_road")
+
+
+def build_lost_road():
+    return LostSpace("lost_road", biome="road", exit_to="lost_corn")
+
+
 def build_lost_space():
-    return LostSpace()
+    # back-compat alias: the original single key -> the corn field.
+    return LostSpace("lost_space", biome="corn", exit_to="lodge_yard")

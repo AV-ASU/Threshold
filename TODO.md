@@ -377,21 +377,34 @@ ONLY if/when the restructure is committed and wired.
   variety.
 
 **LANDED (prototype, wired into NOTHING in-game):** `scenes/lost_space.py`
-(`LostSpace`) -- a generator-backed non-repeating dark field that renders +
-collides through the real engine (`floor`/`objects` are bounded proxies over a
-hashed per-tile generator; a huge finite `w/h` with the player at CENTRE so the
-edge never enters the tilt window; `nav_path` None; `DARK_SCENES`;
-`procedural=True` so smoke skips its flood/full-scan). Built as the **hand-made
-ISLAND in a sea of generation**: a mostly-EMPTY field (dead grass / dirt / mud)
-with sparse corn CLUMPS + scattered things to find (derelict vehicles, lone
-trees, scarecrows, standing stones, a well, a corn altar), and at the centre the
-corn biome's FOCAL POINT -- an **abandoned cult camp** (a still-burning
-`camp_fire` ringed by bedrolls + log seats on worn dirt, reusing brimley's camp
-dressing). The fire is the haven light (lit + orienting, NOT a true refuge); the
-**hunted exit lantern is held until you leave the firelight** (the lit place is a
-dead end -- you escape into the dark). The engine map (the workflow that grounded
-this) is in the session transcript. Preview: the camp focal shot + the walk
-strip (sparse field + non-repeat + exit-on-leaving). Full gate green.
+(`LostSpace`, biome-parameterized: `lost_corn` / `lost_forest` / `lost_road`) --
+a generator-backed non-repeating dark field that renders + collides through the
+real engine (`floor`/`objects` are bounded proxies over a hashed per-tile
+generator; a huge finite `w/h` with the player at CENTRE so the edge never
+enters the tilt window; `nav_path` None; `DARK_SCENES` + `LOST_SPACE_SCENES` --
+a heavier gloom so the lit island pops against a black sea; `procedural=True` so
+smoke skips its flood/full-scan). Each biome is a **hand-made ISLAND in a sea of
+generation** -- a mostly-EMPTY field (dead grass / dirt / mud) with sparse
+biome landmarks (derelict vehicles, lone trees, standing stones) around a
+hand-authored FOCAL ISLAND with its own light:
+- **corn** -- a **CROP CIRCLE**: a grass clearing ringed by a near-solid WALL of
+  corn (isolated by an empty moat so it reads as a circle), an **abandoned cult
+  camp** at the centre, and a big `haven_fire` bonfire whose glow fills the whole
+  circle. Ground detail (grass tufts + leaf litter) breaks up the clearing floor.
+- **forest** -- a still **POND** (animated water, a see-over solid so you can't
+  wade in) on a mossy bank, lit by a fisher's `camp_fire` on the near bank +
+  lanterns on the far shore, dressed with reeds and a low mist.
+- **road** -- a derelict filling **STATION** you cannot enter (a solid footprint;
+  the `gas_station` solid draws the store + canopy + two dead pumps) with a cold
+  buzzing **neon** sign for light, an asphalt forecourt, roadside wrecks, weeds
+  reclaiming the cracked road.
+
+The island light is the haven (lit + orienting, NOT a true refuge); the **hunted
+exit lantern is held until you leave that glow** (the lit place is a dead end --
+you escape into the dark, hunting a light held 6-20 tiles off). New light kinds:
+`haven_fire` (the wide crop-circle bonfire) + `gas_station` (the neon glow), each
+in `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`. Preview: the three focal-island shots
+(dark + bright). Full gate green.
 
 **OPEN, in build order:** (1) the **safe path + yard + one lost space** vertical
 slice, wired so you walk interior -> yard -> path -> fall off a dark edge into
@@ -400,10 +413,12 @@ field); (2) the **dark manipulation layer** inside the lost space
 (observer-dependent geometry, asymmetric return, breathe-with-threat); (3)
 **per-chunk** landmark/exit generation + a silent **re-origin** for a truly
 endless walk (the prototype uses a large finite bound + spawn-at-centre); (4) the
-**biome set** (forest, road) + the **ev-warp** variants; (5) IF the maintainer
-commits: the full Brimley **re-home** (the fences: the car, the well, the
-refuges, the descent chain) + the canon rewrite. **THE DECISION to restructure
-Brimley is NOT yet made** -- this is a feel prototype to judge it.
+**ev-warp** variants (the field swaps for a longer / warped / more-hostile
+version with evidence) + richer linear field features (a river, fences, ruined
+buildings you can't enter); (5) IF the maintainer commits: the full Brimley
+**re-home** (the fences: the car, the well, the refuges, the descent chain) + the
+canon rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- this is
+a feel prototype to judge it.
 
 **Fences:** the safe path is never tricked; the lost space is always escapable
 (the exit light stays in the 6-20 band); a THREAT never blinks out via the

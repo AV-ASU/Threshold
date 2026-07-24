@@ -139,6 +139,37 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — Lost spaces: three biome FOCAL ISLANDS + a full-effort pass
+  (`TODO.md` #26).** The prototype's single corn field grew into three
+  biome-parameterized scenes — `lost_corn` / `lost_forest` / `lost_road`
+  (`lost_space` kept as a back-compat alias → corn) — each a hand-authored lit
+  island in the sea of generation. **Corn** became a real **crop circle**: a
+  grass clearing ringed by a near-solid WALL of corn, isolated by an empty moat
+  so the circle READS as a circle (the field's scattered corn clumps resume only
+  well beyond it), with the abandoned cult camp at the centre and a new wide
+  `haven_fire` bonfire whose glow fills the whole ring (the maintainer's note:
+  "the fire should protect the entirety of the inside of the circle"); the
+  clearing floor is grass, not packed dirt, with grass-tuft + leaf-litter ground
+  detailing. **Forest** is a still **pond** — animated `~` water made a barrier
+  by a see-over invisible solid (`x`) so you can't wade in — on a mossy bank, lit
+  by a fisher's `camp_fire` on the near bank (offset so the player lands behind
+  it, not on it) + lanterns on the far shore, dressed with reeds and a low mist,
+  framed by dense generated trees. **Road** is a derelict filling **station** you
+  cannot enter (a solid footprint in the object grid; a new `gas_station` solid
+  draws the store block + forecourt canopy on posts + two dead pumps + a cold
+  buzzing **neon** sign on a roadside pole) over an asphalt forecourt, with
+  roadside wrecks and weeds reclaiming the cracked road. Two new light kinds —
+  `haven_fire` (the crop-circle bonfire) and `gas_station` (the neon glow) —
+  were added to `FIXTURE_POOLS` + `Scene._LIGHT_KINDS`, and a new
+  `LOST_SPACE_SCENES` gating set gives every lost field a HEAVIER `_draw_dark`
+  gloom (150) so the lit island pops against a black sea. Wells and straw dolls
+  were pulled from the scatter (they read as Brimley cult props, wrong for the
+  liminal fields; maintainer: "No wells or straw dolls here"). Guard:
+  `terrain._build_water_bank_edges` now early-outs on a `procedural` scene (the
+  pond hand-places its own bank reeds) so the forest doesn't full-scan a
+  400-tile field. Still wired into NOTHING in-game — a feel prototype. Full gate
+  green. Canon (NARRATIVE §5 / DESIGN §7) UNCHANGED until the restructure is
+  decided + wired.
 - **2026-07 — The LOST SPACES: a procedural non-repeating in-between (prototype,
   `TODO.md` #26).** Groundwork for the maintainer's Brimley-restructure idea:
   dissolve one-square Brimley into building scenes hung off a dark liminal

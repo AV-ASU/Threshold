@@ -202,8 +202,21 @@ it renders the procedural sprites to a labelled PNG strip.
     CENTRE (the edge never enters the window), gets collision + sight + render
     for free. It sets **`self.procedural = True`** — smoke (`tests/smoke.py`)
     skips flood-fill + full-grid scans for any `procedural` scene (an infinite
-    field would hang them). `nav_path` returns None (straight-line chasers). The
-    hunted exit lantern moves live (`lit_at` reads deco positions live).
+    field would hang them; `terrain._build_water_bank_edges` also early-outs on
+    it). `nav_path` returns None (straight-line chasers). **Biome-parameterized**
+    into three registered scenes — `lost_corn` / `lost_forest` / `lost_road`
+    (plus `lost_space`, a back-compat alias → corn). Each is a hand-authored
+    lit FOCAL ISLAND in the sea of generation: corn = a **crop circle** (grass
+    clearing + a corn-wall ring + an abandoned cult camp lit by a wide
+    `haven_fire`); forest = a **pond** (animated water + a see-over solid
+    barrier, a near-bank `camp_fire` + far-shore lanterns, reeds + mist); road =
+    a derelict **gas station** you can't enter (the `gas_station` solid = store +
+    canopy + pumps + a cold `neon` glow). The island light is the haven; the
+    hunted exit lantern is HELD until you leave that glow, then held 6-20 tiles
+    off (`lit_at` reads deco positions live). All three sit in
+    `LOST_SPACE_SCENES` (a `DARK_SCENES` subset with a heavier gloom so the
+    island pops). New light kinds `haven_fire` + `gas_station` live in
+    `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -606,7 +619,9 @@ section is the CODE MAP only — where each system lives:
   DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
   (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
   become islands and the flashlight works outdoors. Understanding-driven, NOT a
-  day cycle.
+  day cycle. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
+  `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
+  island reads as a bright island in a black sea (TODO #26).
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.

@@ -209,7 +209,14 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "depths_hall", "depths_threshing", "depths_stair",
                "the_sump", "the_cells", "the_old_stores",
                "dark", "threshold",
-               "lost_space"} | DIM_INTERIOR_SCENES
+               "lost_space", "lost_corn", "lost_forest",
+               "lost_road"} | DIM_INTERIOR_SCENES
+
+# The LOST SPACES (TODO #26): the liminal in-between fields. A DARK_SCENES
+# subset that sits HEAVIER than an ordinary dark room so the hand-authored
+# focal island (the crop-circle bonfire, the pond lanterns, the station neon)
+# reads as a bright island in a black sea, and the sight-cone dark presses in.
+LOST_SPACE_SCENES = {"lost_space", "lost_corn", "lost_forest", "lost_road"}
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
 # mechanically disabled and the dread aperture closes regardless
