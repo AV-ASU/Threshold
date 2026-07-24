@@ -460,6 +460,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
+        # Genset blackout timers (the power link, TODO #21): scene key ->
+        # seconds of blackout left. Cleared per run; _tick_power drains it.
+        self._genset_down = {}
         # The hide-check struggle (DESIGN.md §12): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None
@@ -3084,6 +3087,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_moths(dt)
                 self._tick_moth_shed(dt)
                 self._tick_moth_seek(dt)
+                self._tick_power(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)

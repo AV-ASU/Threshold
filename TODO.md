@@ -348,20 +348,27 @@ everywhere), and the flashlight opening on the PI's desk
   per-deco kwarg in all three layers, pilot on the shop's hooded east
   lamp; `CHANGELOG.md` "Lighting"). Aim further lamps per room as each
   placement pass reaches it.
-- **The light-security loop (the core).** Buildings' fixtures can be
-  restored/switched; lit rooms are SECURED against Watchers; lights decay
-  or fail over time; gasoline for the gensets is the cost (canon-ready:
-  the fold cut the grid, the town runs on gensets, `generator` props
-  front the doors). Needs: a genset→fixtures power link, per-scene light
-  state, a fuel item + siphon/refill verb. Keep the tension: a lit town
-  is a town He can see.
+- **The light-security loop (the core).** The FIRST SLICE landed
+  (`CHANGELOG.md` "Lighting"): the genset→fixtures power link exists —
+  per-scene power state (`Scene.power_on`, `Game._tick_power`,
+  `_genset_down` timers), the ELECTRIC kinds die in all three layers at
+  once during a blackout (pool, `lit_at` gate, and the fixture art
+  itself goes dark; fire is exempt), a moth flare blacks its room out
+  for `BLACKOUT_DUR`, and the office radio's static crawl runs on
+  power (the appliance tell). Guarded by `tests/stealth.py` §17.
+  **Still open:** player verbs (restore/switch a fixture), the fuel
+  item + siphon/refill economy, lights decaying/failing on their own,
+  and lit-rooms-SECURED (couples with the Watcher rework below). Keep
+  the tension: a lit town is a town He can see.
 - **Watcher variety.** Wildly different silhouettes per canon (each is a
   different cross-section of the same higher-dimensional gaze —
   NARRATIVE §4 makes this free). Fast/skittery movement prototyped ONE
   design at a time through the creature-design loop; dark-only existence.
-- **The moth blackout.** A moth flare knocks out a genset (drop the
-  yard-light pools), the screen dims, the cult camp processes to the
-  flash and fans out. Rides the power link above.
+- **The moth blackout — remaining staging.** The blackout itself landed
+  with the power link above (flare → the room's electric light dies).
+  Still open: the cult camp PROCESSES to the flash and fans out (a
+  staged response, rides #23), and any screen-dim beat beyond the
+  lights themselves dying.
 - **A full Watchers-in-the-dark rework** (they can open in any room but
   only EXIST in the dark) — couples with the blackout into the perfect
   storm. A real rework of `_tick_watchers`; keep the below-3 threat role.

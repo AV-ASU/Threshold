@@ -478,6 +478,11 @@ class Scene:
                     "yard_light": 85.0, "generator": 42.0,
                     "wall_lamp": 62.0, "drop_bulb": 58.0,
                     "kerosene_lamp": 40.0}
+    # The genset-powered ELECTRIC subset: these emit (and gate) only while
+    # the scene's power is on (`Scene.power_on`, maintained by
+    # Game._tick_power -- a moth flare blacks a room out for a spell).
+    # Fire keeps burning through a blackout.
+    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
 
     def light_sources(self):
         """Cached [(x, y, r, cone)] of the scene's light-emitting decorations
@@ -499,7 +504,8 @@ class Scene:
                 cx_, cy_, half = raw
                 n = math.hypot(cx_, cy_) or 1.0
                 cone = (cx_ / n, cy_ / n, math.radians(half))
-            srcs.append((d.x, d.y, self._LIGHT_KINDS[d.kind], cone))
+            srcs.append((d.x, d.y, self._LIGHT_KINDS[d.kind], cone,
+                         d.kind in self._ELECTRIC_KINDS))
         self._light_cache = (len(self.decorations), srcs)
         return srcs
 
@@ -507,8 +513,12 @@ class Scene:
         """True when world (x, y) stands inside any light pool -- the
         darkness-concealment gate (a player beside a torch reads as lit
         however dark the room is). A cone fixture only lights inside its
-        fan: behind a hooded lamp is honest dark."""
-        for lx, ly, r, cone in self.light_sources():
+        fan: behind a hooded lamp is honest dark. An ELECTRIC source
+        counts only while the scene's power is on."""
+        power = getattr(self, "power_on", True)
+        for lx, ly, r, cone, elec in self.light_sources():
+            if elec and not power:
+                continue
             d = self.world_dist(x, y, lx, ly)
             if d > r:
                 continue

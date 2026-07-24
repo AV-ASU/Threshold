@@ -649,6 +649,20 @@ Built into the procedural draw layer (`scenes/base.py`,
     the one kwarg drives the visible fan (`_draw_dark`), the mechanical
     gate (`Scene.lit_at`'s angular test: behind a hooded lamp is honest
     dark), the cast-shadow pass, and the audit overlay's outline.
+  - **Electric light runs on the gensets, LIVE (the power link;
+    TODO #21 first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
+    `wall_lamp`, `drop_bulb`, `yard_light`) emit only while their scene's
+    power is on (`Scene.power_on`, maintained by `Game._tick_power` off
+    the `_genset_down` blackout timers). A **moth flare blacks its room
+    out** for `BLACKOUT_DUR`; during it the electric fixtures die in
+    every layer at once -- no visible pool, no mechanical `lit_at` cover,
+    and the fixture ART itself goes dark (a dead lamp is dark glass; the
+    office radio's static crawl and creeping needle stop, the
+    world-state-through-an-appliance tell). Fire is exempt throughout:
+    candles, kerosene, and braziers burn on, so a blackout hands the
+    room to the warm accents. Power returns on its own; wordless by
+    design (the lights dying IS the tell). Guarded by
+    `tests/stealth.py` §17.
   - **The interior light is COLD, and darkness is designed (2026-07
     light ruling).** No warm-lamp cosiness indoors: `wall_lamp` casts cold
     blue-white (the maintainer's "LED" read; in 1994 the same light is a

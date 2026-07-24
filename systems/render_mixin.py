@@ -621,11 +621,15 @@ class RenderMixin:
         # under the source, and the pools ADD (combine where they overlap and
         # lift the walls/props/actors they lie on). FIXTURE_POOLS drives it --
         # any fixture, not just wall_torch.
+        from scenes.base import Scene as _Scene
+        powered = getattr(self.scene, "power_on", True)
         fixtures = []
         for d in getattr(self.scene, "decorations", []):
             spec = FIXTURE_POOLS.get(getattr(d, "kind", None))
             if spec is None:
                 continue
+            if not powered and d.kind in _Scene._ELECTRIC_KINDS:
+                continue                    # a blacked-out genset lights nothing
             radius, color, peak, src_z, arm, famp, fspd = spec
             wx, wy = d.x + ax * arm, d.y + ay * arm
             cx, cy = self.camera.project(wx, wy, 0)
@@ -740,7 +744,8 @@ class RenderMixin:
         from rendering.props import is_solid_prop
         srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3], _deco_cone(d))
                 for d in getattr(self.scene, "decorations", [])
-                for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),) if s]
+                for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),)
+                if s and (powered or d.kind not in _Scene._ELECTRIC_KINDS)]
         if srcs:
             casters = [(self.player.x, self.player.y, 8)]
             for n in getattr(self.scene, "npcs", []):

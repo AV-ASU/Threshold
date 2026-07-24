@@ -212,6 +212,9 @@ MOTH_FAST_MULT = 3.0         # the King's shed moths fly this much faster
 MOTH_REACH = 620.0           # cult hearing reach of the flare noise
 MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
 MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
+BLACKOUT_DUR = 45.0          # a moth flare kills the room's genset this long
+                             # (the electric fixtures die; fire keeps burning;
+                             # power returns on its own -- TODO #21 first slice)
 # MOTH_SCENES (where they fly) is defined next to KING_ROAM_SCENES
 # below: the moths' ground IS the King's ground, so his shedding can
 # fill any room he can walk.

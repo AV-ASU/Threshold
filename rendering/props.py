@@ -2202,14 +2202,21 @@ def _draw_wall_lamp_solid(surf, cam, deco):
                 (mount_h, 1.4 * s, 1.4 * s)],
                {"body": (150, 146, 140), "lo": (92, 88, 84),
                 "rim": (178, 174, 168)})
-    # the steady warm bulb glowing at the shade's lower lip
+    # the steady bulb at the shade's lower lip -- glowing only while the
+    # genset runs (the power link's _powered flag); dead, it reads as
+    # dark glass under the shade
     lamp = cam.project(wx, wy + 1.8 * s, mount_h - 3.4 * s)
     lr = max(2, int(2.2 * s * cam.scale))
-    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
-    pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
-    pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
-    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
-    pygame.draw.circle(surf, (255, 230, 182), (int(lamp[0]), int(lamp[1])), lr)
+    if getattr(deco, "_powered", True):
+        glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
+        pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
+        surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+        pygame.draw.circle(surf, (255, 230, 182),
+                           (int(lamp[0]), int(lamp[1])), lr)
+    else:
+        pygame.draw.circle(surf, (66, 68, 74),
+                           (int(lamp[0]), int(lamp[1])), lr)
 
 
 def _draw_drop_bulb_solid(surf, cam, deco):
@@ -2242,14 +2249,19 @@ def _draw_drop_bulb_solid(surf, cam, deco):
     sxp = cam.project(wx + sway, wy, z_bulb + 2.2 * s)
     pygame.draw.circle(surf, (52, 50, 54), (int(sxp[0]), int(sxp[1])),
                        max(1, int(1.6 * s * cam.scale)))
-    # the bulb: cold blue-white core + halo (the town's genset light)
+    # the bulb: cold blue-white core + halo while the genset runs; dead,
+    # a dark glass teardrop still swaying on its cord
     bp = cam.project(wx + sway, wy, z_bulb)
     br = max(2, int(2.4 * s * cam.scale))
-    glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
-    pygame.draw.circle(glow, (205, 218, 240, 60), (br * 3, br * 3), br * 3)
-    pygame.draw.circle(glow, (222, 232, 248, 110), (br * 3, br * 3), br * 2)
-    surf.blit(glow, (int(bp[0] - br * 3), int(bp[1] - br * 3)))
-    pygame.draw.circle(surf, (235, 242, 252), (int(bp[0]), int(bp[1])), br)
+    if getattr(deco, "_powered", True):
+        glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (205, 218, 240, 60), (br * 3, br * 3), br * 3)
+        pygame.draw.circle(glow, (222, 232, 248, 110), (br * 3, br * 3), br * 2)
+        surf.blit(glow, (int(bp[0] - br * 3), int(bp[1] - br * 3)))
+        pygame.draw.circle(surf, (235, 242, 252), (int(bp[0]), int(bp[1])), br)
+    else:
+        pygame.draw.circle(surf, (58, 60, 66), (int(bp[0]), int(bp[1])), br)
+        pygame.draw.circle(surf, (84, 86, 94), (int(bp[0]), int(bp[1])), br, 1)
 
 
 def _draw_smoke_solid(surf, cam, deco):
@@ -2806,14 +2818,23 @@ def _draw_wrong_radio_solid(surf, cam, deco):
     _qp(surf, P, [(-9 * s, hD, z0 + 2 * s), (-1 * s, hD, z0 + 2 * s),        # grille
                   (-1 * s, hD, z0 + H - 2 * s), (-9 * s, hD, z0 + H - 2 * s)],
         (20, 18, 22))
-    for i in range(3):
-        sz = z0 + 2 * s + (t * 6 + i * 3) % (H - 4 * s)
-        _lp(surf, P, (-8.5 * s, hD, sz), (-1.5 * s, hD, sz), (110, 130, 110), 1)
+    # the static crawl + creeping needle are the radio's LIVE face, and
+    # they run on genset power (the power link's _powered flag): in a
+    # blackout the crawl stops and the needle stands where it died --
+    # the world's state showing through an appliance, wordless
+    powered = getattr(deco, "_powered", True)
+    if powered:
+        for i in range(3):
+            sz = z0 + 2 * s + (t * 6 + i * 3) % (H - 4 * s)
+            _lp(surf, P, (-8.5 * s, hD, sz), (-1.5 * s, hD, sz),
+                (110, 130, 110), 1)
     _qp(surf, P, [(1 * s, hD, z0 + 3 * s), (8 * s, hD, z0 + 3 * s),          # dial
                   (8 * s, hD, z0 + H - 3 * s), (1 * s, hD, z0 + H - 3 * s)],
         (20, 18, 22))
-    nx = 1 * s + (math.sin(t * 0.4 + seed) + 1) * 3.4 * s
-    _lp(surf, P, (nx, hD, z0 + 3 * s), (nx, hD, z0 + H - 3 * s), (220, 60, 60), 1)
+    nx = (1 * s + (math.sin(t * 0.4 + seed) + 1) * 3.4 * s if powered
+          else 1 * s + 3.4 * s)
+    ncol = (220, 60, 60) if powered else (110, 46, 46)
+    _lp(surf, P, (nx, hD, z0 + 3 * s), (nx, hD, z0 + H - 3 * s), ncol, 1)
     _lp(surf, P, (8 * s, hD, z0 + H), (12 * s, hD, z0 + H + 8 * s),          # antenna
         (180, 180, 200), 1)
     _lp(surf, P, (-W / 2, hD, z0 + H), (-W / 2 - 4 * s, hD, z0 + H * 0.4),   # strap
@@ -2925,21 +2946,28 @@ def _draw_yard_light_solid(surf, cam, deco):
     pc = cam.project(hx, hy, hood_z + 4.6 * s)
     pygame.draw.circle(surf, galv_lo, (int(pc[0]), int(pc[1])),
                        max(1, int(1.2 * s)))
-    # a faint cold spill on the ground under the head (always on, so the
-    # fixture reads as CASTING light even in daylight; the real navigable
-    # pool is punched by _draw_dark when the scene is dark)
-    _disc(surf, cam, hx, hy + 1.0 * s, 0.2 * s, 7.0 * s, 5.0 * s,
-          (150, 176, 210))
-    # the cold mercury-vapor lamp poking out the hood's lower FRONT lip
+    # the cold mercury-vapor lamp poking out the hood's lower FRONT lip --
+    # burning only while the genset runs (the power link's _powered flag);
+    # a blacked-out head is dark glass under the hood
     lamp = cam.project(hx, hy + 3.0 * s, hood_z - 1.6 * s)
     lr = max(2, int(2.4 * s * cam.scale))
-    glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
-    pygame.draw.circle(glow, (200, 224, 255, 60), (lr * 3, lr * 3), lr * 3)
-    pygame.draw.circle(glow, (216, 232, 255, 120), (lr * 3, lr * 3), lr * 2)
-    surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
-    pygame.draw.circle(surf, (232, 242, 255), (int(lamp[0]), int(lamp[1])), lr)
-    pygame.draw.circle(surf, (255, 255, 255), (int(lamp[0]), int(lamp[1])),
-                       max(1, lr // 2))
+    if getattr(deco, "_powered", True):
+        # a faint cold spill on the ground under the head (so the fixture
+        # reads as CASTING light even in daylight; the real navigable pool
+        # is punched by _draw_dark when the scene is dark)
+        _disc(surf, cam, hx, hy + 1.0 * s, 0.2 * s, 7.0 * s, 5.0 * s,
+              (150, 176, 210))
+        glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (200, 224, 255, 60), (lr * 3, lr * 3), lr * 3)
+        pygame.draw.circle(glow, (216, 232, 255, 120), (lr * 3, lr * 3), lr * 2)
+        surf.blit(glow, (int(lamp[0] - lr * 3), int(lamp[1] - lr * 3)))
+        pygame.draw.circle(surf, (232, 242, 255),
+                           (int(lamp[0]), int(lamp[1])), lr)
+        pygame.draw.circle(surf, (255, 255, 255), (int(lamp[0]), int(lamp[1])),
+                           max(1, lr // 2))
+    else:
+        pygame.draw.circle(surf, (60, 64, 72), (int(lamp[0]), int(lamp[1])),
+                           lr)
 
 
 def _draw_generator_solid(surf, cam, deco):

@@ -559,6 +559,24 @@
 
 ## Lighting
 
+- **2026-07 — The genset power link, first slice (TODO #21
+  light-security).** Electric light is LIVE state now: the ELECTRIC
+  kinds (`Scene._ELECTRIC_KINDS`) emit only while their scene's power
+  is on. `Game._tick_power` drains per-scene `_genset_down` blackout
+  timers and stamps `Scene.power_on` + the per-deco `_powered` flag;
+  a moth FLARE sets its room's timer (`BLACKOUT_DUR` 45s) -- the moth
+  blackout ruling's core, wordless (the lights dying is the tell).
+  During a blackout the electric fixtures die in every layer at once:
+  no visible pool or fan, no mechanical `lit_at` cover, and the fixture
+  art goes dark (wall lamp + drop bulb + yard light draw dead glass;
+  the office radio's static crawl and creeping needle stop -- the
+  first world-state-through-an-appliance tell). Fire is exempt, so a
+  blackout hands the room to the warm accents (the stealth guard
+  proves the counter stays lit by the kerosene FLAME while the hooded
+  lamp's fan goes dark). Run-state, cleared on New Game; power returns
+  on its own. Guarded end to end by `tests/stealth.py` §17. Still open
+  in `TODO.md` #21: player restore/switch verbs, the fuel economy,
+  decay, lit-rooms-secured.
 - **2026-07 — Cone fixtures (light is not only a circle).** A fixture
   deco may carry `cone=(dir_x, dir_y, half_deg)`; the SAME kwarg drives
   all three layers (the maintainer's ask): `_draw_dark` carves + adds a

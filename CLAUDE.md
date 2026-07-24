@@ -131,7 +131,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
   - `systems/rot_mixin.py` — world rot/ashfall + the moth sim + the
-    hunting sheriff.
+    hunting sheriff + the genset power link (`_tick_power`).
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
   - `systems/tableau_mixin.py` — the **close-up examine tableaux**

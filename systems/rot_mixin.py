@@ -314,6 +314,42 @@ class RotMixin:
                     self.audio.play("void_sting", 0.75)
                     self.audio.play("low_pulse", 0.6)
                     self._log_moth_note()
+                    # the BLACKOUT (TODO #21): the flare kills the room's
+                    # genset -- every electric fixture dies for a spell.
+                    # Wordless; the lights going out is the tell.
+                    if any(d.kind in sc._ELECTRIC_KINDS
+                           for d in sc.decorations):
+                        if getattr(self, "_genset_down", None) is None:
+                            self._genset_down = {}
+                        self._genset_down[sc.key] = BLACKOUT_DUR
+
+    def _tick_power(self, dt):
+        """The genset power link (the light-security loop's first slice,
+        TODO #21). `_genset_down` holds per-scene blackout timers (a moth
+        flare sets one); while a scene's timer runs its ELECTRIC fixtures
+        are dead in every layer at once: `Scene.power_on` gates `lit_at`
+        (mechanical), `_draw_dark` skips their pools (visible), and the
+        per-deco `_powered` flag turns the fixture art itself dark (a
+        dead lamp draws dark glass, and the office radio's dial goes
+        out). Power returns on its own when the timer runs out; fire is
+        exempt throughout."""
+        down = getattr(self, "_genset_down", None)
+        if down is None:
+            down = self._genset_down = {}
+        for k in list(down):
+            down[k] -= dt
+            if down[k] <= 0:
+                del down[k]
+        sc = self.scene
+        if sc is None:
+            return
+        on = sc.key not in down
+        if getattr(sc, "power_on", None) != on:
+            sc.power_on = on
+            for d in sc.decorations:
+                if (d.kind in sc._ELECTRIC_KINDS
+                        or d.kind == "wrong_radio"):
+                    d._powered = on
 
     def _log_moth_note(self):
         """The PI's first-flare case note. A NOTE, never evidence (the

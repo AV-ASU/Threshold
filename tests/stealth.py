@@ -1417,6 +1417,41 @@ def main():
           is _terr._WALL_STYLES["rock"],
           "rock: the shipped mine (well_passage) renders the rock style")
 
+    # ---- §17: the genset power link (TODO #21 first slice) --------------
+    # A blackout kills the ELECTRIC fixtures in every layer at once: the
+    # mechanical lit_at gate goes dark at the lamp, fire keeps burning,
+    # and power comes back on its own when the timer drains.
+    print("[17] power link: blackout kills electric light, fire survives, "
+          "power returns")
+    g = new_game()
+    g.load_scene_now("shop")
+    tick(g, 3)
+    sc = g.scene
+    lamp = next(d for d in sc.decorations if d.kind == "drop_bulb")
+    wlamp = next(d for d in sc.decorations if d.kind == "wall_lamp")
+    cand = next(d for d in sc.decorations if d.kind == "candle")
+    # a spot only the hooded east wall_lamp reaches (inside its west fan,
+    # clear of the counter's kerosene flame and the stockroom candle)
+    fan_x, fan_y = wlamp.x - 40, wlamp.y
+    check(sc.power_on and sc.lit_at(fan_x, fan_y),
+          "power on: the wall lamp lights its fan")
+    g._genset_down[sc.key] = 5.0
+    tick(g, 2)
+    check(not sc.power_on, "blackout: the scene's power_on drops")
+    check(not sc.lit_at(fan_x, fan_y),
+          "blackout: the electric lamp's fan goes mechanically dark")
+    check(sc.lit_at(lamp.x, lamp.y),
+          "blackout: the counter spot stays lit by the kerosene FLAME "
+          "(fire is exempt)")
+    check(sc.lit_at(cand.x, cand.y),
+          "blackout: the stockroom candle still lights (fire is exempt)")
+    check(getattr(lamp, "_powered", True) is False,
+          "blackout: the fixture art reads unpowered (_powered False)")
+    g._genset_down[sc.key] = 0.5
+    tick(g, 60)
+    check(sc.power_on and sc.lit_at(fan_x, fan_y),
+          "recovery: the timer drains and the lamp lights again")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")
