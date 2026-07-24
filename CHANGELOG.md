@@ -391,6 +391,19 @@
   office, schoolhouse, Toby's house, the Lodge) is still open per
   `TODO.md` #4c.
 
+## Combat feel
+
+- **2026-07 — The axe swing redesigned (TODO #25, landed).** The old
+  swing walked a constant-speed 150-degree arc with a faint trail -- a
+  windscreen wiper. The redesign maps three phases onto the same prog
+  window: a WIND-UP that pulls the head back past the start side and
+  lifts it off the shoulder (anticipation), a STRIKE that crosses the
+  whole arc in a sharpened smoothstep burst with a bold two-ply motion
+  smear (the snap), and a FOLLOW-THROUGH that overshoots and settles.
+  Haft reach breathes with the phases. Same signature, same call sites,
+  same chop-stun timing (error class 9 untouched); verified on a
+  nine-phase headless strip.
+
 ## The interiors pilot (2026-07, TODO #24)
 
 - **2026-07 — The lodge pilot COMPLETE (ensembles 2-4 + the host).**

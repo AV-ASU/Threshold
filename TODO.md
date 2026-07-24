@@ -220,14 +220,6 @@ placement.
   becomes the kitchen ensemble), approved via captures before the pass
   rolls wider.
 
-### 25. **[Opus]** Axe redesign — the swing animation
-
-Maintainer ask (2026-07): update the axe design, the SWING animation
-mostly. The held-weapon yaw-offset polish item folds in here. Through
-the preview loop: render the swing arc frames headless, judge the arc /
-follow-through / recovery, then wire. The chop-stun timing itself is
-tuned and untouched (threat pacing, error class 9).
-
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 
 Built in pilots, inside hard fences: systemic not scripted; the people do

@@ -8,29 +8,66 @@ from constants import C_BLACK
 # ---------------------------------------------------------------------------
 # Player axe swing -- the one attack, gated on the splitting axe.
 # ---------------------------------------------------------------------------
+def _axe_swing_angle(prog, sweep):
+    """The swing's three phases mapped onto prog 0..1 (2026-07 redesign,
+    TODO #25: the old constant-speed sweep read as a windscreen wiper).
+    WIND-UP (0..0.28): the head pulls BACK past the start side, easing
+    out -- the anticipation. STRIKE (0.28..0.55): the whole arc crosses
+    in this short window, cubic-fast -- the snap. FOLLOW-THROUGH
+    (0.55..1): overshoot past the end, then settle back. Returns
+    (angle_off_start, reach_scale, lift_px)."""
+    WIND, STRIKE = 0.28, 0.55
+    back = math.radians(20)               # pull-back past the start side
+    over = math.radians(14)               # overshoot past the end
+    if prog < WIND:
+        t = prog / WIND
+        e = 1 - (1 - t) * (1 - t)                     # ease-out pull
+        return (-back * e, 0.78 + 0.05 * e, 4.0 * e)
+    if prog < STRIKE:
+        t = (prog - WIND) / (STRIKE - WIND)
+        e = t * t * (3 - 2 * t)                       # smoothstep snap
+        e = e * e * (3 - 2 * e)                       # sharpened: slow-FAST
+        return (-back + (sweep + back + over) * e,
+                0.83 + 0.27 * e, 4.0 * (1 - e))
+    t = (prog - STRIKE) / (1 - STRIKE)
+    e = 1 - (1 - t) * (1 - t)                         # ease-out settle
+    return (sweep + over - over * e, 1.10 - 0.18 * e, 0.0)
+
+
 def draw_axe_swing(surf, px, py, facing, prog):
-    """The splitting axe swung in a flat arc through the facing
-    hemisphere. `prog` (0..1) walks the head from the wind-up side
-    across the front. Procedural: a wood haft + a steel head, with a
-    short motion smear behind the head so the chop reads as motion."""
+    """The splitting axe swung through the facing hemisphere in three
+    phases (wind-up / strike / follow-through, _axe_swing_angle). The
+    strike window carries a bold two-ply motion smear; the wind-up
+    raises the head off the shoulder. Procedural wood haft + steel
+    wedge, dark-edge / lit-core line style."""
     prog = max(0.0, min(1.0, prog))
     fx, fy = facing
     if fx == 0 and fy == 0:
         fy = 1.0
     base = math.atan2(fy, fx)
     sweep = math.radians(150)
-    a = base - sweep / 2 + prog * sweep          # current haft angle
-    R = 21                                        # haft length
+    start = base - sweep / 2
+    off, reach, lift = _axe_swing_angle(prog, sweep)
+    a = start + off
+    R = 21 * reach                                # haft reach breathes
     ox = px + math.cos(base) * 3                  # pivot just ahead of hands
     oy = py + math.sin(base) * 3
-    hx, hy = ox + math.cos(a) * R, oy + math.sin(a) * R
-    # Motion smear: the recent path of the head, fading behind it.
-    smear = []
-    for k in range(7):
-        aa = base - sweep / 2 + max(0.0, prog - k * 0.06) * sweep
-        smear.append((int(ox + math.cos(aa) * R), int(oy + math.sin(aa) * R)))
-    if len(smear) >= 2:
-        pygame.draw.lines(surf, (208, 204, 196), False, smear, 1)
+    hx, hy = ox + math.cos(a) * R, oy + math.sin(a) * R - lift
+    # Motion smear, STRIKE phase only: the recent path of the head as two
+    # plies -- a bold bright inner pass and a faint wide ghost -- so the
+    # snap reads as speed, not as a wiper trail.
+    if 0.28 <= prog <= 0.72:
+        for ply, (lag, col, w) in enumerate(
+                (((0.10), (232, 236, 242), 2), ((0.22), (150, 148, 142), 1))):
+            pts = []
+            for k in range(6):
+                pp = max(0.0, prog - lag * (k / 5.0))
+                aoff, rr, ll = _axe_swing_angle(pp, sweep)
+                aa = start + aoff
+                pts.append((int(ox + math.cos(aa) * 21 * rr),
+                            int(oy + math.sin(aa) * 21 * rr - ll)))
+            if len(pts) >= 2:
+                pygame.draw.lines(surf, col, False, pts, w)
     # Haft (wood), dark edge under a lit core.
     pygame.draw.line(surf, (70, 48, 28), (int(ox), int(oy)), (int(hx), int(hy)), 4)
     pygame.draw.line(surf, (128, 92, 54), (int(ox), int(oy)), (int(hx), int(hy)), 2)
