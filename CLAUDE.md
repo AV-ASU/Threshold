@@ -109,10 +109,19 @@ python tests/conventions.py  # the prose rules, enforced (runs in <1s)
 python tests/smoke.py        # scene-builder / spawn / exit / drop-rate smoke
 python tests/flow.py         # story-beat integration + canon guards
 
+# WHAT TOOLS EXIST? Run this BEFORE writing a throwaway script -- there are
+# 40+ headless tools and the one you want probably already exists.
+python tools/index.py [word]
+
 # LOOK at a scene from all four facings (the VISION.md look pass). Sets the
 # camera yaw itself and ASSERTS the facings differ, so it cannot hand back
 # the same view four times the way a hand-rolled capture does.
 python tools/capture_facings.py <scene_key> [--bright]
+
+# LOOK at a prop kind in isolation before placing it (scene-dressing step 2),
+# and ask what it is registered as (tilt set, light tables, placements).
+python tools/preview_props_sheet.py <kind> [...]
+python tools/kind.py <kind> [...]        # also: --stains, --unplaced
 
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
@@ -856,6 +865,12 @@ section is the CODE MAP only — where each system lives:
     violation slip in beside an old one.
   - Then, and only then, write the one-line rule in the doc and point it at
     the check.
+  - **Check the shelf before you hand-roll.** `python tools/index.py` lists
+    every tool with its job. A session once wrote four scratchpad scripts to
+    preview a prop, capture four facings, and inspect a light while
+    `preview_props_sheet.py`, `capture_facings.py`, and `light_audit.py` sat
+    in `tools/` doing each better. If the tool you need is genuinely missing,
+    **write it into `tools/`, not the scratchpad**, so it exists next time.
 - **CONSOLIDATE RULE LISTS, DON'T JUST APPEND.** The PLAYTEST ERROR CLASSES
   and SCENE-DRESSING PROCESS lists below exist because specific failures
   happened; that's healthy. But a list that only ever grows by appending a
