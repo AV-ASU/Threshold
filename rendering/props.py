@@ -1284,6 +1284,151 @@ def _draw_staircase_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (10, 8, 12), mouth)
 
 
+def _draw_lawman_wall_solid(surf, cam, deco):
+    """THE LAWMAN'S QUARTERS WALL (Wave 2, the sheriff's office; TODO #24):
+    the west-wall run composed as ONE object -- Vane lives at his desk now,
+    and this is the proof. His cot with the blanket tucked army-tight, his
+    boots squared under it, the washstand with its basin and hung towel,
+    and the antler rack carrying his winter coat. Wear: the walked line
+    along the run, the washstand's drip stain, the worn pale sit-spot on
+    the cot's edge. Anchor = the cot's head; the run extends SOUTH (+y);
+    the wall is WEST (-x)."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (96, 74, 46), "side": (70, 54, 34), "dark": (44, 32, 20)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- UNDER-LAYER: the walked line along the run, the drip stain
+    _wline(wx + 20, wy - 10, 0.2, wx + 20, wy + 116, 0.2, (56, 44, 30))
+    _wline(wx + 23, wy + 4, 0.2, wx + 23, wy + 108, 0.2, (50, 40, 28))
+    _ell(wx + 6, wy + 66, 0.25, 5.5, 3.5, (42, 40, 44))     # washstand drip
+    _ell(wx + 5, wy + 68, 0.3, 3.0, 2.0, (54, 52, 58))
+
+    # --- the COT (two tiles): frame, legs, the army-tight blanket
+    for lx, ly in ((-10, -24), (10, -24), (-10, 24), (10, 24)):
+        _wline(wx + lx, wy + ly, 0, wx + lx, wy + ly, 8, (44, 32, 20), 2)
+    _vbox(surf, cam, wx, wy, 24, 54, 8, 12, wood, yaw=0.02)
+    # blanket: olive-drab, tucked square, a fold line; the flat pillow
+    _vbox(surf, cam, wx, wy + 4, 22, 42, 12, 15,
+          {"top": (76, 80, 66), "side": (58, 62, 50), "dark": (40, 43, 34)},
+          yaw=0.02)
+    _wline(wx - 10, wy + 12, 15.3, wx + 10, wy + 12, 15.3, (52, 56, 44))
+    _vbox(surf, cam, wx, wy - 19, 16, 9, 12, 15,
+          {"top": (166, 158, 142), "side": (128, 122, 110),
+           "dark": (86, 82, 74)}, yaw=-0.03)
+    # the sit-spot: the blanket's edge worn pale where he sits to boot up
+    _ell(wx + 10, wy + 14, 15.4, 5, 3, (96, 100, 84))
+    # his boots, squared toes-out under the cot's foot
+    for bxo in (-6, 3):
+        _vbox(surf, cam, wx + bxo, wy + 30, 7, 12, 0, 6,
+              {"top": (48, 40, 32), "side": (36, 30, 24), "dark": (22, 18, 14)},
+              yaw=0.04 if bxo < 0 else -0.05)
+
+    # --- the WASHSTAND (+64): stand, basin, hung towel
+    sy = wy + 64
+    for lx, ly in ((-8, -7), (8, -7), (-8, 7), (8, 7)):
+        _wline(wx + lx, sy + ly, 0, wx + lx, sy + ly, 20, (44, 32, 20), 2)
+    _vbox(surf, cam, wx, sy, 20, 17, 20, 24, wood, yaw=-0.03)
+    _ell(wx, sy - 1, 24.4, 7, 5, (140, 144, 150))           # basin rim
+    _ell(wx, sy - 1, 24.5, 5, 3.4, (94, 108, 118))          # standing water
+    _ell(wx - 2, sy - 2, 24.6, 1.4, 0.9, (170, 184, 194))   # the glint
+    # towel over the south rail, hanging past the top
+    tw = [cam.project(wx - 2, sy + 9, 22), cam.project(wx + 8, sy + 9, 22),
+          cam.project(wx + 8, sy + 9, 10), cam.project(wx - 2, sy + 9, 10)]
+    pygame.draw.polygon(surf, (150, 144, 130), tw)
+    pygame.draw.polygon(surf, (104, 100, 90), tw, 1)
+    _wline(wx + 3, sy + 9, 21, wx + 3, sy + 9, 11, (118, 114, 102))
+
+    # --- the ANTLER RACK (+96): board on the wall, prongs, the coat
+    ry_ = wy + 96
+    rb = [cam.project(wx - 14, ry_ - 10, 26), cam.project(wx - 14, ry_ + 10, 26),
+          cam.project(wx - 14, ry_ + 10, 32), cam.project(wx - 14, ry_ - 10, 32)]
+    pygame.draw.polygon(surf, (70, 54, 34), rb)
+    pygame.draw.polygon(surf, (44, 32, 20), rb, 1)
+    for pyo, tip in ((-6, -4), (0, 2), (6, -2)):            # three prongs
+        _wline(wx - 14, ry_ + pyo, 29, wx - 8, ry_ + pyo + tip, 31,
+               (150, 140, 120), 2)
+    # his winter coat on the middle prong: a hung mass reaching low
+    ct = [cam.project(wx - 9, ry_ - 5, 30), cam.project(wx - 4, ry_ + 7, 29),
+          cam.project(wx - 3, ry_ + 6, 8), cam.project(wx - 10, ry_ - 6, 9)]
+    pygame.draw.polygon(surf, (66, 58, 48), ct)
+    pygame.draw.polygon(surf, (40, 35, 29), ct, 1)
+    _wline(wx - 7, ry_ - 2, 26, wx - 6, ry_ + 3, 12, (48, 42, 35))
+    # the empty prongs say the hat and belt are ON him: the rack half-bare
+
+
+def _draw_lawman_desk_solid(surf, cam, deco):
+    """THE LAWMAN'S DESK (Wave 2, the sheriff's office; TODO #24): Vane's
+    working desk composed as ONE object -- the two-tile desk with its
+    modesty panel, the radio he half-listens to at the back corner, the
+    case files stacked square, the tin mug on its years of rings, the
+    chair yaw-tucked at the working side. Provenance: the town's one real
+    investigator, still working it. Anchor = the desk's centre; the
+    working (south) face is where Vane stands."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (98, 76, 48), "side": (72, 56, 36), "dark": (46, 33, 21)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # boot scuffs at the working side, where he stands over the files
+    _wline(wx - 8, wy + 18, 0.2, wx + 4, wy + 21, 0.2, (56, 44, 30))
+    _wline(wx - 4, wy + 21, 0.2, wx + 8, wy + 19, 0.2, (50, 40, 28))
+
+    # the desk: legs, body, top, a modesty panel on the north face
+    for lx, ly in ((-26, -11), (26, -11), (-26, 11), (26, 11)):
+        _wline(wx + lx, wy + ly, 0, wx + lx, wy + ly, 20, (44, 32, 20), 2)
+    _vbox(surf, cam, wx, wy, 58, 26, 20, 26, wood, yaw=0.015)
+    pn = [cam.project(wx - 26, wy - 11, 20), cam.project(wx + 26, wy - 11, 20),
+          cam.project(wx + 26, wy - 11, 6), cam.project(wx - 26, wy - 11, 6)]
+    pygame.draw.polygon(surf, (60, 46, 30), pn)
+    pygame.draw.polygon(surf, (40, 30, 19), pn, 1)
+    _wline(wx - 26, wy + 2, 26.3, wx + 26, wy + 1, 26.3, (52, 38, 24))
+
+    # ON the desk, west to east: the case files, the mug + rings, the radio
+    _vbox(surf, cam, wx - 17, wy - 2, 15, 11, 26, 30,
+          {"top": (172, 164, 144), "side": (140, 132, 116),
+           "dark": (96, 90, 78)}, yaw=0.05)
+    _wline(wx - 23, wy - 4, 28, wx - 11, wy - 3, 28, (110, 102, 88))
+    _ell(wx - 2, wy + 3, 26.4, 2.6, 1.8, (54, 40, 26), 1)   # old rings
+    _ell(wx + 2, wy - 5, 26.4, 2.4, 1.6, (54, 40, 26), 1)
+    draw_solid(surf, cam, wx - 1, wy + 1,                   # the tin mug
+               [(26.4, 2.2, 2.2), (30.5, 2.4, 2.4)],
+               {"body": (128, 130, 136), "lo": (84, 86, 92),
+                "rim": (168, 170, 176)})
+    # the radio at the back-east corner: box, grille lines, dial, antenna
+    _vbox(surf, cam, wx + 17, wy - 4, 16, 9, 26, 34,
+          {"top": (94, 66, 46), "side": (78, 54, 38), "dark": (52, 36, 26)},
+          yaw=-0.04)
+    for gy_ in (28.5, 30.5, 32.5):
+        _wline(wx + 11, wy + 0.8, gy_, wx + 17, wy + 0.8, gy_, (46, 32, 24))
+    _ell(wx + 21, wy + 0.9, 30.5, 1.3, 1.3, (170, 160, 130))
+    _wline(wx + 24, wy - 8, 34, wx + 28, wy - 10, 42, (150, 150, 160))
+    # the chair, yaw-tucked half under the desk's SE working corner
+    cx_, cy_ = wx + 20, wy + 16
+    for lx, ly in ((-7, -6), (7, -6), (-7, 6), (7, 6)):
+        _wline(cx_ + lx * 0.9, cy_ + ly * 0.9, 0,
+               cx_ + lx, cy_ + ly, 12, (44, 32, 20), 1)
+    _vbox(surf, cam, cx_, cy_, 16, 14, 12, 15, wood, yaw=0.35)
+    bk = [cam.project(cx_ + 5, cy_ + 8, 15), cam.project(cx_ + 12, cy_ + 4, 15),
+          cam.project(cx_ + 13, cy_ + 5, 30), cam.project(cx_ + 6, cy_ + 9, 30)]
+    pygame.draw.polygon(surf, (72, 56, 36), bk)
+    pygame.draw.polygon(surf, (46, 33, 21), bk, 1)
+
+
 def _draw_stockroom_corner_solid(surf, cam, deco):
     """THE STOCKROOM CORNER (Wave 2, the shop; TODO #24 ensemble rule):
     the shop's receiving corner composed as ONE object against the west
@@ -3439,6 +3584,8 @@ SOLID_PROPS = {
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "kitchen_wall":  _draw_kitchen_wall_solid,
     "stockroom_corner": _draw_stockroom_corner_solid,
+    "lawman_wall":   _draw_lawman_wall_solid,
+    "lawman_desk":   _draw_lawman_desk_solid,
     "dining_set":    _draw_dining_set_solid,
     "bar_dressing":  _draw_bar_dressing_solid,
     "hearth_mass":   _draw_hearth_mass_solid,

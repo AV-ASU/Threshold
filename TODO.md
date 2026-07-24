@@ -221,7 +221,11 @@ placement.
   rollout underway:** the shop's stockroom receiving corner landed
   (crate stack + check table + flour barrel as ONE object with its
   wear; the candle stays a separate emitter seated on the table).
-  Next rooms: the sheriff's office quads, then the church vestry.
+  The sheriff's OFFICE quad landed next (the lawman's wall: cot +
+  washstand + coat rack as one west-wall run; the lawman's desk: desk +
+  radio + files + mug + tucked chair as one working surface). Next
+  rooms: the office's booking/waiting corners if they earn it, then
+  the church vestry.
 
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 

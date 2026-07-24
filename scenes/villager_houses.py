@@ -222,6 +222,12 @@ def build_sheriff_office():
         "W.....W.....W..W",   # 10
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
+    # The office ensembles' footprints (see below): the same tiles the old
+    # separate cot/washstand/rack/desk occupied, as see-over solids.
+    _rows = [list(r) for r in objects]
+    for _sx, _sy in ((1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 3)):
+        _rows[_sy][_sx] = "x"
+    objects = ["".join(r) for r in _rows]
     sc = Scene("sheriff_office", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank; its door opens back onto
     # the field.
@@ -252,15 +258,18 @@ def build_sheriff_office():
                        voice="blip_gruff", portrait="sheriff",
                        dialogue_fn=sheriff_dialogue, movement="watch"))
 
-    # ---- OFFICE (NW): Vane's working room ----
-    # His desk (radio on it), the cot + washstand tucked along the west wall
-    # (he lives at his desk now), and the antler coat-rack.
-    sc.add_furniture("table", [(3, 3), (4, 3)], w=54, h=36)   # Vane's desk
-    sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=56)     # his cot, W wall
-    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
+    # ---- OFFICE (NW): Vane's working room (Wave 2 ensembles, TODO #24) ----
+    # Two composed objects instead of six separates: the LAWMAN'S WALL (his
+    # cot, washstand, and coat rack down the west wall -- he lives at his
+    # desk now, blanket tucked army-tight, boots squared under the frame)
+    # and the LAWMAN'S DESK (desk + radio + case files + tin mug + the
+    # tucked chair as one working surface). Footprint 'x' stamps below
+    # match the old separates' tiles, so reachability doesn't move.
+    sc.add_decoration(Decoration(1 * TILE + 16, 1 * TILE + 32, "lawman_wall",
+                                 seed=7))
+    sc.add_decoration(Decoration(4 * TILE + 0, 3 * TILE + 16, "lawman_desk",
+                                 seed=8))
     sc.add_furniture("bookshelf", [(4, 5), (5, 5)], w=58, h=18, seed=6)  # law books
-    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 8, "radio"))
-    sc.add_decoration(Decoration(1 * TILE + 20, 3 * TILE + 8, "washstand"))
     # Genset-electric main light + a backup candle Vane keeps oiled, and a
     # drop cord over the desk itself (the 90% rule: the lawman does not
     # work his own files in the dark).

@@ -426,6 +426,19 @@
 
 ## The interiors pilot (2026-07, TODO #24)
 
+- **2026-07 — Wave 2 rollout: the sheriff's office quad.** Six
+  separates became two composed objects. The LAWMAN'S WALL (west-wall
+  run): his cot with the blanket tucked army-tight and a worn pale
+  sit-spot, boots squared toes-out under the frame, the washstand with
+  standing water and a hung towel over its rail, the antler rack
+  carrying his winter coat (the empty prongs say the hat and belt are
+  on him) -- plus the walked line along the run and the washstand's
+  drip stain. The LAWMAN'S DESK: the two-tile desk with its modesty
+  panel, case files squared, the tin mug on years of rings, the radio
+  with grille + dial + antenna at the back corner, the chair yaw-tucked
+  half under the working side, boot scuffs where he stands. Footprints
+  stamp the old separates' exact tiles. Verified on four-facing +
+  clean-inspection sheets.
 - **2026-07 — Wave 2 rollout: the shop's stockroom receiving corner.**
   The stockroom's prop soup (two loose crates, a bare table, a barrel)
   merged into ONE `stockroom_corner` ensemble per the rule: a yawed
