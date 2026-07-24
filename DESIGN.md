@@ -648,14 +648,25 @@ Built into the procedural draw layer (`scenes/base.py`,
     light ruling).** No warm-lamp cosiness indoors: `wall_lamp` casts cold
     blue-white (the maintainer's "LED" read; in 1994 the same light is a
     fluorescent tube / cold bulb, so the period holds) with a fast shallow
-    shimmer instead of a candle flicker. Fire (candles, kerosene, the
-    hearth) is a PROP with a small warm pool, never a room's light source.
-    Fixtures are placed by COVERAGE across different walls, and
-    **`tools/light_audit.py`** is the design surface: it overlays every
-    emitter's mechanical `lit_at` radius (filled), its visible pool
-    (ring, in the fixture's colour), and cross-hatches everywhere no
-    radius reaches -- THE DARK as a reviewable shape. Run it before and
-    after placing any fixture; the dark places are chosen, not left over.
+    shimmer instead of a candle flicker, and **`drop_bulb`** is its
+    ceiling-hung sibling (a bare bulb on a drop cord, same cold family;
+    per-placement hang height via the `z` kwarg -- hang it above head
+    height or it vanishes into whoever stands at the counter). Fire
+    (candles, kerosene, the hearth) is a PROP with a small warm pool,
+    never a room's light source; the **kerosene lamp emits** that small
+    warm accent (its draw burns a live flame everywhere, so a poolless
+    one was a lie). Fixtures are placed by COVERAGE across different
+    walls, and **`tools/light_audit.py`** is the design surface: it
+    overlays every emitter's mechanical `lit_at` radius (filled), its
+    visible pool (ring, in the fixture's colour), and cross-hatches
+    everywhere no radius reaches -- THE DARK as a reviewable shape. Run
+    it before and after placing any fixture; the dark places are chosen,
+    not left over. **The shop is the first audit-designed room:** lit on
+    purpose at the counter (Hettie's kept bulb over the till, the warm
+    kerosene accent inside its cold pool) and the east floor
+    (`wall_lamp`); dark on purpose in the north aisle, the stove corner,
+    the office nook, and the stockroom->pantry chain (candle, then pitch
+    black for the cult tells).
   - **Interiors run on the gensets too (2026-07 interior lighting pass).** The
     explorable non-refuge interiors (`DIM_INTERIOR_SCENES`: shop, church, barn,
     schoolhouse, sheriff's office) are `DARK_SCENES` at a **lighter gloom**

@@ -2212,6 +2212,46 @@ def _draw_wall_lamp_solid(surf, cam, deco):
     pygame.draw.circle(surf, (255, 230, 182), (int(lamp[0]), int(lamp[1])), lr)
 
 
+def _draw_drop_bulb_solid(surf, cam, deco):
+    """A bare bulb on a drop cord (Hettie's one kept bulb made world-real;
+    the 2026-07 shop light pass): the cord falls out of the unrendered dark
+    overhead -- drawn in segments stepping down toward black, since interiors
+    show no ceiling under the tilt -- into a small socket and a COLD bare
+    bulb that sways just barely. Camera-facing on purpose: a hanging cord +
+    bulb is a thin thing and a glow (VISION trap #1's sanctioned cases).
+    Game._draw_dark casts its cold pool (FIXTURE_POOLS)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    # hang height is per-placement (kwargs z): high enough to clear the
+    # heads standing around it, or it vanishes into whoever tends the counter
+    z_bulb = float(getattr(deco, "kwargs", {}).get("z", 30.0)) * s
+    sway = math.sin(t * 1.1 + seed) * 1.5 * s      # the barely-there sway
+    # cord: three steps up, darkening into the unlit height overhead
+    steps = [(0.0, (46, 44, 42)), (6.0, (36, 35, 34)), (12.0, (27, 27, 28))]
+    for i in range(len(steps)):
+        z0f, col = steps[i]
+        z1f = steps[i + 1][0] if i + 1 < len(steps) else 18.0
+        f0 = 1.0 - z0f / 18.0
+        f1 = 1.0 - z1f / 18.0
+        p0 = cam.project(wx + sway * f0, wy, z_bulb + 3.0 * s + z0f * s)
+        p1 = cam.project(wx + sway * f1, wy, z_bulb + 3.0 * s + z1f * s)
+        pygame.draw.line(surf, col, p0, p1, 1)
+    # socket: a small dark cap over the bulb
+    sxp = cam.project(wx + sway, wy, z_bulb + 2.2 * s)
+    pygame.draw.circle(surf, (52, 50, 54), (int(sxp[0]), int(sxp[1])),
+                       max(1, int(1.6 * s * cam.scale)))
+    # the bulb: cold blue-white core + halo (the town's genset light)
+    bp = cam.project(wx + sway, wy, z_bulb)
+    br = max(2, int(2.4 * s * cam.scale))
+    glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (205, 218, 240, 60), (br * 3, br * 3), br * 3)
+    pygame.draw.circle(glow, (222, 232, 248, 110), (br * 3, br * 3), br * 2)
+    surf.blit(glow, (int(bp[0] - br * 3), int(bp[1] - br * 3)))
+    pygame.draw.circle(surf, (235, 242, 252), (int(bp[0]), int(bp[1])), br)
+
+
 def _draw_smoke_solid(surf, cam, deco):
     """A rising column of smoke -- four puffs ascending in world z, each
     larger and more faded than the last. Reads as a real column you can
@@ -3314,6 +3354,7 @@ SOLID_PROPS = {
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
     "wall_lamp":     _draw_wall_lamp_solid,
+    "drop_bulb":     _draw_drop_bulb_solid,
     "smoke":         _draw_smoke_solid,
     "wisp":          _draw_wisp_solid,
     "rope":          _draw_rope_solid,

@@ -232,8 +232,21 @@ def build_shop():
     # stopped coming before the trucks did.
     sc.add_decoration(Decoration(14 * TILE + 10, 10 * TILE + 8,
                                  "butter_churn"))
-    # The genset-electric MAIN light: a bulkhead lamp on the east wall over the
-    # shop floor. "I keep the lights on. So they know." (2026-07 interior pass.)
+    # THE LIGHT IS DESIGNED (2026-07 shop pass, per tools/light_audit.py).
+    # Lit on purpose: the COUNTER, under Hettie's one kept bulb (the tableau's
+    # "one kept bulb burning over the counter" made world-real -- a drop_bulb
+    # hung over the till, cold genset electric), with the counter kerosene
+    # lamp a small WARM accent inside the cold pool (the additive overlap);
+    # and the east shop floor under the bulkhead wall_lamp. Dark on purpose:
+    # the NORTH AISLE (the bare dust-ghost shelves half-seen over the lit
+    # counter), the stove corner (ember-warm fiction, no pool), the office
+    # nook, and the stockroom->pantry chain (candle only, then pitch dark:
+    # the cult tells behind two doors read by flashlight or not at all).
+    # (hung over the counter's front-centre air: the kerosene lamp keeps the
+    # west end, the till the east, and the bulb clears Hettie's body on the
+    # N facing -- three things reading as three things, not one blob)
+    sc.add_decoration(Decoration(9 * TILE + 0, 9 * TILE + 24, "drop_bulb",
+                                 z=42))
     sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp"))
     # A kerosene lamp on the counter is the backup for when the gas runs low.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,

@@ -559,6 +559,21 @@
 
 ## Lighting
 
+- **2026-07 — The shop light pass (the first audit-designed room) +
+  `drop_bulb` + the kerosene pool.** First placement pass run through
+  `tools/light_audit.py` end to end. New `drop_bulb` fixture (a bare
+  bulb on a drop cord, cold family, cord fading up into the unrendered
+  dark since interiors show no ceiling; per-placement hang height via
+  the `z` kwarg): Hettie's tableau's "one kept bulb burning over the
+  counter" made world-real over the till. `kerosene_lamp` joined both
+  emitter tables (small warm accent pool; its draw burns a live flame
+  everywhere, so a poolless one was a lie) -- the warm-in-cold overlap
+  at the counter is the additive-interaction showcase. Placement notes
+  that cost captures: the bulb 8px from the kerosene read as one blob
+  (moved to the counter's front-centre air), and at z=30 it vanished
+  into Hettie's body on the N facing (raised to z=42, above heads).
+  Dark chosen on purpose: north aisle, stove corner, office nook,
+  stockroom->pantry (candle, then pitch black for the cult tells).
 - **2026-07 — Two-family light model + shared fixture table.** Brimley's
   civic light was originally anachronistic (19th-century lampposts);
   replaced with period-correct 1994 electric (cold `yard_light` poles on
