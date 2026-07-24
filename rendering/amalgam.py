@@ -587,8 +587,143 @@ def assemble(seed):
     return parts[:5]
 
 
+# ===================== THE PALLID MASK -- the 18th part ======================
+# His face made an OBJECT (NARRATIVE 6a), carried in the storm as a part like
+# any other: it surfaces from its own free-form CUT, is HELD by the flesh at
+# the rim, and only ONE exists storm-wide at a time (the migrating bearer,
+# driven by the storm state -- NEVER dealt by assemble(), so every ordinary
+# amalgam is untouched). Two hard design rules: it draws SUB-PLAYER scale (the
+# same hand-object that rests on the altar, not a billboard head) and it is
+# ALWAYS CAMERA-FACING -- His regard faces the PI from any angle (the one
+# deliberate VISION exception, because it is a gaze, not a prop). The timber is
+# a bone<->wood blend: the drowned-white plate shape + the cult wood's carved
+# construction (pale plate, centre seam, brow + long nose, faint grain, deep
+# recessed sockets with the gold a pinprick far back, NO mouth, NO halo).
+_PMASK_BONE = {"base": (204, 198, 186), "hi": (228, 222, 208), "lo": (152, 146, 132),
+               "grain": (136, 128, 114), "edge": (82, 74, 62)}
+_PMASK_WOOD = {"base": (122, 92, 56), "hi": (154, 120, 76), "lo": (82, 60, 38),
+               "grain": (58, 40, 24), "edge": (38, 26, 14)}
+_PMASK_GOLD = (222, 178, 46)
+_PMASK_HOT = (250, 214, 92)
+
+
+def _pmask_pal(blend):
+    b = max(0.0, min(1.0, blend))
+    return {k: tuple(int(_PMASK_BONE[k][i] + (_PMASK_WOOD[k][i] - _PMASK_BONE[k][i]) * b)
+                     for i in range(3)) for k in _PMASK_BONE}
+
+
+def _pmask_jag(surf, cx, cy, rx, ry, col, seed, n=26, jit=0.04):
+    rng = random.Random(seed)
+    pts = [(cx + math.cos(i / n * math.tau) * rx * (1 + rng.uniform(-jit, jit)),
+            cy + math.sin(i / n * math.tau) * ry * (1 + rng.uniform(-jit, jit)))
+           for i in range(n)]
+    pygame.draw.polygon(surf, col, [(int(a), int(b)) for a, b in pts])
+
+
+def carved_pallid_surface(r, gaze=(0.0, 0.25), blend=0.5, seed=7, ember=1.0):
+    """The carved-pallid Mask on its own square surface, centred and face-on.
+    `ember` 0..1 guts the gold as the mask sinks back into its cut."""
+    r = max(4, int(r))
+    P = _pmask_pal(blend)
+    S = int(r * 2.6)
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    mx = my = S // 2
+    rx, ry = r * 0.78, r * 1.05
+    plate = pygame.Surface((S, S), pygame.SRCALPHA)
+    _pmask_jag(plate, mx, my, rx + 2, ry + 2, P["edge"], seed, jit=0.045)
+    _pmask_jag(plate, mx, my, rx, ry, P["base"], seed + 1, jit=0.035)
+    hi = pygame.Surface((S, S), pygame.SRCALPHA)
+    _pmask_jag(hi, mx - int(r * 0.12), my - int(r * 0.18), rx * 0.8, ry * 0.74,
+               (*P["hi"], 130), seed + 2, jit=0.04)
+    plate.blit(hi, (0, 0))
+    for gi in range(5):
+        gx = mx + int((gi - 2) / 2.6 * rx * 0.7)
+        pts = [(gx + int(math.sin(k * 0.9 + gi * 2.1) * 1.6),
+                int(my - ry * 0.45 + (ry * 1.05) * k / 9)) for k in range(10)]
+        pygame.draw.lines(plate, (*P["grain"], 34), False, pts, 1)
+    grad = pygame.Surface((S, S), pygame.SRCALPHA)
+    for yy in range(S):
+        f = max(0.0, (yy - my) / (ry * 1.1))
+        v = int(255 - 92 * min(1.0, f))
+        pygame.draw.line(grad, (v, v, v, 255), (0, yy), (S, yy))
+    plate.blit(grad, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    m.blit(plate, (0, 0))
+    pygame.draw.line(m, (*P["grain"], 190), (mx, my - int(ry * 0.88)), (mx, my + int(ry * 0.9)), 2)
+    pygame.draw.line(m, (*P["hi"], 110), (mx - 1, my - int(ry * 0.8)), (mx - 1, my + int(ry * 0.4)), 1)
+    pygame.draw.arc(m, P["grain"], (mx - int(r * 0.58), my - int(r * 0.5), int(r * 1.16), int(r * 0.5)), 3.35, 6.1, 2)
+    pygame.draw.line(m, P["grain"], (mx, my - int(r * 0.16)), (mx - 2, my + int(r * 0.4)), 2)
+    pygame.draw.line(m, (*P["hi"], 150), (mx - 3, my - int(r * 0.14)), (mx - 5, my + int(r * 0.34)), 1)
+    gx_, gy_ = max(-1, min(1, gaze[0])), max(-1, min(1, gaze[1]))
+    pdx, pdy = int(gx_ * r * 0.055), int(gy_ * r * 0.065)
+    for sgn in (-1, 1):
+        ex = mx + sgn * int(r * 0.38)
+        ey = my - int(r * 0.18)
+        for i, (rr, c) in enumerate([(0.205, (66, 55, 42)), (0.15, (34, 27, 20)), (0.095, (7, 6, 4))]):
+            _pmask_jag(m, ex + i, ey + i, r * rr, r * rr * 1.25, c, seed + 11 + i, n=12, jit=0.16)
+        if ember > 0.05:
+            px, py = ex + pdx, ey + 2 + pdy
+            gs = int(r * 0.34) + 2
+            gl = pygame.Surface((gs, gs), pygame.SRCALPHA)
+            gr = gs // 2
+            pygame.draw.circle(gl, (*_PMASK_GOLD, int(52 * ember)), (gr, gr), max(1, int(r * 0.075)))
+            m.blit(gl, (px - gr, py - gr), special_flags=pygame.BLEND_RGBA_ADD)
+            gcol = tuple(int((60, 50, 24)[i] + (_PMASK_GOLD[i] - (60, 50, 24)[i]) * ember) for i in range(3))
+            pygame.draw.circle(m, gcol, (px, py), max(1, int(r * 0.042)))
+            if ember > 0.4:
+                pygame.draw.circle(m, _PMASK_HOT, (px, py), max(1, int(r * 0.02)))
+    crk = [(mx + int(r * 0.46), my + int(r * 0.08)), (mx + int(r * 0.56), my + int(r * 0.44)),
+           (mx + int(r * 0.4), my + int(r * 0.76))]
+    pygame.draw.lines(m, P["edge"], False, crk, 2)
+    return m
+
+
+def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
+                          blend=0.5, seed=7, ang=1.2, side=-1, lean=8.0):
+    """The Mask as a PART: it rides out of its own cut (`deploy` 0..1) along
+    the cut normal, is held at the rim by shroud grips, and is drawn face-on
+    (camera-facing). `gaze` (gx, gy in -1..1) aims the pupils at the PI. The
+    caller enforces the one-bearer-at-a-time rule."""
+    d = max(0.0, min(1.0, deploy))
+    dx_, dy_ = math.cos(ang), math.sin(ang)
+    nx, ny = -dy_ * side, dx_ * side
+    lay = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+    mcx = cx + nx * r * 0.9 * d
+    mcy = cy + ny * r * 0.9 * d
+    ms = carved_pallid_surface(int(r), gaze, blend, seed, ember=0.25 + 0.75 * d)
+    if lean:
+        ms = pygame.transform.rotate(ms, lean)
+    lay.blit(ms, ms.get_rect(center=(int(mcx), int(mcy))))
+    # everything inside the cut line ends dead flat (the family grammar)
+    p0 = (cx - dx_ * 400, cy - dy_ * 400); p1 = (cx + dx_ * 400, cy + dy_ * 400)
+    p2 = (p1[0] - nx * 400, p1[1] - ny * 400); p3 = (p0[0] - nx * 400, p0[1] - ny * 400)
+    pygame.draw.polygon(lay, (0, 0, 0, 0), [(int(a), int(b)) for a, b in (p0, p1, p2, p3)])
+    surf.blit(lay, (0, 0))
+    # the cut ends peek past the rim; shroud grips hold it on the line
+    ln = r * (1.3 + 0.5 * d)
+    q0 = (cx - dx_ * ln / 2, cy - dy_ * ln / 2); q1 = (cx + dx_ * ln / 2, cy + dy_ * ln / 2)
+    pygame.draw.line(surf, VOID, (int(q0[0]), int(q0[1])), (int(q1[0]), int(q1[1])), 3)
+    off = 2.2
+    pygame.draw.line(surf, RIM,
+                     (int(q0[0] - nx * off + dx_ * ln * 0.04), int(q0[1] - ny * off + dy_ * ln * 0.04)),
+                     (int(q1[0] - nx * off - dx_ * ln * 0.06), int(q1[1] - ny * off - dy_ * ln * 0.06)), 2)
+    grng = random.Random(seed + 3)
+    for sgn in (-1, 1):
+        gx = cx + dx_ * sgn * r * 0.52 + nx * r * 0.05
+        gy = cy + dy_ * sgn * r * 0.52 + ny * r * 0.05
+        lr = r * grng.uniform(0.15, 0.21)
+        pygame.draw.ellipse(surf, SHROUD, (int(gx - lr), int(gy - lr * 0.75), int(lr * 2), int(lr * 1.5)))
+        pygame.draw.arc(surf, SHROUD_LO, (int(gx - lr), int(gy - lr * 0.75), int(lr * 2), int(lr * 1.5)), 3.6, 5.9, 2)
+    fx_ = cx + nx * r * 0.16; fy2 = cy + ny * r * 0.16; lr = r * 0.13
+    pygame.draw.ellipse(surf, SHROUD, (int(fx_ - lr), int(fy2 - lr * 0.7), int(lr * 2), int(lr * 1.4)))
+    for k in range(2):
+        mxp = cx - nx * grng.uniform(3, 8) + grng.uniform(-2, 2)
+        myp = cy - ny * grng.uniform(3, 8) + grng.uniform(-2, 2)
+        pygame.draw.circle(surf, EMBER_G if k == 0 else SHROUD, (int(mxp), int(myp)), 1)
+
+
 def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
-                        dispel=None):
+                        dispel=None, mask=None):
     """Feet at (x, y). `birth` 0..1 is the manifest ramp (parts build out
     staggered); `dispel` 0..1 is the gaze-dispel fraction (parts peel back
     into their cuts in reverse); `gaze` darkens every ember while the
@@ -642,3 +777,16 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     surf.blit(ghost, (int(x - sw // 2) - 3, int(y - base) - 1))
     scaled.set_alpha(int(230 * phase))
     surf.blit(scaled, (int(x - sw // 2), int(y - base)))
+    # THE MASK, when this unit is the bearer (storm state passes `mask`; None
+    # for every ordinary amalgam, so their draw is untouched). Surfaces from a
+    # senses-high cut, sub-player scale, always camera-facing.
+    if mask is not None:
+        mr = mask.get("r", max(8, int(sh * 0.17)))
+        mcx = x + mask.get("dx", int(sw * 0.06))
+        mcy = (y - base) + mask.get("my", int(sh * 0.30))
+        draw_pallid_mask_part(surf, mcx, mcy, mr,
+                              deploy=mask.get("deploy", 1.0),
+                              gaze=mask.get("gaze", (0.0, 0.3)),
+                              blend=mask.get("blend", 0.5),
+                              seed=mask.get("seed", 7),
+                              lean=mask.get("lean", 8.0))

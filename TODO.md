@@ -263,6 +263,50 @@ exemptions.
   rules apply); **disposition framing** read off existing save flags
   (mood, never a meter).
 
+### 25. **[Fable + Opus]** The King → the STORM (apex redesign, IN PROGRESS)
+
+Replacing THE UNFOLDING (`rendering/king_unfold.py`) with the shadow family's
+apex: the King is not one body, He is the **STORM** — His attention flooding
+the flat plane so every dark space erupts amalgam-cuts (portals with a part
+half-out). Locked with the maintainer this pass:
+- **No apex body.** The "bearer" is just another amalgam; nothing marks it but
+  the Mask.
+- **The Mask is a PART** (the 18th), surfaced from its own cut in the family
+  grammar, held by the flesh. His face made an object: **sub-player scale**,
+  **always camera-facing** (His regard; the one deliberate VISION exception).
+  Timber is a bone↔wood blend (carved-pallid). No halo, no mouth.
+- **One Mask storm-wide, MIGRATING** — surfaces on one unit, is borne, sinks,
+  rises elsewhere (THE UNFOLDING's host/sink/rebond state, translated). It IS
+  the focal "Him" and keeps luck-not-omniscience: the Mask surfacing near you
+  is His attention finding you; while it is borne far off, His regard is
+  elsewhere.
+- **Light SLOWS the storm, never burns it** (burning stays the Watchers'
+  privilege); the AI avoids light regardless. He is survived, never dispelled.
+- **The storm fills ALL dark, corn included** ("no light = danger" taken to its
+  end). Rides the ev-driven outdoor darkening (#4/#21). Light = the last
+  refuge.
+- The idle horizon King is **CUT** (maintainer ruling); the storm is the
+  full-power apex at the source, so its overwhelm is the point.
+
+**LANDED (this pass, dormant):** the Mask part in `rendering/amalgam.py`
+(`carved_pallid_surface` + `draw_pallid_mask_part` + a `mask=` kwarg on
+`draw_amalgam_sprite`), NEVER dealt by `assemble()`, so every ordinary amalgam
+is byte-identical. Preview `tools/preview_pallid_part.py` proves sub-player
+scale + always-facing + the deploy ramp.
+
+**OPEN, in build order:** (1) the outdoor **ev-driven darkening + the
+light/dark split** (the storm's stage; #4/#21) FIRST; (2) the **storm state
+machine** — spawn density scaled to the darkening, the single migrating bearer
+(reusing the mask-bond state), the light-slows rule; (3) **retire THE
+UNFOLDING** and rewire the catch / death card / Carcosa cutscene (flow-guarded)
+onto the storm; (4) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the
+apex) ONLY as each piece lands — the docs still describe THE UNFOLDING because
+that is what SHIPS until (3). Land each visual beat through a VISION look-pass.
+
+**Fences:** Mask stays sub-player + camera-facing; one bearer at a time; the
+flood concentrates on His last *sense* of you, not your true position
+(luck-not-omniscience); the impossible count stays at one.
+
 ---
 
 ## Blocked on a human at the keys

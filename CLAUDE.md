@@ -267,10 +267,15 @@ it renders the procedural sprites to a labelled PNG strip.
     except a one-time cached `_FORM` + `_MASK_SURF`. Preview:
     `tools/preview_king_unfold.py`.
   - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
-    from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel)`):
+    from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel,mask)`):
     a seeded 3-5 part deal from a 17-part library, each part emerging
     from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
-    this skin, behavior unchanged (DESIGN.md §1).
+    this skin, behavior unchanged (DESIGN.md §1). The **Pallid Mask part**
+    (`carved_pallid_surface` + `draw_pallid_mask_part`; the storm-King
+    redesign, `TODO.md` #25) is an 18th part NEVER dealt by `assemble()`,
+    driven ONLY by the `mask=` kwarg (sub-player, camera-facing, one bearer
+    storm-wide) — dormant until the storm system lands, so ordinary amalgams
+    stay byte-identical.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the ONLY camera; the
     pitch is locked, there is no flat/pitch-0 view):** `camera.py` (`Camera.project(wx,wy,wz)`,

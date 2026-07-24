@@ -139,6 +139,24 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — The Pallid Mask part (the storm-King redesign's first slice,
+  dormant).** The maintainer began reworking the King away from THE UNFOLDING
+  (`rendering/king_unfold.py`, the 4D everting mass) toward the shadow family's
+  apex: the King as a **STORM** with no single body, His attention flooding the
+  dark, and the Mask carried through it as a **part**, not a face. Ran as a
+  concept loop in scratchpad (v1 floating mask → rejected; masked apex body →
+  "just another amalgam"; the mask-as-part with one migrating bearer →
+  approved). This slice landed the **art asset only, dormant**:
+  `carved_pallid_surface` (the bone↔wood carved-pallid mask, no halo/mouth,
+  deep recessed sockets, gold pinprick) + `draw_pallid_mask_part` (it rides
+  out of its own cut, held at the rim, **sub-player scale**, **always
+  camera-facing** — His regard, the one VISION exception) + a `mask=` kwarg on
+  `draw_amalgam_sprite`. It is NEVER dealt by `assemble()`, so every ordinary
+  amalgam is byte-identical (full gate green, `capture_world --diff` clean).
+  Preview `tools/preview_pallid_part.py`. The storm STATE (one migrating
+  bearer, light-slows-not-burns, corn-fills-with-dark, retiring THE UNFOLDING)
+  is designed but unbuilt — `TODO.md` #25 carries the locked decisions and the
+  build order; canon still describes THE UNFOLDING because that is what ships.
 - **2026-07 — The Watcher-variety program landed as THE AMALGAMS**
   (`rendering/amalgam.py`, `AMALGAM_CHANCE`, DESIGN.md §1). The program
   ran as a maintainer-driven concept loop in session scratchpad: a
