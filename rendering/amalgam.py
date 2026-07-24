@@ -695,16 +695,18 @@ def carved_pallid_surface(r, gaze=(0.0, 0.25), blend=0.5, seed=7, ember=1.0):
 
 def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
                    blend=0.5, seed=7, ember=1.0):
-    """The Pallid Mask as ONE real 3D object: a thin convex ellipsoid shell
-    (semi-axes Rx < Ry, and a REAL depth Rz). `yaw` rotates the whole mesh about
-    the vertical axis; it is projected and back-face culled, so the carved face,
-    the curved edge-on profile (an ellipse cross-section of depth Rz, never a
-    flat line), and the back ALL fall out of the same geometry -- no swapping
-    between drawings, no billboard, no nose. The carved FACE (pale plate, brow,
-    deep jagged sockets with a gold pinprick, centre seam, a hairline crack) is
-    drawn as 3D-anchored overlays that live on the FRONT hemisphere ONLY and cull
-    as it turns, so from behind it is a blank pale shell -- NO eyes on the back.
-    `lean` is a small in-plane roll; `gaze` aims the gold; `ember` its life."""
+    """The Pallid Mask as ONE real 3D object: a single curved SHEET -- the FRONT
+    CAP of an ellipsoid (semi-axes Rx < Ry, a REAL depth Rz), a bent oval of
+    "paper", NOT a closed egg. `yaw` rotates the whole mesh about the vertical
+    axis and projects it, so the carved face, the curved edge-on profile (a bent
+    crescent of depth Rz, never a flat line and never a solid oval), and the pale
+    concave inside seen from behind ALL fall out of the same geometry -- no swap,
+    no billboard, no nose. BOTH sides render in the pale bone colour, so from
+    behind it reads as a mask (its inside), never a dark half. The carved FACE
+    (pale plate, brow, deep jagged sockets with a gold pinprick, centre seam, a
+    hairline crack) is drawn as 3D-anchored overlays on the FRONT face ONLY and
+    culls as it turns -- NO eyes from behind. `lean` is a small in-plane roll;
+    `gaze` aims the gold; `ember` its life."""
     r = max(4, int(r))
     P = _pmask_pal(blend)
 
@@ -726,7 +728,10 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
         zr = -x * spsi + z * cpsi
         return xr * cl - y * sl, xr * sl + y * cl, zr
 
-    # ---- the shell body: a smooth pale dome, a blank darker back ----
+    # ---- the shell body: a single curved SHEET (the FRONT cap only) -- a bent
+    # oval of paper, NOT a closed egg. BOTH sides are drawn in the pale front
+    # colour, so from behind you see its pale concave INSIDE (still reads as a
+    # mask), never a dark far cap and never empty ----
     grid = []
     for i in range(nphi + 1):
         phi = math.pi * i / nphi
@@ -749,16 +754,16 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
         for j in range(nth):
             a, b = grid[i][j], grid[i][j + 1]
             c2, e = grid[i + 1][j + 1], grid[i + 1][j]
+            zc = (a[0] + b[0] + c2[0] + e[0]) * 0.25
+            if zc < 0.0:                                       # FRONT cap only (no
+                continue                                       # closed-egg far cap)
             nzr = (a[6] + b[6] + c2[6] + e[6]) * 0.25
-            if nzr <= 0.02:                                   # back-face cull
-                continue
             nxr = (a[4] + b[4] + c2[4] + e[4]) * 0.25
             nyr = (a[5] + b[5] + c2[5] + e[5]) * 0.25
-            lamb = max(0.0, nxr * Lx + nyr * Ly + nzr * Lz)
+            face = 1.0 if nzr >= 0.0 else -1.0                 # which side faces us
+            lamb = max(0.0, (nxr * Lx + nyr * Ly + nzr * Lz) * face)
             sh = amb + (1 - amb) * lamb
-            zc = (a[0] + b[0] + c2[0] + e[0]) * 0.25
-            base = P["base"] if zc >= 0.0 else dk(P["base"], 0.6)
-            col = dk(base, sh)
+            col = dk(P["base"], sh)                             # pale on BOTH sides
             zavg = (a[3] + b[3] + c2[3] + e[3]) * 0.25
             pts = [(int(cx + a[1]), int(cy + a[2])), (int(cx + b[1]), int(cy + b[2])),
                    (int(cx + c2[1]), int(cy + c2[2])), (int(cx + e[1]), int(cy + e[2]))]

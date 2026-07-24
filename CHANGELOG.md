@@ -145,20 +145,24 @@
   horizontal squash) that collapsed to a straight sliver at profile and read
   flat; a stopgap "edge crescent + nose" only made it worse. The maintainer's
   call: "one object that rotates," no swapping between drawings, no nose.
-  Rebuilt as **`draw_pallid_3d`** — a thin convex ellipsoid shell (semi-axes
-  Rx<Ry with a REAL depth Rz) whose whole mesh is rotated by `yaw`, projected,
-  and back-face culled, so the face, the curved edge-on profile (an ellipse
-  cross-section of depth Rz, never a flat line), and the back all fall out of
-  the SAME geometry. This SUPERSEDES the earlier sub-player + "always
+  Rebuilt as **`draw_pallid_3d`** — a single curved SHEET, the FRONT CAP of an
+  ellipsoid (semi-axes Rx<Ry, a REAL depth Rz), a bent oval of "paper", NOT a
+  closed egg — rotated by `yaw` and projected, so the face, the bent-crescent
+  profile (depth Rz, never a flat line and never a solid oval), and the pale
+  concave inside seen from behind all fall out of the SAME geometry. (A closed
+  ellipsoid was tried first; its dark FAR cap showed at profile and read as a
+  solid egg, so the far cap was dropped — the maintainer's "a mask is a bending
+  piece of paper.") This SUPERSEDES the earlier sub-player + "always
   camera-facing" rule: the Mask is player-scale and a prop that turns to face
   you or away, respecting the tilted world (the flat `carved_pallid_surface`
   is kept only as the face-art reference; the transient
   `carved_pallid_back_surface` / `_mask_edge_crescent` swap helpers were cut).
-  A follow-up pass gave it the 2D look on the 3D body: the carved face (pale
-  plate, deep jagged sockets + gold pupils, centre seam, hairline crack) is
-  drawn as 3D-anchored overlays on the FRONT hemisphere ONLY, so they cull as
-  the shell turns — **no eyes from behind**, the back is a blank pale shell —
-  and the shell was smoothed (high ambient + resolution).
+  A follow-up pass gave it the 2D look: the carved face (pale plate, deep jagged
+  sockets + gold pupils, centre seam, hairline crack) is drawn as 3D-anchored
+  overlays on the FRONT face ONLY, so they cull as it turns — **no eyes from
+  behind**. BOTH sides render in the pale bone colour, so from behind it reads
+  as a mask (its pale concave inside), never a dark half; smoothed (high
+  ambient + resolution).
   The **bearer power-up** also settled: the possessed amalgam is simply a
   BIGGER amalgam (`BEARER_SCALE`) wearing the Mask + a crown of ember-cuts
   (`_bearer_crown`) — size is the tell, not a busier body (an earlier chaotic

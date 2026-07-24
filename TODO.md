@@ -292,9 +292,11 @@ half-out). Locked with the maintainer this pass:
 
 **LANDED (dormant, wired into NOTHING in the game):**
 - The **Mask part** in `rendering/amalgam.py`: `draw_pallid_3d` (the one
-  reusable 3D shell — pale carved FACE on the front hemisphere only, deep
-  jagged sockets + gold, seam, crack; blank pale back, NO eyes from behind;
-  curved profile) driven through `draw_pallid_mask_part` + a `mask=` kwarg on
+  reusable 3D Mask — a single bent SHEET, the front cap of an ellipsoid, NOT a
+  closed egg; pale carved FACE on the front only: deep jagged sockets + gold,
+  seam, crack, NO eyes from behind; BOTH sides pale so from behind you see its
+  pale concave inside and it still reads as a mask; a bent-crescent profile)
+  driven through `draw_pallid_mask_part` + a `mask=` kwarg on
   `draw_amalgam_sprite`, NEVER dealt by `assemble()`, so every ordinary amalgam
   is byte-identical. Player scale (`STORM_MASK_R`). Previews
   `tools/preview_mask_spin.py` (the full spin) + `tools/preview_bearer.py`.
