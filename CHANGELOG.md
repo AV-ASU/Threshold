@@ -586,6 +586,21 @@
 
 ## Lighting
 
+- **2026-07 — The lightmap: darkness composes by accumulation
+  (maintainer: "the lights aren't interacting with each other
+  properly").** The gloom pass used to punch per-pool alpha holes in a
+  dark overlay, painter's-order -- where two pools overlapped, the
+  later pool's dim rim overwrote the earlier pool's bright centre, so
+  every pendant kept a visible ring seam and adjacent lights never
+  combined. Rebuilt as a true lightmap: every source (pools, cone
+  fans, the flashlight beam, the player's bubble) ADD-accumulates into
+  one luminance field over the room's ambient, and the frame is
+  multiplied by it once. Overlapping pools now genuinely brighten
+  their shared floor (the school's paired pendant runs pour into a
+  continuous band), seams are gone, and the falloff matches the
+  colored layer's shape so the whole light field reads as one system.
+  Same gloom extremes as before (ambient floor and full-bright centres
+  unchanged), cached surfaces, one full-screen MULT.
 - **2026-07 — Broken lights: 1-2 dead fixtures per room (maintainer).**
   A `broken=True` fixture kwarg kills the light in every layer at once
   (visible pool, `lit_at` gate, cast shadows, audit coverage -- the

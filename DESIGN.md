@@ -632,11 +632,18 @@ Built into the procedural draw layer (`scenes/base.py`,
     gooseneck offset (`arm`): a yard-light head rides high on its pole, a
     candle sits at the floor. `_draw_dark` casts each pool onto the ground
     UNDER that 3D source as a **tilt-foreshortened ellipse** (not a flat
-    screen circle -- a floor disc squashes by `Camera.ground_squash()`), and
-    the pools blend **additively** (`BLEND_RGB_ADD`), so two lights SUM where
-    they overlap (warm + cold pool toward white) and every pool lifts the
-    walls / props / actors standing in it -- **light interacting with light,
-    and with objects.** On top, a **cast-shadow** pass throws a soft shadow
+    screen circle -- a floor disc squashes by `Camera.ground_squash()`).
+    **The darkness itself composes through a LIGHTMAP (2026-07 rework):**
+    every source (pools, fans, the flashlight cone, the player's bubble)
+    accumulates additively into ONE luminance field over the room's
+    ambient floor, and the frame is multiplied by it once -- so two
+    overlapping pools genuinely BRIGHTEN their shared floor and no pool
+    ever re-darkens a neighbour's centre (the old per-pool alpha carve
+    was painter's-order and left ring seams between adjacent pendants).
+    The **colored** pools then blend additively on top (`BLEND_RGB_ADD`,
+    warm + cold summing toward white), lifting the walls / props /
+    actors standing in them -- **light interacting with light, and with
+    objects.** On top, a **cast-shadow** pass throws a soft shadow
     across the floor AWAY from each source for every solid caster in range
     (player, NPCs, solid props): a LOW source (a candle) throws a long shadow,
     a HIGH one (a yard-light head) a short one, and under several lights an

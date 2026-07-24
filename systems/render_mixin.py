@@ -660,24 +660,26 @@ class RenderMixin:
             left = _far(ang - spread)
             right = _far(ang + spread)
             cone = [(psx, psy), left, tip, right]
-        # GLOOM: dim the whole room, then carve elliptical holes under the
-        # player + every pool so the objects standing in the light show
-        # through (the navigable read; the additive colour lands on top).
+        # GLOOM as a LIGHTMAP (2026-07 rework, maintainer: "the lights
+        # aren't interacting with each other properly"). The old pass
+        # punched per-pool alpha holes in a dark overlay, painter's-order:
+        # where pools overlapped, the later pool's dim rim OVERWROTE the
+        # earlier pool's bright centre, so every pendant kept a visible
+        # ring seam. Now every source ACCUMULATES additively into one
+        # luminance field (base = the room's ambient, sources clamp toward
+        # full bright), and the frame is multiplied by it once -- two
+        # overlapping pools genuinely brighten their shared floor, and the
+        # seams are gone. The colored pools still ADD on top; shadows
+        # still SUB.
         gloom = (130 if self.scene.key in CULT_DARK_SCENES
                  else 72 if self.scene.key in DIM_INTERIOR_SCENES
                  else 100)
-        overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, gloom))
+        amb = 255 - gloom
+        lm = getattr(self, "_lightmap_surf", None)
+        if lm is None or lm.get_size() != self.screen.get_size():
+            lm = self._lightmap_surf = pygame.Surface(self.screen.get_size())
+        lm.fill((amb, amb, amb))
 
-        def _carve(cx, cy, r):
-            n = 8
-            for i in range(n - 1, -1, -1):            # largest (dimmest) first
-                rr = r * (0.24 + 0.76 * i / (n - 1))
-                rx = int(rr)
-                ry = max(1, int(rr * squash))
-                aa = int(gloom * i / (n - 1))         # 0 centre -> gloom at rim
-                pygame.draw.ellipse(overlay, (0, 0, 0, aa),
-                                    (cx - rx, cy - ry, rx * 2, ry * 2))
         def _fan_pts(wx, wy, cn, rr):
             # a directional fixture's fan, laid out in WORLD space and
             # projected -- like the flashlight cone, it foreshortens with
@@ -692,22 +694,36 @@ class RenderMixin:
                                                wy + rr * math.sin(a), 0))
             return pts
 
-        _carve(psx, psy, 118)
+        # the player's own dark-adapted bubble
+        lm.blit(_floor_pool_surf(118, squash, (255, 255, 255), gloom),
+                (psx - 118, psy - int(118 * squash)),
+                special_flags=pygame.BLEND_RGB_ADD)
+        fan_tmp = None
         for cx, cy, radius, color, peak, fl, wx, wy, cn in fixtures:
+            r = max(2, int(radius * fl))
+            lum = int(gloom * fl)
             if cn is None:
-                _carve(cx, cy, int(radius * fl))
+                lm.blit(_floor_pool_surf(r, squash, (255, 255, 255), lum),
+                        (cx - r, cy - int(r * squash)),
+                        special_flags=pygame.BLEND_RGB_ADD)
             else:
-                # carve the gloom along the fan, deepest at the apex
-                n = 6
-                for i in range(n - 1, -1, -1):
-                    rr = radius * fl * (0.22 + 0.78 * i / (n - 1))
-                    aa = int(gloom * i / (n - 1))
-                    pygame.draw.polygon(overlay, (0, 0, 0, aa),
-                                        _fan_pts(wx, wy, cn, rr))
+                if fan_tmp is None:
+                    fan_tmp = pygame.Surface(self.screen.get_size())
+                fan_tmp.fill((0, 0, 0))
+                n = 5
+                for i in range(n, 0, -1):
+                    v = int(lum * (1.0 - (i - 1) / n))
+                    pygame.draw.polygon(fan_tmp, (v, v, v),
+                                        _fan_pts(wx, wy, cn, r * i / n))
+                lm.blit(fan_tmp, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
         if cone:
-            # Carve the beam clear of the gloom (alpha 0 inside the cone).
-            pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
-        self.screen.blit(overlay, (0, 0))
+            # the flashlight beam clears its cone to full bright
+            if fan_tmp is None:
+                fan_tmp = pygame.Surface(self.screen.get_size())
+            fan_tmp.fill((0, 0, 0))
+            pygame.draw.polygon(fan_tmp, (gloom, gloom, gloom), cone)
+            lm.blit(fan_tmp, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+        self.screen.blit(lm, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
         # ADDITIVE light on top: the player's own pool + every fixture's, each
         # a floor ellipse (or fan) under its source. They SUM where they
         # overlap and brighten the walls / props / actors they lie on.
