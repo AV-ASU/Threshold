@@ -632,6 +632,8 @@ class RenderMixin:
                 continue
             if not powered and d.kind in _Scene._ELECTRIC_KINDS:
                 continue                    # a blacked-out genset lights nothing
+            if getattr(d, "kwargs", {}).get("broken"):
+                continue                    # a burned-out bulb casts nothing
             radius, color, peak, src_z, arm, famp, fspd = spec
             wx, wy = d.x + ax * arm, d.y + ay * arm
             cx, cy = self.camera.project(wx, wy, 0)
@@ -747,7 +749,8 @@ class RenderMixin:
         srcs = [(d.x + ax * s[4], d.y + ay * s[4], s[0], s[3], _deco_cone(d))
                 for d in getattr(self.scene, "decorations", [])
                 for s in (FIXTURE_POOLS.get(getattr(d, "kind", None)),)
-                if s and (powered or d.kind not in _Scene._ELECTRIC_KINDS)]
+                if s and (powered or d.kind not in _Scene._ELECTRIC_KINDS)
+                and not getattr(d, "kwargs", {}).get("broken")]
         if srcs:
             casters = [(self.player.x, self.player.y, 8)]
             for n in getattr(self.scene, "npcs", []):

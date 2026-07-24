@@ -124,11 +124,15 @@ def build_schoolhouse():
     # pendants each at even spacing -- barracks wiring. The chosen dark is
     # the piled-desks SE corner (the school's own furniture, shoved into
     # shadow).
+    # (two burned out on the diagonal -- the 1-2 broken rule: nobody has
+    # changed a bulb since the commune went below)
     for _by in (3, 6, 9):
         sc.add_decoration(Decoration(4 * TILE + 16, _by * TILE + 16,
-                                     "drop_bulb", z=38))
+                                     "drop_bulb", z=38,
+                                     broken=(_by == 9)))
         sc.add_decoration(Decoration(11 * TILE + 16, _by * TILE + 16,
-                                     "drop_bulb", z=38))
+                                     "drop_bulb", z=38,
+                                     broken=(_by == 3)))
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "bloodstain",
                                  scale=1.6))
 

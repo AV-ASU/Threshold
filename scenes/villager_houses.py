@@ -135,8 +135,10 @@ def build_church():
                                  z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 4 * TILE + 16, "drop_bulb",
                                  z=38))
+    # (the SW pew pendant is burned out -- the 1-2 broken rule; the
+    # back-left pews sit in its gloom)
     sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 16, "drop_bulb",
-                                 z=38))
+                                 z=38, broken=True))
     sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
@@ -304,8 +306,10 @@ def build_sheriff_office():
                                  seed=9))
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 10 * TILE + 24, "lantern"))
+    # (burned out -- the 1-2 broken rule: the public face decays first;
+    # the door lantern still burns)
     sc.add_decoration(Decoration(3 * TILE + 0, 9 * TILE + 16, "drop_bulb",
-                                 z=38))
+                                 z=38, broken=True))
 
     # ---- RECORDS (NE): the back file room ----
     # The case board of the disappeared Vane can't file on (polaroid wall), the

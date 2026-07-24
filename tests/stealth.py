@@ -1453,6 +1453,13 @@ def main():
     tick(g, 60)
     check(sc.power_on and sc.lit_at(fan_x, fan_y),
           "recovery: the timer drains and the lamp lights again")
+    # A BROKEN fixture (the 1-2 per room rule) never lights, even with
+    # the genset running: the shop's dead mid-floor pendant.
+    check(any(getattr(d, "kwargs", {}).get("broken")
+              for d in sc.decorations if d.kind == "drop_bulb"),
+          "broken: the shop carries its burned-out pendants")
+    check(sc.power_on and not sc.lit_at(12 * TILE + 16, 6 * TILE + 16),
+          "broken: a burned-out pendant's spot stays dark on full power")
 
     print()
     if FAILS:

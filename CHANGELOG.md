@@ -586,6 +586,20 @@
 
 ## Lighting
 
+- **2026-07 — Broken lights: 1-2 dead fixtures per room (maintainer).**
+  A `broken=True` fixture kwarg kills the light in every layer at once
+  (visible pool, `lit_at` gate, cast shadows, audit coverage -- the
+  audit marks it a red X + "(broken)" tag), independent of genset
+  power, and the pendant's art shows why: a shattered jagged stub where
+  the glass was, the dish knocked askew off the cord line, the dead
+  kink in the cord, no sway. Placements: the shop's main-row west +
+  mid-row east (Hettie keeps the counter and aisle burning, the ones
+  people see); the church's SW pew pendant; the barn run's MIDDLE bulb
+  (a dead gap in the dead commune's row); the school's diagonal pair;
+  the sheriff's front waiting room (the public face decays first, the
+  door lantern still burns). The 90% coverage stays the WIRING's
+  design number; live coverage sits at 81-88% with the burnouts, and
+  that dark is sanctioned. Guarded by `tests/stealth.py` §17.
 - **2026-07 — The row rule: pendants hang on one axis (maintainer:
   "people have lights in a row; lights shouldn't look chaotic").** The
   coverage-driven scatter was re-placed as straight runs at even

@@ -81,6 +81,8 @@ def audit(g, key):
                 if d.kind in kinds or d.kind in FIXTURE_POOLS]
 
     def _covered(d, cx, cy, r):
+        if getattr(d, "kwargs", {}).get("broken"):
+            return False                    # a burned-out bulb covers nothing
         if not r or (d.x - cx) ** 2 + (d.y - cy) ** 2 > r * r:
             return False
         cn = _cone_of(d)
@@ -123,6 +125,17 @@ def audit(g, key):
     cov_mech = 100.0 * mech_hits / max(1, walk)
     font = pygame.font.SysFont(None, 22)
     for d, mr in emitters:
+        p = cam.project(d.x, d.y, 0)
+        if getattr(d, "kwargs", {}).get("broken"):
+            # a broken fixture audits as a red X + tag, no rings: it is
+            # sanctioned dark (the 1-2 per room rule), not missing coverage
+            pygame.draw.line(surf, (235, 90, 80), (p[0] - 5, p[1] - 5),
+                             (p[0] + 5, p[1] + 5), 2)
+            pygame.draw.line(surf, (235, 90, 80), (p[0] - 5, p[1] + 5),
+                             (p[0] + 5, p[1] - 5), 2)
+            surf.blit(font.render(d.kind + " (broken)", True, (235, 120, 110)),
+                      (int(p[0]) + 6, int(p[1]) - 18))
+            continue
         pool = FIXTURE_POOLS.get(d.kind)
         cn = _cone_of(d)
         if mr:
@@ -133,7 +146,6 @@ def audit(g, key):
         if pool:
             _ground_ring(surf, cam, d.x, d.y, pool[0], pool[1], width=2,
                          cone=cn)
-        p = cam.project(d.x, d.y, 0)
         surf.blit(font.render(d.kind, True, (255, 255, 160)),
                   (int(p[0]) + 6, int(p[1]) - 18))
     lg = font.render(

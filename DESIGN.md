@@ -699,7 +699,16 @@ Built into the procedural draw layer (`scenes/base.py`,
     fixture, and adjacent rooms share a pendant line where the framing
     would carry it (the sheriff's north line runs three cords through
     two rooms). Scatter is the light placement's version of the grid
-    lockstep failure, inverted: props break the grid, wiring obeys it. **The shop is the first audit-designed room:** lit on
+    lockstep failure, inverted: props break the grid, wiring obeys it.
+    **And every room carries 1-2 BROKEN lights (maintainer, 2026-07):**
+    a `broken=True` fixture kwarg kills it in every layer at once (no
+    pool, no `lit_at`, dead in the audit -- which marks it a red X) and
+    its art shows WHY (a shattered stub for a bulb, the dish knocked
+    askew, the cord's dead kink). Provenance: no deliveries means no
+    replacement bulbs, so a dead gap in a straight run is the town
+    failing in miniature -- the 90% target is the WIRING's design, and
+    the burnouts carve the lived-in dark below it (rooms sit at ~81-88%
+    live). Guarded by `tests/stealth.py` §17. **The shop is the first audit-designed room:** lit on
     purpose at the counter (Hettie's kept bulb over the till, the warm
     kerosene accent inside its cold pool) and the east floor
     (`wall_lamp`); dark on purpose in the north aisle, the stove corner,

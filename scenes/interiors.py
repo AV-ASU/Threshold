@@ -267,16 +267,18 @@ def build_shop():
     # service room. The PANTRY is the chosen dark (the cult tells behind
     # two doors read by flashlight or not at all).
     # -- the main-floor row, y = 9*T+24 (the counter bulb above is its
-    #    middle at x = 9*T)
+    #    middle at x = 9*T). The WEST one is burned out (the 1-2 broken
+    #    rule: no deliveries means no replacement bulbs; Hettie keeps the
+    #    counter and aisle burning, the ones people see)
     sc.add_decoration(Decoration(4 * TILE + 16, 9 * TILE + 24, "drop_bulb",
-                                 z=38))
+                                 z=38, broken=True))
     sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 24, "drop_bulb",
                                  z=38))
-    # -- the mid-floor row, y = 6*T+16
+    # -- the mid-floor row, y = 6*T+16; the EAST one is dead too
     sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(12 * TILE + 16, 6 * TILE + 16, "drop_bulb",
-                                 z=38))
+                                 z=38, broken=True))
     # -- the back-shop aisle single + one centered per service room
     sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 16, "drop_bulb",
                                  z=38))
@@ -428,10 +430,12 @@ def build_barn():
     # three pendants at even spacing, plus one centered over the workroom
     # bench (Mara's journal corner). The chosen dark is the dormitory's
     # SE corner.
+    # (the run's MIDDLE bulb is burned out -- the 1-2 broken rule: a dead
+    # gap in the dead commune's row)
     sc.add_decoration(Decoration(3 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "drop_bulb",
-                                 z=38))
+                                 z=38, broken=True))
     sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",

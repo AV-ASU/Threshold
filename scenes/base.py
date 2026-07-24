@@ -498,6 +498,8 @@ class Scene:
         for d in self.decorations:
             if d.kind not in self._LIGHT_KINDS:
                 continue
+            if getattr(d, "kwargs", {}).get("broken"):
+                continue        # a burned-out fixture never lights anything
             cone = None
             raw = getattr(d, "kwargs", {}).get("cone")
             if raw:

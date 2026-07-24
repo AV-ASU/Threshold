@@ -2446,7 +2446,8 @@ def _draw_wall_lamp_solid(surf, cam, deco):
     # dark glass under the shade
     lamp = cam.project(wx, wy + 1.8 * s, mount_h - 3.4 * s)
     lr = max(2, int(2.2 * s * cam.scale))
-    if getattr(deco, "_powered", True):
+    if (getattr(deco, "_powered", True)
+            and not getattr(deco, "kwargs", {}).get("broken")):
         glow = pygame.Surface((lr * 6, lr * 6), pygame.SRCALPHA)
         pygame.draw.circle(glow, (255, 210, 150, 66), (lr * 3, lr * 3), lr * 3)
         pygame.draw.circle(glow, (255, 224, 176, 120), (lr * 3, lr * 3), lr * 2)
@@ -2474,7 +2475,11 @@ def _draw_drop_bulb_solid(surf, cam, deco):
     # hang height is per-placement (kwargs z): high enough to clear the
     # heads standing around it, or it vanishes into whoever tends the counter
     z_bulb = float(getattr(deco, "kwargs", {}).get("z", 30.0)) * s
-    sway = math.sin(t * 1.1 + seed) * 1.5 * s      # the barely-there sway
+    broken = bool(getattr(deco, "kwargs", {}).get("broken"))
+    # a broken pendant hangs DEAD: no sway animation, a fixed kink in the
+    # cord where something (or someone) caught it
+    sway = (2.2 * s if broken
+            else math.sin(t * 1.1 + seed) * 1.5 * s)
     z_shade = z_bulb + 1.6 * s                     # the dish sits over the bulb
     # cord: a heavier line stepping dark into the unlit height overhead,
     # so the eye can track the hang
@@ -2488,7 +2493,7 @@ def _draw_drop_bulb_solid(surf, cam, deco):
         p0 = cam.project(wx + sway * f0, wy, z_shade + 6.4 * s + z0f * s)
         p1 = cam.project(wx + sway * f1, wy, z_shade + 6.4 * s + z1f * s)
         pygame.draw.line(surf, col, p0, p1, 2 if i == 0 else 1)
-    powered = getattr(deco, "_powered", True)
+    powered = getattr(deco, "_powered", True) and not broken
     bx = wx + sway
     # the bulb glows UNDER the shade lip (drawn before the dish, so the
     # shade's dark rim always cuts the glow -- the fixture over the light)
@@ -2500,14 +2505,23 @@ def _draw_drop_bulb_solid(surf, cam, deco):
         pygame.draw.circle(glow, (222, 232, 248, 100), (br * 3, br * 3), br * 2)
         surf.blit(glow, (int(bp[0] - br * 3), int(bp[1] - br * 3)))
         pygame.draw.circle(surf, (238, 244, 252), (int(bp[0]), int(bp[1])), br)
+    elif broken:
+        # the SHATTERED bulb: no glass ball, just the jagged stub under
+        # the socket -- the reason this one will never come back on
+        for ja, jl in ((-0.6, 2.2), (0.3, 1.6), (1.2, 2.0)):
+            pygame.draw.line(surf, (96, 98, 106), (int(bp[0]), int(bp[1] - 2)),
+                             (int(bp[0] + math.cos(ja) * jl * s),
+                              int(bp[1] + math.sin(ja) * jl * s + 1)), 1)
     else:
         pygame.draw.circle(surf, (56, 58, 64), (int(bp[0]), int(bp[1])), br)
         pygame.draw.circle(surf, (82, 84, 92), (int(bp[0]), int(bp[1])), br, 1)
     # the steel dish shade: a cone opening downward over the bulb -- the
     # simple ceiling light's whole silhouette. Slightly lit inside-lip when
-    # burning; dead enamel when the genset is down.
+    # burning; dead enamel when the genset is down; a broken one hangs its
+    # dish ASKEW off the cord line, knocked and never righted.
     lip = (132, 136, 144) if powered else (86, 88, 96)
-    draw_solid(surf, cam, bx, wy,
+    sx_off = 1.6 * s if broken else 0.0
+    draw_solid(surf, cam, bx + sx_off, wy,
                [(z_shade, 6.4 * s, 6.4 * s),
                 (z_shade + 2.6 * s, 4.4 * s, 4.4 * s),
                 (z_shade + 5.2 * s, 1.8 * s, 1.8 * s),
@@ -3206,7 +3220,8 @@ def _draw_yard_light_solid(surf, cam, deco):
     # a blacked-out head is dark glass under the hood
     lamp = cam.project(hx, hy + 3.0 * s, hood_z - 1.6 * s)
     lr = max(2, int(2.4 * s * cam.scale))
-    if getattr(deco, "_powered", True):
+    if (getattr(deco, "_powered", True)
+            and not getattr(deco, "kwargs", {}).get("broken")):
         # a faint cold spill on the ground under the head (so the fixture
         # reads as CASTING light even in daylight; the real navigable pool
         # is punched by _draw_dark when the scene is dark)
