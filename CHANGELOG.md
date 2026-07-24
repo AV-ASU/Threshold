@@ -573,6 +573,16 @@
 
 ## Lighting
 
+- **2026-07 — The drop bulb became a real pendant (maintainer: "those
+  need to look like lights, not glowing orbs in space").** The bare
+  bulb + halo read as a floating orb at game scale; the rework gives
+  the fixture a BODY: a heavier drop cord stepping dark into the
+  unrendered height, a steel dish shade (a cone of revolution -- the
+  one place a lampshade read is correct), and the bulb glowing UNDER
+  the lip so the dark rim always cuts the glow. Unpowered it keeps the
+  dish in dead enamel with dark glass, so a blackout shows dead
+  fixtures hanging rather than lights that vanished. Verified in-scene
+  on N/E facings, powered and blacked out.
 - **2026-07 — The 90% coverage rule + the five dim interiors relit.**
   Maintainer mandate: with every light on, >=90% of an indoor room's
   walkable floor sits inside a visible pool; the ~10% dark is chosen.

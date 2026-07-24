@@ -668,9 +668,14 @@ Built into the procedural draw layer (`scenes/base.py`,
     blue-white (the maintainer's "LED" read; in 1994 the same light is a
     fluorescent tube / cold bulb, so the period holds) with a fast shallow
     shimmer instead of a candle flicker, and **`drop_bulb`** is its
-    ceiling-hung sibling (a bare bulb on a drop cord, same cold family;
-    per-placement hang height via the `z` kwarg -- hang it above head
-    height or it vanishes into whoever stands at the counter). Fire
+    ceiling-hung sibling: a simple PENDANT (drop cord into a steel dish
+    shade, the bulb glowing under the lip -- the dark shade silhouette
+    is what sells 'fixture'; a bare glow read as a floating orb,
+    2026-07 maintainer catch). Per-placement hang height via the `z`
+    kwarg -- hang it above head height or it vanishes into whoever
+    stands at the counter. A dead pendant keeps its dish (dark enamel,
+    dark glass), so a blackout leaves visible dead fixtures, never
+    vanished lights. Fire
     (candles, kerosene, the hearth) is a PROP with a small warm pool,
     never a room's light source; the **kerosene lamp emits** that small
     warm accent (its draw burns a live flame everywhere, so a poolless

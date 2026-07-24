@@ -2314,12 +2314,13 @@ def _draw_wall_lamp_solid(surf, cam, deco):
 
 
 def _draw_drop_bulb_solid(surf, cam, deco):
-    """A bare bulb on a drop cord (Hettie's one kept bulb made world-real;
-    the 2026-07 shop light pass): the cord falls out of the unrendered dark
-    overhead -- drawn in segments stepping down toward black, since interiors
-    show no ceiling under the tilt -- into a small socket and a COLD bare
-    bulb that sways just barely. Camera-facing on purpose: a hanging cord +
-    bulb is a thin thing and a glow (VISION trap #1's sanctioned cases).
+    """A simple ceiling PENDANT light (2026-07 rework, maintainer: 'those
+    need to look like lights, not glowing orbs in space'): a drop cord out
+    of the unrendered dark overhead into a steel DISH SHADE, the bulb
+    glowing under its lip. The dark shade silhouette is what sells
+    'fixture' -- the glow alone read as a floating orb. Sways just barely.
+    Camera-facing on purpose: a hanging cord + a dish of revolution + a
+    glow (VISION trap #1's sanctioned cases -- it IS a lampshade).
     Game._draw_dark casts its cold pool (FIXTURE_POOLS)."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
@@ -2329,33 +2330,48 @@ def _draw_drop_bulb_solid(surf, cam, deco):
     # heads standing around it, or it vanishes into whoever tends the counter
     z_bulb = float(getattr(deco, "kwargs", {}).get("z", 30.0)) * s
     sway = math.sin(t * 1.1 + seed) * 1.5 * s      # the barely-there sway
-    # cord: three steps up, darkening into the unlit height overhead
-    steps = [(0.0, (46, 44, 42)), (6.0, (36, 35, 34)), (12.0, (27, 27, 28))]
+    z_shade = z_bulb + 1.6 * s                     # the dish sits over the bulb
+    # cord: a heavier line stepping dark into the unlit height overhead,
+    # so the eye can track the hang
+    steps = [(0.0, (56, 54, 52)), (7.0, (40, 40, 40)), (13.0, (29, 29, 30))]
+    top = 20.0
     for i in range(len(steps)):
         z0f, col = steps[i]
-        z1f = steps[i + 1][0] if i + 1 < len(steps) else 18.0
-        f0 = 1.0 - z0f / 18.0
-        f1 = 1.0 - z1f / 18.0
-        p0 = cam.project(wx + sway * f0, wy, z_bulb + 3.0 * s + z0f * s)
-        p1 = cam.project(wx + sway * f1, wy, z_bulb + 3.0 * s + z1f * s)
-        pygame.draw.line(surf, col, p0, p1, 1)
-    # socket: a small dark cap over the bulb
-    sxp = cam.project(wx + sway, wy, z_bulb + 2.2 * s)
-    pygame.draw.circle(surf, (52, 50, 54), (int(sxp[0]), int(sxp[1])),
-                       max(1, int(1.6 * s * cam.scale)))
-    # the bulb: cold blue-white core + halo while the genset runs; dead,
-    # a dark glass teardrop still swaying on its cord
-    bp = cam.project(wx + sway, wy, z_bulb)
-    br = max(2, int(2.4 * s * cam.scale))
-    if getattr(deco, "_powered", True):
+        z1f = steps[i + 1][0] if i + 1 < len(steps) else top
+        f0 = 1.0 - z0f / top
+        f1 = 1.0 - z1f / top
+        p0 = cam.project(wx + sway * f0, wy, z_shade + 6.4 * s + z0f * s)
+        p1 = cam.project(wx + sway * f1, wy, z_shade + 6.4 * s + z1f * s)
+        pygame.draw.line(surf, col, p0, p1, 2 if i == 0 else 1)
+    powered = getattr(deco, "_powered", True)
+    bx = wx + sway
+    # the bulb glows UNDER the shade lip (drawn before the dish, so the
+    # shade's dark rim always cuts the glow -- the fixture over the light)
+    bp = cam.project(bx, wy + 1.2 * s, z_bulb)
+    br = max(2, int(2.2 * s * cam.scale))
+    if powered:
         glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
-        pygame.draw.circle(glow, (205, 218, 240, 60), (br * 3, br * 3), br * 3)
-        pygame.draw.circle(glow, (222, 232, 248, 110), (br * 3, br * 3), br * 2)
+        pygame.draw.circle(glow, (205, 218, 240, 52), (br * 3, br * 3), br * 3)
+        pygame.draw.circle(glow, (222, 232, 248, 100), (br * 3, br * 3), br * 2)
         surf.blit(glow, (int(bp[0] - br * 3), int(bp[1] - br * 3)))
-        pygame.draw.circle(surf, (235, 242, 252), (int(bp[0]), int(bp[1])), br)
+        pygame.draw.circle(surf, (238, 244, 252), (int(bp[0]), int(bp[1])), br)
     else:
-        pygame.draw.circle(surf, (58, 60, 66), (int(bp[0]), int(bp[1])), br)
-        pygame.draw.circle(surf, (84, 86, 94), (int(bp[0]), int(bp[1])), br, 1)
+        pygame.draw.circle(surf, (56, 58, 64), (int(bp[0]), int(bp[1])), br)
+        pygame.draw.circle(surf, (82, 84, 92), (int(bp[0]), int(bp[1])), br, 1)
+    # the steel dish shade: a cone opening downward over the bulb -- the
+    # simple ceiling light's whole silhouette. Slightly lit inside-lip when
+    # burning; dead enamel when the genset is down.
+    lip = (132, 136, 144) if powered else (86, 88, 96)
+    draw_solid(surf, cam, bx, wy,
+               [(z_shade, 6.4 * s, 6.4 * s),
+                (z_shade + 2.6 * s, 4.4 * s, 4.4 * s),
+                (z_shade + 5.2 * s, 1.8 * s, 1.8 * s),
+                (z_shade + 6.4 * s, 0.9 * s, 0.9 * s)],
+               {"body": (72, 74, 82), "lo": (46, 48, 54), "rim": lip})
+    # the shade's underside rim catches the burning bulb
+    if powered:
+        _disc(surf, cam, bx, wy, z_shade + 0.2 * s, 6.2 * s, 6.2 * s,
+              (188, 198, 216), fill=False, width=1)
 
 
 def _draw_smoke_solid(surf, cam, deco):
