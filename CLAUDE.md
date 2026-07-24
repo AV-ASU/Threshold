@@ -111,7 +111,8 @@ python tests/flow.py         # story-beat integration + canon guards
 
 # WHAT TOOLS EXIST? Run this BEFORE writing a throwaway script -- there are
 # 40+ headless tools and the one you want probably already exists.
-python tools/index.py [word]
+python tools/index.py [word]         # the shelf, filtered
+python tools/index.py --md           # regenerate TOOLS.md (gate checks it)
 
 # LOOK at a scene from all four facings (the VISION.md look pass). Sets the
 # camera yaw itself and ASSERTS the facings differ, so it cannot hand back

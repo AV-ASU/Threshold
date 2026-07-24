@@ -230,6 +230,26 @@ def _lost_silent():
                 "    beat there seems to want words, it needs staging, not a line.")
 
 
+# ------------------------------------------------------- 7. TOOLS.md fresh
+# THE RULE: TOOLS.md is GENERATED from each tool's own docstring
+# (`python tools/index.py --md`) precisely so a hand-maintained list of 40+
+# tools cannot rot the way the canon's dead file references did. This check
+# is what makes "generated" true rather than aspirational.
+@check("TOOLS.md matches the actual tool shelf")
+def _tools_md():
+    sys.path.insert(0, os.path.join(_ROOT, "tools"))
+    import index as _index
+    want = _index.render_md()
+    try:
+        have = open("TOOLS.md").read()
+    except FileNotFoundError:
+        return "    TOOLS.md is missing. Run: python tools/index.py --md"
+    if have != want:
+        return ("    TOOLS.md is stale (a tool was added, renamed, removed, or\n"
+                "    its docstring's first line changed).\n"
+                "    Regenerate: python tools/index.py --md")
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,
