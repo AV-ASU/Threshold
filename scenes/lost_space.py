@@ -66,8 +66,8 @@ _REACH = 2.2              # tiles: this close to the exit = you climbed out
 _BIOME = {
     "corn":   {"clear_r": 4.5, "ring_w": 2.5, "haven_r": 8.5, "spawn_off": 3.0},
     "forest": {"pond_r": 4.2, "haven_r": 7.0, "spawn_off": 6.5},
-    "road":   {"haven_r": 9.0, "spawn_off": 0.6, "road_amp": 8.0,
-               "road_half": 2.6, "road_off": 4.0, "road_drift": 0.14},
+    "road":   {"haven_r": 9.5, "spawn_off": 0.6, "road_amp": 8.0,
+               "road_half": 2.6, "road_off": 6.5, "road_drift": 0.14},
 }
 
 
@@ -250,8 +250,8 @@ class LostSpace(Scene):
     def _building_solid(self, tx, ty):
         # the sealed store block at the lot's north-west (matches the
         # gas_station deco placed at (cx-4, cy-4) tiles; see _build_road_station)
-        return (self._cx - 6.3 <= tx <= self._cx - 1.7
-                and self._cy - 6.4 <= ty <= self._cy - 4.5)
+        return (self._cx - 7.3 <= tx <= self._cx - 0.7
+                and self._cy - 5.6 <= ty <= self._cy - 2.4)
 
     def _corn_here(self, tx, ty):
         # sparse corn CLUMPS in the field: a low-freq gate so corn appears in
