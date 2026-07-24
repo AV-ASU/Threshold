@@ -288,20 +288,27 @@ half-out). Locked with the maintainer this pass:
 - The idle horizon King is **CUT** (maintainer ruling); the storm is the
   full-power apex at the source, so its overwhelm is the point.
 
-**LANDED (this pass, dormant):** the Mask part in `rendering/amalgam.py`
-(`carved_pallid_surface` + `draw_pallid_mask_part` + a `mask=` kwarg on
-`draw_amalgam_sprite`), NEVER dealt by `assemble()`, so every ordinary amalgam
-is byte-identical. Preview `tools/preview_pallid_part.py` proves sub-player
-scale + always-facing + the deploy ramp.
+**LANDED (dormant, wired into NOTHING in the game):**
+- The **Mask part** in `rendering/amalgam.py` (`carved_pallid_surface` +
+  `draw_pallid_mask_part` + a `mask=` kwarg on `draw_amalgam_sprite`), NEVER
+  dealt by `assemble()`, so every ordinary amalgam is byte-identical. Preview
+  `tools/preview_pallid_part.py`. The Mask draws at **player scale**
+  (`STORM_MASK_R`, the maintainer's "the full 1" — revised up from the earlier
+  sub-player call).
+- The **storm ENGINE** `systems/storm.py` (`Storm`): the single migrating Mask
+  bearer, units drifting to His **lagged sense** of the player (luck, not
+  omniscience), **light slows + repels, never burns**. Sim + draw helper only;
+  imported by nothing in the game. Preview `tools/preview_storm.py`.
 
 **OPEN, in build order:** (1) the outdoor **ev-driven darkening + the
-light/dark split** (the storm's stage; #4/#21) FIRST; (2) the **storm state
-machine** — spawn density scaled to the darkening, the single migrating bearer
-(reusing the mask-bond state), the light-slows rule; (3) **retire THE
-UNFOLDING** and rewire the catch / death card / Carcosa cutscene (flow-guarded)
-onto the storm; (4) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the
-apex) ONLY as each piece lands — the docs still describe THE UNFOLDING because
-that is what SHIPS until (3). Land each visual beat through a VISION look-pass.
+light/dark split** (the storm's stage; #4/#21) FIRST; (2) **wire the storm
+engine in** — real scene dark-spots as anchors (off the darkening), tilt-camera
+projection, spawn density off evidence, and the **catch** (a bearer reaching
+you = the King-catch death); (3) **retire THE UNFOLDING** and rewire the catch
+/ death card / Carcosa cutscene (flow-guarded) onto the storm; (4) reconcile
+canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each piece lands —
+the docs still describe THE UNFOLDING because that is what SHIPS until (3). Land
+each visual beat through a VISION look-pass.
 
 **Fences:** Mask stays sub-player + camera-facing; one bearer at a time; the
 flood concentrates on His last *sense* of you, not your true position

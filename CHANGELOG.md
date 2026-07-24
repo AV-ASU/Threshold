@@ -139,6 +139,20 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — The storm ENGINE (`systems/storm.py`), dormant.** The second
+  slice of the storm-King redesign (`TODO.md` #25): a standalone `Storm` sim
+  the game imports nowhere yet. It holds the single migrating Mask bearer (the
+  Mask sinks on one unit and rises from another, one storm-wide), units that
+  drift toward His **lagged sense** of the player (luck, not omniscience: the
+  sense snaps to your true position only every few seconds), and the
+  **light-slows-never-burns** rule (a lit unit is slowed to a fraction and
+  eases back out of the pool, but is never dispelled — that stays the
+  Watchers'). The Mask draws at **player scale** (the maintainer's "the full
+  1", revising the earlier sub-player sizing). Preview `tools/preview_storm.py`
+  runs it over time (the Mask migrating #5→#2→#0, the flood massing on the
+  refuge, the pool staying clear). Integration (real dark-spot anchors off the
+  darkening, tilt projection, the catch, retiring THE UNFOLDING) is #25's later
+  slices.
 - **2026-07 — The Pallid Mask part (the storm-King redesign's first slice,
   dormant).** The maintainer began reworking the King away from THE UNFOLDING
   (`rendering/king_unfold.py`, the 4D everting mass) toward the shadow family's
