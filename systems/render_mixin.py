@@ -468,6 +468,15 @@ class RenderMixin:
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
                                      SIGHT_ANG_FEATHER, LOS_STEP)
         aim = self.look.aim
+        # On the storm-darkened surface (TODO #25) the fog must darken WITH the
+        # scene: it is drawn AFTER _draw_dark, so a fixed gray reads too bright
+        # over a night town. Pull it toward black and thicken it by the stage
+        # gloom (the blind spot is UNSEEN -> it should be the darkest). ev0 gloom
+        # 0 leaves the cold thin gray unchanged (byte-identical); scoped to storm
+        # scenes so the DARK interiors keep their fog.
+        storm_scene = (self.scene is not None
+                       and self.scene.key in STORM_STAGE_SCENES)
+        fog_gloom = STORM_DARK_GLOOM[self._rot_stage()] if storm_scene else 0
         # The fog layer is a pure function of the player's ground point, the
         # aim heading, the camera pose, and the scene. All of those hold still
         # whenever the player is settled (standing, reading, in dialogue) --
@@ -480,7 +489,7 @@ class RenderMixin:
         fkey = (self.screen.get_size(),
                 int(self.player.x / 3), int(self.player.y / 3),
                 int(aim * 100), int(cam.cam_x / 3), int(cam.cam_y / 3),
-                round(cam.yaw, 3), round(cam.scale, 3))
+                round(cam.yaw, 3), round(cam.scale, 3), fog_gloom)
         fc = self._sight_fog_cache
         # Identity-held scene ref (not id(): a freed scene's id can recycle).
         if (fc.get("key") == fkey and fc.get("scene") is self.scene
@@ -490,7 +499,12 @@ class RenderMixin:
         fog = fc.get("surf")
         if fog is None or fog.get_size() != self.screen.get_size():
             fog = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
+        fr, fg, fb, fa = 58, 60, 66, SIGHT_FOG_ALPHA    # cold, thin gray
+        if fog_gloom > 0:                               # match the darkened night
+            darken = 1.0 - min(0.72, fog_gloom / 255.0 * 1.3)
+            fr, fg, fb = int(fr * darken), int(fg * darken), int(fb * darken)
+            fa = min(205, SIGHT_FOG_ALPHA + int(fog_gloom * 0.72))
+        fog.fill((fr, fg, fb, fa))
         # The sight math is ground-plane WORLD space; the apex is the player's
         # ground point. Cast a fan of rays across the cone, marching each one
         # out until it crosses a solid (Scene.blocks_sight, the same predicate

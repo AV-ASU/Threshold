@@ -150,7 +150,11 @@
   clears a pool under each), and the flashlight is enabled outdoors
   (`_flashlight_lit`) so its light-draws-Him double-edge (`VIS_LIT_RISE`)
   applies there too. The whole-frame lightmap multiply darkens the sky for
-  free. Framed as world rot's LIGHT twin (the ashfall's companion, DESIGN §2):
+  free, and the blind-spot sight fog (`_draw_sight_fog`, drawn AFTER
+  `_draw_dark`) darkens + thickens with the same stage gloom so the UNSEEN
+  region matches the night instead of reading as a bright gray wash over a
+  dark town (the blind spot should be the darkest). Framed as world rot's
+  LIGHT twin (the ashfall's companion, DESIGN §2):
   *understanding* thinning the veil, NOT a day/night cycle — the "one
   continuous daytime state" invariant holds (no `day_phase`/`day_count`;
   NARRATIVE reconciled). VISUAL + flashlight only; the light/dark COVER split

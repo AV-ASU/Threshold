@@ -297,6 +297,9 @@ What rises with the stage:
   (`STORM_DARK_GLOOM`): stage 0 is full day (early-out, byte-identical), stage 3
   is night. The civic yard-lights threading the roads (§6) become ISLANDS, and
   the flashlight earns its place outdoors (with its light-draws-Him cost, §1).
+  The blind-spot sight fog (`_draw_sight_fog`, drawn after `_draw_dark`) darkens
+  and thickens with the SAME stage gloom, so the unseen region is the darkest
+  part of the night rather than a bright gray wash floating over a dark town.
   It is the ashfall's LIGHT twin — the veil thinning as His attention gathers,
   never a day/night cycle (no `day_phase`/`day_count`; the daytime invariant
   holds, NARRATIVE §canon). VISUAL + flashlight so far; it is the STAGE the
