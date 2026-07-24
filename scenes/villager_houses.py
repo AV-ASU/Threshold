@@ -126,16 +126,20 @@ def build_church():
     # Genset-electric main light on the nave's north wall by the chancel (the
     # altar candles are the devotion, not the wiring). (2026-07 interior pass.)
     sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
-    # The 90% rule: bulbs on drop cords down the nave roof (a poor parish
-    # wired once, decades back) + one in the vestry. The chosen dark is the
-    # nave's far corners past the pew banks.
-    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+    # The 90% rule + the ROW rule (lights run on one axis, never scatter):
+    # two straight runs over the pew banks, the way a wired church hangs
+    # them over the seating, two pendants each on matched columns -- a
+    # clean 2x2 -- plus one centered in the vestry. The chosen dark is
+    # the nave's far corners past the pew banks.
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "drop_bulb",
                                  z=38))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "drop_bulb",
+    sc.add_decoration(Decoration(11 * TILE + 16, 4 * TILE + 16, "drop_bulb",
                                  z=38))
-    sc.add_decoration(Decoration(4 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+    sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(8 * TILE + 0, 10 * TILE + 0, "drop_bulb",
                                  z=38))
@@ -274,7 +278,9 @@ def build_sheriff_office():
     # drop cord over the desk itself (the 90% rule: the lawman does not
     # work his own files in the dark).
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
-    sc.add_decoration(Decoration(3 * TILE + 16, 4 * TILE + 0, "drop_bulb",
+    # (on the building's NORTH pendant line, y = 3*T+16, shared with the
+    # records-room cord -- the row rule: lights run on one axis)
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
                                  z=42))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 8, "candle"))
     # Hunting-country office: a mounted buck + the trophy walleye over the desk
@@ -298,7 +304,7 @@ def build_sheriff_office():
                                  seed=9))
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 10 * TILE + 24, "lantern"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+    sc.add_decoration(Decoration(3 * TILE + 0, 9 * TILE + 16, "drop_bulb",
                                  z=38))
 
     # ---- RECORDS (NE): the back file room ----
@@ -313,9 +319,12 @@ def build_sheriff_office():
     sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # Genset light for the file room + a drop cord over the filing table's
-    # east end (the 90% rule; the payphone corner reads).
+    # Genset light for the file room + two drop cords on the building's
+    # NORTH pendant line (y = 3*T+16, shared with the office cord: one
+    # straight three-light run across the building -- the row rule).
     sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=38))
     sc.add_decoration(Decoration(12 * TILE + 16, 3 * TILE + 16, "drop_bulb",
                                  z=38))
     # Mara's booking slip, in the records-room filing table (a surface trail

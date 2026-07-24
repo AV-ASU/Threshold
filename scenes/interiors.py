@@ -259,24 +259,30 @@ def build_shop():
     sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp",
                                  cone=(-1, 0, 55)))
     # The 90% rule (maintainer, 2026-07): with every light on, >=90% of the
-    # walkable floor sits in a visible pool. Drop cords strung through the
-    # roof beams carry it: the back-shop aisle, the office nook, the
-    # stockroom, and the south floor by the door. The PANTRY is the chosen
-    # dark (the cult tells behind two doors read by flashlight or not at
-    # all); a blackout drops the whole room back to the two flames.
+    # walkable floor sits in a visible pool -- and the pendants hang in
+    # ROWS (maintainer: lights run on one axis, never scatter; cords come
+    # off joists and joists run parallel). The shop strings three E-W
+    # runs: the main-floor row (the counter bulb is its middle), the
+    # mid-floor pair, and the aisle single, plus one centered fixture per
+    # service room. The PANTRY is the chosen dark (the cult tells behind
+    # two doors read by flashlight or not at all).
+    # -- the main-floor row, y = 9*T+24 (the counter bulb above is its
+    #    middle at x = 9*T)
+    sc.add_decoration(Decoration(4 * TILE + 16, 9 * TILE + 24, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 24, "drop_bulb",
+                                 z=38))
+    # -- the mid-floor row, y = 6*T+16
+    sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 6 * TILE + 16, "drop_bulb",
+                                 z=38))
+    # -- the back-shop aisle single + one centered per service room
     sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "drop_bulb",
-                                 z=38))
-    sc.add_decoration(Decoration(5 * TILE + 16, 10 * TILE + 16, "drop_bulb",
-                                 z=38))
-    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "drop_bulb",
-                                 z=38))
-    sc.add_decoration(Decoration(11 * TILE + 16, 10 * TILE + 16, "drop_bulb",
-                                 z=38))
-    sc.add_decoration(Decoration(12 * TILE + 16, 5 * TILE + 16, "drop_bulb",
                                  z=38))
     # A kerosene lamp on the counter is the backup for when the gas runs low.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,
@@ -417,16 +423,18 @@ def build_barn():
     # Genset-electric main light on the main-floor north wall (the lantern +
     # candle are backup). (2026-07 interior pass.)
     sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
-    # The 90% rule: the commune strung drop cords when they slept here --
-    # one over the workroom bench (Mara's journal corner), two down the
-    # dormitory floor. The chosen dark is the dormitory's SE corner.
-    sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+    # The 90% rule + the ROW rule (lights run on one axis, never scatter):
+    # the commune strung ONE straight run down the dormitory's length,
+    # three pendants at even spacing, plus one centered over the workroom
+    # bench (Mara's journal corner). The chosen dark is the dormitory's
+    # SE corner.
+    sc.add_decoration(Decoration(3 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
-    sc.add_decoration(Decoration(4 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
                                  z=38))
-    sc.add_decoration(Decoration(7 * TILE + 16, 10 * TILE + 0, "drop_bulb",
+    sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
                                  z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))

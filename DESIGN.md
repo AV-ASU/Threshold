@@ -691,7 +691,15 @@ Built into the procedural draw layer (`scenes/base.py`,
     All five `DIM_INTERIOR_SCENES` hold it (drop cords strung through
     the roof beams are the workhorse), which is what makes a genset
     blackout dramatic: a 90%-lit room falls back to its two flames. Run
-    the audit before and after placing any fixture. **The shop is the first audit-designed room:** lit on
+    the audit before and after placing any fixture. **And the pendants
+    hang in ROWS (maintainer, 2026-07): lights run on one axis at even
+    spacing, never scatter** -- cords come off joists and joists run
+    parallel, so an open hall gets a straight run down its length (or
+    matched runs over its seating/beds), a small room gets ONE centered
+    fixture, and adjacent rooms share a pendant line where the framing
+    would carry it (the sheriff's north line runs three cords through
+    two rooms). Scatter is the light placement's version of the grid
+    lockstep failure, inverted: props break the grid, wiring obeys it. **The shop is the first audit-designed room:** lit on
     purpose at the counter (Hettie's kept bulb over the till, the warm
     kerosene accent inside its cold pool) and the east floor
     (`wall_lamp`); dark on purpose in the north aisle, the stove corner,

@@ -586,6 +586,18 @@
 
 ## Lighting
 
+- **2026-07 — The row rule: pendants hang on one axis (maintainer:
+  "people have lights in a row; lights shouldn't look chaotic").** The
+  coverage-driven scatter was re-placed as straight runs at even
+  spacing: the shop's three E-W runs (the counter bulb the middle of
+  the main row) + one centered fixture per service room; the church's
+  2x2 over the pew banks + the vestry single; the barn's run of three
+  down the dormitory; the school's two runs of three over the cot
+  banks (barracks wiring); the sheriff's north pendant line running
+  three cords through two rooms + the south line of three. Coverage
+  IMPROVED under the discipline (shop 95 / church 92 / barn 92 /
+  school 97 / sheriff 90) -- rows tile a room better than scatter.
+  Rule codified in DESIGN §6: props break the grid, wiring obeys it.
 - **2026-07 — The drop bulb became a real pendant (maintainer: "those
   need to look like lights, not glowing orbs in space").** The bare
   bulb + halo read as a floating orb at game scale; the rework gives
