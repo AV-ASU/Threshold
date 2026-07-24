@@ -130,8 +130,8 @@ it renders the procedural sprites to a labelled PNG strip.
     cultist + fold/portal pursuit, visibility + evidence floor, death.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
-  - `systems/rot_mixin.py` — world rot/ashfall + the moth sim + the
-    hunting sheriff + the genset power link (`_tick_power`).
+  - `systems/rot_mixin.py` — world rot/ashfall + the hunting sheriff +
+    the genset power link (`_tick_power`).
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
   - `systems/tableau_mixin.py` — the **close-up examine tableaux**
@@ -266,10 +266,6 @@ it renders the procedural sprites to a labelled PNG strip.
     `scale_mul` depth-scale (`KING_TILT_DEPTH_*`, looms as he closes). Stateless
     except a one-time cached `_FORM` + `_MASK_SURF`. Preview:
     `tools/preview_king_unfold.py`.
-  - `moth.py` — **the Moth**, the King's herald + first flying entity
-    (`draw_moth(surf,x,y,t,spread,glow,seed,flap,husk)`): tented ragged
-    wings at rest, a limb-knot snap at the flare, a crumpled husk on the
-    ground. Sim + spawn live in `systems/rot_mixin.py` (below).
   - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
     from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel)`):
     a seeded 3-5 part deal from a 17-part library, each part emerging
@@ -390,8 +386,8 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Threat model — the code map
 
 **The full current-state description of every threat system lives in
-`DESIGN.md`** (§1 the model + the King + the evidence ladder + the Moths +
-the Watchers + WADE, §2 world rot + Vane's fall, §12 graded stealth). This
+`DESIGN.md`** (§1 the model + the King + the evidence ladder + the
+Watchers + WADE, §2 world rot + Vane's fall, §12 graded stealth). This
 section is the CODE MAP only — where each system lives:
 
 - **visibility** [0,1] — `threat_mixin._tick_visibility`; `VIS_*` config.
@@ -414,9 +410,6 @@ section is the CODE MAP only — where each system lives:
   `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
-- **Moths** — sim in `rot_mixin` (`_tick_moth_shed`/`_tick_moth_seek`/
-  `_spawn_moths`/`_tick_moths`, the per-room `_moth_field`), art
-  `rendering/moth.py draw_moth`; `MOTH_*` config; stealth §9.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config; light pools + the beam BURN them
   (`WATCHER_LIGHT_BURN`); stealth §11.
@@ -677,8 +670,8 @@ section is the CODE MAP only — where each system lives:
      actually read the thing). When you add a trigger, state the exact beat it fires on
      and verify it.
   3. **Mechanics in player-facing text.** No name/description/note/caption may state a
-     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence", the old
-     moth note's "kill them quiet" tail, cut in the 2026-07 dialogue audit). State the
+     game rule, a verb, or an evidence threshold (the old revolver "3+ evidence" tell,
+     cut in the 2026-07 dialogue audit). State the
      FICTION; never the system. (Companion to
      the no-dashes HARD RULE: player-facing strings are held to a higher bar than code.)
   4. **Editorializing / over-written captions.** A narrator beat states the fact and

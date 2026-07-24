@@ -244,19 +244,19 @@ exemptions.
 - **23b. The town half (open).** The **yield**: a local a cult patrol
   passes steps off the lane, eyes down, waits, resumes; the cultist never
   acknowledges them. **Mundane witness reactions**: a local who sees the
-  drawn gun, a sprint, or a moth axed flinches or hurries indoors (rides
+  drawn gun or a sprint flinches or hurries indoors (rides
   homebody `_inside`); a kill nearby empties the street for the visit.
   Strictly mundane reactions only.
 - **23c. The mechanical pieces (open), sequenced for the #5 tuning
   pass.** SEARCH **sweep partition** (multiple searchers divide
   `sweep_points`, no duplicate checks); **room posture** (a per-scene
-  calm/uneasy/roused int raised by flares, shots, struggles, found bodies,
+  calm/uneasy/roused int raised by shots, struggles, found bodies,
   decaying; modulates walk speed, scan time, sweep budget — ship
   OFF-default behind config until the #5 tuning pass absorbs it); the
   **flank call** (a locked chaser pulls at most one nearby patrol to a
   flank point, same LOS/suspicion rules, normal search timer, never soft
   omniscience); **object-state investigation** (a left-on noisemaker, an
-  opened door, a moth husk: pause at it, mark the room uneasy).
+  opened door: pause at it, mark the room uneasy).
 - **23d. Content passes (open, anytime, Fable).** Fuller local **day-loops**
   on the JOBS `stations` plumbing (Pell to the field edge he doesn't look
   at, Calder to her gate, Royce circling his truck; door-anchor honesty
@@ -360,9 +360,11 @@ everywhere), and the flashlight opening on the PI's desk
   per-scene power state (`Scene.power_on`, `Game._tick_power`,
   `_genset_down` timers), the ELECTRIC kinds die in all three layers at
   once during a blackout (pool, `lit_at` gate, and the fixture art
-  itself goes dark; fire is exempt), a moth flare blacks its room out
-  for `BLACKOUT_DUR`, and the office radio's static crawl runs on
-  power (the appliance tell). Guarded by `tests/stealth.py` §17.
+  itself goes dark; fire is exempt) for `BLACKOUT_DUR`, and the office
+  radio's static crawl runs on power (the appliance tell). Guarded by
+  `tests/stealth.py` §17. **No live trigger fires a blackout now** — the
+  moth flare that used to was cut with the moths (2026-07); the gas
+  fuel/failure economy below is what will feed it.
   **Lit-rooms-SECURED landed via the 2026-07 Watcher spawn rule** (a
   Watcher opens only at a dark spot with line of sight to the player,
   so a fully lit room cannot open anything; `CHANGELOG.md`). **Still
@@ -374,11 +376,14 @@ everywhere), and the flashlight opening on the PI's desk
   open from the blessed idea set: the beam forcing individual PARTS to
   retract (per-part light burn), and the build-out reading the hold
   timer rather than a fixed ramp.
-- **The moth blackout — remaining staging.** The blackout itself landed
-  with the power link above (flare → the room's electric light dies).
-  Still open: the cult camp PROCESSES to the flash and fans out (a
-  staged response, rides #23), and any screen-dim beat beyond the
-  lights themselves dying.
+- **The blackout trigger + response — deferred to the gas system.** The
+  blackout machinery landed (a room's electric light dies), but its only
+  live trigger, the moth flare, was cut with the moths (2026-07), so
+  nothing fires a blackout in play yet. The gas-genset fuel/failure
+  economy (above) is the intended trigger. Riding on it when it lands:
+  the cult camp PROCESSES to a room going dark and fans out (a staged
+  response, rides #23), and any screen-dim beat beyond the lights
+  themselves dying.
 - **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
   line-of-sight spots only, 2026-07). Still open: dark-only EXISTENCE
   (a live Watcher caught by a room relighting should burn or flee, in
@@ -513,7 +518,7 @@ compression pass (#4b).
 Phase 1 landed (the threat section moved to DESIGN §1; `CHANGELOG.md`,
 "Documentation process"). Still open: CLAUDE.md's Layout section carries a
 tableau mega-paragraph and several system narrations (Casebook, dialogue
-channels, moth/stealth asides) that duplicate or should live in
+channels, stealth asides) that duplicate or should live in
 DESIGN/DIALOGUE; move each to its one home and leave a code-map pointer,
 one section per pass, keeping the every-turn read shrinking.
 

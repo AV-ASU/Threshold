@@ -723,15 +723,6 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   "The road has gone still, all at once. No wind, no birds. The whole town
   holding its breath." / "I have what I came for. I should not be standing
   in the open when it lets that breath go."
-- **`the_moths`** (`_log_moth_note`, `systems/rot_mixin.py`; the first
-  flare): "Something hanging in the air out past the fences. Folded up
-  like a dead spider, drifting. I took it for a rag on the wind until it
-  turned against the wind." / "I got close and it opened. Lit up gold and
-  screamed, and every hooded thing in earshot turned my way at once. Then
-  it was not there anymore." / "A moth, then. A moth that works for
-  whatever owns this town." *(2026-07 audit: the old third line's "Keep
-  clear of them or kill them quiet." tail was CUT as a playtest error
-  class 3 leak, a verb stated in a note.)*
 - **`cult_calling`** (Scriptorium, note): "Every hand different. Every one
   of them grateful. I keep waiting for the page where somebody admits they
   were tricked. It isn't here." Pickup notice: "The Calling. Their own

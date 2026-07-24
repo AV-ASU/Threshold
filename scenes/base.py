@@ -480,8 +480,8 @@ class Scene:
                     "kerosene_lamp": 40.0}
     # The genset-powered ELECTRIC subset: these emit (and gate) only while
     # the scene's power is on (`Scene.power_on`, maintained by
-    # Game._tick_power -- a moth flare blacks a room out for a spell).
-    # Fire keeps burning through a blackout.
+    # Game._tick_power off the `_genset_down` blackout timers). Fire keeps
+    # burning through a blackout.
     _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
 
     def light_sources(self):

@@ -173,6 +173,28 @@
 
 ## The King, the Moths, the evidence ladder
 
+- **2026-07 — The Moths were CUT entirely (reverses the addition below).**
+  The herald swarm was removed root and branch: the sim
+  (`_new_moth`/`_spawn_moths`/`_tick_moth_shed`/`_tick_moth_seek`/
+  `_moth_seek_spot`/`_tick_moths`/`_moth_spent`/`_log_moth_note` in
+  `rot_mixin`), the art (`rendering/moth.py`, deleted), the `MOTH_*` config
+  block and `MOTH_SCENES`, the `game._moth_field` init + the three per-frame
+  ticks, the render draw pass, the moth-lamp dark-cover break, the
+  `the_moths` case note, and `tests/stealth.py` §9. **Why:** the moths never
+  had a home in the fiction (NARRATIVE never named them — they were pure
+  mechanic); they doubled the Watchers' "His attention made local" job; and
+  they inverted the game's own light metaphor (light draws Him, yet a moth
+  is the thing drawn to light). The ladder's telegraph beats survive intact
+  as the `the_turning` (ev2) and `the_breath` (ev3) notes; nothing gated on
+  moths, so no progression changed. **One consequence:** the moth flare was
+  the blackout system's only live trigger. The blackout machinery
+  (`_tick_power`/`_genset_down`/`Scene.power_on`/`BLACKOUT_DUR`, DESIGN §6)
+  is KEPT as the light-pillar foundation, now trigger-less in play and
+  guarded synthetically by `tests/stealth.py` §17 (which drives
+  `_genset_down` directly); the gas-genset fuel/failure economy that will
+  fire it is deferred (`TODO.md` #21). Docs reconciled: DESIGN §1 ladder,
+  CLAUDE.md layout/code-map, TODO #21/#23, DIALOGUE.md Part B,
+  creature-design skill.
 - **2026-07 — The evidence ladder built out in full.** Ev 0: town reads
   wrong but no cult patrols spawn. Ev 1: cult wakes. Ev 2
   (`KING_TURNS_HEAD_EV`): a telegraph note ("the_turning") — his attention

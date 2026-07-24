@@ -155,17 +155,21 @@ its head) and pings the cult to **investigate the body**, and the body
 > evidence-pickup autosave (`Game._autosave`, play-notes) persists it like
 > any other arg. Guarded: flow §27/§32.
 
-### The evidence ladder, the Moths, the Watchers, the deep-water WADE
+### The evidence ladder, the Watchers, the deep-water WADE
 
 > Moved whole from `CLAUDE.md` (2026-07 doc consolidation: one fact, one
 > home -- these systems' only full descriptions used to live in the entry
-> point instead of the design doc).
+> point instead of the design doc). The **Moths were cut (2026-07)**: the
+> King's herald swarm never had a home in the fiction (NARRATIVE never
+> named them), doubled the Watchers' "His attention made local" job, and
+> inverted the game's own light metaphor (light draws Him, yet a moth is
+> the thing drawn to light). Their telegraph beats survive as the
+> `the_turning` / `the_breath` notes; the ladder below reads without them.
 
 - **The evidence LADDER (2026-07)**: each surface beat flips a visible
   world state. **Ev 0**: the town is only wrong — **no cult patrols
   spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
-  far up the road, ONE omen moth pre-drifting his road
-  (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
+  far up the road. **Ev 1**: the
   cult wakes (patrols spawn). **Cultist spawn geography (2026-07):** a cult
   scene keeps `Scene.cult_target` roamers filled (default `CULT_REGULARS` 2),
   spawning them at the farthest unoccupied point in `Scene.cult_spawns` (a
@@ -176,36 +180,14 @@ its head) and pings the cult to **investigate the body**, and the body
   the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
   **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
   evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
-  attention finds YOU — a single SEEKER moth materialises in the player's
-  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
-  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
+  attention finds YOU — a one-time telegraph note lands
   (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
   but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
   (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
   its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
   NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
   window to reach the lodge for the Invitation before the hunt begins
-  (decouples the spike from progression). Then his shedding starts and the
-  seeker slows to `MOTH_SEEK3_*` (5-6 min).
-- **The Moths** (the King's heralds; `MOTH_*` config, sim in
-  `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
-  `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
-  billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
-  every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
-  moths into whatever room HE occupies (`_roam_king["scene"]`), plus
-  the player-seeker drip above. They **PERSIST and STACK per room**
-  (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
-  fill fuller and fuller, and the field only thins when the player
-  **spends** one (`_moth_spent`: a pop, or a flare burning out). So a
-  room whipping with fast fliers means *he keeps coming back here*.
-  Enter one's `MOTH_RADIUS` and it KINDLES (`MOTH_KINDLE` window: back
-  out, axe it quietly up close, or spend a round from range); the
-  window expiring is the **FLARE**: a `MOTH_REACH` noise the cult
-  converges on, a visibility spike capped under the King, the dark
-  broken around it (`_tick_dark_cover`) — it burns `MOTH_FLARE_DUR`,
-  then **falls** as a charred husk that stays for the visit. First
-  flare files a case NOTE (never evidence). Guarded by
-  `tests/stealth.py` §9.
+  (decouples the spike from progression).
 - **The Watchers** (His gaze made manifest; the play-notes rework made them
   **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
   `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
@@ -683,8 +665,11 @@ Built into the procedural draw layer (`scenes/base.py`,
     TODO #21 first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
     `wall_lamp`, `drop_bulb`, `yard_light`) emit only while their scene's
     power is on (`Scene.power_on`, maintained by `Game._tick_power` off
-    the `_genset_down` blackout timers). A **moth flare blacks its room
-    out** for `BLACKOUT_DUR`; during it the electric fixtures die in
+    the `_genset_down` blackout timers). A **blackout blacks its room
+    out** for `BLACKOUT_DUR` (no live trigger since the moths were cut,
+    2026-07 -- the gas-genset failure that will fire it is deferred,
+    TODO #21; the mechanism stands ready, guarded synthetically by
+    `tests/stealth.py` §17); during it the electric fixtures die in
     every layer at once -- no visible pool, no mechanical `lit_at` cover,
     and the fixture ART itself goes dark (a dead lamp is dark glass; the
     office radio's static crawl and creeping needle stop, the

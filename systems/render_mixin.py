@@ -22,7 +22,6 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_revolver_held, draw_gun_fire,
                                draw_king_death, view_from_facing, KING_UNFOLD)
 from rendering.king_unfold import draw_unfold_catch
-from rendering.moth import draw_moth
 from rendering.transform import draw_vessel_bloom
 from rendering.furniture import FURNITURE as _FURN_SPECS
 from systems.config import *        # noqa: F401,F403
@@ -1538,44 +1537,6 @@ class RenderMixin:
                       lambda a=a, sx=sx, sy=sy, fn=_draw_enemy:
                       draw_with_alpha(self.screen, a, fn,
                                       rect=(sx - 110, sy - 160, 220, 250)))
-        # The Moths -- the first flying entity: a hovering billboard with
-        # a slow bob, sight-gated like every other actor. A faint cold
-        # smudge marks the ground point (never an honest shadow).
-        for m in (getattr(self.scene, "_moths", None) or []):
-            for ox, oy in _offsets:
-                sx, sy = self.camera.project(m["x"] + ox, m["y"] + oy)
-                if not _on_screen(sx, sy):
-                    continue
-                a = _vis_alpha(m["x"] + ox, m["y"] + oy)
-                if a is None:
-                    continue
-                # hover collapses to the ground as a burnt-out moth FALLS;
-                # a newly ARRIVED seeker drops in from above while it
-                # fades up (the "b" ramp)
-                hf = m.get("h", 1.0)
-                bm = m.get("b", 1.0)
-                hover = ((34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0)
-                         * hf * (1.0 + 2.2 * (1.0 - bm)))
-
-                def _draw_moth_e(s, m=m, sx=sx, sy=sy, hover=hover):
-                    gy = sy - actor_lift
-                    husk = m["state"] == "husk"
-                    if not husk:
-                        smw = 20 + int(6 * m["glow"])
-                        smudge = pygame.Surface((smw * 2, 8),
-                                                pygame.SRCALPHA)
-                        pygame.draw.ellipse(smudge, (8, 7, 12, 80),
-                                            (0, 0, smw * 2, 8))
-                        s.blit(smudge, (sx - smw, gy - 4))
-                    draw_moth(s, sx, gy - hover, m["t"],
-                              spread=m["spread"], glow=m["glow"],
-                              seed=m["seed"],
-                              flap=(1.0 if m.get("fast") else 0.2),
-                              husk=husk)
-                _emit(self.camera.depth(m["x"] + ox, m["y"] + oy),
-                      lambda a=a * bm, sx=sx, sy=sy, fn=_draw_moth_e:
-                      draw_with_alpha(self.screen, a, fn,
-                                      rect=(sx - 70, sy - 180, 140, 230)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             _emit(self.camera.depth(p.x, p.y),
