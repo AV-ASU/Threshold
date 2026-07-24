@@ -2706,9 +2706,21 @@ def _draw_neon_pylon_solid(surf, cam, deco):
     if (int(t * 3) + deco.seed) % 19 == 0:
         buzz *= 0.5
     scz = pole_h + 22 * s                   # sign centre height
+    # A roadside pylon is DOUBLE-SIDED: both faces carry the same painted
+    # artwork, so the sign reads from either direction of travel. On screen the
+    # world +u axis flips once the camera passes 90 degrees off the front, which
+    # would render the lettering MIRRORED (caught in the first honest
+    # four-facing look pass: "CASSILDA'S" read backwards from the south). Flip
+    # the sign's local u with it, and the visible face always reads correctly.
+    face = -1.0 if math.cos(cam.yaw) < 0 else 1.0
+    THICK = 5.0 * s                         # the sign box has real body
 
-    def SB(u, z):                           # sign-plane point (faces south)
-        p = cam.project(wx + u, wy - 0.3, scz + z)
+    def SB(u, z):                           # visible face of the sign box
+        p = cam.project(wx + u * face, wy - (THICK * 0.5 + 0.3) * face, scz + z)
+        return (int(p[0]), int(p[1]))
+
+    def SBk(u, z):                          # the far face (the box's back)
+        p = cam.project(wx + u * face, wy + (THICK * 0.5) * face, scz + z)
         return (int(p[0]), int(p[1]))
     # ---- the STAR (5-point, bulb-lined yellow) -- BIG, points reach well past
     #      the banners that cross its middle ----
@@ -2720,6 +2732,15 @@ def _draw_neon_pylon_solid(surf, cam, deco):
         star_uz.append((math.cos(ang) * rr, math.sin(ang) * rr))
     star = [SB(u, z) for (u, z) in star_uz]
     ygl = (int(196 + 50 * buzz), int(158 + 40 * buzz), 30)
+    # The star is a real BOX with depth, not a decal on air: draw its far face
+    # and bridge the two, so from a side-on angle the sign reads as a physical
+    # object seen edge-on rather than thinning to nothing.
+    back = [SBk(u, z) for (u, z) in star_uz]
+    pygame.draw.polygon(surf, _shade(ygl, 0.42), back)
+    for i in range(len(star)):
+        j = (i + 1) % len(star)
+        pygame.draw.polygon(surf, _shade(ygl, 0.62),
+                            [star[i], star[j], back[j], back[i]])
     pygame.draw.polygon(surf, ygl, star)
     pygame.draw.polygon(surf, _shade(ygl, 0.55), star, max(2, int(2 * s)))
     star_pts = star + [star[0]]

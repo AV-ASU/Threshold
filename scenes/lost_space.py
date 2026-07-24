@@ -304,19 +304,23 @@ class LostSpace(Scene):
                 return "P"                # asphalt
             if dxr < rhalf + 1.6:
                 return "d"                # gravel shoulder
-            # off the road: weeds reclaiming the cracked ground
-            rr = self._vnoise(tx * 0.06 + 11, ty * 0.06 + 2, salt=7)
-            if rr > 0.58:
-                return "g"
-            return "d" if rr > 0.3 else ";"
-        # the shared EMPTY field: dead grass / mud / bare dirt so the nothing
-        # still reads varied, not one flat colour.
+            # off the road: weeds reclaiming the cracked ground (same narrow
+            # brightness band as the shared field -- no black mud continents)
+            return self._field_floor(tx, ty)
+        return self._field_floor(tx, ty)
+
+    def _field_floor(self, tx, ty):
+        """The shared EMPTY field ground: dead grass and bare dirt in big soft
+        regions, with SMALL scattered wet patches. Mud (';') is deliberately
+        rare and small: it is half the luma of dirt, so at field scale it read
+        as black HOLES in the world rather than as ground (caught in the first
+        honest four-facing look pass). Keep the field's variation inside a
+        narrow brightness band and let the LIGHT do the contrast."""
         g = self._vnoise(tx * 0.05 + 40, ty * 0.05 - 17, salt=3)
-        if g > 0.60:
-            return "g"
-        if g < 0.36:
+        # small high-frequency wet patches, not continent-sized mud blobs
+        if self._vnoise(tx * 0.22 - 6, ty * 0.22 + 19, salt=11) < 0.24:
             return ";"
-        return "d"
+        return "g" if g > 0.52 else "d"
 
     def _obj_at(self, tx, ty):
         r = self._rt(tx, ty)
@@ -435,8 +439,9 @@ class LostSpace(Scene):
         lx, ly = self._exit_light.x, self._exit_light.y
         d = math.hypot(lx - p.x, ly - p.y)
         if d <= _REACH * TILE:            # reached it -> out of the lost space
-            game.show_notice("You break free of the field into the light.",
-                             duration=2.2)
+            # NO narrator box here (maintainer ruling): the lost spaces carry
+            # no narration at all. Reaching the light and the world changing
+            # around you IS the beat; a caption would explain it away.
             game.cross_fold(self._exit_to)
             return
         if d > _MAX_EXIT * TILE or d < _MIN_EXIT * 0.5 * TILE:
