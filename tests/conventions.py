@@ -215,9 +215,14 @@ def _doc_refs():
 
 # -------------------------------------------------- 6. lost spaces are mute
 # THE RULE (maintainer, DIALOGUE.md): the lost fields carry NO narrator boxes,
-# notices, or case-notebook writes. The dark and the hunted light are the
-# whole text.
-@check("the lost spaces ship no narration")
+# notices, case-notebook writes -- or place NAME. The dark and the hunted
+# light are the whole text.
+# WHY THE NAME HALF: the HUD labels every scene in the lower-left, and the
+# default label is the titlecased scene key -- so a lost field silently
+# announced itself as "Lost Forest", telling the player exactly what had
+# happened to them. Same explaining-away as a caption, from a different layer,
+# which is why this check covers both rather than only the words in the file.
+@check("the lost spaces ship no narration and no place name")
 def _lost_silent():
     src = open("scenes/lost_space.py").read()
     hits = [t for t in ("show_notice", "_evidence(", "_log_note", "DialogueBox",
@@ -226,6 +231,17 @@ def _lost_silent():
         return (f"    scenes/lost_space.py uses {hits}.\n"
                 "    The lost spaces are wordless by ruling (DIALOGUE.md). If a\n"
                 "    beat there seems to want words, it needs staging, not a line.")
+    from systems.config import LOST_SPACE_SCENES
+    from scenes import load_scene
+    from scenes.base import scene_display_name
+    named = sorted(k for k in LOST_SPACE_SCENES
+                   if scene_display_name(load_scene(k)).strip())
+    if named:
+        return ("    these lost scenes label themselves in the HUD corner: "
+                f"{named}.\n"
+                "    A lost space is somewhere with no name you know. Set\n"
+                "    `display_name = \"\"` (an explicit blank, which\n"
+                "    scene_display_name honours; None falls back to the key).")
 
 
 # ------------------------------------------------------- 7. TOOLS.md fresh

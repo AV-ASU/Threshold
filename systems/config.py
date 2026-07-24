@@ -280,6 +280,17 @@ DIM_SAFE_SCENES = {"lodge_cellar"}
 STORM_STAGE_SCENES = {"brimley"} | OUTDOOR_SCENES
 STORM_DARK_GLOOM = (0, 44, 92, 138)     # darkness amount by rot stage 0..3
 
+# ---- THE MOUTH: falling out of the world (TODO #26) ----
+# A scene opts an edge in with `Scene.set_lost_edge`, but the edge is only a
+# way THROUGH when it is dark. That makes the lost spaces a consequence of the
+# evidence ladder rather than a separate system: at ev0 the surface is full
+# daylight and every bound is the invisible wall it has always been; as the
+# storm gloom climbs with understanding, the edges of the authored world stop
+# holding. 92 is STORM_DARK_GLOOM[2] -- the mouth opens at rot stage 2.
+LOST_EDGE_GLOOM = 92
+LOST_EDGE_BAND = 1.0     # tiles: how close to the bound counts as "the edge"
+LOST_EDGE_BACKOFF = 3.0  # tiles: how far in from the edge you climb back out
+
 # ---- THRESHOLD: cult geography + threat tuning ----
 # Regular cultists roam every outdoor scene; the safe lodge interiors
 # (SAFE_SCENES) are the only refuge.

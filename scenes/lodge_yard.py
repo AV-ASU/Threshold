@@ -159,6 +159,15 @@ def build_lodge_yard():
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 24,
                                  "town_sign", text="BRIMLEY"))
 
+    # THE MOUTH (TODO #26). North and south of the yard is the forest band,
+    # and past it the map bound -- an invisible wall in daylight. Once the
+    # storm has darkened the surface (rot stage 2, so you have earned two
+    # pieces of Mara's trail), pushing through the treeline in the dark stops
+    # being refused: the world lets go and drops you in the lost forest. The
+    # x axis is the fold and stays a fold; only the treeline opens. The yard
+    # light by the porch is genuine cover -- a lit spot never opens.
+    sc.set_lost_edge("ns", "lost_forest")
+
     sc.set_spawn("default", 12, 7)
     sc.set_spawn("from_lodge", 5, 6)             # one south of back door
     sc.set_spawn("from_country_lane", 1, 7)      # one east of west passage

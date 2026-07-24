@@ -3556,6 +3556,124 @@ def main():
     check(not gdl.save.arg("dead_locals"),
           "dead-locals: New Game clears the ledger")
 
+    # --- 32b. THE MOUTH: the lost-space loop closes (TODO #26) -----------
+    # interior -> yard -> push through the treeline in the dark -> fall ->
+    # land on the lit island -> leave its glow -> hunt the light -> climb
+    # back out into the yard a few strides from where you fell. Every gate
+    # below is the one that makes this a CONSEQUENCE of the evidence ladder
+    # rather than a door: light refuses, dark lets go.
+    from systems.config import (LOST_EDGE_GLOOM, LOST_EDGE_BAND,
+                                LOST_EDGE_BACKOFF)
+    from scenes.base import TILE as _T
+
+    def _press(g, vx, vy):
+        """Drive one edge check with a movement intent, as update_player does."""
+        return g._tick_lost_edge(vx, vy)
+
+    gme = new_game()
+    gme.load_scene_now("lodge_yard")
+    ready(gme)
+    yard = gme.scene
+    check(yard.lost_edges == {"n": "lost_forest", "s": "lost_forest"},
+          "mouth: the yard's treeline (N/S) opens on the lost forest")
+    check(not yard.wrap_y and yard.wrap_x,
+          "mouth: it sits on the NON-wrapping axis (the fold stays a fold)")
+    # A wrapping axis is refused outright -- a seam has no far side.
+    try:
+        yard.set_lost_edge("e", "lost_forest")
+        check(False, "mouth: a wrapping edge is refused")
+    except ValueError:
+        check(True, "mouth: a wrapping edge is refused")
+
+    # Stand him ON the north bound, pressing north, at ev0: full daylight.
+    def _at_edge(g):
+        g.player.x = 12 * _T + _T // 2
+        g.player.y = LOST_EDGE_BAND * _T * 0.5
+    _at_edge(gme)
+    check(gme.scene_gloom() == 0,
+          "mouth: at ev0 the surface is full daylight")
+    check(not _press(gme, 0.0, -60.0) and gme.scene.key == "lodge_yard",
+          "mouth: a LIT edge is a wall -- daylight never lets go")
+
+    # Two pieces of Mara's trail: the storm reaches rot stage 2 and the
+    # world is dark enough that its edge stops holding.
+    gme.save.set_arg("evidence", [{"name": f"me_t{i}", "content": "x"}
+                                  for i in range(2)])
+    check(gme.scene_gloom() >= LOST_EDGE_GLOOM,
+          "mouth: two clues in, the storm darkens the yard past the gate")
+    _at_edge(gme)
+    check(not _press(gme, 0.0, 60.0),
+          "mouth: pressing INWARD off the north edge never falls")
+    _at_edge(gme)
+    gme._flashlight_lit = lambda: True
+    check(not _press(gme, 0.0, -60.0) and gme.scene.key == "lodge_yard",
+          "mouth: a lit SPOT in a dark world still refuses (light protects)")
+    gme._flashlight_lit = lambda: False
+    _at_edge(gme)
+    fx, fy = gme.player.x, gme.player.y
+    check(_press(gme, 0.0, -60.0), "mouth: in the dark, the world lets go")
+    check(gme.scene.key == "lost_forest",
+          "mouth: the treeline drops you in the FOREST field, not a corn one")
+    check(gme._lost_return is not None
+          and gme._lost_return[0] == "lodge_yard"
+          and abs(gme._lost_return[2] - (fy + LOST_EDGE_BACKOFF * _T)) < 1.0,
+          "mouth: the return anchor is set back INTO the yard, not on the edge")
+
+    # You land in the island's light and there is no way out while you stand
+    # in it; leaving the glow starts the hunt.
+    lost = gme.scene
+    lost.on_update_fn(gme, lost, 0.1)
+    check(getattr(lost, "_exit_light", None) is None,
+          "mouth: standing in the island's glow, there is no way out")
+    lost._drop_exit()
+    gme.player.x = lost._fx + 40 * _T
+    gme.player.y = lost._fy
+    lost.on_update_fn(gme, lost, 0.1)
+    ex = getattr(lost, "_exit_light", None)
+    check(ex is not None, "mouth: leaving the glow raises the hunted light")
+
+    # Reach it and you climb out where you fell -- not into the next field.
+    if ex is not None:
+        gme.player.x, gme.player.y = ex.x, ex.y
+        lost.on_update_fn(gme, lost, 0.1)
+    check(gme.scene.key == "lodge_yard",
+          "mouth: reaching the light climbs you back into the world you lost")
+    check(gme._lost_return is None, "mouth: the anchor is spent, not reused")
+    check(abs(gme.player.y - (fy + LOST_EDGE_BACKOFF * _T)) < 2.0 * _T,
+          "mouth: you come up a few strides in from the edge that took you")
+    check(not _press(gme, 0.0, -60.0),
+          "mouth: the return lands clear of the mouth (no instant re-swallow)")
+
+    # No anchor (a direct load, a preview) still chains field to field, so
+    # the lost spaces stay walkable on their own.
+    gml = new_game()
+    gml.load_scene_now("lost_corn")
+    ready(gml)
+    gml._lost_return = None
+    lc = gml.scene
+    gml.player.x = lc._fx + 40 * _T
+    gml.player.y = lc._fy
+    lc.on_update_fn(gml, lc, 0.1)
+    exc = getattr(lc, "_exit_light", None)
+    if exc is not None:
+        gml.player.x, gml.player.y = exc.x, exc.y
+        lc.on_update_fn(gml, lc, 0.1)
+    check(gml.scene.key == "lost_forest",
+          "mouth: with no anchor the fields still chain (preview stays usable)")
+
+    # And every OTHER scene is untouched: opting in is explicit.
+    from scenes import SCENE_BUILDERS as _SB_M, load_scene as _ls_m
+    _opted = []
+    for _k in sorted(_SB_M):
+        try:
+            _s = _ls_m(_k)
+        except Exception:
+            continue
+        if getattr(_s, "lost_edges", None):
+            _opted.append(_k)
+    check(_opted == ["lodge_yard"],
+          "mouth: exactly one scene opts in today (" + ", ".join(_opted) + ")")
+
     # --- 33. THE NAME STAYS OFF THE PAGE (Chambers, never quoted) --------
     # "Carcosa" / "the King in Yellow" / "the Yellow King" never appear in
     # a player-facing string. AST sweep of every string literal outside

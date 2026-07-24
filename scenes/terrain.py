@@ -1087,11 +1087,16 @@ DISPLAY_NAMES = {
 
 def scene_display_name(scene):
     """Resolve a scene's HUD label. Builder override > DISPLAY_NAMES
-    table > titlecased key."""
+    table > titlecased key.
+
+    `display_name = ""` is a DELIBERATE blank (a place with no name you
+    know, e.g. the lost spaces) and is honoured; None means unset and falls
+    through to the table."""
     if scene is None:
         return ""
-    if getattr(scene, "display_name", None):
-        return scene.display_name
+    name = getattr(scene, "display_name", None)
+    if name is not None:
+        return name
     label = DISPLAY_NAMES.get(scene.key)
     if label:
         return label

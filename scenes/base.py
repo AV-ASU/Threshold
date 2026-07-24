@@ -209,6 +209,14 @@ class Scene:
         # fold). Off by default.
         self.wrap_x = False
         self.wrap_y = False
+        # THE MOUTH (TODO #26): which of this scene's non-wrapping map edges
+        # can swallow the player into a lost space, as {side: lost_scene_key}
+        # for sides in "nesw". None (the default) = every edge is what it has
+        # always been, an invisible bound, so an un-opted scene is unchanged.
+        # LIGHT GATES ENTRY: `Game._tick_lost_edge` only opens the mouth where
+        # the ambient is genuinely dark and the spot is unlit -- a lit edge
+        # stays a wall. Set with `set_lost_edge`.
+        self.lost_edges = None
         # Optional RENDER BAND: a (top_row, bottom_row) tile span that tiles
         # ENDLESSLY toward the north (decreasing y) for rendering ONLY, while
         # everything from top_row south renders once. Used by the arrival road
@@ -933,6 +941,29 @@ class Scene:
         self.exits[char] = (target_scene, spawn_id)
         if direction:
             self.exit_directions[char] = direction
+
+    def set_lost_edge(self, sides, lost_scene):
+        """Opt this scene's map edge(s) in as a MOUTH into a lost space.
+
+        `sides` is a string of compass letters ("n", "s", "ns", ...);
+        `lost_scene` is the lost-space key that edge opens onto -- pick the
+        biome the edge actually looks like, so the field you land in is the
+        one you walked into (the yard's treeline opens on `lost_forest`).
+
+        An edge on a WRAPPING axis is refused: a toroidal edge is not an
+        edge, it is a seam, and stepping over it already carries you to the
+        far side. Nothing happens here at load; the gate is in
+        `Game._tick_lost_edge`, which needs the scene DARK to open it."""
+        for s in sides:
+            if s not in "nesw":
+                raise ValueError(f"bad lost edge side {s!r}")
+            if (s in "ns" and self.wrap_y) or (s in "ew" and self.wrap_x):
+                raise ValueError(
+                    f"{self.key}: the '{s}' edge wraps. A seam has no far "
+                    "side to fall off; put the mouth on a non-wrapping axis.")
+            if self.lost_edges is None:
+                self.lost_edges = {}
+            self.lost_edges[s] = lost_scene
 
     def set_spawn(self, name, tx, ty):
         self.spawns[name] = (tx * TILE + TILE // 2, ty * TILE + TILE // 2)

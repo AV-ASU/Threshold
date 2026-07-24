@@ -221,8 +221,8 @@ it renders the procedural sprites to a labelled PNG strip.
     `terrain.py` for draw code, `base.py` for the Scene model. terrain
     depends only on `constants` + lazy `scenes`/`rendering.*` imports,
     never on `Scene`, so there is no cycle.
-  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26
-    prototype, wired into nothing in-game yet): a procedurally-generated,
+  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
+    the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
     renderer is already a camera-window system and collision/sight route through
     `char_object_at`/`char_floor_at`: a `Scene` whose `floor`/`objects` are
@@ -255,7 +255,25 @@ it renders the procedural sprites to a labelled PNG strip.
     island pops). New light kinds `haven_fire` + `neon_pylon` live in
     `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`; the road also adds
     non-light solids `gas_station` / `chain_fence` / `boulder` and the
-    `parking_bay` floor decal.
+    `parking_bay` floor decal. **How you get in and out (the loop):** a scene
+    opts a NON-wrapping map edge in with `Scene.set_lost_edge(sides, key)`
+    (`Scene.lost_edges`; None everywhere else, so an un-opted scene is
+    unchanged), and `Game._tick_lost_edge` swallows you there only when the
+    room is genuinely dark (`Game.scene_gloom() >= LOST_EDGE_GLOOM`, which on
+    the surface is the storm climbing with the evidence count) AND the spot
+    is unlit — **light gates entry: a lit edge is a wall.** The fall writes
+    `Game._lost_return` (the scene + a spot `LOST_EDGE_BACKOFF` tiles back
+    inside it) and crosses through `cross_fold`; reaching the hunted lantern
+    spends that anchor and climbs you back out where you fell. No anchor (a
+    direct load or a preview) falls back to the static `exit_to` chain. The
+    fields also REARRANGE themselves behind you (`_tick_reshuffle`: only
+    unlit, out-of-cone, far-off scatter props move, and only to somewhere
+    also unlit and out-of-cone — geometry lies, threats never do), carry a
+    manned camp + lamp-carrying cultists (so the lost scenes are in
+    `CULTIST_SCENES` with `cult_target = 0`), and are WORDLESS, including
+    `display_name = ""` so the HUD never names the place. Shipping mouth
+    today: the lodge yard's treeline. Guards: `tests/flow.py` §32b,
+    `tests/conventions.py` check 6.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -538,7 +556,9 @@ section is the CODE MAP only — where each system lives:
   EVERY other traversal — seamless world edges, direction-gated fold
   exits (these now route straight through `cross_fold` whatever scenes
   they join, so a fold can cross surface↔underground), the maze's
-  same-scene `I`/`Q` relocations, and the King's rift juke — funnels
+  same-scene `I`/`Q` relocations, the fall through a dark map edge into a
+  lost space and the climb back out (`_tick_lost_edge`, DESIGN.md §13), and
+  the King's rift juke — funnels
   through `Game.cross_fold` (`systems/game.py`): no fade,
   no sting, stride/look/screen-position preserved. The crossing is
   deliberately nothing; the FRAME is the spectacle. Visible folds + the

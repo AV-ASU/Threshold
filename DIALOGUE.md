@@ -1280,3 +1280,11 @@ exit light, and the world changing around you are the whole text. The one
 notice that existed (on reaching the exit light) was CUT: a caption there
 explains away the only beat the space has. If a lost-space beat ever seems to
 want words, that is the signal it needs better staging, not a line.
+
+**They carry no PLACE NAME either.** Every other scene labels itself in the
+HUD's lower-left corner ("the Yard", "General Store"); the lost fields set
+`display_name = ""` so that corner stays blank. The default would have
+titlecased the scene key into "Lost Forest" and told the player exactly what
+had happened to them, which is the same explaining-away as a caption. A lost
+space is somewhere with no name you know. Both halves of this ruling, the
+words and the name, are enforced by `tests/conventions.py` check 6.

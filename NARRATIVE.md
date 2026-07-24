@@ -270,6 +270,21 @@ never predation.
   off the hall, Sable's own room up in the loft, the yard, and the
   cornfields beyond. The **padlocked lodge cellar** (a surface interior)
   holds the boxed old registers, keyed from the nail behind the house.
+- **The in-between.** The dark fields on the far side of the world's
+  edge: a corn one, a forest one, a road one, each holding a single lit
+  place (a crop circle around a cold camp, a pond with lanterns across
+  it, a filling-station lot under a neon sign) in an otherwise empty
+  dark that never repeats. They are not a *place the town connects to*
+  and not a level; they are what the seal's geometry looks like from
+  inside, and the fold has always been the same phenomenon (§1). **You
+  reach them by walking into the dark past where the world stops.** In
+  daylight the edge is simply an edge and refuses you; only once you
+  understand enough for the light to go out of Brimley (§2, the rot)
+  does its boundary stop holding. **Light is the whole rule out there:**
+  what a lamp touches is fixed and true, and the dark rearranges itself
+  behind you. The way back is a lantern you have to hunt in the dark,
+  and it always exists. Nobody in Brimley will discuss this, and the
+  fields themselves say nothing at all.
 - **The grove.** A hollow north of Brimley, above the river: the mouth
   of the cult's dug mine. The congregation walked there openly once —
   the night procession Toby followed, before the rite. The seal hid it:
@@ -603,6 +618,14 @@ purpose, and keep each one guarded where a guard exists.
   the rest of the run (the `dead_locals` ledger); nobody leaves
   Brimley, not even by dying (guarded: `tests/flow.py` §32). → §5,
   `DESIGN.md` §1
+- **Light gates the in-between.** A lit edge of the world is a wall; a
+  dark one is the way through, and the surface only goes dark as the
+  evidence count climbs, so the fields are a consequence of
+  understanding rather than a door someone opens. Out there, what light
+  touches is fixed and the unlit dark rearranges itself, but **only
+  geometry ever lies** — a threat is never unmade by looking away. The
+  way back always exists (guarded: `tests/flow.py` §32b). → §5,
+  `DESIGN.md` §13
 - **The names stay off the page.** *Carcosa* / *the King in Yellow* /
   *the Yellow King* never appear in player-facing text; the SEAL
   ending's black stars + twin suns are the one unnamed reference

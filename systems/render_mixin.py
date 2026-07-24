@@ -635,6 +635,30 @@ class RenderMixin:
             if getattr(d, "kind", None) == "neon_pylon":
                 draw_prop_solid(self.screen, self.camera, d)
 
+    def scene_gloom(self):
+        """How dark this scene is RIGHT NOW, 0..255 (0 = full daylight).
+
+        The ONE source for the room's darkness. `_draw_dark` multiplies the
+        frame by it, and `_tick_lost_edge` gates the mouth on it -- so "dark
+        enough to fall through" is measured against the darkness the player
+        can actually see, and neither can drift from the other.
+
+        On the surface it is the STORM: the world darkens with understanding
+        (the rot stage), not with a clock, so stage 0 early-outs to daylight.
+        Everywhere else it is the room's fixed gloom."""
+        sc = getattr(self, "scene", None)
+        if sc is None:
+            return 0
+        key = sc.key
+        if key in STORM_STAGE_SCENES:
+            return STORM_DARK_GLOOM[self._rot_stage()]
+        if key not in DARK_SCENES:
+            return 0
+        return (150 if key in LOST_SPACE_SCENES
+                else 130 if key in CULT_DARK_SCENES
+                else 72 if key in DIM_INTERIOR_SCENES
+                else 100)
+
     def _draw_dark(self):
         """Dark interiors/underground (DARK_SCENES) render as a navigable
         gloom: a moderate black tint over the whole scene so it reads
@@ -713,17 +737,9 @@ class RenderMixin:
         # overlapping pools genuinely brighten their shared floor, and the
         # seams are gone. The colored pools still ADD on top; shadows
         # still SUB.
-        if storm_scene:
-            # the surface darkens with understanding, not a clock (TODO #25):
-            # gloom ramps with the rot stage; stage 0 is full day (early-out).
-            gloom = STORM_DARK_GLOOM[self._rot_stage()]
-            if gloom <= 0:
-                return
-        else:
-            gloom = (150 if key in LOST_SPACE_SCENES
-                     else 130 if key in CULT_DARK_SCENES
-                     else 72 if key in DIM_INTERIOR_SCENES
-                     else 100)
+        gloom = self.scene_gloom()
+        if gloom <= 0:
+            return
         amb = 255 - gloom
         lm = getattr(self, "_lightmap_surf", None)
         if lm is None or lm.get_size() != self.screen.get_size():

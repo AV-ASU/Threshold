@@ -418,32 +418,32 @@ ONLY if/when the restructure is committed and wired.
   swaps the field for a longer/warped/more-hostile version, odd landmarks for
   variety.
 
-**Prototype LANDED and wired into NOTHING in-game** (`scenes/lost_space.py`;
-the three biome fields `lost_corn` / `lost_forest` / `lost_road`, each a
-hand-authored lit focal island in a generated dark sea, and what they are
-made of: `CHANGELOG.md`, "The shadows program"). It exists to be judged by
-feel, not to ship as is.
+**The prototype is REACHABLE now, through one mouth.** The three biome
+fields, the cult presence in them, the observer-dependent dark, and the
+whole loop (interior -> yard -> treeline -> fall -> hunt -> climb out) are
+built and wired to the lodge yard's north/south edge; the shipping system
+and its code map are `DESIGN.md` §13, how it landed is `CHANGELOG.md`. It
+is still here to be judged by FEEL: one mouth on one scene is a vertical
+slice, not the restructure.
 
-**OPEN, in build order:** (1) **CULT PRESENCE, remainder.** The **occupied
-camp** landed (`CHANGELOG.md`): a second, manned fire on a hashed bearing
-26-36 tiles out, its crew spawned on approach and released when you leave.
-Still open: **roaming light-carriers** -- a cultist walking the dark with a
-lantern, so a distant glow is genuinely ambiguous (the exit, or a hunter
-coming?). That ambiguity is the point of putting light in their hands, and it
-only pays off once more than one moving glow can exist at a time;
-(2) the **safe path + yard + one lost space** vertical
-slice, wired so you walk interior -> yard -> path -> fall off a dark edge into
-the lost space -> hunt the light -> climb out (the real LOOP, not just the
-field); (3) the **dark manipulation layer** inside the lost space
-(observer-dependent geometry, asymmetric return, breathe-with-threat); (4)
-**per-chunk** landmark/exit generation + a silent **re-origin** for a truly
-endless walk (the prototype uses a large finite bound + spawn-at-centre); (5) the
-**ev-warp** variants (the field swaps for a longer / warped / more-hostile
-version with evidence) + richer linear field features (a river, fences, ruined
-buildings you can't enter); (6) IF the maintainer commits: the full Brimley
-**re-home** (the fences: the car, the well, the refuges, the descent chain) + the
-canon rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- this is
-a feel prototype to judge it.
+**OPEN, in build order:** (1) the **SAFE PATH** layer -- the loop reaches
+the lost spaces through the yard's treeline today, but the lit, tricked-by
+-nothing paved road with lamp posts that buildings are supposed to hang off
+does not exist yet; without it the three layers are two, and "get back to
+the path" has nowhere to mean; (2) the rest of the **dark manipulation
+layer**: the observer-dependent reshuffle landed, but the **asymmetric
+return** (the way back is not the way you came) and **breathe-with-threat**
+(the space stretching as the meter fills) have not; (3) **per-chunk**
+landmark/exit generation + a silent **re-origin** for a truly endless walk
+(today: a large finite bound + spawn-at-centre); (4) the **ev-warp**
+variants (the field swaps for a longer / warped / more-hostile version with
+evidence) + richer linear field features (a river, fences, ruined buildings
+you can't enter); (5) more mouths -- one scene opts in today, and each new
+one is a deliberate choice of which edge of the authored world stops
+holding; (6) IF the maintainer commits: the full Brimley **re-home** (the
+fences: the car, the well, the refuges, the descent chain) + the canon
+rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- the
+mouth is opt-in per scene precisely so judging the feel costs no canon.
 
 **Fences:** the safe path is never tricked; the lost space is always escapable
 (the exit light stays in the 6-20 band); a THREAT never blinks out via the

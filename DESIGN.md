@@ -1788,3 +1788,104 @@ hides must read under the oblique tilt (volumes / standees / decals per the
 tilt dispatch map), not flat stickers. The Pillar-2 **peek** verb is
 deliberately deferred (free look under tilt already gives the information
 function).
+
+---
+
+## 13. The lost spaces -- the in-between (TODO #26)
+
+Three procedurally-generated, non-repeating dark fields
+(`scenes/lost_space.py`; `lost_corn` / `lost_forest` / `lost_road`, plus the
+`lost_space` back-compat alias onto corn). They are the backrooms
+in-between: mostly EMPTY generated ground with sparse wrong things in it,
+built around ONE hand-authored lit island. The full model, the fences, and
+what is still open live in `TODO.md` #26; this section is the shipping
+system and its code map.
+
+### The shape of a field
+
+A `LostSpace` is a `Scene` whose `floor` / `objects` are generator-backed
+proxies (`_GenGrid` / `_GenRow`) over a hashed per-tile field, with a huge
+finite `w`/`h` and the player spawned at CENTRE, so collision, sight, and
+the tilt render all work unchanged and the map edge never enters the camera
+window. `procedural = True` tells `tests/smoke.py` to skip flood-fill and
+full-grid scans (an unbounded field would hang them); `nav_path` returns
+None, so chasers run straight-line. `display_name` is the empty string: a
+lost space is a place with no name you know, so the HUD corner that labels
+every other scene stays blank here.
+
+Each field has its own hand-authored **focal island** in the sea of
+generation: corn is a crop circle around an abandoned camp fire, forest is a
+pond with a fire on the near bank and lanterns across the water, road is a
+filling-station lot under a neon pylon. Because the island is the only lit
+thing, `LOST_SPACE_SCENES` carries a heavier gloom (150) than the other
+dark scenes so it reads as a bright island in a black sea.
+
+### The loop, end to end
+
+1. **The mouth.** A scene opts a non-wrapping map edge in with
+   `Scene.set_lost_edge(sides, lost_key)`, which fills `Scene.lost_edges`
+   (`{side: lost_scene_key}`; None on every other scene, so an un-opted
+   scene is exactly what it was). `Game._tick_lost_edge` runs from
+   `update_player` right after the wrap clamp, because the map edge is
+   where the clamp just refused to let them through.
+2. **Light gates entry.** The edge only opens when the ambient is dark
+   (`Game.scene_gloom() >= LOST_EDGE_GLOOM`) AND the spot itself is unlit
+   (`Scene.lit_at` false, flashlight off). On the surface the gloom is the
+   STORM, which climbs with the evidence count, so the lost spaces cost no
+   new system: at ev0 the world is daylight and every bound is the
+   invisible wall it always was, and only once understanding has darkened
+   the world do its edges stop holding. A lit spot never opens, which makes
+   the yard lights and a carried flame real protection.
+   Pressing OUTWARD is required: you fall through by walking into the edge,
+   never by loitering near it.
+3. **The fall** writes the return anchor (`Game._lost_return` = the scene
+   and a spot `LOST_EDGE_BACKOFF` tiles back INTO the world) and crosses via
+   `cross_fold` -- the same one primitive as every other non-door
+   traversal, so there is no fade and no sting. The biome you land in is
+   the one the edge looked like.
+4. **The island** is a lit dead end. While you stand in its glow there is
+   no way out at all.
+5. **The hunt.** Leave the glow and the exit light (a lantern) appears,
+   held 6-20 tiles off and relocating out of your sight cone if you drift,
+   so the way out is always findable and never free.
+6. **Climbing out** spends the anchor and returns you to the yard a few
+   strides in from the edge that took you. With no anchor (a direct load, a
+   preview) the fields chain to each other instead, so they stay walkable
+   on their own.
+
+Guarded end to end by `tests/flow.py` §32b, including that a lit edge
+refuses, a lit spot in a dark world refuses, and the return lands clear of
+the mouth. **Shipping mouth today: the lodge yard's treeline (N/S).** The
+yard's x axis is the torus and stays the torus -- `set_lost_edge` refuses a
+wrapping edge outright, because a seam has no far side to fall off.
+
+### The dark rearranges itself
+
+`LostSpace._tick_reshuffle` moves the FIELD's scatter landmarks (never the
+island, never a camp, never a light) every `_SHUFFLE_EVERY` seconds, at
+most `_SHUFFLE_MAX` at a time, with a rotating cursor so it works its way
+through the whole set rather than shuffling the same three forever. The
+rule it enforces is the one the whole in-between runs on: **what the light
+touches is TRUE; the dark is not.** A landmark is only moved when it is
+outside your sight cone, unlit, and farther than `_SHUFFLE_NEAR`, and it
+only lands somewhere that is also outside the cone, unlit, and not solid.
+Only GEOMETRY lies -- a threat never blinks out this way.
+
+### Who else is out there
+
+Two kinds of light that are not the exit. The **occupied camp** is a
+second, manned fire on a hashed bearing 26-36 tiles out, its crew spawned
+on approach and released when you leave; it comes in three flavours (rest /
+watch / work) so the camp you stumble into is not always the camp you
+stumbled into last time. The **lamp-carriers** are cultists walking the
+dark with a light in hand, and they exist precisely so a distant warm glow
+is ambiguous: the way out, or someone coming. All of them are ordinary cult
+NPCs, so the lost scenes sit in `CULTIST_SCENES` (with `cult_target = 0`,
+so the field never musters a patrol of its own).
+
+### The fields are WORDLESS
+
+No narrator boxes, no notices, no case-notebook writes, no place name. The
+dark and the hunted light are the entire text; a caption would explain away
+the one beat the space exists to deliver. Enforced by
+`tests/conventions.py` check 6.

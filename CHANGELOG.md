@@ -139,6 +139,80 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 — THE MOUTH: the lost-space loop closes (`TODO.md` #26 step 2,
+  `DESIGN.md` §13).** The three biome fields had been built and wired into
+  nothing: reachable only by loading the scene key directly. This landed the
+  entry and the exit, so the loop the ticket describes (interior -> yard ->
+  push through the treeline -> fall -> land on the lit island -> leave its
+  glow -> hunt the light -> climb out) is walkable end to end.
+  **The design problem was where the mouth goes.** Wiring it into Brimley
+  would have pre-committed the restructure decision the ticket explicitly
+  records as NOT made, so instead the mouth is an opt-in per-scene capability
+  (`Scene.set_lost_edge(sides, lost_key)` -> `Scene.lost_edges`, None on
+  every other scene). Judging the feel now costs no canon, and each future
+  mouth is a deliberate choice about which edge of the authored world stops
+  holding. `set_lost_edge` refuses a WRAPPING edge outright: a torus seam has
+  no far side to fall off, and the yard's x axis must stay the fold it is.
+  **The gate is light, and it cost no new system.** `Game._tick_lost_edge`
+  runs from `update_player` right after the wrap clamp (the map edge is
+  exactly where the clamp just refused to let them through) and only opens
+  when the room is genuinely dark AND the spot unlit. On the surface that
+  darkness is the STORM, which already climbs with the evidence count -- so
+  at ev0 every bound is the invisible wall it has always been, and the world
+  only starts letting go once understanding has put the lights out. A lit
+  spot never opens, which quietly makes the yard lights and a carried flame
+  real protection instead of decoration. Falling writes a return anchor a few
+  strides back INTO the world; reaching the hunted lantern spends it and
+  climbs you out where you fell, rather than the old behaviour of chaining
+  field to field forever (that chain survives as the no-anchor fallback, so
+  previews and tests still walk).
+  Shipping mouth: the lodge yard's treeline, N and S. Guarded by
+  `tests/flow.py` §32b, whose two load-bearing halves (the light gate, the
+  return anchor) were fault-injected to prove they go red.
+  Two supporting fixes came out of building it. `Game.scene_gloom()` was
+  extracted from `_draw_dark` so the darkness the gate measures IS the
+  darkness the player sees, verified behaviour-identical across every scene x
+  rot stage. And the lost fields lost their place NAME: the HUD labels every
+  scene in the corner from the titlecased key, so a lost field had been
+  announcing itself as "Lost Forest" -- the same explaining-away as the
+  narrator box the maintainer had already cut. `display_name = ""` is now an
+  honoured explicit blank (None still means unset), and
+  `tests/conventions.py` check 6 was WIDENED to cover the name alongside the
+  words rather than a new check appended beside it.
+
+- **2026-07 — The dark rearranges itself (`TODO.md` #26 step 3, partial).**
+  The observer-dependent half of the manipulation layer:
+  `LostSpace._tick_reshuffle` moves the field's scatter landmarks when you
+  are not looking. The rule it enforces is the one the whole in-between runs
+  on -- **what the light touches is TRUE; the dark is not** -- so a prop only
+  moves when it is outside your sight cone, unlit, and far off, and only
+  lands somewhere also outside the cone, unlit, and not solid. Only GEOMETRY
+  lies; the island, the camps, every light, and every threat are exempt by
+  construction (the ticket's own fence). The first cut used a fixed-start
+  loop and so shuffled the same three props forever; a rotating cursor fixed
+  it, measured at 24 of 84 landmarks moved in 20s with zero fence violations.
+  Asymmetric return and breathe-with-threat remain open.
+
+- **2026-07 — Forest pond + camp variety (`TODO.md` #26).** The pond island
+  was reworked off the tan `d` donut that made its waterline a drawn circle:
+  `_pond_r()` meanders the radius with noise, the rim is wet mud, reeds sit
+  in clumped stands hugging the bank rather than evenly ringing it, and the
+  small `camp_fire` became a `haven_fire` with the lights pulled to the
+  water. Island mean brightness 23.1 -> 28.7, p99 51 -> 75. The occupied camp
+  gained three flavours chosen by hash (rest / watch / work, crews of 4 / 2 /
+  3), verified distinct across nine seeds, so the camp you stumble into is
+  not always the one you stumbled into last time.
+
+- **2026-07 — `--bright` was not bright (tooling).** The clean-inspection
+  flag on `tools/capture_facings.py` dropped the darkness and the fog but
+  left the film GRADE and the sight CONE on, so inspection shots came back
+  murky and near-identical to the player view -- which is exactly how a
+  geometry defect hides from a look pass. Now it follows VISION's recipe in
+  full (mean 46.2 -> 60.1, near-black 11.5% -> 4.9%). The same tool gained
+  `--ev N`: a STORM_STAGE_SCENES scene at the default ev0 is full daylight,
+  so before this there was no way to LOOK at the darkened surface world the
+  game is mostly played in.
+
 - **2026-07 — Lost road: the CASSILDA'S convenience store, done right
   (maintainer art pass, second round).** The road station's building was a
   bland box; reworked into a real Casey's-style convenience STORE
