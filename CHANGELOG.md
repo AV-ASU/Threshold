@@ -160,12 +160,20 @@
   PUMPS** -- `_draw_fuel_pump` is a proper 1990s dispenser (concrete curb, cream
   cabinet with a red kick panel, an overhanging display head with a dark
   metered window + green digits, a red topper, a hose slung into a nozzle boot
-  on the flank), not a plain box; **(4) the roadside `neon_pylon` reads the
-  NAME big** (same tube alphabet) over a small **1.09** price plate, not a
-  price where the name should be. The lot was also pushed further from the road
-  (`road_off` 6.5). NOTE: `CASSILDA'S` / `1.09` are player-facing art strings in
-  a prototype wired into nothing; if the lost road is wired in, the name moves
-  into `DIALOGUE.md` per its contract.
+  on the flank), not a plain box; **(4) the roadside `neon_pylon`** was a plain
+  board -- replaced (third round, to a maintainer reference photo) with a
+  vintage GOOGIE / atomic-age STAR sign: a big bulb-lined yellow star
+  (`_neon_bulbs` chase marquee) behind two angled neon banners -- a red one
+  reading **CASSILDA'S**, a blue one **GAS FOR LESS** -- drawn with the tube
+  alphabet warped onto each banner's angle; its light pool went warm.
+  Third-round fixes too: the pump canopy + pumps were split OUT of the store
+  solid into a separate `pump_island` deco so they DEPTH-SORT at their own
+  position (the store is well north) -- the store no longer sorts on top of its
+  own forecourt; and the rooftop "chimney" (a tall dark box) became a low wide
+  curbed AC unit with grille fins. The lot was pushed further from the road
+  (`road_off` 6.5). NOTE: `CASSILDA'S` / `GAS FOR LESS` are player-facing art
+  strings in a prototype wired into nothing; if the lost road is wired in, they
+  move into `DIALOGUE.md` per its contract.
 - **2026-07 — Lost spaces: three biome FOCAL ISLANDS + a full-effort pass
   (`TODO.md` #26).** The prototype's single corn field grew into three
   biome-parameterized scenes — `lost_corn` / `lost_forest` / `lost_road`

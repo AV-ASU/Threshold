@@ -2391,6 +2391,15 @@ _GLYPH = {
            (0.86, 0.30), (0.5, 0.02), (0.14, 0.02)]],
     "'": [[(0.52, 1.0), (0.4, 0.66)]],
     " ": [],
+    "G": [[(0.88, 0.80), (0.34, 0.98), (0.06, 0.70), (0.06, 0.30), (0.34, 0.02),
+           (0.88, 0.18), (0.88, 0.44), (0.56, 0.44)]],
+    "F": [[(0.86, 0.98), (0.2, 0.98), (0.2, 0.02)], [(0.2, 0.52), (0.72, 0.52)]],
+    "O": [[(0.5, 0.98), (0.12, 0.72), (0.12, 0.28), (0.5, 0.02),
+           (0.88, 0.28), (0.88, 0.72), (0.5, 0.98)]],
+    "R": [[(0.18, 0.02), (0.18, 0.98), (0.62, 0.98), (0.84, 0.78), (0.62, 0.52),
+           (0.18, 0.52)], [(0.5, 0.52), (0.86, 0.02)]],
+    "E": [[(0.86, 0.98), (0.2, 0.98), (0.2, 0.02), (0.86, 0.02)],
+          [(0.2, 0.5), (0.66, 0.5)]],
     "0": [[(0.5, 0.98), (0.14, 0.72), (0.14, 0.28), (0.5, 0.02),
            (0.86, 0.28), (0.86, 0.72), (0.5, 0.98)]],
     "1": [[(0.30, 0.76), (0.54, 0.98), (0.54, 0.02)], [(0.28, 0.02), (0.8, 0.02)]],
@@ -2615,92 +2624,128 @@ def _draw_gas_station_solid(surf, cam, deco):
         pygame.draw.line(surf, _shade((86, 82, 76), 0.85),
                          (rtl[0] + (rtr[0] - rtl[0]) * fr, rtl[1] + (rtr[1] - rtl[1]) * fr),
                          (rbl[0] + (rbr[0] - rbl[0]) * fr, rbl[1] + (rbr[1] - rbl[1]) * fr), 1)
-    draw_box(surf, cam, wx + 54 * s, wy - 26 * s, 38 * s, 26 * s, WH + 14 * s,
-             {"top": (104, 106, 112), "side": (74, 76, 82), "dark": (48, 50, 54)})
-    vp = cam.project(wx - 52 * s, wy - 24 * s, WH)
-    vt = cam.project(wx - 52 * s, wy - 24 * s, WH + 18 * s)
-    pygame.draw.line(surf, (78, 80, 84), vp, vt, max(2, int(3 * s)))
-    pygame.draw.circle(surf, (60, 62, 66), (int(vt[0]), int(vt[1])), max(2, int(3 * s)))
+    # a LOW rooftop AC unit (a squat curbed box with grille fins -- NOT a
+    # chimney) + a short plumbing vent stub
+    _vbox(surf, cam, wx + 40 * s, wy - 22 * s, 54 * s, 32 * s, WH, WH + 3 * s,
+          {"top": (66, 68, 72), "side": (50, 52, 56), "dark": (38, 40, 44)})
+    _vbox(surf, cam, wx + 40 * s, wy - 22 * s, 48 * s, 27 * s, WH + 3 * s, WH + 14 * s,
+          {"top": (124, 126, 132), "side": (92, 94, 100), "dark": (58, 60, 64)})
+    for i in range(-3, 4):                 # grille fins on the unit top
+        p0 = cam.project(wx + 40 * s + i * 6 * s, wy - 33 * s, WH + 14 * s)
+        p1 = cam.project(wx + 40 * s + i * 6 * s, wy - 11 * s, WH + 14 * s)
+        pygame.draw.line(surf, (72, 74, 78), p0, p1, 1)
+    v0 = cam.project(wx - 58 * s, wy - 26 * s, WH)
+    v1 = cam.project(wx - 58 * s, wy - 26 * s, WH + 9 * s)
+    pygame.draw.line(surf, (84, 86, 90), v0, v1, max(2, int(3 * s)))
 
-    # ============ the pump CANOPY (south, clear of the store) + PUMPS =========
-    cyf = wy + 128 * s
+
+def _draw_pump_island_solid(surf, cam, deco):
+    """The fuel CANOPY + three dead PUMPS on their island. A SEPARATE deco from
+    the store so it depth-sorts at its OWN position (the store sits well north),
+    which keeps the parking bays / wrecks / pumps occluding in the right order.
+    Faces SOUTH."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    red = (172, 46, 40)
     cz = 56 * s
     post = (82, 80, 84)
-    for pxl in (-72 * s, 72 * s):
+    for pxl in (-72 * s, 72 * s):          # canopy posts
         for pyl in (-30 * s, 30 * s):
-            a = cam.project(wx + pxl, cyf + pyl, 0)
-            b = cam.project(wx + pxl, cyf + pyl, cz)
+            a = cam.project(wx + pxl, wy + pyl, 0)
+            b = cam.project(wx + pxl, wy + pyl, cz)
             pygame.draw.line(surf, post, a, b, max(3, int(5 * s)))
             pygame.draw.line(surf, _shade(post, 1.4), a, b, 1)
-    slab = {"top": (84, 82, 88), "side": (56, 54, 58), "dark": (34, 32, 36)}
-    draw_box(surf, cam, wx, cyf, 164 * s, 72 * s, 9 * s, slab)
+    for pxl in (-48 * s, 0, 48 * s):        # pumps (under the roof)
+        _draw_fuel_pump(surf, cam, wx + pxl, wy + 2 * s, s, red, seed=deco.seed + int(pxl))
+    # the canopy slab + red fascia on top (drawn last -> reads as a roof over
+    # the pumps)
+    _vbox(surf, cam, wx, wy, 164 * s, 72 * s, cz, cz + 9 * s,
+          {"top": (84, 82, 88), "side": (56, 54, 58), "dark": (34, 32, 36)})
 
     def CF(lx, lz):
-        p = cam.project(wx + lx, cyf + 36 * s - 0.3, lz)
+        p = cam.project(wx + lx, wy + 36 * s - 0.3, lz)
         return (int(p[0]), int(p[1]))
     pygame.draw.polygon(surf, red, [
         CF(-82 * s, cz), CF(82 * s, cz), CF(82 * s, cz + 9 * s), CF(-82 * s, cz + 9 * s)])
     pygame.draw.polygon(surf, _shade(red, 1.25), [
         CF(-82 * s, cz + 8 * s), CF(82 * s, cz + 8 * s),
         CF(82 * s, cz + 9 * s), CF(-82 * s, cz + 9 * s)])
-    for pxl in (-48 * s, 0, 48 * s):
-        _draw_fuel_pump(surf, cam, wx + pxl, cyf + 2 * s, s, red, seed=deco.seed + int(pxl))
+
+
+def _neon_bulbs(surf, pts, t, seed, r, on, off):
+    """Chase-light bulbs along a polyline `pts` (screen points): evenly spaced
+    dots that light in a running pattern (googie marquee)."""
+    for i in range(len(pts) - 1):
+        (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+        seg = math.hypot(x1 - x0, y1 - y0)
+        n = max(1, int(seg / (r * 2.4)))
+        for k in range(n):
+            f = k / n
+            bx, by = int(x0 + (x1 - x0) * f), int(y0 + (y1 - y0) * f)
+            lit = (i * 3 + k + int(t * 8) + seed) % 3 == 0
+            pygame.draw.circle(surf, on if lit else off, (bx, by), r)
+            if lit:
+                pygame.draw.circle(surf, (255, 250, 230), (bx, by), max(1, r - 2))
 
 
 def _draw_neon_pylon_solid(surf, cam, deco):
-    """The tall roadside NEON PYLON -- the ROAD lost-space's beacon + light.
-    A steel pole carrying a BIG bright sign box near the top that buzzes cold
-    in the dark. You land right under it. Faces SOUTH."""
+    """The tall roadside NEON PYLON -- a vintage GOOGIE / atomic-age star sign
+    (the maintainer's reference): a big bulb-lined yellow STAR behind two angled
+    neon banners -- a red one reading the store name, a blue one the tagline --
+    on a black pole. The zone's light. You land right under it. Faces SOUTH."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     t = getattr(deco, "t", 0.0)
-    pole_h = 168 * s
+    pole_h = 150 * s
     a = cam.project(wx, wy, 0)
-    b = cam.project(wx, wy, pole_h)
-    pygame.draw.line(surf, (74, 74, 80), a, b, max(3, int(7 * s)))
-    pygame.draw.line(surf, (34, 34, 38), a, b, 1)
-    # buzz: the tubes gutter but stay BRIGHT (an occasional dying-tube dropout)
+    b = cam.project(wx, wy, pole_h + 30 * s)
+    pygame.draw.line(surf, (22, 22, 24), a, b, max(4, int(8 * s)))
+    pygame.draw.line(surf, (58, 58, 62), a, b, 1)
     buzz = 0.78 + 0.22 * math.sin(t * 14.0 + deco.seed)
     if (int(t * 3) + deco.seed) % 19 == 0:
-        buzz *= 0.45
-    neon = (int(160 + 95 * buzz), int(222 + 33 * buzz), 255)
-    bw2, bh2 = 52 * s, 40 * s              # a BIG sign box
-    bcz = pole_h - bh2 + 2 * s
+        buzz *= 0.5
+    scz = pole_h + 30 * s                   # sign centre height
 
-    def SB(lx, lz):                        # sign-board point (faces south)
-        p = cam.project(wx + lx, wy - 0.3, bcz + lz)
+    def SB(u, z):                           # sign-plane point (faces south)
+        p = cam.project(wx + u, wy - 0.3, scz + z)
         return (int(p[0]), int(p[1]))
-    board = [SB(-bw2, -bh2), SB(bw2, -bh2), SB(bw2, bh2), SB(-bw2, bh2)]
-    glow = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    xs = [p[0] for p in board]; ys = [p[1] for p in board]
-    gpad = int(26 * s)
-    grect = pygame.Rect(min(xs) - gpad, min(ys) - gpad,
-                        max(xs) - min(xs) + 2 * gpad,
-                        max(ys) - min(ys) + 2 * gpad)
-    pygame.draw.rect(glow, (*neon, int(120 * buzz)), grect, border_radius=int(14 * s))
-    pygame.draw.rect(glow, (*neon, int(56 * buzz)),
-                     grect.inflate(gpad, gpad), border_radius=int(20 * s))
-    surf.blit(glow, (0, 0))
-    pygame.draw.polygon(surf, (int(42 + 54 * buzz), int(86 + 70 * buzz),
-                               int(112 + 60 * buzz)), board)
-    pygame.draw.polygon(surf, neon, board, max(4, int(5 * s)))
-    # the store NAME big across the board (drawn neon TUBES, no fonts), and a
-    # small period fuel PRICE plate at the foot
-    def SBp(u, z):                         # projector for _draw_neon_word
-        return SB(u, z - bcz)
-    core = (int(150 + 90 * buzz), int(220 + 30 * buzz), 255)
-    glow = (30, 70, 96); hot = (238, 250, 255)
-    _draw_neon_word(surf, SBp, -bw2 + 8 * s, bw2 - 8 * s, bcz - bh2 + 16 * s,
-                    bcz + bh2 - 6 * s, STATION_NAME, core, glow, hot, s * 1.15)
-    # a small "1.09" price plate below the board
-    ppz = -bh2 - 15 * s
-    plate = [SB(-24 * s, ppz), SB(24 * s, ppz),
-             SB(24 * s, ppz + 13 * s), SB(-24 * s, ppz + 13 * s)]
-    pygame.draw.polygon(surf, (18, 22, 28), plate)
-    pygame.draw.polygon(surf, _shade(neon, 0.7), plate, 1)
-    _draw_neon_word(surf, SBp, -20 * s, 20 * s, bcz + ppz + 2 * s,
-                    bcz + ppz + 11 * s, "1.09", (255, 210, 90), (90, 74, 30),
-                    (255, 240, 180), s * 0.7)
+    # ---- the STAR (5-point, bulb-lined yellow) -- BIG, points reach well past
+    #      the banners that cross its middle ----
+    R = 96 * s
+    star_uz = []
+    for i in range(10):
+        ang = -math.pi / 2 + i * math.pi / 5
+        rr = R if i % 2 == 0 else R * 0.42
+        star_uz.append((math.cos(ang) * rr, math.sin(ang) * rr))
+    star = [SB(u, z) for (u, z) in star_uz]
+    ygl = (int(196 + 50 * buzz), int(158 + 40 * buzz), 30)
+    pygame.draw.polygon(surf, ygl, star)
+    pygame.draw.polygon(surf, _shade(ygl, 0.55), star, max(2, int(2 * s)))
+    star_pts = star + [star[0]]
+    _neon_bulbs(surf, star_pts, t, deco.seed, max(2, int(3.2 * s)),
+                (int(226 + 29 * buzz), int(214 + 30 * buzz), 130), (86, 70, 24))
+
+    # ---- two angled neon BANNERS crossing the star's middle ----
+    def banner(cu, cz, hl, hh, ang, fill, text, tcore, tglow, thot):
+        c, sn = math.cos(ang), math.sin(ang)
+
+        def L(tx, ty):                      # banner-local (tx along, ty across)
+            return SB(cu + tx * hl * c - ty * hh * sn,
+                      cz + tx * hl * sn + ty * hh * c)
+        quad = [L(-1, 1), L(1, 1), L(1, -1), L(-1, -1)]
+        drop = [L(-1, -1), L(1, -1), L(1, -1.6), L(-1, -1.6)]
+        pygame.draw.polygon(surf, _shade(fill, 0.45), drop)    # 3D bottom edge
+        pygame.draw.polygon(surf, fill, quad)
+        pygame.draw.polygon(surf, _shade(fill, 1.45), quad, max(1, int(1.5 * s)))
+
+        def P(gx, gz):                      # map a glyph point onto the banner
+            return L(gx, gz)
+        _draw_neon_word(surf, P, -0.9, 0.9, -0.6, 0.6, text, tcore, tglow, thot, s)
+
+    banner(0, 26 * s, 60 * s, 13 * s, -0.14, (150, 30, 34), STATION_NAME,
+           (255, 92, 98), (110, 20, 24), (255, 214, 218))
+    banner(0, -22 * s, 66 * s, 13 * s, 0.11, (28, 44, 104), "GAS FOR LESS",
+           (150, 212, 255), (28, 58, 110), (242, 250, 255))
 
 
 def _draw_chain_fence_solid(surf, cam, deco):
@@ -4023,6 +4068,7 @@ SOLID_PROPS = {
     "camp_fire":     _draw_camp_fire_solid,
     "haven_fire":    _draw_camp_fire_solid,   # lost-space bonfire (scaled up)
     "gas_station":   _draw_gas_station_solid,
+    "pump_island":   _draw_pump_island_solid,
     "neon_pylon":    _draw_neon_pylon_solid,
     "chain_fence":   _draw_chain_fence_solid,
     "boulder":       _draw_boulder_solid,

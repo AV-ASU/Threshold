@@ -212,9 +212,12 @@ it renders the procedural sprites to a labelled PNG strip.
     barrier, a near-bank `camp_fire` + far-shore lanterns, reeds + mist); road =
     a fenced filling-station **lot** (you land under a tall bright `neon_pylon`
     at the driveway; the sealed `gas_station` building -- a Casey's-style
-    convenience store, **CASSILDA'S**, `STATION_NAME` in props, brick wainscot +
-    storefront + red awning + a neon-name fascia -- and its own pump canopy sit
-    NW, `parking_bay` decals + `chain_fence` panels dress the lot, and a winding
+    convenience store, **CASSILDA'S**, `STATION_NAME` in props, face-culled with
+    every side dressed, brick wainscot + storefront + red awning + a
+    procedural-neon-tube name fascia -- with a separate `pump_island` (canopy +
+    pumps, split out so it depth-sorts on its own) sit NW, the `neon_pylon` is a
+    googie bulb-star sign, `parking_bay` decals + `chain_fence` panels dress the
+    lot, and a winding
     paved road generated river-style runs past the east edge, drifting west as it
     goes north). The island light is the haven; the
     hunted exit lantern is HELD until you leave that glow, then held 6-20 tiles

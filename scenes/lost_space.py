@@ -167,13 +167,15 @@ class LostSpace(Scene):
 
         # the neon pylon = the beacon you spawn under (the driveway corner)
         self.add_decoration(Decoration(cx, cy, "neon_pylon", seed=3))
-        # the sealed building + its pump canopy at the lot's north-west
+        # the sealed store building at the lot's north-west
         self.add_decoration(Decoration(*W(-4, -4), "gas_station", seed=4))
-        # painted parking bays across the open asphalt south of the pumps + a
-        # car nosed into one
+        # the pump canopy + pumps as a SEPARATE deco (south of the store) so it
+        # depth-sorts at its own position, not the store's
+        self.add_decoration(Decoration(*W(-4, -1), "pump_island", seed=5))
+        # painted parking bays across the open asphalt in front + a car in one
         for i, txo in enumerate((-8, -6, -4, -2)):
-            self.add_decoration(Decoration(*W(txo, 0), "parking_bay", seed=i))
-        self.add_decoration(Decoration(*W(-6, 0), "rust_wagon", seed=7))
+            self.add_decoration(Decoration(*W(txo, 1), "parking_bay", seed=i))
+        self.add_decoration(Decoration(*W(-6, 1), "rust_wagon", seed=7))
         # wrecks stalled on the road (north up it, and south by the driveway)
         self.add_decoration(Decoration(*W(4, -5), "rust_van", seed=12))
         self.add_decoration(Decoration(*W(3, 6), "rust_sedan", seed=9))

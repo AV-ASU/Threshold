@@ -237,6 +237,15 @@ class DecoStructureMixin:
         for px in (-16, 0, 16):                                           # pumps
             pygame.draw.rect(surf, (180, 174, 160), (x + px - 3, y + 12, 6, 8))
 
+    def _draw_pump_island(self, surf, x, y):
+        """The fuel canopy + pumps island (props._draw_pump_island_solid draws
+        the tilt volume). Flat fallback: a canopy bar over three pumps."""
+        pygame.draw.rect(surf, (84, 82, 88), (x - 26, y - 20, 52, 4))       # canopy
+        pygame.draw.rect(surf, (170, 54, 46), (x - 26, y - 17, 52, 2))      # fascia
+        for px in (-16, 0, 16):
+            pygame.draw.rect(surf, (200, 196, 186), (x + px - 3, y - 4, 6, 12))
+            pygame.draw.rect(surf, (170, 46, 40), (x + px - 3, y - 4, 6, 3))
+
     def _draw_neon_pylon(self, surf, x, y):
         """The tall roadside neon pylon (props._draw_neon_pylon_solid draws
         the tilt volume). Flat fallback: a pole with a big bright sign box."""
