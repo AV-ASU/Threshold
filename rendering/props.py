@@ -1284,6 +1284,100 @@ def _draw_staircase_solid(surf, cam, deco):
     pygame.draw.polygon(surf, (10, 8, 12), mouth)
 
 
+def _draw_stockroom_corner_solid(surf, cam, deco):
+    """THE STOCKROOM CORNER (Wave 2, the shop; TODO #24 ensemble rule):
+    the shop's receiving corner composed as ONE object against the west
+    wall -- what used to be two loose crates, a table, and a barrel in
+    prop soup. A crate stack (two high, a third askew beside), the check
+    table where goods were tallied (paper sacks, the ledger; the candle
+    deco seats on it separately so it keeps EMITTING), and the flour
+    barrel with the ring-stain ghost of its shipped twin. Provenance:
+    the last delivery was months ago -- half the corner is dust ghosts
+    and tally marks for stock that never came. Anchor = the crate
+    stack's floor point; the run extends SOUTH (+y); the wall is WEST."""
+    wx, wy = deco.x, deco.y
+    wood = {"top": (100, 78, 48), "side": (74, 56, 36), "dark": (46, 33, 21)}
+    wood_d = {"top": (84, 64, 40), "side": (60, 46, 30), "dark": (38, 28, 18)}
+    oak = {"body": (88, 66, 40), "lo": (56, 42, 26), "rim": (118, 92, 58)}
+
+    def _ell(cx, cy, z, rx_, ry_, col, width=0):
+        pts = [cam.project(cx + rx_ * math.cos(a), cy + ry_ * math.sin(a), z)
+               for a in [i * math.pi / 6.0 for i in range(12)]]
+        pygame.draw.polygon(surf, col, pts, width)
+
+    def _wline(x0, y0, z0_, x1, y1, z1_, col, w=1):
+        pygame.draw.line(surf, col, cam.project(x0, y0, z0_),
+                         cam.project(x1, y1, z1_), w)
+
+    # --- UNDER-LAYER: the years on the floor, drawn first.
+    # The dust ghost north of the crates, where the winter's stock stood
+    # before it sold down to nothing (paler: feet never cross it now).
+    gh = [cam.project(wx - 13, wy - 46, 0.2), cam.project(wx + 9, wy - 44, 0.2),
+          cam.project(wx + 10, wy - 26, 0.2), cam.project(wx - 12, wy - 27, 0.2)]
+    pygame.draw.polygon(surf, (96, 84, 60), gh)
+    pygame.draw.polygon(surf, (70, 60, 42), gh, 1)
+    # drag scuffs from the stockroom door toward the check table
+    _wline(wx + 96, wy + 14, 0.2, wx + 72, wy + 34, 0.2, (58, 44, 28))
+    _wline(wx + 92, wy + 20, 0.2, wx + 70, wy + 38, 0.2, (52, 40, 26))
+    # the shipped twin barrel's ring stain, and the dry spill at the live one
+    _ell(wx + 74, wy + 88, 0.25, 8.5, 5.5, (40, 32, 22), 1)
+    _ell(wx + 74, wy + 88, 0.25, 6.0, 3.8, (54, 44, 30), 1)
+    for gx, gy, gr in ((88, 70, 2.4), (95, 76, 1.8), (84, 78, 2.0),
+                       (92, 64, 1.6), (98, 71, 2.2)):
+        _ell(wx + gx, wy + gy, 0.3, gr, gr * 0.7, (150, 132, 92))
+
+    # --- the CRATE STACK against the west wall (tiles r4-r5)
+    _vbox(surf, cam, wx + 2, wy - 12, 20, 18, 0, 15, wood, yaw=0.06)
+    _vbox(surf, cam, wx + 1, wy - 13, 14, 13, 15, 26, wood_d, yaw=-0.12)
+    _vbox(surf, cam, wx + 3, wy + 14, 17, 16, 0, 13, wood, yaw=0.10)
+    # board seams on the east faces (the faces the camera reads)
+    for bx, by, bz0, bz1 in ((12, -18, 4, 11), (12, -6, 4, 11),
+                             (8, -13, 18, 24), (12, 9, 3, 10), (12, 19, 3, 10)):
+        _wline(wx + bx, wy + by, bz0, wx + bx, wy + by, bz1, (46, 33, 21))
+    # chalk tally on the wall over the stack: the receiving count, stopped
+    for i, ty_ in enumerate((-22, -17, -12, -7)):
+        _wline(wx - 15, wy + ty_, 11, wx - 15, wy + ty_, 17, (168, 166, 152))
+    _wline(wx - 15, wy - 24, 11, wx - 15, wy - 5, 17, (168, 166, 152))
+    for i, ty_ in enumerate((6, 11, 16)):                 # an older, fainter set
+        _wline(wx - 15, wy + ty_, 11, wx - 15, wy + ty_, 16, (118, 114, 102))
+
+    # --- the CHECK TABLE (tile r6 c3): plank top on legs, the tally goods
+    tx_, ty2 = wx + 66, wy + 48
+    for lx, ly in ((-12, -8), (12, -8), (-12, 8), (12, 8)):
+        _wline(tx_ + lx, ty2 + ly, 0, tx_ + lx, ty2 + ly, 22, (48, 34, 22), 2)
+    _vbox(surf, cam, tx_, ty2, 32, 22, 22, 26, wood, yaw=0.03)
+    _wline(tx_ - 14, ty2 - 2, 26.3, tx_ + 14, ty2 - 1, 26.3, (52, 38, 24))
+    # paper sacks stacked at the table's west end
+    _vbox(surf, cam, tx_ - 8, ty2 - 2, 10, 8, 26, 33,
+          {"top": (128, 112, 86), "side": (104, 90, 68), "dark": (70, 60, 44)},
+          yaw=0.08)
+    _vbox(surf, cam, tx_ - 7, ty2 - 1, 9, 7, 33, 39,
+          {"top": (120, 104, 80), "side": (96, 84, 64), "dark": (64, 54, 40)},
+          yaw=-0.10)
+    # the receiving ledger, flat on the east half, a pencil across it
+    lg = [cam.project(tx_ + 4, ty2 - 6, 26.5), cam.project(tx_ + 13, ty2 - 5, 26.5),
+          cam.project(tx_ + 12, ty2 + 3, 26.5), cam.project(tx_ + 3, ty2 + 2, 26.5)]
+    pygame.draw.polygon(surf, (176, 168, 148), lg)
+    pygame.draw.polygon(surf, (110, 102, 88), lg, 1)
+    _wline(tx_ + 5, ty2 - 1, 26.7, tx_ + 11, ty2 - 2, 26.7, (92, 74, 50))
+
+    # --- the FLOUR BARREL (tile r7 c4): staves, hoops, chalked lid
+    bx_, by_ = wx + 96, wy + 80
+    draw_solid(surf, cam, bx_, by_,
+               [(0, 8, 8), (4, 9.2, 9.2), (12, 9.2, 9.2), (16, 8, 8)], oak)
+    for hz in (4, 12):
+        _disc(surf, cam, bx_, by_, hz, 9.3, 9.3, (76, 78, 84),
+              fill=False, width=1)
+    _disc(surf, cam, bx_, by_, 16.2, 7.6, 7.6, (112, 88, 56))
+    _wline(bx_ - 3, by_ - 2, 16.4, bx_ + 4, by_ + 1, 16.4, (168, 166, 152))
+    # the scoop, dropped at the spill
+    sp = [cam.project(bx_ - 10, by_ + 8, 0.6), cam.project(bx_ - 5, by_ + 6, 0.6),
+          cam.project(bx_ - 4, by_ + 10, 0.4), cam.project(bx_ - 9, by_ + 12, 0.4)]
+    pygame.draw.polygon(surf, (128, 118, 100), sp)
+    pygame.draw.polygon(surf, (78, 72, 60), sp, 1)
+    _wline(bx_ - 4, by_ + 8, 0.6, bx_ + 2, by_ + 6, 0.8, (98, 90, 76))
+
+
 def _draw_kitchen_wall_solid(surf, cam, deco):
     """THE KITCHEN WALL (interiors pilot, TODO #24): the lodge's cooking
     run composed as ONE object against a west wall. Cookstove on legs
@@ -3328,6 +3422,7 @@ SOLID_PROPS = {
     "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "kitchen_wall":  _draw_kitchen_wall_solid,
+    "stockroom_corner": _draw_stockroom_corner_solid,
     "dining_set":    _draw_dining_set_solid,
     "bar_dressing":  _draw_bar_dressing_solid,
     "hearth_mass":   _draw_hearth_mass_solid,

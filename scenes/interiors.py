@@ -170,6 +170,13 @@ def build_shop():
         "W..............W",   # 11
         "WWWWWWWWDWWWWWWW",   # 12  D = exit door back to the field (col 8)
     ]
+    # The stockroom receiving-corner ensemble's footprint (see below): the
+    # same tiles its old separate crates/table/barrel occupied, as see-over
+    # solids, so reachability and the door approaches don't move.
+    _rows = [list(r) for r in objects]
+    for _sx, _sy in ((1, 4), (1, 5), (3, 6), (4, 7)):
+        _rows[_sy][_sx] = "x"
+    objects = ["".join(r) for r in _rows]
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
@@ -290,12 +297,17 @@ def build_shop():
                                  wall="N"))
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
-    # --- The stockroom (west, first door): dry-goods overstock ---
-    sc.add_furniture("crate", [(1, 4)], seed=4)
-    sc.add_furniture("crate", [(1, 5)], seed=5)
-    sc.add_furniture("barrel", [(4, 7)])     # kept off the (5,5) door approach
-    sc.add_furniture("table", [(3, 6)], w=30, h=30)
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "candle"))
+    # --- The stockroom (west, first door): THE RECEIVING CORNER (Wave 2
+    # ensemble; TODO #24): crate stack + check table + flour barrel composed
+    # as ONE object with its wear (the dust ghost of sold-out stock, the
+    # stopped tally, the shipped twin's ring stain). The candle stays its
+    # own deco, SEATED on the check table, so it keeps emitting. Footprint
+    # tiles ('x' stamps below) match the old separates exactly, so
+    # reachability + Hettie's (2,5) station are untouched.
+    sc.add_decoration(Decoration(1 * TILE + 16, 5 * TILE + 0,
+                                 "stockroom_corner", seed=12))
+    sc.add_decoration(Decoration(3 * TILE + 24, 6 * TILE + 8, "candle",
+                                 z=27))
     sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",
                                  ang=0.0))
     # --- The cold pantry (nested, two doors deep): preserves + the cult tells ---

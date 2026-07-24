@@ -216,9 +216,12 @@ placement.
 - **Blank building faces:** E/W exterior shells (the backwoods cabin is
   a bare grey slab from the side) need relief — windows, timber framing,
   a lean-to, stacked wood — via the exterior library, not one-offs.
-- **Pilot: the LODGE COMMON ROOM** (in progress; the "random stove"
-  becomes the kitchen ensemble), approved via captures before the pass
-  rolls wider.
+- **Pilot: the LODGE COMMON ROOM** — LANDED (kitchen wall, dining set,
+  hearth mass, the host's desk + key wall; `CHANGELOG.md`). **Wave 2
+  rollout underway:** the shop's stockroom receiving corner landed
+  (crate stack + check table + flour barrel as ONE object with its
+  wear; the candle stays a separate emitter seated on the table).
+  Next rooms: the sheriff's office quads, then the church vestry.
 
 ### 23. **[Opus + Fable]** Complex behavior for cultists and locals
 

@@ -426,6 +426,20 @@
 
 ## The interiors pilot (2026-07, TODO #24)
 
+- **2026-07 — Wave 2 rollout: the shop's stockroom receiving corner.**
+  The stockroom's prop soup (two loose crates, a bare table, a barrel)
+  merged into ONE `stockroom_corner` ensemble per the rule: a yawed
+  crate stack against the west wall, the check table with paper sacks
+  and the receiving ledger, the flour barrel with a chalked lid and a
+  dropped scoop -- and its wear layer in world space (the dust ghost of
+  sold-out stock, the stopped chalk tally on the wall, the shipped twin
+  barrel's ring stain, drag scuffs, a dry grain spill). The candle
+  stays its OWN deco seated on the check table so it keeps emitting
+  (an ensemble must never swallow a light source into dead art). The
+  footprint stamps the exact tiles the old separates held, so
+  reachability and Hettie's stockroom station are untouched. Verified
+  on a four-facing in-room sheet.
+
 - **2026-07 — The lodge pilot COMPLETE (ensembles 2-4 + the host).**
   The dining set (the one set place, the dust-shadow of the second, live
   candle, yaw-tucked chairs, splinted leg); the service bar dressing
