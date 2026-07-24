@@ -485,12 +485,16 @@ class Scene:
     _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
 
     def light_sources(self):
-        """Cached [(x, y, r, cone)] of the scene's light-emitting decorations
-        (see _LIGHT_KINDS). `cone` is None for an omni pool, else
-        (nx, ny, half_rad) from the deco's `cone=(dir_x, dir_y, half_deg)`
-        kwarg -- a DIRECTIONAL fixture lights (and gates) only inside its
-        fan (TODO #21 cone fixtures). Rebuilt when the decoration count
-        changes (world rot adds decals at load; nothing removes lights)."""
+        """Cached [(deco, r, cone, elec)] of the scene's light-emitting
+        decorations (see _LIGHT_KINDS). `cone` is None for an omni pool,
+        else (nx, ny, half_rad) from the deco's `cone=(dir_x, dir_y,
+        half_deg)` kwarg -- a DIRECTIONAL fixture lights (and gates) only
+        inside its fan (TODO #21 cone fixtures). The cache holds the
+        FILTERED DECO LIST, never positions: readers take x/y live off the
+        deco, so a MOVING light source (a carried lantern, a swinging
+        pendant) gates correctly (2026-07, maintainer: expect moving
+        lights). Rebuilt when the decoration count changes (world rot adds
+        decals at load; nothing removes lights)."""
         cache = getattr(self, "_light_cache", None)
         if cache is not None and cache[0] == len(self.decorations):
             return cache[1]
@@ -506,7 +510,7 @@ class Scene:
                 cx_, cy_, half = raw
                 n = math.hypot(cx_, cy_) or 1.0
                 cone = (cx_ / n, cy_ / n, math.radians(half))
-            srcs.append((d.x, d.y, self._LIGHT_KINDS[d.kind], cone,
+            srcs.append((d, self._LIGHT_KINDS[d.kind], cone,
                          d.kind in self._ELECTRIC_KINDS))
         self._light_cache = (len(self.decorations), srcs)
         return srcs
@@ -516,11 +520,13 @@ class Scene:
         darkness-concealment gate (a player beside a torch reads as lit
         however dark the room is). A cone fixture only lights inside its
         fan: behind a hooded lamp is honest dark. An ELECTRIC source
-        counts only while the scene's power is on."""
+        counts only while the scene's power is on. Positions read LIVE
+        off the deco, so moving sources gate correctly."""
         power = getattr(self, "power_on", True)
-        for lx, ly, r, cone, elec in self.light_sources():
+        for src, r, cone, elec in self.light_sources():
             if elec and not power:
                 continue
+            lx, ly = src.x, src.y
             d = self.world_dist(x, y, lx, ly)
             if d > r:
                 continue

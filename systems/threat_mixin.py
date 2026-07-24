@@ -858,17 +858,29 @@ class ThreatMixin:
         """Manifest one Watcher at a walkable tile a little way off, in a
         random direction around the player. It stands and stares (the
         'watch' movement). A faint breath and a small visibility nudge
-        mark the moment it opens its eyes."""
+        mark the moment it opens its eyes.
+
+        The spawn spot obeys two rules (maintainer, 2026-07): it must be
+        DARK (a Watcher only exists in the dark -- `Scene.lit_at` is the
+        same gate cover reads), and it must hold LINE OF SIGHT to the
+        player (`clear_sight_line`), so one can never open in a sealed
+        room or out-of-bounds pocket you cannot answer with your gaze.
+        The corollary is the light-security promise: a room with no dark
+        spot in view of you cannot open ANYTHING -- a fully lit room is
+        secured, and a blackout un-secures it."""
         scene = self.scene
         spot = None
-        for _ in range(12):
+        for _ in range(20):
             ang = random.uniform(0, math.tau)
             r = random.uniform(110, 200)   # closer in (play-notes: hard to see far)
             wx = self.player.x + math.cos(ang) * r
             wy = self.player.y + math.sin(ang) * r
             if (0 < wx < scene.w * Scene.TILE
                     and 0 < wy < scene.h * Scene.TILE
-                    and not scene.is_solid_at(wx, wy)):
+                    and not scene.is_solid_at(wx, wy)
+                    and not scene.lit_at(wx, wy)
+                    and scene.clear_sight_line(wx, wy,
+                                               self.player.x, self.player.y)):
                 spot = (wx, wy)
                 break
         if spot is None:

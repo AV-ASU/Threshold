@@ -323,6 +323,11 @@ def build_shop():
     # the contents have all gone the same murky shade.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22,
                                  "preserve_shelf", seed=17))
+    # A placed DARK SOURCE deepens the pantry past the room's ambient (the
+    # reverse light, 2026-07): the cult tells sit in blackness blacker
+    # than the gloom, and the flashlight beam is the only honest read.
+    sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 16, "dark_pool",
+                                 r=84, depth=52))
     # The cult tells, hidden in the pantry (the true blind spot, out of the
     # shop's sight): the mirror that shows the wrong silhouette, the wrong_photo.
     sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 16, "mirror"))
@@ -442,6 +447,11 @@ def build_barn():
                                  z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
+    # The dormitory's SE corner is a placed dark source (the reverse
+    # light): the chosen dark made blacker than ambient, where the dead
+    # run's gap points.
+    sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 16, "dark_pool",
+                                 r=76, depth=42))
     # Northern-MN lodge dressing: a mounted buck + trophy walleye on the
     # north wall, cobwebs in the high corners, an antler coat-rack on
     # the west wall, and a split-wood stack in the SW corner. The floor

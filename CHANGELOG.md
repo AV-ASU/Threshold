@@ -586,6 +586,25 @@
 
 ## Lighting
 
+- **2026-07 — The reverse light, moving sources, and the Watcher spawn
+  rules (maintainer batch).** Three connected pieces. (1) The
+  `dark_pool` deco: an INVISIBLE placed dark source (kwargs `r`,
+  `depth`) that SUBTRACTS from the lightmap after every light has
+  added, so placed darkness always wins where it contends with a lamp
+  -- blackness blacker than ambient, authored exactly where the design
+  wants it (pilots: the shop pantry's cult tells, the barn's SE
+  corner); the audit draws it as a deep-blue ring. (2) Moving light
+  sources are expected: `Scene.light_sources` now caches the emitter
+  DECO LIST and readers take positions live, so a carried or swinging
+  source gates correctly in the mechanical layer (the visible lightmap
+  was already per-frame). (3) The Watcher spawn rules: a Watcher opens
+  only at a spot that is DARK (`lit_at`) and holds LINE OF SIGHT to
+  the player (`clear_sight_line`) -- never in a sealed room or
+  out-of-bounds pocket you cannot answer with your gaze, which kills
+  unanswerable accumulation AND delivers lit-rooms-secured for free (a
+  room with no dark spot in view of you cannot open anything; a
+  blackout un-secures it). Guarded by `tests/stealth.py` §11 (every
+  spawn dark + sighted; the sealed pantry opens nothing).
 - **2026-07 — The lightmap: darkness composes by accumulation
   (maintainer: "the lights aren't interacting with each other
   properly").** The gloom pass used to punch per-pool alpha holes in a

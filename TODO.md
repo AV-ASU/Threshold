@@ -363,10 +363,12 @@ everywhere), and the flashlight opening on the PI's desk
   itself goes dark; fire is exempt), a moth flare blacks its room out
   for `BLACKOUT_DUR`, and the office radio's static crawl runs on
   power (the appliance tell). Guarded by `tests/stealth.py` §17.
-  **Still open:** player verbs (restore/switch a fixture), the fuel
-  item + siphon/refill economy, lights decaying/failing on their own,
-  and lit-rooms-SECURED (couples with the Watcher rework below). Keep
-  the tension: a lit town is a town He can see.
+  **Lit-rooms-SECURED landed via the 2026-07 Watcher spawn rule** (a
+  Watcher opens only at a dark spot with line of sight to the player,
+  so a fully lit room cannot open anything; `CHANGELOG.md`). **Still
+  open:** player verbs (restore/switch a fixture), the fuel item +
+  siphon/refill economy, and lights decaying/failing on their own.
+  Keep the tension: a lit town is a town He can see.
 - **Watcher variety.** Wildly different silhouettes per canon (each is a
   different cross-section of the same higher-dimensional gaze —
   NARRATIVE §4 makes this free). Fast/skittery movement prototyped ONE
@@ -376,9 +378,11 @@ everywhere), and the flashlight opening on the PI's desk
   Still open: the cult camp PROCESSES to the flash and fans out (a
   staged response, rides #23), and any screen-dim beat beyond the
   lights themselves dying.
-- **A full Watchers-in-the-dark rework** (they can open in any room but
-  only EXIST in the dark) — couples with the blackout into the perfect
-  storm. A real rework of `_tick_watchers`; keep the below-3 threat role.
+- **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
+  line-of-sight spots only, 2026-07). Still open: dark-only EXISTENCE
+  (a live Watcher caught by a room relighting should burn or flee, in
+  any scene, not just the dim interiors) and opening them in every
+  non-refuge room type. Keep the below-3 threat role.
 - The **capture→King-unleashed** thread and **procession-across-scenes**
   staging sit here too, unscoped. **The capture fork is RULED (2026-07,
   maintainer): capture is GAME OVER** — the CAPTURED card stays a hard

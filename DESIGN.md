@@ -228,7 +228,14 @@ its head) and pings the cult to **investigate the body**, and the body
   #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
   dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
   the flashlight is the cover, and a Watcher caught in a pool / the beam
-  **BURNS** out (`WATCHER_LIGHT_BURN`). The **true refuges stay gaze-free**
+  **BURNS** out (`WATCHER_LIGHT_BURN`). **A Watcher can only OPEN at a spot
+  that is DARK and holds LINE OF SIGHT to the player (2026-07 spawn rule,
+  `_spawn_watcher`):** it manifests where you could answer it with your
+  gaze, never in a sealed room or an out-of-bounds pocket, so there is no
+  unanswerable accumulation -- and the corollary is the light-security
+  promise: a room with no dark spot in view of you cannot open anything.
+  **A fully lit room is SECURED; a blackout un-secures it** (guarded,
+  `tests/stealth.py` §11). The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
   high-visibility trigger is retired.) The gun and axe **share one weapon slot** (left-click
@@ -707,6 +714,18 @@ Built into the procedural draw layer (`scenes/base.py`,
     would carry it (the sheriff's north line runs three cords through
     two rooms). Scatter is the light placement's version of the grid
     lockstep failure, inverted: props break the grid, wiring obeys it.
+    **The REVERSE LIGHT (maintainer, 2026-07):** an invisible `dark_pool`
+    deco (kwargs `r`, `depth`) SUBTRACTS from the lightmap AFTER every
+    light has added -- placed darkness that always wins where it contends
+    with a lamp, blacker than the room's ambient, with no texture because
+    it is only darkness. The audit draws it as a deep-blue ring. Draw-layer
+    only (the mechanical `lit_at` gate is untouched); it is the tool for
+    authoring blackness exactly where the design wants it (the shop
+    pantry's cult tells sit in one). **Moving light sources are expected**
+    (not just the flashlight): the visible lightmap rebuilds from live
+    deco positions every frame, and `Scene.light_sources` caches the deco
+    LIST, never positions, so a carried or swinging source gates
+    correctly in the mechanical layer too.
     **And every room carries 1-2 BROKEN lights (maintainer, 2026-07):**
     a `broken=True` fixture kwarg kills it in every layer at once (no
     pool, no `lit_at`, dead in the audit -- which marks it a red X) and

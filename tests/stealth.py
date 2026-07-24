@@ -917,9 +917,10 @@ def main():
     tick(g, 30)
     g.save.set_arg("evidence", [{"name": f"w{i}"}
                                 for i in range(WATCHER_WAKE_EV)])
-    # The shop's CHOSEN dark under the 90% coverage rule is the pantry
-    # (behind two doors, no fixture reaches it).
-    dark_x, dark_y = 2 * TILE + 16, 1 * TILE + 16
+    # A mech-dark spot on the OPEN shop floor (the spawn rule needs a dark
+    # spot WITH line of sight to the player, so the exposure test stands
+    # in the open, not the sealed pantry).
+    dark_x, dark_y = 6 * TILE + 16, 5 * TILE + 16
     assert not g.scene.lit_at(dark_x, dark_y)
     for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
         g.player.x, g.player.y = dark_x, dark_y
@@ -929,6 +930,21 @@ def main():
             break
     check(bool(g._watchers),
           "watchers: standing in the dark of a non-refuge interior opens one")
+    # The spawn rules themselves (maintainer, 2026-07): every opened
+    # Watcher stands in the DARK with LINE OF SIGHT to the player...
+    check(all((not g.scene.lit_at(w.x, w.y))
+              and g.scene.clear_sight_line(w.x, w.y, dark_x, dark_y)
+              for w in g._watchers),
+          "watchers: every spawn is dark AND holds line of sight")
+    # ...and the sealed pantry (shut doors, no dark spot in view) can
+    # open NOTHING: no unanswerable accumulation, and a fully lit or
+    # sealed room is secured.
+    g.player.x, g.player.y = 2 * TILE + 16, 1 * TILE + 16
+    n0 = len(g._watchers)
+    g._spawn_watcher()
+    check(len(g._watchers) == n0,
+          "watchers: no dark spot with sight of you = nothing opens "
+          "(the sealed pantry)")
     # Step into a light POOL: exposure drops, so the wave stops driving
     # visibility (the hold releases).
     lit_x, lit_y = 12 * TILE + 16, 9 * TILE + 16   # inside the hooded fan

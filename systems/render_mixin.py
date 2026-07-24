@@ -723,6 +723,21 @@ class RenderMixin:
             fan_tmp.fill((0, 0, 0))
             pygame.draw.polygon(fan_tmp, (gloom, gloom, gloom), cone)
             lm.blit(fan_tmp, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+        # DARK SOURCES (maintainer, 2026-07): the reverse light. An
+        # invisible `dark_pool` deco SUBTRACTS from the lightmap AFTER
+        # every light has added, so where placed darkness and a lamp
+        # contend, the dark wins -- blackness blacker than the room's
+        # ambient, put exactly where the design wants it. No texture by
+        # design: it is only darkness.
+        for d in getattr(self.scene, "decorations", []):
+            if getattr(d, "kind", None) != "dark_pool":
+                continue
+            dr = int(getattr(d, "kwargs", {}).get("r", 90))
+            dd = int(getattr(d, "kwargs", {}).get("depth", 46))
+            dcx, dcy = self.camera.project(d.x, d.y, 0)
+            lm.blit(_floor_pool_surf(dr, squash, (255, 255, 255), dd),
+                    (int(dcx) - dr, int(dcy) - int(dr * squash)),
+                    special_flags=pygame.BLEND_RGB_SUB)
         self.screen.blit(lm, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
         # ADDITIVE light on top: the player's own pool + every fixture's, each
         # a floor ellipse (or fan) under its source. They SUM where they

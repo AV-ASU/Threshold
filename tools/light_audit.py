@@ -124,6 +124,17 @@ def audit(g, key):
     cov_pool = 100.0 * pool_hits / max(1, walk)
     cov_mech = 100.0 * mech_hits / max(1, walk)
     font = pygame.font.SysFont(None, 22)
+    # placed DARK SOURCES (the reverse light): a deep-blue ring, so the
+    # authored blackness is as reviewable as the light
+    for d in sc.decorations:
+        if getattr(d, "kind", None) != "dark_pool":
+            continue
+        dr = int(getattr(d, "kwargs", {}).get("r", 90))
+        _ground_ring(surf, cam, d.x, d.y, dr, (70, 60, 190), width=0, alpha=48)
+        _ground_ring(surf, cam, d.x, d.y, dr, (110, 100, 235), width=2)
+        p = cam.project(d.x, d.y, 0)
+        surf.blit(font.render("dark_pool", True, (140, 130, 245)),
+                  (int(p[0]) + 6, int(p[1]) - 18))
     for d, mr in emitters:
         p = cam.project(d.x, d.y, 0)
         if getattr(d, "kwargs", {}).get("broken"):
