@@ -917,7 +917,9 @@ def main():
     tick(g, 30)
     g.save.set_arg("evidence", [{"name": f"w{i}"}
                                 for i in range(WATCHER_WAKE_EV)])
-    dark_x, dark_y = 2 * TILE + 16, 9 * TILE + 16     # far from every fixture
+    # The shop's CHOSEN dark under the 90% coverage rule is the pantry
+    # (behind two doors, no fixture reaches it).
+    dark_x, dark_y = 2 * TILE + 16, 1 * TILE + 16
     assert not g.scene.lit_at(dark_x, dark_y)
     for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
         g.player.x, g.player.y = dark_x, dark_y
@@ -929,7 +931,7 @@ def main():
           "watchers: standing in the dark of a non-refuge interior opens one")
     # Step into a light POOL: exposure drops, so the wave stops driving
     # visibility (the hold releases).
-    lit_x, lit_y = 13 * TILE + 16, 8 * TILE + 16       # under the wall_lamp
+    lit_x, lit_y = 12 * TILE + 16, 9 * TILE + 16   # inside the hooded fan
     assert g.scene.lit_at(lit_x, lit_y)
     g.player.x, g.player.y = lit_x, lit_y
     g.player.hidden = None

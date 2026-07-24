@@ -119,6 +119,20 @@ def build_schoolhouse():
     # (the guttered candles are what the commune bedded down by). (2026-07.)
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # The 90% rule: the commune strung drop cords over the cot banks and
+    # the door approach when they lived here. The chosen dark is the
+    # piled-desks SE corner (the school's own furniture, shoved into
+    # shadow).
+    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 0, 6 * TILE + 8, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(3 * TILE + 0, 9 * TILE + 0, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(13 * TILE + 16, 4 * TILE + 16, "drop_bulb",
+                                 z=38))
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "bloodstain",
                                  scale=1.6))
 

@@ -115,9 +115,11 @@ FIXTURE_POOLS = {
     # shallow shimmer instead of a candle flicker. Fire is a PROP now,
     # never the room's light.)
     "wall_lamp":    (88,   (205, 218, 240),  62,   20,    3,   0.05, 13.0),
-    # a bare bulb on a drop cord (the shop counter's kept bulb): the same
-    # cold family, hung high, the barest shimmer
-    "drop_bulb":    (84,   (205, 218, 240),  60,   30,    0,   0.06, 11.0),
+    # a bare bulb on a drop cord (the ceiling workhorse of the 90% rule): the
+    # same cold family, hung high, the barest shimmer. The VISIBLE pool is
+    # wide (a bare bulb floods its room); the mechanical gate stays the
+    # tighter _LIGHT_KINDS radius, so stealth cover doesn't move with it.
+    "drop_bulb":    (108,  (205, 218, 240),  56,   30,    0,   0.06, 11.0),
     # the brass oil lamp burns a real flame everywhere it is drawn, so it
     # emits everywhere too -- a small WARM accent pool, never a room's light
     # (2026-07 shop pass; the warm+cold overlap at Hettie's counter is the

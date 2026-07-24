@@ -251,6 +251,26 @@ def build_shop():
     # wall behind it stays honest dark -- the cone-fixture pilot, TODO #21)
     sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp",
                                  cone=(-1, 0, 55)))
+    # The 90% rule (maintainer, 2026-07): with every light on, >=90% of the
+    # walkable floor sits in a visible pool. Drop cords strung through the
+    # roof beams carry it: the back-shop aisle, the office nook, the
+    # stockroom, and the south floor by the door. The PANTRY is the chosen
+    # dark (the cult tells behind two doors read by flashlight or not at
+    # all); a blackout drops the whole room back to the two flames.
+    sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(5 * TILE + 16, 10 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(11 * TILE + 16, 10 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(12 * TILE + 16, 5 * TILE + 16, "drop_bulb",
+                                 z=38))
     # A kerosene lamp on the counter is the backup for when the gas runs low.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 2,
                                  "kerosene_lamp"))
@@ -385,6 +405,17 @@ def build_barn():
     # Genset-electric main light on the main-floor north wall (the lantern +
     # candle are backup). (2026-07 interior pass.)
     sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # The 90% rule: the commune strung drop cords when they slept here --
+    # one over the workroom bench (Mara's journal corner), two down the
+    # dormitory floor. The chosen dark is the dormitory's SE corner.
+    sc.add_decoration(Decoration(12 * TILE + 16, 2 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(4 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(7 * TILE + 16, 10 * TILE + 0, "drop_bulb",
+                                 z=38))
     sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
     # Northern-MN lodge dressing: a mounted buck + trophy walleye on the

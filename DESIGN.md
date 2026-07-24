@@ -678,9 +678,15 @@ Built into the procedural draw layer (`scenes/base.py`,
     walls, and **`tools/light_audit.py`** is the design surface: it
     overlays every emitter's mechanical `lit_at` radius (filled), its
     visible pool (ring, in the fixture's colour), and cross-hatches
-    everywhere no radius reaches -- THE DARK as a reviewable shape. Run
-    it before and after placing any fixture; the dark places are chosen,
-    not left over. **The shop is the first audit-designed room:** lit on
+    everywhere no radius reaches -- THE DARK as a reviewable shape --
+    and prints COVERAGE (% of walkable floor inside a visible pool /
+    inside a mechanical radius). **The 90% rule (maintainer, 2026-07):
+    with every light on, at least 90% of a dim interior's walkable floor
+    sits inside a visible pool; the ~10% dark is chosen, not left over.**
+    All five `DIM_INTERIOR_SCENES` hold it (drop cords strung through
+    the roof beams are the workhorse), which is what makes a genset
+    blackout dramatic: a 90%-lit room falls back to its two flames. Run
+    the audit before and after placing any fixture. **The shop is the first audit-designed room:** lit on
     purpose at the counter (Hettie's kept bulb over the till, the warm
     kerosene accent inside its cold pool) and the east floor
     (`wall_lamp`); dark on purpose in the north aisle, the stove corner,

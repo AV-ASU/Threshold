@@ -559,6 +559,20 @@
 
 ## Lighting
 
+- **2026-07 — The 90% coverage rule + the five dim interiors relit.**
+  Maintainer mandate: with every light on, >=90% of an indoor room's
+  walkable floor sits inside a visible pool; the ~10% dark is chosen.
+  `tools/light_audit.py` now MEASURES it (walkable-floor coverage %,
+  pool + mechanical, printed on the sheet and stdout, cone-aware), and
+  all five `DIM_INTERIOR_SCENES` were relit to the target (shop 92 /
+  church 91 / barn 90 / schoolhouse 90 / sheriff's office 90) with
+  ceiling `drop_bulb` cords as the workhorse (the maintainer's
+  ceiling-source call: textured, never sourceless -- the light-security
+  verbs need findable fixtures). The bulb's VISIBLE pool widened to 108
+  (a bare bulb floods a room) while its mechanical `_LIGHT_KINDS`
+  radius stayed 58, so stealth cover didn't move. Chosen darks: the
+  shop pantry, the church's far nave corners, the barn's SE dormitory
+  corner, the school's piled-desks corner, the cell's inner corner.
 - **2026-07 — The genset power link, first slice (TODO #21
   light-security).** Electric light is LIVE state now: the ELECTRIC
   kinds (`Scene._ELECTRIC_KINDS`) emit only while their scene's power

@@ -126,6 +126,19 @@ def build_church():
     # Genset-electric main light on the nave's north wall by the chancel (the
     # altar candles are the devotion, not the wiring). (2026-07 interior pass.)
     sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    # The 90% rule: bulbs on drop cords down the nave roof (a poor parish
+    # wired once, decades back) + one in the vestry. The chosen dark is the
+    # nave's far corners past the pew banks.
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(4 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(8 * TILE + 0, 10 * TILE + 0, "drop_bulb",
+                                 z=38))
     # The parsonage's hunting-country dressing lives in the VESTRY (the
     # preacher's living quarters), not over the altar: a mounted buck on the
     # vestry's north wall. (The cobweb + desk lamp are added below.)
@@ -248,8 +261,12 @@ def build_sheriff_office():
     sc.add_furniture("bookshelf", [(4, 5), (5, 5)], w=58, h=18, seed=6)  # law books
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(1 * TILE + 20, 3 * TILE + 8, "washstand"))
-    # Genset-electric main light + a backup candle Vane keeps oiled.
+    # Genset-electric main light + a backup candle Vane keeps oiled, and a
+    # drop cord over the desk itself (the 90% rule: the lawman does not
+    # work his own files in the dark).
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 4 * TILE + 0, "drop_bulb",
+                                 z=42))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 8, "candle"))
     # Hunting-country office: a mounted buck + the trophy walleye over the desk
     # (N wall, the pair), the calendar of months he stopped reporting (stopped
@@ -272,6 +289,8 @@ def build_sheriff_office():
                                  seed=9))
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 10 * TILE + 24, "lantern"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
 
     # ---- RECORDS (NE): the back file room ----
     # The case board of the disappeared Vane can't file on (polaroid wall), the
@@ -285,8 +304,11 @@ def build_sheriff_office():
     sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # Genset light for the file room.
+    # Genset light for the file room + a drop cord over the filing table's
+    # east end (the 90% rule; the payphone corner reads).
     sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 16, "wall_lamp"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 3 * TILE + 16, "drop_bulb",
+                                 z=38))
     # Mara's booking slip, in the records-room filing table (a surface trail
     # beat; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not on Vane --
     # reachable whether he is alive, dead, or never spoken to (world-persistent;
@@ -305,6 +327,13 @@ def build_sheriff_office():
     sc.add_furniture("table", [(8, 8), (9, 8)], w=54, h=36)   # booking desk
     sc.add_furniture("chair", [(8, 9)], w=22, h=28)
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16, "wall_lamp"))
+    # Drop cords over the cell approach and the booking floor (the 90%
+    # rule): the law lights its own bars. The chosen dark is the cell's
+    # inner corner.
+    sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
+    sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "drop_bulb",
+                                 z=38))
     sc.add_decoration(Decoration(13 * TILE + 20, 10 * TILE + 24, "bloodstain",
                                  scale=1.4))
     sc.add_decoration(Decoration(14 * TILE + 26, 8 * TILE + 6, "cobweb",
