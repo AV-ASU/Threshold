@@ -139,6 +139,32 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The streets had way too much light (maintainer), and the claim
+  behind them was wrong.** The safe path shipped lit end to end on the stated
+  theory that the road's safety WAS its lamp coverage. It read like an airport
+  runway, and the theory did not survive being checked: the mouth can only
+  open within `LOST_EDGE_BAND` of a MAP EDGE, an arm's end is an EXIT (which
+  already beats a mouth), and a flank edge carries no asphalt near it. The
+  road is safe by its GEOMETRY, and a dark stretch in the middle of one is
+  safe too. Verified by walking every lane of every arm of every path scene
+  end to end at ev3 in the dark: 63 lanes, zero falls.
+  So the lamps came down to about a third (43 -> 13), and the survivors were
+  placed for what they TELL you rather than for coverage: one mast at the
+  junction, one at each arm's end, and a rare mid-run pole so a long arm is
+  not black end to end. A glow ahead in the dark now means a decision or a way
+  out. The junction pair became a single mast as well -- two facing masts read
+  as a lit gateway, and this is a county road.
+  The light still does real work (it keeps the verge's dark off the asphalt at
+  the rim, it makes you visible to anything hunting, and it dies with the
+  gensets), so the blackout beat is unchanged. `tests/flow.py` §34's lighting
+  check was REPLACED rather than relaxed: instead of asserting every asphalt
+  tile sits in a pool, it now drives the walk described above and separately
+  asserts the lamps stay sparse. The old check would have passed a road three
+  times overlit; the new one fails a road that is actually unsafe. Corrected
+  the overstated claim in `DESIGN.md` §14, `CLAUDE.md`, `NARRATIVE.md` §5 and
+  the module docstring, all of which had stated lamp coverage as the
+  mechanism.
+
 - **2026-07 -- THE SAFE PATH: the lit spine (`TODO.md` #26 step 1,
   `DESIGN.md` §14).** The middle of the three layers, and the last one
   missing after the mouth closed the loop. The maintainer asked for "safe

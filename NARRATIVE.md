@@ -276,10 +276,10 @@ never predation.
   crosses on the planks. They are the one part of the outdoors that is
   exactly what it looks like. **Nothing on a lit road lies to you**, and
   every local knows to stay on them without knowing why (§4, Garrick); the
-  ones who walked off them are the ones who came out somewhere else. What
-  keeps a road honest is the light on it, not the asphalt, which is the
-  quiet joke of the place: the town's safety runs on gasoline, and the
-  gensets are not new.
+  ones who walked off them are the ones who came out somewhere else. The
+  county lamps along them are sparse and far apart, marking the junctions
+  and the turnings and leaving long dark stretches between, and they run on
+  the same gasoline everything else in town runs on now.
 - **The in-between.** The dark fields on the far side of the world's
   edge: a corn one, a forest one, a road one, each holding a single lit
   place (a crop circle around a cold camp, a pond with lanterns across
@@ -636,12 +636,11 @@ purpose, and keep each one guarded where a guard exists.
   geometry ever lies** — a threat is never unmade by looking away. The
   way back always exists (guarded: `tests/flow.py` §32b). → §5,
   `DESIGN.md` §13
-- **A lit road never lies.** The same rule read from the other side:
-  the paved roads are safe for exactly as long as their lamps burn, so
-  the asphalt carries you where its signs say and the verge beside it
-  does not. The lamps run on the town's gensets, which makes a blackout
-  the one thing that can take the safety away (guarded:
-  `tests/flow.py` §34). → §5, `DESIGN.md` §14
+- **The road never lies.** The paved roads carry you where their signs
+  say, dark or lit, and the verge beside them does not. The lamps along
+  them are few and far between, and what they mark is where the road
+  decides or where it lets you off; they are not what makes it safe
+  (guarded: `tests/flow.py` §34). → §5, `DESIGN.md` §14
 - **The names stay off the page.** *Carcosa* / *the King in Yellow* /
   *the Yellow King* never appear in player-facing text; the SEAL
   ending's black stars + twin suns are the one unnamed reference

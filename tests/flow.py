@@ -30,6 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+import math
 import pygame
 pygame.init()
 pygame.display.set_mode((960, 540))
@@ -37,6 +38,15 @@ pygame.display.set_mode((960, 540))
 from systems.game import Game
 
 FAILS = []
+
+
+class _Keys(dict):
+    """A pygame key-state map that answers False for anything unset, so a
+    harness can drive `update_player` without building the full 512-entry
+    array (a plain dict raises KeyError on the sprint check)."""
+
+    def __missing__(self, _k):
+        return False
 
 
 def check(cond, msg):
@@ -3703,17 +3713,60 @@ def main():
           f"path: the road is {2*ROAD_HALF+1} lanes wide inside a "
           f"{2*(ROAD_HALF+SHOULDER)+1}-tile corridor")
 
-    # THE LIGHT IS THE SAFETY. Every asphalt tile of every path scene must sit
-    # inside a lamp pool, because an unlit stretch of safe path is a stretch
-    # the mouth reaches -- you would fall out of the world while walking the
-    # road the game taught you was the safe one.
+    # THE ROAD IS SAFE, and this is the assertion that says so. It is a WALK,
+    # not a lighting audit: every lane of every arm of every path scene is
+    # driven end to end at ev3 (full night) with the lamps sparse, and none of
+    # them may fall out of the world. An earlier version of this checked that
+    # every asphalt tile sat inside a lamp pool, on the theory that coverage
+    # WAS the safety -- it was not (the mouth only reaches a map edge, and an
+    # arm's end is an exit), and the theory cost the road three times the
+    # lamps it needed.
+    gw = new_game()
+    gw.save.set_arg("evidence", [{"name": f"pw_t{i}", "content": "x"}
+                                 for i in range(3)])
+    _wkeys = _Keys()
+    _wkeys[pygame.K_w] = True
+    _HEAD = {"n": -math.pi / 2, "s": math.pi / 2, "e": 0.0, "w": math.pi}
     for _k, _s in sorted(paths.items()):
-        unlit = [(tx, ty) for ty in range(_s.h) for tx in range(_s.w)
-                 if _s.floor[ty][tx] in ("P", "Y", "-")
-                 and not _s.lit_at(tx * _T + 16, ty * _T + 16)]
-        check(not unlit,
-              f"path: {_k}'s whole carriageway is lit "
-              + (f"({len(unlit)} DARK tiles, e.g. {unlit[:3]})" if unlit else ""))
+        fell, lanes = [], 0
+        for side in _s.arms:
+            hd = _HEAD[side]
+            for lane in range(-(ROAD_HALF + SHOULDER), ROAD_HALF + SHOULDER + 1):
+                gw.load_scene_now(_k)
+                gw.state = "playing"
+                gw.look.body = gw.look.aim = hd
+                gw.player.facing = (round(math.cos(hd)), round(math.sin(hd)))
+                jx, jy = _s.junction
+                if side in "ns":
+                    gw.player.x = (jx + lane) * _T + _T // 2
+                    gw.player.y = jy * _T + _T // 2
+                else:
+                    gw.player.x = jx * _T + _T // 2
+                    gw.player.y = (jy + lane) * _T + _T // 2
+                lanes += 1
+                for _ in range(900):
+                    gw.update_player(1 / 60.0, _wkeys)
+                    if gw.scene.key != _k:
+                        break
+                    if _s.find_exit_at(gw.player.x, gw.player.y,
+                                       facing=gw.player.facing):
+                        break
+                if gw.scene.key.startswith("lost_"):
+                    fell.append((side, lane))
+        check(not fell,
+              f"path: {_k} walks safe in the dark, {lanes} lanes of road at "
+              f"ev3" + (f" -- FELL on {fell[:3]}" if fell else ""))
+
+    # AND THE LIGHT IS SPARSE. It marks the junction and the ways out; it does
+    # not carpet the road (maintainer: "the streets have way too much light").
+    for _k, _s in sorted(paths.items()):
+        lamps = [d for d in _s.decorations
+                 if getattr(d, "kind", "") == "street_lamp"]
+        road_len = sum(1 for ty in range(_s.h) for tx in range(_s.w)
+                       if _s.floor[ty][tx] in ("Y", "-"))
+        check(len(lamps) <= max(4, road_len // 8),
+              f"path: {_k} is lit sparsely ({len(lamps)} masts over "
+              f"{road_len} tiles of centre lane)")
 
     # EVERY SIDE IS A MOUTH, and the biome matches the verge you pushed
     # through (never corn on one side, pine on the other).

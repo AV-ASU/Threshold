@@ -8,15 +8,21 @@ look away. Garrick has been saying it since 2026-06: *"Stay on the roads.
 People who go off the roads come out wrong-side of where they went in."* This
 module is that line made into level geometry.
 
-**The road is safe because it is LIT, not because it is a road.** The lamps
-are `yard_light` poles on the shoulders, close enough that their pools overlap
-into one unbroken band of light down the carriageway, and light gates the
-mouth (`Game._tick_lost_edge`): a lit edge is a wall. So the paving and the
-verge are not decoration, they are the rule. Walk the crown of the road and
-the world cannot take you. Step off the shoulder, past the last pole, into the
-dark grass at the scene's flank, and it can. The lamps run on the town's
-gensets (`yard_light` is in `Scene._ELECTRIC_KINDS`), which means a blackout
-does not merely dim the road, it opens it.
+**The road is safe by its GEOMETRY.** Walk the asphalt anywhere, at any hour,
+at any evidence count, and the world cannot take you. That is not lamp
+coverage doing the work, it is the shape of the thing: the mouth can only open
+within `LOST_EDGE_BAND` of a map edge, an arm's end is an EXIT (and an exit
+always beats a mouth, `Game._tick_lost_edge`), and a flank edge has no asphalt
+anywhere near it. Step off the shoulder into the dark grass at a flank and it
+lets go exactly like any other verge. So the rule the player learns is simple
+and true: **the road carries you on, everything beside it does not.**
+
+The LAMPS are therefore not the safety, and there are deliberately few of them
+(see the lighting note below). They still do real work -- they are what keeps
+the verge's dark off the asphalt at the rim, and standing under one makes you
+visible to anything hunting, since stealth reads the same `Scene.lit_at`. And
+being ELECTRIC (`street_lamp` is in `Scene._ELECTRIC_KINDS`) they go out with
+the gensets, so a blackout takes even that away.
 
 **Shapes.** A path scene is built from ARMS -- a subset of "nesw" -- laid out
 around one junction at the scene's centre:
@@ -46,8 +52,9 @@ from entities.decoration import Decoration
 ROAD_HALF = 2        # asphalt half-width -> a 5-tile carriageway
 SHOULDER = 2         # gravel shoulder each side -> a 9-tile corridor
 LAMP_OFF = ROAD_HALF + 1             # lamp masts stand just off the asphalt
-LAMP_STEP = 4        # tiles between stations; poles ALTERNATE sides, so the
-                     # light reads as a rhythm rather than a colonnade
+LAMP_STEP = 20       # tiles between mid-run stations. DELIBERATELY sparse
+                     # (maintainer: "the streets have way too much light"):
+                     # see the lighting note below.
 RIVER_BANK = 3       # tiles of open bank kept clear either side of the water,
                      # so the river is SEEN from the road instead of buried
                      # behind the verge growth
@@ -58,13 +65,25 @@ VERGE = 10           # how deep the verge growth reaches in from the map edge.
                      # and, worse, as safe ground. The growth thins as it nears
                      # the road, so the gradient does the work.
 
-# LAMP_OFF/LAMP_STEP are not taste, they are the SAFETY MARGIN. `street_lamp`
-# gates as lit out to 150px (Scene._LIGHT_KINDS); a mast LAMP_OFF tiles off the
-# centreline reaches sqrt(150^2 - (32*LAMP_OFF)^2) px along the road at the far
-# kerb, so the stations have to be closer together than twice that or the road
-# grows dark gaps -- and a dark gap in a safe path is a hole you fall out of the
-# world through. These values were swept, not guessed, and tests/flow.py §34
-# fails if any asphalt tile in any path scene is unlit.
+# ---- WHERE THE LIGHT GOES, and why there is so little of it ------------
+# The first cut lit the carriageway end to end, on the theory that the road's
+# safety WAS its lamp coverage. It read like an airport runway, and the theory
+# was wrong besides: the mouth can only open within LOST_EDGE_BAND of a map
+# edge, an arm's end is an EXIT (which always beats a mouth), and a flank edge
+# has no asphalt near it. So the road is safe by its GEOMETRY, and a dark
+# stretch in the middle of one is safe too.
+#
+# That frees the lamps to do the job they are actually good at, which is to
+# MEAN something. What survives is a station at the junction and one at each
+# arm's end -- so a glow ahead in the dark tells you there is a decision or a
+# way out there -- plus a rare mid-run pole every LAMP_STEP tiles so a long
+# arm is not pitch black from end to end. Between them the road is dark and
+# you walk it faster.
+#
+# The light still does real work: it is what keeps the verge's dark off the
+# asphalt at the rim, it makes you VISIBLE to anything hunting (stealth reads
+# the same `lit_at`), and because `street_lamp` is an ELECTRIC fixture a
+# genset blackout takes even these away.
 
 _AXIS = {"n": (0, -1), "s": (0, 1), "e": (1, 0), "w": (-1, 0)}
 # What a flank's TREELINE is planted with, and therefore which lost space its
@@ -359,23 +378,21 @@ def _lamp_stations(sc, w, h, cx, cy, arms):
     """(tx, ty, side) for each lamp mast: masts stand just off the asphalt,
     alternating flanks as they march out along each arm.
 
-    TWO stations are placed unconditionally rather than left to the stride,
-    because both were dark in the first cut and both are the worst possible
-    places for a hole in the light:
+    THE LIGHT IS INFORMATION, not coverage. Two stations are placed for what
+    they TELL you, and the mid-run stride is deliberately too long to join
+    them up:
 
-    * THE JUNCTION, lit from both flanks. It is the one spot every arm's run
-      of poles marches AWAY from, so a plain stride leaves the crossing --
-      where you stand deciding which way to go -- as the darkest tile around.
-    * EACH ARM'S FAR END, at the map edge. That is the tile you walk out on,
-      and an unlit one means the last step of a safe path is a step into a
-      lost space instead of the next scene.
+    * THE JUNCTION, on ONE flank. Standing in the dark further down an arm, a
+      glow ahead means the place where the road decides. (One pole, not the
+      pair the first cut used -- two facing masts read as a lit gateway, and
+      this is a county road, not an entrance.)
+    * EACH ARM'S FAR END, at the map edge. A second glow, further off, means
+      a way on. Between the two the road is dark and you walk it faster.
     """
     out = []
-    for off in (LAMP_OFF, -LAMP_OFF):
-        # the junction, lit from both sides
-        vertical = "n" in arms or "s" in arms
-        out.append((cx + (off if vertical else 0),
-                    cy + (0 if vertical else off), "*"))
+    vertical = "n" in arms or "s" in arms
+    out.append((cx + (LAMP_OFF if vertical else 0),
+                cy + (0 if vertical else LAMP_OFF), "*"))
     flip = 0
     for side in sorted(arms):
         dx, dy = _AXIS[side]

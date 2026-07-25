@@ -227,13 +227,17 @@ it renders the procedural sprites to a labelled PNG strip.
     ARMS (a subset of `"nesw"` around one centre junction): two opposite =
     an **I**, two adjacent = an **L**, three = a **T**. `build_path` lays the
     surface, lamps, verge, exits and mouths from that alone. **The road is
-    safe because it is LIT** — §13's mouth only opens on dark unlit ground,
-    so lamps covering the asphalt end to end make the road immune while the
-    verge beside it lets go exactly like any flank. `LAMP_OFF`/`LAMP_STEP`
-    are a SAFETY MARGIN, swept until no road tile is unlit and guarded by
-    `tests/flow.py` §34; `street_lamp` (a new `SOLID_PROPS` volume, in BOTH
-    light tables and in `_ELECTRIC_KINDS`) is the fixture, so a genset
-    blackout OPENS the path rather than just dimming it. Arms paint in two
+    safe by its GEOMETRY, not by its lamps** — §13's mouth only reaches a MAP
+    EDGE, an arm's end is an exit (and `_tick_lost_edge` refuses on an exit
+    tile), and a flank edge carries no asphalt; so the asphalt is safe
+    everywhere while the verge beside it lets go like any flank. Guarded by
+    `tests/flow.py` §34 as a WALK (every lane of every arm at ev3, none may
+    fall). The LAMPS are deliberately SPARSE (~a third of the first cut,
+    which read as a runway): one mast at the junction, one per arm end, a
+    rare mid-run pole — light as information, so a glow ahead means a
+    decision or a way out. `street_lamp` (a new `SOLID_PROPS` volume, in BOTH
+    light tables and in `_ELECTRIC_KINDS`) still gates stealth cover and dies
+    with the gensets. Arms paint in two
     passes (all gravel, then all asphalt) so a junction is surfaced, not
     quartered; the dashed centre lane (`"Y"` N-S, `"-"` E-W — two floor chars
     because tiles cache BY CHAR) stops at the junction box. Every side is a

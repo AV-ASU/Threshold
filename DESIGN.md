@@ -1902,27 +1902,34 @@ asphalt moves when you look away. It is Garrick's standing advice made into
 level geometry: *"Stay on the roads. People who go off the roads come out
 wrong-side of where they went in."*
 
-### The road is safe because it is LIT
+### The road is safe by its GEOMETRY, and the light is sparse
 
-This is the whole design, and it is why the layer needed no new rule. §13's
-mouth only opens where the ground is dark and unlit, so a road whose lamps
-cover it end to end is a road the world cannot take you off. The paving, the
-shoulders and the verge are therefore not dressing, they are the mechanism:
+Walk the asphalt anywhere, at any hour, at any evidence count, and the world
+cannot take you. That is the shape of the thing rather than the lamps: §13's
+mouth can only open within `LOST_EDGE_BAND` of a MAP EDGE, an arm's end is an
+EXIT (and `Game._tick_lost_edge` refuses on an exit tile), and a flank edge
+has no asphalt anywhere near it. Step off the shoulder into the dark grass at
+a flank and it lets go like any other verge. So the rule the player learns is
+short and true: **the road carries you on, everything beside it does not.**
 
-* **On the crown of the road** you are safe, always, at any evidence count.
-* **Off the shoulder, past the last pole**, the verge is as dark as any other
-  flank and lets go exactly like one.
-* **The lamps are on the town's gensets** (`street_lamp` is in
-  `Scene._ELECTRIC_KINDS`), so a blackout does not merely dim the safe path,
-  it OPENS it. That is the only way the layer's promise can be taken away,
-  and it is deliberate.
+`tests/flow.py` §34 asserts this as a WALK -- every lane of every arm of
+every path scene, driven end to end at ev3 with the lamps sparse, none of
+which may fall out of the world.
 
-`street_lamp` (`rendering/props.py`) is the fixture: the same cold
-mercury-vapor head the town hangs in its yards, up a tall galvanized mast
-with a long gooseneck over the carriageway and a poured footing. It gates as
-lit out to 150px, and `LAMP_OFF` / `LAMP_STEP` in `safe_path.py` are a
-SAFETY MARGIN rather than a look -- they were swept until no asphalt tile in
-any path scene was unlit, and `tests/flow.py` §34 fails if one ever is.
+The LAMPS are therefore not the safety, and there are deliberately few (about
+a third of the first cut, which lit the carriageway end to end and read like
+an airport runway). What survives is placed for what it TELLS you: one mast
+at the junction, one at each arm's end, and a rare mid-run pole so a long arm
+is not black from end to end. A glow ahead in the dark means a decision or a
+way out; between them the road is dark and you walk it faster.
+
+The light still does real work. It keeps the verge's dark off the asphalt at
+the rim, and standing under a mast makes you VISIBLE to anything hunting
+(stealth reads the same `Scene.lit_at`). Being ELECTRIC (`street_lamp` is in
+`Scene._ELECTRIC_KINDS`) it goes out with the gensets, so a blackout takes
+even that away. `street_lamp` (`rendering/props.py`) is the fixture: the same
+cold mercury-vapor head the town hangs in its yards, up a tall galvanized
+mast with a long gooseneck over the carriageway and a poured footing.
 
 ### Shapes: I, L and T
 

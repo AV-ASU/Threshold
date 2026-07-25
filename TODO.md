@@ -433,27 +433,74 @@ mouth only opens on dark ground), and the river both seen and crossed.
 Shipping network: `country_lane` (T) / `river_road` (I) / `river_bend` (L).
 So two of the three layers exist. The missing one is the YARD.
 
-**THE YARD COUNT (the maintainer's question, audited 2026-07).** Brimley has
-**seven enterable buildings**, and their doors group cleanly by the street
-they front, so the answer is **four yards, not seven** -- plus the Lodge's
-existing one, **five in all**:
+**THE YARDS (maintainer: "I want each house to have its own yard").** Brimley
+has **seven enterable buildings**, so **seven yards**, one each, plus the
+Lodge's existing one: church, barn, shop, schoolhouse, sheriff's office, the
+abandoned farmhouse, Toby's house. (An earlier pass proposed grouping the
+three facing PAIRS into shared yards; overruled -- a yard is a household's
+own ground, and sharing one flattens exactly the thing the layer exists to
+say.)
 
-| yard | holds | frontage |
-|---|---|---|
-| north | church (door E) + barn (door W) | face each other across the west spine, rows 8-12 |
-| main street | shop (door S) + schoolhouse (door S) | side by side on the E-W drag, rows 18-22 |
-| south | sheriff's office (door E) + farmhouse (door W) | face each other across the spine, rows 44-48 |
-| east | Toby's house (door N) | alone on the east bank, its own access road |
-| (lodge) | the Arcadia + the woodshed | `lodge_yard`, already built |
+**Who has a doorstep and who does not (audited).** Hettie stands at the shop,
+Vane at his office, Crane at the church, Toby at his house. **Mrs. Calder,
+Royce and Garrick stand on open ground with no building at all**, and Old
+Pell loiters at the schoolhouse step, which is not his (he is the
+`vanish=False` homebody precisely because that room is empty).
 
-A yard holds a building's own ground -- its porch, its fence, its junk -- and
-two buildings that face each other across a street share that street, not
-their yards; but at this scale a facing pair reads as one place and splitting
-it would buy four extra loads for nothing. Toby's house is the one that
-genuinely stands alone.
+**On filling the empty three with them:** the maintainer's "we can put people
+without houses into some empty ones" is right in principle but the three
+empty buildings are the wrong three. The **schoolhouse** and the **barn** are
+where the congregation bedded down before they went below (NARRATIVE §3/§4),
+and their cobwebbed emptiness is a story beat the player is meant to walk
+into; the **farmhouse** is abandoned in its own name. Moving locals in
+overwrites all three. So: **add three small houses** for Calder, Royce and
+Garrick instead. A corn town has more than seven buildings anyway, the yard
+layer wants more to do, and an empty yard that reads empty is one of the best
+details the layer can carry.
 
-**OPEN, in build order:** (1) the **YARDS**, per the table above: the layer
-that hangs buildings off the path, generalising what `lodge_yard` does by
+**WHAT GOES IN A YARD** (the vocabulary; a yard picks from it, it does not
+get all of it). The point of the layer is that you learn a household without
+talking to anyone.
+
+- **The genset, one per occupied yard, and its state IS the household's.**
+  The grid died with the seal and the town runs on gasoline (NARRATIVE §5).
+  Running: a warm work-bulb, a fuel can standing beside it. Dead: cold, the
+  can empty on its side. One glance tells you if anyone is still keeping the
+  place. It is already a prop, it is a light source, a noise source, and it
+  makes the blackout (#21) land per house instead of per scene.
+- **One interrupted task, and only one.** The seal was January 15; it is
+  April. Firewood half split with the axe still in the round. A car up on
+  blocks with one wheel never put back. Laundry frozen on the line since
+  winter. Storm windows half taken down. A bed turned over and never planted.
+  Three months of stasis said without a line of dialogue, different per
+  household.
+- **The mail.** Deliveries stopped with the fold. A box out at the road,
+  which is exactly where the yard meets the safe path: stuffed with January's
+  last delivery and never emptied, or hanging open and empty since. The
+  cheapest legible piece of the whole fiction, sitting on the layer seam.
+- **An occupancy tell readable FROM THE ROAD**, before you commit to the
+  path: the path itself worn through the dead grass or grown over; a lit
+  window against the dark (worth much more now the streets are barely lit);
+  curtains open or drawn; a dog chain with no dog.
+- **The car that will not start.** Everyone drove in and nothing leaves
+  (NARRATIVE §1). How it is parked is the characterisation: squared away by
+  someone who gave up early, or nosed at the road with the driver's door
+  still open by someone who tried and walked back.
+- **A boundary that is not a wall**: wire on wooden posts, a hedge, a line of
+  stones, or just the line where the mowing stopped. Mechanically this is
+  where the mouth is, so it has to READ as an edge and be pushed through.
+- **A step.** A stoop, a porch, two boards. Something between the ground and
+  the door so going in reads as arriving.
+- **The wrong yard**, for any house a newcomer took: the same vocabulary,
+  subtly off. Tools stacked too neatly. A bed dug too deep and the wrong
+  shape. A husk thing on the porch rail. The door-motif chalked on the siding
+  where the weather has nearly taken it.
+
+**The minimum for any yard**: a boundary, a step, one interrupted task, and
+one occupancy tell. Everything else is per household.
+
+**OPEN, in build order:** (1) the **YARDS**, per the spec above: seven of
+them plus three new small houses, generalising what `lodge_yard` does by
 hand. Each yard's non-road edges are mouths like a path's flanks; (2) the
 rest of the **dark manipulation layer**: the observer-dependent reshuffle
 landed, but the **asymmetric return** (the way back is not the way you came)
