@@ -30,6 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+import math
 import pygame
 pygame.init()
 pygame.display.set_mode((960, 540))
@@ -37,6 +38,15 @@ pygame.display.set_mode((960, 540))
 from systems.game import Game
 
 FAILS = []
+
+
+class _Keys(dict):
+    """A pygame key-state map that answers False for anything unset, so a
+    harness can drive `update_player` without building the full 512-entry
+    array (a plain dict raises KeyError on the sprint check)."""
+
+    def __missing__(self, _k):
+        return False
 
 
 def check(cond, msg):
@@ -725,8 +735,13 @@ def main():
     _bt, _bb = _road._render_band
     _north_ok = all(_bt <= _road.render_row(_ty) < _bb
                     for _ty in range(-60, _bt))
-    _band_clean = all("d" not in "".join(_road.floor[_r])
-                      and "X" not in "".join(_road.objects[_r])
+    # A band row must carry no LANDMARK: not the E-W dirt crossing (which is a
+    # FULL-WIDTH dirt row) and not the dead car's footprint. Checked as those
+    # two things rather than "contains no 'd'" -- since the road took the safe
+    # path's cross-section its shoulders are dirt on every row, so the old
+    # proxy failed on a scene that was still correct.
+    _band_clean = all(set("".join(_road.floor[_r])) != {"d"}
+                      and not (set("xX") & set("".join(_road.objects[_r])))
                       for _r in range(_bt, _bb))
     check(_north_ok and _band_clean,
           "geo: the northern view only ever shows the landmark-free band "
@@ -3555,6 +3570,303 @@ def main():
     gdl.save.new()
     check(not gdl.save.arg("dead_locals"),
           "dead-locals: New Game clears the ledger")
+
+    # --- 32b. THE MOUTH: the lost-space loop closes (TODO #26) -----------
+    # interior -> yard -> push through the treeline in the dark -> fall ->
+    # land on the lit island -> leave its glow -> hunt the light -> climb
+    # back out into the yard a few strides from where you fell. Every gate
+    # below is the one that makes this a CONSEQUENCE of the evidence ladder
+    # rather than a door: light refuses, dark lets go.
+    from systems.config import (LOST_EDGE_GLOOM, LOST_EDGE_BAND,
+                                LOST_EDGE_BACKOFF)
+    RIVER_SEEN_MAX = 6      # tiles: the water must be visible from the road
+    from scenes.base import TILE as _T
+
+    def _press(g, vx, vy):
+        """Drive one edge check with a movement intent, as update_player does."""
+        return g._tick_lost_edge(vx, vy)
+
+    gme = new_game()
+    gme.load_scene_now("lodge_yard")
+    ready(gme)
+    yard = gme.scene
+    check(yard.lost_edges == {"n": "lost_forest", "s": "lost_forest"},
+          "mouth: the yard's treeline (N/S) opens on the lost forest")
+    check(not yard.wrap_y and yard.wrap_x,
+          "mouth: it sits on the NON-wrapping axis (the fold stays a fold)")
+    # A wrapping axis is refused outright -- a seam has no far side.
+    try:
+        yard.set_lost_edge("e", "lost_forest")
+        check(False, "mouth: a wrapping edge is refused")
+    except ValueError:
+        check(True, "mouth: a wrapping edge is refused")
+
+    # Stand him ON the north bound, pressing north, at ev0: full daylight.
+    def _at_edge(g):
+        g.player.x = 12 * _T + _T // 2
+        g.player.y = LOST_EDGE_BAND * _T * 0.5
+    _at_edge(gme)
+    check(gme.scene_gloom() == 0,
+          "mouth: at ev0 the surface is full daylight")
+    check(not _press(gme, 0.0, -60.0) and gme.scene.key == "lodge_yard",
+          "mouth: a LIT edge is a wall -- daylight never lets go")
+
+    # Two pieces of Mara's trail: the storm reaches rot stage 2 and the
+    # world is dark enough that its edge stops holding.
+    gme.save.set_arg("evidence", [{"name": f"me_t{i}", "content": "x"}
+                                  for i in range(2)])
+    check(gme.scene_gloom() >= LOST_EDGE_GLOOM,
+          "mouth: two clues in, the storm darkens the yard past the gate")
+    _at_edge(gme)
+    check(not _press(gme, 0.0, 60.0),
+          "mouth: pressing INWARD off the north edge never falls")
+    _at_edge(gme)
+    gme._flashlight_lit = lambda: True
+    check(not _press(gme, 0.0, -60.0) and gme.scene.key == "lodge_yard",
+          "mouth: a lit SPOT in a dark world still refuses (light protects)")
+    gme._flashlight_lit = lambda: False
+    _at_edge(gme)
+    fx, fy = gme.player.x, gme.player.y
+    check(_press(gme, 0.0, -60.0), "mouth: in the dark, the world lets go")
+    check(gme.scene.key == "lost_forest",
+          "mouth: the treeline drops you in the FOREST field, not a corn one")
+    check(gme._lost_return is not None
+          and gme._lost_return[0] == "lodge_yard"
+          and abs(gme._lost_return[2] - (fy + LOST_EDGE_BACKOFF * _T)) < 1.0,
+          "mouth: the return anchor is set back INTO the yard, not on the edge")
+
+    # You land in the island's light and there is no way out while you stand
+    # in it; leaving the glow starts the hunt.
+    lost = gme.scene
+    lost.on_update_fn(gme, lost, 0.1)
+    check(getattr(lost, "_exit_light", None) is None,
+          "mouth: standing in the island's glow, there is no way out")
+    lost._drop_exit()
+    gme.player.x = lost._fx + 40 * _T
+    gme.player.y = lost._fy
+    lost.on_update_fn(gme, lost, 0.1)
+    ex = getattr(lost, "_exit_light", None)
+    check(ex is not None, "mouth: leaving the glow raises the hunted light")
+
+    # Reach it and you climb out where you fell -- not into the next field.
+    if ex is not None:
+        gme.player.x, gme.player.y = ex.x, ex.y
+        lost.on_update_fn(gme, lost, 0.1)
+    check(gme.scene.key == "lodge_yard",
+          "mouth: reaching the light climbs you back into the world you lost")
+    check(gme._lost_return is None, "mouth: the anchor is spent, not reused")
+    check(abs(gme.player.y - (fy + LOST_EDGE_BACKOFF * _T)) < 2.0 * _T,
+          "mouth: you come up a few strides in from the edge that took you")
+    check(not _press(gme, 0.0, -60.0),
+          "mouth: the return lands clear of the mouth (no instant re-swallow)")
+
+    # No anchor (a direct load, a preview) still chains field to field, so
+    # the lost spaces stay walkable on their own.
+    gml = new_game()
+    gml.load_scene_now("lost_corn")
+    ready(gml)
+    gml._lost_return = None
+    lc = gml.scene
+    gml.player.x = lc._fx + 40 * _T
+    gml.player.y = lc._fy
+    lc.on_update_fn(gml, lc, 0.1)
+    exc = getattr(lc, "_exit_light", None)
+    if exc is not None:
+        gml.player.x, gml.player.y = exc.x, exc.y
+        lc.on_update_fn(gml, lc, 0.1)
+    check(gml.scene.key == "lost_forest",
+          "mouth: with no anchor the fields still chain (preview stays usable)")
+
+    # And every OTHER scene is untouched: opting in is explicit. The set is
+    # frozen BY NAME so adding a mouth is a decision someone makes on purpose
+    # rather than a side effect of touching a scene builder.
+    from scenes import SCENE_BUILDERS as _SB_M, load_scene as _ls_m
+    _opted = []
+    for _k in sorted(_SB_M):
+        try:
+            _s = _ls_m(_k)
+        except Exception:
+            continue
+        if getattr(_s, "lost_edges", None):
+            _opted.append(_k)
+    check(_opted == ["country_lane", "gravel_road_north", "lodge_yard",
+                     "river_bend", "river_road"],
+          "mouth: only the yard and the safe paths open (" + ", ".join(_opted) + ")")
+
+    # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
+    # The layer's promise is mechanical, so every part of it is checked
+    # mechanically. If any of these go red the path is not safe, it just
+    # looks it.
+    from scenes.safe_path import (SafePath, shape_of, ROAD_HALF, SHOULDER,
+                                  LAMP_OFF)
+    paths = {}
+    for _k in sorted(_SB_M):
+        try:
+            _s = _ls_m(_k)
+        except Exception:
+            continue
+        if isinstance(_s, SafePath):
+            paths[_k] = _s
+    check(sorted(paths) == ["country_lane", "gravel_road_north", "river_bend",
+                            "river_road"],
+          "path: the network is " + ", ".join(sorted(paths)))
+    # The shape VOCABULARY is actually used -- not four straights.
+    shapes = sorted(shape_of(p.arms) for p in paths.values())
+    check(set(shapes) == {"I", "L", "T"},
+          f"path: the network ships an I, an L and a T (got {shapes})")
+
+    # NOT TOO THIN (maintainer). A carriageway plus both shoulders.
+    check(2 * ROAD_HALF + 1 >= 5 and SHOULDER >= 2,
+          f"path: the road is {2*ROAD_HALF+1} lanes wide inside a "
+          f"{2*(ROAD_HALF+SHOULDER)+1}-tile corridor")
+
+    # THE ROAD IS SAFE, and this is the assertion that says so. It is a WALK,
+    # not a lighting audit: every lane of every arm of every path scene is
+    # driven end to end at ev3 (full night) with the lamps sparse, and none of
+    # them may fall out of the world. An earlier version of this checked that
+    # every asphalt tile sat inside a lamp pool, on the theory that coverage
+    # WAS the safety -- it was not (the mouth only reaches a map edge, and an
+    # arm's end is an exit), and the theory cost the road three times the
+    # lamps it needed.
+    gw = new_game()
+    gw.save.set_arg("evidence", [{"name": f"pw_t{i}", "content": "x"}
+                                 for i in range(3)])
+    _wkeys = _Keys()
+    _wkeys[pygame.K_w] = True
+    _HEAD = {"n": -math.pi / 2, "s": math.pi / 2, "e": 0.0, "w": math.pi}
+    for _k, _s in sorted(paths.items()):
+        fell, lanes = [], 0
+        for side in _s.arms:
+            hd = _HEAD[side]
+            for lane in range(-(ROAD_HALF + SHOULDER), ROAD_HALF + SHOULDER + 1):
+                gw.load_scene_now(_k)
+                gw.state = "playing"
+                gw.look.body = gw.look.aim = hd
+                gw.player.facing = (round(math.cos(hd)), round(math.sin(hd)))
+                jx, jy = _s.junction
+                if side in "ns":
+                    gw.player.x = (jx + lane) * _T + _T // 2
+                    gw.player.y = jy * _T + _T // 2
+                else:
+                    gw.player.x = jx * _T + _T // 2
+                    gw.player.y = (jy + lane) * _T + _T // 2
+                lanes += 1
+                for _ in range(900):
+                    gw.update_player(1 / 60.0, _wkeys)
+                    if gw.scene.key != _k:
+                        break
+                    if _s.find_exit_at(gw.player.x, gw.player.y,
+                                       facing=gw.player.facing):
+                        break
+                if gw.scene.key.startswith("lost_"):
+                    fell.append((side, lane))
+        check(not fell,
+              f"path: {_k} walks safe in the dark, {lanes} lanes of road at "
+              f"ev3" + (f" -- FELL on {fell[:3]}" if fell else ""))
+
+    # AND THE LIGHT IS SPARSE. It marks the junction and the ways out; it does
+    # not carpet the road (maintainer: "the streets have way too much light").
+    for _k, _s in sorted(paths.items()):
+        lamps = [d for d in _s.decorations
+                 if getattr(d, "kind", "") == "street_lamp"]
+        road_len = sum(1 for ty in range(_s.h) for tx in range(_s.w)
+                       if _s.floor[ty][tx] in ("Y", "-"))
+        check(len(lamps) <= max(4, road_len // 4),
+              f"path: {_k} is lit sparsely ({len(lamps)} masts over "
+              f"{road_len} tiles of centre lane)")
+
+    # NO MAST STANDS IN THE ROAD. A lamp post on the carriageway is a thing
+    # you would swerve around in a car and walk into on foot, and it was the
+    # first thing the maintainer flagged. The junction pole is the trap: an
+    # offset along ONE axis is only clear of the road when the scene has no
+    # arm on the other, so on a T and an L it landed squarely in the cross.
+    for _k, _s in sorted(paths.items()):
+        in_road = [(int(d.x // _T), int(d.y // _T))
+                   for d in _s.decorations
+                   if getattr(d, "kind", "") == "street_lamp"
+                   and _s.floor[int(d.y // _T)][int(d.x // _T)] in ("P", "Y", "-")]
+        check(not in_road,
+              f"path: every {_k} mast stands off the carriageway"
+              + (f" -- IN THE ROAD at {in_road}" if in_road else ""))
+
+    # EVERY SIDE IS A MOUTH, and the biome matches the verge you pushed
+    # through (never corn on one side, pine on the other).
+    for _k, _s in sorted(paths.items()):
+        check(sorted(_s.lost_edges or {}) == ["e", "n", "s", "w"],
+              f"path: {_k} opens on a lost space from every side")
+
+    # THE ROAD ALWAYS WINS. An arm's edge carries both an exit and a mouth;
+    # standing on the asphalt there must take the exit, and standing on the
+    # grass beside it must not.
+    gp = new_game()
+    gp.save.set_arg("evidence", [{"name": f"pe_t{i}", "content": "x"}
+                                 for i in range(3)])
+    gp.load_scene_now("country_lane")
+    ready(gp)
+    lane = gp.scene
+    lcx, lcy = lane.junction
+    check(gp.scene_gloom() >= LOST_EDGE_GLOOM,
+          "path: at ev3 the lane is dark enough for its edges to open")
+    # off the shoulder, walking out west: the world lets go
+    gp.player.x = _T * 0.5
+    gp.player.y = (lcy + ROAD_HALF + SHOULDER + 4) * _T + _T // 2
+    check(_press(gp, -60.0, 0.0) and gp.scene.key.startswith("lost_"),
+          "path: walking out through the GRASS beside the road lets go")
+
+    # THE BLACKOUT. `street_lamp` is an ELECTRIC fixture, so a genset failure
+    # does not merely dim the safe path, it OPENS it: the lamps are the only
+    # thing holding the mouth shut. Tested here because it is the one place
+    # the layer's promise can be taken away from the player, and because it
+    # is also the only way to exercise the exit-beats-mouth rule -- with the
+    # lamps burning the road is lit and the gate refuses anyway.
+    gp.load_scene_now("country_lane")
+    ready(gp)
+    lane = gp.scene
+    gp._genset_down = {"country_lane": 30.0}
+    gp._tick_power(0.0)
+    check(lane.power_on is False, "path: a genset failure kills the lamps")
+    check(not lane.lit_at((lcx + 8) * _T + 16, lcy * _T + 16),
+          "path: with the lamps out the road itself goes dark")
+    # ON the asphalt at the west exit, unlit: the EXIT still wins.
+    gp.player.x, gp.player.y = _T * 0.5, lcy * _T + _T // 2
+    check(not _press(gp, -60.0, 0.0) and gp.scene.key == "country_lane",
+          "path: an exit tile is never a mouth, even blacked out")
+    # one tile off the asphalt, same dark edge: now it lets go.
+    gp.player.y = (lcy + ROAD_HALF + SHOULDER + 3) * _T + _T // 2
+    check(_press(gp, -60.0, 0.0) and gp.scene.key.startswith("lost_"),
+          "path: blacked out, the verge beside the road opens as ever")
+
+    # THE RIVER IS SEEN, and it is a barrier rather than a puddle.
+    rr = paths["river_road"]
+    water = [(tx, ty) for ty in range(rr.h) for tx in range(rr.w)
+             if rr.floor[ty][tx] == "~"]
+    check(len(water) > 100, f"path: the river runs the length of the run "
+                            f"({len(water)} water tiles)")
+    check(all(rr.is_solid_at(tx * _T + 16, ty * _T + 16) for tx, ty in water[:40]),
+          "path: the water blocks the body (you cannot walk the river)")
+    # and it is close enough to the road to actually be seen from it
+    near = min(abs(tx - rr.junction[0]) for tx, ty in water)
+    check(near <= ROAD_HALF + SHOULDER + RIVER_SEEN_MAX,
+          f"path: the water comes within {near} tiles of the centreline")
+
+    # THE BRIDGE IS A STRUCTURE, not a plank texture: the deck is railed on
+    # both exposed lips, and it carries the whole corridor across.
+    rb = paths["river_bend"]
+    deck = rb._bridge_tiles
+    check(len(deck) >= 2 * (ROAD_HALF + SHOULDER),
+          f"path: the bend's deck carries the full corridor ({len(deck)} tiles)")
+    rails = [d for d in rb.decorations if getattr(d, "kind", "") == "bridge_rail"]
+    # BOTH lips, checked by geometry rather than by a count: the deck is only
+    # as long as the river is wide, so a raw count says nothing. Every rail
+    # must sit off the deck's edge, and rails must exist on both sides of it.
+    _dc = sum(ty for _tx, ty in deck) / float(len(deck))
+    _above = [d for d in rails if d.y / _T < _dc]
+    _below = [d for d in rails if d.y / _T > _dc]
+    check(_above and _below,
+          f"path: the deck is railed on BOTH lips "
+          f"({len(_above)} upstream, {len(_below)} downstream)")
+    check(all(not rb.is_solid_at(tx * _T + 16, ty * _T + 16) for tx, ty in deck),
+          "path: you can actually walk the bridge")
 
     # --- 33. THE NAME STAYS OFF THE PAGE (Chambers, never quoted) --------
     # "Carcosa" / "the King in Yellow" / "the Yellow King" never appear in

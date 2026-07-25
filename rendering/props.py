@@ -11,7 +11,10 @@ falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 import math
 import random
 import pygame
-from rendering.solids import draw_solid, draw_box, draw_billboard, _shade
+from rendering.solids import (draw_solid, draw_box, draw_billboard,
+                              draw_log, _shade)
+from rendering.assemblies import ASSEMBLIES, variant
+from rendering.assembly import draw as _assembly_draw
 
 
 def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
@@ -787,66 +790,6 @@ def _draw_car_solid(surf, cam, deco):
     _round_wheel(surf, P, wbx, hW, r)             # near wheels (exposed)
     _round_wheel(surf, P, -wbx, hW, r)
     _lp(surf, P, (-hL + 3, -hW + 2, z1), (hL - 3, -hW + 2, z1), _shade(body["top"], 1.15), 1)
-
-
-def _draw_pickup_truck_solid(surf, cam, deco):
-    """A pickup as a real volume: a cab at the front (glassed), an OPEN bed
-    behind (recessed dark floor, side rails, a tailgate), four round wheels, a
-    grille + bumper + lamps at the nose. Faded farm-green paint."""
-    wx, wy = deco.x, deco.y
-    s = (getattr(deco, "scale", 1.0) or 1.0)
-    yaw = float(deco.kwargs.get("yaw", 0.0))
-    P = _vframe(cam, wx, wy, yaw)
-    L, W = 56 * s, 27 * s
-    hL, hW = L / 2, W / 2
-    z0, z1 = 5 * s, 13 * s
-    cf, cb = hL, 7 * s                             # cab spans nose -> x=7
-    cz1 = z1 + 13 * s
-    cW = W * 0.92
-    chW = cW / 2
-    r, wbx = 7 * s, hL * 0.62
-    body = {"top": (92, 100, 82), "side": (64, 72, 56), "dark": (40, 46, 34)}
-    cab = {"top": (74, 82, 66), "side": (52, 60, 46), "dark": (30, 36, 26)}
-    glass, glass_hi, chrome = (46, 58, 60), (96, 114, 118), (166, 170, 176)
-    _vehicle_shadow(surf, cam, wx, wy, L, W)
-    _round_wheel(surf, P, wbx, -hW, r)
-    _round_wheel(surf, P, -wbx, -hW, r)
-    _vbox(surf, cam, wx, wy, L, W, z0, z1, body, yaw=yaw)
-    ccx = (cf + cb) / 2
-    _vbox(surf, cam, wx + ccx * math.cos(yaw), wy + ccx * math.sin(yaw),
-          cf - cb, cW, z1, cz1, cab, yaw=yaw)
-    # OPEN bed behind the cab: recessed dark floor + side rails + tailgate
-    bf, bb = cb - 1 * s, -hL + 1
-    railz = z1 + 5 * s
-    _qp(surf, P, [(bb, -hW + 1, z1), (bf, -hW + 1, z1),
-                  (bf, hW - 1, z1), (bb, hW - 1, z1)], (28, 30, 24))     # bed floor
-    for ly in (-hW, hW):                                                 # side rails
-        _qp(surf, P, [(bb, ly, z1), (bf, ly, z1), (bf, ly, railz), (bb, ly, railz)],
-            body["side"] if ly > 0 else _shade(body["side"], 0.8))
-    _qp(surf, P, [(bb, -hW, z1), (bb, hW, z1), (bb, hW, railz), (bb, -hW, railz)],
-        body["dark"])                                                    # tailgate
-    _lp(surf, P, (bb, hW + 0.2, railz), (bf, hW + 0.2, railz), _shade(body["top"], 1.1), 1)
-    # cab glass: near side + windshield
-    ny = hW + 0.2
-    _qp(surf, P, [(cb + 2, chW + 0.2, z1 + 2), (cf - 3, chW + 0.2, z1 + 2),
-                  (cf - 3, chW + 0.2, cz1 - 2), (cb + 2, chW + 0.2, cz1 - 2)], glass)
-    _lp(surf, P, (cb + 2, chW + 0.3, cz1 - 2), (cf - 3, chW + 0.3, cz1 - 2), glass_hi, 1)
-    _qp(surf, P, [(cf, -chW, z1 + 2), (cf, chW, z1 + 2),
-                  (cf, chW, cz1 - 2), (cf, -chW, cz1 - 2)], glass)
-    # door seam + trim on the cab near side
-    _lp(surf, P, (cb + 3 * s, ny, z0 + 1), (cb + 3 * s, ny, z1), _shade(cab["dark"], 0.8), 1)
-    _lp(surf, P, (cb + 1, ny, z0 + 4 * s), (hL - 3, ny, z0 + 4 * s), _shade(body["side"], 1.3), 1)
-    # nose: bumper, grille, lamps
-    _qp(surf, P, [(hL, -hW, z0), (hL, hW, z0), (hL, hW, z0 + 4 * s), (hL, -hW, z0 + 4 * s)], chrome)
-    for ey in (-7 * s, -2.5 * s, 2.5 * s, 7 * s):
-        _lp(surf, P, (hL, ey, z0 + 5 * s), (hL, ey, z1 - 1 * s), _shade(body["dark"], 0.7), 1)
-    for ey in (-hW * 0.6, hW * 0.6):
-        hp = P(hL, ey, z1 - 2 * s)
-        pygame.draw.circle(surf, (230, 224, 188), (int(hp[0]), int(hp[1])), max(2, int(2.4 * s)))
-        tp = P(-hL, ey, railz - 2 * s)
-        pygame.draw.circle(surf, (178, 42, 38), (int(tp[0]), int(tp[1])), max(2, int(2 * s)))
-    _round_wheel(surf, P, wbx, hW, r)
-    _round_wheel(surf, P, -wbx, hW, r)
 
 
 # ---- The dead lots: abandoned rusted cars (2026-07) ----------------------
@@ -2195,49 +2138,6 @@ def _draw_kerosene_lamp_solid(surf, cam, deco):
                (255, 206, 96), (255, 244, 186))
 
 
-def _draw_lantern_solid(surf, cam, deco):
-    """A 19th-century iron lamppost: a vertical pole on the ground, a
-    cross-arm at the top, a square lantern hung from the arm. The town-square
-    fixture; under dark cult-rooms it's the only legible light."""
-    wx, wy = deco.x, deco.y
-    s = (getattr(deco, "scale", 1.0) or 1.0)
-    iron = (52, 52, 60)
-    iron_hi = (96, 96, 108)
-    # pole
-    pole_h = 30 * s
-    base = cam.project(wx, wy, 0)
-    top = cam.project(wx, wy, pole_h)
-    pygame.draw.line(surf, iron, base, top, max(2, int(2 * s)))
-    # cross-arm: a short horizontal beam to one side of the pole
-    arm_len = 6 * s
-    arm_ax = math.cos(cam.yaw + math.pi / 2)
-    arm_ay = math.sin(cam.yaw + math.pi / 2)
-    arm_end = cam.project(wx + arm_ax * arm_len, wy + arm_ay * arm_len, pole_h)
-    pygame.draw.line(surf, iron, top, arm_end, max(2, int(2 * s)))
-    # lantern body hung from the arm end -- a small box
-    lx = wx + arm_ax * arm_len
-    ly = wy + arm_ay * arm_len
-    box_h = 7 * s
-    box_w = 5 * s
-    lantern_pal = {"top": (60, 56, 50), "side": (38, 36, 40),
-                   "dark": (24, 22, 26)}
-    draw_box(surf, cam, lx, ly, box_w, box_w, box_h, lantern_pal)
-    # chain bit
-    hang_top = cam.project(lx, ly, pole_h)
-    hang_bot = cam.project(lx, ly, pole_h - 1 * s)
-    pygame.draw.line(surf, iron_hi, hang_top, hang_bot, 1)
-    # lit window: a small bright square on the lantern's near face
-    win_z = pole_h - 1.0 * s - box_h * 0.5
-    win = cam.project(lx, ly + box_w * 0.55, win_z)
-    ww = max(2, int(box_w * 0.5 * cam.scale))
-    wh = max(2, int(box_h * 0.55 * cam.scale))
-    pygame.draw.rect(surf, (255, 196, 120),
-                     (int(win[0] - ww / 2), int(win[1] - wh / 2), ww, wh))
-    pygame.draw.rect(surf, (255, 232, 180),
-                     (int(win[0] - ww / 4), int(win[1] - wh / 4),
-                      max(1, ww // 2), max(1, wh // 2)))
-
-
 def _draw_brazier_solid(surf, cam, deco):
     """A cult fire-bowl on an iron tripod: three splayed legs grounded in a
     triangle, a wide flat bowl set on top, the flame guttering above. Reads as
@@ -2768,6 +2668,246 @@ def _draw_neon_pylon_solid(surf, cam, deco):
            (255, 92, 98), (110, 20, 24), (255, 214, 218))
     banner(0, -22 * s, 66 * s, 13 * s, 0.11, (28, 44, 104), "GAS FOR LESS",
            (150, 212, 255), (28, 58, 110), (242, 250, 255))
+
+
+def _draw_mailbox_solid(surf, cam, deco):
+    """A rural roadside mailbox: a cedar post, a tin box, and the signal flag
+    on its flank. `yaw` points the box along the road it serves.
+
+    The single most legible piece of the fiction in a yard, and it sits
+    exactly on the layer seam where the yard meets the road (DESIGN.md §14).
+    Deliveries stopped with the fold, so `full=True` leaves a wedge of
+    January's last mail jammed in the mouth and `open=True` drops the door so
+    it hangs empty.
+
+    Everything is placed in WORLD space off the deco's own `yaw`. The first
+    cut derived the flag and the mouth from `cam.yaw`, which meant they swung
+    around the box as the camera turned and vanished entirely from two of the
+    four headings -- the flag IS the thing that says mailbox, so that made it
+    a grey lozenge on a stick (VISION: the four-facing rule applies to props,
+    not only to scenes)."""
+    wx, wy = deco.x, deco.y
+    s_ = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+    post = (86, 68, 46)
+    post_h = 24 * s_
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, post_h)
+    pygame.draw.line(surf, post, base, top, max(2, int(3.0 * s_)))
+    pygame.draw.line(surf, _shade(post, 1.35), base, top, 1)
+    # the box: a real tin volume, long along its own yaw
+    draw_box(surf, cam, wx, wy, 15.0 * s_, 8.5 * s_, 9.0 * s_,
+             {"top": (128, 130, 138), "side": (104, 106, 112),
+              "dark": (60, 62, 68)}, yaw=yaw)
+    # world axes of the box: `ax` runs along it, `bx` out of its flank
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    bxn, byn = -sa, ca
+    # THE FLAG, standing off the flank that faces the camera
+    side = 1.0 if _face_vis(cam, bxn, byn) else -1.0
+    fx = wx + bxn * side * 4.6 * s_
+    fy = wy + byn * side * 4.6 * s_
+    fa = cam.project(fx, fy, post_h + 1.0 * s_)
+    fb = cam.project(fx, fy, post_h + 13.0 * s_)
+    pygame.draw.line(surf, (150, 62, 48), fa, fb, max(2, int(2 * s_)))
+    pygame.draw.polygon(surf, (178, 80, 60), [
+        fb, (fb[0] + 6 * s_, fb[1] + 2 * s_), (fb[0], fb[1] + 5 * s_)])
+    # THE MOUTH at the box's road end, with its door down or its last delivery
+    mx, my = wx + ca * 7.4 * s_, wy + sa * 7.4 * s_
+    if kw.get("open"):
+        da = cam.project(mx, my, post_h + 1.0 * s_)
+        db = cam.project(mx + ca * 3.0 * s_, my + sa * 3.0 * s_,
+                         post_h - 5.0 * s_)
+        pygame.draw.line(surf, (60, 62, 68), da, db, max(2, int(3 * s_)))
+    elif kw.get("full"):
+        m = cam.project(mx, my, post_h + 4.5 * s_)
+        pygame.draw.polygon(surf, (150, 146, 132), [
+            (m[0] - 3 * s_, m[1] - 3 * s_), (m[0] + 4 * s_, m[1] - 4 * s_),
+            (m[0] + 4 * s_, m[1] + 2 * s_), (m[0] - 3 * s_, m[1] + 2 * s_)])
+
+
+def _draw_yard_fence_solid(surf, cam, deco):
+    """A rural boundary fence: split cedar posts with two or three sagging
+    wire strands. The line where somebody's ground stops.
+
+    NOT `chain_fence` -- that is the filling station's chain-link, and nobody
+    in 1994 rural Minnesota fenced a yard with it (SCENE-DRESSING #1: every
+    detail answers who made it and why). `run='h'|'v'` + `len`; posts lean by
+    a seeded jitter because nothing here has been straightened since the
+    winter, and a `gap` kwarg drops the wire so a stretch reads as down."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    run = kw.get("run", "h")
+    ln = kw.get("len", 32) * s
+    gap = kw.get("gap", False)
+    seed = int(abs(wx) * 11 + abs(wy) * 7)
+    ph = 20 * s
+    dx, dy = (ln, 0) if run == "h" else (0, ln)
+    x0, y0 = wx - dx / 2, wy - dy / 2
+    x1, y1 = wx + dx / 2, wy + dy / 2
+    cedar = (92, 76, 54)
+    for i in range(3):
+        f = i / 2.0
+        px = x0 + (x1 - x0) * f
+        py = y0 + (y1 - y0) * f
+        lean = ((seed + i * 29) % 7 - 3) * 0.5 * s
+        a = cam.project(px, py, 0)
+        b = cam.project(px + lean, py, ph)
+        pygame.draw.line(surf, cedar, a, b, max(2, int(2.2 * s)))
+        pygame.draw.line(surf, _shade(cedar, 1.35), a, b, 1)
+    if gap:
+        return
+    for wz, sag in ((ph * 0.92, 1.6), (ph * 0.58, 2.4), (ph * 0.28, 3.0)):
+        a = cam.project(x0, y0, wz)
+        m = cam.project((x0 + x1) / 2, (y0 + y1) / 2, wz - sag * s)
+        b = cam.project(x1, y1, wz)
+        pygame.draw.lines(surf, (118, 112, 100), False, [a, m, b], 1)
+
+
+def _draw_stoop_solid(surf, cam, deco):
+    """Plank steps up to a door: the thing between the ground and the
+    threshold, so going in reads as arriving rather than clipping through a
+    wall. `steps` (default 2), `w` (tiles wide), and `yaw` = the direction
+    you climb, which is the door's outward normal.
+
+    The treads step back along the deco's OWN yaw. Deriving that from
+    `cam.yaw` (as the first cut did) made the flight swing around as the
+    camera turned, so from two headings it collapsed into a single tall
+    slab."""
+    wx, wy = deco.x, deco.y
+    s_ = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    n = int(kw.get("steps", 2))
+    yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+    half_w = kw.get("w", 1.6) * 9 * s_
+    pal = {"top": (122, 102, 74), "side": (88, 72, 52), "dark": (54, 44, 32)}
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    depth = 7.0 * s_
+    # BACK TO FRONT. Drawing the treads in index order let the upper, further
+    # step paint over the nearer one it should sit behind, so the flight read
+    # as one slab with a notch bitten out of it.
+    treads = []
+    for i in range(n):
+        # the lowest tread is furthest OUT from the door; each one above it
+        # steps back toward the threshold
+        back = ((n - 1) / 2.0 - i) * depth
+        tx, ty = wx + ca * back, wy + sa * back
+        treads.append((cam.depth(tx, ty, 5.0 * s_ * i), tx, ty, i))
+    treads.sort(key=lambda t: t[0])
+    for _d, tx, ty, i in treads:
+        draw_box(surf, cam, tx, ty, half_w * 2, depth, 5.0 * s_,
+                 pal, yaw=yaw, z0=5.0 * s_ * i)
+
+
+def _draw_woodpile_solid(surf, cam, deco):
+    """A stack of split firewood, with the chopping block and the axe still
+    standing in it (`axe=True`). `yaw` runs along the stack's length.
+
+    The canonical INTERRUPTED TASK for a yard (DESIGN.md §14): the seal was
+    January and it is April, so the household's last unfinished job has been
+    sitting out three months.
+
+    **It is a stack of LOG OBJECTS** (`solids.draw_log`), depth-sorted back
+    to front, and that is what makes it occlude honestly. Everything else was
+    tried first and all of it failed on the same point: a `draw_solid` body of
+    revolution read as a barrel with dots on it; a `draw_box` crate with the
+    ends painted on one face read as a table with coins spilled beside it;
+    and a stack of `draw_box` logs let you see INSIDE them, because that
+    primitive paints all four vertical faces unconditionally and always calls
+    +y the near one, so at most headings it draws its own back over its
+    front. A log is a closed cylinder that only draws the surface facing you,
+    and a pile of them sorts like any other set of solids.
+
+    Each log is jittered in length and seating so the ends are a ragged plane
+    and the top a lumpy one; courses offset half a log the way a stack
+    settles. Rows and columns derive from the size and the log diameter, so
+    nothing overhangs at any scale."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    seed = int(abs(wx) * 13 + abs(wy) * 17) & 0xffff
+    pal = {"bark": (86, 68, 46), "bark_lo": (48, 37, 25),
+           "cut": (156, 132, 96)}
+    rows = int(kw.get("rows", 4))
+    ncols = int(kw.get("cols", 3))
+    yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    LOG = 5.4 * s                      # a split log's diameter
+    length = 19.0 * s
+    logs = []
+    for row in range(rows):
+        for c in range(ncols):
+            h = (seed + row * 31 + c * 17)
+            ln = length * (0.86 + ((h >> 2) % 5) * 0.06)
+            shove = (((h >> 5) % 7) - 3) * 0.7 * s
+            v = (c - (ncols - 1) / 2.0) * LOG * 0.97 + (row % 2) * (LOG * 0.5)
+            z = row * LOG * 0.90 + LOG / 2
+            lx = wx - sa * v + ca * shove
+            ly = wy + ca * v + sa * shove
+            logs.append((cam.depth(lx, ly, z), lx, ly, z, ln, h))
+    # back to front: the pile is a set of solids and sorts like one
+    logs.sort(key=lambda t: t[0])
+    for _d, lx, ly, z, ln, h in logs:
+        draw_log(surf, cam, lx, ly, z, yaw, ln, LOG * 0.47, pal, seed=h)
+    if kw.get("axe"):
+        # the chopping block a stride off the stack's flank, the axe left
+        # standing in the round
+        bx, by = wx - sa * 15 * s, wy + ca * 15 * s
+        draw_solid(surf, cam, bx, by,
+                   [(0.0, 5.0 * s, 5.0 * s), (9.0 * s, 5.0 * s, 5.0 * s)],
+                   {"body": pal["bark"], "lo": pal["bark_lo"],
+                    "rim": pal["cut"]})
+        h0 = cam.project(bx, by, 9.0 * s)
+        h1 = cam.project(bx + 2.0 * s, by - 3.0 * s, 22.0 * s)
+        pygame.draw.line(surf, (108, 88, 62), h0, h1, max(2, int(2 * s)))
+        pygame.draw.polygon(surf, (150, 152, 158), [
+            h1, (h1[0] + 5 * s, h1[1] + 1 * s),
+            (h1[0] + 4 * s, h1[1] + 5 * s), (h1[0] - 1 * s, h1[1] + 4 * s)])
+
+
+def _draw_bridge_rail_solid(surf, cam, deco):
+    """The SAFE PATH bridge's timber parapet (DESIGN.md §14): squared posts,
+    a top rail and a mid rail, run along the deck edge.
+
+    A road bridge is a STRUCTURE, and the deck planks alone are a floor
+    texture: under the tilt a bridge with no rail is a brown patch of ground
+    that happens to sit on water, which is exactly how the first cut of the
+    river crossing read. The rail is what puts it above the river and gives
+    the crossing a silhouette to walk between. `kwargs`: run='h'|'v' (the
+    parapet's axis) + len (px). Weathered creosote timber, town-built, and
+    long past anybody maintaining it -- posts lean by a seeded jitter."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    run = kw.get("run", "h")
+    ln = kw.get("len", 32) * s
+    seed = int(abs(wx) * 7 + abs(wy) * 13)
+    rail_z = 22 * s
+    dx, dy = (ln, 0) if run == "h" else (0, ln)
+    x0, y0 = wx - dx / 2, wy - dy / 2
+    x1, y1 = wx + dx / 2, wy + dy / 2
+    tim = (78, 60, 40)
+    tim_hi = (108, 86, 58)
+    tim_lo = (46, 35, 22)
+    # posts: squared timber, a real little volume so they catch the tilt
+    n = max(2, int(ln / 16))
+    for i in range(n + 1):
+        f = i / n
+        px = x0 + (x1 - x0) * f
+        py = y0 + (y1 - y0) * f
+        lean = ((seed + i * 37) % 5 - 2) * 0.35 * s
+        draw_solid(surf, cam, px + lean * 0.4, py,
+                   [(0.0, 1.9 * s, 1.9 * s), (rail_z + 2 * s, 1.6 * s, 1.6 * s)],
+                   {"body": tim, "lo": tim_lo, "rim": tim_hi})
+    # top rail + mid rail, drawn as lines along the run at their own heights
+    for rz, wgt, col in ((rail_z, max(2, int(2.4 * s)), tim_hi),
+                         (rail_z * 0.55, max(1, int(1.6 * s)), tim)):
+        a = cam.project(x0, y0, rz)
+        b = cam.project(x1, y1, rz)
+        pygame.draw.line(surf, col, a, b, wgt)
+        pygame.draw.line(surf, tim_lo,
+                         (a[0], a[1] + wgt), (b[0], b[1] + wgt), 1)
 
 
 def _draw_chain_fence_solid(surf, cam, deco):
@@ -3635,29 +3775,42 @@ def _draw_valve_solid(surf, cam, deco):
                        cam.project(wx + 8 * s, wy + 5 * s, 0)], max(2, int(2 * s)))
 
 
-def _draw_yard_light_solid(surf, cam, deco):
+def _draw_yard_light_solid(surf, cam, deco, pole_h=46.0, arm_len=13.0,
+                           mast=False):
     """A rural dusk-to-dawn yard light: a tall wood pole, a downswept
     gooseneck arm, a shallow galvanized reflector hood, and a cold mercury-
     vapor lamp burning under it. The period-correct town light -- 1994
     northern Minnesota ran on these, not lanterns -- and its glow is COLD
     blue-white, the deliberate opposite of the warm fire the town huddles
     at (burn barrels, braziers, candles). Runs off the generators now the
-    fold cut the grid (NARRATIVE §1)."""
+    fold cut the grid (NARRATIVE §1).
+
+    `street_lamp` (DESIGN.md §14) reuses this at highway proportions: the
+    same town's hardware on a taller GALVANIZED mast with a long gooseneck
+    reaching out over the carriageway, so the safe path's lighting reads as
+    the same municipality that hung the yard lights, one size up."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
-    wood = (74, 60, 44)
-    wood_hi = (104, 86, 62)
+    wood = (74, 60, 44) if not mast else (96, 98, 108)
+    wood_hi = (104, 86, 62) if not mast else (132, 136, 148)
     galv = (120, 122, 130)
     galv_lo = (70, 72, 80)
-    pole_h = 46 * s
+    pole_h = pole_h * s
     base = cam.project(wx, wy, 0)
     top = cam.project(wx, wy, pole_h)
-    pygame.draw.line(surf, wood, base, top, max(2, int(3 * s)))
+    pygame.draw.line(surf, wood, base, top, max(2, int((4 if mast else 3) * s)))
     pygame.draw.line(surf, wood_hi, base, top, max(1, int(1 * s)))
+    if mast:
+        # a poured concrete footing + the base hand-hole cover: the tell that
+        # says highway standard rather than a pole somebody sank in a yard
+        draw_solid(surf, cam, wx, wy,
+                   [(0.0, 3.4 * s, 3.4 * s), (5.0 * s, 3.0 * s, 3.0 * s)],
+                   {"body": (78, 76, 74), "lo": (44, 43, 42),
+                    "rim": (104, 102, 98)})
     # a gooseneck arm: UP off the pole and OUT to one side (screen-relative to
     # the yaw, so the head stays anchored off the pole from any facing, never a
     # billboard), then a short drop to the lamp head
-    arm_len = 13 * s
+    arm_len = arm_len * s
     ax = math.cos(cam.yaw + math.pi / 2)
     ay = math.sin(cam.yaw + math.pi / 2)
     hx = wx + ax * arm_len
@@ -3702,6 +3855,18 @@ def _draw_yard_light_solid(surf, cam, deco):
     else:
         pygame.draw.circle(surf, (60, 64, 72), (int(lamp[0]), int(lamp[1])),
                            lr)
+
+
+def _draw_street_lamp_solid(surf, cam, deco):
+    """The SAFE PATH's highway lamp (DESIGN.md §14): the same cold mercury-
+    vapor head the town hangs in its yards, up on a tall galvanized mast with
+    a long gooseneck out over the carriageway and a poured footing at its
+    base. It exists because the safe path's safety IS its lighting -- the
+    mouth only opens where the ground is unlit, so a road lit by yard lights
+    would have been a road with dark gaps you fall through. Bigger throw,
+    fewer poles, and it reads as municipal rather than domestic."""
+    _draw_yard_light_solid(surf, cam, deco, pole_h=78.0, arm_len=26.0,
+                           mast=True)
 
 
 def _draw_generator_solid(surf, cam, deco):
@@ -4054,7 +4219,36 @@ def _draw_bell_stock_solid(surf, cam, deco):
         pygame.draw.line(surf, (40, 38, 40), g0, g1, max(1, int(1.6 * s)))
 
 
+def _draw_bush_solid(surf, cam, deco):
+    """A scrub bush -- the SAME plant renderer the terrain uses, so a bush
+    beside a tree is the same species of thing lit the same way. It used to
+    be a flat floor sticker with a dark ellipse under it: a lily pad on a
+    black pot, and structurally unable to occlude anything because floor
+    decals draw before the depth pass."""
+    from scenes.terrain import draw_tree_body
+    seed = int(getattr(deco, "seed", 0) or 0) ^ int(deco.x) * 73856093 \
+        ^ int(deco.y) * 19349663
+    draw_tree_body(surf, cam, deco.x, deco.y, seed, "brush",
+                   (getattr(deco, "scale", 1.0) or 1.0) * 0.85)
+    return True
+
+
+def _draw_creepy_tree_solid(surf, cam, deco):
+    """The wrong tree: a bare April deciduous, but taller and drawn with the
+    dead-wood bark. It was a camera-facing standee card -- identical outline
+    from all four facings, so it swivelled to watch you, which VISION allows
+    for flame and thin foliage and not for a thing with a solid trunk."""
+    from scenes.terrain import draw_tree_body
+    seed = int(getattr(deco, "seed", 0) or 0) ^ int(deco.x) * 19349663 \
+        ^ int(deco.y) * 83492791
+    draw_tree_body(surf, cam, deco.x, deco.y, seed | 2, "bare",
+                   (getattr(deco, "scale", 1.0) or 1.0) * 1.25)
+    return True
+
+
 SOLID_PROPS = {
+    "bush":          _draw_bush_solid,
+    "creepy_tree":   _draw_creepy_tree_solid,
     "bell_stock":    _draw_bell_stock_solid,
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -4081,7 +4275,6 @@ SOLID_PROPS = {
     "shoring_frame": _draw_shoring_frame_solid,
     "ore_cart":      _draw_ore_cart_solid,
     "player_car":    _draw_car_solid,
-    "pickup_truck":  _draw_pickup_truck_solid,
     "rust_sedan":    _draw_rust_sedan_solid,
     "rust_wagon":    _draw_rust_wagon_solid,
     "rust_coupe":    _draw_rust_coupe_solid,
@@ -4093,6 +4286,7 @@ SOLID_PROPS = {
     "pump_island":   _draw_pump_island_solid,
     "neon_pylon":    _draw_neon_pylon_solid,
     "chain_fence":   _draw_chain_fence_solid,
+    "bridge_rail":   _draw_bridge_rail_solid,
     "boulder":       _draw_boulder_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,
@@ -4119,8 +4313,8 @@ SOLID_PROPS = {
     "valve":          _draw_valve_solid,
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,
-    "lantern":       _draw_lantern_solid,
     "yard_light":    _draw_yard_light_solid,
+    "street_lamp":   _draw_street_lamp_solid,
     "generator":     _draw_generator_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
@@ -4153,7 +4347,7 @@ _STANDEE_HANG = frozenset(("hanging_figure",))
 # here is genuinely organic (trees, grass, corn-husk effigies) or too slight to
 # volumize (the doll), where a stood-up card is the right read.
 _STANDEE_GROUND = frozenset((
-    "creepy_tree", "corn_doll", "tall_grass", "grass_tuft", "doll",
+    "corn_doll", "tall_grass", "grass_tuft", "doll",
     "husk_bundle",
 ))
 _STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
@@ -4215,15 +4409,43 @@ def draw_standee(surf, cam, deco):
 
 def is_solid_prop(kind):
     """A decoration that, under tilt, draws as world-oriented geometry (a
-    body-of-revolution solid OR a grounded standee) instead of a flat top-down
-    sticker. Both route through draw_prop_solid + the unified depth pass."""
-    return kind in SOLID_PROPS or kind in _STANDEE_KINDS
+    declared ASSEMBLY, a body-of-revolution solid, OR a grounded standee)
+    instead of a flat top-down sticker. All three route through
+    draw_prop_solid + the unified depth pass.
+
+    ASSEMBLIES MUST BE IN HERE. Converting a kind to the assembly pipeline
+    removes it from SOLID_PROPS; if this predicate doesn't know about the new
+    table, the scene's solid-emit test calls the kind a flat decal, it falls
+    through to Decoration.draw, finds no _draw_<kind> method, and ships a
+    MAGENTA SQUARE. That is exactly what the first six converted kinds did."""
+    return kind in ASSEMBLIES or kind in SOLID_PROPS or kind in _STANDEE_KINDS
 
 
 def draw_prop_solid(surf, cam, deco):
-    """Draw one decoration as a volumetric body-of-revolution prop or a grounded
-    standee. Returns True if it was a known solid/standee (and drawn), False
-    otherwise so the caller can fall back."""
+    """Draw one decoration as a volumetric prop or a grounded standee.
+    Returns True if it was a known solid/standee (and drawn), False otherwise
+    so the caller can fall back.
+
+    ASSEMBLIES WIN. A kind declared in `rendering/assemblies.py` is drawn by
+    the central assembly renderer, which culls, sorts and shades once for
+    every prop instead of each prop doing its own (`rendering/assembly.py`
+    explains why that split exists). Anything not yet converted keeps its
+    hand-written function -- the two paths coexist on purpose, so props move
+    over as they are touched rather than in one unverifiable sweep."""
+    asm = ASSEMBLIES.get(deco.kind)
+    if asm is not None:
+        kw = getattr(deco, "kwargs", {})
+        yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+        # A kind may be declared as a VARIANT FACTORY rather than one fixed
+        # assembly, so a scene can ask for the loaded mailbox or the woodpile
+        # with the axe still in the block. Without this the scene's kwargs
+        # went nowhere: `axe=True` and `full=True` were quietly dropped while
+        # the comment beside them went on describing an axe nobody could see.
+        if callable(asm):
+            asm = variant(deco.kind, asm, kw)
+        _assembly_draw(surf, cam, asm, deco.x, deco.y, yaw=yaw,
+                       scale=(getattr(deco, "scale", 1.0) or 1.0))
+        return True
     fn = SOLID_PROPS.get(deco.kind)
     if fn is not None:
         fn(surf, cam, deco)

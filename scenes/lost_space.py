@@ -60,6 +60,28 @@ _MIN_EXIT = 6              # tiles: the exit never sits closer (always a hunt)
 _MAX_EXIT = 20             # tiles: nor farther (always escapable)
 _REACH = 2.2              # tiles: this close to the exit = you climbed out
 
+# the occupied camp: far enough out to be stumbled into while hunting the
+# exit, never the light you land in
+_CAMP_RING_MIN = 26.0      # tiles from the focal island
+_CAMP_RING_MAX = 36.0
+_CAMP_STAND = 2.4          # tiles: how far off the flame they stand
+_CAMP_WAKE = 24.0          # tiles: crew exists inside this
+_CAMP_SLEEP = 34.0         # tiles: released beyond this (hysteresis)
+
+# the lamp-carriers: cultists walking the dark with a light in hand. The
+# whole point is that a MOVING warm glow is indistinguishable from the
+# stationary warm glow you are hunting, until it moves.
+_ROAM_CREW = 2             # carriers abroad in the field at once
+_ROAM_MIN = 18.0           # tiles: never spawned closer than this
+_ROAM_MAX = 30.0           # tiles: nor farther (they must be SEEN)
+_ROAM_RELEASE = 52.0       # tiles: released once you are long gone
+
+# the dark rearranging itself: how often, how much, and the radius inside
+# which a landmark is "here" and therefore never moves
+_SHUFFLE_EVERY = 2.5       # seconds between passes
+_SHUFFLE_MAX = 3           # landmarks relocated per pass (never a whole field)
+_SHUFFLE_NEAR = 16.0       # tiles: nothing this close is ever touched
+
 # per-biome focal + haven geometry (tiles). `haven_r` is how far the island's
 # light protects (leave it and the exit hunt begins); `spawn_off` drops the
 # player that many tiles SOUTH of the focal centre so they face the island.
@@ -84,6 +106,12 @@ class LostSpace(Scene):
         self._exit_to = exit_to
         self.w = self.h = size
         self.procedural = True                    # smoke skips flood/full scans
+        # NO PLACE NAME. Every other scene labels itself in the HUD corner;
+        # the default here would have titlecased the key into "Lost Forest",
+        # which tells the player exactly what happened to them. A lost space
+        # is somewhere with no name you know, and the wordlessness ruling
+        # (DIALOGUE.md) covers the corner label the same as a caption.
+        self.display_name = ""
         self._cx = self._cy = size // 2           # focal centre tile (map centre)
         self.floor = _GenGrid(self._floor_at, size)
         self.objects = _GenGrid(self._obj_at, size)
@@ -106,11 +134,224 @@ class LostSpace(Scene):
         {"corn": self._build_corn_camp,
          "forest": self._build_forest_pond,
          "road": self._build_road_station}[self._biome]()
+        self._scatter_decos = []                  # the field's movable landmarks
         self._scatter_ground_detail()
         self._scatter_things(count=84, radius=72)
         self._exit_light = None                   # spawns only once you leave
+        self._shuf_t = _SHUFFLE_EVERY
+        self._shuf_i = 0                          # rotating reshuffle cursor
         self._hunting = False
+        # THE OCCUPIED CAMP (the inversion). Its fire is raised at build time
+        # so the glow is out there in the black from the moment you arrive;
+        # the CREW is spawned on approach and released when you leave, so a
+        # 400-tile field never simulates a crowd. `cult_target = 0` keeps the
+        # town's evidence-gated top-up (`_ensure_cultists`) out of the field:
+        # this population is the scene's own.
+        self.cult_target = 0
+        self._camp_pos, self._camp_size = self._raise_occupied_camp()
+        self._camp_crew = []
+        self._roamers = []                        # (cultist, carried lantern)
         self.on_update_fn = self._tick
+
+    # ============ THE DARK REARRANGES (observer-dependent geometry) ==========
+    def _tick_reshuffle(self, game, dt):
+        """The field quietly rearranges the things you are not looking at.
+
+        The rule the whole space runs on, and the one it never breaks:
+        **what the light touches is TRUE; the dark is not.** So a landmark
+        moves only when ALL of these hold:
+
+          * it is OUTSIDE your sight cone (`visible_factor` == 0), so nothing
+            is ever seen to move. You do not catch it; you only ever find that
+            it is not where you left it.
+          * it is UNLIT (`lit_at` false). Anything standing in a light pool is
+            fixed, permanently. That is what makes light worth walking toward
+            and what keeps the exit lantern, the island, and the camps honest.
+          * it is far enough off to be out of mind, and it lands far enough
+            off to stay that way.
+
+        THREATS ARE NEVER TOUCHED (the fence, `TODO.md` #26): only scenery
+        lies. A cultist blinking across the field would be a different, worse
+        game -- and it would break the one-impossible-thing rule, because then
+        the space would be doing something the FOLD is not."""
+        self._shuf_t -= dt
+        if self._shuf_t > 0.0:
+            return
+        self._shuf_t = _SHUFFLE_EVERY
+        p = game.player
+        look = getattr(game, "look", None)
+        heading = getattr(look, "aim", 0.0) if look else 0.0
+        from rendering.sight import visible_factor
+        moved = 0
+        # Sweep from a ROTATING cursor rather than the head of the list. A
+        # fixed start meant the same first-eligible few landmarks teleported
+        # over and over while the rest of the field never moved at all -- the
+        # opposite of a space that slowly rearranges.
+        n = len(self._scatter_decos)
+        for off in range(n):
+            if moved >= _SHUFFLE_MAX:
+                break
+            d = self._scatter_decos[(self._shuf_i + off) % n]
+            dist = math.hypot(d.x - p.x, d.y - p.y)
+            if dist < _SHUFFLE_NEAR * TILE:
+                continue                       # too close: it is basically here
+            if visible_factor(p.x, p.y, heading, d.x, d.y,
+                              self.blocks_sight) > 0.0:
+                continue                       # you are looking at it
+            if self.lit_at(d.x, d.y):
+                continue                       # the light makes it true
+            for _try in range(6):
+                a = self._hash01(int(d.x) + _try, int(d.y) + moved,
+                                 salt=51 + _try) * math.tau
+                rr = (_SHUFFLE_NEAR + 4.0 + self._hash01(
+                    int(d.y), int(d.x) + _try, salt=61) * 22.0) * TILE
+                nx, ny = p.x + math.cos(a) * rr, p.y + math.sin(a) * rr
+                if self.is_solid_at(nx, ny):
+                    continue
+                if visible_factor(p.x, p.y, heading, nx, ny,
+                                  self.blocks_sight) > 0.0:
+                    continue                   # never land it in your view
+                if self.lit_at(nx, ny):
+                    continue                   # nor inside a light that would
+                    #                            then be lying about it
+                d.x, d.y = nx, ny
+                moved += 1
+                self._shuf_i = (self._shuf_i + off + 1) % n
+                break
+
+    # ================= THE OCCUPIED CAMP (the inversion) =====================
+    def _raise_occupied_camp(self):
+        """A SECOND fire out in the black, and this one is manned.
+
+        The field teaches you that light is orienting: you land in a lit
+        haven, and the way out is a light you hunt. This camp spends that
+        lesson. From a distance its glow is just another warm light in a dark
+        field, indistinguishable from the exit; you close on it because
+        closing on light is what the space has trained you to do, and the
+        figures standing at it only resolve once you are near enough for them
+        to resolve you.
+
+        Placed on a hashed bearing at `_CAMP_RING` tiles: outside the haven
+        (so it is never the thing you land in) and inside the wandering you do
+        while hunting the exit (so it is genuinely stumbled into).
+
+        Camps come in KINDS, chosen per field by hash, because one camp
+        repeated verbatim stops being a discovery the second time you meet it.
+        Each kind reads differently at a glance, so what you are walking up on
+        is legible before it is dangerous:
+
+          * **rest**  -- bedrolls down, seats pulled in, a bigger crew. They
+                         are living here. The most camp-like, the most bodies.
+          * **watch** -- no bedding, one seat, a small crew standing. A post,
+                         not a home; they are looking outward.
+          * **work**  -- a barrow and a heap beside the flame: a dig detail
+                         stopped for the night, tools where they dropped them.
+
+        Returns (world centre, crew size)."""
+        a = self._hash01(3, 91, salt=21) * math.tau
+        r = (_CAMP_RING_MIN + self._hash01(7, 41, salt=22)
+             * (_CAMP_RING_MAX - _CAMP_RING_MIN)) * TILE
+        cx = self._fx + math.cos(a) * r
+        cy = self._fy + math.sin(a) * r
+        kind = ("rest", "watch", "work")[
+            int(self._hash01(11, 23, salt=28) * 3) % 3]
+        # the fire is the lure, so it burns from the start (a camp_fire is in
+        # both light tables: it casts a real pool AND gives real cover)
+        self.add_decoration(Decoration(cx, cy, "camp_fire", seed=53))
+        if kind == "rest":
+            dressing = ((-40, -14, "bedroll"), (34, -20, "bedroll"),
+                        (6, 40, "bedroll"), (44, 16, "log_seat"),
+                        (-46, 20, "log_seat"))
+            crew = 4
+        elif kind == "watch":
+            dressing = ((46, 10, "log_seat"), (-30, 34, "grass_tuft"))
+            crew = 2
+        else:                                   # work
+            dressing = ((-48, -8, "wheelbarrow"), (40, 26, "bedroll"),
+                        (30, -34, "log_seat"))
+            crew = 3
+        for i, (dx, dy, k) in enumerate(dressing):
+            self.add_decoration(Decoration(cx + dx, cy + dy, k, seed=i + 30))
+        self._camp_kind = kind
+        return (cx, cy), crew
+
+    def _tick_camp(self, game):
+        """Spawn the camp's crew when the player nears, release them when the
+        player is long gone. They are ordinary cult regulars: the standard
+        gaze, suspicion, Talk and two-touch grab all apply untouched. The only
+        bespoke part is WHERE they come from and when they exist."""
+        p = game.player
+        cx, cy = self._camp_pos
+        d = math.hypot(p.x - cx, p.y - cy)
+        live = [n for n in self._camp_crew
+                if n in self.npcs and getattr(n, "alive", True)]
+        self._camp_crew = live
+        if d < _CAMP_WAKE * TILE and len(live) < self._camp_size:
+            for i in range(self._camp_size - len(live)):
+                a = self._hash01(i, 17, salt=23) * math.tau
+                at = (cx + math.cos(a) * _CAMP_STAND * TILE,
+                      cy + math.sin(a) * _CAMP_STAND * TILE)
+                n = game._spawn_cultist("cult_regular", "cultist",
+                                        speed=0.95, gaze_range=180, at=at)
+                if n is not None:
+                    self._camp_crew.append(n)
+        elif d > _CAMP_SLEEP * TILE and live:
+            # walked away for good: let the field go quiet again rather than
+            # simulate a crew nobody is near
+            self.npcs = [n for n in self.npcs if n not in live]
+            self._camp_crew = []
+
+    # ================= THE LAMP-CARRIERS (the ambiguous glow) ================
+    def _tick_roamers(self, game):
+        """Cultists walking the dark with a lantern in hand.
+
+        The field's exit is a warm lantern held 6-20 tiles off. So is this.
+        The only thing that tells them apart is that one of them MOVES, and by
+        the time you are sure which you are looking at, the question has
+        usually answered itself. It also puts the two threats in their proper
+        jobs: the Watchers FIND you, the cult CATCHES you.
+
+        The carried light is a real emitter parented to the body -- the
+        lightmap reads live deco positions every frame and `light_sources`
+        caches the deco LIST rather than positions, so a moving source lights
+        and gates correctly with no special case."""
+        p = game.player
+        # they walk the dark you walk: abroad only once you have left the
+        # island's glow and the hunt is on
+        hunting = math.hypot(p.x - self._fx, p.y - self._fy) >= \
+            self._cfg["haven_r"] * TILE
+        live = []
+        for npc, lamp in self._roamers:
+            gone = (npc not in self.npcs or not getattr(npc, "alive", True)
+                    or getattr(npc, "_is_corpse", False))
+            far = math.hypot(npc.x - p.x, npc.y - p.y) > _ROAM_RELEASE * TILE
+            if gone or far or not hunting:
+                if npc in self.npcs and (far or not hunting) and not gone:
+                    self.npcs.remove(npc)
+                try:
+                    self.decorations.remove(lamp)
+                except ValueError:
+                    pass
+                continue
+            lamp.x, lamp.y = npc.x, npc.y        # the light rides the body
+            live.append((npc, lamp))
+        self._roamers = live
+        if not hunting:
+            return
+        for i in range(_ROAM_CREW - len(live)):
+            a = self._hash01(int(p.x) + i, int(p.y), salt=31 + i) * math.tau
+            d = (_ROAM_MIN + self._hash01(int(p.y) + i, int(p.x), salt=41)
+                 * (_ROAM_MAX - _ROAM_MIN)) * TILE
+            at = (p.x + math.cos(a) * d, p.y + math.sin(a) * d)
+            if self.is_solid_at(*at):
+                continue
+            npc = game._spawn_cultist("cult_regular", "cultist",
+                                      speed=0.95, gaze_range=180, at=at)
+            if npc is None:
+                continue
+            lamp = Decoration(npc.x, npc.y, "lantern", seed=(i * 7) & 0xffff)
+            self.add_decoration(lamp)
+            self._roamers.append((npc, lamp))
 
     # ================= the focal islands (hand-authored) =====================
     def _build_corn_camp(self):
@@ -131,22 +372,44 @@ class LostSpace(Scene):
         with lanterns on posts around the far shore, reeds, and a low mist."""
         cx, cy = self._fx, self._fy
         pr = self._cfg["pond_r"] * TILE
-        # the near-bank fire: the zone's warm light, mirrored in the pond. Set
-        # to one side of the bank so the player (who lands further back) sees
-        # it burning between them and the water, not standing on it.
-        self.add_decoration(Decoration(cx - 40, cy + pr + 4, "camp_fire", seed=17))
+        # The near-bank fire: the zone's HAVEN light, and it has to be a
+        # haven-class one. Built as a modest `camp_fire` the pond was the only
+        # focal island without a real light source (corn has `haven_fire`, the
+        # road a `neon_pylon`), and in the player's actual dark view it read
+        # as a black pond in a black wood rather than the pretty thing it is
+        # meant to be. Set to one side of the bank so the player, landing
+        # further back, sees it burning between them and the water.
+        self.add_decoration(Decoration(cx - 40, cy + pr - 10, "haven_fire",
+                                       seed=17, scale=1.25))
         # lanterns on stub posts around the far/side banks
         for a in (0.6, 2.1, 4.2):
-            lx = cx + math.cos(a) * (pr + 26)
-            ly = cy + math.sin(a) * (pr + 26)
+            lx = cx + math.cos(a) * (pr + 10)
+            ly = cy + math.sin(a) * (pr + 10)
             self.add_decoration(Decoration(lx, ly, "lantern", seed=int(a * 40)))
-        # reeds + a fallen log + real 3D boulders on the bank
+        # REEDS ON THE WATERLINE. Scattered singles read as nothing at this
+        # scale; reeds grow in stands, so they are placed in clumps that hug
+        # the meandering bank (the radius is sampled per bearing, so they sit
+        # ON the water's edge wherever it happens to run) with gaps between
+        # the stands, never an even fringe.
+        n_st = 7
+        for s in range(n_st):
+            a0 = (s / n_st) * math.tau + self._hash01(s, 5, salt=24) * 0.5
+            if self._hash01(s, 9, salt=25) < 0.28:
+                continue                        # a bare stretch of bank
+            for k in range(2 + int(self._hash01(s, k_ := 3, salt=26) * 4)):
+                a = a0 + (k - 1.5) * 0.10
+                rr = self._pond_r(self._cx + math.cos(a) * 10,
+                                  self._cy + math.sin(a) * 10) * TILE
+                rr += (0.5 + self._hash01(s * 9 + k, 2, salt=27) * 0.7) * TILE
+                self.add_decoration(Decoration(
+                    cx + math.cos(a) * rr, cy + math.sin(a) * rr,
+                    "tall_grass", seed=(s * 13 + k) & 0xffff))
+        # boulders half in the water, a fallen log, framing trees off the bank
         for i, (dx, dy, kind) in enumerate((
-                (-8, -pr - 18, "tall_grass"), (24, -pr - 10, "tall_grass"),
-                (pr + 20, 10, "log_seat"), (-pr - 24, -6, "tall_grass"),
-                (18, pr + 24, "tall_grass"), (-34, pr + 18, "grass_tuft"),
-                (pr + 16, -30, "boulder"), (-pr - 20, 34, "boulder"),
-                (pr + 34, -40, "creepy_tree"), (-pr - 40, 28, "creepy_tree"))):
+                (pr + 4, -34, "boulder"), (-pr - 10, 30, "boulder"),
+                (26, -pr - 6, "boulder"),
+                (pr + 22, 12, "log_seat"), (-38, pr + 20, "grass_tuft"),
+                (pr + 40, -46, "creepy_tree"), (-pr - 46, 30, "creepy_tree"))):
             self.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=i + 20))
         # a breathing mist lying on the water
         self.add_decoration(Decoration(cx, cy, "mist", seed=5,
@@ -220,6 +483,14 @@ class LostSpace(Scene):
         """distance from the focal centre, in tiles."""
         return math.hypot(tx - self._cx, ty - self._cy)
 
+    def _pond_r(self, tx, ty):
+        """The pond's radius along the bearing of (tx, ty): the base radius
+        pushed in and out by low-frequency noise so the waterline meanders
+        like a real pond instead of ringing a perfect circle."""
+        a = math.atan2(ty - self._cy, tx - self._cx)
+        n = self._vnoise(math.cos(a) * 2.2 + 5, math.sin(a) * 2.2 - 3, salt=19)
+        return self._cfg["pond_r"] * (0.82 + 0.36 * n)
+
     def _road_x(self, ty):
         """The winding road's centre COLUMN at row ty (tiles). A smooth
         low-freq value-noise meander (the maintainer's 'generate it like a
@@ -281,10 +552,19 @@ class LostSpace(Scene):
             if r > cr + rw + 5 and self._corn_here(tx, ty):
                 return ":"                # a field corn clump
         elif b == "forest":
-            if r <= self._cfg["pond_r"]:
+            # An organic pond, not a disc: the waterline is the radius pushed
+            # around by low-frequency noise, and the WET bank that follows it
+            # is narrow and ragged (in places the moss runs right to the
+            # water). The bank is dark wet mud, never the dry tan dirt it
+            # started as -- as `d` it was luma 75, the BRIGHTEST thing in the
+            # scene, so a beach-coloured donut read louder than the pond it
+            # surrounded.
+            pr = self._pond_r(tx, ty)
+            if r <= pr:
                 return "~"                # the POND (animated water)
-            if r <= self._cfg["pond_r"] + 1.4:
-                return "d"                # muddy bank ring
+            if r <= pr + 0.35 + self._vnoise(tx * 0.5, ty * 0.5, salt=17) * 0.9:
+                return ";"                # wet mud at the waterline (always a
+                #                           thin rim, ragged in width)
             gg = self._vnoise(tx * 0.09 + 3, ty * 0.09 - 5, salt=6)
             return "G" if gg > 0.5 else "g"   # mossy forest floor
         elif b == "road":
@@ -393,8 +673,11 @@ class LostSpace(Scene):
             lx = self._fx + math.cos(a) * rr
             ly = self._fy + math.sin(a) * rr
             k = lib[int(self._hash01(i, 42, salt=4) * len(lib)) % len(lib)]
-            self.add_decoration(Decoration(lx, ly, k,
-                                           seed=(self._seed + i * 17) & 0xffff))
+            d = Decoration(lx, ly, k, seed=(self._seed + i * 17) & 0xffff)
+            self.add_decoration(d)
+            # only the FIELD's scatter is allowed to rearrange itself; the
+            # island, the camps and every light are fixed by construction
+            self._scatter_decos.append(d)
 
     # ================= the hunted exit light =================================
     def _relocate_exit(self, game):
@@ -426,6 +709,11 @@ class LostSpace(Scene):
         p = game.player
         if p is None:
             return
+        # the manned fire runs wherever you are: its whole job is to be out
+        # there in the dark while you are busy hunting a different light
+        self._tick_camp(game)
+        self._tick_roamers(game)
+        self._tick_reshuffle(game, dt)
         haven = self._cfg["haven_r"] * TILE
         d_haven = math.hypot(p.x - self._fx, p.y - self._fy)
         if d_haven < haven:
@@ -442,6 +730,16 @@ class LostSpace(Scene):
             # NO narrator box here (maintainer ruling): the lost spaces carry
             # no narration at all. Reaching the light and the world changing
             # around you IS the beat; a caption would explain it away.
+            # You CLIMB OUT where you fell in. The anchor is written by
+            # Game._tick_lost_edge, a few strides back from the edge that
+            # swallowed you, so the world you return to is the one you lost.
+            ret = getattr(game, "_lost_return", None)
+            if ret is not None:
+                game._lost_return = None
+                game.cross_fold(ret[0], dest_pos=(ret[1], ret[2]))
+                return
+            # No anchor: the field was loaded directly (a preview, a test).
+            # Fall through to the static neighbour so the fields still chain.
             game.cross_fold(self._exit_to)
             return
         if d > _MAX_EXIT * TILE or d < _MIN_EXIT * 0.5 * TILE:

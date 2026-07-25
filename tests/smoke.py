@@ -109,6 +109,16 @@ def check_exits_resolve():
     return errors
 
 
+# Sub-tile samples per tile edge for the fine flood. A tree blocks as a
+# ROUND foot inside its cell now (scenes/terrain.py `tree_footprint`), so a
+# tile-granular walk map is no longer the truth: it calls a whole cell solid
+# when most of it is clear, and its 4-way steps cannot see the DIAGONAL gaps
+# between trunks -- which are the way a stand of trees is meant to be
+# crossed. Four samples per tile resolves a gap of about 8 world units; the
+# diagonal gaps between neighbouring trees run near 18.
+_FINE = 4
+
+
 def _walkable(sc, tx, ty):
     if not (0 <= tx < sc.w and 0 <= ty < sc.h):
         return False
@@ -116,21 +126,73 @@ def _walkable(sc, tx, ty):
             and not is_floor_solid(sc.floor[ty][tx]))
 
 
+def _has_plants(sc):
+    from scenes.terrain import OBJECT_DEFS
+    for row in sc.objects:
+        for ch in row:
+            od = OBJECT_DEFS.get(ch) or {}
+            if od.get("kind") == "tree" and od.get("solid"):
+                return True
+    return False
+
+
 def _flood(sc, sx, sy):
+    """Walkable tiles reachable from (sx, sy).
+
+    In a scene with solid plants this floods at SUB-TILE resolution through
+    `sc.is_solid_at` -- the same predicate the player's own movement uses --
+    and then reports which tiles were entered. The player collides as a
+    POINT, so anywhere a point fits is somewhere they can stand, and the
+    coarse map was rejecting real routes. Stepping stays 4-way: movement
+    resolves x and y separately, so a pure diagonal squeeze through a corner
+    where both orthogonal neighbours block is not actually walkable.
+    """
     from collections import deque
-    seen = set()
-    if not _walkable(sc, sx, sy):
+    if not _has_plants(sc):
+        seen = set()
+        if not _walkable(sc, sx, sy):
+            return seen
+        seen.add((sx, sy))
+        q = deque([(sx, sy)])
+        while q:
+            cx, cy = q.popleft()
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = (cx + dx, cy + dy)
+                if n not in seen and _walkable(sc, n[0], n[1]):
+                    seen.add(n)
+                    q.append(n)
         return seen
-    seen.add((sx, sy))
-    q = deque([(sx, sy)])
+
+    step = TILE / float(_FINE)
+    W, H = sc.w * _FINE, sc.h * _FINE
+
+    def clear(ix, iy):
+        if not (0 <= ix < W and 0 <= iy < H):
+            return False
+        px, py = (ix + 0.5) * step, (iy + 0.5) * step
+        if is_floor_solid(sc.floor[int(py // TILE)][int(px // TILE)]):
+            return False
+        return not sc.is_solid_at(px, py)
+
+    s0 = (int(sx * _FINE + _FINE // 2), int(sy * _FINE + _FINE // 2))
+    if not clear(*s0):
+        # the spawn's own sample may land in a trunk; try the rest of its tile
+        cands = [(sx * _FINE + a, sy * _FINE + b)
+                 for a in range(_FINE) for b in range(_FINE)]
+        cands = [c for c in cands if clear(*c)]
+        if not cands:
+            return set()
+        s0 = cands[0]
+    seen_f = {s0}
+    q = deque([s0])
     while q:
         cx, cy = q.popleft()
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             n = (cx + dx, cy + dy)
-            if n not in seen and _walkable(sc, n[0], n[1]):
-                seen.add(n)
+            if n not in seen_f and clear(*n):
+                seen_f.add(n)
                 q.append(n)
-    return seen
+    return {(ix // _FINE, iy // _FINE) for ix, iy in seen_f}
 
 
 def _reachable(region, tx, ty):

@@ -16,6 +16,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pygame
 pygame.init()
+# the skybox's cached base calls Surface.convert(), which needs a display
+# mode even under the dummy driver
+pygame.display.set_mode((1, 1))
 from rendering.camera import Camera
 from rendering.solids import draw_solid, draw_box
 from rendering.skybox import draw_skybox

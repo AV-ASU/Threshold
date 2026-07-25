@@ -563,6 +563,53 @@ Built into the procedural draw layer (`scenes/base.py`,
   touch open floor, faint pitting/cracks. The seams vanish; a run reads
   as a single battered surface. Terrain rendering is shared through
   `draw_scene_terrain` (Scene.draw + the offline renderer use the same).
+- **THE GROUND is the biggest surface in the frame, and it is built in
+  three layers.** Under a fixed 55-degree camera the floor is most of what
+  the player looks at, so a flat fill is a flat fill across half the screen.
+  (1) The BASE is a per-char colour bilinearly smoothed across tile corners
+  together with the macro shadow, so brightness rolls ACROSS tile edges
+  rather than stepping at them. (2) The DETAIL is clustered, never
+  sprinkled: grass is one to three tufts of blades plus last year's straw
+  mat, dirt is fine grain with a few seated stones and a short angled
+  scuff. Detail runs mostly DARKER than the base -- turf at this distance is
+  the shadow between the blades -- and both the count and the placement vary
+  per tile, because a fixed count is itself a pattern. Nothing may carry a
+  screen axis: a full-width mark at a fixed tile row becomes a stripe on a
+  rotated facing (`d` had one, and the plank floor had the same bug before
+  it). (3) The SEAM between two chars is frayed by `_build_path_fringe_card`
+  for every char in `_PATCH_CHARS`, in both chars' colours. Tiles are cached
+  BY CHAR so no tile can know its neighbours, which makes every unfrayed
+  boundary a hard straight step at the grid -- and a lone tile of a
+  different colour then reads as a hole rather than as ground. Values sit in
+  one damp April family: the dirt paths must never be the brightest thing
+  outdoors, and wet ground gets its darkness from the puddles drawn on it,
+  not from a near-black base.
+- **OBJECTS ARE NOT TILES, AND OCCLUSION FOLLOWS FROM HEIGHT.** The rule
+  walls established with `_wall_slab` -- authored per tile, but carrying a
+  real sub-tile footprint that is the SINGLE SOURCE for the draw layers and
+  for `is_solid_at` / `blocks_sight` / `_nav_solid_at` -- now applies to
+  plants too (`scenes/terrain.py` `tree_footprint`). A tree stands off its
+  cell centre and blocks as a round foot, so a stand reads as a wood instead
+  of a grid and the player slips between trunks on the diagonal the way the
+  silhouette promises. Jitter plus foot is held under 0.7 of a tile so a tree
+  can never seal a corridor it was not authored into.
+  Because the player collides as a POINT and a trunk is a circle, the gaps
+  between trees are now a property of the stand rather than something a
+  designer marks tile by tile. That retired the walk-through tree outright
+  (about half the forest was one); a band of solid trees still admits a
+  straight north crossing at 25-55% of its width, and far more on the
+  diagonal, which is the "push through the woods" feel the permeable band
+  was hand-authored to fake. It also retired the tile-granular reachability
+  guard: `tests/smoke.py` floods sub-tile through `is_solid_at` in any scene
+  with solid plants, because a coarse 4-way tile walk cannot see a diagonal
+  gap and was rejecting real routes.
+  Occlusion is then a consequence of geometry rather than of draw order.
+  Two rules make that true: **nothing gets a privileged layer** (anything
+  with height joins the one depth-sorted pass -- `bush` used to be a floor
+  decal, drawn before the pass, and so could never occlude anything at any
+  position), and **every occluder reports its own height** (`tree_height`)
+  to both the depth key and the fade box, instead of the flat wall rise of
+  26 that a 50-tall spruce and a knee-high scrub both used to claim.
 - **Interior walls render as thin-slab geometry, per material (current
   state; `scenes/terrain.py`; how this evolved -- bevel -> slab -> rounded ->
   materials -> the mine as hewn rock -- is in `CHANGELOG.md`, "Walls &
@@ -1788,3 +1835,245 @@ hides must read under the oblique tilt (volumes / standees / decals per the
 tilt dispatch map), not flat stickers. The Pillar-2 **peek** verb is
 deliberately deferred (free look under tilt already gives the information
 function).
+
+---
+
+## 13. The lost spaces -- the in-between (TODO #26)
+
+Three procedurally-generated, non-repeating dark fields
+(`scenes/lost_space.py`; `lost_corn` / `lost_forest` / `lost_road`, plus the
+`lost_space` back-compat alias onto corn). They are the backrooms
+in-between: mostly EMPTY generated ground with sparse wrong things in it,
+built around ONE hand-authored lit island. The full model, the fences, and
+what is still open live in `TODO.md` #26; this section is the shipping
+system and its code map.
+
+### The shape of a field
+
+A `LostSpace` is a `Scene` whose `floor` / `objects` are generator-backed
+proxies (`_GenGrid` / `_GenRow`) over a hashed per-tile field, with a huge
+finite `w`/`h` and the player spawned at CENTRE, so collision, sight, and
+the tilt render all work unchanged and the map edge never enters the camera
+window. `procedural = True` tells `tests/smoke.py` to skip flood-fill and
+full-grid scans (an unbounded field would hang them); `nav_path` returns
+None, so chasers run straight-line. `display_name` is the empty string: a
+lost space is a place with no name you know, so the HUD corner that labels
+every other scene stays blank here.
+
+Each field has its own hand-authored **focal island** in the sea of
+generation: corn is a crop circle around an abandoned camp fire, forest is a
+pond with a fire on the near bank and lanterns across the water, road is a
+filling-station lot under a neon pylon. Because the island is the only lit
+thing, `LOST_SPACE_SCENES` carries a heavier gloom (150) than the other
+dark scenes so it reads as a bright island in a black sea.
+
+### The loop, end to end
+
+1. **The mouth.** A scene opts a non-wrapping map edge in with
+   `Scene.set_lost_edge(sides, lost_key)`, which fills `Scene.lost_edges`
+   (`{side: lost_scene_key}`; None on every other scene, so an un-opted
+   scene is exactly what it was). `Game._tick_lost_edge` runs from
+   `update_player` right after the wrap clamp, because the map edge is
+   where the clamp just refused to let them through.
+2. **Light gates entry.** The edge only opens when the ambient is dark
+   (`Game.scene_gloom() >= LOST_EDGE_GLOOM`) AND the spot itself is unlit
+   (`Scene.lit_at` false, flashlight off). On the surface the gloom is the
+   STORM, which climbs with the evidence count, so the lost spaces cost no
+   new system: at ev0 the world is daylight and every bound is the
+   invisible wall it always was, and only once understanding has darkened
+   the world do its edges stop holding. A lit spot never opens, which makes
+   the yard lights and a carried flame real protection.
+   Pressing OUTWARD is required: you fall through by walking into the edge,
+   never by loitering near it.
+3. **The fall** writes the return anchor (`Game._lost_return` = the scene
+   and a spot `LOST_EDGE_BACKOFF` tiles back INTO the world) and crosses via
+   `cross_fold` -- the same one primitive as every other non-door
+   traversal, so there is no fade and no sting. The biome you land in is
+   the one the edge looked like.
+4. **The island** is a lit dead end. While you stand in its glow there is
+   no way out at all.
+5. **The hunt.** Leave the glow and the exit light (a lantern) appears,
+   held 6-20 tiles off and relocating out of your sight cone if you drift,
+   so the way out is always findable and never free.
+6. **Climbing out** spends the anchor and returns you to the yard a few
+   strides in from the edge that took you. With no anchor (a direct load, a
+   preview) the fields chain to each other instead, so they stay walkable
+   on their own.
+
+Guarded end to end by `tests/flow.py` §32b, including that a lit edge
+refuses, a lit spot in a dark world refuses, and the return lands clear of
+the mouth. **Shipping mouth today: the lodge yard's treeline (N/S).** The
+yard's x axis is the torus and stays the torus -- `set_lost_edge` refuses a
+wrapping edge outright, because a seam has no far side to fall off.
+
+### The dark rearranges itself
+
+`LostSpace._tick_reshuffle` moves the FIELD's scatter landmarks (never the
+island, never a camp, never a light) every `_SHUFFLE_EVERY` seconds, at
+most `_SHUFFLE_MAX` at a time, with a rotating cursor so it works its way
+through the whole set rather than shuffling the same three forever. The
+rule it enforces is the one the whole in-between runs on: **what the light
+touches is TRUE; the dark is not.** A landmark is only moved when it is
+outside your sight cone, unlit, and farther than `_SHUFFLE_NEAR`, and it
+only lands somewhere that is also outside the cone, unlit, and not solid.
+Only GEOMETRY lies -- a threat never blinks out this way.
+
+### Who else is out there
+
+Two kinds of light that are not the exit. The **occupied camp** is a
+second, manned fire on a hashed bearing 26-36 tiles out, its crew spawned
+on approach and released when you leave; it comes in three flavours (rest /
+watch / work) so the camp you stumble into is not always the camp you
+stumbled into last time. The **lamp-carriers** are cultists walking the
+dark with a light in hand, and they exist precisely so a distant warm glow
+is ambiguous: the way out, or someone coming. All of them are ordinary cult
+NPCs, so the lost scenes sit in `CULTIST_SCENES` (with `cult_target = 0`,
+so the field never musters a patrol of its own).
+
+### The fields are WORDLESS
+
+No narrator boxes, no notices, no case-notebook writes, no place name. The
+dark and the hunted light are the entire text; a caption would explain away
+the one beat the space exists to deliver. Enforced by
+`tests/conventions.py` check 6.
+
+---
+
+## 14. The safe path -- the lit spine (TODO #26)
+
+The middle of the three layers: **interior -> yard -> SAFE PATH <-> lost
+spaces** (`scenes/safe_path.py`). A path scene is a wide paved road under
+civic lamps, and it is the one part of the outdoors that does not lie. Its
+arms go where they say, its geometry never rearranges, and nothing on the
+asphalt moves when you look away. It is Garrick's standing advice made into
+level geometry: *"Stay on the roads. People who go off the roads come out
+wrong-side of where they went in."*
+
+### The road is safe by its GEOMETRY, and the light is sparse
+
+Walk the asphalt anywhere, at any hour, at any evidence count, and the world
+cannot take you. That is the shape of the thing rather than the lamps: §13's
+mouth can only open within `LOST_EDGE_BAND` of a MAP EDGE, an arm's end is an
+EXIT (and `Game._tick_lost_edge` refuses on an exit tile), and a flank edge
+has no asphalt anywhere near it. Step off the shoulder into the dark grass at
+a flank and it lets go like any other verge. So the rule the player learns is
+short and true: **the road carries you on, everything beside it does not.**
+
+`tests/flow.py` §34 asserts this as a WALK -- every lane of every arm of
+every path scene, driven end to end at ev3 with the lamps sparse, none of
+which may fall out of the world.
+
+The LAMPS are therefore not the safety, and there are far fewer than the
+first cut's end-to-end coverage (which read like an airport runway). The
+pattern is the maintainer's own, read off eight X's drawn on a capture of the
+country lane and generalised in `_lamp_stations` so every road in the network
+is lit the same way:
+
+* **A junction is lit at its CORNERS, never at its centre.** A mast goes in
+  each corner that lies between two arms, so the poles flank the mouth of the
+  side road instead of standing in the crossing. A side with no arm has
+  nothing to flank, so that shoulder takes one mast on the centreline, which
+  closes the junction's fourth side without lighting a road that is not there.
+* **Runs are lit in PAIRS**, facing each other across the road every
+  `LAMP_STEP` (11) tiles out from the junction.
+* **The ends of a run go dark.** The last pair falls where the stride falls
+  and nothing is added to light the way out. A road fading into unlit distance
+  is the point.
+
+Masts sit on the OUTER edge of the shoulder, where the right-of-way ends and
+the grass starts.
+
+**Placement is ART-DIRECTED, not derived, where it matters.**
+`build_path(..., lamps=((tx, ty), ...))` overrides the rhythm outright, and
+`tools/screen_to_world.py` turns marks on a capture into that list. Lamp
+positions are a thing the maintainer draws on a screenshot, and a derived
+rhythm that looks reasonable is not the same as the one that was asked for --
+the country lane's eight are the maintainer's own. A scene nobody has
+directed keeps the default.
+
+**No mast ever stands on the carriageway.** A lamp post in the middle of a
+road is a thing you would swerve around in a car and walk into on foot. Every
+station is pushed outward until its tile is not asphalt and dropped if it
+cannot get clear; an explicit `lamps=` position on asphalt raises at build
+time. `tests/flow.py` §34 fails on any mast in the road.
+
+The light still does real work. It keeps the verge's dark off the asphalt at
+the rim, and standing under a mast makes you VISIBLE to anything hunting
+(stealth reads the same `Scene.lit_at`). Being ELECTRIC (`street_lamp` is in
+`Scene._ELECTRIC_KINDS`) it goes out with the gensets, so a blackout takes
+even that away. `street_lamp` (`rendering/props.py`) is the fixture: the same
+cold mercury-vapor head the town hangs in its yards, up a tall galvanized
+mast with a long gooseneck over the carriageway and a poured footing.
+
+### Shapes: I, L and T
+
+A path is built from ARMS, a subset of "nesw" around one junction at the
+scene's centre. Two opposite arms is an **I** (a straight run), two adjacent
+an **L** (the road turns), three a **T** (a junction). `build_path` lays the
+surface, the lamps, the verge, the exits and the mouths from that alone, so a
+new segment is a call rather than a hand-drawn grid.
+
+Arms are painted in two passes -- every arm's gravel, then every arm's
+asphalt on top -- so a junction comes out surfaced rather than quartered by
+whichever arm was drawn last. The dashed centre lane stops at the junction
+box, because a real crossroads has no line through it. `"Y"` is the N-S
+centre lane and `"-"` the E-W one; they are two floor chars rather than one
+neighbour-aware char because floor tiles are cached BY CHAR.
+
+**Not too thin** (maintainer). Five tiles of asphalt inside a nine-tile
+corridor with the shoulders. The road it replaced was a three-tile dirt strip
+in a twelve-tile scene, which read as a corridor rather than a road you can
+stand in the middle of.
+
+### Every side is a mouth, and the biome is a rule
+
+Every side of a path scene opens on a lost space, arms included: the grass
+either side of an arm's end is as dark as a flank's. The road exit wins where
+it is laid (`Game._tick_lost_edge` refuses on an exit tile, and a path's
+exits span the whole corridor including both shoulders), so the rule the
+player learns is the true one -- **the asphalt carries you on, everything
+beside it lets go.**
+
+WHICH lost space is derived, not authored: a flank opens on whatever its
+verge is planted with (`_VERGE_LOST`: pine -> `lost_forest`, dead corn ->
+`lost_corn`), and an arm's end opens on `lost_road`, because what you stepped
+off there was a roadside. Hand-picking per scene is how you end up pushing
+through a wall of corn and landing in a pine wood.
+
+### The river
+
+The river is the artery of the whole nightmare (NARRATIVE §2) and it has to
+be visible from the path, so `build_path` takes a channel and keeps
+`RIVER_BANK` tiles of open bank clear of verge growth either side of it --
+at full density the trees close over the water and bury it. Water is `~`
+floor over the see-over solid `x` (the lost-space pond precedent): it blocks
+the body but not the sight cone, so the far bank shows across it.
+
+Where a road arm crosses the channel it becomes a **bridge**: the deck is
+paved across the whole corridor (a deck that stopped at the asphalt would
+leave two dirt strips walking over open water) and `_rail_the_deck` runs a
+timber parapet down both exposed lips. The rail is not trim -- under the tilt
+a bridge without one is a brown patch of ground that happens to sit on water.
+
+### The shipping network
+
+Three segments east and north of town, one of each shape, closing a loop with
+the two roads that were already there:
+
+| scene | shape | arms | what it is |
+|---|---|---|---|
+| `country_lane` | **T** | W / E / N | the junction east of town: Brimley west, the arrival road east, the river run north. Dead corn to the shoulder on its one flank. |
+| `river_road` | **I** | S / N | a straight run north with the water off the east shoulder the whole way. Pine going black to the west. |
+| `river_bend` | **L** | S / E | the road turns east and crosses the river on the planks. |
+| `gravel_road_north` | **T** | S / N / W | Brimley south, the backwoods north, the bend west. Gravel-shouldered, pines to the kerb; keeps its boarded chop-target alcove. |
+
+`arrival_road` is the one road that is NOT a `SafePath`, and deliberately so:
+its endless-north illusion is built from a `_render_band` + a `_treadmill` +
+a silent same-scene south loop, none of which a generic path builder models.
+It took the cross-section and the lamp pattern instead, widened from 15 to 23
+tiles so a nine-tile corridor fits, with every column derived from `ROAD_C`
+and the shared constants rather than written as a literal. Its car, sign and
+boards moved out onto the verge. (One flow guard had to change with it: the
+band-is-landmark-free check tested for "no `d` in the row", which was a valid
+proxy only while dirt appeared solely on the E-W crossing; it now tests the
+two real landmarks, a full-width dirt row and the car footprint.)

@@ -306,95 +306,8 @@ def build_schoolhouse():
     return sc
 
 
-def build_country_lane():
-    """A worn rural road between the Clerk's yard and the town
-    crossroads. Long thin scene -- 32 wide x 12 tall -- so the
-    walk feels like time passing rather than a single doorway. The
-    road itself is a 3-tile dirt strip in the middle; corn / wild
-    grass on either side; a busted wooden fence runs along the
-    south edge. A single creepy_tree on the north side at midway.
-
-    Two exits: west `a` -> village (from_country_lane), east `e` ->
-    lodge_yard (from_country_lane). No interior building, no
-    NPCs by default; the Sheriff patrol can pass through here as
-    part of his route (already wired by tag, no extra work).
-    """
-    W, H = 32, 12
-    floor_rows = []
-    for y in range(H):
-        if 5 <= y <= 7:
-            floor_rows.append("d" * W)
-        else:
-            floor_rows.append("g" * W)
-    objects_l = []
-    for y in range(H):
-        if y < 2 or y >= H - 2:
-            # THRESHOLD: country lane is now flanked by cornfields,
-            # not woods. Tree perimeter replaced with cornstalk.
-            row = ["C"] * W
-        else:
-            row = ["."] * W
-            row[0] = "C"
-            row[W - 1] = "C"
-        objects_l.append(row)
-    # West passage (a) -- to village
-    for dy in (-1, 0, 1):
-        objects_l[6 + dy][0] = "a"
-    # East passage (e) -- to lodge_yard
-    for dy in (-1, 0, 1):
-        objects_l[6 + dy][W - 1] = "e"
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("country_lane", floor_rows, objects, music="outside")
-    sc.add_exit("a", "brimley", "from_country_lane")
-    # East now lands on the ARRIVAL ROAD (the looping road W of the Lodge),
-    # whose dirt path carries on east to the yard.
-    sc.add_exit("e", "arrival_road", "from_country_lane")
-    sc.set_spawn("default", 1, 6)
-    # Player walked WEST off the arrival road: lands at the east end of the
-    # lane, facing west toward town. (from_lodge_yard kept as an alias for
-    # any save that still routes straight here.)
-    sc.set_spawn("from_arrival_road", W - 2, 6)
-    sc.set_spawn("from_lodge_yard", W - 2, 6)
-    # Player walked EAST out of Brimley: lands at the west end of
-    # the lane, facing east toward home.
-    sc.set_spawn("from_brimley", 1, 6)
-
-    # Atmosphere -- corn tufts on both sides of the road, a few
-    # crows, a leaning fence post deco, one creepy_tree, a dead
-    # crow on the road, a missing-flyer pinned to a fence.
-    rng = random.Random(2028)
-    for _ in range(36):
-        gx = rng.randint(2, W - 3) * TILE + rng.randint(0, 30)
-        gy = rng.randint(0, H - 1) * TILE + rng.randint(0, 30)
-        ty_ = gy // TILE
-        if 5 <= ty_ <= 7:   # keep the road clear
-            continue
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(8 * TILE + 8, 1 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(22 * TILE + 8, 10 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(15 * TILE + 16, 1 * TILE + 28,
-                                 "creepy_tree"))
-    sc.add_decoration(Decoration(18 * TILE + 16, 7 * TILE + 22,
-                                 "dead_crow"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
-                                 "missing_flyer"))
-
-    # ---- The walked-out road (2026-07 detail pass) ----
-    # The locals who went to flag down help walked EAST down this lane
-    # and never came back: bootprints along the road that head east and
-    # simply stop, well short of the seam.
-    for fx, fy in ((17, 6), (20, 5), (23, 6), (25, 6)):
-        sc.add_decoration(Decoration(fx * TILE + 16, fy * TILE + 16,
-                                     "mud_footprint"))
-    # The busted south fence sheds a plank; tins dumped off the north
-    # shoulder (both noise traps along the cover lanes).
-    sc.add_noise_trap(24 * TILE + 16, 9 * TILE + 16, "plank", seed=25)
-    sc.add_noise_trap(9 * TILE + 16, 3 * TILE + 16, "cans", seed=26)
-    for lx, ly in ((6, 4), (28, 8)):
-        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
-                                     "leaves"))
-    sc.hide_spots = []
-    return sc
+# build_country_lane moved to scenes/safe_path.py in 2026-07: the lane is a
+# SAFE PATH now (a T junction, DESIGN.md §14), not a 3-tile dirt strip.
 
 
 def build_graveyard():
@@ -531,64 +444,8 @@ def build_graveyard():
     return sc
 
 
-def build_gravel_road_north():
-    """Long thin gravel road running north out of town. South exit
-    `a` returns to village; north exit `e` reaches backwoods_cabin.
-    Tall scene (14 wide x 22 tall) so the walk feels like distance.
-    Cornstalks + dead crows on either side; no NPC by default. The
-    Choir and Hound patrols both spawn here as part of their route
-    (wired via `_sheriff_scenes` in systems/game.py)."""
-    W, H = 14, 22
-    floor_rows = []
-    for y in range(H):
-        row = []
-        for x in range(W):
-            if 6 <= x <= 8:
-                row.append("d")            # gravel road through middle
-            else:
-                row.append("g")
-        floor_rows.append("".join(row))
-    objects_l = []
-    for y in range(H):
-        if y < 1 or y >= H - 1:
-            row = ["T"] * W
-        else:
-            row = ["."] * W
-            row[0] = "T"
-            row[W - 1] = "T"
-        objects_l.append(row)
-    # North exit (e) -> backwoods_cabin. South exit (a) -> village.
-    objects_l[0][7] = "e"
-    objects_l[H - 1][7] = "a"
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("gravel_road_north", floor_rows, objects, music="outside")
-    sc.add_exit("e", "backwoods_cabin", "from_road")
-    sc.add_exit("a", "brimley", "from_gravel_road")
-    sc.set_spawn("default", 7, H - 2)
-    sc.set_spawn("from_brimley", 7, H - 2)
-    sc.set_spawn("from_backwoods_cabin", 7, 1)
-
-    rng = random.Random(2031)
-    for _ in range(50):
-        gx = rng.randint(1, W - 2) * TILE + rng.randint(0, 30)
-        gy = rng.randint(1, H - 2) * TILE + rng.randint(0, 30)
-        tx_ = gx // TILE
-        if 6 <= tx_ <= 8:
-            continue
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 14 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 11 * TILE + 16, "dead_crow"))
-    sc.add_decoration(Decoration(3 * TILE + 8, 1 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(10 * TILE + 8, 19 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16,
-                                 "phantom_mark"))
-    # Boarded-over panel of nailed planks set into the east tree line at
-    # midway -- a chop-target that opens onto an empty, long-looted alcove.
-    sc.objects[10][13] = "q"
-
-    sc.hide_spots = []
-    return sc
+# build_gravel_road_north moved to scenes/safe_path.py in 2026-07: the last
+# of the thin dirt roads became a T SAFE PATH (DESIGN.md §14).
 
 
 def build_backwoods_cabin():

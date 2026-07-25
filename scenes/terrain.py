@@ -77,7 +77,13 @@ def _wall_shadow_strip():
 
 
 # Object chars tall enough to throw a shadow onto the floor below.
-_SHADOW_CASTERS = frozenset("#WTpj%&lzqKR")
+# NOT trees ('T'/'p'): under the tilt a tree is a volumetric body that lays
+# its own contact shadow. The wall strip is a TILE-wide hard-topped rectangle
+# blitted flat on the tile to the SOUTH -- a second shadow, tile-shaped,
+# belonging to nothing the player can see. In the forest band, where trees
+# sit on most tiles, they overlapped into the dark rectangles the maintainer
+# spotted in the grass.
+_SHADOW_CASTERS = frozenset("#W%&lzqKR")
 # draw_object kinds that get a soft contact shadow at their base.
 _STANDING_KINDS = frozenset((
     "tree", "cornstalk", "rock", "bed", "table", "chair",
@@ -97,7 +103,7 @@ def _dark_tile(alpha):
 
 
 FLOOR_DEFS = {
-    "g": {"color": (46, 58, 44),   "step": "step_grass"},
+    "g": {"color": (45, 55, 42),   "step": "step_grass"},
     "G": {"color": (34, 46, 36),   "step": "step_grass"},
     "_": {"color": (80, 78, 74),   "step": "step_stone"},
     "=": {"color": (88, 66, 42),   "step": "step_wood"},
@@ -113,12 +119,22 @@ FLOOR_DEFS = {
     # Dirt footpath -- the worn-grass walking lane that runs through every
     # outdoor scene (replaces the round-4 stone corridor). Soft ochre so
     # it reads as packed dirt next to grass without going full road.
-    "d": {"color": (96, 76, 52),   "step": "step_grass"},
-    # Paved asphalt -- THE road (arrival_road): the one paved road in the game,
-    # west of the start, where the King idles. Cold grey aggregate. "Y" is the
-    # centre lane and paints the faded dashed centreline. Other roads stay dirt.
+    # Damp April earth, not summer dust. At (96, 76, 52) the paths were the
+    # BRIGHTEST thing in any outdoor scene -- brighter than the buildings they
+    # ran between -- so the eye went to the road instead of the town. The
+    # value now sits above grass without glowing.
+    "d": {"color": (70, 57, 42),   "step": "step_grass"},
+    # Paved asphalt -- the SAFE PATH surface (arrival_road and the path
+    # network, DESIGN.md §14). Cold grey aggregate. "Y" and "-" are the centre
+    # lane, painting the faded dashed centreline: "Y" for a road running
+    # NORTH-SOUTH (dashes along the column) and "-" for one running EAST-WEST
+    # (dashes along the row). Two chars rather than one neighbour-aware char
+    # because floor tiles are CACHED BY CHAR -- a tile that looked at its
+    # neighbours would render whichever orientation was rasterised first and
+    # then reuse it everywhere. Dirt tracks stay "d".
     "P": {"color": (44, 42, 47),   "step": "step_stone"},
     "Y": {"color": (44, 42, 47),   "step": "step_stone"},
+    "-": {"color": (44, 42, 47),   "step": "step_stone"},
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
     # Smooth flat grey stone -- NO texture at all (no mottle, grout, jitter, or
     # macro shadow). The Threshold apron: an impossibly even, man-made-looking
@@ -136,7 +152,14 @@ FLOOR_DEFS = {
     # Marsh mud -- wet churned low ground, walkable. Stamped in organic
     # patches across the Brimley fields so the plain reads as a sodden
     # brimley marsh, not a flat lawn.
-    ";": {"color": (40, 37, 30),   "step": "step_grass"},
+    # THE BLACK PATCHES. At (40, 37, 30) this was a brown near-black, and
+    # scenes sprinkle it as ISOLATED SINGLE TILES through grass at (45, 55,
+    # 42) -- so each one read as a square black hole in the lawn rather than
+    # as wet ground (the maintainer's "black patches in the grass at certain
+    # angles"). Wet ground is the SAME ground, darker and greyer; the base
+    # now sits beside grass and the darkness comes from the puddles drawn on
+    # top, where it belongs. Its edges fray like a path's (_PATCH_CHARS).
+    ";": {"color": (44, 48, 38),   "step": "step_grass"},
 }
 
 
@@ -145,7 +168,15 @@ OBJECT_DEFS = {
     "#": {"solid": True, "kind": "stone_wall"},
     "W": {"solid": True, "kind": "wood_wall"},
     "T": {"solid": True, "kind": "tree"},
-    "p": {"solid": False, "kind": "tree"},   # passable secret tree -- looks identical to T
+    # A NORMAL TREE. `p` used to be a walk-through tree -- 967 of them,
+    # about half the forest -- because a forest of full-tile square
+    # collision cells is a wall, so permeability had to be authored in by
+    # hand. Round sub-tile feet (`tree_footprint`) make the gaps FALL OUT of
+    # the geometry instead, and the player collides as a point, so a stand of
+    # solid trees is already something you thread rather than something you
+    # bounce off. Undergrowth is a `bush` DECORATION now, placed where a
+    # scene wants it, rather than half the treeline.
+    "p": {"solid": True, "kind": "tree"},
     "C": {"solid": True, "kind": "cornstalk"},
     "A": {"solid": False, "kind": "cornstalk"},   # passable corn -- looks like C
     "R": {"solid": True, "kind": "rock"},
@@ -267,44 +298,109 @@ def _vary(seed, i):
     return v
 
 
-def _draw_tree(surf, rx, ry, seed):
-    """An oversized, irregular canopy that spills past its tile and
-    overhangs its neighbours -- a run of trees reads as one organic
-    canopy line, not a grid of identical discs. Center, radius, lean,
-    lobe layout and tint all vary per tile (deterministic). Light reads
-    from the upper-left, matching the wall faces."""
-    cx = rx + 16 + (_vary(seed, 0) % 11) - 5            # -5..+5
-    cy = ry + 12 + (_vary(seed, 1) % 9) - 5             # -5..+3 (bias up)
-    R = 18 + (_vary(seed, 2) % 9)                       # 18..26 > half-tile -> overhangs
-    # Slow wind sway: the canopy leans a few px on a per-tree phase, so a
-    # run of trees ripples out of sync rather than swaying as one block.
-    cx += int(math.sin(pygame.time.get_ticks() / 1100.0
-                       + (seed & 511) * 0.0123) * 2.6)
-    lean = (_vary(seed, 3) % 7) - 3
-    tw = 5 + (_vary(seed, 4) % 2)
-    bx = rx + 16 - tw // 2 + lean                       # short trunk, mostly hidden
-    pygame.draw.rect(surf, (44, 32, 22), (bx, ry + 18, tw, 14))
-    pygame.draw.rect(surf, (28, 20, 13), (bx, ry + 18, 2, 14))
+def _draw_tree(surf, rx, ry, seed, h=46):
+    """A tree standing on the ground line at ry + TILE, `h` pixels tall.
+
+    THE OLD SHAPE WAS A BUSH. It was six big overlapping circles centred
+    barely above the tile with a 14px trunk stub that the canopy completely
+    swallowed -- so a tree had no visible trunk, no gap between ground and
+    foliage, and a smooth blobby silhouette. Stood up as a standee card it
+    read as a lily pad or a shrub, never as a tree, and scaled up by the
+    camera the low-resolution circles turned into visible straight facets.
+
+    What actually says TREE at a glance is the silhouette: a bare trunk
+    lifting a ragged mass clear of the ground, and a canopy edge broken
+    enough that no arc of it repeats. So: a real trunk with a fork, and a
+    canopy built from many SMALL puffs whose outline is deliberately torn
+    rather than three big discs whose outline is three arcs.
+
+    Light reads from the upper left, matching the wall faces.
+    """
+    ground = ry + TILE
+    top = ground - h
     g = _vary(seed, 5) % 12
-    base = (16 + g // 2, 38 + g, 22 + g // 2)
+    dark = (13, 28, 18 + g // 3)                       # underside, in shade
+    base = (17 + g // 2, 40 + g, 23 + g // 2)
     mid = (26 + g, 56 + g, 32 + g)
-    lite = (42 + g, 78 + g, 46 + g)
-    for k, (ox, oy, rr) in enumerate((
-            (0.0, 0.10, 1.00), (-0.55, 0.22, 0.64), (0.55, 0.16, 0.60),
-            (-0.30, -0.46, 0.58), (0.34, -0.40, 0.54), (0.0, 0.48, 0.50))):
-        wob = (_vary(seed, 10 + k) % 5) - 2
-        pygame.draw.circle(surf, base,
-                           (int(cx + ox * R), int(cy + oy * R)),
-                           max(3, int(rr * R) + wob))
-    for ox, oy, rr in ((-0.18, -0.10, 0.72), (0.30, 0.06, 0.54),
-                       (-0.05, -0.42, 0.46)):
-        pygame.draw.circle(surf, mid,
-                           (int(cx + ox * R), int(cy + oy * R)),
-                           max(2, int(rr * R)))
-    for ox, oy, rr in ((-0.34, -0.34, 0.34), (-0.06, -0.20, 0.24)):
-        pygame.draw.circle(surf, lite,
-                           (int(cx + ox * R), int(cy + oy * R)),
-                           max(2, int(rr * R)))
+    lite = (40 + g, 74 + g, 44 + g)
+    # Slow wind sway on a per-tree phase, so a run of trees ripples out of
+    # sync rather than swaying as one block. Only the CROWN moves; the trunk
+    # foot stays planted.
+    sway = math.sin(pygame.time.get_ticks() / 1100.0
+                    + (seed & 511) * 0.0123) * (h * 0.035)
+    lean = ((_vary(seed, 3) % 7) - 3) * (h / 46.0)
+    # ---- the trunk: tapered, from the ground up to the canopy's underside
+    trunk_h = h * (0.32 + (_vary(seed, 6) % 5) * 0.02)
+    tw = max(3, int(h * 0.095))
+    fx = rx + 16                                       # foot, tile centre
+    hx = fx + lean + sway                              # head of the trunk
+    hy = ground - trunk_h
+    for i in range(int(trunk_h)):
+        u = i / max(1.0, trunk_h)
+        px = fx + (hx - fx) * u * u                    # bends, not a stick
+        wdt = max(1, int(tw * (1.0 - 0.45 * u)))
+        pygame.draw.rect(surf, (44, 32, 22),
+                         (int(px - wdt / 2), int(ground - i), wdt, 1))
+        pygame.draw.rect(surf, (26, 19, 12),
+                         (int(px - wdt / 2), int(ground - i),
+                          max(1, wdt // 3), 1))
+    # a fork: two limbs leaving the trunk head into the canopy
+    for sgn in (-1, 1):
+        lx = hx + sgn * h * 0.10
+        ly = hy - h * 0.10
+        pygame.draw.line(surf, (40, 29, 20), (int(hx), int(hy)),
+                         (int(lx), int(ly)), max(1, tw // 2))
+    # ---- the canopy: many small puffs, torn edge
+    cxc = hx
+    cyc = top + (ground - trunk_h - top) * 0.50
+    rxr = h * (0.26 + (_vary(seed, 2) % 5) * 0.012)    # canopy half-width
+    ryr = (ground - trunk_h - top) * 0.50
+    if ryr < 3:
+        ryr = 3
+    # THE CANOPY IS ONE MASS UNDER ONE LIGHT. Shading it by a threshold
+    # ("dark below this line, base above") split it into two hard-edged
+    # bands -- a near-black slab with a lighter slab stacked on it, which
+    # reads as two objects. Each puff instead takes its shade from where it
+    # sits relative to the light (upper LEFT), so the crown grades
+    # continuously from a lit shoulder to a shadowed underside.
+    ramp = (dark, base, mid, lite)
+
+    def _puff_col(ox, oy):
+        t = 0.52 - 0.62 * (oy / max(1.0, ryr)) - 0.30 * (ox / max(1.0, rxr))
+        t = max(0.0, min(0.999, t))
+        i = t * (len(ramp) - 1)
+        a_, b_ = ramp[int(i)], ramp[min(len(ramp) - 1, int(i) + 1)]
+        f = i - int(i)
+        return tuple(int(a_[j] + (b_[j] - a_[j]) * f) for j in range(3))
+
+    # OUTER puffs first: they carry the torn silhouette, so they are placed
+    # around the rim and a few are dropped outright to break the outline.
+    npuff = 20
+    for k in range(npuff):
+        a = (k / npuff) * math.tau + (_vary(seed, 10 + k) % 13) * 0.05
+        rad = 0.62 + (_vary(seed, 40 + k) % 7) * 0.055
+        ox = math.cos(a) * rxr * rad
+        oy = math.sin(a) * ryr * rad
+        if _vary(seed, 80 + k) % 6 == 0:
+            continue                                   # a gap in the crown
+        pr = max(2, int(h * 0.09) - (_vary(seed, 60 + k) % 3))
+        pygame.draw.circle(surf, _puff_col(ox, oy),
+                           (int(cxc + ox), int(cyc + oy)), pr)
+    # then the BODY, filling in toward the middle so the crown is solid
+    for k in range(11):
+        a = (k / 11.0) * math.tau + 0.4
+        rad = 0.14 + (_vary(seed, 100 + k) % 6) * 0.055
+        ox = math.cos(a) * rxr * rad
+        oy = math.sin(a) * ryr * rad
+        pr = max(2, int(h * 0.095) - (_vary(seed, 110 + k) % 2))
+        pygame.draw.circle(surf, _puff_col(ox, oy),
+                           (int(cxc + ox), int(cyc + oy)), pr)
+    # the lit shoulder, upper left -- the one place the sky reaches
+    for k in range(4):
+        ox = -rxr * (0.16 + 0.15 * k) + (_vary(seed, 120 + k) % 5) - 2
+        oy = -ryr * (0.30 + 0.10 * (k % 2)) + (_vary(seed, 130 + k) % 5) - 2
+        pygame.draw.circle(surf, lite, (int(cxc + ox), int(cyc + oy)),
+                           max(2, int(h * 0.05)))
 
 
 def _draw_corn(surf, rx, ry, seed):
@@ -708,36 +804,51 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         # unnaturally even (the Threshold apron).
         return
     if ch in ("g", "G"):
-        # Grass with layered detail: a faint base mottle on every
-        # tile, occasional grass blades, occasional darker dead-clump,
-        # and a very rare bone-white speck (something old buried).
+        # GRASS. It used to be a flat fill plus a handful of 2px rectangles
+        # scattered at unrelated positions, which at the tilt's magnification
+        # reads as confetti on a green void: noise, not texture. Real turf
+        # reads as CLUMPS -- tufts that grow together, with bare and dead
+        # ground between them -- so the detail is now clustered rather than
+        # sprinkled, and every clump leans off a per-clump angle so nothing
+        # lines up with the screen axes on a rotated facing.
         seed = tx * 37 + ty * 53
-        # Soft mottle -- every tile gets one or two darker patches so
-        # the grass never reads as a flat green field.
-        for i in range(2):
-            sx = (seed * (i * 3 + 1)) % 28
-            sy = (seed * (i * 5 + 7)) % 28
-            pygame.draw.rect(surf, (40, 50, 40),
-                             (rx + sx, ry + sy, 2, 2))
-        if seed % 7 == 0:
-            pygame.draw.rect(surf, (54, 64, 46),
-                             (rx + (seed % 26), ry + (seed * 3 % 26), 2, 4))
-        if seed % 11 == 0:
-            # Dead clump
-            pygame.draw.rect(surf, (66, 56, 34),
-                             (rx + (seed * 2 % 26),
-                              ry + (seed * 5 % 26), 3, 2))
+        # ONE to THREE tufts, varied per tile. Fixing the count made the
+        # density itself a pattern -- every tile equally busy reads as a
+        # uniform speckle no matter how the marks are placed.
+        # Blades run DARKER than the base and only occasionally lighter:
+        # turf at this distance is mostly the shadow between the blades, and
+        # a field of light-on-dark marks reads as lichen or mould.
+        for c in range(1 + (_vary(seed, 99) % 3)):
+            cxg = rx + 3 + (_vary(seed, c * 3) % 25)
+            cyg = ry + 7 + (_vary(seed, c * 3 + 1) % 22)
+            lean = ((_vary(seed, c * 3 + 2) % 5) - 2) * 0.5
+            g2 = _vary(seed, 40 + c) % 7
+            if _vary(seed, 45 + c) % 4 == 0:
+                blade = (48 + g2, 60 + g2, 42 + g2 // 2)      # caught light
+            else:
+                blade = (34 + g2 // 2, 43 + g2, 31 + g2 // 2)  # in shadow
+            for k in range(2 + (_vary(seed, 50 + c) % 3)):
+                bx0 = cxg + k - 1
+                hgt = 3 + (_vary(seed, 60 + c * 4 + k) % 4)
+                pygame.draw.line(surf, blade, (bx0, cyg),
+                                 (int(bx0 + lean * hgt * 0.5), cyg - hgt), 1)
+        # LAST YEAR'S DEAD GROWTH, flattened and straw-pale. It is April and
+        # the seal was January: the mat of dead grass is what the ground
+        # actually looks like, and it gives the field its warm/cool break.
+        if seed % 4 == 0:
+            dx = rx + (_vary(seed, 7) % 20) + 2
+            dy = ry + (_vary(seed, 8) % 20) + 4
+            straw = (54, 50, 35)
+            for k in range(2 + (_vary(seed, 9) % 2)):
+                ox = (_vary(seed, 70 + k) % 9)
+                oy = (_vary(seed, 80 + k) % 6)
+                pygame.draw.line(surf, straw, (dx + ox, dy + oy),
+                                 (dx + ox + 3 + (k % 2), dy + oy - 1), 1)
         if seed % 9 == 0:
             # Bare earth scuffed through the grass -- a patch of dirt.
             ex, ey = rx + (seed * 7 % 22) + 2, ry + (seed * 11 % 22) + 2
-            pygame.draw.ellipse(surf, (60, 48, 34), (ex, ey, 7, 5))
-            pygame.draw.rect(surf, (50, 40, 28), (ex + 2, ey + 1, 2, 2))
-        if seed % 13 == 0:
-            # A taller blade clump, lighter green, catching what light there is.
-            bx, by = rx + (seed * 5 % 28), ry + (seed * 3 % 22) + 6
-            for k in range(3):
-                pygame.draw.line(surf, (72, 86, 54),
-                                 (bx + k * 2, by), (bx + k * 2 - 1, by - 5 - k), 1)
+            pygame.draw.ellipse(surf, (54, 46, 34), (ex, ey, 7, 5))
+            pygame.draw.rect(surf, (46, 39, 29), (ex + 2, ey + 1, 2, 2))
         if seed % 73 == 0:
             # Bone speck -- very rare. The kind of thing a player
             # only catches on the second or third walk through.
@@ -934,26 +1045,56 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + (seed % 28), ry + 6),
                              (rx + (seed % 28), ry + 12), 1)
     elif ch == "d":
-        # Dirt path -- pebbles + drag marks + occasional dark wet
-        # patch so the path reads as worn AND grimy.
+        # DIRT PATH -- packed damp earth. The old version was three 2px
+        # rectangles and, on every fifth tile, a pale line running the FULL
+        # tile width at exactly y=16: a perfectly straight, perfectly
+        # repeating scratch that becomes a vertical stripe on an E/W facing.
+        # That is the same defect the plank floor was fixed for ("the floor
+        # on the east/west looks like straight lines"), and a ground texture
+        # must not carry a screen axis at all.
         seed = tx * 23 + ty * 47
-        for i in range(3):
-            sx = rx + ((seed * (i + 1)) % 24) + 4
-            sy = ry + ((seed * (i + 3)) % 24) + 4
-            col = (96, 72, 48) if i != 2 else (78, 56, 36)
-            pygame.draw.rect(surf, col, (sx, sy, 2, 2))
-        if seed % 5 == 0:
-            pygame.draw.line(surf, (108, 82, 56), (rx + 2, ry + 16),
-                             (rx + TILE - 2, ry + 16), 1)
-        if seed % 9 == 0:
-            # Dark wet patch -- the path remembers something.
-            pygame.draw.rect(surf, (66, 44, 28),
-                             (rx + (seed * 3 % 22) + 4,
-                              ry + (seed * 7 % 22) + 4, 4, 3))
-    elif ch in ("P", "Y"):
+        # fine grain: dense, low-contrast, two tones, so the surface has a
+        # material rather than a few visible dots
+        for i in range(9):
+            sx = rx + (_vary(seed, i) % 30) + 1
+            sy = ry + (_vary(seed, i + 20) % 30) + 1
+            col = (76, 63, 47) if i % 3 else (58, 47, 35)
+            pygame.draw.rect(surf, col, (sx, sy, 1, 1))
+        # Embedded stones: a dark seating shadow with a small lit crown on
+        # top, so they sit IN the ground. Kept SMALL, ROUND and sparse -- at
+        # a 3:1 ellipse and a +30% crown they read as scattered grains of
+        # rice, and two per tile everywhere is again a uniform speckle.
+        if seed % 3 == 0:
+            for k in range(1 + (_vary(seed, 5) % 2)):
+                stx = rx + (_vary(seed, 30 + k) % 26) + 3
+                sty = ry + (_vary(seed, 33 + k) % 26) + 3
+                sr = 2 + (_vary(seed, 36 + k) % 2)
+                pygame.draw.ellipse(surf, (46, 38, 29),
+                                    (stx, sty + 1, sr + 2, sr))
+                pygame.draw.ellipse(surf, (78, 67, 52), (stx, sty, sr + 1, sr))
+        if seed % 4 == 0:
+            # a scuff dragged through the dirt -- SHORT and on a per-tile
+            # angle, never spanning the tile and never axis-aligned
+            ang = (_vary(seed, 9) % 360) * math.pi / 180.0
+            sxc = rx + 8 + (_vary(seed, 11) % 16)
+            syc = ry + 8 + (_vary(seed, 12) % 16)
+            ln = 4 + (_vary(seed, 13) % 5)
+            pygame.draw.line(surf, (58, 48, 36),
+                             (int(sxc - math.cos(ang) * ln),
+                              int(syc - math.sin(ang) * ln)),
+                             (int(sxc + math.cos(ang) * ln),
+                              int(syc + math.sin(ang) * ln)), 1)
+        if seed % 6 == 0:
+            # damp patch -- the path holding water it never quite loses
+            wx0 = rx + (_vary(seed, 15) % 18) + 3
+            wy0 = ry + (_vary(seed, 16) % 18) + 3
+            pygame.draw.ellipse(surf, (52, 44, 34),
+                                (wx0, wy0, 8 + (_vary(seed, 17) % 5), 5))
+    elif ch in ("P", "Y", "-"):
         # Paved asphalt -- cold grey aggregate speckle, the odd hairline crack
-        # and a tar-dark patch. "Y" is the centre lane: it paints the faded
-        # dashed centreline so the run of tiles reads as one paved road.
+        # and a tar-dark patch. "Y" / "-" are the centre lane: they paint the
+        # faded dashed centreline (N-S / E-W respectively) so the run of tiles
+        # reads as one paved road.
         seed = tx * 31 + ty * 17
         for i in range(4):
             sx = rx + ((seed * (i + 1)) % 26) + 3
@@ -968,9 +1109,12 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             cx, cy = rx + (seed % 18) + 5, ry + 3
             pygame.draw.line(surf, (24, 23, 26), (cx, cy),
                              (cx + (seed % 6) - 3, cy + TILE - 6), 1)
-        if ch == "Y" and (ty % 2 == 0):            # faded dashed centreline
+        if ch == "Y" and (ty % 2 == 0):            # faded dash, N-S road
             pygame.draw.rect(surf, (150, 138, 86),
                              (rx + TILE // 2 - 1, ry + 6, 2, TILE - 12))
+        elif ch == "-" and (tx % 2 == 0):          # faded dash, E-W road
+            pygame.draw.rect(surf, (150, 138, 86),
+                             (rx + 6, ry + TILE // 2 - 1, TILE - 12, 2))
     elif ch == ";":
         # Marsh mud -- wet, churned ground. Dark puddle blotches with a
         # cold standing-water glint, dead reeds, hairline mud cracks.
@@ -1078,6 +1222,11 @@ DISPLAY_NAMES = {
     "graveyard":            "the Graveyard",
     "country_lane":         "the Country Lane",
     "gravel_road_north":    "the Gravel Road",
+    # the safe path east and north of town (DESIGN.md §14). Plain road names,
+    # the kind a county puts on a sign, so the lit spine reads as ordinary
+    # infrastructure and not as somewhere the game is steering you.
+    "river_road":           "River Road",
+    "river_bend":           "the River Bend",
     "backwoods_cabin":      "the Backwoods Cabin",
     "backwoods_cabin_interior": "the Cabin",
     "bell_tower":           "the Bell Tower",
@@ -1087,11 +1236,16 @@ DISPLAY_NAMES = {
 
 def scene_display_name(scene):
     """Resolve a scene's HUD label. Builder override > DISPLAY_NAMES
-    table > titlecased key."""
+    table > titlecased key.
+
+    `display_name = ""` is a DELIBERATE blank (a place with no name you
+    know, e.g. the lost spaces) and is honoured; None means unset and falls
+    through to the table."""
     if scene is None:
         return ""
-    if getattr(scene, "display_name", None):
-        return scene.display_name
+    name = getattr(scene, "display_name", None)
+    if name is not None:
+        return name
     label = DISPLAY_NAMES.get(scene.key)
     if label:
         return label
@@ -1160,7 +1314,13 @@ def _corn_runs(scene):
     return c
 
 
-_TILT_STANDEE_CACHE = {}
+# The kinds the tilt dispatch actually draws for a billboard char. Trees and
+# corn are VOLUMETRIC under the tilt (`_tilt_tree_draw` / `_tilt_corn_draw`),
+# not the flat cards this module used to stand up: `_tilt_standee` had been
+# dead for some time, every billboard char having been routed to a solid, and
+# it cost a full diagnostic cycle to discover -- a whole redesign went into
+# the wrong function because the docs and the code still described cards.
+_TILT_BILLBOARD_KINDS = frozenset({"tree", "cornstalk"})
 
 
 # Distance-LOD threshold (world-px, squared) for the tilted billboards. A tree
@@ -1210,47 +1370,11 @@ _TREE_CARD_CAP = 1600
 # than a full tree, so the player can tell at a glance which growth blocks them
 # ('T', solid) and which they can slip through -- a stealth-navigation tell --
 # and the woods get a low understory layer instead of one stamped canopy height.
-_TILT_BRUSH_CHARS = frozenset({"p", "j"})
-
-
-def _draw_brush_body(surf, camera, wx, wy, seed, far):
-    """A low scrub bush: a short woody stem under a clumped, ground-hugging mound
-    of foliage (a couple of offset lobes near rank). Clearly under knee/waist
-    height next to a tree, so passable growth reads as passable."""
-    from rendering.solids import draw_solid
-    g = _vary(seed, 5) % 12
-    r = 8 + (_vary(seed, 2) % 5)            # spread 8..12
-    hgt = 9 + (_vary(seed, 3) % 6)          # low: 9..14 world tall
-    foliage = {
-        "body": (30 + g, 50 + g, 26 + g // 2),
-        "lo":   (18 + g // 2, 34 + g, 16 + g // 2),
-        "rim":  (54 + g, 78 + g, 42 + g),
-    }
-    stem = {"body": (54 + g // 3, 42 + g // 4, 28 + g // 4),
-            "lo": (30, 22, 14), "rim": (86, 62, 40)}
-    # stubby woody base
-    draw_solid(surf, camera, wx, wy,
-               [(0, 1.6, 1.6), (hgt * 0.5, 1.2, 1.2)], stem)
-    # main low foliage mound
-    z0 = hgt * 0.30
-    draw_solid(surf, camera, wx, wy,
-               [(z0,             r * 0.5,  r * 0.5),
-                (z0 + hgt * 0.45, r,        r),
-                (z0 + hgt * 0.85, r * 0.7,  r * 0.7),
-                (z0 + hgt * 1.10, r * 0.25, r * 0.25)],
-               foliage)
-    # a clumped side lobe or two so it reads as a bush, not a green ball
-    if not far:
-        for li in range(1 + (_vary(seed, 6) % 2)):
-            ox = ((_vary(seed, 7 + li * 3) % 11) - 5) * 0.8
-            oy = ((_vary(seed, 8 + li * 3) % 7) - 3) * 0.4
-            rr = r * 0.55
-            zb = z0 * 0.6
-            draw_solid(surf, camera, wx + ox, wy + oy,
-                       [(zb,            rr * 0.4, rr * 0.4),
-                        (zb + rr,       rr,       rr),
-                        (zb + rr * 1.9, rr * 0.3, rr * 0.3)],
-                       foliage)
+# Terrain chars drawn as low scrub rather than as a tree. EMPTY on purpose:
+# undergrowth is a `bush` decoration a scene places deliberately, and the
+# forest is trees. `j` is not here either -- it is a hidden doorway, and it
+# only works as one if it looks like every other tree.
+_TILT_BRUSH_CHARS = frozenset()
 
 
 def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
@@ -1300,101 +1424,316 @@ def _build_tree_card(camera, scene, tx, ty, ch, far):
     return (card, anchor[0] - rect.x, anchor[1] - rect.y)
 
 
-def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
-    """A tree as a real volumetric body: a brown cylindrical trunk + a tapered
-    canopy projected through the camera as a body of revolution. Anchored to
-    the tile, the silhouette varies correctly under yaw (a billboard never
-    does -- it always faces the camera, swinging with the head turn). Per-
-    tile seed varies trunk girth, canopy size, lean, palette + an occasional
-    secondary lobe so a band of trees doesn't read as a stamped row.
-    Rendered once per (tile, angle) into a card by _tilt_tree_solid."""
-    from rendering.solids import draw_solid
-    seed = (tx * 73856093) ^ (ty * 19349663)
-    wx = tx * TILE + 16
-    wy = ty * TILE + 16
-    if ch in _TILT_BRUSH_CHARS:
-        _draw_brush_body(surf, camera, wx, wy, seed, far)
-        return
-    trunk_r = 2.4 + (_vary(seed, 0) % 10) * 0.12   # 2.4..3.5
-    trunk_h = 13 + (_vary(seed, 1) % 7)            # 13..19
-    canopy_r = 11 + (_vary(seed, 2) % 6)           # 11..16
-    canopy_h = 24 + (_vary(seed, 3) % 9)           # 24..32
-    lean_x = ((_vary(seed, 4) % 7) - 3) * 0.6      # -1.8..1.8
-    g = _vary(seed, 5) % 12
-    # Trunk -- the gnarled bole, slight base flare
-    trunk_pal = {
-        "body": (60 + g // 3, 42 + g // 4, 26 + g // 4),
-        "lo":   (32 + g // 4, 22 + g // 4, 14 + g // 4),
-        "rim":  (102 + g // 2, 72 + g // 3, 46 + g // 3),
-    }
-    draw_solid(surf, camera, wx, wy,
-               [(0, trunk_r * 1.22, trunk_r * 1.22),
-                (trunk_h * 0.5, trunk_r, trunk_r),
-                (trunk_h, trunk_r * 0.86, trunk_r * 0.86)],
-               trunk_pal)
-    # The stand is NORTH-WOODS APRIL (2026-07 quality sprint; the old
-    # summer-green canopy blobs read as "weird shaped trees" -- a smooth
-    # body of revolution at this size is a lampshade). Two species by
-    # seed: ~2/3 boreal SPRUCE -- a ragged dark cone of stacked, jittered
-    # tiers, the shape this renderer is genuinely good at -- and ~1/3
-    # BARE deciduous, a taller trunk with seeded branch strokes and no
-    # canopy at all (the sealed winter only just let go; nothing has
-    # leafed). Seasonally true (NARRATIVE §3: April, last year's corn
-    # dead standing) and darker on the skyline than the green ever was.
-    species = _vary(seed, 6) % 3
-    if species < 2:
-        # SPRUCE: stacked drooping tiers, each ring jittered so no two
-        # trees repeat and no tier is a clean circle.
-        spruce_pal = {
-            "body": (18 + g // 2, 38 + g // 2, 26 + g // 3),
-            "lo":   (10 + g // 3, 24 + g // 3, 16 + g // 3),
-            "rim":  (32 + g // 2, 56 + g // 2, 38 + g // 2),
-        }
-        z0 = trunk_h * 0.55
-        h = canopy_h * 1.15
-        tiers = 2 if far else 3 + (_vary(seed, 7) % 2)
-        for i in range(tiers):
-            t = i / max(1, tiers - 1)              # 0 bottom .. 1 top
-            jr = 0.82 + (_vary(seed, 8 + i) % 9) * 0.045   # 0.82..1.18
-            rr = canopy_r * (1.05 - 0.62 * t) * jr
-            tz = z0 + h * (0.06 + 0.86 * t)
-            th = h * (0.34 if i < tiers - 1 else 0.26)
-            jx = ((_vary(seed, 12 + i) % 7) - 3) * 0.5
-            draw_solid(surf, camera, wx + lean_x + jx, wy,
-                       [(tz, rr, rr),
-                        (tz + th * 0.55, rr * 0.62, rr * 0.62),
-                        (tz + th, rr * 0.22, rr * 0.22)],
-                       spruce_pal)
+# ============================ THE TREE ====================================
+# ONE renderer, THREE species, one light. Before this there were separate
+# draws for the spruce, the bare deciduous, the passable scrub, the `bush`
+# decoration (a flat floor sticker) and the `creepy_tree` decoration (a
+# camera-facing card). Five ways to draw a plant, five palettes, five ideas
+# about where the light comes from, and every one of them judged on its own.
+# The result was a treeline where nothing matched anything: a flat dark
+# cutout beside a bright faceted lump beside a lily pad on a black pot.
+#
+# Species differ in SHAPE. They share the palette family, the light
+# direction, the shading ramp, and the height model, because those are what
+# make a stand read as one wood rather than as a prop shelf.
+#
+# `_tree_height` is public to this module on purpose: DESIGN.md's occlusion
+# model needs an object's REAL height, and every one of these used to be
+# depth-keyed and fade-tested at the flat wall rise of 26 whatever it
+# actually was.
+
+TREE_SPECIES = ("spruce", "bare", "brush")
+
+# How far a tree may stand off its cell centre, and how wide its foot is,
+# both as a fraction of a tile. Kept so that jitter + foot < 0.7 of a tile:
+# past that a tree can seal a corridor it was never authored into.
+_TREE_JITTER = 0.22
+_TREE_FOOT = 0.42
+
+# Screen-space light, upper LEFT, matching the wall faces and the prop
+# materials. Every species shades off this one vector.
+_TREE_LIT = (-0.62, -0.78)
+
+
+def _tree_ramp(g, species):
+    """The four-stop foliage ramp + the bark, for one species and tint."""
+    if species == "brush":
+        # scrub is the youngest, greyest growth here -- it must NOT be the
+        # brightest green in the frame, which is what it was
+        dark = (11, 24, 15 + g // 3)
+        base = (17, 34, 20 + g // 3)
+        mid = (24 + g // 2, 46 + g // 2, 27 + g // 3)
+        lite = (34 + g // 2, 60 + g // 2, 36 + g // 3)
     else:
-        # BARE: the trunk carries on past its bole into a leader + seeded
-        # branch strokes. Projected as world lines at build time (the card
-        # is yaw-keyless like every tree; branch parallax across a head
-        # turn is background-subtle).
-        bare = (54 + g // 3, 40 + g // 4, 28 + g // 4)
-        top_h = trunk_h + canopy_h * 0.9
-        p0 = camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.8)
-        p1 = camera.project(wx + lean_x, wy, top_h)
-        pygame.draw.line(surf, bare, p0, p1, 2)
-        n_br = 3 if far else 5 + (_vary(seed, 7) % 3)
-        for i in range(n_br):
-            fz = 0.35 + 0.6 * ((_vary(seed, 8 + i) % 97) / 97.0)
-            bz = trunk_h * 0.8 + (top_h - trunk_h * 0.8) * fz
-            ang = ((_vary(seed, 16 + i) % 628) / 100.0)
-            ln = canopy_r * (0.55 + (_vary(seed, 24 + i) % 7) * 0.09) \
-                * (1.0 - 0.5 * fz)
-            bx0 = wx + lean_x * fz
-            q0 = camera.project(bx0, wy, bz)
-            q1 = camera.project(bx0 + math.cos(ang) * ln,
-                                wy + math.sin(ang) * ln * 0.5,
-                                bz + ln * 0.7)
-            pygame.draw.line(surf, bare, q0, q1, 1)
-            if not far and i % 2 == 0:
-                q2 = camera.project(bx0 + math.cos(ang) * ln * 1.25,
-                                    wy + math.sin(ang) * ln * 0.6,
-                                    bz + ln * 1.05)
-                pygame.draw.line(
-                    surf, (bare[0] - 12, bare[1] - 10, bare[2] - 8),
-                    q1, q2, 1)
+        dark = (9, 21, 14 + g // 3)
+        base = (15 + g // 3, 33 + g // 2, 20 + g // 3)
+        mid = (23 + g // 2, 48 + g // 2, 29 + g // 3)
+        lite = (36 + g // 2, 68 + g // 2, 42 + g // 2)
+    return (dark, base, mid, lite)
+
+
+def _tree_bark(g):
+    """Bark, kept COLD and dark. The old bole ran (60, 42, 26) up to a
+    (102, 72, 46) rim, which against near-black foliage read as bright
+    orange -- a traffic cone with twigs in it."""
+    return {"body": (42 + g // 4, 34 + g // 5, 26 + g // 5),
+            "lo": (20, 16, 13),
+            "rim": (58 + g // 4, 47 + g // 5, 36 + g // 5)}
+
+
+def _tree_lerp(ramp, t):
+    t = max(0.0, min(0.999, t))
+    i = t * (len(ramp) - 1)
+    a, b = ramp[int(i)], ramp[min(len(ramp) - 1, int(i) + 1)]
+    f = i - int(i)
+    return (int(a[0] + (b[0] - a[0]) * f),
+            int(a[1] + (b[1] - a[1]) * f),
+            int(a[2] + (b[2] - a[2]) * f))
+
+
+def tree_species_for(seed, ch):
+    """Which species a tile/instance is. Passable growth ('p'/'j') is scrub;
+    a solid tree is two-thirds spruce, one-third bare April deciduous."""
+    if ch in _TILT_BRUSH_CHARS:
+        return "brush"
+    return "bare" if (_vary(seed, 6) % 3) == 2 else "spruce"
+
+
+def tree_footprint(tx, ty, ch):
+    """Where a plant actually STANDS and how wide its foot is, in WORLD
+    units: `(wx, wy, r)`.
+
+    THIS IS THE 'TREES ARE TREATED LIKE WALLS' CONTRACT. Walls stopped being
+    tiles when `_wall_slab` gave them a real sub-tile footprint and made that
+    footprint the SINGLE SOURCE for the draw layers AND for
+    `is_solid_at` / `blocks_sight` / `_nav_solid_at` -- so what the player
+    bumps is what the player sees. Trees now get the same deal: authored per
+    tile, but placed freely inside it and blocking as a ROUND foot rather
+    than as a square 32x32 cell.
+
+    Two things come out of that. The stand stops reading as a grid, which is
+    DESIGN.md 6's core principle and the single biggest RimWorld tell left
+    outdoors. And the player can slip between trunks on the diagonal the way
+    the silhouette says they should, instead of being stopped by the corner
+    of a cell that has nothing drawn in it.
+
+    The jitter is deliberately bounded. At `_TREE_JITTER` 0.22 and a foot of
+    0.42 the circle reaches at most 0.64 of a tile from its cell centre, so a
+    tree can never seal a neighbouring corridor it was not authored into --
+    which smoke's flood-fill would fail on anyway.
+    """
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    species = tree_species_for(seed, ch)
+    jx = ((_vary(seed, 91) % 19) - 9) / 9.0 * (TILE * _TREE_JITTER)
+    jy = ((_vary(seed, 92) % 19) - 9) / 9.0 * (TILE * _TREE_JITTER)
+    if species == "brush":
+        r = TILE * 0.30
+    else:
+        r = TILE * _TREE_FOOT * (0.88 + (_vary(seed, 93) % 5) * 0.06)
+    return (tx * TILE + TILE * 0.5 + jx, ty * TILE + TILE * 0.5 + jy, r)
+
+
+def tree_height(seed, species, scale=1.0):
+    """How tall this plant STANDS, in world units (the player is 20, a wall
+    is 26). The occlusion pass needs the real number: everything here used to
+    be sorted and fade-tested at 26, so a 50-tall spruce under-reported the
+    screen it covered and a knee-high bush over-reported it by triple."""
+    if species == "brush":
+        return (9 + (_vary(seed, 3) % 6)) * 1.10 * scale
+    trunk_h = 17 + (_vary(seed, 1) % 6)
+    canopy_h = 31 + (_vary(seed, 3) % 8)
+    if species == "bare":
+        return (trunk_h + canopy_h * 1.05) * scale
+    return (trunk_h * 0.16 + canopy_h * 1.30 * 0.82 + canopy_h * 1.30 * 0.40) \
+        * scale
+
+
+def _spruce_tier(surf, camera, wx, wy, z0, r, h, ramp, seed, far=False):
+    """One drooping, needled TIER of a spruce, as its own silhouette.
+
+    Tiers used to be `draw_solid` bodies of revolution, and draw_solid gives
+    every body a `lo` ellipse ring around its base and a BRIGHTENED filled
+    ellipse across its top -- correct for a barrel, and up a conifer it
+    stacks three or four glowing hoops. That is the "stacked lampshades"
+    read: the rings are the most contrasted thing on the tree and every one
+    is a perfect ellipse.
+
+    What says spruce is the SAW-TOOTH: branch tips drooping at the rim, so
+    the lower edge of every tier is broken and no two are alike. Built from
+    the projected footprint directly, so it still foreshortens and yaws
+    exactly like a body of revolution -- it just has no lid.
+
+    Each tier is also SHADED across its own width off the shared light, not
+    filled flat. Filled flat, a stand of these read as paper cutouts: right
+    silhouette, no volume, and the only thing in the scene with no light
+    direction at all.
+    """
+    cp = camera.ground_squash()
+    ca, sa = math.cos(camera.yaw), math.sin(camera.yaw)
+    half = math.hypot(r * ca, r * sa) * camera.scale
+    ydep = r * cp * camera.scale
+    bx, by = camera.project(wx, wy, z0)
+    ax, ay = camera.project(wx, wy, z0 + h)
+    if half < 1.5:
+        return
+    lift = h * camera.height_rise()
+    n = 4 if far else 7
+    # The tier is drawn as a fan of wedges from the apex, each wedge shaded
+    # by where it sits across the light. One polygon per tier cannot carry a
+    # gradient; a fan can, at the same silhouette.
+    rim = []
+    for i in range(n + 1):
+        u = -1.0 + 2.0 * i / n
+        arc = ydep * math.sqrt(max(0.0, 1.0 - u * u))
+        droop = (_vary(seed, 40 + i) % 4) * 0.16 * max(1.0, ydep)
+        rim.append((bx + half * u, by + arc + droop, u))
+        if i < n:
+            um = u + 1.0 / n
+            arcm = ydep * math.sqrt(max(0.0, 1.0 - um * um))
+            notch = lift * (0.20 + (_vary(seed, 60 + i) % 3) * 0.06)
+            rim.append((bx + half * um, by + arcm - notch, um))
+    for k in range(len(rim) - 1):
+        x0, y0, u0 = rim[k]
+        x1, y1, _u1 = rim[k + 1]
+        # lit where the wedge faces the light, dark where it turns away
+        t = 0.50 - 0.46 * u0 + 0.10 * ((_vary(seed, 80 + k) % 5) - 2) * 0.1
+        pygame.draw.polygon(surf, _tree_lerp(ramp, t),
+                            [(ax, ay), (x0, y0), (x1, y1)])
+
+
+def _bare_limb(surf, camera, bark, levels, bx0, by0, bz0, ang, tilt, ln,
+               wdt, lvl, sd):
+    """One limb, then its children. A leafless tree is READ by its forking:
+    each split shorter and thinner than its parent until the crown is a haze
+    of twigs. Single straight strokes radiating off the leader at random
+    angles -- which is what this was -- is a bottle brush."""
+    ex = bx0 + math.cos(ang) * ln
+    ey = by0 + math.sin(ang) * ln * 0.5      # the ground plane foreshortens
+    ez = bz0 + ln * tilt
+    col = bark["body"] if wdt > 1 else bark["lo"]
+    pygame.draw.line(surf, col, camera.project(bx0, by0, bz0),
+                     camera.project(ex, ey, ez), wdt)
+    if lvl >= levels:
+        return
+    for c in range(2):
+        spread = 0.55 + (_vary(sd, 3 + c) % 9) * 0.06
+        _bare_limb(surf, camera, bark, levels, ex, ey, ez,
+                   ang + (spread if c else -spread)
+                   + ((_vary(sd, 7 + c) % 5) - 2) * 0.10,
+                   min(1.4, tilt + 0.28 + (_vary(sd, 11 + c) % 4) * 0.06),
+                   ln * (0.60 + (_vary(sd, 15 + c) % 4) * 0.05),
+                   max(1, wdt - 1), lvl + 1, sd ^ ((c + 1) * 2654435761))
+
+
+def _tapered_bole(surf, camera, bark, wx, wy, top_x, top_h, r, scale):
+    """A trunk that CONTINUES into whatever it carries, instead of a capped
+    cylinder. `draw_solid` finishes every body with a base ring and a
+    brightened cap disc, so a bole drawn that way ends in a lit lid partway
+    up the tree -- which is what made the bare deciduous a fence post."""
+    bw = r * scale
+    b0 = camera.project(wx, wy, 0.0)
+    b1 = camera.project(top_x, wy, top_h)
+    pygame.draw.polygon(surf, bark["body"], [
+        (b0[0] - bw * 1.22, b0[1]), (b0[0] + bw * 1.22, b0[1]),
+        (b1[0] + bw * 0.55, b1[1]), (b1[0] - bw * 0.55, b1[1])])
+    pygame.draw.line(surf, bark["rim"], (b0[0] - bw * 1.0, b0[1]),
+                     (b1[0] - bw * 0.45, b1[1]), 1)
+    pygame.draw.line(surf, bark["lo"], (b0[0] + bw * 1.0, b0[1]),
+                     (b1[0] + bw * 0.45, b1[1]), 1)
+
+
+def draw_tree_body(surf, camera, wx, wy, seed, species, scale=1.0, far=False):
+    """THE one plant renderer. `wx, wy` is the foot, in WORLD units and free
+    of the tile grid; `scale` sizes the individual."""
+    g = _vary(seed, 5) % 12
+    ramp = _tree_ramp(g, species)
+    bark = _tree_bark(g)
+    lean_x = ((_vary(seed, 4) % 7) - 3) * 0.6 * scale
+
+    if species == "brush":
+        # LOW SCRUB: knee-to-waist, a couple of clumped lobes over a woody
+        # stub. Built from tiers like the spruce so it shares the shading --
+        # as a `draw_solid` body at this size it was a handful of flat
+        # faceted quads with a red-brown pot at its foot (draw_solid's base
+        # ring and cap on the stem).
+        r = (8 + (_vary(seed, 2) % 5)) * scale
+        hgt = (9 + (_vary(seed, 3) % 6)) * scale
+        _tapered_bole(surf, camera, bark, wx, wy, wx, hgt * 0.34,
+                      1.0, scale)
+        # SQUAT and clumped. Built from the same tier as the spruce (that is
+        # what shares the shading) but wide and short, so the cone flattens
+        # into a mound -- at a tall tier the lobes read as two miniature
+        # conifers standing together, which is the opposite of scrub.
+        lobes = 2 if far else 3 + (_vary(seed, 6) % 2)
+        for li in range(lobes):
+            ox = ((_vary(seed, 7 + li * 3) % 11) - 5) * 0.22 * r
+            oy = ((_vary(seed, 8 + li * 3) % 7) - 3) * 0.14 * r
+            lr = r * (0.66 + (_vary(seed, 9 + li) % 5) * 0.09)
+            lz = hgt * (0.10 + (_vary(seed, 17 + li) % 4) * 0.06)
+            _spruce_tier(surf, camera, wx + ox, wy + oy, lz,
+                         lr, hgt * 0.44, ramp, seed ^ (li * 40503), far)
+        return
+
+    # SIZE. The maintainer picked the tall end of the old 40-54 spread as
+    # the right stature for a tree, so the FLOOR comes up rather than the
+    # ceiling going higher: the short ones were what read as scrubby, and
+    # a stand wants a canopy well over the buildings it stands behind
+    # (a wall rises 26, the player stands 20).
+    trunk_r = (1.5 + (_vary(seed, 0) % 10) * 0.07) * scale
+    trunk_h = (17 + (_vary(seed, 1) % 6)) * scale
+    canopy_r = (12 + (_vary(seed, 2) % 6)) * scale
+    canopy_h = (31 + (_vary(seed, 3) % 8)) * scale
+
+    if species == "spruce":
+        # the bole is almost entirely behind the skirt; what shows is a stub
+        _tapered_bole(surf, camera, bark, wx, wy, wx + lean_x * 0.3,
+                      trunk_h * 0.6, trunk_r, 1.0)
+        z0 = trunk_h * 0.16
+        h = canopy_h * 1.30
+        tiers = 3 if far else 4 + (_vary(seed, 7) % 2)
+        for i in range(tiers):
+            t = i / max(1, tiers - 1)
+            jr = 0.86 + (_vary(seed, 8 + i) % 9) * 0.035
+            rr = canopy_r * (1.10 - 0.74 * t) * jr
+            tz = z0 + h * (0.02 + 0.80 * t)
+            jx = ((_vary(seed, 12 + i) % 7) - 3) * 0.5 * scale
+            _spruce_tier(surf, camera, wx + lean_x + jx, wy, tz, rr,
+                         h * 0.40, ramp, seed ^ (i * 2654435761), far)
+        return
+
+    # BARE: a leafless April deciduous.
+    top_h = trunk_h + canopy_h * 1.05
+    _tapered_bole(surf, camera, bark, wx, wy, wx + lean_x * 0.4,
+                  trunk_h * 0.7, trunk_r, 1.0)
+    levels = 2 if far else 3
+    pygame.draw.line(surf, bark["body"],
+                     camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.7),
+                     camera.project(wx + lean_x, wy, top_h), max(1, int(2 * scale)))
+    n_br = 3 if far else 4 + (_vary(seed, 7) % 3)
+    for i in range(n_br):
+        fz = 0.24 + 0.68 * ((_vary(seed, 8 + i) % 97) / 97.0)
+        bz = trunk_h * 0.7 + (top_h - trunk_h * 0.7) * fz
+        ang = ((_vary(seed, 16 + i) % 628) / 100.0)
+        ln = canopy_r * (0.52 + (_vary(seed, 24 + i) % 7) * 0.07) \
+            * (1.0 - 0.42 * fz)
+        _bare_limb(surf, camera, bark, levels, wx + lean_x * fz, wy, bz,
+                   ang, 0.62, ln, max(1, int(2 * scale)), 1,
+                   seed ^ (i * 40503))
+
+
+def _draw_brush_body(surf, camera, wx, wy, seed, far):
+    """Back-compat shim -- the scrub species by its old name."""
+    draw_tree_body(surf, camera, wx, wy, seed, "brush", 1.0, far)
+
+
+def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
+    """One plant at a tile, dispatched to the shared renderer by species.
+    Rendered once per (tile, angle) into a card by `_tilt_tree_solid`."""
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    fx, fy, _r = tree_footprint(tx, ty, ch)
+    draw_tree_body(surf, camera, fx, fy, seed,
+                   tree_species_for(seed, ch), 1.0, far)
+
 
 
 # Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster
@@ -1629,84 +1968,6 @@ def _tilt_grass_draw(surf, camera, tx, ty, far=False):
             col = straw                                  # a dead-dry blade
         pygame.draw.line(surf, blade_dk, p0[:2], p1[:2], 2)
         pygame.draw.line(surf, col, p1[:2], p2[:2], 1 if far else 2)
-
-
-def _tilt_standee(surf, camera, scene, tx, ty, ch):
-    """Stand a tree / cornstalk up as a WORLD-ANCHORED card whose base sits on
-    the floor at the tile centre and whose horizontal axis tracks world-X. The
-    flat tile art (_draw_tree/_draw_corn) is rendered onto a card with the
-    trunk/stalk base at the bottom-centre; the card is then scaled to the
-    projected screen-width of its world footprint AND rotated to follow the
-    row's tilt under yaw, so the foliage anchors in the scene instead of
-    swinging to face the camera. Corn merges into a width-wide run card (LOD);
-    cards are CACHED + convert_alpha'd (cleared on scene change with the floor
-    cache); trees keep a soft contact shadow."""
-    kind = OBJECT_DEFS.get(ch, {}).get("kind")
-    width = 1
-    if kind == "cornstalk":                # LOD: this tile may anchor a run
-        wtx = tx % scene.w if scene.wrap_x else tx
-        wty = ty % scene.h if scene.wrap_y else ty
-        width = _corn_runs(scene)[0].get((wtx, wty), 1)
-        key = (kind, wtx, wty, width)
-    else:
-        key = (kind, (tx * 73856093) ^ (ty * 19349663))
-    card = _TILT_STANDEE_CACHE.get(key)
-    if card is None:
-        CH = 60
-        if kind == "cornstalk":
-            CW = width * TILE + 16         # one row of `width` stalk clumps
-            card = pygame.Surface((CW, CH), pygame.SRCALPHA)
-            for i in range(width):
-                s = ((wtx + i) * 73856093) ^ (wty * 19349663)
-                _draw_corn(card, 8 + i * TILE, CH - TILE, s)
-        else:
-            CW = 72                        # canopy spills past the tile
-            card = pygame.Surface((CW, CH), pygame.SRCALPHA)
-            _draw_tree(card, CW // 2 - 16, CH - TILE,
-                       (tx * 73856093) ^ (ty * 19349663))
-        card = card.convert_alpha()        # fast per-pixel-alpha blits
-        _TILT_STANDEE_CACHE[key] = card
-    # The card represents a width-wide strip of foliage anchored along the
-    # world's +X axis. Its bottom edge is a horizontal world-line at z=0; its
-    # top edge is the same line lifted to the card's pixel height in world
-    # units. Project both endpoints of the bottom edge to screen; the segment
-    # between them is the row's WORLD-anchored base under the current yaw,
-    # so as the camera turns the row foreshortens / leans with the field
-    # instead of swinging to face the camera.
-    sw, sh = card.get_size()
-    half_world = sw / 2.0                  # card's half-extent in WORLD units
-    wx_center = tx * TILE + (width * TILE) // 2
-    wy_world = ty * TILE + 16
-    p_left = camera.project(wx_center - half_world, wy_world, 0.0)
-    p_right = camera.project(wx_center + half_world, wy_world, 0.0)
-    if kind != "cornstalk":                # trees grounded; corn is too dense
-        bx, by = camera.project(wx_center, wy_world, 0.0)
-        _ground_shadow(surf, bx, by, 12, 5, 70)
-    base_len = math.hypot(p_right[0] - p_left[0], p_right[1] - p_left[1])
-    if base_len < 2:
-        return                              # seen edge-on along the row -> a sliver
-    rise = sh * (0.4 + 0.6 * camera.ground_squash())   # foreshortened upright
-    scaled = pygame.transform.scale(card,
-                                    (max(2, int(base_len)), max(2, int(rise))))
-    angle = math.degrees(math.atan2(-(p_right[1] - p_left[1]),
-                                    p_right[0] - p_left[0]))
-    if abs(angle) > 0.5:
-        final = pygame.transform.rotate(scaled, angle)
-    else:
-        final = scaled
-    nw, nh = final.get_size()
-    # pygame.rotate keeps the surface's geometric centre in place. The card's
-    # original bottom-centre (offset (0, rise/2) from its centre before
-    # rotation) lands at (rise/2 * sin(a), rise/2 * cos(a)) from the new
-    # centre once rotated -- anchor that point to the projected mid-base so
-    # the stalks/canopy stand ON the floor at the row.
-    a_rad = math.radians(angle)
-    bc_off_x = (rise / 2.0) * math.sin(a_rad)
-    bc_off_y = (rise / 2.0) * math.cos(a_rad)
-    mid_x = (p_left[0] + p_right[0]) / 2.0
-    mid_y = (p_left[1] + p_right[1]) / 2.0
-    surf.blit(final, (int(mid_x - nw / 2.0 - bc_off_x),
-                      int(mid_y - nh / 2.0 - bc_off_y)))
 
 
 _WALL_BASE = (19, 18, 23)
@@ -3071,6 +3332,11 @@ def _draw_door_leaf(surf, rx, ry, room, seed):
 
 
 _PATH_GRASS = frozenset(("g", "G", ":"))
+# Chars whose edges FRAY into a different neighbouring ground char, and the
+# chars they may fray into. Both sides of a boundary fringe, so a seam gets
+# lobes of each colour crossing it and no straight tile edge survives.
+_PATCH_CHARS = frozenset(("d", ";", ":"))
+_FRAY_INTO = frozenset(("g", "G", ":", ";", "d"))
 
 
 _PATH_FRINGE_MARGIN = 8                 # the fringe blobs spill ~3 px into the
@@ -3078,13 +3344,29 @@ _PATH_FRINGE_MARGIN = 8                 # the fringe blobs spill ~3 px into the
 _PATH_FRINGE_CACHE = {}                 # (tx, ty) -> cached SRCALPHA surface
 
 
+def _shade_rgb(col, f):
+    return tuple(max(0, min(255, int(c * f))) for c in col)
+
+
 def _build_path_fringe_card(scene, tx, ty):
-    """Render the four-edge fringe + grass-tuft bite-backs ONCE into a
-    TILE+2m square SRCALPHA card, so the per-frame call is a single blit
-    instead of ~30 circle draws per path tile. Pure function of scene.floor
-    around (tx, ty); cleared in _draw_path_fringe when the scene changes."""
+    """Render the four-edge fringe + bite-backs ONCE into a TILE+2m square
+    SRCALPHA card, so the per-frame call is a single blit instead of ~30
+    circle draws per patch tile. Pure function of scene.floor around
+    (tx, ty); cleared in _draw_path_fringe when the scene changes.
+
+    WHY EVERY PATCH CHAR NEEDS THIS, not just the dirt path. Floor tiles are
+    cached BY CHAR, so no tile can know its neighbours and every boundary
+    between two chars is a hard straight step at the tile grid. Dirt was the
+    only char that frayed, which is why dirt met grass organically while
+    marsh mud met grass as a perfect square -- and a lone square of a
+    different colour reads as a hole, not as ground.
+
+    The lobe colours come from the tile's OWN char now (they were hardcoded
+    dirt browns), so the same code frays any patch into any surround.
+    """
     floor, h, w = scene.floor, scene.h, scene.w
-    dirt, dirt2 = (88, 68, 45), (74, 56, 37)
+    own = FLOOR_DEFS.get(floor[ty][tx], FLOOR_DEFS["g"])["color"]
+    lobe, lobe2 = _shade_rgb(own, 1.14), _shade_rgb(own, 0.86)
     m = _PATH_FRINGE_MARGIN
     card = pygame.Surface((TILE + 2 * m, TILE + 2 * m), pygame.SRCALPHA)
     # Local rx, ry of the tile origin inside the card.
@@ -3092,27 +3374,34 @@ def _build_path_fringe_card(scene, tx, ty):
     ry = m
     for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
         nx, ny = tx + ndx, ty + ndy
-        if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _PATH_GRASS:
+        if not (0 <= nx < w and 0 <= ny < h):
             continue
-        grass = FLOOR_DEFS[floor[ny][nx]]["color"]
+        nch = floor[ny][nx]
+        if nch == floor[ty][tx] or nch not in _FRAY_INTO:
+            continue
+        neigh = FLOOR_DEFS[nch]["color"]
         seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 83492791)
         if ndy:
             ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
         else:
             ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
-        for k in range(6):
-            u = (k + (_vary(seed, k) % 3) / 3.0) / 6.0
-            depth = (_vary(seed, 10 + k) % 9) - 3
+        # FINER than it was: 9 small lobes rather than 6 fat ones. At radius
+        # 3-5 the fringe read as a row of rounded blobs -- a scalloped edge
+        # is its own pattern, and a pattern is what an organic edge must not
+        # have.
+        for k in range(9):
+            u = (k + (_vary(seed, k) % 3) / 3.0) / 9.0
+            depth = (_vary(seed, 10 + k) % 8) - 3
             cx = int(ex + ax * TILE * u + ndx * depth)
             cy = int(ey + ay * TILE * u + ndy * depth)
-            col = dirt if (_vary(seed, 30 + k) % 3) else dirt2
-            pygame.draw.circle(card, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
-        for k in range(2):
-            u = (1 + 2 * k) / 4.0
-            d = 2 + (_vary(seed, 40 + k) % 3)
+            col = lobe if (_vary(seed, 30 + k) % 3) else lobe2
+            pygame.draw.circle(card, col, (cx, cy), 2 + (_vary(seed, 20 + k) % 2))
+        for k in range(3):
+            u = (1 + 2 * k) / 6.0 + 0.08
+            d = 1 + (_vary(seed, 40 + k) % 3)
             cx = int(ex + ax * TILE * u - ndx * d)
             cy = int(ey + ay * TILE * u - ndy * d)
-            pygame.draw.circle(card, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+            pygame.draw.circle(card, neigh, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
     return card.convert_alpha()
 
 
@@ -3302,7 +3591,6 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
     global _FLOOR_CACHE_SCENE
     if _FLOOR_CACHE_SCENE is not scene:
         _FLOOR_CACHE.clear()
-        _TILT_STANDEE_CACHE.clear()  # tree/corn billboard cards are scene-keyed
         _CORN_RUN_CACHE.clear()      # corn-run LOD decomposition is per scene
         _PATH_FRINGE_CACHE.clear()   # path-edge fringe cards are scene-keyed
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
@@ -3342,7 +3630,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
     for ty in range(y0, y1):
         for tx in range(x0, x1):
             ch = _lookup_floor(ty, tx)
-            if ch == "d":
+            if ch in _PATCH_CHARS:
                 _draw_path_fringe(surf, scene, tx, ty,
                                   tx * TILE - cam_x, ty * TILE - cam_y)
             elif ch == "~" and not bake_static:
@@ -4021,7 +4309,10 @@ _FLOOR_DECAL_KINDS = frozenset((
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
-    "bush",
+    # "bush" was HERE, and being a floor decal is why it could never
+    # occlude anything: the flat layer is drawn before the depth pass, so
+    # a bush was under every tree at any position. It is a real volume now
+    # (rendering/props.py `_draw_bush_solid` -> the shared plant renderer).
     # Marks scratched into the floor or the body of something laid in the dirt:
     # all read as ground decals and want to turn with the room under tilt.
     "mud_footprint", "claw_marks", "dead_crow", "watching_wound",
@@ -4115,7 +4406,7 @@ _FLOOR_DECAL_SCALE_BKT = 0.05
 # only pitch-squashed onto the floor, so they hold still and cost nothing on a
 # turn. Directional decals (signs, prints, the Yellow Sign, a dead crow) keep
 # the yaw rotate so they stay pinned to the ground as it turns.
-_FLOOR_DECAL_YAW_INVARIANT = frozenset({"bush", "mist", "leaves"})
+_FLOOR_DECAL_YAW_INVARIANT = frozenset({"mist", "leaves"})
 
 
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
@@ -4463,14 +4754,15 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
         return
     if ch in _TILT_BILLBOARD_CHARS:
         kind = OBJECT_DEFS.get(ch, {}).get("kind")
+        # Every billboard char is one of these two; `_TILT_BILLBOARD_KINDS`
+        # says so and tests/conventions.py enforces it, so a new billboard
+        # kind fails the gate instead of silently drawing nothing.
         if kind == "tree":
             _tilt_tree_solid(surf, camera, scene, tx, ty, ch,
                              far=_tilt_lod_far(camera, tx, ty))
         elif kind == "cornstalk":
             _tilt_corn_solid(surf, camera, scene, tx, ty, ch,
                              far=_tilt_lod_far(camera, tx, ty))
-        else:
-            _tilt_standee(surf, camera, scene, tx, ty, ch)
     elif ch in _COUNTER_CHARS:
         _tilt_counter_box(surf, camera, scene, tx, ty)
     elif ch in _RACK_CHARS:

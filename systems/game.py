@@ -463,6 +463,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Genset blackout timers (the power link, TODO #21): scene key ->
         # seconds of blackout left. Cleared per run; _tick_power drains it.
         self._genset_down = {}
+        # Where a lost space puts you back (TODO #26): (scene_key, x, y),
+        # written by _tick_lost_edge when the world lets go and spent by the
+        # hunted exit light. None = the field was entered some other way (a
+        # direct load, a preview) and its static exit_to carries instead.
+        self._lost_return = None
         # The hide-check struggle (DESIGN.md §12): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None
@@ -665,6 +670,63 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # itself is continuous.
         self.cam_x = self.player.x - screen_dx
         self.cam_y = self.player.y - screen_dy
+
+    # ---- THE MOUTH: falling out of the world (TODO #26) --------------------
+    def _tick_lost_edge(self, vx, vy):
+        """Walk into an opted-in map edge in the DARK and the world lets go.
+
+        The loop this closes: interior -> yard -> push through the treeline
+        -> fall -> land on the lit island -> leave its glow -> hunt the way
+        out -> climb back into the yard a few strides in from where you fell.
+
+        LIGHT GATES ENTRY, which is the whole rule and the reason this needs
+        no new system: the surface darkens with the evidence ladder (the
+        storm), so at ev0 the bound is the invisible wall it has always been
+        and only once the world is genuinely dark does its edge stop holding.
+        A lit spot never opens, so the yard lights and a carried flame are
+        real protection rather than decoration.
+
+        Returns True when it swallowed them (the caller must stop touching
+        the old scene: it is gone)."""
+        sc = self.scene
+        edges = getattr(sc, "lost_edges", None)
+        if not edges or self.player is None:
+            return False
+        p = self.player
+        band = LOST_EDGE_BAND * Scene.TILE
+        side = None
+        # Pressing OUTWARD is required -- you fall through the edge by
+        # walking into it, never by loitering near the treeline.
+        if "n" in edges and vy < 0 and p.y < band:
+            side = "n"
+        elif "s" in edges and vy > 0 and p.y > sc.h * Scene.TILE - band:
+            side = "s"
+        elif "w" in edges and vx < 0 and p.x < band:
+            side = "w"
+        elif "e" in edges and vx > 0 and p.x > sc.w * Scene.TILE - band:
+            side = "e"
+        if side is None:
+            return False
+        # AN EXIT IS NEVER A MOUTH. A side can carry both: the safe path's
+        # arms end at a road exit spanning the carriageway, with the dark
+        # verge on either flank of it. The road always wins, so walking out
+        # along the asphalt carries you on and walking out through the grass
+        # beside it does not -- which is the rule the whole layer runs on.
+        if sc.find_exit_at(p.x, p.y, facing=None) is not None:
+            return False
+        if self.scene_gloom() < LOST_EDGE_GLOOM:
+            return False              # a lit world has no edge to fall off
+        if sc.lit_at(p.x, p.y) or self._flashlight_lit():
+            return False              # nor does a lit SPOT in a dark world
+        # Where they climb back out: the tile they fell from, pushed a few
+        # strides back INTO the world so the return doesn't drop them on the
+        # mouth and swallow them again on the next step.
+        back = LOST_EDGE_BACKOFF * Scene.TILE
+        rx = p.x + (back if side == "w" else -back if side == "e" else 0.0)
+        ry = p.y + (back if side == "n" else -back if side == "s" else 0.0)
+        self._lost_return = (sc.key, rx, ry)
+        self.cross_fold(edges[side])
+        return True
 
     def begin_transition(self, target_scene, spawn_id="default", seamless=False):
         if self.state == "transition": return
@@ -1271,6 +1333,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     _band = _band_bottom - _band_top
                     self.player.y += _band
                     self.cam_y += _band
+            # THE MOUTH. Pressed against an opted-in map edge in the dark, the
+            # bound stops holding and the world lets go. Checked here, right
+            # after the clamp, because the map edge is exactly where the clamp
+            # just refused to let them through.
+            if self._tick_lost_edge(vx, vy):
+                return
             if input_active and not moved:
                 self.player.bump_timer -= dt
                 if self.player.bump_timer <= 0:

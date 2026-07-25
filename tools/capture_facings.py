@@ -14,8 +14,13 @@ records the first; the lost-space islands were the second). So this tool sets
 the yaw itself AND asserts the frames actually differ -- if the yaw silently
 stops taking, the run FAILS instead of handing back four norths.
 
+`--ev N` sets the evidence count, so a storm-staged outdoor scene can be
+judged at the darkness the player actually meets it in (ev0 is daylight).
 `--bright` drops the sight cone + film grade for clean geometry inspection;
 without it you get the real player view (dark overlay, fog, grade).
+`--tick N` runs the scene's on_update N times first, so content that only
+exists once the scene has updated (spawned crews, relocating lights) is
+actually in frame instead of silently absent.
 """
 import os
 import sys
@@ -41,13 +46,22 @@ FACINGS = (("N", -math.pi / 2, (0, -1)), ("E", 0.0, (1, 0)),
 SEED = 7
 
 
-def capture(g, key, heading, facing_vec, px=None, py=None, bright=False):
+def capture(g, key, heading, facing_vec, px=None, py=None, bright=False,
+            ticks=0, ev=0):
     random.seed(SEED)
     try:
         import numpy as np
         np.random.seed(SEED)
     except Exception:
         pass
+    # The surface world darkens with UNDERSTANDING, not a clock (the storm,
+    # DESIGN.md §2): an outdoor scene at ev0 is full daylight and the same
+    # scene at ev3 is night. Capturing only the default ev0 means a
+    # STORM_STAGE_SCENES look pass never sees the state most of the game is
+    # played in, so the ev the shot is judged at has to be selectable.
+    if ev:
+        g.save.set_arg("evidence", [{"name": f"cap_ev{i}", "content": "x"}
+                                    for i in range(ev)])
     g.load_scene_now(key)
     g.look.body = wrap(heading)
     g.look.aim = wrap(heading)
@@ -62,11 +76,28 @@ def capture(g, key, heading, facing_vec, px=None, py=None, bright=False):
         g.player.x = px
     if py is not None:
         g.player.y = py
+    # Some content only exists after the scene's own update has run (spawned
+    # crews, relocating lights, anything driven by on_update). Tick it at the
+    # player's final position BEFORE drawing, or the capture shows an empty
+    # world and quietly lies about what the player would meet.
+    for _ in range(ticks):
+        fn = getattr(g.scene, "on_update_fn", None)
+        if fn:
+            fn(g, g.scene, 0.1)
     g._update_camera(snap=True)
     g.camera.yaw = g.look.cam_yaw          # re-assert (snap may re-run lerps)
     if bright:
+        # VISION.md's clean-inspection recipe, in full: drop the darkness, the
+        # blind-spot fog, the sight CONE, and the film GRADE. Dropping only the
+        # first two leaves the grade's desaturate+vignette on, so "bright" came
+        # back murky and near-indistinguishable from the player view -- which
+        # is exactly how a geometry defect hides in an inspection shot.
         g._draw_dark = lambda: None
         g._draw_sight_fog = lambda: None
+        import scenes.base as _sb
+        import rendering.sight as _sight
+        _sb.apply_grade = lambda *a, **k: None
+        _sight.visible_factor = lambda *a, **k: 1.0
     surf = pygame.Surface((g.screen.get_width(), g.screen.get_height()))
     g.screen = surf
     try:
@@ -94,6 +125,12 @@ def main():
     ap.add_argument("--px", type=float, default=None)
     ap.add_argument("--py", type=float, default=None)
     ap.add_argument("--bright", action="store_true")
+    ap.add_argument("--tick", type=int, default=0,
+                    help="run the scene's on_update N times before drawing "
+                         "(for spawned/driven content)")
+    ap.add_argument("--ev", type=int, default=0,
+                    help="evidence count -> rot stage -> storm darkness "
+                         "(a STORM_STAGE_SCENES look pass at ev0 is daylight)")
     ap.add_argument("--tag", default="look")
     args = ap.parse_args()
 
@@ -103,7 +140,8 @@ def main():
     shots = {}
     for name, heading, fv in FACINGS:
         shots[name] = capture(g, args.scene, heading, fv,
-                              args.px, args.py, args.bright)
+                              args.px, args.py, args.bright, args.tick,
+                              args.ev)
         pygame.image.save(shots[name], f"{out}/{args.scene}_{name}.png")
         print(f"  wrote {out}/{args.scene}_{name}.png")
 

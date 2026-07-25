@@ -209,6 +209,14 @@ class Scene:
         # fold). Off by default.
         self.wrap_x = False
         self.wrap_y = False
+        # THE MOUTH (TODO #26): which of this scene's non-wrapping map edges
+        # can swallow the player into a lost space, as {side: lost_scene_key}
+        # for sides in "nesw". None (the default) = every edge is what it has
+        # always been, an invisible bound, so an un-opted scene is unchanged.
+        # LIGHT GATES ENTRY: `Game._tick_lost_edge` only opens the mouth where
+        # the ambient is genuinely dark and the spot is unlit -- a lit edge
+        # stays a wall. Set with `set_lost_edge`.
+        self.lost_edges = None
         # Optional RENDER BAND: a (top_row, bottom_row) tile span that tiles
         # ENDLESSLY toward the north (decreasing y) for rendering ONLY, while
         # everything from top_row south renders once. Used by the arrival road
@@ -472,18 +480,23 @@ class Scene:
     # Light-emitting decoration kinds and their mechanical pool radii
     # (px). Mirrors the fixtures _draw_dark renders visibly so what
     # LOOKS lit IS lit to the stealth model.
+    # `campfire` is NOT here on purpose: it is the COLD indoor scorch decal
+    # ("long dead but for one last dull ember"), so it must not hand out light
+    # cover or suppress a Watcher. The LIT ground fire is `camp_fire`.
     _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
-                    "campfire": 80.0, "camp_fire": 88.0,
+                    "camp_fire": 88.0, "burn_barrel": 80.0,
                     "haven_fire": 200.0, "neon_pylon": 190.0,
                     "lantern": 60.0, "candle": 55.0,
-                    "yard_light": 85.0, "generator": 42.0,
+                    "yard_light": 85.0, "street_lamp": 150.0,
+                    "generator": 42.0,
                     "wall_lamp": 62.0, "drop_bulb": 58.0,
                     "kerosene_lamp": 40.0}
     # The genset-powered ELECTRIC subset: these emit (and gate) only while
     # the scene's power is on (`Scene.power_on`, maintained by
     # Game._tick_power off the `_genset_down` blackout timers). Fire keeps
     # burning through a blackout.
-    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light"})
+    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light",
+                                 "street_lamp"})
 
     def light_sources(self):
         """Cached [(deco, r, cone, elec)] of the scene's light-emitting
@@ -610,6 +623,20 @@ class Scene:
         ch = self.char_object_at(x_px, y_px)
         if not (is_object_solid(ch) or ch in _WALL_CHARS):
             return False
+        if ch in _terrain._TILT_BILLBOARD_CHARS and \
+                _terrain.OBJECT_DEFS.get(ch, {}).get("kind") == "tree":
+            # A TREE BLOCKS AS A ROUND FOOT AT ITS OWN POSITION, not as the
+            # whole 32x32 cell it was authored in -- the same contract the
+            # thin-slab walls have, and read from the same function the draw
+            # uses (`_terrain.tree_footprint`). A tree standing off-centre in
+            # its cell blocks off-centre; the corner of the cell it does not
+            # occupy is walkable, which is what the silhouette has always
+            # promised.
+            tx, ty = int(x_px // TILE), int(y_px // TILE)
+            fx, fy, r = _terrain.tree_footprint(tx, ty, ch)
+            if (x_px - fx) ** 2 + (y_px - fy) ** 2 > r * r:
+                return False
+            return True
         if ch in _WALL_CHARS and getattr(self, "key", None) in _terrain._SLAB_SCENES:
             foot = _terrain._wall_slab(self, int(x_px // TILE), int(y_px // TILE))
             if foot is not None:
@@ -930,6 +957,29 @@ class Scene:
         self.exits[char] = (target_scene, spawn_id)
         if direction:
             self.exit_directions[char] = direction
+
+    def set_lost_edge(self, sides, lost_scene):
+        """Opt this scene's map edge(s) in as a MOUTH into a lost space.
+
+        `sides` is a string of compass letters ("n", "s", "ns", ...);
+        `lost_scene` is the lost-space key that edge opens onto -- pick the
+        biome the edge actually looks like, so the field you land in is the
+        one you walked into (the yard's treeline opens on `lost_forest`).
+
+        An edge on a WRAPPING axis is refused: a toroidal edge is not an
+        edge, it is a seam, and stepping over it already carries you to the
+        far side. Nothing happens here at load; the gate is in
+        `Game._tick_lost_edge`, which needs the scene DARK to open it."""
+        for s in sides:
+            if s not in "nesw":
+                raise ValueError(f"bad lost edge side {s!r}")
+            if (s in "ns" and self.wrap_y) or (s in "ew" and self.wrap_x):
+                raise ValueError(
+                    f"{self.key}: the '{s}' edge wraps. A seam has no far "
+                    "side to fall off; put the mouth on a non-wrapping axis.")
+            if self.lost_edges is None:
+                self.lost_edges = {}
+            self.lost_edges[s] = lost_scene
 
     def set_spawn(self, name, tx, ty):
         self.spawns[name] = (tx * TILE + TILE // 2, ty * TILE + TILE // 2)

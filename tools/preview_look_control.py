@@ -54,7 +54,7 @@ def render(scene, lc, px, py, label, sub):
     out = pygame.Surface(CELL)
     draw_skybox(out, (0, 0, CELL[0], CELL[1]), yaw=cam.yaw, kind="void",
                 horizon_frac=0.40)
-    walls, _solids, _walldecos = draw_terrain_tilted(out, scene, cam)
+    walls, _solids, _walldecos, _nbr = draw_terrain_tilted(out, scene, cam)
     # walls behind the player first, player, then walls in front (Phase 5 the
     # game depth-sorts these per-actor; this preview keeps a simple player split)
     pdepth = cam.depth(px, py)

@@ -111,11 +111,16 @@ TILT_EXEMPT = {
 def _tilt_sets():
     from scenes import SCENE_BUILDERS, load_scene
     from rendering.props import SOLID_PROPS, _STANDEE_KINDS
+    from rendering.assemblies import ASSEMBLIES
     from rendering.furniture import FURNITURE
     from scenes.terrain import (_FLOOR_DECAL_KINDS, _SURFACE_DECAL_KINDS,
                                 _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
-    sets = (SOLID_PROPS, _STANDEE_KINDS, FURNITURE, _FLOOR_DECAL_KINDS,
-            _SURFACE_DECAL_KINDS, _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
+    # ASSEMBLIES is the newest tilt registration: a kind declared as PARTS
+    # (rendering/assemblies.py) is drawn by the central assembly renderer
+    # and is as real a volume as anything in SOLID_PROPS.
+    sets = (SOLID_PROPS, ASSEMBLIES, _STANDEE_KINDS, FURNITURE,
+            _FLOOR_DECAL_KINDS, _SURFACE_DECAL_KINDS, _WALL_DECO_KINDS,
+            _TABLETOP_PROP_KINDS)
     orphan = {}
     for key in sorted(SCENE_BUILDERS):
         try:
@@ -140,13 +145,11 @@ def _tilt_sets():
 # Scene._LIGHT_KINDS (the MECHANICAL cover radius stealth reads) and
 # FIXTURE_POOLS (the VISIBLE pool _draw_dark casts). A kind in only one is a
 # light that gates but does not shine, or shines but does not gate.
-# ALLOWLIST = two shipped disagreements, both suspected real bugs, left as
-# gameplay decisions for the maintainer rather than silently "fixed" here.
-LIGHT_EXEMPT = {
-    "campfire": "gates as lit but casts nothing -- it is the DEAD indoor "
-                "scorch decal, so arguably should not gate at all (triage)",
-    "burn_barrel": "casts light but gives no mechanical cover (triage)",
-}
+# No exemptions. The two this check found on its first run were real bugs and
+# are fixed: `campfire` (the COLD indoor scorch decal) was handing out an 80px
+# light-cover radius while casting nothing, and `burn_barrel` was casting a
+# visible pool while giving no cover at all. Keep this empty if you can.
+LIGHT_EXEMPT = {}
 
 
 @check("light kinds agree across the mechanical + visible tables")
@@ -217,9 +220,14 @@ def _doc_refs():
 
 # -------------------------------------------------- 6. lost spaces are mute
 # THE RULE (maintainer, DIALOGUE.md): the lost fields carry NO narrator boxes,
-# notices, or case-notebook writes. The dark and the hunted light are the
-# whole text.
-@check("the lost spaces ship no narration")
+# notices, case-notebook writes -- or place NAME. The dark and the hunted
+# light are the whole text.
+# WHY THE NAME HALF: the HUD labels every scene in the lower-left, and the
+# default label is the titlecased scene key -- so a lost field silently
+# announced itself as "Lost Forest", telling the player exactly what had
+# happened to them. Same explaining-away as a caption, from a different layer,
+# which is why this check covers both rather than only the words in the file.
+@check("the lost spaces ship no narration and no place name")
 def _lost_silent():
     src = open("scenes/lost_space.py").read()
     hits = [t for t in ("show_notice", "_evidence(", "_log_note", "DialogueBox",
@@ -228,6 +236,180 @@ def _lost_silent():
         return (f"    scenes/lost_space.py uses {hits}.\n"
                 "    The lost spaces are wordless by ruling (DIALOGUE.md). If a\n"
                 "    beat there seems to want words, it needs staging, not a line.")
+    from systems.config import LOST_SPACE_SCENES
+    from scenes import load_scene
+    from scenes.base import scene_display_name
+    named = sorted(k for k in LOST_SPACE_SCENES
+                   if scene_display_name(load_scene(k)).strip())
+    if named:
+        return ("    these lost scenes label themselves in the HUD corner: "
+                f"{named}.\n"
+                "    A lost space is somewhere with no name you know. Set\n"
+                "    `display_name = \"\"` (an explicit blank, which\n"
+                "    scene_display_name honours; None falls back to the key).")
+
+
+# --------------------------------------------------- 7. exits are walkable
+# THE RULE: an exit fires from the tile the player is STANDING ON
+# (`Scene.find_exit_at` off `char_object_at`), so an exit char that is SOLID
+# in OBJECT_DEFS is an exit nobody can ever take. There is no error and no
+# visible tell: the passage simply reads as a wall you bump into.
+# WHY THIS CHECK: Brimley's north road to `gravel_road_north` used "R", which
+# is a solid ROCK char. It shipped that way and the road out the top of town
+# was unreachable until somebody walked it in a test harness. Two more of the
+# same slipped into the safe-path network in the same session, which is the
+# tell that this needs a machine and not a memo.
+@check("every exit char is walkable (an exit you cannot stand on is a wall)")
+def _exit_chars_walkable():
+    from scenes import SCENE_BUILDERS, load_scene
+    from scenes.terrain import is_object_solid
+    rows = []
+    for key in sorted(SCENE_BUILDERS):
+        try:
+            sc = load_scene(key)
+        except Exception:
+            continue
+        if getattr(sc, "procedural", False):
+            continue
+        for ch in sorted(sc.exits):
+            if is_object_solid(ch):
+                rows.append(f"    {key}: exit {ch!r} -> {sc.exits[ch][0]!r} "
+                            "is a SOLID char, so the passage is a wall")
+    if rows:
+        return ("  pick a non-solid char (an 'outdoor_passage' or 'door' kind\n"
+                "  in scenes/terrain.py OBJECT_DEFS) for any exit the player\n"
+                "  walks onto.\n" + "\n".join(rows))
+
+
+# ------------------------------------------- 8. assemblies match their refs
+# THE RULE: a prop declared as PARTS is built to a recorded reference
+# (`rendering/references.py`), and both the structure and the proportion are
+# machine-checkable BECAUSE it is data. This is the check that could not
+# exist while props were imperative draw calls, and it is the whole reason
+# the rework was worth doing.
+# It has already earned its keep: on its first run it caught a mailbox being
+# measured with its post included, a stoop whose reference axes were quoted
+# the way a catalogue quotes them (and so was compared ninety degrees out),
+# and a woodpile modelled with its logs along the stack instead of across it.
+# All three were found before anything was rendered.
+@check("every parts-built prop matches its recorded reference")
+def _assemblies():
+    from rendering.assemblies import ASSEMBLIES, base
+    from rendering.assembly import validate
+    from rendering import references as R
+    rows = []
+    # `base()` because a kind may be declared as a VARIANT FACTORY; the
+    # reference describes the plain object, so that is what gets measured.
+    for kind in sorted(ASSEMBLIES):
+        asm = base(kind)
+        for m in validate(asm, kind):
+            rows.append("    " + m)
+        if kind not in R.REFERENCES:
+            rows.append(f"    {kind}: built as parts but has NO reference on "
+                        "record -- search for one and add it to "
+                        "rendering/references.py")
+            continue
+        for m in (R.check_proportion(kind, asm), R.check_stature(kind, asm)):
+            if m:
+                rows.append("    " + m)
+    if rows:
+        return ("  a parts-built prop is checked against the real object's "
+                "proportions AND\n"
+                "  against how tall it should stand in the world.\n"
+                "  Fix the model, or correct the reference if the reference "
+                "is what is wrong\n"
+                "  (its `real` is in the MODEL's axes: +x length, +y across, "
+                "+z up).\n"
+                + "\n".join(rows))
+
+
+# ------------------------------------- 8b. volumes answer to is_solid_prop
+# THE RULE: registering a kind in a volume TABLE is not enough. The scene's
+# emit path asks ONE question -- `props.is_solid_prop(kind)` -- and anything
+# that answers False is treated as a flat decal, falls through to
+# Decoration.draw, finds no `_draw_<kind>` method and ships a MAGENTA SQUARE
+# into the world.
+# This is not hypothetical: converting the first six props to assemblies
+# removed them from SOLID_PROPS (correctly) and left `is_solid_prop` reading
+# only the old two tables, so the freshly dressed lodge yard rendered six
+# magenta placeholders. Check 2 passed the whole time -- it tests the tables,
+# and the tables were right. The predicate is the thing that has to agree, so
+# the predicate is what gets asserted here.
+@check("every volume kind answers True to props.is_solid_prop")
+def _solid_predicate():
+    from rendering.props import SOLID_PROPS, _STANDEE_KINDS, is_solid_prop
+    from rendering.assemblies import ASSEMBLIES
+    rows = []
+    for label, table in (("ASSEMBLIES", ASSEMBLIES),
+                         ("SOLID_PROPS", SOLID_PROPS),
+                         ("_STANDEE_KINDS", _STANDEE_KINDS)):
+        for kind in sorted(table):
+            if not is_solid_prop(kind):
+                rows.append(f"    {kind!r} is in {label} but is_solid_prop "
+                            "says no -> renders as a magenta square")
+    # AND NOT IN TWO OF THEM. draw_prop_solid prefers the assembly, so a kind
+    # left behind in SOLID_PROPS keeps a hand-written draw that no longer runs
+    # -- dead code free to disagree with what actually ships. It did: `lantern`
+    # was converted as a hand-carried hurricane lantern while the unreachable
+    # function beside it went on being the iron POST lamp the scenes and the
+    # light tables had always meant. Nothing pointed that out because nothing
+    # was looking.
+    for kind in sorted(set(ASSEMBLIES) & set(SOLID_PROPS)):
+        rows.append(f"    {kind!r} is in BOTH ASSEMBLIES and SOLID_PROPS -- "
+                    "the assembly wins, so\n      delete the hand-written "
+                    "draw rather than leave it to rot")
+    if rows:
+        return ("  a kind the tilt draws as geometry must be recognised by\n"
+                "  rendering/props.py is_solid_prop -- that predicate, not the\n"
+                "  table, is what the scene emit path asks -- and must be\n"
+                "  registered in exactly one place.\n"
+                + "\n".join(rows))
+
+
+# ------------------------------------ 8c. every billboard char has a drawer
+# THE RULE: under the tilt, an object char in `_TILT_BILLBOARD_CHARS` is
+# dispatched by its KIND, and only `tree` and `cornstalk` have a branch. A new
+# billboard kind with no branch draws NOTHING -- the terrain version of the
+# magenta square, except quieter, because empty ground looks like ground.
+# This check also pins down a second failure it grew out of: `_tilt_standee`,
+# the flat-card path the docs described as how trees are drawn, had been dead
+# for some time (every billboard char routes to a solid). A full tree redesign
+# went into the wrong function before anyone noticed.
+@check("every tilt billboard char has a live draw branch")
+def _billboard_kinds():
+    from scenes.terrain import (_TILT_BILLBOARD_CHARS, _TILT_BILLBOARD_KINDS,
+                                OBJECT_DEFS)
+    rows = []
+    for ch in sorted(_TILT_BILLBOARD_CHARS):
+        kind = OBJECT_DEFS.get(ch, {}).get("kind")
+        if kind not in _TILT_BILLBOARD_KINDS:
+            rows.append(f"    {ch!r} is a billboard char of kind {kind!r}, "
+                        "which _tilt_tile_box has no branch for -> it draws "
+                        "nothing at all")
+    if rows:
+        return ("  a billboard char must be dispatched to a real drawer in\n"
+                "  scenes/terrain.py _tilt_tile_box. Add a branch there AND\n"
+                "  the kind to _TILT_BILLBOARD_KINDS.\n" + "\n".join(rows))
+
+
+# ------------------------------------------------------- 9. TOOLS.md fresh
+# THE RULE: TOOLS.md is GENERATED from each tool's own docstring
+# (`python tools/index.py --md`) precisely so a hand-maintained list of 40+
+# tools cannot rot the way the canon's dead file references did. This check
+# is what makes "generated" true rather than aspirational.
+@check("TOOLS.md matches the actual tool shelf")
+def _tools_md():
+    sys.path.insert(0, os.path.join(_ROOT, "tools"))
+    import index as _index
+    want = _index.render_md()
+    try:
+        have = open("TOOLS.md").read()
+    except FileNotFoundError:
+        return "    TOOLS.md is missing. Run: python tools/index.py --md"
+    if have != want:
+        return ("    TOOLS.md is stale (a tool was added, renamed, removed, or\n"
+                "    its docstring's first line changed).\n"
+                "    Regenerate: python tools/index.py --md")
 
 
 def main():

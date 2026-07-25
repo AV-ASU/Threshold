@@ -69,7 +69,58 @@ def first_line(path):
         return ""
 
 
+def render_md():
+    """TOOLS.md, generated from each tool's own docstring so it cannot drift.
+    `tests/conventions.py` regenerates this and fails if the checked-in file
+    disagrees, so adding a tool without refreshing the doc is a red gate."""
+    names = sorted(f for f in os.listdir(_HERE)
+                   if f.endswith(".py") and f != "index.py")
+    out = [
+        "# THRESHOLD — Tools",
+        "",
+        "> **Generated file — do not hand-edit.** Rebuild with",
+        "> `python tools/index.py --md`. Each line is the first line of that",
+        "> tool's own docstring, so this list cannot drift from the shelf;",
+        "> `tests/conventions.py` fails if it does. Every tool is headless and",
+        "> self-configures the SDL dummy drivers.",
+        "",
+        "Not canon, and never required reading — it is a shelf label. The",
+        "terminal version is `python tools/index.py [word]`.",
+        "",
+        "## Start here — the reflex tools",
+        "",
+    ]
+    for name, why in START_HERE:
+        if os.path.exists(os.path.join(_HERE, name)):
+            flat = " ".join(why.split())
+            out.append(f"- **`tools/{name}`** — {flat}")
+    out.append("")
+    shown = set()
+    for title, prefixes in GROUPS:
+        rows = [n for n in names
+                if any(p in n for p in prefixes) and n not in shown]
+        if not rows:
+            continue
+        out += [f"## {title.title()}", ""]
+        for n in rows:
+            shown.add(n)
+            out.append(f"- `tools/{n}` — {first_line(os.path.join(_HERE, n))}")
+        out.append("")
+    rest = [n for n in names if n not in shown]
+    if rest:
+        out += ["## Other", ""]
+        for n in rest:
+            out.append(f"- `tools/{n}` — {first_line(os.path.join(_HERE, n))}")
+        out.append("")
+    return "\n".join(out)
+
+
 def main():
+    if "--md" in sys.argv[1:]:
+        path = os.path.join(os.path.dirname(_HERE), "TOOLS.md")
+        open(path, "w").write(render_md())
+        print(f"wrote {path}")
+        return 0
     q = (sys.argv[1] if len(sys.argv) > 1 else "").lower()
     names = sorted(f for f in os.listdir(_HERE)
                    if f.endswith(".py") and f != "index.py")

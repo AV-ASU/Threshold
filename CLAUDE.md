@@ -111,7 +111,8 @@ python tests/flow.py         # story-beat integration + canon guards
 
 # WHAT TOOLS EXIST? Run this BEFORE writing a throwaway script -- there are
 # 40+ headless tools and the one you want probably already exists.
-python tools/index.py [word]
+python tools/index.py [word]         # the shelf, filtered
+python tools/index.py --md           # regenerate TOOLS.md (gate checks it)
 
 # LOOK at a scene from all four facings (the VISION.md look pass). Sets the
 # camera yaw itself and ASSERTS the facings differ, so it cannot hand back
@@ -122,6 +123,24 @@ python tools/capture_facings.py <scene_key> [--bright]
 # and ask what it is registered as (tilt set, light tables, placements).
 python tools/preview_props_sheet.py <kind> [...]
 python tools/kind.py <kind> [...]        # also: --stains, --unplaced
+
+# LOOK CLOSE at one corner of a REAL scene -- the middle altitude, between
+# the isolated prop sheet and the whole-map capture. Judging a placed prop
+# from a full-scene shot is how six of them shipped as magenta squares.
+python tools/inspect_spot.py <scene> --at TX,TY [--zoom 4] [--dark] [--ev N]
+
+# LOOK at the GROUND and what grows on it, in isolation -- floor chars as
+# blocks, char-vs-char seams, or the plants. A floor char judged from a
+# whole-scene shot is four pixels; that is how a near-black marsh tile
+# sprinkled through grass read as square holes for months.
+python tools/preview_terrain.py [--chars g d ";"] [--seams] [--plants]
+
+# THE MAINTAINER MARKED UP A SCREENSHOT -- turn the marks into tile coords.
+# Under the tilt this is NOT eyeballable (yawed, foreshortened, the same
+# screen row covers different world rows by depth); guessing has produced
+# placements that looked plausible and matched none of the marks.
+python tools/screen_to_world.py <scene> --facing S --ev 2 --at 60,245 --at ...
+python tools/screen_to_world.py <scene> --facing S --grid /tmp/g.png
 
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
@@ -220,8 +239,41 @@ it renders the procedural sprites to a labelled PNG strip.
     `terrain.py` for draw code, `base.py` for the Scene model. terrain
     depends only on `constants` + lazy `scenes`/`rendering.*` imports,
     never on `Scene`, so there is no cycle.
-  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26
-    prototype, wired into nothing in-game yet): a procedurally-generated,
+  - `scenes/safe_path.py` — **the SAFE PATH** (`SafePath` / `build_path`;
+    the SYSTEM is `DESIGN.md` §14): the lit paved spine, middle of the three
+    layers (interior → yard → PATH ↔ lost spaces). A scene is built from
+    ARMS (a subset of `"nesw"` around one centre junction): two opposite =
+    an **I**, two adjacent = an **L**, three = a **T**. `build_path` lays the
+    surface, lamps, verge, exits and mouths from that alone. **The road is
+    safe by its GEOMETRY, not by its lamps** — §13's mouth only reaches a MAP
+    EDGE, an arm's end is an exit (and `_tick_lost_edge` refuses on an exit
+    tile), and a flank edge carries no asphalt; so the asphalt is safe
+    everywhere while the verge beside it lets go like any flank. Guarded by
+    `tests/flow.py` §34 as a WALK (every lane of every arm at ev3, none may
+    fall). The LAMP PATTERN is the maintainer's, read off marks on a capture
+    and generalised: a junction is lit at its CORNERS between two arms (plus
+    one centred mast on any armless side), runs carry facing PAIRS every
+    `LAMP_STEP` (11) tiles out, and the ends of a run go DARK. Masts sit on
+    the OUTER shoulder edge and never on asphalt (each is pushed outward until
+    its tile is not asphalt, dropped if it cannot get clear, and an explicit
+    position on asphalt raises at build time). `build_path(..., lamps=((tx,ty),
+    ...))` overrides the pattern outright where a scene is art-directed;
+    `tools/screen_to_world.py` turns marks on a capture into that list (the
+    country lane's eight are the maintainer's own).
+    `street_lamp`
+    (a new `SOLID_PROPS` volume, in BOTH light tables and in
+    `_ELECTRIC_KINDS`) still gates stealth cover and dies with the gensets. Arms paint in two
+    passes (all gravel, then all asphalt) so a junction is surfaced, not
+    quartered; the dashed centre lane (`"Y"` N-S, `"-"` E-W — two floor chars
+    because tiles cache BY CHAR) stops at the junction box. Every side is a
+    mouth including the arms, with the road exit winning (exits span the full
+    corridor, and `_tick_lost_edge` refuses on an exit tile); WHICH lost space
+    is derived from the verge (`_VERGE_LOST`), never hand-picked. A `river=`
+    channel keeps `RIVER_BANK` tiles of bank clear so the water is SEEN, and a
+    crossing gets a paved deck plus a `bridge_rail` parapet down both lips.
+    Ships `country_lane` (T) / `river_road` (I) / `river_bend` (L).
+  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
+    the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
     renderer is already a camera-window system and collision/sight route through
     `char_object_at`/`char_floor_at`: a `Scene` whose `floor`/`objects` are
@@ -254,7 +306,25 @@ it renders the procedural sprites to a labelled PNG strip.
     island pops). New light kinds `haven_fire` + `neon_pylon` live in
     `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`; the road also adds
     non-light solids `gas_station` / `chain_fence` / `boulder` and the
-    `parking_bay` floor decal.
+    `parking_bay` floor decal. **How you get in and out (the loop):** a scene
+    opts a NON-wrapping map edge in with `Scene.set_lost_edge(sides, key)`
+    (`Scene.lost_edges`; None everywhere else, so an un-opted scene is
+    unchanged), and `Game._tick_lost_edge` swallows you there only when the
+    room is genuinely dark (`Game.scene_gloom() >= LOST_EDGE_GLOOM`, which on
+    the surface is the storm climbing with the evidence count) AND the spot
+    is unlit — **light gates entry: a lit edge is a wall.** The fall writes
+    `Game._lost_return` (the scene + a spot `LOST_EDGE_BACKOFF` tiles back
+    inside it) and crosses through `cross_fold`; reaching the hunted lantern
+    spends that anchor and climbs you back out where you fell. No anchor (a
+    direct load or a preview) falls back to the static `exit_to` chain. The
+    fields also REARRANGE themselves behind you (`_tick_reshuffle`: only
+    unlit, out-of-cone, far-off scatter props move, and only to somewhere
+    also unlit and out-of-cone — geometry lies, threats never do), carry a
+    manned camp + lamp-carrying cultists (so the lost scenes are in
+    `CULTIST_SCENES` with `cult_target = 0`), and are WORDLESS, including
+    `display_name = ""` so the HUD never names the place. Shipping mouth
+    today: the lodge yard's treeline. Guards: `tests/flow.py` §32b,
+    `tests/conventions.py` check 6.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -292,6 +362,65 @@ it renders the procedural sprites to a labelled PNG strip.
     unchanged; add a new prop kind by dropping a `_draw_<kind>` method
     into the fitting mixin.
 - `rendering/`
+  - **THE PROP PIPELINE (2026-07 rework).** A prop is DATA, not a draw
+    function. Four files, and the split between them is the point:
+    - `prim.py` — parametric solids returning FACES (`verts, normal, role`)
+      in local space, drawing nothing: `box` / `plate` / `arch` (a tunnel
+      vault) / `cyl` (z or x axis) / `prism` / `frustum` (a TAPERED prism —
+      `sides=4` a lantern housing, `r1=0` a peaked cap, high `sides` a cone)
+      / `wedge` / `revolve`, plus `bounds`. The library is wide on purpose —
+      props used to be built out of whatever primitive was closest rather
+      than the shape the object IS (a rural mailbox is a tunnel arch and
+      shipped as a rectangular prism; a lantern head TAPERS and shipped as a
+      straight prism, which reads as a tin can). When the shape you need has
+      no primitive, **add the primitive** — that is the whole point of the
+      split.
+    - `materials.py` — the ONE colour table (`MATERIALS`, `ROLE_SHADE`,
+      `shade_for`). Every prop used to inline its own RGB, which is why
+      things didn't sit together. Shading takes the face role AND how far up
+      it faces, so a cylinder gets a crown-to-belly gradient for free. Judge
+      a new material in a SCENE, in the dark (`tools/inspect_spot.py --dark`):
+      the preview sheet's neutral card flatters everything, and `lift`
+      compounds it (an upward face lands near `(1 + lift) x base`, and under
+      the 55° camera most of a low prop IS its top).
+    - `assembly.py` — `Part` (a primitive + local transform + material) and
+      `Assembly`, plus `draw()` which culls, depth-sorts and shades ONCE for
+      every prop, and `validate()`. Culling/order/shading being central is
+      what makes the old failures inexpressible: a box painting its own back
+      faces, parts placed off `cam.yaw`, pieces painted in loop order.
+      `Assembly(..., shadow=f)` opts into a contact pool, for a prop held
+      clear of the ground (a truck on its wheels reads as hovering without
+      one); default 0 leaves every existing prop untouched.
+    - `assemblies.py` — the declared props themselves, and
+      `references.py` — what each one is SUPPOSED to be (real dimensions,
+      shape language, tells, source URL). `check_proportion` compares the
+      model's L:W:H against the real object's; `real` is in the MODEL's axes
+      (+x length, +y across, +z up), not the way a catalogue quotes it.
+      `check_stature` compares how tall it STANDS against the reference's
+      `world_h` — proportion alone is blind to a prop built correctly at the
+      wrong size, which is how a mailbox shipped 36 units tall (a wall is 26,
+      the player 20) with a flawless ratio. **A mount height is in WORLD
+      units, never the model's exaggerated `k`.**
+    An `ASSEMBLIES` value may be a finished `Assembly` OR a **variant
+    factory** — a function whose parameters are read from the decoration's
+    kwargs (`variant()`, built once per combination and cached; `base(kind)`
+    is the default, which is what the reference measures). That is how a
+    scene asks for the loaded mailbox, the woodpile with the axe still in the
+    block, or the fence bay whose wire is down. Before it existed those
+    kwargs were silently dropped while the comment beside them went on
+    describing an axe nobody could see.
+    `draw_prop_solid` prefers an assembly and falls back to the hand-written
+    function, so kinds convert as they're touched rather than in one sweep.
+    **Converting a kind means DELETING its old `SOLID_PROPS` entry and adding
+    it to `is_solid_prop`** — leave it in `SOLID_PROPS` and you keep a dead
+    draw free to disagree with what ships (`lantern` was converted as a
+    hand-carried hurricane lantern while its unreachable function went on
+    being the iron POST lamp the scenes and light tables had always meant);
+    leave it out of `is_solid_prop` and the scene calls it a flat decal and
+    ships a MAGENTA SQUARE. Both are guarded (`tests/conventions.py` checks 8
+    and 8b). Preview with `tools/preview_props_sheet.py`, which turntables
+    and prints the reference beside the render, then `tools/inspect_spot.py`
+    to see it in the actual scene.
   - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). This is now a
     thin **facade** that re-exports the public surface from themed siblings, so
     `from rendering.sprites import <name>` is unchanged. The siblings:
@@ -358,13 +487,45 @@ it renders the procedural sprites to a labelled PNG strip.
     cursor; the yaw chase is aim-steady (trigger locks it, standing
     damps it, `CHASE_*`/`TURN_RATE` config). Previews:
     `tools/preview_{tilt,skybox,occlusion,pseudo3d,sight,blindspot_live}.py`.
-    Under tilt, **trees + cornstalks stand up as 3D billboards** (`_tilt_standee`
-    in `scenes/terrain.py`, cached cards + a horizontal-run corn LOD `_corn_runs`)
-    and join the wall/occluder set returned by `draw_terrain_tilted` — so they
+    Under tilt, **trees + cornstalks are VOLUMETRIC bodies, not cards**
+    (`_tilt_tree_draw` / `_tilt_corn_draw` in `scenes/terrain.py`, each
+    rendered once into a per-tile card by `_tilt_tree_solid` /
+    `_tilt_corn_solid`, plus a horizontal-run corn LOD `_corn_runs`). They
+    join the wall/occluder set returned by `draw_terrain_tilted` — so they
     depth-sort + fade per-actor like walls (`_TILT_BILLBOARD_CHARS` in the
-    collection + `_tilt_tile_box` dispatch; the flat floor raster skips them via
-    `draw_scene_terrain(..., skip_billboard=True)`). Collision is unchanged;
-    flat top-down draws them flat as before.
+    collection + `_tilt_tile_box` dispatch, which routes by KIND and is
+    guarded by `tests/conventions.py` check 8c so a new billboard kind with
+    no branch fails instead of drawing nothing). Collision is unchanged.
+    **EVERY plant is ONE renderer, `draw_tree_body`, with three species**
+    (`TREE_SPECIES`): `spruce` (drooping needled tiers via `_spruce_tier`,
+    each tier a shaded fan rather than a `draw_solid` body — draw_solid rings
+    every body with a base ellipse and a brightened cap disc, which up a
+    conifer reads as stacked lampshades), `bare` (a tapered bole continuing
+    into a leader with recursively forking limbs), and `brush` (squat clumped
+    mounds — walk-through growth). They share one palette family, one light
+    direction and one height model, which is what makes a stand read as one
+    wood. The `bush` and `creepy_tree` DECORATIONS route here too
+    (`props.py` `_draw_bush_solid` / `_draw_creepy_tree_solid`) — `bush` was
+    a flat floor decal and `creepy_tree` a camera-facing standee. The flat
+    `_draw_tree` / `_draw_corn` are NOT this: they are the pitch-0 tile art,
+    live only in the cutscene forest (`ui/cutscenes.py`).
+    **A tree is not bound to its tile** (`tree_footprint`, the same contract
+    `_wall_slab` gave walls): authored per tile, placed freely inside it, and
+    blocking as a ROUND foot at its own position. That one function is the
+    single source for the draw AND for `is_solid_at` / `blocks_sight` /
+    `_nav_solid_at` (via `Scene._obj_solid_here`), so what the player bumps
+    is what the player sees, and the stand stops reading as a grid.
+    **Heights are real** (`tree_height`): the depth key and the occluder fade
+    box in `render_mixin` take the object's own height, not the flat wall
+    rise of 26 that every occluder but a counter used to claim.
+    **There are no walk-through trees.** `p` used to be a passable tree (967
+    of them, about half the forest) because full-tile square collision makes
+    a stand a wall, so permeability had to be authored by hand. Round feet
+    plus a POINT-collided player make the gaps fall out of the geometry, so
+    `p` is now an ordinary solid tree and `_TILT_BRUSH_CHARS` is empty;
+    undergrowth is a `bush` decoration a scene places deliberately. `j` stays
+    passable because it is a hidden DOORWAY, and it now draws as a normal
+    tree, which is what made it hidden in the first place.
   - **Blind-spot vision (`sight.py`, DESIGN.md §10):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, and
     the world-rot decals — flagged `_sight_gated`) to a forward sight
@@ -537,7 +698,9 @@ section is the CODE MAP only — where each system lives:
   EVERY other traversal — seamless world edges, direction-gated fold
   exits (these now route straight through `cross_fold` whatever scenes
   they join, so a fold can cross surface↔underground), the maze's
-  same-scene `I`/`Q` relocations, and the King's rift juke — funnels
+  same-scene `I`/`Q` relocations, the fall through a dark map edge into a
+  lost space and the climb back out (`_tick_lost_edge`, DESIGN.md §13), and
+  the King's rift juke — funnels
   through `Game.cross_fold` (`systems/game.py`): no fade,
   no sting, stride/look/screen-position preserved. The crossing is
   deliberately nothing; the FRAME is the spectacle. Visible folds + the
@@ -666,8 +829,7 @@ section is the CODE MAP only — where each system lives:
   phantom blocks, incl. the lodge fireplace and the Scriptorium's evidence
   desks). Use `add_furniture` (a real volume + footprint); smoke [9/9] now
   fails any scene that ships one. `FURNITURE` / `SOLID_PROPS` = a real projected
-  volume; `_STANDEE_KINDS` (`props.py`, `scenes/terrain.py _tilt_standee`) = a flat
-  card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
+  volume; `_STANDEE_KINDS` (`props.py` `draw_standee`) = a flat card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
   `_SURFACE_DECAL_KINDS` = warped flat onto the floor/surface plane;
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
@@ -844,6 +1006,16 @@ section is the CODE MAP only — where each system lives:
   stale in another is rot). A change is not "done" until its docs match it,
   so before you commit, ask which of the six canon docs (plus `README.md`)
   your diff just made stale and fix them in the same breath.
+- **IF IT ISN'T GOOD, REMAKE IT NOW (`VISION.md`).** When you look at a
+  model, a scene, or a design and judge it not good enough, remake it in the
+  same breath rather than handing it over with a caveat attached. "Reads a
+  bit flat", "acceptable for now", "I'd rather judge it in situ" are all the
+  same move: shipping work you have already decided is poor and making the
+  maintainer say so. Another pass now is minutes, because the reference, the
+  preview and the last failed attempt are all still loaded; the same pass
+  after a round trip costs their attention and your context. The one
+  exception is a genuine fork between two defensible directions, which is a
+  question, not a caveat.
 - **MAKE THE CHECK, NOT THE NOTE (the highest-leverage habit here).** When
   you break a rule, or the maintainer catches the same class of mistake
   twice, the fix is **not** another paragraph in a doc. Prose rules on this
@@ -902,6 +1074,13 @@ section is the CODE MAP only — where each system lives:
   the same file in one turn; an early edit moves line context and later ones
   silently mis-apply. For multi-site mechanical changes, write a small Python
   patch script with `assert count == 1` per replacement, then run + verify.
+  **Never delete a function by cutting to the next `def`.** Module-level
+  constants live in those gaps, and the cut takes them silently: it has now
+  removed `_RUST_BASES`/`_PLATE_COLS` (the dead-car palette) and
+  `_WALL_BASE`/`_WALL_FACE`/`_WALL_TOP`/`_WALL_FOOT` while removing an
+  unrelated dead draw. `compileall` does not catch it -- only the gate does,
+  as a `NameError` from `render_smoke`. Delete the exact body, then grep the
+  removed span for assignments before writing the file.
 - **Check narrative text against `NARRATIVE.md` BEFORE writing it**, not
   after. The bible is the source of truth; quote its intended voice.
 - **`tests/flow.py`** is the integration harness (separate from `smoke.py`):

@@ -139,6 +139,398 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- "If it isn't good, remake it now" (maintainer).** Written into
+  `VISION.md` with a pointer from `CLAUDE.md`'s working agreements: when you
+  look at a model or a design and judge it not good enough, remake it in the
+  same breath instead of handing it over with a caveat. "Reads a bit flat",
+  "acceptable for now", "I'd rather judge it in situ" are all the same move --
+  shipping work already judged as poor and making the maintainer say so. The
+  economics are lopsided: another pass now costs minutes because the
+  reference, the preview and the last failed attempt are all still loaded,
+  while the same pass after a round trip costs their attention and a full
+  context rebuild. A prop that took five exchanges usually took one exchange
+  and four caveats that should have been four more iterations. The stated
+  exception is a genuine fork between two defensible directions, which is a
+  question rather than a caveat.
+  Applied immediately to the thing that prompted it. The stoop had been
+  handed over the turn before with exactly that hedge -- proportionally
+  correct, reads flat, I'd rather see it in situ. Looked at again it was two
+  treads and no LANDING, which is a flight of steps rather than a stoop: the
+  landing at the door IS the object and the steps are its approach. Remade
+  from a fresh reference (36in minimum landing, wider than the door by a foot
+  each side, 6-7in rise to 11-12in run) with side cheeks closing the step
+  ends so the treads never float. It reads from every heading now.
+
+- **2026-07 -- THE PROP PIPELINE: props became data (maintainer: "the issue
+  is the creation process... if this can take us from 5 prompts an object to
+  one or two that would be perfect").** Diagnosis first, because the
+  individual bugs were symptoms: a prop was a function emitting polygons, so
+  every prop re-derived face culling, draw order, shading and world-vs-screen
+  placement, and every prop got them wrong independently. Worse, I built the
+  shape the primitives made easy rather than the shape the object is -- the
+  library was four shapes wide, so a rural mailbox (a tunnel arch) shipped as
+  a rectangular prism and a stoop as two slabs, and no amount of bug-fixing
+  touched that.
+  Four new files. `prim.py` returns FACES rather than pixels, and is wide
+  enough to model things: box, plate, arch, cylinder on either axis, prism,
+  wedge, revolve. `materials.py` is the one colour table, shading from the
+  face's role and how far up it faces, so a cylinder gets its crown-to-belly
+  gradient for free and two props meant to be the same cedar are. 
+  `assembly.py` holds `Part`/`Assembly` and does culling, depth-sorting and
+  shading ONCE for everything -- which makes the old failures inexpressible
+  rather than merely fixed. `assemblies.py` declares the props.
+  **`references.py` is the piece that changes the hit rate.** The maintainer's
+  observation was that the best prop in the game is the one built from a
+  reference they handed over, and everything built from my own description of
+  it went five revisions. Fetching reference IMAGES turned out to be blocked
+  by this environment's egress policy (403 on CONNECT; the proxy README says
+  report it rather than route around), but web SEARCH works and carries most
+  of the value, because what a photo fixes is shape language and proportion
+  and both are written down. The Joroleman mailbox is "a tunnel with an
+  arched top and flat front, back and bottom", 23.2 x 11 x 13.4in. A stoop is
+  7in rise to 11in run, 48-60in wide. Recording that and checking against it
+  in the gate is `tests/conventions.py` check 8.
+  It paid immediately, and this is the part worth keeping: on its first run
+  the proportion check caught three errors BEFORE anything was rendered -- a
+  mailbox measured with its post included, a stoop whose reference axes were
+  quoted the way a catalogue quotes them and so was compared ninety degrees
+  out, and a woodpile modelled with its logs running along the stack instead
+  of across it (a stack runs along a wall with the ends out, so a log lies
+  across it). That last one was the actual reason the pile had looked wrong
+  through three previous rewrites.
+  The four yard props are rebuilt on it. `draw_prop_solid` prefers an
+  assembly and falls back to the hand-written function, so the ~80 existing
+  props are untouched and convert as they are contacted -- a mass conversion
+  would mean re-verifying eighty props by eye, which is the expensive thing
+  the rework exists to stop.
+
+- **2026-07 -- `draw_box` was drawing its own back faces (maintainer:
+  "occlusion is wrong, I can see inside some logs").** The primitive picked
+  which faces to draw from a FIXED world axis -- "near, left, right" measured
+  outward from +y -- and drew them unconditionally. That is only correct
+  while the camera looks down -y. At other headings it painted the box's back
+  over its front and left the real front undrawn, so a box showed a concave
+  scoop into its own inside. It affected every box prop (visible on the
+  mailbox and the stoop) and it is the reason a woodpile could not be stacked
+  out of boxes at all. Faces are now chosen by the CAMERA: each of the four
+  vertical faces is kept or dropped by whether its outward normal points at
+  the viewer, and the one pointing most toward the viewer takes the shaded
+  near colour. A box is convex so the survivors never overlap. Verified
+  against the render regression set: identical within tolerance on every
+  shipping scene, so the fix corrected the geometry without disturbing what
+  was already tuned around it.
+  **And a log is its own object now** (`solids.draw_log`, the maintainer's
+  call: "just make one log and then create a stack of those"). It is a closed
+  cylinder with sawn end caps that draws only the surface facing the viewer,
+  and the woodpile is a depth-sorted stack of them. That is what finally made
+  the pile occlude honestly, after three failed attempts to fake it from a
+  single volume. The stoop's treads were sorted back-to-front for the same
+  reason -- drawing them in index order let the upper, further step paint
+  over the nearer one, so the flight read as one slab with a notch bitten
+  out of it.
+
+- **2026-07 -- `draw_box` could not stack (maintainer: "can't you see that the
+  log pile looks wrong?").** It is the primitive every flat-sided prop is
+  built from, and it always drew from z=0 to z=h -- there was no way to sit a
+  box on top of another one. The woodpile's courses were therefore all
+  sitting on the ground in a single layer while their drawn log-ends were
+  placed at the heights the courses should have been at, so the ends floated
+  above the mass like sparks. The stoop had the same disease from the same
+  cause: each "step" was a box from the ground to its own height, making a
+  set of nested slabs rather than a flight. `draw_box` gained a `z0` base
+  height (defaulting to 0.0, so every existing caller is unchanged) and both
+  props now stack.
+  Getting there took three wrong turns on the woodpile, all worth recording
+  because they are the same mistake at different depths. It was first a
+  `draw_solid` body of revolution (a barrel with dots on it), then a
+  `draw_box` crate with the ends decorating one face (a table with coins
+  spilled beside it), then a stack of real logs whose ends were still
+  screen-space `pygame.draw.circle` at a fixed pixel radius -- so they neither
+  scaled with the prop nor tilted with the face, and at any size but the one
+  they were eyeballed at they were twice the width of the end and hung off
+  both sides. The ends are now rings of points built in the END FACE'S OWN
+  PLANE and projected one by one, so they foreshorten and skew with it, and
+  the row/column count is derived from the stack's dimensions and the log
+  diameter rather than chosen.
+  The other lesson: it was being judged at 5x magnification, where the flaws
+  were obvious but the proportions were not. `--scale` on the preview is how
+  to check a prop at the size it actually ships at, which is where silhouette
+  is the only thing that survives.
+
+- **2026-07 -- The prop preview was rendering everything flat, and VISION's
+  all-directions rule now covers props (maintainer: "it needs to default to
+  3D... the vision all directions rule need to be applied for prop
+  creation").** `tools/preview_props_sheet.py` built its camera with
+  `pitch=55` and never assigned `yaw`, so every prop was drawn dead-on at yaw
+  0: one face, no corner, no top. Under that view a real volume and a flat
+  card are indistinguishable, which is exactly backwards for the tool whose
+  job is telling them apart -- the same defect `capture_facings.py` was
+  written for, in a second place. It now TURNTABLES by default, a row of four
+  yaws per kind.
+  Turning it on immediately failed three of the four brand-new yard props,
+  all of which had read fine dead-on: the mailbox's flag, the woodpile's cut
+  ends and the stoop's treads were all placed off `cam.yaw` rather than the
+  deco's own yaw, so they swung around their objects as the view turned and
+  disappeared from half the headings. All three now place in WORLD space,
+  and the woodpile's ends are face-culled so you never see them through the
+  stack. Two of them were also `draw_solid` bodies of revolution and read as
+  a drum apiece (a stoop like a butter-churn lid, a woodpile like a
+  perforated barrel); both are `draw_box` now.
+  An automatic camera-facing DETECTOR was written and then removed rather
+  than shipped: byte-identity across yaws fails because many prop draws use
+  unseeded `random` for speckle, and silhouette comparison fails because the
+  pitch flatten means even a deliberately camera-locked box changes outline
+  as the view turns. It could not be made to fail on a real standee, and a
+  check that cannot fail is not a check. The turntable is read by eye, with
+  the two failure signatures written down in `VISION.md` next to the rule.
+
+- **2026-07 -- The last two thin roads joined the safe path.**
+  `gravel_road_north` was rebuilt outright as a T (14x22 -> 32x36), keeping
+  its boarded chop-target alcove, its pines and its crows. `arrival_road` was
+  NOT rebuilt: its endless-north illusion is a `_render_band` plus a
+  `_treadmill` plus a silent same-scene south loop, none of which a generic
+  path builder models, so it kept its machinery and took the cross-section and
+  lamp pattern instead -- widened 15 -> 23 tiles so a nine-tile corridor fits,
+  with every column derived from `ROAD_C` and the shared constants rather than
+  the literals that made it un-widenable before. Its car, sign and directional
+  boards moved out onto the verge.
+  Two guards fired on the change and only one was a real defect. The crow
+  noise-trap's literal column landed inside the widened east tree wall (real,
+  fixed). The band-is-landmark-free check tested "no `d` anywhere in the row",
+  which was a valid proxy only while dirt appeared solely on the E-W crossing
+  -- with dirt shoulders on every row it failed a scene that was still
+  correct, so it now tests the two actual landmarks (a full-width dirt row and
+  the car footprint) instead of a stand-in for them.
+  Verified by walking all 90 lanes of all four path scenes at ev3 in the dark
+  (zero falls, zero masts in a road) and by driving `arrival_road`'s own
+  machinery: the treadmill still wraps, the south loop still fires, the car
+  still answers, and both mouths still lead where they say.
+
+- **2026-07 -- The marked lamp pattern generalised to the whole network.**
+  The eight X's on the country lane were decomposed rather than copied, and
+  they turned out to encode a consistent rule: a junction is lit at the
+  CORNERS between two arms (the poles flank the side road's mouth instead of
+  standing in the crossing), a side with no arm takes one centred mast to
+  close the fourth side, runs carry FACING PAIRS every 11 tiles out, and the
+  ends of a run are left dark. `_lamp_stations` now implements that, which is
+  a change of kind as well as spacing -- the old derived rhythm staggered
+  poles down alternating shoulders, and the marks are unambiguous that the
+  long runs come in twos.
+  Checked against the ground truth rather than assumed: the derived pattern
+  reproduces four of the maintainer's eight marks exactly, three more within
+  one tile, and differs meaningfully only on the short north arm. The lane
+  keeps its explicit `lamps=` list either way; `river_road` and `river_bend`
+  now follow the rule (10 and 7 masts, five clean pairs down the river run).
+  Still on the old thin-road treatment and therefore unlit: `gravel_road_north`
+  and `arrival_road`, queued as `TODO.md` #26's path rebuild.
+
+- **2026-07 -- Lamp positions came off a marked-up screenshot, and reading it
+  became a tool.** The maintainer drew X's on a capture ("lights on all the
+  yellow Xs and nowhere else"); a rhythm placed to match them by eye hit none
+  of them. Under the oblique tilt the marks are not eyeballable -- the view is
+  yawed and foreshortened, and the same screen row covers very different world
+  rows depending on depth. `tools/screen_to_world.py` inverts the projection
+  by brute force (project every tile centre through the real camera, take the
+  nearest), so a marked screenshot becomes a tile list in one step; `--grid`
+  writes the same view with tile coordinates drawn on it, so a scene can be
+  discussed in numbers.
+  What the marks said once read: masts belong on the OUTER edge of the
+  shoulder (not halfway across it), they STAGGER between the two sides rather
+  than pairing off across the road, and NOTHING stands at the junction --
+  poles flank the crossing instead. So `LAMP_OFF` moved out a tile, the
+  junction station was cut, and `build_path` gained a `lamps=` override so a
+  scene's lighting can be art-directed outright rather than approximated. The
+  country lane's eight are the maintainer's own positions, verified to match
+  exactly; the other two scenes keep the re-tuned default.
+
+- **2026-07 -- A lamp post was standing in the middle of the road
+  (maintainer, marked on a screenshot).** The junction mast was offset from
+  the junction along ONE axis, which is clear of the road only when the scene
+  has no arm on the other axis -- so on the T and the L, which have both, it
+  was planted squarely in the cross. It now goes DIAGONALLY into a corner
+  quadrant (off both carriageways by construction, and where a junction light
+  belongs anyway).
+  Rather than tune the stride until mid-run stations stopped landing on a
+  crossing arm's asphalt too, every station is now pushed outward along its
+  own offset until its tile is not asphalt, and dropped if it cannot get
+  clear. Placement cannot produce a pole in the road. The maintainer's marks
+  also asked for the rhythm back along both shoulders, so the mid-run stride
+  tightened (13 masts -> 21 across the three scenes, all on gravel).
+  `tests/flow.py` §34 gained the assertion. Proving it could fail took
+  stripping all THREE defences (the diagonal, the nudge, and the drop), which
+  is the useful result: the builder refuses to emit the defect, and the guard
+  is there for any future code path that places a mast by hand.
+
+- **2026-07 -- The streets had way too much light (maintainer), and the claim
+  behind them was wrong.** The safe path shipped lit end to end on the stated
+  theory that the road's safety WAS its lamp coverage. It read like an airport
+  runway, and the theory did not survive being checked: the mouth can only
+  open within `LOST_EDGE_BAND` of a MAP EDGE, an arm's end is an EXIT (which
+  already beats a mouth), and a flank edge carries no asphalt near it. The
+  road is safe by its GEOMETRY, and a dark stretch in the middle of one is
+  safe too. Verified by walking every lane of every arm of every path scene
+  end to end at ev3 in the dark: 63 lanes, zero falls.
+  So the lamps came down to about a third (43 -> 13), and the survivors were
+  placed for what they TELL you rather than for coverage: one mast at the
+  junction, one at each arm's end, and a rare mid-run pole so a long arm is
+  not black end to end. A glow ahead in the dark now means a decision or a way
+  out. The junction pair became a single mast as well -- two facing masts read
+  as a lit gateway, and this is a county road.
+  The light still does real work (it keeps the verge's dark off the asphalt at
+  the rim, it makes you visible to anything hunting, and it dies with the
+  gensets), so the blackout beat is unchanged. `tests/flow.py` §34's lighting
+  check was REPLACED rather than relaxed: instead of asserting every asphalt
+  tile sits in a pool, it now drives the walk described above and separately
+  asserts the lamps stay sparse. The old check would have passed a road three
+  times overlit; the new one fails a road that is actually unsafe. Corrected
+  the overstated claim in `DESIGN.md` §14, `CLAUDE.md`, `NARRATIVE.md` §5 and
+  the module docstring, all of which had stated lamp coverage as the
+  mechanism.
+
+- **2026-07 -- THE SAFE PATH: the lit spine (`TODO.md` #26 step 1,
+  `DESIGN.md` §14).** The middle of the three layers, and the last one
+  missing after the mouth closed the loop. The maintainer asked for "safe
+  paths that lead to yards and the lost paths. T and L and I shaped areas...
+  Not too thin... We need the river seen in the safe paths."
+  **The design finding is that the layer needed no new rule.** §13's mouth
+  only opens on dark, unlit ground, so a road whose lamps cover it end to end
+  is already a road the world cannot take you off. That turns the paving, the
+  shoulders and the verge from dressing into the mechanism: safe on the
+  crown, gone off the shoulder, and -- because `street_lamp` is an ELECTRIC
+  fixture -- a genset blackout does not dim the safe path, it OPENS it. It
+  also lands Garrick's 2026-06 line ("stay on the roads") as level geometry
+  instead of advice.
+  `scenes/safe_path.py` builds a scene from ARMS, a subset of "nesw" around
+  one junction: two opposite is an I, two adjacent an L, three a T. Five
+  lanes of asphalt in a nine-tile corridor answers "not too thin" (the road
+  it replaced was a three-tile dirt strip in a twelve-tile scene). Shipping
+  network: `country_lane` rebuilt as the T, plus `river_road` (the I, with
+  the water off its shoulder the whole way) and `river_bend` (the L, crossing
+  on the planks); `gravel_road_north` gained a west turnout so the loop
+  closes.
+  Two things became RULES rather than per-scene decisions, both because
+  authoring them by hand is how they go wrong: every side of a path is a
+  mouth with the road exit winning (so the player learns one true rule --
+  asphalt carries you on, everything beside it lets go), and WHICH lost space
+  a side opens on is derived from what its verge is planted with, so you can
+  never push through a wall of dead corn and land in a pine wood.
+  New props: `street_lamp` (the town's mercury-vapor head up a galvanized
+  highway mast, in both light tables and `_ELECTRIC_KINDS`) and `bridge_rail`
+  (a timber parapet). Both were needed rather than wanted -- yard lights left
+  84% of the road dark, and a deck without a rail reads under the tilt as a
+  brown patch of ground that happens to sit on water. New floor char `"-"`,
+  the E-W dashed centre lane, because the existing `"Y"` dash is hardcoded
+  vertical and floor tiles cache BY CHAR.
+  **Four defects were caught by looking rather than by reading the code,**
+  which is the entire argument for the VISION rule: the north arm's gravel
+  shoulders painted straight across the east-west carriageway (fixed by
+  painting all gravel then all asphalt); the flank fence ran down the middle
+  of a carriageway (the arm code's `vertical` flag reused for a
+  perpendicular run); the arm-protection bands cleared a bare grass lane
+  across the half of every L and T the road never reaches (now derived from
+  the tiles the road actually covers); and the verge trees closed over the
+  river and buried it, which is the one thing the maintainer explicitly asked
+  for.
+  Guards, `tests/flow.py` §34: the shape vocabulary is actually used, no
+  asphalt tile in any path scene is unlit, every side opens on a lost space,
+  the river is wide and blocking and visible from the road, and the deck is
+  railed on both lips. The lamp geometry was SWEPT rather than guessed. The
+  blackout case is tested end to end and is also the only way to exercise
+  exit-beats-mouth (with the lamps burning the road is lit and the gate
+  refuses anyway) -- which is how the first version of that test was found to
+  be passing for the wrong reason.
+  **The yard count, audited for the maintainer:** Brimley has seven enterable
+  buildings, grouping by shared frontage into FOUR yards (church+barn,
+  shop+school, sheriff+farmhouse, Toby alone) plus the Lodge's existing one.
+  The table is in `TODO.md` #26, where the yard layer is now step 1.
+
+- **2026-07 -- The north road out of Brimley was never walkable (bug, found
+  while building the safe path).** `Scene.find_exit_at` reads the tile the
+  player is STANDING ON, so an exit char that is solid in `OBJECT_DEFS` is an
+  exit nobody can take -- no error, no tell, the passage just reads as a wall
+  you bump into. Brimley registered its `gravel_road_north` exit as `"R"`,
+  which is a solid ROCK char, and had shipped that way; the road out the top
+  of town could not be entered on foot. Found by walking the map in a harness
+  rather than by reading it, and two more of the same slipped into the new
+  path network in the same session before the pattern was obvious. All three
+  now use `"^"` (an outdoor_passage, like every other road exit), Brimley's
+  passage widened from one tile to three so it does not need threading, and
+  `tests/conventions.py` check 7 fails on any solid exit char anywhere.
+
+- **2026-07 — THE MOUTH: the lost-space loop closes (`TODO.md` #26 step 2,
+  `DESIGN.md` §13).** The three biome fields had been built and wired into
+  nothing: reachable only by loading the scene key directly. This landed the
+  entry and the exit, so the loop the ticket describes (interior -> yard ->
+  push through the treeline -> fall -> land on the lit island -> leave its
+  glow -> hunt the light -> climb out) is walkable end to end.
+  **The design problem was where the mouth goes.** Wiring it into Brimley
+  would have pre-committed the restructure decision the ticket explicitly
+  records as NOT made, so instead the mouth is an opt-in per-scene capability
+  (`Scene.set_lost_edge(sides, lost_key)` -> `Scene.lost_edges`, None on
+  every other scene). Judging the feel now costs no canon, and each future
+  mouth is a deliberate choice about which edge of the authored world stops
+  holding. `set_lost_edge` refuses a WRAPPING edge outright: a torus seam has
+  no far side to fall off, and the yard's x axis must stay the fold it is.
+  **The gate is light, and it cost no new system.** `Game._tick_lost_edge`
+  runs from `update_player` right after the wrap clamp (the map edge is
+  exactly where the clamp just refused to let them through) and only opens
+  when the room is genuinely dark AND the spot unlit. On the surface that
+  darkness is the STORM, which already climbs with the evidence count -- so
+  at ev0 every bound is the invisible wall it has always been, and the world
+  only starts letting go once understanding has put the lights out. A lit
+  spot never opens, which quietly makes the yard lights and a carried flame
+  real protection instead of decoration. Falling writes a return anchor a few
+  strides back INTO the world; reaching the hunted lantern spends it and
+  climbs you out where you fell, rather than the old behaviour of chaining
+  field to field forever (that chain survives as the no-anchor fallback, so
+  previews and tests still walk).
+  Shipping mouth: the lodge yard's treeline, N and S. Guarded by
+  `tests/flow.py` §32b, whose two load-bearing halves (the light gate, the
+  return anchor) were fault-injected to prove they go red.
+  Two supporting fixes came out of building it. `Game.scene_gloom()` was
+  extracted from `_draw_dark` so the darkness the gate measures IS the
+  darkness the player sees, verified behaviour-identical across every scene x
+  rot stage. And the lost fields lost their place NAME: the HUD labels every
+  scene in the corner from the titlecased key, so a lost field had been
+  announcing itself as "Lost Forest" -- the same explaining-away as the
+  narrator box the maintainer had already cut. `display_name = ""` is now an
+  honoured explicit blank (None still means unset), and
+  `tests/conventions.py` check 6 was WIDENED to cover the name alongside the
+  words rather than a new check appended beside it.
+
+- **2026-07 — The dark rearranges itself (`TODO.md` #26 step 3, partial).**
+  The observer-dependent half of the manipulation layer:
+  `LostSpace._tick_reshuffle` moves the field's scatter landmarks when you
+  are not looking. The rule it enforces is the one the whole in-between runs
+  on -- **what the light touches is TRUE; the dark is not** -- so a prop only
+  moves when it is outside your sight cone, unlit, and far off, and only
+  lands somewhere also outside the cone, unlit, and not solid. Only GEOMETRY
+  lies; the island, the camps, every light, and every threat are exempt by
+  construction (the ticket's own fence). The first cut used a fixed-start
+  loop and so shuffled the same three props forever; a rotating cursor fixed
+  it, measured at 24 of 84 landmarks moved in 20s with zero fence violations.
+  Asymmetric return and breathe-with-threat remain open.
+
+- **2026-07 — Forest pond + camp variety (`TODO.md` #26).** The pond island
+  was reworked off the tan `d` donut that made its waterline a drawn circle:
+  `_pond_r()` meanders the radius with noise, the rim is wet mud, reeds sit
+  in clumped stands hugging the bank rather than evenly ringing it, and the
+  small `camp_fire` became a `haven_fire` with the lights pulled to the
+  water. Island mean brightness 23.1 -> 28.7, p99 51 -> 75. The occupied camp
+  gained three flavours chosen by hash (rest / watch / work, crews of 4 / 2 /
+  3), verified distinct across nine seeds, so the camp you stumble into is
+  not always the one you stumbled into last time.
+
+- **2026-07 — `--bright` was not bright (tooling).** The clean-inspection
+  flag on `tools/capture_facings.py` dropped the darkness and the fog but
+  left the film GRADE and the sight CONE on, so inspection shots came back
+  murky and near-identical to the player view -- which is exactly how a
+  geometry defect hides from a look pass. Now it follows VISION's recipe in
+  full (mean 46.2 -> 60.1, near-black 11.5% -> 4.9%). The same tool gained
+  `--ev N`: a STORM_STAGE_SCENES scene at the default ev0 is full daylight,
+  so before this there was no way to LOOK at the darkened surface world the
+  game is mostly played in.
+
 - **2026-07 — Lost road: the CASSILDA'S convenience store, done right
   (maintainer art pass, second round).** The road station's building was a
   bland box; reworked into a real Casey's-style convenience STORE
@@ -789,6 +1181,178 @@
   the rim fade where a neighbor exists.
 
 ## Terrain & prop read (2026-07 quality sprint)
+
+- **2026-07 — Trees consolidated, un-bound from tiles, and occluding by
+  height.** A sprite-by-sprite audit found seven tree sprites and six of them
+  failing: the spruce a flat cutout with no light direction, the bare
+  deciduous an orange bole ending dead where its leader began, the scrub a
+  set of faceted quads with a red pot at its foot (`draw_solid`'s base ring
+  and cap on the stem), `bush` a flat floor sticker reading as a lily pad on
+  a black pot, `creepy_tree` a camera-facing standee that swivelled to watch
+  you, and the cutscene forest no longer closing into a canopy (a regression
+  from the previous entry's crown narrowing). Only the skybox treeline
+  passed. Three stages, all approved before starting:
+  - **One renderer, three species.** `draw_tree_body` with
+    `spruce` / `bare` / `brush`, sharing one palette family, one light
+    direction and one height model -- which is what makes a stand read as one
+    wood rather than a prop shelf. Five separate draws collapse into it,
+    including the two decorations.
+  - **Real heights.** `render_mixin` keyed EVERY occluder's depth sort and
+    fade box at `_TILT_WALL_RISE` (26), counters excepted. A spruce stands
+    about 50 and so under-reported the screen it covered; knee-high scrub
+    over-reported by triple. Each object reports `tree_height` now.
+  - **No privileged layers.** `draw_terrain_tilted` draws the flat layer
+    first and returns the upright occluders for the caller to interleave, so
+    a `_FLOOR_DECAL_KINDS` decoration could never occlude anything at any
+    position. `bush` was one. It is a volume now, in the depth pass.
+  - **`tree_footprint` -- the wall contract, for plants.** Authored per tile,
+    placed freely inside it, blocking as a round foot, and that one function
+    is the single source for the draw AND for collision, sight and nav
+    through `Scene._obj_solid_here`. Jitter + foot is bounded under 0.7 of a
+    tile so a tree cannot seal a corridor it was never authored into.
+  - **Then the walk-through tree was retired entirely** (maintainer, on
+    seeing the round feet: "that's perfect and allows for natural gaps for
+    the player to slip through so we don't need collision-less trees").
+    `p` -- 967 tiles, about half the forest -- existed because full-tile
+    square collision makes a stand of trees a wall, so permeability had to
+    be authored by hand. With round feet and a point-collided player the
+    gaps are a property of the geometry: a band of solid trees still admits
+    a straight north crossing at 25-55% of its width, far more diagonally.
+    `_TILT_BRUSH_CHARS` is empty now and undergrowth is a `bush` decoration
+    placed deliberately. `j` stays passable -- it is a hidden doorway -- and
+    draws as an ordinary tree again, which is what made it hidden.
+  - Two guards had to follow. `tests/smoke.py`'s reachability flood was
+    tile-granular and 4-way, so it called a whole cell solid when most of it
+    was clear and could not see a diagonal gap at all; it floods sub-tile
+    through `is_solid_at` now in any scene with solid plants. And three
+    hand-placed hide spots / noisemakers turned out to be sitting on
+    scattered plants that had been harmless while plants were walk-through
+    -- `scenes/__init__.py` clears a solid plant under authored content, so
+    scatter can never win over a placement again.
+  - Tree stature raised on the maintainer's mark-up: the old 40-54 spread
+    became 50-64 (a wall is 26). The floor came up rather than the ceiling
+    going higher -- the short ones were what read as scrubby.
+  - Also: `OBJECT_DEFS` had claimed for some time that `p` is a "passable
+    secret tree -- looks identical to T". It renders as low scrub and has
+    not looked identical to `T` in a while; the comment was the wrong half
+    of the contradiction and now describes what actually ships.
+
+- **2026-07 — Ground and trees redesigned; the black patches in the grass
+  found.** The maintainer: "update the design of dirt, grass, trees. They are
+  all looking off. Are there black patches in the grass at certain angles."
+  There were, from two causes, and both were found by A/B rather than by
+  reading:
+  - **Marsh mud `;` was the main one.** Base colour (40, 37, 30) -- a brown
+    near-black -- sprinkled by the scene builders as ISOLATED SINGLE TILES
+    through grass at (46, 58, 44). Tiles are cached BY CHAR, so nothing
+    frays a boundary unless it is written to, and only the dirt path had
+    been. Each marsh tile was therefore a hard-edged square of a different
+    hue two-thirds the value of its surround: a black hole in the lawn. Wet
+    ground is now the same ground, greyer, with the darkness coming from the
+    puddles drawn on top; and `_build_path_fringe_card` was generalised from
+    "the dirt path" to any `_PATCH_CHARS` tile, colouring its lobes from its
+    OWN char, so every seam frays.
+  - **Trees were double-shadowing.** `_SHADOW_CASTERS` included `T`/`p`, so
+    every tree tile blitted a TILE-wide hard-topped gradient onto the tile
+    south of it -- flat, in the floor raster, belonging to nothing the
+    player can see, and overlapping into rectangles wherever trees are
+    dense. Trees already lay their own contact pool.
+  - **Dirt was the brightest thing outdoors.** (96, 76, 52) against grass at
+    (46, 58, 44): the eye went to the road instead of the town. Now damp
+    April earth. Its detail was three 2px rectangles plus, every fifth tile,
+    a pale line spanning the FULL tile width at exactly y=16 -- a perfectly
+    repeating scratch that becomes a vertical stripe on an E/W facing, the
+    same defect the plank floor was fixed for. Replaced with fine grain,
+    seated stones and a short scuff on a per-tile ANGLE.
+  - **Grass was confetti.** A flat fill plus a handful of 2px rectangles at
+    unrelated positions. Now clustered tufts (count and placement varied per
+    tile, since a fixed count is its own pattern) and last year's straw mat,
+    running mostly DARKER than the base. The first attempt ran them lighter
+    and denser and read as lichen; that is recorded in DESIGN §6 as the rule.
+  - **The tree redesign went into the wrong function first.** CLAUDE.md said
+    trees stand up as `_tilt_standee` billboard cards. They do not and had
+    not for some time: every billboard char routes to a volumetric
+    `_tilt_tree_solid`, and `_tilt_standee` was reachable from nothing. A
+    full canopy rebuild landed in the dead flat path before a render of the
+    actual scene showed nothing had changed. `_tilt_standee` is deleted, and
+    `tests/conventions.py` check 8c now fails if a billboard char has no live
+    dispatch branch. (The flat `_draw_tree` survives -- it is live in the
+    cutscene forest -- and kept its improvement.)
+  - **The real tree.** Spruce tiers were `draw_solid` bodies of revolution,
+    and draw_solid finishes every body with a `lo` ellipse ring at its base
+    and a BRIGHTENED filled ellipse across its top; stacked four high that is
+    a tree wearing hoops. `_spruce_tier` draws its own saw-toothed skirt
+    instead -- drooping branch tips, no lid -- and the bole was thinned from
+    a fifth of the tree's spread to a tenth (it had read as a keg standing
+    under the branches). The bare deciduous got recursively forking limbs in
+    place of single strokes radiating off the leader, and a tapered bole that
+    continues into them rather than a capped cylinder, which had made it a
+    fence post with nails in it.
+  - **`tools/preview_terrain.py`** exists now for the same reason
+    `preview_props_sheet.py` does: a floor char judged from a whole-scene
+    capture is four pixels among props, actors and shadow, which is how a
+    near-black tile in the grass survived. Blocks per char, `--seams` for
+    char-vs-char boundaries, `--plants` for what grows on it.
+
+- **2026-07 — The lodge yard dressed, and five props remade doing it.**
+  The first real use of the parts-built prop pipeline on a scene, run as the
+  maintainer asked for it: look, find, change, apply, judge, repeat. What
+  the looking turned up is the entry.
+  - **Six props shipped as MAGENTA SQUARES.** Converting a kind to an
+    assembly correctly removes it from `SOLID_PROPS`, but `is_solid_prop` —
+    the predicate the scene's solid-emit path actually asks — still read
+    only the two old tables. So the scene called them flat decals, they fell
+    through to `Decoration.draw`, found no `_draw_<kind>` method, and drew
+    the unknown-kind placeholder. Conventions check 2 passed throughout: it
+    tests the TABLES, and the tables were right. New check 8b asserts the
+    predicate instead, and fault-injection confirmed it names the exact four.
+  - **`lantern` was the wrong object entirely.** It had been converted as a
+    hand-carried hurricane lantern — right name, wrong thing, a third of the
+    height — while the unreachable `_draw_lantern_solid` beside it went on
+    being the iron POST lamp every scene and both light tables had always
+    meant. Its own light data settled it (`FIXTURE_POOLS` src_z 20, arm 0,
+    warm, flickering, not electric: a flame directly over its own base at
+    eye height). Remodelled as a garden post lantern with a tapered glass
+    head; `prim.frustum` was added because a taper had no primitive and had
+    been faked with a straight prism, which reads as a tin can. Check 8b now
+    also fails a kind left in BOTH tables, since that dead draw is what let
+    the disagreement sit unnoticed.
+  - **`check_stature` (the size check proportion cannot make).**
+    `check_proportion` compares a model against itself, so it is blind to a
+    prop built perfectly at the wrong SIZE. The mailbox stood 36 units tall
+    — a wall is 26, the player 20 — at a flawless 2.11 : 1 : 1.22, because
+    the legibility exaggeration in the model's `k` got applied a second time
+    to its post; from three of four facings it read as a bar on a stick.
+    Every reference now records `world_h`, and the rule is that a mount
+    height is in WORLD units, never the model's `k`. It caught the woodpile
+    (8ft, taller than the player) and the fence (player-height posts on a
+    wire yard fence) in the same pass.
+  - **Variant factories.** `full=`/`axe=`/`gap=` were being passed by the
+    scene and silently dropped, while the comments beside them described an
+    axe and a gap nobody could see. An `ASSEMBLIES` value may now be a
+    factory whose parameters are read from the decoration's kwargs, cached
+    per combination. The mail juts out past the door end, the axe stands in
+    the block, the fence bay's wire is down.
+  - **Palette judged in the scene, not on the card.** `plank`, `concrete`,
+    `paper`, `log_cut` and `tin` were set by eye on the preview sheet's
+    neutral grey and turned out to be the palest objects in a Darkwood-dark
+    yard — the stoop out-read the building it was attached to. Darkened;
+    `wire` added because a bright fence strand drew the eye to the least
+    important thing in the frame.
+  - **`tools/inspect_spot.py`.** The dressing process asks for three
+    altitudes and the isolated sheet and whole-scene capture covered only
+    the outer two, so the middle one kept being skipped — which is how a
+    woodpile got signed off at a magnification where proportion cannot be
+    read, and how six magenta squares got called placed. Four facings on a
+    named tile, zoomed, `--dark` for the light the player actually meets.
+    It has to move `TILT_ZOOM` rather than `camera.scale`, because
+    `_update_camera` re-asserts the scale every call — the same class of
+    trap as the yaw, and it asserts the zoom took.
+  - Placement fixes from the same pass: the woodpile moved against the
+    woodshed (a stack in open dirt reads as dumped lumber), and the fence
+    laid end to end at the bay's own width instead of every four tiles,
+    where 42-unit bays with 86-unit holes read as four abandoned fragments
+    rather than a boundary.
 
 - **2026-07 — Plank floors read from E/W; macro shadow tamed.** Boards
   varied only per ROW, so a rotated (E/W) facing showed long uniform
