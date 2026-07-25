@@ -155,6 +155,44 @@ def prism(sides, r, h, z0=0.0, rot=0.0):
     return faces
 
 
+def frustum(sides, r0, r1, h, z0=0.0, rot=0.0):
+    """An n-sided TAPERED prism: `r0` at the bottom, `r1` at the top.
+
+    The shape that keeps coming up and had no primitive, so it kept being
+    built as a straight `prism` and the taper -- which is usually the whole
+    identifying tell -- went missing. A lantern head tapers inward; a peaked
+    cap is this with `r1=0`; a bucket, a chimney pot and a cone are all this.
+    `sides=4` gives a square housing, high `sides` a smooth cone.
+
+    A face's normal has to lean with the slope, or a tapered side lights like
+    a vertical one and the model reads as a straight box after all.
+    """
+    z1 = z0 + h
+    ring0 = [(math.cos(rot + i * math.tau / sides) * r0,
+              math.sin(rot + i * math.tau / sides) * r0, z0)
+             for i in range(sides)]
+    ring1 = [(math.cos(rot + i * math.tau / sides) * r1,
+              math.sin(rot + i * math.tau / sides) * r1, z1)
+             for i in range(sides)]
+    faces = [(list(reversed(ring0)), (0, 0, -1), UNDER)]
+    if r1 > 1e-6:
+        faces.append((ring1, (0, 0, 1), TOP))
+    # how far the wall leans out of vertical: the normal's z component
+    run = r0 - r1
+    for i in range(sides):
+        j = (i + 1) % sides
+        mx = (ring0[i][0] + ring0[j][0]) / 2.0
+        my = (ring0[i][1] + ring0[j][1]) / 2.0
+        nrm = _n(mx * h, my * h, run * math.hypot(mx, my))
+        if r1 <= 1e-6:
+            # a point at the top: the quad collapses to a triangle
+            faces.append(([ring0[i], ring0[j], ring1[j]], nrm, SIDE))
+        else:
+            faces.append(_quad(ring0[i], ring0[j], ring1[j], ring1[i],
+                               nrm, SIDE))
+    return faces
+
+
 def wedge(w, d, h, z0=0.0):
     """A ramp: full height at -x, falling to nothing at +x. Roof pitches,
     spoil slopes, a cellar door."""

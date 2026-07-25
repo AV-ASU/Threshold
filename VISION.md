@@ -55,6 +55,25 @@ turned a mailbox that had gone five revisions as a grey lozenge into one that
 reads at a glance. `check_proportion` then compares the model against that
 ratio in the gate, so a wrong shape fails before it is ever rendered.
 
+**And record how tall it STANDS (`world_h`), not only its shape.**
+`check_proportion` compares a model against itself, so it is blind to a prop
+built perfectly at the wrong SIZE. The same mailbox later shipped 36 units
+tall — a wall is 26, the player is 20 — holding a flawless 2.11 : 1 : 1.22,
+because the legibility exaggeration baked into the model's `k` got applied a
+second time to its post. From three of four facings it read as a bar on a
+stick. `check_stature` now guards that: every reference records how tall the
+thing stands in world units, judged against the player's 20 and the wall's
+26. **A mount height is always in WORLD units, never the model's `k`** —
+anything that says where a prop sits (a post, a sill, a tabletop) is
+measured against the world, not against the prop.
+
+**Judge it in a SCENE before you believe a colour.** The contact sheet's
+neutral card flatters everything. Several materials were set by eye there
+and turned out to be the palest objects in a Darkwood-dark yard — a stoop
+that out-read the building it was attached to. `lift` compounds this: an
+upward-facing face lands near `(1 + lift) x base`, and under a 55-degree
+camera most of a low prop IS its top.
+
 **A repeated shape is many OBJECTS, not one faked volume.** A woodpile is
 logs, a fence is posts, a stack is things stacked. Every attempt to imply
 that from a single mass failed at a different depth (a barrel with dots on
@@ -161,6 +180,26 @@ reveal each wall face, not just dead-on.
   (N `= -pi/2`, E `= 0`, S `= pi/2`, W `= pi`) — and then diff the frames.
 - **Props in isolation** before placing: `tools/preview_props_sheet.py <kind>`
   (never place a kind by its name; render it first, `CLAUDE.md` SCENE-DRESSING).
+- **One corner of a real scene, close up — the MIDDLE altitude:**
+
+  ```bash
+  python tools/inspect_spot.py <scene_key> --at TX,TY [--zoom 4] [--dark] [--ev N]
+  ```
+
+  Four facings centred on a tile you name, zoomed until you can actually see
+  what is there. The dressing process asks for three altitudes and then the
+  dark; the isolated sheet and the whole-scene capture covered the outer two
+  and this middle one had no tool, so it kept being skipped. Both ways that
+  fails are real: a woodpile signed off on a contact sheet at a magnification
+  where proportion cannot be read, and six props called placed from a
+  whole-scene shot too small to show they had rendered as **magenta
+  placeholder squares**. `--dark` keeps the darkness/fog/grade the player
+  actually meets, which is where a too-pale material gives itself away.
+
+  Same trap as the yaw, one field over: `_update_camera` re-asserts
+  `camera.scale = TILT_ZOOM` every call, so assigning `camera.scale` around a
+  capture is silently undone before the draw. The tool moves `TILT_ZOOM` and
+  then asserts the scale actually took.
 - **Cutscenes / tableaux**: step the draw fn over `t` and save frames (as with
   the flashback and the close-up tableau previews).
 

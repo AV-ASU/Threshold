@@ -47,6 +47,7 @@ REFERENCES = {
               "-- on a wooden post, with a small signal flag on one flank.",
         "real": (23.2, 11.0, 13.4),      # No. 2 size, inches
         "part": "box",
+        "world_h": 19.6,   # box floor at chest height on a 20-tall player
         "mount": "box floor 41-45in above the road, so the post is about "
                  "three times the box's own height",
         "tells": ["the arch is the silhouette; a rectangular box reads as a "
@@ -68,6 +69,7 @@ REFERENCES = {
         # 60in is the WIDTH, across (+y); +x is the direction you climb,
         # which is the landing depth plus the run of the steps
         "real": (60.0, 60.0, 21.0),      # 36in landing + 2 runs, 3 risers
+        "world_h": 8.4,   # three risers up to the door sill
         "mount": "the landing's top sits just below the interior threshold, "
                  "so the door can swing clear of it",
         "tells": ["the LANDING is what makes it a stoop; steps alone are a "
@@ -86,17 +88,67 @@ REFERENCES = {
               "The logs lie across the stack, so the stack's long axis is "
               "the wall it runs along and its depth is one log's length.",
         "real": (48.0, 16.0, 30.0),      # 4ft high, 8ft long, 16in logs
+        "world_h": 17.0,   # a stack you could rest a hand on, not a barricade
         "mount": "on the ground, usually against something",
         "tells": ["it is LOGS, not a mass -- the separate pieces and the "
                   "ragged ends are the whole read",
                   "courses offset by half a log as the stack settles"],
         "src": "(shape is self-evident; kept for the proportion)",
     },
+    "lantern": {
+        # WHAT THIS KIND IS was settled by its LIGHT DATA, not by its name.
+        # FIXTURE_POOLS gives it src_z 20, arm 0, a warm flickering colour and
+        # no place in _ELECTRIC_KINDS: a flame, directly over its own base, at
+        # about the eye height of a 20-tall player. That is a garden post
+        # lantern. It was briefly modelled as a hand-carried hurricane lantern
+        # -- right name, wrong object, and a third of the height -- which is
+        # why the reference now opens by naming the mount.
+        "is": "A residential POST LANTERN: a tapered glass head with a peaked "
+              "vented cap and a finial, sitting on top of a slim iron post "
+              "with a flared foot. Burns a flame; there is no wire to it.",
+        # a stock post-lantern head: 17.5in tall, 7.25in across. The head is
+        # what `real` measures -- the post is a mount, and letting its length
+        # into the ratio is the error the mailbox's post made first.
+        "real": (7.25, 7.25, 17.5),
+        "part": "head",
+        "world_h": 26.0,   # wall height, flame at eye level (FIXTURE_POOLS src_z 20)
+        "mount": "on top of a post about 5ft tall, so the flame lands at "
+                 "roughly eye height (world z 20, which is what FIXTURE_POOLS "
+                 "lights)",
+        "tells": ["the head TAPERS inward toward the top -- straight sides "
+                  "read as a tin can or a matchbox on a stick",
+                  "the cap is a PEAK with a finial on it, not a flat lid",
+                  "the head is WIDER than the post it stands on, so the "
+                  "silhouette steps out at the top",
+                  "astragal bars divide the glass into panes, and the lit "
+                  "glass sits BEHIND them"],
+        "src": "https://www.1stoplighting.com/lighting/4-11-11121-0-1276910/"
+               "CWI-Lighting_Granville---1-Light-Outdoor-Post-Lantern-Head-"
+               "17.5-Inches-Tall-and-6.9-Inches-Wide-0412PT7-1-101.htm",
+    },
+    "pickup_truck": {
+        "is": "A 1980s half-ton pickup: a CAB with a roof and glass, a hood "
+              "in front of it, and an open bed behind, on four wheels.",
+        # a 1985 F-150 regular cab: 194 x 79 x 75in
+        # 75in is the WHOLE vehicle's height, roof to road -- not the body
+        # pan's. Naming a `part` here made the check compare the overall
+        # height against one slab of the chassis and fail a correct model.
+        "real": (194.0, 79.0, 75.0),
+        "world_h": 19.7,   # roof just under the player's own height
+        "mount": "on its wheels",
+        "tells": ["the CAB ROOF is the thing -- an open-topped body reads as "
+                  "a jeep or a flatbed, not a pickup",
+                  "the bed sides are lower than the cab roof, so the "
+                  "silhouette steps DOWN from front to back",
+                  "the hood is lower again, so it steps down twice"],
+        "src": "(period half-ton regular cab dimensions)",
+    },
     "yard_fence": {
         "is": "A rural boundary fence: split cedar posts with two or three "
               "sagging wire strands. NOT chain-link, which is the filling "
               "station's and wrong for a 1994 Minnesota yard.",
         "real": (96.0, 4.0, 42.0),       # one bay, post to post
+        "world_h": 15.5,   # waist high: a boundary you step over
         "mount": "posts sunk in the ground, leaning where they are old",
         "tells": ["the wire sags between posts; taut wire reads as new",
                   "posts are round or roughly split, never milled square"],
@@ -122,6 +174,40 @@ def proportion(kind):
     return (l / w, 1.0, h / w)
 
 
+def check_stature(kind, asm, tol=0.16):
+    """Does the prop STAND at the height the world expects?
+
+    `check_proportion` compares a model against itself -- its own L:W:H --
+    and so is completely blind to a prop built correctly at the wrong SIZE.
+    A mailbox shipped 36 units tall (a wall is 26, the player is 20) with a
+    perfect 2.11 : 1 : 1.22, because the exaggeration in the model's `k` got
+    applied a second time to the post. From three of four facings it read as
+    a bar on a stick and nothing said a word.
+
+    So every reference records `world_h`: how tall this thing stands in the
+    world, in world units, decided against the player's 20 and the wall's 26.
+    That number is a design decision -- props here are drawn somewhat larger
+    than life so they read at play zoom -- but it is a RECORDED one, which is
+    what makes drifting off it a failure instead of a surprise.
+    """
+    ref = REFERENCES.get(kind)
+    if not ref:
+        return None
+    want = ref.get("world_h")
+    if want is None:
+        return (f"{kind}: no `world_h` on record. Add how tall it should "
+                "stand in world units (player 20, wall 26) so its SIZE is "
+                "checked and not just its shape.")
+    b = asm.bounds()
+    got = b[5] - b[2]
+    if abs(got - want) / max(want, 0.01) > tol:
+        return (f"{kind}: stands {got:.1f} units tall, expected about "
+                f"{want:.1f} (player 20, wall 26). Either the model is "
+                "sized off the wrong scale -- a mount height must be in "
+                "WORLD units, never the model's `k` -- or `world_h` is what "
+                "needs updating.")
+
+
 def check_proportion(kind, asm, tol=0.22):
     """Compare an assembly's actual L:W:H against the reference's.
 
@@ -135,14 +221,23 @@ def check_proportion(kind, asm, tol=0.22):
     ref = proportion(kind)
     if ref is None:
         return f"{kind}: no reference on record to check against"
+    # `part` may name ONE part or a GROUP of them by prefix ("head" matches
+    # head_glass, head_cap, head_finial ...). What a catalogue measures is
+    # rarely one primitive: a lantern head is its collar, glass, bars, cap
+    # and finial together, and forcing that into a single part would mean
+    # modelling it as a box -- losing the taper the reference exists to hold
+    # us to.
     want_part = REFERENCES[kind].get("part")
-    parts = [p for p in asm.parts if p.name == want_part] if want_part else []
+    parts = ([p for p in asm.parts
+              if p.name == want_part or p.name.startswith(want_part + "_")]
+             if want_part else [])
     if want_part and not parts:
         return (f"{kind}: reference measures part {want_part!r}, which the "
-                "assembly does not have")
+                "assembly does not have (name the part that, or prefix a "
+                f"group of parts {want_part + '_'!r})")
     from rendering import prim
     if parts:
-        fs = [(v, n, r) for v, n, r, _m in parts[0].placed()]
+        fs = [(v, n, r) for p in parts for v, n, r, _m in p.placed()]
         b = prim.bounds(fs)
     else:
         b = asm.bounds()

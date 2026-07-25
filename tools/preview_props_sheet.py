@@ -53,7 +53,7 @@ import pygame
 
 from rendering.camera import Camera
 from rendering.props import draw_prop_solid
-from rendering.assemblies import ASSEMBLIES
+from rendering.assemblies import ASSEMBLIES, base
 from rendering.assembly import validate
 from rendering import references as R
 from entities.decoration import Decoration
@@ -123,14 +123,19 @@ def main():
         # rather than three revisions later.
         small = pygame.font.Font(None, 17)
         lines = R.describe(kind, width=30)
-        asm = ASSEMBLIES.get(kind)
+        asm = base(kind) if kind in ASSEMBLIES else None
         if asm is not None:
             pm = R.check_proportion(kind, asm)
+            sm = R.check_stature(kind, asm)
             vm = validate(asm, kind)
             lines.append("")
             lines.append("PROPORTION: " + ("off -- see below" if pm else "ok"))
             if pm:
                 lines += textwrap.wrap(pm, 30)
+            b_ = asm.bounds()
+            lines.append(f"STANDS {b_[5] - b_[2]:.1f} tall (player 20, wall 26)")
+            if sm:
+                lines += textwrap.wrap(sm, 30)
             for m in vm:
                 lines += textwrap.wrap("! " + m, 30)
         for li, ln in enumerate(lines[:11]):

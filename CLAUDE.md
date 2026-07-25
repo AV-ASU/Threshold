@@ -124,6 +124,11 @@ python tools/capture_facings.py <scene_key> [--bright]
 python tools/preview_props_sheet.py <kind> [...]
 python tools/kind.py <kind> [...]        # also: --stains, --unplaced
 
+# LOOK CLOSE at one corner of a REAL scene -- the middle altitude, between
+# the isolated prop sheet and the whole-map capture. Judging a placed prop
+# from a full-scene shot is how six of them shipped as magenta squares.
+python tools/inspect_spot.py <scene> --at TX,TY [--zoom 4] [--dark] [--ev N]
+
 # THE MAINTAINER MARKED UP A SCREENSHOT -- turn the marks into tile coords.
 # Under the tilt this is NOT eyeballable (yawed, foreshortened, the same
 # screen row covers different world rows by depth); guessing has produced
@@ -355,29 +360,61 @@ it renders the procedural sprites to a labelled PNG strip.
     function. Four files, and the split between them is the point:
     - `prim.py` — parametric solids returning FACES (`verts, normal, role`)
       in local space, drawing nothing: `box` / `plate` / `arch` (a tunnel
-      vault) / `cyl` (z or x axis) / `prism` / `wedge` / `revolve`, plus
-      `bounds`. The library is wide on purpose — props used to be built out
-      of whatever primitive was closest rather than the shape the object IS
-      (a rural mailbox is a tunnel arch and shipped as a rectangular prism).
+      vault) / `cyl` (z or x axis) / `prism` / `frustum` (a TAPERED prism —
+      `sides=4` a lantern housing, `r1=0` a peaked cap, high `sides` a cone)
+      / `wedge` / `revolve`, plus `bounds`. The library is wide on purpose —
+      props used to be built out of whatever primitive was closest rather
+      than the shape the object IS (a rural mailbox is a tunnel arch and
+      shipped as a rectangular prism; a lantern head TAPERS and shipped as a
+      straight prism, which reads as a tin can). When the shape you need has
+      no primitive, **add the primitive** — that is the whole point of the
+      split.
     - `materials.py` — the ONE colour table (`MATERIALS`, `ROLE_SHADE`,
       `shade_for`). Every prop used to inline its own RGB, which is why
       things didn't sit together. Shading takes the face role AND how far up
-      it faces, so a cylinder gets a crown-to-belly gradient for free.
+      it faces, so a cylinder gets a crown-to-belly gradient for free. Judge
+      a new material in a SCENE, in the dark (`tools/inspect_spot.py --dark`):
+      the preview sheet's neutral card flatters everything, and `lift`
+      compounds it (an upward face lands near `(1 + lift) x base`, and under
+      the 55° camera most of a low prop IS its top).
     - `assembly.py` — `Part` (a primitive + local transform + material) and
       `Assembly`, plus `draw()` which culls, depth-sorts and shades ONCE for
       every prop, and `validate()`. Culling/order/shading being central is
       what makes the old failures inexpressible: a box painting its own back
       faces, parts placed off `cam.yaw`, pieces painted in loop order.
+      `Assembly(..., shadow=f)` opts into a contact pool, for a prop held
+      clear of the ground (a truck on its wheels reads as hovering without
+      one); default 0 leaves every existing prop untouched.
     - `assemblies.py` — the declared props themselves, and
       `references.py` — what each one is SUPPOSED to be (real dimensions,
       shape language, tells, source URL). `check_proportion` compares the
       model's L:W:H against the real object's; `real` is in the MODEL's axes
       (+x length, +y across, +z up), not the way a catalogue quotes it.
+      `check_stature` compares how tall it STANDS against the reference's
+      `world_h` — proportion alone is blind to a prop built correctly at the
+      wrong size, which is how a mailbox shipped 36 units tall (a wall is 26,
+      the player 20) with a flawless ratio. **A mount height is in WORLD
+      units, never the model's exaggerated `k`.**
+    An `ASSEMBLIES` value may be a finished `Assembly` OR a **variant
+    factory** — a function whose parameters are read from the decoration's
+    kwargs (`variant()`, built once per combination and cached; `base(kind)`
+    is the default, which is what the reference measures). That is how a
+    scene asks for the loaded mailbox, the woodpile with the axe still in the
+    block, or the fence bay whose wire is down. Before it existed those
+    kwargs were silently dropped while the comment beside them went on
+    describing an axe nobody could see.
     `draw_prop_solid` prefers an assembly and falls back to the hand-written
     function, so kinds convert as they're touched rather than in one sweep.
-    Guarded by `tests/conventions.py` check 8. Preview with
-    `tools/preview_props_sheet.py`, which turntables and prints the reference
-    beside the render.
+    **Converting a kind means DELETING its old `SOLID_PROPS` entry and adding
+    it to `is_solid_prop`** — leave it in `SOLID_PROPS` and you keep a dead
+    draw free to disagree with what ships (`lantern` was converted as a
+    hand-carried hurricane lantern while its unreachable function went on
+    being the iron POST lamp the scenes and light tables had always meant);
+    leave it out of `is_solid_prop` and the scene calls it a flat decal and
+    ships a MAGENTA SQUARE. Both are guarded (`tests/conventions.py` checks 8
+    and 8b). Preview with `tools/preview_props_sheet.py`, which turntables
+    and prints the reference beside the render, then `tools/inspect_spot.py`
+    to see it in the actual scene.
   - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). This is now a
     thin **facade** that re-exports the public surface from themed siblings, so
     `from rendering.sprites import <name>` is unchanged. The siblings:

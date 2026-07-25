@@ -70,9 +70,15 @@ class Part:
 class Assembly:
     """A whole prop. Built once at import; drawn many times."""
 
-    def __init__(self, *parts, scale=1.0):
+    def __init__(self, *parts, scale=1.0, shadow=0.0):
         self.parts = list(parts)
         self.scale = scale
+        # A CONTACT SHADOW, opt-in per prop (0 = none, and every prop that
+        # does not ask for one draws exactly as before). It earns its place on
+        # anything held clear of the ground -- a truck on its wheels reads as
+        # floating without it -- and is wrong on something that sits flush,
+        # where the prop's own dark under-face already does the job.
+        self.shadow = shadow
         self._cache = None
 
     def faces(self):
@@ -103,6 +109,17 @@ def draw(surf, cam, asm, wx, wy, yaw=0.0, scale=1.0, z0=0.0, tint=None):
     cyw, syw = cam._cy, cam._sy
     cp, sp = cam._cp, cam._sp
     ca, sa = math.cos(yaw), math.sin(yaw)
+    if asm.shadow > 0.0:
+        bx0, by0, _z0b, bx1, by1, _z1b = asm.bounds()
+        # the footprint's half-extent, taken as a radius so the pool does not
+        # swing as the prop turns
+        rad = max(bx1 - bx0, by1 - by0) * 0.5 * s * asm.shadow
+        shw = max(3, int(rad * cam.scale))
+        shh = max(2, int(rad * cam.ground_squash() * cam.scale))
+        px, py = cam.project(wx, wy, z0)
+        sh = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 105), (2, 2, shw * 2, shh * 2))
+        surf.blit(sh, (px - shw - 2, py - shh - 2))
     drawn = []
     for verts, nrm, role, mat in asm.faces():
         nx, ny, nz = nrm

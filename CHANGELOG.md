@@ -1182,6 +1182,66 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — The lodge yard dressed, and five props remade doing it.**
+  The first real use of the parts-built prop pipeline on a scene, run as the
+  maintainer asked for it: look, find, change, apply, judge, repeat. What
+  the looking turned up is the entry.
+  - **Six props shipped as MAGENTA SQUARES.** Converting a kind to an
+    assembly correctly removes it from `SOLID_PROPS`, but `is_solid_prop` —
+    the predicate the scene's solid-emit path actually asks — still read
+    only the two old tables. So the scene called them flat decals, they fell
+    through to `Decoration.draw`, found no `_draw_<kind>` method, and drew
+    the unknown-kind placeholder. Conventions check 2 passed throughout: it
+    tests the TABLES, and the tables were right. New check 8b asserts the
+    predicate instead, and fault-injection confirmed it names the exact four.
+  - **`lantern` was the wrong object entirely.** It had been converted as a
+    hand-carried hurricane lantern — right name, wrong thing, a third of the
+    height — while the unreachable `_draw_lantern_solid` beside it went on
+    being the iron POST lamp every scene and both light tables had always
+    meant. Its own light data settled it (`FIXTURE_POOLS` src_z 20, arm 0,
+    warm, flickering, not electric: a flame directly over its own base at
+    eye height). Remodelled as a garden post lantern with a tapered glass
+    head; `prim.frustum` was added because a taper had no primitive and had
+    been faked with a straight prism, which reads as a tin can. Check 8b now
+    also fails a kind left in BOTH tables, since that dead draw is what let
+    the disagreement sit unnoticed.
+  - **`check_stature` (the size check proportion cannot make).**
+    `check_proportion` compares a model against itself, so it is blind to a
+    prop built perfectly at the wrong SIZE. The mailbox stood 36 units tall
+    — a wall is 26, the player 20 — at a flawless 2.11 : 1 : 1.22, because
+    the legibility exaggeration in the model's `k` got applied a second time
+    to its post; from three of four facings it read as a bar on a stick.
+    Every reference now records `world_h`, and the rule is that a mount
+    height is in WORLD units, never the model's `k`. It caught the woodpile
+    (8ft, taller than the player) and the fence (player-height posts on a
+    wire yard fence) in the same pass.
+  - **Variant factories.** `full=`/`axe=`/`gap=` were being passed by the
+    scene and silently dropped, while the comments beside them described an
+    axe and a gap nobody could see. An `ASSEMBLIES` value may now be a
+    factory whose parameters are read from the decoration's kwargs, cached
+    per combination. The mail juts out past the door end, the axe stands in
+    the block, the fence bay's wire is down.
+  - **Palette judged in the scene, not on the card.** `plank`, `concrete`,
+    `paper`, `log_cut` and `tin` were set by eye on the preview sheet's
+    neutral grey and turned out to be the palest objects in a Darkwood-dark
+    yard — the stoop out-read the building it was attached to. Darkened;
+    `wire` added because a bright fence strand drew the eye to the least
+    important thing in the frame.
+  - **`tools/inspect_spot.py`.** The dressing process asks for three
+    altitudes and the isolated sheet and whole-scene capture covered only
+    the outer two, so the middle one kept being skipped — which is how a
+    woodpile got signed off at a magnification where proportion cannot be
+    read, and how six magenta squares got called placed. Four facings on a
+    named tile, zoomed, `--dark` for the light the player actually meets.
+    It has to move `TILT_ZOOM` rather than `camera.scale`, because
+    `_update_camera` re-asserts the scale every call — the same class of
+    trap as the yaw, and it asserts the zoom took.
+  - Placement fixes from the same pass: the woodpile moved against the
+    woodshed (a stack in open dirt reads as dumped lumber), and the fence
+    laid end to end at the bay's own width instead of every four tiles,
+    where 42-unit bays with 86-unit holes read as four abandoned fragments
+    rather than a boundary.
+
 - **2026-07 — Plank floors read from E/W; macro shadow tamed.** Boards
   varied only per ROW, so a rotated (E/W) facing showed long uniform
   stripes ("the floor on the east/west looks like straight lines"); the

@@ -294,11 +294,14 @@ def _exit_chars_walkable():
 # All three were found before anything was rendered.
 @check("every parts-built prop matches its recorded reference")
 def _assemblies():
-    from rendering.assemblies import ASSEMBLIES
+    from rendering.assemblies import ASSEMBLIES, base
     from rendering.assembly import validate
     from rendering import references as R
     rows = []
-    for kind, asm in sorted(ASSEMBLIES.items()):
+    # `base()` because a kind may be declared as a VARIANT FACTORY; the
+    # reference describes the plain object, so that is what gets measured.
+    for kind in sorted(ASSEMBLIES):
+        asm = base(kind)
         for m in validate(asm, kind):
             rows.append("    " + m)
         if kind not in R.REFERENCES:
@@ -306,16 +309,60 @@ def _assemblies():
                         "record -- search for one and add it to "
                         "rendering/references.py")
             continue
-        pm = R.check_proportion(kind, asm)
-        if pm:
-            rows.append("    " + pm)
+        for m in (R.check_proportion(kind, asm), R.check_stature(kind, asm)):
+            if m:
+                rows.append("    " + m)
     if rows:
         return ("  a parts-built prop is checked against the real object's "
-                "proportions.\n"
+                "proportions AND\n"
+                "  against how tall it should stand in the world.\n"
                 "  Fix the model, or correct the reference if the reference "
                 "is what is wrong\n"
                 "  (its `real` is in the MODEL's axes: +x length, +y across, "
                 "+z up).\n"
+                + "\n".join(rows))
+
+
+# ------------------------------------- 8b. volumes answer to is_solid_prop
+# THE RULE: registering a kind in a volume TABLE is not enough. The scene's
+# emit path asks ONE question -- `props.is_solid_prop(kind)` -- and anything
+# that answers False is treated as a flat decal, falls through to
+# Decoration.draw, finds no `_draw_<kind>` method and ships a MAGENTA SQUARE
+# into the world.
+# This is not hypothetical: converting the first six props to assemblies
+# removed them from SOLID_PROPS (correctly) and left `is_solid_prop` reading
+# only the old two tables, so the freshly dressed lodge yard rendered six
+# magenta placeholders. Check 2 passed the whole time -- it tests the tables,
+# and the tables were right. The predicate is the thing that has to agree, so
+# the predicate is what gets asserted here.
+@check("every volume kind answers True to props.is_solid_prop")
+def _solid_predicate():
+    from rendering.props import SOLID_PROPS, _STANDEE_KINDS, is_solid_prop
+    from rendering.assemblies import ASSEMBLIES
+    rows = []
+    for label, table in (("ASSEMBLIES", ASSEMBLIES),
+                         ("SOLID_PROPS", SOLID_PROPS),
+                         ("_STANDEE_KINDS", _STANDEE_KINDS)):
+        for kind in sorted(table):
+            if not is_solid_prop(kind):
+                rows.append(f"    {kind!r} is in {label} but is_solid_prop "
+                            "says no -> renders as a magenta square")
+    # AND NOT IN TWO OF THEM. draw_prop_solid prefers the assembly, so a kind
+    # left behind in SOLID_PROPS keeps a hand-written draw that no longer runs
+    # -- dead code free to disagree with what actually ships. It did: `lantern`
+    # was converted as a hand-carried hurricane lantern while the unreachable
+    # function beside it went on being the iron POST lamp the scenes and the
+    # light tables had always meant. Nothing pointed that out because nothing
+    # was looking.
+    for kind in sorted(set(ASSEMBLIES) & set(SOLID_PROPS)):
+        rows.append(f"    {kind!r} is in BOTH ASSEMBLIES and SOLID_PROPS -- "
+                    "the assembly wins, so\n      delete the hand-written "
+                    "draw rather than leave it to rot")
+    if rows:
+        return ("  a kind the tilt draws as geometry must be recognised by\n"
+                "  rendering/props.py is_solid_prop -- that predicate, not the\n"
+                "  table, is what the scene emit path asks -- and must be\n"
+                "  registered in exactly one place.\n"
                 + "\n".join(rows))
 
 

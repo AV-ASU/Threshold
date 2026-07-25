@@ -17,18 +17,34 @@ woods and metals lit by a weak sky, not saturated colour. Add a material
 here rather than passing a colour into a prop.
 """
 
+# A NOTE ON HOW LIGHT THESE MAY BE. `lift` is added on TOP of the role
+# factor, so an upward face lands at roughly (1 + lift) x base -- and under a
+# 55-degree camera most of what you see of a low prop IS its top. Several
+# materials were first set by eye on the preview sheet's neutral grey card,
+# where a value looks reasonable that turns out to be the palest thing in a
+# Darkwood-dark yard. Judge a new material in a SCENE, in the dark
+# (`tools/inspect_spot.py --dark`), not on the contact sheet.
 #            base RGB            lift  what it is
 MATERIALS = {
     "cedar":      ((86, 68, 46), 0.34),   # weathered post + rail timber
-    "plank":      ((96, 78, 56), 0.30),   # sawn boards, decking, a stoop
+    "plank":      ((80, 66, 48), 0.22),   # sawn boards, decking, a stoop
     "log_bark":   ((78, 60, 40), 0.38),   # split firewood, round side
-    "log_cut":    ((150, 126, 92), 0.16),  # a sawn end, pale against bark
-    "tin":        ((104, 106, 112), 0.30),  # galvanised sheet, a mailbox
+    "log_cut":    ((104, 88, 66), 0.16),  # a sawn end, pale against bark
+    "tin":        ((80, 82, 88), 0.30),   # galvanised sheet, a mailbox
     "steel":      ((96, 98, 106), 0.26),  # poles, masts, hardware
-    "concrete":   ((84, 82, 78), 0.24),   # footings, a poured stoop
+    "concrete":   ((64, 62, 59), 0.22),   # footings, a poured stoop
     "flag_red":   ((150, 62, 48), 0.22),  # the mailbox signal flag
-    "paper":      ((150, 146, 132), 0.14),  # mail, a pinned notice
-    "rust":       ((92, 62, 44), 0.28),   # what the town's metal is now
+    "paper":      ((105, 102, 92), 0.14),  # mail, a pinned notice
+    "rust":       ((78, 54, 40), 0.28),   # what the town's metal is now
+    "iron":       ((54, 54, 62), 0.30),   # black ironwork: a lamp post, a rail
+    "wire":       ((62, 56, 48), 0.18),   # fence strand: weathered, NOT bright
+    "farm_green": ((72, 80, 64), 0.26),   # faded paint on a working truck
+    "glass":      ((46, 58, 60), 0.20),   # unlit panes, a windshield
+    # A LIT pane is not glass with a bright colour, it is a surface that
+    # already carries its own light: `lift` near zero keeps the flame from
+    # shading darker on the faces that turn away, so the head glows evenly
+    # instead of having a dim side.
+    "flame_glass": ((255, 186, 108), 0.02),
     "wood":       ((88, 70, 50), 0.32),   # generic fallback
 }
 

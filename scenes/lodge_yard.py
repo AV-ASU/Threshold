@@ -168,6 +168,52 @@ def build_lodge_yard():
     # light by the porch is genuine cover -- a lit spot never opens.
     sc.set_lost_edge("ns", "lost_forest")
 
+    # ---- THE YARD VOCABULARY (DESIGN.md §14, TODO #26) ----
+    # A yard's job is to tell you about a household without anybody speaking.
+    # Every piece below answers who lives here and what they stopped doing;
+    # nothing is here for texture. All are parts-built props checked against
+    # a real reference (rendering/references.py).
+    #
+    # THE STOOP at the Lodge's back door: the step between the ground and
+    # the threshold, so going in reads as arriving. yaw=-pi/2 climbs north,
+    # into the door.
+    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 20, "stoop",
+                                 yaw=-math.pi / 2))
+    # THE GENSET against the Lodge's east wall, and it is RUNNING: Sable
+    # keeps the desk of an empty hotel lit and ready (NARRATIVE §4). The
+    # grid died with the seal, so a warm work-bulb burning out here is the
+    # tell that somebody is still keeping the place.
+    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "generator"))
+    # THE MAILBOX out at the road, exactly on the seam where the yard meets
+    # the safe path. Deliveries stopped with the fold in January, so it is
+    # still FULL: nobody has emptied it because nothing has come to replace
+    # what is in it.
+    sc.add_decoration(Decoration(12 * TILE + 16, 5 * TILE + 24, "mailbox",
+                                 yaw=math.pi / 2, full=True))
+    # THE INTERRUPTED TASK: firewood half-stacked AGAINST the woodshed's east
+    # wall with the axe still standing in the block. The seal was January and
+    # it is April. It has to touch the shed: a stack standing alone in open
+    # dirt reads as dumped lumber, and firewood is always stacked against
+    # something so it does not fall over (rendering/references.py).
+    sc.add_decoration(Decoration(4 * TILE + 6, 13 * TILE + 16, "woodpile",
+                                 yaw=math.pi / 2, axe=True))
+    # THE BOUNDARY: a wire fence along the yard's south side, where the kept
+    # ground stops and the treeline starts. It reads as an edge you push
+    # through rather than a wall, which is what the mouth needs (DESIGN §13).
+    #
+    # The bays are laid END TO END, at the bay's own width rather than on a
+    # tile multiple. Spaced every four tiles they were 42-unit bays with
+    # 86-unit holes between them, which reads as four abandoned fence
+    # FRAGMENTS instead of one line -- and a boundary that is mostly hole
+    # cannot make a gap mean anything.
+    _BAY = 33.0
+    _x0 = 9 * TILE
+    _n = int((21 * TILE - _x0) / _BAY) + 1
+    for _i in range(_n):
+        sc.add_decoration(Decoration(_x0 + _i * _BAY, 15 * TILE + 20,
+                                     "yard_fence",
+                                     seed=_i, gap=(_i == _n // 2)))
+
     sc.set_spawn("default", 12, 7)
     sc.set_spawn("from_lodge", 5, 6)             # one south of back door
     sc.set_spawn("from_country_lane", 1, 7)      # one east of west passage

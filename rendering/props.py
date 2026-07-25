@@ -13,7 +13,7 @@ import random
 import pygame
 from rendering.solids import (draw_solid, draw_box, draw_billboard,
                               draw_log, _shade)
-from rendering.assemblies import ASSEMBLIES
+from rendering.assemblies import ASSEMBLIES, variant
 from rendering.assembly import draw as _assembly_draw
 
 
@@ -790,66 +790,6 @@ def _draw_car_solid(surf, cam, deco):
     _round_wheel(surf, P, wbx, hW, r)             # near wheels (exposed)
     _round_wheel(surf, P, -wbx, hW, r)
     _lp(surf, P, (-hL + 3, -hW + 2, z1), (hL - 3, -hW + 2, z1), _shade(body["top"], 1.15), 1)
-
-
-def _draw_pickup_truck_solid(surf, cam, deco):
-    """A pickup as a real volume: a cab at the front (glassed), an OPEN bed
-    behind (recessed dark floor, side rails, a tailgate), four round wheels, a
-    grille + bumper + lamps at the nose. Faded farm-green paint."""
-    wx, wy = deco.x, deco.y
-    s = (getattr(deco, "scale", 1.0) or 1.0)
-    yaw = float(deco.kwargs.get("yaw", 0.0))
-    P = _vframe(cam, wx, wy, yaw)
-    L, W = 56 * s, 27 * s
-    hL, hW = L / 2, W / 2
-    z0, z1 = 5 * s, 13 * s
-    cf, cb = hL, 7 * s                             # cab spans nose -> x=7
-    cz1 = z1 + 13 * s
-    cW = W * 0.92
-    chW = cW / 2
-    r, wbx = 7 * s, hL * 0.62
-    body = {"top": (92, 100, 82), "side": (64, 72, 56), "dark": (40, 46, 34)}
-    cab = {"top": (74, 82, 66), "side": (52, 60, 46), "dark": (30, 36, 26)}
-    glass, glass_hi, chrome = (46, 58, 60), (96, 114, 118), (166, 170, 176)
-    _vehicle_shadow(surf, cam, wx, wy, L, W)
-    _round_wheel(surf, P, wbx, -hW, r)
-    _round_wheel(surf, P, -wbx, -hW, r)
-    _vbox(surf, cam, wx, wy, L, W, z0, z1, body, yaw=yaw)
-    ccx = (cf + cb) / 2
-    _vbox(surf, cam, wx + ccx * math.cos(yaw), wy + ccx * math.sin(yaw),
-          cf - cb, cW, z1, cz1, cab, yaw=yaw)
-    # OPEN bed behind the cab: recessed dark floor + side rails + tailgate
-    bf, bb = cb - 1 * s, -hL + 1
-    railz = z1 + 5 * s
-    _qp(surf, P, [(bb, -hW + 1, z1), (bf, -hW + 1, z1),
-                  (bf, hW - 1, z1), (bb, hW - 1, z1)], (28, 30, 24))     # bed floor
-    for ly in (-hW, hW):                                                 # side rails
-        _qp(surf, P, [(bb, ly, z1), (bf, ly, z1), (bf, ly, railz), (bb, ly, railz)],
-            body["side"] if ly > 0 else _shade(body["side"], 0.8))
-    _qp(surf, P, [(bb, -hW, z1), (bb, hW, z1), (bb, hW, railz), (bb, -hW, railz)],
-        body["dark"])                                                    # tailgate
-    _lp(surf, P, (bb, hW + 0.2, railz), (bf, hW + 0.2, railz), _shade(body["top"], 1.1), 1)
-    # cab glass: near side + windshield
-    ny = hW + 0.2
-    _qp(surf, P, [(cb + 2, chW + 0.2, z1 + 2), (cf - 3, chW + 0.2, z1 + 2),
-                  (cf - 3, chW + 0.2, cz1 - 2), (cb + 2, chW + 0.2, cz1 - 2)], glass)
-    _lp(surf, P, (cb + 2, chW + 0.3, cz1 - 2), (cf - 3, chW + 0.3, cz1 - 2), glass_hi, 1)
-    _qp(surf, P, [(cf, -chW, z1 + 2), (cf, chW, z1 + 2),
-                  (cf, chW, cz1 - 2), (cf, -chW, cz1 - 2)], glass)
-    # door seam + trim on the cab near side
-    _lp(surf, P, (cb + 3 * s, ny, z0 + 1), (cb + 3 * s, ny, z1), _shade(cab["dark"], 0.8), 1)
-    _lp(surf, P, (cb + 1, ny, z0 + 4 * s), (hL - 3, ny, z0 + 4 * s), _shade(body["side"], 1.3), 1)
-    # nose: bumper, grille, lamps
-    _qp(surf, P, [(hL, -hW, z0), (hL, hW, z0), (hL, hW, z0 + 4 * s), (hL, -hW, z0 + 4 * s)], chrome)
-    for ey in (-7 * s, -2.5 * s, 2.5 * s, 7 * s):
-        _lp(surf, P, (hL, ey, z0 + 5 * s), (hL, ey, z1 - 1 * s), _shade(body["dark"], 0.7), 1)
-    for ey in (-hW * 0.6, hW * 0.6):
-        hp = P(hL, ey, z1 - 2 * s)
-        pygame.draw.circle(surf, (230, 224, 188), (int(hp[0]), int(hp[1])), max(2, int(2.4 * s)))
-        tp = P(-hL, ey, railz - 2 * s)
-        pygame.draw.circle(surf, (178, 42, 38), (int(tp[0]), int(tp[1])), max(2, int(2 * s)))
-    _round_wheel(surf, P, wbx, hW, r)
-    _round_wheel(surf, P, -wbx, hW, r)
 
 
 # ---- The dead lots: abandoned rusted cars (2026-07) ----------------------
@@ -2196,49 +2136,6 @@ def _draw_kerosene_lamp_solid(surf, cam, deco):
     fw = 1.5 * s * cam.scale
     _flame_tri(surf, cam, wx, wy, cz + 1.0 * s, fh, fw,
                (255, 206, 96), (255, 244, 186))
-
-
-def _draw_lantern_solid(surf, cam, deco):
-    """A 19th-century iron lamppost: a vertical pole on the ground, a
-    cross-arm at the top, a square lantern hung from the arm. The town-square
-    fixture; under dark cult-rooms it's the only legible light."""
-    wx, wy = deco.x, deco.y
-    s = (getattr(deco, "scale", 1.0) or 1.0)
-    iron = (52, 52, 60)
-    iron_hi = (96, 96, 108)
-    # pole
-    pole_h = 30 * s
-    base = cam.project(wx, wy, 0)
-    top = cam.project(wx, wy, pole_h)
-    pygame.draw.line(surf, iron, base, top, max(2, int(2 * s)))
-    # cross-arm: a short horizontal beam to one side of the pole
-    arm_len = 6 * s
-    arm_ax = math.cos(cam.yaw + math.pi / 2)
-    arm_ay = math.sin(cam.yaw + math.pi / 2)
-    arm_end = cam.project(wx + arm_ax * arm_len, wy + arm_ay * arm_len, pole_h)
-    pygame.draw.line(surf, iron, top, arm_end, max(2, int(2 * s)))
-    # lantern body hung from the arm end -- a small box
-    lx = wx + arm_ax * arm_len
-    ly = wy + arm_ay * arm_len
-    box_h = 7 * s
-    box_w = 5 * s
-    lantern_pal = {"top": (60, 56, 50), "side": (38, 36, 40),
-                   "dark": (24, 22, 26)}
-    draw_box(surf, cam, lx, ly, box_w, box_w, box_h, lantern_pal)
-    # chain bit
-    hang_top = cam.project(lx, ly, pole_h)
-    hang_bot = cam.project(lx, ly, pole_h - 1 * s)
-    pygame.draw.line(surf, iron_hi, hang_top, hang_bot, 1)
-    # lit window: a small bright square on the lantern's near face
-    win_z = pole_h - 1.0 * s - box_h * 0.5
-    win = cam.project(lx, ly + box_w * 0.55, win_z)
-    ww = max(2, int(box_w * 0.5 * cam.scale))
-    wh = max(2, int(box_h * 0.55 * cam.scale))
-    pygame.draw.rect(surf, (255, 196, 120),
-                     (int(win[0] - ww / 2), int(win[1] - wh / 2), ww, wh))
-    pygame.draw.rect(surf, (255, 232, 180),
-                     (int(win[0] - ww / 4), int(win[1] - wh / 4),
-                      max(1, ww // 2), max(1, wh // 2)))
 
 
 def _draw_brazier_solid(surf, cam, deco):
@@ -4349,7 +4246,6 @@ SOLID_PROPS = {
     "shoring_frame": _draw_shoring_frame_solid,
     "ore_cart":      _draw_ore_cart_solid,
     "player_car":    _draw_car_solid,
-    "pickup_truck":  _draw_pickup_truck_solid,
     "rust_sedan":    _draw_rust_sedan_solid,
     "rust_wagon":    _draw_rust_wagon_solid,
     "rust_coupe":    _draw_rust_coupe_solid,
@@ -4388,7 +4284,6 @@ SOLID_PROPS = {
     "valve":          _draw_valve_solid,
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,
-    "lantern":       _draw_lantern_solid,
     "yard_light":    _draw_yard_light_solid,
     "street_lamp":   _draw_street_lamp_solid,
     "generator":     _draw_generator_solid,
@@ -4485,9 +4380,16 @@ def draw_standee(surf, cam, deco):
 
 def is_solid_prop(kind):
     """A decoration that, under tilt, draws as world-oriented geometry (a
-    body-of-revolution solid OR a grounded standee) instead of a flat top-down
-    sticker. Both route through draw_prop_solid + the unified depth pass."""
-    return kind in SOLID_PROPS or kind in _STANDEE_KINDS
+    declared ASSEMBLY, a body-of-revolution solid, OR a grounded standee)
+    instead of a flat top-down sticker. All three route through
+    draw_prop_solid + the unified depth pass.
+
+    ASSEMBLIES MUST BE IN HERE. Converting a kind to the assembly pipeline
+    removes it from SOLID_PROPS; if this predicate doesn't know about the new
+    table, the scene's solid-emit test calls the kind a flat decal, it falls
+    through to Decoration.draw, finds no _draw_<kind> method, and ships a
+    MAGENTA SQUARE. That is exactly what the first six converted kinds did."""
+    return kind in ASSEMBLIES or kind in SOLID_PROPS or kind in _STANDEE_KINDS
 
 
 def draw_prop_solid(surf, cam, deco):
@@ -4505,6 +4407,13 @@ def draw_prop_solid(surf, cam, deco):
     if asm is not None:
         kw = getattr(deco, "kwargs", {})
         yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+        # A kind may be declared as a VARIANT FACTORY rather than one fixed
+        # assembly, so a scene can ask for the loaded mailbox or the woodpile
+        # with the axe still in the block. Without this the scene's kwargs
+        # went nowhere: `axe=True` and `full=True` were quietly dropped while
+        # the comment beside them went on describing an axe nobody could see.
+        if callable(asm):
+            asm = variant(deco.kind, asm, kw)
         _assembly_draw(surf, cam, asm, deco.x, deco.y, yaw=yaw,
                        scale=(getattr(deco, "scale", 1.0) or 1.0))
         return True

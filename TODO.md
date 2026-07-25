@@ -501,8 +501,18 @@ talking to anyone.
 **The minimum for any yard**: a boundary, a step, one interrupted task, and
 one occupancy tell. Everything else is per household.
 
+**`lodge_yard` IS THE WORKED EXAMPLE NOW** (the props exist, the yard is
+dressed): the stoop at the back door, the running genset against the Lodge's
+east wall, the still-full mailbox on the road seam, the half-stacked
+firewood with the axe in the block against the woodshed, and a wire fence
+along the south with one bay's wire down where the mouth is. Every piece is
+a parts-built prop with a recorded reference (`rendering/assemblies.py`), so
+the other yards assemble from the same vocabulary rather than being drawn
+again. `pickup_truck` and `lantern` were remade to match. Sizes are pinned
+to the player (20) and the wall (26) by `check_stature`.
+
 **OPEN, in build order:** (1) the **YARDS**, per the spec above: seven of
-them plus three new small houses, generalising what `lodge_yard` does by
+them plus three new small houses, generalising what `lodge_yard` now does by
 hand. Each yard's non-road edges are mouths like a path's flanks; (2) the
 rest of the **dark manipulation layer**: the observer-dependent reshuffle
 landed, but the **asymmetric return** (the way back is not the way you came)
