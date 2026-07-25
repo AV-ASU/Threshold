@@ -224,6 +224,44 @@ def check_ending_cutscenes(g):
     return errors
 
 
+def check_painted_lettering(_g):
+    """Painted world lettering must never come out MIRRORED.
+
+    A surface's local +x runs either way across the screen depending on which
+    of its faces is toward the viewer, so a word laid out in increasing x is
+    a perfect mirror image half the time. The town board shipped exactly that
+    and read "YELMIRB" -- and this is the class of defect the eye is worst at
+    (VISION.md records a mirror-reversed neon sign surviving a four-facing
+    look pass twice).
+
+    `paint_word` corrects it by probing its own projection, so the assertion
+    is simply that a LEFT-HANDED projection produces the same picture as a
+    right-handed one. Verified to fail: remove the probe in
+    rendering/lettering.py and this goes red.
+    """
+    import pygame
+    from rendering import lettering
+    errors = 0
+    W, H = 240, 60
+    a, b = pygame.Surface((W, H)), pygame.Surface((W, H))
+    for surf, flip in ((a, False), (b, True)):
+        surf.fill((0, 0, 0))
+        # The SAME band, addressed left-to-right and right-to-left. The two
+        # projections are exact reflections over the band, so a word that
+        # corrects for handedness lands on identical pixels either way.
+        lettering.paint_word(
+            surf,
+            (lambda lx, lz: (W - lx, H - 10 - lz)) if flip
+            else (lambda lx, lz: (lx, H - 10 - lz)),
+            "BRIMLEY", 0.0, float(W), 0.0, 44.0, (255, 255, 255), weight=0.17)
+    if pygame.image.tostring(a, "RGB") != pygame.image.tostring(b, "RGB"):
+        errors += fail("painted lettering is MIRRORED on a left-handed "
+                       "projection (rendering/lettering.py paint_word)")
+    if not a.get_bounding_rect().width:
+        errors += fail("painted lettering drew nothing at all")
+    return errors
+
+
 def main():
     g = Game()
     g.save.new()
@@ -231,14 +269,16 @@ def main():
     g._start_play()
 
     failures = 0
-    print("[1/4] draw pipeline across scenes ...")
+    print("[1/5] draw pipeline across scenes ...")
     failures += check_draw_pipeline(g)
-    print("[2/4] core vignette overlays paint ...")
+    print("[2/5] core vignette overlays paint ...")
     failures += check_vignette_paints(g)
-    print("[3/4] ending cutscenes draw ...")
+    print("[3/5] ending cutscenes draw ...")
     failures += check_ending_cutscenes(g)
-    print("[4/4] heightfield + see-through door sight-gating ...")
+    print("[4/5] heightfield + see-through door sight-gating ...")
     failures += check_phase6_and_doors(g)
+    print("[5/5] painted world lettering is never mirrored ...")
+    failures += check_painted_lettering(g)
 
     if failures:
         print(f"\n{failures} failure(s).")

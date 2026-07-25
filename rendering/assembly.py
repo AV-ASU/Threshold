@@ -70,9 +70,19 @@ class Part:
 class Assembly:
     """A whole prop. Built once at import; drawn many times."""
 
-    def __init__(self, *parts, scale=1.0, shadow=0.0):
+    def __init__(self, *parts, scale=1.0, shadow=0.0, overlay=None):
         self.parts = list(parts)
         self.scale = scale
+        # MARKINGS ON A FACE, opt-in per prop (None = none, and every prop
+        # that does not ask for one draws exactly as before). Faces carry a
+        # material, which is a colour and nothing else, so anything WRITTEN
+        # or painted on a prop -- lettering, a stencil, a number -- had no
+        # way in and got pasted on in screen space instead, where it slides
+        # off the surface it belongs to as the camera turns. An overlay is
+        # handed the prop's own local->screen projector after the faces are
+        # drawn, so it can put paint in the plane of the thing it is painted
+        # on. See `rendering/lettering.py`.
+        self.overlay = overlay
         # A CONTACT SHADOW, opt-in per prop (0 = none, and every prop that
         # does not ask for one draws exactly as before). It earns its place on
         # anything held clear of the ground -- a truck on its wheels reads as
@@ -120,14 +130,22 @@ def draw(surf, cam, asm, wx, wy, yaw=0.0, scale=1.0, z0=0.0, tint=None):
         sh = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
         pygame.draw.ellipse(sh, (0, 0, 0, 105), (2, 2, shw * 2, shh * 2))
         surf.blit(sh, (px - shw - 2, py - shh - 2))
+    def toward_viewer(nx, ny, nz):
+        """How squarely a local-space normal meets the viewer.
+
+        The object's yaw turns it into world space, then the camera's yaw and
+        pitch into the camera's frame: the horizontal part swung toward the
+        eye, plus the vertical part the tilt lets us see. Positive is facing
+        us. One definition, used for culling AND handed to the overlay, so
+        paint on a face can never disagree with the face about whether it is
+        visible."""
+        wnx, wny = nx * ca - ny * sa, nx * sa + ny * ca
+        return (-wnx * syw + wny * cyw) * cp + nz * sp
+
     drawn = []
     for verts, nrm, role, mat in asm.faces():
         nx, ny, nz = nrm
-        # the normal turned into world space by the object's yaw
-        wnx, wny = nx * ca - ny * sa, nx * sa + ny * ca
-        # ...and into the camera's frame: horizontal part toward the viewer
-        # plus the vertical part the pitch lets us see
-        toward = (-wnx * syw + wny * cyw) * cp + nz * sp
+        toward = toward_viewer(nx, ny, nz)
         if toward <= 0.001:
             continue                        # faces away: never drawn
         pts = []
@@ -146,6 +164,12 @@ def draw(surf, cam, asm, wx, wy, yaw=0.0, scale=1.0, z0=0.0, tint=None):
         col = shade_for(mat, role, nz, toward, tint)
         if len(pts) >= 3:
             pygame.draw.polygon(surf, col, pts)
+    if asm.overlay is not None:
+        def to_screen(x, y, z):
+            """A point in the prop's own local space, on the screen."""
+            rx, ry = x * ca - y * sa, x * sa + y * ca
+            return cam.project(wx + rx * s, wy + ry * s, z0 + z * s)
+        asm.overlay(surf, to_screen, toward_viewer)
 
 
 def validate(asm, name="assembly"):

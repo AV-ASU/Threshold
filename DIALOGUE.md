@@ -1272,6 +1272,24 @@ them, so the contract binds them like any other line.
   (*Carcosa*, *the King in Yellow*, *the Yellow King*) stay off the page as
   ever (NARRATIVE §5, guarded `tests/flow.py` §33).
 
+- **BRIMLEY / NORTHERNMOST CORN / EST. 1894** (`_SIGN_LINES` in
+  `rendering/assemblies.py`; the town's painted welcome board). Three lines on
+  the civic board at the road into town, and the same three on the board the
+  PI drives past in the opening (`ui/cutscenes.py _draw_road_sign`) -- one
+  object, so the two must always agree. Spelled in the procedural PAINTED
+  stroke alphabet (`rendering/lettering.py`), never a font. The boast and the
+  founding year are the town's own mundane pride, corroborated by Old Pell in
+  his own words ("Northernmost corn in the world, grown on this ground since
+  1894") and by NARRATIVE §1's timeline; the corn is never the door's doing.
+  Guarded by `tests/flow.py` §19c. The board's BACK carries no lettering at
+  all, which is the same fact the SPREAD ending states as "the side they
+  never painted".
+
+  The smaller wayfinding boards of the same kind carry a single plain word
+  (**TOWN**, **BRIMLEY**, **LODGE**, **ARCADIA**). Like the safe path's road
+  names, a sign that names a place in ordinary language is a sign telling the
+  truth; nothing in the town's own signage is ever uncanny.
+
 ## The lost spaces carry NO narration (maintainer ruling)
 
 The lost fields (`lost_corn` / `lost_forest` / `lost_road`) ship **no narrator

@@ -363,7 +363,7 @@ it renders the procedural sprites to a labelled PNG strip.
     into the fitting mixin.
 - `rendering/`
   - **THE PROP PIPELINE (2026-07 rework).** A prop is DATA, not a draw
-    function. Four files, and the split between them is the point:
+    function. Five files, and the split between them is the point:
     - `prim.py` — parametric solids returning FACES (`verts, normal, role`)
       in local space, drawing nothing: `box` / `plate` / `arch` (a tunnel
       vault) / `cyl` (z or x axis) / `prism` / `frustum` (a TAPERED prism —
@@ -391,6 +391,25 @@ it renders the procedural sprites to a labelled PNG strip.
       `Assembly(..., shadow=f)` opts into a contact pool, for a prop held
       clear of the ground (a truck on its wheels reads as hovering without
       one); default 0 leaves every existing prop untouched.
+    - `lettering.py` — **the PAINTED alphabet, and how words get onto a
+      prop.** Anything the player READS off an object (a sign, a stencil, a
+      number) is drawn as geometry in that surface's own plane, via
+      `paint_word(surf, proj, ...)` where `proj(lx, lz)` maps the surface's
+      local coordinates to the screen. A prop declares one with
+      `Assembly(..., overlay=fn)`, which hands it the prop's own
+      local→screen projector after the faces are drawn. **Never rasterise a
+      word and blit it**: a font surface can only be placed at a SCREEN
+      position, so it stays screen-horizontal while the surface under it
+      foreshortens and turns (that is error class 7, and it is how the town
+      board's three lines ended up floating off the plank). Lettering also
+      culls with its face, so an unpainted back is geometry rather than
+      something to remember. `paint_word` corrects its own handedness (a
+      surface's local +x runs either way across the screen depending on
+      which face is toward you, which silently mirrors a word); that is
+      asserted by `tests/render_smoke.py` [5/5]. The world's other alphabet
+      is the neon-TUBE set (`_GLYPH` / `_draw_neon_word` in `props.py`).
+      Preview both letterforms and legibility-at-size with
+      `tools/preview_lettering.py`.
     - `assemblies.py` — the declared props themselves, and
       `references.py` — what each one is SUPPOSED to be (real dimensions,
       shape language, tells, source URL). `check_proportion` compares the

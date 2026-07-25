@@ -40,6 +40,13 @@ MATERIALS = {
     "wire":       ((62, 56, 48), 0.18),   # fence strand: weathered, NOT bright
     "farm_green": ((72, 80, 64), 0.26),   # faded paint on a working truck
     "glass":      ((46, 58, 60), 0.20),   # unlit panes, a windshield
+    # PAINTED SIGNAGE. A civic board is a painted field with the lettering
+    # brushed over it, so the two live together here: the pale letters carry
+    # almost no `lift`, because paint on a vertical board does not catch the
+    # sky the way bare timber does, and lifting them turned the board into
+    # the brightest thing in a dark yard.
+    "sign_field": ((46, 56, 44), 0.12),   # municipal green, faded off
+    "sign_paint": ((156, 148, 122), 0.03),  # the brushed lettering, bone
     # A LIT pane is not glass with a bright colour, it is a surface that
     # already carries its own light: `lift` near zero keeps the flame from
     # shading darker on the faces that turn away, so the head glows evenly

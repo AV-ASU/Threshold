@@ -1182,6 +1182,59 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — The town sign remade, and the last font left the world
+  (TODO #27).** The maintainer asked for the BRIMLEY board to be redone. A
+  look pass found it was not only plain but broken in three ways, all of
+  them hidden by the same trick: its three lines were rendered in a SYSTEM
+  FONT and blitted at the board's projected centre. A rasterised word can
+  only be placed at a screen position, so the lettering stayed
+  screen-horizontal while the board foreshortened under the 55 degree
+  camera, and from the east it floated off the plank and hung over the post
+  (error class 7). It also painted its own BACK, so the three lines read
+  perfectly from behind a board the fiction is explicit about never having
+  been painted on that side. And because the big civic layout was inferred
+  from the text reading "BRIMLEY", the three DIRECTIONAL boards pointing
+  travellers toward town each rendered the full welcome board, founding
+  year and all: four welcome signs for one town, three of them nowhere near
+  its edge.
+  - **A painted alphabet** (`rendering/lettering.py`), the brushed cousin of
+    the neon-tube `_GLYPH` set that spells CASSILDA'S. Full A-Z, digits and
+    punctuation as stroke polylines, each thickened into one filled polygon,
+    with proportional advances and a wear pass that flakes the paint.
+  - **Lettering as geometry in the surface's own plane.** Assemblies had no
+    way to put anything ON a face -- a face carries a material, which is a
+    colour and nothing else -- so anything written on a prop had to be
+    pasted on in screen space. `Assembly(..., overlay=fn)` hands a prop its
+    own local-to-screen projector after its faces are drawn. The board's
+    words now skew, foreshorten and go edge-on with the board, and are drawn
+    only when the panel's front normal faces the viewer, so the bare back
+    falls out of the geometry rather than being remembered.
+  - **The board itself**, from a recorded reference: an 8x16ft panel (the
+    maintainer's call, for the room the lettering needed) in a battened
+    frame, on two capped posts inset from the ends, with the painted face
+    and the bare back as separate plates so only one side is green.
+  - **MIRRORING made inexpressible.** A surface's local +x runs either way
+    across the screen depending on which face is toward the viewer, so the
+    first cut came out as a perfect mirror and read "YELMIRB". `paint_word`
+    now probes its own projection and mirrors the word about its band, which
+    fixes letter order and letter shape together for any plane on any prop.
+    Locked by `tests/render_smoke.py` [5/5], verified to fail with the probe
+    removed -- this is the class of defect the eye is worst at, and VISION
+    records a mirror-reversed sign surviving a four-facing look pass twice.
+  - **Sized against the real thing, twice.** The first build was true to a
+    4x8 sheet and the maintainer called it illegible: at play zoom the town's
+    name landed 8px high with one-pixel strokes. The lesson was the tooling's,
+    not the model's -- it had only ever been judged at 4x inspect zoom, which
+    is exactly the flattery VISION warns about. Doubling the real board to
+    8x16 gave the lettering its room while keeping the model honest.
+  - `rendering/props.py` is now at ZERO system fonts and its `FONT_BUDGET`
+    entry is deleted, so the file is locked shut. The intro drive-in board
+    and the SPREAD drive-out's blank back were rebuilt to the same shape in
+    the same pass, so the three renders of one object cannot disagree.
+  - New tool: `tools/preview_lettering.py`, the alphabet flat and large
+    beside the same text at the size it really lands, because "is this a
+    good R" and "can this be read from the road" are different questions.
+
 - **2026-07 — Trees consolidated, un-bound from tiles, and occluding by
   height.** A sprite-by-sprite audit found seven tree sprites and six of them
   failing: the spruce a flat cutout with no light direction, the bare

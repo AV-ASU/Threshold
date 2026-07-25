@@ -837,11 +837,11 @@ def build_brimley():
     # farmstead yard lights are. Their glow is COLD blue-white, the deliberate
     # opposite of the warm fire the banks huddle at (burn barrels, braziers).
     sc.add_decoration(Decoration(56 * TILE + 16, 27 * TILE + 16, "town_sign",
-                                 text="BRIMLEY"))
+                                 text="BRIMLEY", welcome=False))
     sc.add_decoration(Decoration(51 * TILE + 16, 24 * TILE + 20, "town_sign",
-                                 text="TOWN"))
+                                 text="TOWN", welcome=False))
     sc.add_decoration(Decoration(18 * TILE + 16, 26 * TILE + 16, "town_sign",
-                                 text="TOWN"))
+                                 text="TOWN", welcome=False))
     for lx in (8, 20, 40, 52):                  # yard lights on the E-W spine
         sc.add_decoration(Decoration(lx * TILE + 16, 24 * TILE + 16,
                                      "yard_light"))
@@ -927,8 +927,14 @@ def build_brimley():
     # ---- Lived-in town dressing ----
     # The "Welcome to Brimley" sign by the east-edge lodge road, the first
     # lived-in detail the arriving PI sees.
+    # It FACES EAST, at the traffic it greets. The board only had a front
+    # and a back once it stopped being painted on both sides, so which way
+    # it points became a real question: the PI drives in from the lodge
+    # road on the east, and a welcome board a driver reads from behind is
+    # not a welcome board.
     sc.add_decoration(Decoration(55 * TILE + 16, 23 * TILE + 16,
-                                 "town_sign", text="BRIMLEY"))
+                                 "town_sign", text="BRIMLEY",
+                                 yaw=math.pi / 2))
     # Schoolhouse flagpole -- flag at half-mast, faded, frayed (by its
     # south front now).
     sc.add_decoration(Decoration(20 * TILE + 16, 23 * TILE + 16, "flagpole"))

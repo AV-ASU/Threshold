@@ -118,22 +118,6 @@ Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
   interior cover as styles land; extend `tests/stealth.py` §16; VISION
   toward the Darkwood organic read.
 
-### 27. **[Opus]** Remake the town sign (maintainer: "I want the town sign remade")
-
-The old-timey painted BRIMLEY board (WELCOME TO / NORTHERNMOST CORN / EST.
-1894) needs a redesign. It is also the game's **last font-rendered world
-lettering** (`rendering/props.py`, 3 of the 3 uses in `FONT_BUDGET`), so the
-remake is the chance to retire that: spell it in the procedural neon-tube
-alphabet's cousin, a **painted**-letter stroke set (`_GLYPH` +
-`_draw_neon_word` in `rendering/props.py` are the worked reference; a painted
-board wants flat opaque strokes with wear, not tube glow). Drop the file's
-`FONT_BUDGET` entry to 0 when it lands and the guard locks it shut.
-Verify with `tools/capture_facings.py` (a roadside board is read from the
-approach, so check the angles a driver/walker actually gets, not just N).
-**Reconcile:** the SPREAD ending's drive-out sign (`rendering/spread_drive.py
-_sign_back`) shares the board's shape and is already flagged under Optional
-polish; do both in one pass so they cannot disagree.
-
 ### 28. **[Opus + Fable]** Cut the calendars (maintainer: "I hate it")
 
 **Maintainer ruling: remove the calendars from the game**, including the beat
@@ -703,13 +687,6 @@ compression pass (#4b).
 
 ## Optional polish (no canon/lore change; do as time allows)
 
-- **[Opus]** **SPREAD ending sign sync** — the intro drive-in sign and the
-  in-game welcome sign render the old-timey BRIMLEY board (WELCOME TO /
-  NORTHERNMOST CORN / EST. 1894). The SPREAD ending's drive-out still shows
-  the old blank-back sign shape (`rendering/spread_drive.py _sign_back`).
-  Update its proportions/posts to match the new board (the back stays
-  blank/unpainted by design; only the shape needs to agree). Verify with a
-  headless capture of the SPREAD drive-out.
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** — the
   discovery location + staging landed (`CHANGELOG.md`). Still open: (1)
   **bespoke sprite** — the current corpse is a placeholder medieval knight

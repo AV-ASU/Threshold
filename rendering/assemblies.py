@@ -14,8 +14,9 @@ the split that kept going wrong when both were eyeballed together.
 import inspect
 import math
 
-from rendering import prim
+from rendering import lettering, prim
 from rendering.assembly import Assembly, Part
+from rendering.materials import shade_for
 
 
 def _k(real, target_len):
@@ -375,6 +376,141 @@ def _pickup_truck():
     )
 
 
+# ------------------------------------------------------------- town sign
+# Reference: a 4x8ft painted panel in a battened frame, on two squared posts,
+# panel bottom about 3 1/2ft up. The version this replaces was a flat tan
+# rectangle on two sticks with its three lines rendered in a SYSTEM FONT and
+# blitted at the board's projected centre -- so the words stayed
+# screen-horizontal while the board foreshortened, and from the east they
+# floated off the plank and hung over the post. It also painted its own BACK:
+# the same three lines read perfectly from behind a board the fiction says
+# nobody ever painted (the SPREAD ending's drive-out shows "the side they
+# never painted"). Both faults are structural here rather than fixed: the
+# lettering is an OVERLAY in the panel's own plane, and it is drawn only when
+# the panel's front normal faces the viewer.
+_SIGN_LINES = ("BRIMLEY", "NORTHERNMOST CORN", "EST. 1894")
+
+
+def _sign_paint(lines, x0, x1, plane_y):
+    """The board's lettering, painted in the panel's plane.
+
+    `lines` is (text, z bottom, z top, brush weight). The paint SHADES with
+    the face it sits on -- same material table, same `toward` the renderer
+    culled by -- so the letters dim as the board turns away instead of
+    staying flat and giving the surface away as a sticker.
+    """
+    def paint(surf, to_screen, toward_viewer):
+        toward = toward_viewer(0.0, -1.0, 0.0)
+        if toward <= 0.001:
+            return                       # the back of the board is bare
+        col = shade_for("sign_paint", "side", 0.0, toward)
+        chip = shade_for("sign_field", "side", 0.0, toward)
+
+        def proj(lx, lz):
+            return to_screen(lx, plane_y, lz)
+
+        for text, zb, zt, weight in lines:
+            lettering.paint_word(surf, proj, text, x0, x1, zb, zt, col,
+                                 wear=chip, weight=weight,
+                                 seed=sum(ord(c) for c in text))
+    return paint
+
+
+def _town_sign(text="BRIMLEY", welcome=True):
+    """A painted board on two posts.
+
+    `welcome` is the town's civic board at the road in: the full 4x8 panel
+    carrying all three lines. Without it you get the compact single-word
+    wayfinding board, which is what five of this kind's six placements
+    actually are. That USED to be inferred from the text reading "BRIMLEY",
+    which meant the three directional boards pointing travellers toward town
+    each rendered the whole civic welcome board, founding year and all --
+    four welcome signs for one town, three of them nowhere near its edge.
+    """
+    # An 8 x 16ft board: DOUBLE the 4x8 sheet a small sign is cut from, and
+    # the size the town's own board actually wants to be. Three lines on a
+    # 4x8 left the name 8px high at play zoom with one-pixel strokes, which
+    # is a smudge -- a sign nobody can read is not a sign. Doubling the real
+    # object rather than inflating a small one keeps the model honest: a
+    # 16ft board genuinely stands about twice a wall, so the world size below
+    # is close to true scale instead of an exaggeration to be apologised for.
+    # The panel holds the same 2:1 either way.
+    real = (192.0, 2.0, 96.0)
+    if welcome:
+        pw = 72.0                            # panel width, world units
+        base_z = 10.0                        # bottom edge, about 3 1/2ft up
+        post_t, rail_h, stile_w, cap_h = 3.4, 2.8, 2.4, 1.3
+        post_in, post_rise = 5.0, 1.0
+    else:
+        pw = 34.0
+        base_z = 12.0
+        post_t, rail_h, stile_w, cap_h = 1.9, 1.5, 1.3, 0.75
+        post_in, post_rise = 2.2, 0.5
+    k = _k(real, pw)
+    ph = (real[2] * k) if welcome else 10.0  # a wayfinding board is squatter
+    pt = max(0.8, real[1] * k)               # panel thickness
+    top_z = base_z + ph
+    # THE POSTS ARE MEASURED IN WORLD UNITS, not scaled off `k`: how far a
+    # board stands off the ground is a fact about the world, not about the
+    # exaggeration baked into the model (the mailbox lesson).
+    post_h = top_z + post_rise
+    post_x = pw / 2 - post_in                     # inset from the panel ends
+    post_y = pt / 2 + post_t / 2                  # the board hangs on the FRONT
+    rail_w = pw + rail_h * 0.8
+    # the frame stands PROUD of the panel toward the reader; that shadow line
+    # is what makes it a board rather than a painted plank
+    fy = -(pt / 2) - 0.45
+    parts = [
+        # TWO plates, not one box, because only ONE side of a board ever gets
+        # painted. A single `sign_field` box carries the municipal green on
+        # all six faces, so from behind you get a smart green panel instead
+        # of the bare weathered plank the fiction is explicit about (the
+        # SPREAD ending's drive-out: "the side they never painted").
+        Part(prim.box(pw, pt * 0.5, ph), at=(0, -pt * 0.25, base_z),
+             mat="sign_field", name="panel_face"),
+        Part(prim.box(pw, pt * 0.5, ph), at=(0, pt * 0.25, base_z),
+             mat="plank", name="panel_back"),
+        Part(prim.box(rail_w, rail_h * 0.8, rail_h), at=(0, fy, top_z - rail_h),
+             mat="plank", name="rail_top"),
+        Part(prim.box(rail_w, rail_h * 0.7, rail_h * 0.8),
+             at=(0, fy, base_z - rail_h * 0.2),
+             mat="plank", name="rail_bottom"),
+        *[Part(prim.box(stile_w, rail_h * 0.55, ph - rail_h * 2.0),
+               at=(sx * (pw / 2 - stile_w / 2 + 0.8), fy + 0.1,
+                   base_z + rail_h),
+               mat="plank", name=f"stile{sx}")
+          for sx in (1, -1)],
+        *[Part(prim.box(post_t, post_t, post_h), at=(sx * post_x, post_y, 0),
+               mat="cedar", name=f"post{sx}")
+          for sx in (1, -1)],
+        # a shallow pyramid cap so the post end grain is not left open to the
+        # weather, which is both what a builder does and what gives the
+        # silhouette its two small peaks
+        *[Part(prim.frustum(4, post_t * 0.76, 0.2, cap_h, rot=math.pi / 4),
+               at=(sx * post_x, post_y, post_h), mat="cedar", name=f"cap{sx}")
+          for sx in (1, -1)],
+    ]
+    inner = pw / 2 - stile_w - 0.6           # the lettering field, inside the frame
+    fz0, fz1 = base_z + rail_h * 0.7, top_z - rail_h * 1.1
+    if welcome:
+        # Three lines, and the town name is the one you read from a moving
+        # car, so it takes half the field. The other two are the town's own
+        # boast and its founding year (NARRATIVE §1: est. 1894, the world's
+        # northernmost corn town) and sit small under it.
+        h = fz1 - fz0
+        # The NAME takes half the field. It is the only line anybody reads
+        # at speed or at distance; the boast and the year are what you find
+        # when you stop, and at play zoom they are honest texture.
+        lines = [(_SIGN_LINES[0], fz0 + h * 0.46, fz0 + h * 0.95, 0.17),
+                 (_SIGN_LINES[1], fz0 + h * 0.25, fz0 + h * 0.40, 0.24),
+                 (_SIGN_LINES[2], fz0 + h * 0.04, fz0 + h * 0.19, 0.24)]
+    else:
+        lines = [(text, fz0 + (fz1 - fz0) * 0.16,
+                  fz0 + (fz1 - fz0) * 0.84, 0.18)]
+    return Assembly(*parts, overlay=_sign_paint(lines, -inner, inner,
+                                                -(pt / 2) - 0.01))
+
+
 # A VALUE here is a finished assembly; a FUNCTION is a variant factory that
 # the draw path calls with whichever of the decoration's kwargs it declares
 # (`variant()` below). Both are equally declarative -- the factory just lets a
@@ -386,6 +522,7 @@ ASSEMBLIES = {
     "yard_fence": _yard_fence,
     "lantern": _lantern(),
     "pickup_truck": _pickup_truck(),
+    "town_sign": _town_sign,
 }
 
 # Built variants, keyed by (kind, the kwargs that mattered). An assembly is

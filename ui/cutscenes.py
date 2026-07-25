@@ -15,6 +15,7 @@ import random
 import pygame
 
 from constants import SCREEN_W, SCREEN_H, TILE
+from rendering import lettering
 from rendering.sprites import draw_carcosa, draw_mask_yank, draw_seal_tableau
 from rendering.spread_drive import draw_spread_drive
 
@@ -532,29 +533,40 @@ class CutsceneMixin:
 
 
     def _draw_road_sign(self, s, x, y, light):
-        """The BRIMLEY welcome board as it passes in the headlights. Renders
-        the SAME content + palette as the in-game welcome sign
-        (rendering/props.py _draw_town_sign_solid, the BRIMLEY variant): the
-        name, the corn boast, the founding year, on a weathered two-post
-        wooden board. The corn pride is a mundane human feat, never the
-        door's doing (TODO #11 guardrail)."""
+        """The BRIMLEY welcome board as it passes in the headlights.
+
+        THE SAME OBJECT as the one standing in the world
+        (`rendering/assemblies.py` `_town_sign`): a green painted panel in a
+        battened frame on two capped posts, lettered with the painted stroke
+        alphabet rather than a font, so the board the PI drives past at the
+        start and the board he walks up to later cannot disagree about what
+        the town's sign looks like. This is a flat cutscene, so the letters
+        are laid on a do-nothing projection instead of a face's plane, which
+        is what `paint_word` takes anyway.
+
+        The corn pride is a mundane human feat, never the door's doing.
+        """
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
-        bw, bh = 112, 48
+        bw, bh = 112, 52
         bx, by = x - bw // 2, y - bh
-        # Two posts + a board nailed across (the in-game signpost's shape).
-        for px in (x - 24, x + 24):
-            pygame.draw.rect(s, L((62, 44, 28)), (px - 2, by + 8, 4, 46))
-        pygame.draw.rect(s, L((96, 70, 44)), (bx, by, bw, bh))
-        pygame.draw.rect(s, L((60, 42, 22)), (bx, by, bw, bh), 1)
-        pygame.draw.line(s, L((124, 92, 58)), (bx + 1, by + 1),
-                         (bx + bw - 1, by + 1), 1)
-        nm = self.fonts["sm"].render("BRIMLEY", True, L((30, 20, 8)))
-        s.blit(nm, (x - nm.get_width() // 2, by + 5))
-        b1 = self.fonts["tiny"].render("NORTHERNMOST CORN", True, L((44, 32, 16)))
-        s.blit(b1, (x - b1.get_width() // 2, by + 23))
-        est = self.fonts["tiny"].render("EST. 1894", True, L((44, 32, 16)))
-        s.blit(est, (x - est.get_width() // 2, by + 34))
+        # the posts run WELL below the panel, or the board reads as
+        # hanging in the air rather than standing on two legs
+        for px in (x - 30, x + 30):                    # inset from the ends
+            pygame.draw.rect(s, L((62, 44, 28)), (px - 3, by + 6, 6, 70))
+            pygame.draw.rect(s, L((78, 58, 38)), (px - 4, by + 2, 8, 5))
+        pygame.draw.rect(s, L((46, 56, 44)), (bx, by, bw, bh))
+        for r in ((bx - 3, by - 3, bw + 6, 7), (bx - 3, by + bh - 4, bw + 6, 6),
+                  (bx - 3, by, 5, bh), (bx + bw - 2, by, 5, bh)):
+            pygame.draw.rect(s, L((80, 66, 48)), r)   # the frame, proud
+        col, chip = L((156, 148, 122)), L((46, 56, 44))
+        for text, z0, z1, wt in (("BRIMLEY", 0.50, 0.94, 0.17),
+                                 ("NORTHERNMOST CORN", 0.28, 0.45, 0.22),
+                                 ("EST. 1894", 0.05, 0.21, 0.22)):
+            lettering.paint_word(
+                s, lambda lx, lz: (bx + lx, by + bh - lz), text,
+                bw * 0.07, bw * 0.93, bh * z0, bh * z1, col,
+                wear=chip, weight=wt, seed=sum(ord(c) for c in text))
 
 
     def _draw_lodge_sign(self, s, x, ground_y, f):

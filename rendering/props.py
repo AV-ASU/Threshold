@@ -142,101 +142,6 @@ def _draw_well_solid(surf, cam, deco):
     pygame.draw.line(surf, rope, bh_a, bh_b, max(1, int(1.5 * s)))
 
 
-def _draw_town_sign_solid(surf, cam, deco):
-    """A wooden roadside signpost as real volume: two thin upright posts +
-    a thicker board nailed across them, the town name burnt into the front
-    face. The board catches the camera tilt as a flat plane instead of
-    pointing at you forever."""
-    wx, wy = deco.x, deco.y
-    s = (getattr(deco, "scale", 1.0) or 1.0)
-    text = deco.kwargs.get("text", "BRIMLEY") if hasattr(deco, "kwargs") else "BRIMLEY"
-    post_col = (62, 44, 28)
-    post_lit = (88, 64, 40)
-    board_col = (96, 70, 44)
-    board_lit = (124, 92, 58)
-    board_dk = (60, 42, 22)
-    POST_H = 26 * s
-    POST_T = 1.6 * s
-    POST_DX = 9 * s
-    # Two upright posts (thin box-extrude). Board is mounted to the FRONT
-    # (south-facing) face so it reads facing the road.
-    for ox in (-POST_DX, POST_DX):
-        b = (cam.project(wx + ox - POST_T / 2, wy - POST_T / 2, 0),
-             cam.project(wx + ox + POST_T / 2, wy - POST_T / 2, 0),
-             cam.project(wx + ox + POST_T / 2, wy + POST_T / 2, 0),
-             cam.project(wx + ox - POST_T / 2, wy + POST_T / 2, 0))
-        t = (cam.project(wx + ox - POST_T / 2, wy - POST_T / 2, POST_H),
-             cam.project(wx + ox + POST_T / 2, wy - POST_T / 2, POST_H),
-             cam.project(wx + ox + POST_T / 2, wy + POST_T / 2, POST_H),
-             cam.project(wx + ox - POST_T / 2, wy + POST_T / 2, POST_H))
-        pygame.draw.polygon(surf, post_col, [b[3], b[2], t[2], t[3]])
-        pygame.draw.polygon(surf, _shade(post_col, 0.7),
-                            [b[1], b[2], t[2], t[1]])
-        pygame.draw.polygon(surf, post_lit, [t[0], t[1], t[2], t[3]])
-    # Board: a thin plank box. The BRIMLEY welcome board is bigger and
-    # carries the town's civic boast; directional signs stay compact.
-    welcome = (text == "BRIMLEY")
-    BOARD_Z0 = POST_H * (0.38 if welcome else 0.55)
-    BOARD_Z1 = POST_H * (1.00 if welcome else 0.95)
-    BOARD_W = (22 if welcome else 14) * s
-    BOARD_DEPTH = 1.0 * s
-    by = wy - POST_T / 2 - BOARD_DEPTH * 0.6     # nailed to the FRONT of posts
-    bb = (cam.project(wx - BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z0),
-          cam.project(wx + BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z0),
-          cam.project(wx + BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z0),
-          cam.project(wx - BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z0))
-    bt = (cam.project(wx - BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z1),
-          cam.project(wx + BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z1),
-          cam.project(wx + BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z1),
-          cam.project(wx - BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z1))
-    # FRONT face (this is what reads the text)
-    front = [bb[0], bb[1], bt[1], bt[0]]
-    pygame.draw.polygon(surf, board_col, front)
-    pygame.draw.polygon(surf, board_dk, front, 1)
-    # bottom edge highlight
-    pygame.draw.line(surf, board_lit,
-                     (int(bb[0][0]), int(bb[0][1])),
-                     (int(bb[1][0]), int(bb[1][1])), 1)
-    # top edge cap
-    pygame.draw.polygon(surf, _shade(board_col, 1.18),
-                        [bt[0], bt[1], bt[2], bt[3]])
-    # right face (east end of board)
-    pygame.draw.polygon(surf, _shade(board_col, 0.7),
-                        [bb[1], bb[2], bt[2], bt[1]])
-    # Render the text onto the FRONT face. We render at native pixel size
-    # then warp via a polygon-bounded blit -- simpler approach: render onto
-    # a small surface and blit centered on the projected board front centre
-    # (the board is mostly facing the camera under pitch 55, so this reads).
-    try:
-        tcx = int((bb[0][0] + bb[1][0]) / 2)
-        top_y = (bt[0][1] + bt[1][1]) / 2
-        bot_y = (bb[0][1] + bb[1][1]) / 2
-        span = max(1.0, bot_y - top_y)
-        if welcome:
-            # Three stacked lines: the name, the corn boast, the founding
-            # year -- an old-timey painted welcome board (TODO #11; the
-            # corn pride is a mundane human feat, never the door's doing).
-            big = pygame.font.SysFont(None, max(9, int(9 * s * cam.scale)),
-                                      bold=True)
-            sm = pygame.font.SysFont(None, max(6, int(6 * s * cam.scale)),
-                                     bold=True)
-            for img, fr in ((big.render("BRIMLEY", True, (30, 20, 8)), 0.24),
-                            (sm.render("NORTHERNMOST CORN", True,
-                                       (44, 32, 16)), 0.55),
-                            (sm.render("EST. 1894", True, (44, 32, 16)), 0.80)):
-                yy = int(top_y + span * fr)
-                surf.blit(img, (tcx - img.get_width() // 2,
-                                yy - img.get_height() // 2))
-        else:
-            font = pygame.font.SysFont(None, max(7, int(7 * s * cam.scale)),
-                                       bold=True)
-            txt = font.render(text, True, (28, 18, 8))
-            surf.blit(txt, (tcx - txt.get_width() // 2,
-                            int((top_y + bot_y) / 2) - txt.get_height() // 2))
-    except Exception:
-        pass
-
-
 def _draw_flagpole_solid(surf, cam, deco):
     """A weathered metal flagpole. Tall cylinder body of revolution + a
     rounded knob cap. The flag is a small drooping cloth quad that sways
@@ -4265,7 +4170,6 @@ SOLID_PROPS = {
     "hill_cap":      _draw_hill_cap_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
-    "town_sign":     _draw_town_sign_solid,
     "flagpole":      _draw_flagpole_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,

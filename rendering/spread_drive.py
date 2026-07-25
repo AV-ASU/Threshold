@@ -238,22 +238,30 @@ def _car_topdown_south(s, cx, cy, light, t, running, dome=0.0):
 
 
 def _sign_back(s, x, y, light, fonts_none=None):
-    """The back of the BRIMLEY sign as it passes -- grey board, two posts.
-    Leaving, you only ever see the side they never painted."""
-    pygame.draw.rect(s, (int(50 * light), int(44 * light), int(36 * light)),
-                     (x - 26, y, 4, 44))
-    pygame.draw.rect(s, (int(50 * light), int(44 * light), int(36 * light)),
-                     (x + 22, y, 4, 44))
-    bw, bh = 86, 38
-    bd = (int(58 * light), int(54 * light), int(48 * light))
-    pygame.draw.rect(s, bd, (x - bw // 2, y - bh, bw, bh), border_radius=3)
-    pygame.draw.rect(s, (int(34 * light), int(31 * light), int(27 * light)),
-                     (x - bw // 2, y - bh, bw, bh), 2, border_radius=3)
-    # Weathering streaks down the bare plywood.
-    for i in range(4):
-        sx = x - bw // 2 + 12 + i * 18
-        pygame.draw.line(s, (int(44 * light), int(40 * light), int(34 * light)),
-                         (sx, y - bh + 4), (sx + 2, y - 4), 1)
+    """The back of the BRIMLEY sign as it passes. Leaving, you only ever see
+    the side they never painted.
+
+    Its SHAPE has to agree with the board's front (`rendering/assemblies.py`
+    `_town_sign`, and the drive-IN board in `ui/cutscenes.py`): same width,
+    same two capped posts inset from the panel's ends. It is the same object
+    seen from behind at the other end of the run, and it used to be a
+    narrower rounded-corner board that matched neither. The back stays bare by
+    design -- no frame, because the frame is on the front, and no lettering,
+    because nobody ever painted this side.
+    """
+    def L(v):
+        return (int(v[0] * light), int(v[1] * light), int(v[2] * light))
+    bw, bh = 112, 52
+    bx, by = x - bw // 2, y - bh
+    for px in (x - 30, x + 30):
+        pygame.draw.rect(s, L((50, 44, 36)), (px - 3, by + 6, 6, 70))
+        pygame.draw.rect(s, L((62, 54, 44)), (px - 4, by + 2, 8, 5))
+    pygame.draw.rect(s, L((72, 62, 48)), (bx, by, bw, bh))
+    pygame.draw.rect(s, L((34, 31, 27)), (bx, by, bw, bh), 2)
+    # Weathering streaks down the bare board.
+    for i in range(5):
+        sx = bx + 12 + i * 22
+        pygame.draw.line(s, L((58, 50, 40)), (sx, by + 4), (sx + 2, by + bh - 5), 1)
 
 
 def _exterior_road(s, t):

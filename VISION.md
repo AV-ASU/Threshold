@@ -200,6 +200,18 @@ reveal each wall face, not just dead-on.
   `camera.scale = TILT_ZOOM` every call, so assigning `camera.scale` around a
   capture is silently undone before the draw. The tool moves `TILT_ZOOM` and
   then asserts the scale actually took.
+
+  **Zooming in is how you judge CRAFT; it is not how you judge whether the
+  thing WORKS.** The magnification that lets you see a prop properly is
+  flattery, and some questions only exist at the size the player actually
+  gets: whether a detail survives, whether a shape still reads, whether
+  lettering can be READ. The town board was signed off from four-facing
+  shots at `--zoom 4`, where it looked finished, and the maintainer's first
+  words on it in play were "that sign is illegible" -- at 1x its name was
+  eight pixels high. So when a prop's whole job is to be read or recognised,
+  finish the pass with a plain `capture_facings.py` at play zoom and ask the
+  blunt question there. If it fails at 1x it has failed, however good the
+  close-up was.
 - **The GROUND and its plants, in isolation:**
 
   ```bash

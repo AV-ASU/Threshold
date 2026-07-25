@@ -157,7 +157,7 @@ def build_lodge_yard():
     # A BRIMLEY board on the road's north shoulder by the WEST mouth
     # (2026-07 playtest fix): leaving the Lodge yard, town is that way.
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 24,
-                                 "town_sign", text="BRIMLEY"))
+                                 "town_sign", text="BRIMLEY", welcome=False))
 
     # THE MOUTH (TODO #26). North and south of the yard is the forest band,
     # and past it the map bound -- an invisible wall in daylight. Once the
@@ -269,7 +269,7 @@ def build_lodge_yard():
                                  rise=26, depth_bias=140))
     # A hanging ARCADIA board by the porch -- the hotel's name.
     sc.add_decoration(Decoration(9 * TILE + 20, 6 * TILE + 8,
-                                 "town_sign", text="ARCADIA"))
+                                 "town_sign", text="ARCADIA", welcome=False))
     # Atmosphere -- chimney smoke from the house, a couple of crows,
     # scattered grass. No patrol NPC. No enemy spawn. The smoke sits over
     # the roof's baked chimney at the BACK-EAST corner of the ridge
@@ -499,7 +499,7 @@ def build_arrival_road():
     for bx, btxt in ((ROAD_C - CORR - 1, "BRIMLEY"),
                      (ROAD_C + CORR + 1, "LODGE")):
         b = Decoration(bx * TILE + 16, (PMID - 2) * TILE + 24,
-                       "town_sign", text=btxt)
+                       "town_sign", text=btxt, welcome=False)
         b._no_wrap = True
         sc.add_decoration(b)
     # The dead car a few tiles north of the sign -- seen from BEHIND (it died

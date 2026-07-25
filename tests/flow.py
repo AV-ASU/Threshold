@@ -2369,10 +2369,15 @@ def main():
     _lodge_src = _srclow("scenes", "lodge.py")
     check("found religion" not in _cuts and "found religion" not in _lodge_src,
           "intro: no 'found religion' in the drive cards or bedroom notebook")
-    _props = _srclow("rendering", "props.py")
+    # The board's three lines moved with the board itself when it was remade
+    # as a parts-built prop: they live in `rendering/assemblies.py` now
+    # (_SIGN_LINES), not in the hand-written draw that used to render them in
+    # a font. The CANON is unchanged -- the boast and the founding year are
+    # still on the board -- so the guard follows them to their new home.
+    _asm = _srclow("rendering", "assemblies.py")
     check("northernmost corn" in _cuts and "1894" in _cuts,
           "intro sign: the drive-in welcome board carries the corn boast + EST. 1894")
-    check("northernmost corn" in _props and "1894" in _props,
+    check("northernmost corn" in _asm and "1894" in _asm,
           "welcome sign: the in-game board carries the corn boast + EST. 1894")
 
     # --- 20. Cultists use dynamic AI, not preset coordinates (DESIGN.md §4) -

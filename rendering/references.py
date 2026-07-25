@@ -154,6 +154,40 @@ REFERENCES = {
                   "posts are round or roughly split, never milled square"],
         "src": "(provenance rule, CLAUDE.md scene-dressing #1)",
     },
+    "town_sign": {
+        "is": "A town's painted welcome board: an 8x16ft panel in a battened "
+              "frame, bolted across TWO squared timber posts, with a shallow "
+              "cap over the top to shed rain. A civic object somebody in the "
+              "town lettered by hand, not a highway sign.",
+        # 192 x 96in panel (two 4x8 sheets each way), nominal 2in with its
+        # frame. +x is the board's WIDTH (the way you read it), +y its
+        # thickness, +z its height -- the model's axes, which is not how a
+        # sign shop quotes a sheet.
+        "real": (192.0, 2.0, 96.0),
+        "part": "panel",   # the face + back plates together
+        # A 16ft board on posts stands about twice an 8ft wall, so this is
+        # close to true scale rather than an exaggeration. The board was
+        # doubled to 8x16 precisely so the lettering could have the room to
+        # READ at play zoom without the model having to lie about its size.
+        "world_h": 47.0,   # about 1.8x a wall, and it reads from the road
+        "mount": "the panel's bottom edge about 3 1/2ft up, so the board "
+                 "clears the verge growth and reads from a car. The posts "
+                 "are inset from the panel's ends, never flush with them, "
+                 "and a board this size wants 8x8 stock rather than 6x6.",
+        "tells": ["the LETTERING is the object -- a blank board of these "
+                  "proportions is a billboard back or a hoarding",
+                  "the frame stands proud of the panel, and that shadow line "
+                  "is what reads as a board rather than a painted plank",
+                  "two posts, not one: a single post reads as a mailbox or a "
+                  "yard sign at this size",
+                  "the back is never painted, so from behind it is bare "
+                  "weathered board and the posts' full length"],
+        # 4x8 panel + wood post stock; 5ft is the MUTCD rural minimum to the
+        # bottom of a regulatory sign, which a decorative community board
+        # sits below -- it is not a traffic control device.
+        "src": "https://en.wikipedia.org/wiki/Welcome_sign + "
+               "https://mutcd.info/mutcd-sign-mounting-heights-lateral-offset/",
+    },
 }
 
 
