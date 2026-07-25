@@ -27,11 +27,11 @@ from .villager_houses import (build_church, build_sheriff_office,
 from .brimley import build_brimley
 from .hidden_folds import build_effigy_grove
 from .safe_path import (build_country_lane, build_river_road,
-                        build_river_bend)
+                        build_river_bend,
+                        build_gravel_road_north)
 from .lost_space import (build_lost_space, build_lost_corn,
                          build_lost_forest, build_lost_road)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
-                                build_gravel_road_north,
                                 build_backwoods_cabin,
                                 build_backwoods_cabin_interior,
                                 build_bell_tower,

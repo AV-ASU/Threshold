@@ -444,77 +444,8 @@ def build_graveyard():
     return sc
 
 
-def build_gravel_road_north():
-    """Long thin gravel road running north out of town. South exit
-    `a` returns to village; north exit `e` reaches backwoods_cabin.
-    Tall scene (14 wide x 22 tall) so the walk feels like distance.
-    Cornstalks + dead crows on either side; no NPC by default. The
-    Choir and Hound patrols both spawn here as part of their route
-    (wired via `_sheriff_scenes` in systems/game.py)."""
-    W, H = 14, 22
-    floor_rows = []
-    for y in range(H):
-        row = []
-        for x in range(W):
-            if 6 <= x <= 8:
-                row.append("d")            # gravel road through middle
-            else:
-                row.append("g")
-        floor_rows.append("".join(row))
-    objects_l = []
-    for y in range(H):
-        if y < 1 or y >= H - 1:
-            row = ["T"] * W
-        else:
-            row = ["."] * W
-            row[0] = "T"
-            row[W - 1] = "T"
-        objects_l.append(row)
-    # North exit (e) -> backwoods_cabin. South exit (a) -> village.
-    objects_l[0][7] = "e"
-    objects_l[H - 1][7] = "a"
-    # WEST SPUR -> the river bend (the safe-path loop, DESIGN.md §14). A short
-    # gravel turnout joins the bend road, so the network east and north of town
-    # closes rather than dead-ending. This road itself is still the old thin
-    # kind and is queued for the path treatment (`TODO.md` #26).
-    floor_ll = [list(r) for r in floor_rows]
-    for sy in (9, 10, 11):
-        for sx in range(0, 7):
-            floor_ll[sy][sx] = "d"
-            objects_l[sy][sx] = "."
-        objects_l[sy][0] = "^"
-    floor_rows = ["".join(r) for r in floor_ll]
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("gravel_road_north", floor_rows, objects, music="outside")
-    sc.add_exit("e", "backwoods_cabin", "from_road")
-    sc.add_exit("a", "brimley", "from_gravel_road")
-    sc.add_exit("^", "river_bend", "from_gravel_road_north")
-    sc.set_spawn("default", 7, H - 2)
-    sc.set_spawn("from_brimley", 7, H - 2)
-    sc.set_spawn("from_backwoods_cabin", 7, 1)
-    sc.set_spawn("from_river_bend", 1, 10)
-
-    rng = random.Random(2031)
-    for _ in range(50):
-        gx = rng.randint(1, W - 2) * TILE + rng.randint(0, 30)
-        gy = rng.randint(1, H - 2) * TILE + rng.randint(0, 30)
-        tx_ = gx // TILE
-        if 6 <= tx_ <= 8:
-            continue
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 14 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 11 * TILE + 16, "dead_crow"))
-    sc.add_decoration(Decoration(3 * TILE + 8, 1 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(10 * TILE + 8, 19 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16,
-                                 "phantom_mark"))
-    # Boarded-over panel of nailed planks set into the east tree line at
-    # midway -- a chop-target that opens onto an empty, long-looted alcove.
-    sc.objects[10][13] = "q"
-
-    sc.hide_spots = []
-    return sc
+# build_gravel_road_north moved to scenes/safe_path.py in 2026-07: the last
+# of the thin dirt roads became a T SAFE PATH (DESIGN.md §14).
 
 
 def build_backwoods_cabin():

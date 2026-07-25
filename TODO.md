@@ -427,11 +427,13 @@ is still here to be judged by FEEL: one mouth on one scene is a vertical
 slice, not the restructure.
 
 **The SAFE PATH layer landed** (`DESIGN.md` §14, `scenes/safe_path.py`): the
-I / L / T shape vocabulary, a five-lane road in a nine-tile corridor, lamps
-that keep the whole carriageway lit (which is what makes it safe, since the
-mouth only opens on dark ground), and the river both seen and crossed.
-Shipping network: `country_lane` (T) / `river_road` (I) / `river_bend` (L).
-So two of the three layers exist. The missing one is the YARD.
+I / L / T shape vocabulary, a five-lane road in a nine-tile corridor, the
+maintainer's own lamp pattern, and the river both seen and crossed. **Every
+road in the game is now on it** -- `country_lane` (T), `river_road` (I),
+`river_bend` (L) and `gravel_road_north` (T) are path scenes, and
+`arrival_road` keeps its treadmill/render-band machinery but took the same
+cross-section and lamps. So two of the three layers exist. The missing one is
+the YARD.
 
 **THE YARDS (maintainer: "I want each house to have its own yard").** Brimley
 has **seven enterable buildings**, so **seven yards**, one each, plus the
@@ -509,10 +511,7 @@ not; (3) **per-chunk** landmark/exit generation + a silent **re-origin** for
 a truly endless walk (today: a large finite bound + spawn-at-centre); (4) the
 **ev-warp** variants (the field swaps for a longer / warped / more-hostile
 version with evidence) + richer linear field features (fences, ruined
-buildings you can't enter); (5) the two remaining OLD thin roads --
-`gravel_road_north` (which now carries a west turnout onto the bend) and
-`arrival_road` -- rebuilt as safe paths, so the layer is consistent rather
-than patchy; (6) IF the maintainer commits: the full Brimley **re-home** (the
+buildings you can't enter); (5) IF the maintainer commits: the full Brimley **re-home** (the
 fences: the car, the well, the refuges, the descent chain) + the canon
 rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- the
 mouth is opt-in per scene precisely so judging the feel costs no canon.

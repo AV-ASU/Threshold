@@ -617,3 +617,49 @@ def build_country_lane():
         sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16, "leaves"))
     sc.hide_spots = []
     return sc
+
+
+def build_gravel_road_north():
+    """The **T** north of town: Brimley south, the backwoods north, the river
+    bend west.
+
+    The last of the old three-tile dirt roads to get the path treatment. It
+    keeps its gravel identity -- the shoulders read wider and looser here than
+    on the lane, and the pines come right down to them -- but it is the same
+    corridor and the same lamp pattern as the rest of the network, because a
+    road that is safe in one scene and a footpath in the next teaches nothing.
+
+    Carried over from the thin version: the boarded panel set into the east
+    treeline (a chop-target onto a long-looted alcove), the two pines, the
+    crows, and the phantom mark on the road.
+    """
+    W, H = 32, 36
+    sc = build_path(
+        "gravel_road_north", "nsw", W, H,
+        verge_char=("T", "p"),
+        exits=(("s", "a", "brimley", "from_gravel_road"),
+               ("n", "e", "backwoods_cabin", "from_road"),
+               ("w", "^", "river_bend", "from_gravel_road_north")),
+        spawns=(("from_brimley", "s"), ("from_backwoods_cabin", "n"),
+                ("from_river_bend", "w")),
+        seed=2031)
+    cx, cy = sc.junction
+    # THE BOARDED PANEL, still in the east treeline: nailed planks over a
+    # long-looted alcove, chopped through with the axe (`q`, Game._chop_at).
+    objs = [list(r) for r in sc.objects]
+    objs[cy - 6][cx + LAMP_OFF + 3] = "q"
+    sc.objects = objs
+    sc.add_decoration(Decoration((cx - LAMP_OFF - 3) * TILE + 16,
+                                 (cy - 9) * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration((cx + LAMP_OFF + 4) * TILE + 16,
+                                 (cy + 7) * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(cx * TILE + 16, (cy - 7) * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration((cx - 3) * TILE + 16, (cy + 4) * TILE + 20,
+                                 "dead_crow"))
+    sc.add_decoration(Decoration((cx - LAMP_OFF - 2) * TILE + 8,
+                                 (cy - 14) * TILE + 22, "crow"))
+    sc.add_decoration(Decoration((cx + LAMP_OFF + 2) * TILE + 8,
+                                 (cy + 12) * TILE + 22, "crow"))
+    sc.hide_spots = []
+    return sc

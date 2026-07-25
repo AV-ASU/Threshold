@@ -735,8 +735,13 @@ def main():
     _bt, _bb = _road._render_band
     _north_ok = all(_bt <= _road.render_row(_ty) < _bb
                     for _ty in range(-60, _bt))
-    _band_clean = all("d" not in "".join(_road.floor[_r])
-                      and "X" not in "".join(_road.objects[_r])
+    # A band row must carry no LANDMARK: not the E-W dirt crossing (which is a
+    # FULL-WIDTH dirt row) and not the dead car's footprint. Checked as those
+    # two things rather than "contains no 'd'" -- since the road took the safe
+    # path's cross-section its shoulders are dirt on every row, so the old
+    # proxy failed on a scene that was still correct.
+    _band_clean = all(set("".join(_road.floor[_r])) != {"d"}
+                      and not (set("xX") & set("".join(_road.objects[_r])))
                       for _r in range(_bt, _bb))
     check(_north_ok and _band_clean,
           "geo: the northern view only ever shows the landmark-free band "
@@ -3684,7 +3689,8 @@ def main():
             continue
         if getattr(_s, "lost_edges", None):
             _opted.append(_k)
-    check(_opted == ["country_lane", "lodge_yard", "river_bend", "river_road"],
+    check(_opted == ["country_lane", "gravel_road_north", "lodge_yard",
+                     "river_bend", "river_road"],
           "mouth: only the yard and the safe paths open (" + ", ".join(_opted) + ")")
 
     # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
@@ -3701,11 +3707,12 @@ def main():
             continue
         if isinstance(_s, SafePath):
             paths[_k] = _s
-    check(sorted(paths) == ["country_lane", "river_bend", "river_road"],
+    check(sorted(paths) == ["country_lane", "gravel_road_north", "river_bend",
+                            "river_road"],
           "path: the network is " + ", ".join(sorted(paths)))
-    # The shape VOCABULARY is actually used -- one of each, not three straights.
+    # The shape VOCABULARY is actually used -- not four straights.
     shapes = sorted(shape_of(p.arms) for p in paths.values())
-    check(shapes == ["I", "L", "T"],
+    check(set(shapes) == {"I", "L", "T"},
           f"path: the network ships an I, an L and a T (got {shapes})")
 
     # NOT TOO THIN (maintainer). A carriageway plus both shoulders.

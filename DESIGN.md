@@ -2018,7 +2018,15 @@ the two roads that were already there:
 | `country_lane` | **T** | W / E / N | the junction east of town: Brimley west, the arrival road east, the river run north. Dead corn to the shoulder on its one flank. |
 | `river_road` | **I** | S / N | a straight run north with the water off the east shoulder the whole way. Pine going black to the west. |
 | `river_bend` | **L** | S / E | the road turns east and crosses the river on the planks. |
+| `gravel_road_north` | **T** | S / N / W | Brimley south, the backwoods north, the bend west. Gravel-shouldered, pines to the kerb; keeps its boarded chop-target alcove. |
 
-`gravel_road_north` gained a west turnout onto the bend so the loop closes;
-it is itself still an old thin road and is queued for the same treatment
-(`TODO.md` #26).
+`arrival_road` is the one road that is NOT a `SafePath`, and deliberately so:
+its endless-north illusion is built from a `_render_band` + a `_treadmill` +
+a silent same-scene south loop, none of which a generic path builder models.
+It took the cross-section and the lamp pattern instead, widened from 15 to 23
+tiles so a nine-tile corridor fits, with every column derived from `ROAD_C`
+and the shared constants rather than written as a literal. Its car, sign and
+boards moved out onto the verge. (One flow guard had to change with it: the
+band-is-landmark-free check tested for "no `d` in the row", which was a valid
+proxy only while dirt appeared solely on the E-W crossing; it now tests the
+two real landmarks, a full-width dirt row and the car footprint.)

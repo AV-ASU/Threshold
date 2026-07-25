@@ -139,6 +139,28 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The last two thin roads joined the safe path.**
+  `gravel_road_north` was rebuilt outright as a T (14x22 -> 32x36), keeping
+  its boarded chop-target alcove, its pines and its crows. `arrival_road` was
+  NOT rebuilt: its endless-north illusion is a `_render_band` plus a
+  `_treadmill` plus a silent same-scene south loop, none of which a generic
+  path builder models, so it kept its machinery and took the cross-section and
+  lamp pattern instead -- widened 15 -> 23 tiles so a nine-tile corridor fits,
+  with every column derived from `ROAD_C` and the shared constants rather than
+  the literals that made it un-widenable before. Its car, sign and directional
+  boards moved out onto the verge.
+  Two guards fired on the change and only one was a real defect. The crow
+  noise-trap's literal column landed inside the widened east tree wall (real,
+  fixed). The band-is-landmark-free check tested "no `d` anywhere in the row",
+  which was a valid proxy only while dirt appeared solely on the E-W crossing
+  -- with dirt shoulders on every row it failed a scene that was still
+  correct, so it now tests the two actual landmarks (a full-width dirt row and
+  the car footprint) instead of a stand-in for them.
+  Verified by walking all 90 lanes of all four path scenes at ev3 in the dark
+  (zero falls, zero masts in a road) and by driving `arrival_road`'s own
+  machinery: the treadmill still wraps, the south loop still fires, the car
+  still answers, and both mouths still lead where they say.
+
 - **2026-07 -- The marked lamp pattern generalised to the whole network.**
   The eight X's on the country lane were decomposed rather than copied, and
   they turned out to encode a consistent rule: a junction is lit at the
