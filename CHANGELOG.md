@@ -139,6 +139,34 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- `draw_box` could not stack (maintainer: "can't you see that the
+  log pile looks wrong?").** It is the primitive every flat-sided prop is
+  built from, and it always drew from z=0 to z=h -- there was no way to sit a
+  box on top of another one. The woodpile's courses were therefore all
+  sitting on the ground in a single layer while their drawn log-ends were
+  placed at the heights the courses should have been at, so the ends floated
+  above the mass like sparks. The stoop had the same disease from the same
+  cause: each "step" was a box from the ground to its own height, making a
+  set of nested slabs rather than a flight. `draw_box` gained a `z0` base
+  height (defaulting to 0.0, so every existing caller is unchanged) and both
+  props now stack.
+  Getting there took three wrong turns on the woodpile, all worth recording
+  because they are the same mistake at different depths. It was first a
+  `draw_solid` body of revolution (a barrel with dots on it), then a
+  `draw_box` crate with the ends decorating one face (a table with coins
+  spilled beside it), then a stack of real logs whose ends were still
+  screen-space `pygame.draw.circle` at a fixed pixel radius -- so they neither
+  scaled with the prop nor tilted with the face, and at any size but the one
+  they were eyeballed at they were twice the width of the end and hung off
+  both sides. The ends are now rings of points built in the END FACE'S OWN
+  PLANE and projected one by one, so they foreshorten and skew with it, and
+  the row/column count is derived from the stack's dimensions and the log
+  diameter rather than chosen.
+  The other lesson: it was being judged at 5x magnification, where the flaws
+  were obvious but the proportions were not. `--scale` on the preview is how
+  to check a prop at the size it actually ships at, which is where silhouette
+  is the only thing that survives.
+
 - **2026-07 -- The prop preview was rendering everything flat, and VISION's
   all-directions rule now covers props (maintainer: "it needs to default to
   3D... the vision all directions rule need to be applied for prop

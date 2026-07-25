@@ -135,9 +135,14 @@ def draw_solid(surf, cam, wx, wy, sections, palette, t=0.0, yaw=0.0,
         pygame.draw.lines(surf, rim, False, edge, 1)
 
 
-def draw_box(surf, cam, wx, wy, w, d, h, palette, yaw=0.0):
-    """Axis-aligned box: footprint w x d on the ground, height h. Draws the
-    visible vertical faces then the top, pitch-aware."""
+def draw_box(surf, cam, wx, wy, w, d, h, palette, yaw=0.0, z0=0.0):
+    """Axis-aligned box: footprint w x d, rising from `z0` to `z0 + h`. Draws
+    the visible vertical faces then the top, pitch-aware.
+
+    `z0` is what lets a box be STACKED. Without it every box sat on the
+    ground, which is how the woodpile's courses all ended up in one layer
+    while their drawn log-ends floated at the heights they should have been
+    at."""
     top, side, dark = palette["top"], palette["side"], palette["dark"]
     hw, hd = w / 2.0, d / 2.0
     # eight corners in world space
@@ -146,10 +151,10 @@ def draw_box(surf, cam, wx, wy, w, d, h, palette, yaw=0.0):
         rx = sx * math.cos(yaw) - sy * math.sin(yaw)
         ry = sx * math.sin(yaw) + sy * math.cos(yaw)
         return cam.project(wx + rx, wy + ry, sz)
-    ftl, ftr = P(-hw, -hd, 0), P(hw, -hd, 0)
-    fbr, fbl = P(hw, hd, 0), P(-hw, hd, 0)
-    ttl, ttr = P(-hw, -hd, h), P(hw, -hd, h)
-    tbr, tbl = P(hw, hd, h), P(-hw, hd, h)
+    ftl, ftr = P(-hw, -hd, z0), P(hw, -hd, z0)
+    fbr, fbl = P(hw, hd, z0), P(-hw, hd, z0)
+    ttl, ttr = P(-hw, -hd, z0 + h), P(hw, -hd, z0 + h)
+    tbr, tbl = P(hw, hd, z0 + h), P(-hw, hd, z0 + h)
     # front (near, larger world-y) and the two visible sides
     pygame.draw.polygon(surf, dark, [fbl, fbr, tbr, tbl])   # near face
     pygame.draw.polygon(surf, side, [ftl, fbl, tbl, ttl])   # left
