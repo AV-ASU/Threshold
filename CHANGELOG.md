@@ -139,6 +139,33 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The prop preview was rendering everything flat, and VISION's
+  all-directions rule now covers props (maintainer: "it needs to default to
+  3D... the vision all directions rule need to be applied for prop
+  creation").** `tools/preview_props_sheet.py` built its camera with
+  `pitch=55` and never assigned `yaw`, so every prop was drawn dead-on at yaw
+  0: one face, no corner, no top. Under that view a real volume and a flat
+  card are indistinguishable, which is exactly backwards for the tool whose
+  job is telling them apart -- the same defect `capture_facings.py` was
+  written for, in a second place. It now TURNTABLES by default, a row of four
+  yaws per kind.
+  Turning it on immediately failed three of the four brand-new yard props,
+  all of which had read fine dead-on: the mailbox's flag, the woodpile's cut
+  ends and the stoop's treads were all placed off `cam.yaw` rather than the
+  deco's own yaw, so they swung around their objects as the view turned and
+  disappeared from half the headings. All three now place in WORLD space,
+  and the woodpile's ends are face-culled so you never see them through the
+  stack. Two of them were also `draw_solid` bodies of revolution and read as
+  a drum apiece (a stoop like a butter-churn lid, a woodpile like a
+  perforated barrel); both are `draw_box` now.
+  An automatic camera-facing DETECTOR was written and then removed rather
+  than shipped: byte-identity across yaws fails because many prop draws use
+  unseeded `random` for speckle, and silhouette comparison fails because the
+  pitch flatten means even a deliberately camera-locked box changes outline
+  as the view turns. It could not be made to fail on a real standee, and a
+  check that cannot fail is not a check. The turntable is read by eye, with
+  the two failure signatures written down in `VISION.md` next to the rule.
+
 - **2026-07 -- The last two thin roads joined the safe path.**
   `gravel_road_north` was rebuilt outright as a T (14x22 -> 32x36), keeping
   its boarded chop-target alcove, its pines and its crows. `arrival_road` was

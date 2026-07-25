@@ -2770,6 +2770,185 @@ def _draw_neon_pylon_solid(surf, cam, deco):
            (150, 212, 255), (28, 58, 110), (242, 250, 255))
 
 
+def _draw_mailbox_solid(surf, cam, deco):
+    """A rural roadside mailbox: a cedar post, a tin box, and the signal flag
+    on its flank. `yaw` points the box along the road it serves.
+
+    The single most legible piece of the fiction in a yard, and it sits
+    exactly on the layer seam where the yard meets the road (DESIGN.md §14).
+    Deliveries stopped with the fold, so `full=True` leaves a wedge of
+    January's last mail jammed in the mouth and `open=True` drops the door so
+    it hangs empty.
+
+    Everything is placed in WORLD space off the deco's own `yaw`. The first
+    cut derived the flag and the mouth from `cam.yaw`, which meant they swung
+    around the box as the camera turned and vanished entirely from two of the
+    four headings -- the flag IS the thing that says mailbox, so that made it
+    a grey lozenge on a stick (VISION: the four-facing rule applies to props,
+    not only to scenes)."""
+    wx, wy = deco.x, deco.y
+    s_ = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+    post = (86, 68, 46)
+    post_h = 24 * s_
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, post_h)
+    pygame.draw.line(surf, post, base, top, max(2, int(3.0 * s_)))
+    pygame.draw.line(surf, _shade(post, 1.35), base, top, 1)
+    # the box: a real tin volume, long along its own yaw
+    draw_box(surf, cam, wx, wy, 15.0 * s_, 8.5 * s_, 9.0 * s_,
+             {"top": (128, 130, 138), "side": (104, 106, 112),
+              "dark": (60, 62, 68)}, yaw=yaw)
+    # world axes of the box: `ax` runs along it, `bx` out of its flank
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    bxn, byn = -sa, ca
+    # THE FLAG, standing off the flank that faces the camera
+    side = 1.0 if _face_vis(cam, bxn, byn) else -1.0
+    fx = wx + bxn * side * 4.6 * s_
+    fy = wy + byn * side * 4.6 * s_
+    fa = cam.project(fx, fy, post_h + 1.0 * s_)
+    fb = cam.project(fx, fy, post_h + 13.0 * s_)
+    pygame.draw.line(surf, (150, 62, 48), fa, fb, max(2, int(2 * s_)))
+    pygame.draw.polygon(surf, (178, 80, 60), [
+        fb, (fb[0] + 6 * s_, fb[1] + 2 * s_), (fb[0], fb[1] + 5 * s_)])
+    # THE MOUTH at the box's road end, with its door down or its last delivery
+    mx, my = wx + ca * 7.4 * s_, wy + sa * 7.4 * s_
+    if kw.get("open"):
+        da = cam.project(mx, my, post_h + 1.0 * s_)
+        db = cam.project(mx + ca * 3.0 * s_, my + sa * 3.0 * s_,
+                         post_h - 5.0 * s_)
+        pygame.draw.line(surf, (60, 62, 68), da, db, max(2, int(3 * s_)))
+    elif kw.get("full"):
+        m = cam.project(mx, my, post_h + 4.5 * s_)
+        pygame.draw.polygon(surf, (150, 146, 132), [
+            (m[0] - 3 * s_, m[1] - 3 * s_), (m[0] + 4 * s_, m[1] - 4 * s_),
+            (m[0] + 4 * s_, m[1] + 2 * s_), (m[0] - 3 * s_, m[1] + 2 * s_)])
+
+
+def _draw_yard_fence_solid(surf, cam, deco):
+    """A rural boundary fence: split cedar posts with two or three sagging
+    wire strands. The line where somebody's ground stops.
+
+    NOT `chain_fence` -- that is the filling station's chain-link, and nobody
+    in 1994 rural Minnesota fenced a yard with it (SCENE-DRESSING #1: every
+    detail answers who made it and why). `run='h'|'v'` + `len`; posts lean by
+    a seeded jitter because nothing here has been straightened since the
+    winter, and a `gap` kwarg drops the wire so a stretch reads as down."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    run = kw.get("run", "h")
+    ln = kw.get("len", 32) * s
+    gap = kw.get("gap", False)
+    seed = int(abs(wx) * 11 + abs(wy) * 7)
+    ph = 20 * s
+    dx, dy = (ln, 0) if run == "h" else (0, ln)
+    x0, y0 = wx - dx / 2, wy - dy / 2
+    x1, y1 = wx + dx / 2, wy + dy / 2
+    cedar = (92, 76, 54)
+    for i in range(3):
+        f = i / 2.0
+        px = x0 + (x1 - x0) * f
+        py = y0 + (y1 - y0) * f
+        lean = ((seed + i * 29) % 7 - 3) * 0.5 * s
+        a = cam.project(px, py, 0)
+        b = cam.project(px + lean, py, ph)
+        pygame.draw.line(surf, cedar, a, b, max(2, int(2.2 * s)))
+        pygame.draw.line(surf, _shade(cedar, 1.35), a, b, 1)
+    if gap:
+        return
+    for wz, sag in ((ph * 0.92, 1.6), (ph * 0.58, 2.4), (ph * 0.28, 3.0)):
+        a = cam.project(x0, y0, wz)
+        m = cam.project((x0 + x1) / 2, (y0 + y1) / 2, wz - sag * s)
+        b = cam.project(x1, y1, wz)
+        pygame.draw.lines(surf, (118, 112, 100), False, [a, m, b], 1)
+
+
+def _draw_stoop_solid(surf, cam, deco):
+    """Plank steps up to a door: the thing between the ground and the
+    threshold, so going in reads as arriving rather than clipping through a
+    wall. `steps` (default 2), `w` (tiles wide), and `yaw` = the direction
+    you climb, which is the door's outward normal.
+
+    The treads step back along the deco's OWN yaw. Deriving that from
+    `cam.yaw` (as the first cut did) made the flight swing around as the
+    camera turned, so from two headings it collapsed into a single tall
+    slab."""
+    wx, wy = deco.x, deco.y
+    s_ = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    n = int(kw.get("steps", 2))
+    yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+    half_w = kw.get("w", 1.6) * 9 * s_
+    pal = {"top": (122, 102, 74), "side": (88, 72, 52), "dark": (54, 44, 32)}
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    depth = 7.0 * s_
+    for i in range(n):
+        # the lowest tread is furthest OUT from the door; each one above it
+        # steps back toward the threshold
+        back = ((n - 1) / 2.0 - i) * depth
+        draw_box(surf, cam, wx + ca * back, wy + sa * back,
+                 half_w * 2, depth, 5.0 * s_ * (i + 1), pal, yaw=yaw)
+
+
+def _draw_woodpile_solid(surf, cam, deco):
+    """A stack of split firewood, ends toward the road, with the chopping
+    block and the axe still standing in it (`axe=True`).
+
+    The canonical INTERRUPTED TASK for a yard (DESIGN.md §14): the seal was
+    January and it is April, so a household's last unfinished job has been
+    sitting out three months. The round ends are what identify it, so they
+    face the camera; a smooth pile would read as a spoil heap."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    kw = getattr(deco, "kwargs", {})
+    seed = int(abs(wx) * 13 + abs(wy) * 17)
+    bark = (74, 58, 40)
+    cut = (146, 122, 88)
+    rows = int(kw.get("rows", 3))
+    # A flat-sided STACK, not a drum. draw_solid's equal radii turned the
+    # first cut into a barrel with dots painted on it; the pale cut ends are
+    # the whole identity of a woodpile, so the body is a box and the ends are
+    # laid on its road-facing FACE (SCENE-DRESSING #3 + #4).
+    yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    draw_box(surf, cam, wx, wy, 26.0 * s, 12.0 * s, rows * 6.0 * s,
+             {"top": (86, 68, 47), "side": bark, "dark": (40, 31, 21)},
+             yaw=yaw)
+    # The pale CUT ENDS sit on the stack's two ends in WORLD space, and each
+    # end is drawn only while it faces the camera. Pasting them screen-side
+    # (the first cut) drew the ends through the stack from behind, so the
+    # pile read as a grid of dots that followed you around.
+    for endn in (1.0, -1.0):
+        nx, ny = ca * endn, sa * endn
+        if not _face_vis(cam, nx, ny):
+            continue
+        for r in range(rows):
+            for i in range(4):
+                off = (i - 1.5) * 5.6 * s
+                e = cam.project(wx + nx * 13.4 * s - sa * off,
+                                wy + ny * 13.4 * s + ca * off,
+                                r * 6.0 * s + 3.0 * s)
+                rr = max(1, int(2.4 * s * cam.scale))
+                shade = 1.0 - ((seed + r * 7 + i * 13) % 5) * 0.06
+                pygame.draw.circle(surf, _shade(cut, shade),
+                                   (int(e[0]), int(e[1])), rr)
+                pygame.draw.circle(surf, bark, (int(e[0]), int(e[1])), rr, 1)
+    if kw.get("axe"):
+        # the chopping block a stride off, the axe left standing in the round
+        bx, by = wx - sa * 17 * s, wy + ca * 17 * s
+        draw_solid(surf, cam, bx, by,
+                   [(0.0, 5.0 * s, 5.0 * s), (9.0 * s, 5.0 * s, 5.0 * s)],
+                   {"body": bark, "lo": (38, 30, 20), "rim": cut})
+        h0 = cam.project(bx, by, 9.0 * s)
+        h1 = cam.project(bx + 2.0 * s, by - 3.0 * s, 22.0 * s)
+        pygame.draw.line(surf, (108, 88, 62), h0, h1, max(2, int(2 * s)))
+        pygame.draw.polygon(surf, (150, 152, 158), [
+            h1, (h1[0] + 5 * s, h1[1] + 1 * s),
+            (h1[0] + 4 * s, h1[1] + 5 * s), (h1[0] - 1 * s, h1[1] + 4 * s)])
+
+
 def _draw_bridge_rail_solid(surf, cam, deco):
     """The SAFE PATH bridge's timber parapet (DESIGN.md §14): squared posts,
     a top rail and a mid rail, run along the deck edge.
@@ -4163,6 +4342,10 @@ SOLID_PROPS = {
     "neon_pylon":    _draw_neon_pylon_solid,
     "chain_fence":   _draw_chain_fence_solid,
     "bridge_rail":   _draw_bridge_rail_solid,
+    "mailbox":       _draw_mailbox_solid,
+    "yard_fence":    _draw_yard_fence_solid,
+    "stoop":         _draw_stoop_solid,
+    "woodpile":      _draw_woodpile_solid,
     "boulder":       _draw_boulder_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,

@@ -27,6 +27,26 @@ the one facing you happened to check. View **N / E / S / W** before you trust
 it (error class 8, `CLAUDE.md`). Then, when it matters, the same shot with the
 **darkness / sight-gating ON** (players never see the brightened debug view).
 
+**PROPS GET THE SAME RULE.** A kind is a thing you look at from every side
+too, and "it read fine" almost always means "it read fine dead-on". Use
+`tools/preview_props_sheet.py <kind> ...`, which **turntables by default** --
+a row of four yaws per kind against a wall-height ruler. The two failures it
+exists to catch:
+
+- **A part placed off `cam.yaw` instead of the deco's own yaw.** It swings
+  around the object as the view turns and vanishes from some headings. A
+  mailbox whose flag is screen-relative is a grey lozenge on a stick from
+  half the compass, and it looks perfect in a single dead-on shot.
+- **A camera-facing card.** Its outline never changes as the row turns. Right
+  for flame, a glow, or thin foliage; a bug for anything man-made (trap #1
+  below).
+
+Place identifying parts in WORLD space, off the deco's `yaw`. Use `draw_box`
+for anything flat-sided and `draw_solid` only for a genuine body of
+revolution -- `draw_solid` with equal radii is a drum, which is how a stoop
+shipped looking like a butter-churn lid and a woodpile like a perforated
+barrel.
+
 **For SHOWING the maintainer: one angle is enough.** When you share a scene,
 send **one** representative PNG (`SendUserFile`), not the whole four-facing
 sheet. The maintainer wants to see it, not audit it. Pick the clearest angle.
