@@ -118,15 +118,6 @@ Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
   interior cover as styles land; extend `tests/stealth.py` §16; VISION
   toward the Darkwood organic read.
 
-### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
-
-Promote Royce to the man who drove Brimley's supply run (Hettie's shelves
-are bare because *his* deliveries stopped). **[Fable]** a small dialogue
-nudge (he ran the route, goods in and out) — his newspaper exchange
-already carries some of this; confirm it's enough or add the nudge.
-**[Opus]** place his picked-clean semi rusting at the town edge (optional
-light scavenge, never evidence). Reconcile with his worker job-loop.
-
 ### 13b. **[Fable]** Interior voice — quiet the routine reactions
 
 The Casebook structure landed (Case/Tools/Papers tabs, the Working Theory

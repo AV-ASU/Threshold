@@ -376,6 +376,81 @@ def _pickup_truck():
     )
 
 
+# ------------------------------------------------------------ semi truck
+# Reference: an 80s conventional tractor + a 48ft dry van. Royce hauled for
+# Brimley for twelve years, so the bare shelves in Hettie's shop are HIS
+# stopped deliveries (TODO #12) -- the rig is that fact made an object, and
+# it is the largest man-made thing in the town.
+def _semi_truck(stripped=True):
+    real = (576.0, 102.0, 110.0)
+    k = _k(real, 118.0)                  # 118 world units of trailer
+    L, W, H = real[0] * k, real[1] * k, real[2] * k
+    deck = 48.0 * k                      # trailer floor above the road
+    tx = L * 0.5 - 12.0                  # the nose of the box
+    wheel_r = 4.2
+    parts = [
+        # THE BOX. One volume, because a dry van is one volume; the detail
+        # that sells it is what is UNDER it, not panel lines on it.
+        Part(prim.box(L, W, H), at=(-14.0, 0, deck), mat="rust",
+             name="trailer"),
+        Part(prim.box(L * 0.98, W * 0.72, 2.4), at=(-14.0, 0, deck - 2.4),
+             mat="steel", name="deckrail"),
+        # landing gear: the legs it stands on with no tractor under the nose
+        *[Part(prim.box(2.2, 2.2, deck - 1.0), at=(tx - 34.0, sy * W * 0.30, 0),
+               mat="steel", name=f"gear{sy}") for sy in (1, -1)],
+        # the bogie, back under the tail
+        *[Part(prim.cyl(r=wheel_r, length=3.4, axis="x"),
+               at=(-14.0 - L * 0.36 + ax * 10.0, sy * (W / 2 - 1.6), wheel_r),
+               yaw=math.pi / 2, mat="iron", name=f"bogie{ax}{sy}")
+          for ax in (0, 1) for sy in (1, -1)],
+        # THE TRACTOR: hood out in front of the cab is what makes it a
+        # conventional rather than a cab-over, so the silhouette steps DOWN
+        # from stack to cab roof to hood.
+        Part(prim.box(20.0, W * 0.92, 20.0), at=(tx + 16.0, 0, 7.0),
+             mat="farm_green", name="cab"),
+        Part(prim.box(9.0, W * 0.62, 8.0), at=(tx + 16.0, 0, 21.0),
+             mat="glass", name="windshield"),
+        Part(prim.box(22.0, W * 0.80, 11.0), at=(tx + 37.0, 0, 7.0),
+             mat="farm_green", name="hood"),
+        Part(prim.box(24.0, W * 0.98, 5.0), at=(tx + 26.0, 0, 2.0),
+             mat="steel", name="frame"),
+        Part(prim.cyl(r=1.5, length=22.0, axis="z"),
+             at=(tx + 5.0, W * 0.40, 8.0), mat="steel", name="stack"),
+        Part(prim.cyl(r=3.0, length=13.0, axis="x"),
+             at=(tx + 26.0, -W * 0.46, 7.0), yaw=math.pi / 2,
+             mat="tin", name="fueltank"),
+        *[Part(prim.cyl(r=wheel_r, length=3.4, axis="x"),
+               at=(tx + 40.0, sy * (W * 0.44), wheel_r),
+               yaw=math.pi / 2, mat="iron", name=f"steer{sy}")
+          for sy in (1, -1)],
+    ]
+    drive = [(0, 1), (0, -1), (1, 1), (1, -1)]
+    if stripped:
+        # PICKED CLEAN. Nothing leaves Brimley, so the rig is a parts shop:
+        # the near drive wheels are gone and the rear doors hang open. It has
+        # to read as robbed rather than crashed -- everything is still square
+        # on its frame, it is simply missing pieces.
+        drive = [(0, -1), (1, -1)]
+        for sy, ang in ((1, 1.15), (-1, -1.15)):
+            parts.append(Part(
+                prim.box(1.6, W * 0.48, H * 0.94),
+                at=(-14.0 - L * 0.5 - W * 0.20, sy * W * 0.24, deck),
+                yaw=sy * ang, mat="rust", name=f"door{sy}"))
+    else:
+        for sy in (1, -1):
+            parts.append(Part(prim.box(1.6, W * 0.48, H * 0.94),
+                              at=(-14.0 - L * 0.5, sy * W * 0.24, deck),
+                              mat="rust", name=f"door{sy}"))
+    parts += [Part(prim.cyl(r=wheel_r, length=3.4, axis="x"),
+                   at=(tx + 8.0 - ax * 10.0, sy * (W / 2 - 1.6), wheel_r),
+                   yaw=math.pi / 2, mat="iron", name=f"drive{ax}{sy}")
+              for ax, sy in drive]
+    # NO contact pool. The shared shadow is a circle sized off the prop's
+    # LARGEST extent, which on a 177-unit rig lands a black disc wider than
+    # the trailer is long. Its own dark underside does the job here.
+    return Assembly(*parts)
+
+
 # ------------------------------------------------------------- seed corn
 # Reference: a pallet of 50lb seed-corn sacks, unopened. This is what
 # replaced Old Pell's stopped calendar (TODO #28): the calendar said "a man
@@ -655,6 +730,7 @@ ASSEMBLIES = {
     "pickup_truck": _pickup_truck(),
     "town_sign": _town_sign,
     "seed_corn": _seed_corn,
+    "semi_truck": _semi_truck,
 }
 
 # Built variants, keyed by (kind, the kwargs that mattered). An assembly is

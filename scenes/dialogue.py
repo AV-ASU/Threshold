@@ -2018,6 +2018,30 @@ ROYCE_CONVO = {
                 ("pi", "[c=dim]Said flat. No fear left in it.[/c]"),
             ],
         },
+        # TODO #12: Royce HAULED for this town, so the bare shelves in
+        # Hettie's shop are his stopped deliveries. He describes the failed
+        # run and nothing beyond it (locals report failure, never pattern),
+        # and the last line is what put his rig in the field east of the
+        # road with its doors hanging open.
+        {
+            "key": "route",
+            "q": "Somebody kept this town in flour and diesel. That was "
+                 "you, wasn't it?",
+            "label": "You hauled for this town.",
+            "once": True,
+            "avail": lambda g: g.save.flag("convo_royce_intro_asked"),
+            "beats": [
+                ("npc", "Twelve years. Every tin on Hettie's shelves came "
+                        "up that road on my trailer, and every load of "
+                        "corn went back down it."),
+                ("npc", "Last run was the week before the new year. Made "
+                        "the county line with a full load and came back "
+                        "into town with it still full."),
+                ("npc", "She's sat out east of the road ever since. Folks "
+                        "have been helping themselves to her. I don't "
+                        "stop them."),
+            ],
+        },
         {
             "key": "how_in",
             "q": "You keep looking at me like I owe you something. Say "

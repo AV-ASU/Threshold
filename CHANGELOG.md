@@ -1182,6 +1182,34 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — Royce is the man who hauled for Brimley, and his rig is in a
+  field (TODO #12).** The promotion gives the gutted shop a cause with a
+  name: Hettie's shelves are bare because HIS deliveries stopped. One new
+  exchange carries it (twelve years on the route, the last run that made the
+  county line with a full load and came back into town still full), and its
+  closing line is what puts the truck in the world: "Folks have been helping
+  themselves to her. I don't stop them."
+  - New prop `semi_truck` with its reference: an 80s conventional tractor
+    (hood in FRONT of the cab, which is what makes it a conventional rather
+    than a cab-over) coupled to a 48ft dry van. It is the largest man-made
+    thing in Brimley and stands a shade over a wall.
+  - **Picked clean by default**, because nothing leaves Brimley and a
+    stopped truck is a parts shop: rear doors hung open on their corners,
+    the near drive wheels gone. It reads as robbed rather than crashed --
+    everything still square on its frame, simply missing pieces. So there is
+    nothing left on it to take, which is the honest version of the ticket's
+    "optional light scavenge": the scavenging already happened.
+  - **Laid BROADSIDE to the road**, which the look pass decided. End-on
+    under this camera the rig is an anonymous brown container; side-on the
+    silhouette steps down from stack to cab roof to hood and it is
+    unmistakably a truck. It also moved off the verge it first shared with
+    the welcome board, where two of the biggest objects in town crowded each
+    other.
+  - It takes NO contact shadow: the shared pool is a circle sized off a
+    prop's largest extent, and on a 177-unit rig that lands a black disc
+    wider than the trailer is long.
+
+
 - **2026-07 — The calendars are cut (TODO #28).** Maintainer ruling: "I hate
   it." The `calendar` decoration is gone from the game, along with the three
   system-font uses that drew its month/day label, so `entities/deco_horror.py`

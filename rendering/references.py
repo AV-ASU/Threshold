@@ -154,6 +154,33 @@ REFERENCES = {
                   "posts are round or roughly split, never milled square"],
         "src": "(provenance rule, CLAUDE.md scene-dressing #1)",
     },
+    "semi_truck": {
+        # Royce's rig. The point of the object is that it is FULL-SIZE and
+        # going nowhere: a 48ft trailer parked on a verge in a town of
+        # two-storey buildings is the biggest man-made thing in Brimley, and
+        # it has not moved since the week before the new year.
+        "is": "A 1980s conventional semi: a long-nose tractor (hood out in "
+              "front of the cab, exhaust stack behind it) coupled to a 48ft "
+              "dry van trailer. Picked over since it stopped: rear doors "
+              "hanging open, wheels robbed off the drive axle.",
+        # the TRAILER BOX is what `real` measures -- the whole rig's length
+        # would fold the tractor into the ratio and mean nothing
+        "real": (576.0, 102.0, 110.0),   # 48ft x 102in x 110in van body
+        "part": "trailer",
+        "world_h": 33.0,   # a shade over a wall: it towers, which is the read
+        "mount": "trailer deck about 48in up on its bogie; the tractor's "
+                 "fifth wheel takes the nose, so the box runs level",
+        "tells": ["the box is the silhouette, and it is LONG -- a short box "
+                  "reads as a delivery van or a boxcar",
+                  "the hood in FRONT of the cab is what makes it a "
+                  "conventional rather than a cab-over",
+                  "the trailer's underside is open: you see daylight between "
+                  "the deck and the road, between the landing gear and the "
+                  "bogie",
+                  "rear doors are the full height of the box and swing on "
+                  "the corners"],
+        "src": "(48ft dry van + period conventional tractor dimensions)",
+    },
     "seed_corn": {
         # WHAT IT HAS TO SAY comes first: it is APRIL, and these are not
         # open. A corn man with unopened seed in April is a man who has not

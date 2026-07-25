@@ -712,6 +712,18 @@ def build_brimley():
             "feel a knock coming before it lands.",
             "I've started leaving the door unlatched at night. It seemed... polite.",
         ])])
+    # ROYCE'S RIG (TODO #12), pulled onto the grass shoulder east of the
+    # north road and left there since the week before the new year. He
+    # hauled for this town for twelve years, so the bare shelves in Hettie's
+    # shop are HIS stopped deliveries; this is that fact standing in a field.
+    # Laid BROADSIDE to the E-W road, not along the north one. A semi's
+    # whole read is its silhouette stepping down from stack to cab roof to
+    # hood, and end-on under this camera it is an anonymous brown container;
+    # side-on it is unmistakably a truck. Picked over since -- doors hung
+    # open, wheels off the near side -- so there is nothing left on it to
+    # take, which is the point of it.
+    sc.add_decoration(Decoration(56 * TILE + 16, 18 * TILE + 16,
+                                 "semi_truck"))
     # Royce -- by the river bridge. He tried to drive out like everyone
     # did; the corn handed him back. He clings to the one fact: you got IN.
     _resident(28, 26, "Royce", "royce",
