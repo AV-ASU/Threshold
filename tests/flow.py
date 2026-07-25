@@ -3764,9 +3764,23 @@ def main():
                  if getattr(d, "kind", "") == "street_lamp"]
         road_len = sum(1 for ty in range(_s.h) for tx in range(_s.w)
                        if _s.floor[ty][tx] in ("Y", "-"))
-        check(len(lamps) <= max(4, road_len // 8),
+        check(len(lamps) <= max(4, road_len // 4),
               f"path: {_k} is lit sparsely ({len(lamps)} masts over "
               f"{road_len} tiles of centre lane)")
+
+    # NO MAST STANDS IN THE ROAD. A lamp post on the carriageway is a thing
+    # you would swerve around in a car and walk into on foot, and it was the
+    # first thing the maintainer flagged. The junction pole is the trap: an
+    # offset along ONE axis is only clear of the road when the scene has no
+    # arm on the other, so on a T and an L it landed squarely in the cross.
+    for _k, _s in sorted(paths.items()):
+        in_road = [(int(d.x // _T), int(d.y // _T))
+                   for d in _s.decorations
+                   if getattr(d, "kind", "") == "street_lamp"
+                   and _s.floor[int(d.y // _T)][int(d.x // _T)] in ("P", "Y", "-")]
+        check(not in_road,
+              f"path: every {_k} mast stands off the carriageway"
+              + (f" -- IN THE ROAD at {in_road}" if in_road else ""))
 
     # EVERY SIDE IS A MOUTH, and the biome matches the verge you pushed
     # through (never corn on one side, pine on the other).

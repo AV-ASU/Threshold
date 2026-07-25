@@ -1916,12 +1916,21 @@ short and true: **the road carries you on, everything beside it does not.**
 every path scene, driven end to end at ev3 with the lamps sparse, none of
 which may fall out of the world.
 
-The LAMPS are therefore not the safety, and there are deliberately few (about
-a third of the first cut, which lit the carriageway end to end and read like
-an airport runway). What survives is placed for what it TELLS you: one mast
-at the junction, one at each arm's end, and a rare mid-run pole so a long arm
-is not black from end to end. A glow ahead in the dark means a decision or a
-way out; between them the road is dark and you walk it faster.
+The LAMPS are therefore not the safety, and there are far fewer than the
+first cut's end-to-end coverage (which read like an airport runway). What
+survives is placed for what it TELLS you: one mast in a corner of the
+junction, one at each arm's end, and a mid-run rhythm alternating down the
+two shoulders. A glow ahead in the dark means a decision or a way out; the
+stretches between are dark and you walk them faster.
+
+**No mast ever stands on the carriageway.** A lamp post in the middle of a
+road is a thing you would swerve around in a car and walk into on foot. The
+junction pole is the trap: offsetting it along ONE axis is only clear of the
+road when the scene has no arm on the other axis, so on a T or an L it lands
+squarely in the cross. It goes DIAGONALLY into a corner quadrant, which is
+off both carriageways by construction, and every other station is pushed
+outward until its tile is not asphalt (and dropped if it cannot get clear).
+`tests/flow.py` §34 fails on any mast in the road.
 
 The light still does real work. It keeps the verge's dark off the asphalt at
 the rim, and standing under a mast makes you VISIBLE to anything hunting

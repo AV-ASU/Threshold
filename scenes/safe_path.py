@@ -52,7 +52,7 @@ from entities.decoration import Decoration
 ROAD_HALF = 2        # asphalt half-width -> a 5-tile carriageway
 SHOULDER = 2         # gravel shoulder each side -> a 9-tile corridor
 LAMP_OFF = ROAD_HALF + 1             # lamp masts stand just off the asphalt
-LAMP_STEP = 20       # tiles between mid-run stations. DELIBERATELY sparse
+LAMP_STEP = 9        # tiles between mid-run stations. DELIBERATELY sparse
                      # (maintainer: "the streets have way too much light"):
                      # see the lighting note below.
 RIVER_BANK = 3       # tiles of open bank kept clear either side of the water,
@@ -378,21 +378,36 @@ def _lamp_stations(sc, w, h, cx, cy, arms):
     """(tx, ty, side) for each lamp mast: masts stand just off the asphalt,
     alternating flanks as they march out along each arm.
 
-    THE LIGHT IS INFORMATION, not coverage. Two stations are placed for what
-    they TELL you, and the mid-run stride is deliberately too long to join
-    them up:
+    THE LIGHT IS INFORMATION, not coverage. Stations are placed for what they
+    TELL you, and the mid-run stride is deliberately too long to join them up:
 
-    * THE JUNCTION, on ONE flank. Standing in the dark further down an arm, a
-      glow ahead means the place where the road decides. (One pole, not the
-      pair the first cut used -- two facing masts read as a lit gateway, and
-      this is a county road, not an entrance.)
+    * THE JUNCTION, in a CORNER. Standing in the dark further down an arm, a
+      glow ahead means the place where the road decides.
     * EACH ARM'S FAR END, at the map edge. A second glow, further off, means
       a way on. Between the two the road is dark and you walk it faster.
+
+    **NO MAST EVER STANDS ON THE CARRIAGEWAY.** A lamp post in the middle of
+    a road is a thing you would swerve around in a car and walk into on foot,
+    and it is the first thing anybody notices. The junction pole is the trap:
+    offsetting it along ONE axis puts it clear of the road only when the
+    scene has no arm on the other axis, so on a T or an L (which have both)
+    the first cut planted it squarely in the cross. It goes DIAGONALLY into a
+    corner quadrant instead, which is off both carriageways by construction
+    and is where a junction light belongs anyway. Guarded by
+    `tests/flow.py` §34.
     """
     out = []
-    vertical = "n" in arms or "s" in arms
-    out.append((cx + (LAMP_OFF if vertical else 0),
-                cy + (0 if vertical else LAMP_OFF), "*"))
+    # THE JUNCTION, diagonally into a corner. Prefer the quadrant between two
+    # arms that actually exist (an inner corner reads as lighting the turn);
+    # fall back to any corner on a straight run.
+    corners = [("n", "e", -1, -1), ("n", "w", 1, -1),
+               ("s", "e", -1, 1), ("s", "w", 1, 1)]
+    pick = next((c for c in corners if c[0] in arms and c[1] in arms), None)
+    if pick is None:
+        pick = next((c for c in corners if c[0] in arms or c[1] in arms),
+                    corners[0])
+    _a, _b, qx, qy = pick
+    out.append((cx + qx * LAMP_OFF, cy + qy * LAMP_OFF, "*"))
     flip = 0
     for side in sorted(arms):
         dx, dy = _AXIS[side]
@@ -410,11 +425,26 @@ def _lamp_stations(sc, w, h, cx, cy, arms):
             ty = py + (0 if vertical else off)
             if 0 <= tx < w and 0 <= ty < h:
                 out.append((tx, ty, side))
-    # de-dupe: two arms can want the same shoulder tile at a junction
+    # OFF THE ROAD, structurally. A station derived from ITS OWN arm's
+    # cross-axis can still land on ANOTHER arm's carriageway where the two
+    # cross, so rather than tuning the stride until that stops happening,
+    # every mast is pushed outward along its own offset until the tile under
+    # it is not asphalt. Placement cannot produce a pole in the road.
     seen, uniq = set(), []
     for tx, ty, side in out:
-        if (tx, ty) in seen or not (0 <= tx < w and 0 <= ty < h):
+        if not (0 <= tx < w and 0 <= ty < h):
             continue
+        ox = 0 if tx == cx else (1 if tx > cx else -1)
+        oy = 0 if ty == cy else (1 if ty > cy else -1)
+        for _push in range(SHOULDER + 2):
+            if sc.floor[ty][tx] not in ("P", "Y", "-"):
+                break
+            ntx, nty = tx + ox, ty + oy
+            if not (0 <= ntx < w and 0 <= nty < h):
+                break
+            tx, ty = ntx, nty
+        if (tx, ty) in seen or sc.floor[ty][tx] in ("P", "Y", "-"):
+            continue                  # still stuck on asphalt: drop it
         seen.add((tx, ty))
         uniq.append((tx, ty, side))
     return uniq

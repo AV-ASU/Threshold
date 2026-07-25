@@ -232,12 +232,13 @@ it renders the procedural sprites to a labelled PNG strip.
     tile), and a flank edge carries no asphalt; so the asphalt is safe
     everywhere while the verge beside it lets go like any flank. Guarded by
     `tests/flow.py` §34 as a WALK (every lane of every arm at ev3, none may
-    fall). The LAMPS are deliberately SPARSE (~a third of the first cut,
-    which read as a runway): one mast at the junction, one per arm end, a
-    rare mid-run pole — light as information, so a glow ahead means a
-    decision or a way out. `street_lamp` (a new `SOLID_PROPS` volume, in BOTH
-    light tables and in `_ELECTRIC_KINDS`) still gates stealth cover and dies
-    with the gensets. Arms paint in two
+    fall). The LAMPS are SPARSE and never on the asphalt: one mast in a
+    CORNER of the junction (a one-axis offset lands in the cross on a T or an
+    L), one per arm end, and a mid-run rhythm alternating down the shoulders,
+    every station pushed outward until it is off the carriageway — light as
+    information, so a glow ahead means a decision or a way out. `street_lamp`
+    (a new `SOLID_PROPS` volume, in BOTH light tables and in
+    `_ELECTRIC_KINDS`) still gates stealth cover and dies with the gensets. Arms paint in two
     passes (all gravel, then all asphalt) so a junction is surfaced, not
     quartered; the dashed centre lane (`"Y"` N-S, `"-"` E-W — two floor chars
     because tiles cache BY CHAR) stops at the junction box. Every side is a

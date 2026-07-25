@@ -139,6 +139,24 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- A lamp post was standing in the middle of the road
+  (maintainer, marked on a screenshot).** The junction mast was offset from
+  the junction along ONE axis, which is clear of the road only when the scene
+  has no arm on the other axis -- so on the T and the L, which have both, it
+  was planted squarely in the cross. It now goes DIAGONALLY into a corner
+  quadrant (off both carriageways by construction, and where a junction light
+  belongs anyway).
+  Rather than tune the stride until mid-run stations stopped landing on a
+  crossing arm's asphalt too, every station is now pushed outward along its
+  own offset until its tile is not asphalt, and dropped if it cannot get
+  clear. Placement cannot produce a pole in the road. The maintainer's marks
+  also asked for the rhythm back along both shoulders, so the mid-run stride
+  tightened (13 masts -> 21 across the three scenes, all on gravel).
+  `tests/flow.py` §34 gained the assertion. Proving it could fail took
+  stripping all THREE defences (the diagonal, the nudge, and the drop), which
+  is the useful result: the builder refuses to emit the defect, and the guard
+  is there for any future code path that places a mast by hand.
+
 - **2026-07 -- The streets had way too much light (maintainer), and the claim
   behind them was wrong.** The safe path shipped lit end to end on the stated
   theory that the road's safety WAS its lamp coverage. It read like an airport
