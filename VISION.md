@@ -200,6 +200,20 @@ reveal each wall face, not just dead-on.
   `camera.scale = TILT_ZOOM` every call, so assigning `camera.scale` around a
   capture is silently undone before the draw. The tool moves `TILT_ZOOM` and
   then asserts the scale actually took.
+- **The GROUND and its plants, in isolation:**
+
+  ```bash
+  python tools/preview_terrain.py [--chars g d ";"] [--seams] [--plants] [--dark]
+  ```
+
+  Blocks of each floor char, or every char against every other with
+  `--seams`, through the real tilt camera at four facings. The ground is
+  most of the frame under the tilt, so a flat fill is a flat fill across
+  half the screen -- and that is invisible in a whole-scene thumbnail where
+  a floor char is four pixels among props, actors and shadow. Seams need
+  their own look: tiles are cached BY CHAR, so no tile knows its
+  neighbours and every boundary between two chars is a hard straight step
+  unless something is drawn across it.
 - **Cutscenes / tableaux**: step the draw fn over `t` and save frames (as with
   the flashback and the close-up tableau previews).
 

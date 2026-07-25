@@ -1182,6 +1182,63 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — Ground and trees redesigned; the black patches in the grass
+  found.** The maintainer: "update the design of dirt, grass, trees. They are
+  all looking off. Are there black patches in the grass at certain angles."
+  There were, from two causes, and both were found by A/B rather than by
+  reading:
+  - **Marsh mud `;` was the main one.** Base colour (40, 37, 30) -- a brown
+    near-black -- sprinkled by the scene builders as ISOLATED SINGLE TILES
+    through grass at (46, 58, 44). Tiles are cached BY CHAR, so nothing
+    frays a boundary unless it is written to, and only the dirt path had
+    been. Each marsh tile was therefore a hard-edged square of a different
+    hue two-thirds the value of its surround: a black hole in the lawn. Wet
+    ground is now the same ground, greyer, with the darkness coming from the
+    puddles drawn on top; and `_build_path_fringe_card` was generalised from
+    "the dirt path" to any `_PATCH_CHARS` tile, colouring its lobes from its
+    OWN char, so every seam frays.
+  - **Trees were double-shadowing.** `_SHADOW_CASTERS` included `T`/`p`, so
+    every tree tile blitted a TILE-wide hard-topped gradient onto the tile
+    south of it -- flat, in the floor raster, belonging to nothing the
+    player can see, and overlapping into rectangles wherever trees are
+    dense. Trees already lay their own contact pool.
+  - **Dirt was the brightest thing outdoors.** (96, 76, 52) against grass at
+    (46, 58, 44): the eye went to the road instead of the town. Now damp
+    April earth. Its detail was three 2px rectangles plus, every fifth tile,
+    a pale line spanning the FULL tile width at exactly y=16 -- a perfectly
+    repeating scratch that becomes a vertical stripe on an E/W facing, the
+    same defect the plank floor was fixed for. Replaced with fine grain,
+    seated stones and a short scuff on a per-tile ANGLE.
+  - **Grass was confetti.** A flat fill plus a handful of 2px rectangles at
+    unrelated positions. Now clustered tufts (count and placement varied per
+    tile, since a fixed count is its own pattern) and last year's straw mat,
+    running mostly DARKER than the base. The first attempt ran them lighter
+    and denser and read as lichen; that is recorded in DESIGN §6 as the rule.
+  - **The tree redesign went into the wrong function first.** CLAUDE.md said
+    trees stand up as `_tilt_standee` billboard cards. They do not and had
+    not for some time: every billboard char routes to a volumetric
+    `_tilt_tree_solid`, and `_tilt_standee` was reachable from nothing. A
+    full canopy rebuild landed in the dead flat path before a render of the
+    actual scene showed nothing had changed. `_tilt_standee` is deleted, and
+    `tests/conventions.py` check 8c now fails if a billboard char has no live
+    dispatch branch. (The flat `_draw_tree` survives -- it is live in the
+    cutscene forest -- and kept its improvement.)
+  - **The real tree.** Spruce tiers were `draw_solid` bodies of revolution,
+    and draw_solid finishes every body with a `lo` ellipse ring at its base
+    and a BRIGHTENED filled ellipse across its top; stacked four high that is
+    a tree wearing hoops. `_spruce_tier` draws its own saw-toothed skirt
+    instead -- drooping branch tips, no lid -- and the bole was thinned from
+    a fifth of the tree's spread to a tenth (it had read as a keg standing
+    under the branches). The bare deciduous got recursively forking limbs in
+    place of single strokes radiating off the leader, and a tapered bole that
+    continues into them rather than a capped cylinder, which had made it a
+    fence post with nails in it.
+  - **`tools/preview_terrain.py`** exists now for the same reason
+    `preview_props_sheet.py` does: a floor char judged from a whole-scene
+    capture is four pixels among props, actors and shadow, which is how a
+    near-black tile in the grass survived. Blocks per char, `--seams` for
+    char-vs-char boundaries, `--plants` for what grows on it.
+
 - **2026-07 — The lodge yard dressed, and five props remade doing it.**
   The first real use of the parts-built prop pipeline on a scene, run as the
   maintainer asked for it: look, find, change, apply, judge, repeat. What

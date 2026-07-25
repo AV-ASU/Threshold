@@ -79,4 +79,5 @@ terminal version is `python tools/index.py [word]`.
 
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/preview_look_control.py` — Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
+- `tools/preview_terrain.py` — LOOK at the GROUND and what grows on it, in isolation.
 - `tools/screen_to_world.py` — Turn SCREEN positions in a capture back into WORLD TILES.

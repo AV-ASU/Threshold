@@ -563,6 +563,27 @@ Built into the procedural draw layer (`scenes/base.py`,
   touch open floor, faint pitting/cracks. The seams vanish; a run reads
   as a single battered surface. Terrain rendering is shared through
   `draw_scene_terrain` (Scene.draw + the offline renderer use the same).
+- **THE GROUND is the biggest surface in the frame, and it is built in
+  three layers.** Under a fixed 55-degree camera the floor is most of what
+  the player looks at, so a flat fill is a flat fill across half the screen.
+  (1) The BASE is a per-char colour bilinearly smoothed across tile corners
+  together with the macro shadow, so brightness rolls ACROSS tile edges
+  rather than stepping at them. (2) The DETAIL is clustered, never
+  sprinkled: grass is one to three tufts of blades plus last year's straw
+  mat, dirt is fine grain with a few seated stones and a short angled
+  scuff. Detail runs mostly DARKER than the base -- turf at this distance is
+  the shadow between the blades -- and both the count and the placement vary
+  per tile, because a fixed count is itself a pattern. Nothing may carry a
+  screen axis: a full-width mark at a fixed tile row becomes a stripe on a
+  rotated facing (`d` had one, and the plank floor had the same bug before
+  it). (3) The SEAM between two chars is frayed by `_build_path_fringe_card`
+  for every char in `_PATCH_CHARS`, in both chars' colours. Tiles are cached
+  BY CHAR so no tile can know its neighbours, which makes every unfrayed
+  boundary a hard straight step at the grid -- and a lone tile of a
+  different colour then reads as a hole rather than as ground. Values sit in
+  one damp April family: the dirt paths must never be the brightest thing
+  outdoors, and wet ground gets its darkness from the puddles drawn on it,
+  not from a near-black base.
 - **Interior walls render as thin-slab geometry, per material (current
   state; `scenes/terrain.py`; how this evolved -- bevel -> slab -> rounded ->
   materials -> the mine as hewn rock -- is in `CHANGELOG.md`, "Walls &

@@ -366,6 +366,32 @@ def _solid_predicate():
                 + "\n".join(rows))
 
 
+# ------------------------------------ 8c. every billboard char has a drawer
+# THE RULE: under the tilt, an object char in `_TILT_BILLBOARD_CHARS` is
+# dispatched by its KIND, and only `tree` and `cornstalk` have a branch. A new
+# billboard kind with no branch draws NOTHING -- the terrain version of the
+# magenta square, except quieter, because empty ground looks like ground.
+# This check also pins down a second failure it grew out of: `_tilt_standee`,
+# the flat-card path the docs described as how trees are drawn, had been dead
+# for some time (every billboard char routes to a solid). A full tree redesign
+# went into the wrong function before anyone noticed.
+@check("every tilt billboard char has a live draw branch")
+def _billboard_kinds():
+    from scenes.terrain import (_TILT_BILLBOARD_CHARS, _TILT_BILLBOARD_KINDS,
+                                OBJECT_DEFS)
+    rows = []
+    for ch in sorted(_TILT_BILLBOARD_CHARS):
+        kind = OBJECT_DEFS.get(ch, {}).get("kind")
+        if kind not in _TILT_BILLBOARD_KINDS:
+            rows.append(f"    {ch!r} is a billboard char of kind {kind!r}, "
+                        "which _tilt_tile_box has no branch for -> it draws "
+                        "nothing at all")
+    if rows:
+        return ("  a billboard char must be dispatched to a real drawer in\n"
+                "  scenes/terrain.py _tilt_tile_box. Add a branch there AND\n"
+                "  the kind to _TILT_BILLBOARD_KINDS.\n" + "\n".join(rows))
+
+
 # ------------------------------------------------------- 9. TOOLS.md fresh
 # THE RULE: TOOLS.md is GENERATED from each tool's own docstring
 # (`python tools/index.py --md`) precisely so a hand-maintained list of 40+

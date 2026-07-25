@@ -129,6 +129,12 @@ python tools/kind.py <kind> [...]        # also: --stains, --unplaced
 # from a full-scene shot is how six of them shipped as magenta squares.
 python tools/inspect_spot.py <scene> --at TX,TY [--zoom 4] [--dark] [--ev N]
 
+# LOOK at the GROUND and what grows on it, in isolation -- floor chars as
+# blocks, char-vs-char seams, or the plants. A floor char judged from a
+# whole-scene shot is four pixels; that is how a near-black marsh tile
+# sprinkled through grass read as square holes for months.
+python tools/preview_terrain.py [--chars g d ";"] [--seams] [--plants]
+
 # THE MAINTAINER MARKED UP A SCREENSHOT -- turn the marks into tile coords.
 # Under the tilt this is NOT eyeballable (yawed, foreshortened, the same
 # screen row covers different world rows by depth); guessing has produced
@@ -481,13 +487,24 @@ it renders the procedural sprites to a labelled PNG strip.
     cursor; the yaw chase is aim-steady (trigger locks it, standing
     damps it, `CHASE_*`/`TURN_RATE` config). Previews:
     `tools/preview_{tilt,skybox,occlusion,pseudo3d,sight,blindspot_live}.py`.
-    Under tilt, **trees + cornstalks stand up as 3D billboards** (`_tilt_standee`
-    in `scenes/terrain.py`, cached cards + a horizontal-run corn LOD `_corn_runs`)
-    and join the wall/occluder set returned by `draw_terrain_tilted` — so they
+    Under tilt, **trees + cornstalks are VOLUMETRIC bodies, not cards**
+    (`_tilt_tree_draw` / `_tilt_corn_draw` in `scenes/terrain.py`, each
+    rendered once into a per-tile card by `_tilt_tree_solid` /
+    `_tilt_corn_solid`, plus a horizontal-run corn LOD `_corn_runs`). They
+    join the wall/occluder set returned by `draw_terrain_tilted` — so they
     depth-sort + fade per-actor like walls (`_TILT_BILLBOARD_CHARS` in the
-    collection + `_tilt_tile_box` dispatch; the flat floor raster skips them via
-    `draw_scene_terrain(..., skip_billboard=True)`). Collision is unchanged;
-    flat top-down draws them flat as before.
+    collection + `_tilt_tile_box` dispatch, which routes by KIND and is
+    guarded by `tests/conventions.py` check 8c so a new billboard kind with
+    no branch fails instead of drawing nothing). Collision is unchanged.
+    A tree is one of two species by seed: a **spruce**, a stack of drooping
+    needled tiers built by `_spruce_tier` (its own saw-toothed silhouette
+    rather than a `draw_solid` body — draw_solid rings every body with a base
+    ellipse and a brightened cap disc, which up a conifer reads as stacked
+    lampshades), or a **bare deciduous**, a tapered bole continuing into a
+    leader with recursively forking limbs. The flat `_draw_tree` /
+    `_draw_corn` are NOT this: they are the pitch-0 tile art, live only in
+    the cutscene forest (`ui/cutscenes.py`). Editing them does not change
+    what the player sees.
   - **Blind-spot vision (`sight.py`, DESIGN.md §10):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, and
     the world-rot decals — flagged `_sight_gated`) to a forward sight
@@ -791,8 +808,7 @@ section is the CODE MAP only — where each system lives:
   phantom blocks, incl. the lodge fireplace and the Scriptorium's evidence
   desks). Use `add_furniture` (a real volume + footprint); smoke [9/9] now
   fails any scene that ships one. `FURNITURE` / `SOLID_PROPS` = a real projected
-  volume; `_STANDEE_KINDS` (`props.py`, `scenes/terrain.py _tilt_standee`) = a flat
-  card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
+  volume; `_STANDEE_KINDS` (`props.py` `draw_standee`) = a flat card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
   `_SURFACE_DECAL_KINDS` = warped flat onto the floor/surface plane;
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
@@ -1037,6 +1053,13 @@ section is the CODE MAP only — where each system lives:
   the same file in one turn; an early edit moves line context and later ones
   silently mis-apply. For multi-site mechanical changes, write a small Python
   patch script with `assert count == 1` per replacement, then run + verify.
+  **Never delete a function by cutting to the next `def`.** Module-level
+  constants live in those gaps, and the cut takes them silently: it has now
+  removed `_RUST_BASES`/`_PLATE_COLS` (the dead-car palette) and
+  `_WALL_BASE`/`_WALL_FACE`/`_WALL_TOP`/`_WALL_FOOT` while removing an
+  unrelated dead draw. `compileall` does not catch it -- only the gate does,
+  as a `NameError` from `render_smoke`. Delete the exact body, then grep the
+  removed span for assignments before writing the file.
 - **Check narrative text against `NARRATIVE.md` BEFORE writing it**, not
   after. The bible is the source of truth; quote its intended voice.
 - **`tests/flow.py`** is the integration harness (separate from `smoke.py`):
