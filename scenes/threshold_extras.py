@@ -13,8 +13,11 @@ from .dialogue import _evidence
 
 def _backwoods_note_pickup(game):
     game.save.set_flag("backwoods_note_taken", True)
+    # "A small stash." said nothing: not what is in it, not who left it.
+    # State what is there and stop; whose it was is the player's to wonder.
     _evidence(game, "backwoods_note",
-        "A small stash.")
+        "Tins, a bedroll, a candle stub burned to the tin. Somebody sat "
+        "out here a while.")
 
 
 def build_schoolhouse():
@@ -423,9 +426,11 @@ def build_graveyard():
                     "[c=dim](A weather-worn headstone.)[/c]",
                     "[c=dim]The name has worn away.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
-                _evidence(game, "worn_stone",
-                    "A weathered headstone."
-                )
+                # (The second caption this used to fire, "A weathered
+                # headstone.", was cut: the line above already said it,
+                # and two boxes for one press is the noise TODO #13b is
+                # about. The flag still sets, so nothing downstream moves.)
+                game.save.set_flag("evidence_worn_stone", True)
             else:
                 game.dialog.show([
                     "[c=dim]A worn headstone.[/c]",
@@ -1016,17 +1021,12 @@ def build_cornfield_maze():
             scene._rustle_t = random.uniform(2.5, 6.0)
             game.audio.play("breath", 0.18)
     sc.on_update_fn = _cornfield_maze_on_update
-    sc.add_interactable(sc._scarecrow_pos[0], sc._scarecrow_pos[1], 40)  # [E] cue
-
-    def _cornfield_maze_interact(game):
-        sx, sy = sc._scarecrow_pos
-        if (abs(game.player.x - sx) < 40
-                and abs(game.player.y - sy) < 40):
-            _evidence(game, "scarecrow",
-                "A scarecrow."
-            )
-            return
-    sc.on_interact_fn = _cornfield_maze_interact
+    # THE SCARECROW HAS NO EXAMINE (TODO #13b). It carried an [E] cue whose
+    # entire payload was "A scarecrow." -- the word for the thing the player
+    # is already looking at, delivered as a caption that stops the world to
+    # say nothing. That is the grievance in miniature: every interaction
+    # does something, and none of it leaves the player thinking. The
+    # scarecrow is better set-dressing than it ever was a beat.
 
     # Litter in the lanes (2026-07 sound overhaul): tins dumped in lane
     # 2, and a crow posted in lane 4 that flushes screaming -- the maze

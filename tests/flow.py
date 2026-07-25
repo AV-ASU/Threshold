@@ -1143,9 +1143,17 @@ def main():
     _lt = " ".join(l for e in gl2.save.arg("notes", [])
                    if e.get("name") == "the_ledger" for l in e["lines"]).lower()
     # CANON: the checkout dates stop A YEAR back (the same season the PI
-    # dreamed the door once) -- never "months". Guard the duration.
-    check("a year" in _lt and "months" not in _lt and "keep it in mind" in _lt,
-          "voice: the Ledger carries the PI's voice (dates stop a YEAR back)")
+    # dreamed the door once) -- never "months". Guard the duration, and
+    # guard that the note still lands the FACT the case turns on: the clean
+    # book upstairs begins exactly where these leave off.
+    #
+    # This used to also pin the phrase "keep it in mind", which was the PI
+    # telling himself the thing mattered. TODO #13b cut that on purpose --
+    # the note states what the two books do and stops, and the inference is
+    # the player's. Pinning a hedge in a test is how a hedge becomes canon.
+    check("a year" in _lt and "months" not in _lt
+          and "starts right where these leave off" in _lt,
+          "voice: the Ledger keeps the YEAR and states what the books do")
 
     # Chalk-door swarm fills the Scriptorium (obsessive, none overlapping).
     _scr = _ldcd("works_scriptorium")

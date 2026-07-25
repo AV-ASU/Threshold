@@ -1089,14 +1089,18 @@ def basement_interact(game):
         # here freely (sable_cellar_permission). The closing reflection reads
         # that openness back -- the host handed you his own damning book
         # without a blink -- instead of the neutral "a clerk got lazy" shrug.
+        # TRIMMED (TODO #13b): the closer used to talk itself around the
+        # whole inference -- "Probably nothing. A clerk who got lazy... 
+        # ...Still... I'll keep it in mind." -- which is the PI doing the
+        # player's thinking out loud and then telling him it mattered. The
+        # FACT is that the two books abut, and that is enough; what it means
+        # is the player's to reach.
         _closer = ("[c=dim]He let me down here without a blink. A year of "
                    "guests, and the clean book upstairs starts right where "
-                   "these leave off. I'll keep it in mind.[/c]"
+                   "these leave off.[/c]"
                    if game.save.flag("sable_cellar_permission") else
-                   "[c=dim]Probably nothing. A clerk who got lazy, dropped "
-                   "the habit. ...Still. A year of guests, and the clean "
-                   "book upstairs starts right where these leave off. I'll "
-                   "keep it in mind.[/c]")
+                   "[c=dim]A year of guests, and the clean book upstairs "
+                   "starts right where these leave off.[/c]")
         _evidence(game, "the_ledger", [
             "Boxes of the Lodge's old registers, years deep, carried down "
             "here as each book filled. You lift the top one out and start "

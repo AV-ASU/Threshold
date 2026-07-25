@@ -673,10 +673,10 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   stop. The last anyone signed out was a year back. Every name since signs
   in and never out." Closer if Sable gave cellar permission: "[c=dim]He let
   me down here without a blink. A year of guests, and the clean book
-  upstairs starts right where these leave off. I'll keep it in mind.[/c]";
-  else: "[c=dim]Probably nothing. A clerk who got lazy, dropped the habit.
-  ...Still. A year of guests, and the clean book upstairs starts right
-  where these leave off. I'll keep it in mind.[/c]" Re-examine: "[c=dim]A
+  upstairs starts right where these leave off.[/c]"; else: "[c=dim]A year
+  of guests, and the clean book upstairs starts right where these leave
+  off.[/c]" (TODO #13b trimmed the hedging and the self-instruction off
+  both: the note states what the two books do and stops) Re-examine: "[c=dim]A
   year of names that never signed out. You've read enough of them.[/c]"
 - **`the_fall`** (`build_depths_antechamber._interact`, `scenes/depths.py`):
   "There is no way back above you, and you are not hurt. Cut stone, worn
@@ -1251,8 +1251,8 @@ ones landed so far:
 - **the receipt's pickup notice** (`grant_receipt`): "Her tab from the
   shop."
 
-The remaining one-line routine examines (headstones, `scarecrow`,
-`worn_stone`, the bell-tower view "From the bell tower the town is small.")
+The remaining one-line routine examines (headstones, `worn_stone`, the
+bell-tower view "From the bell tower the town is small.")
 and the HUD/system notice layer (see Coverage) stay indexed: the code is
 authoritative for their exact words, and the contract still binds (touch
 one, update the other).
@@ -1296,6 +1296,17 @@ them, so the contract binds them like any other line.
   (**TOWN**, **BRIMLEY**, **LODGE**, **ARCADIA**). Like the safe path's road
   names, a sign that names a place in ordinary language is a sign telling the
   truth; nothing in the town's own signage is ever uncanny.
+
+## Some things are looked at and say nothing (TODO #13b)
+
+The **scarecrow** in the corn maze had an `[E]` cue whose entire payload was
+the caption "A scarecrow." It is now silent set-dressing. The rule it stands
+for: a prop examine that returns the NAME of the thing the player is already
+looking at is not a beat, it is a box that stops the world to say nothing,
+and the game has been accused (fairly) of doing something on every
+interaction and leaving the player nothing to think about. If an examine has
+no fact to add, it should not exist. The **headstone** likewise fires ONE
+caption now instead of two for the same press.
 
 ## The lost spaces carry NO narration (maintainer ruling)
 

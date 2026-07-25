@@ -118,31 +118,23 @@ Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
   interior cover as styles land; extend `tests/stealth.py` §16; VISION
   toward the Darkwood organic read.
 
-### 13b. **[Fable]** Interior voice — quiet the routine reactions
+### 13b. **[Fable]** Interior voice — the remainder, if any
 
-The Casebook structure landed (Case/Tools/Papers tabs, the Working Theory
-pinned first, the named scribble toast — `CHANGELOG.md`), and a first trim
-cut the three worst offenders. **Still open — the maintainer's actual
-grievance ("every interaction does something and never leaves the player
-thinking"):** on-screen PI narrator captions still fire on nearly every
-world-prop examine. Cut candidates (~30 sites, prop examines that
-editorialize a conclusion instead of stating the fact): the lodge
-register/ledger recaps, the well / news-rack monologues, headstone +
-candle re-examines, `barrow_tools` / `scarecrow` / `backwoods_note` /
-`worn_stone` / `bell_tower` / `the_burning` / `the_fall` /
-`threshing_floor` / `works_cistern_seen` / `the_doorframe` flavor
-`_evidence` calls (these write nothing to the book — caption only). Trim
-each to a terse factual line or silence, so the player draws the
-inference. **The revisit-nudges** (`_REVISIT_NUDGES`, the "I should go
-back and ask him" appends) are the clearest instance of "the game does
-the thinking for you" — decide with the maintainer whether they go.
-**KEEP, do not touch:** the five `CANONICAL_EVIDENCE` beats, the
-descent-voice arc, the dream, the Mask temptation, Mara's calling-out, the
-fold notes, the threshold recognition, and the deliberate atmospheric
-one-shots that ARE the dread (the frozen news rack, the empty church).
-Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
-assert on several of these captions/notes) and update the ones whose
-behavior legitimately changes.
+**An audit pass landed** (`CHANGELOG.md`) and found the ticket's premise
+mostly stale: of the ~30 named cut candidates, most already state the fact
+and stop (`the_burning`'s slagged buckles, `the_fall`, `threshing_floor`,
+`works_cistern_seen`, `the_doorframe`, the well's two lines, the candle
+callback). Four real offenders were cut; the `_REVISIT_NUDGES` half of the
+ticket had already been removed in an earlier pass.
+
+**Left deliberately, and worth a maintainer ruling rather than a quiet
+edit:** the guest register's habit-recap ("A lodge this old has years of
+these. They go somewhere when they fill. Down, if this place is like every
+hotel I've worked.") is the PI reasoning out loud AND the only pointer to
+the cellar (NARRATIVE §5, "the desk keeps the clean sign-in book and the
+lead pointing down"). Trimming it to a fact would cut the lead with it. If
+the hand-holding matters more than the pointer, that is a design call, not
+a prose one.
 
 ### 24. **[Opus + Fable]** INTERIORS PROGRAM — ensembles, floor plans, the prop fifteen
 

@@ -1182,6 +1182,36 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — Interior voice: the audit, and four cuts (TODO #13b).** The
+  standing grievance was that "every interaction does something and never
+  leaves the player thinking", with ~30 prop examines named as suspects.
+  Reading all of them found the premise mostly stale: most already state the
+  fact and stop, and are the better for it (`the_burning`'s slagged buckles
+  and boot eyelets, `the_fall`, `threshing_floor`, `works_cistern_seen`,
+  `the_doorframe`'s "A doorframe with no wall.", the well's two lines, the
+  candle callback). The `_REVISIT_NUDGES` half of the ticket had already
+  been cut in an earlier pass. Four real offenders remained:
+  - **The scarecrow's examine is GONE.** Its entire payload was the caption
+    "A scarecrow." -- the word for the thing the player is already looking
+    at, delivered as a box that stops the world to say nothing. It is the
+    grievance in miniature, and the fix is silence: if an examine has no
+    fact to add, it should not exist.
+  - **The headstone fired TWO captions for one press**; the second was the
+    bare name of the object. Now one.
+  - **"A small stash."** named nothing it gave you. It now says what is
+    actually there (tins, a bedroll, a candle stub burned down to the tin)
+    and leaves whose it was alone.
+  - **The Ledger's closer talked itself around the whole inference** --
+    "Probably nothing. A clerk who got lazy... ...Still... I'll keep it in
+    mind." Trimmed to the fact the case turns on: the clean book upstairs
+    starts right where these leave off. A `tests/flow.py` guard had pinned
+    the phrase "keep it in mind", so the guard was updated too -- pinning a
+    hedge in a test is how a hedge becomes canon.
+  - **Left deliberately:** the guest register's habit-recap is the PI
+    reasoning out loud AND the only pointer to the cellar, so trimming it
+    would cut the lead with it. Flagged in `TODO.md` as a design call.
+
+
 - **2026-07 — Royce is the man who hauled for Brimley, and his rig is in a
   field (TODO #12).** The promotion gives the gutted shop a cause with a
   name: Hettie's shelves are bare because HIS deliveries stopped. One new
