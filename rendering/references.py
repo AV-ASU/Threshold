@@ -58,19 +58,28 @@ REFERENCES = {
                "with-flag-design/",
     },
     "stoop": {
-        "is": "Two or three exterior timber steps up to a house door, wide "
-              "enough for two people, with a nosing overhanging each riser.",
-        # 48in is the WIDTH, which is across (+y); +x is the climb
-        "real": (22.0, 48.0, 14.0),      # a 2-riser stoop, inches
-        "mount": "sits against the doorway; the top tread meets the "
-                 "threshold",
-        "tells": ["7in rise to 11in run is the proportion that reads as "
-                  "steps; anything squarer reads as stacked slabs",
-                  "48-60in WIDE -- much wider than it is tall, which is the "
-                  "single thing most often got wrong",
-                  "the tread overhangs the riser below it (the nosing)"],
-        "src": "https://www.hunker.com/12608255/"
-               "standard-sizes-of-the-steps-for-a-front-porch/",
+        # REWRITTEN once the first model was judged and found wanting: it was
+        # two treads and no LANDING, which is a flight of steps, not a stoop.
+        # A stoop is the platform at the door, with steps coming off it -- the
+        # landing is the object and the steps are its approach.
+        "is": "A front stoop: a timber LANDING at the house door, at least "
+              "36in deep and wider than the door, with two or three steps "
+              "coming down off it. Side cheeks close the ends.",
+        # 60in is the WIDTH, across (+y); +x is the direction you climb,
+        # which is the landing depth plus the run of the steps
+        "real": (60.0, 60.0, 21.0),      # 36in landing + 2 runs, 3 risers
+        "mount": "the landing's top sits just below the interior threshold, "
+                 "so the door can swing clear of it",
+        "tells": ["the LANDING is what makes it a stoop; steps alone are a "
+                  "flight and read as slabs stacked on grass",
+                  "6-7in rise to 11-12in run; wider than the door by a foot "
+                  "each side",
+                  "the tread overhangs its riser (the nosing), and that "
+                  "shadow line is what reads as a step at distance",
+                  "side cheeks enclose the step ends, so you never see the "
+                  "treads floating"],
+        "src": "https://www.gardenista.com/posts/hardscaping-101-"
+               "the-front-stoop/",
     },
     "woodpile": {
         "is": "A stack of split firewood against a wall or fence, ends OUT. "

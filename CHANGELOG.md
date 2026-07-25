@@ -139,6 +139,28 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- "If it isn't good, remake it now" (maintainer).** Written into
+  `VISION.md` with a pointer from `CLAUDE.md`'s working agreements: when you
+  look at a model or a design and judge it not good enough, remake it in the
+  same breath instead of handing it over with a caveat. "Reads a bit flat",
+  "acceptable for now", "I'd rather judge it in situ" are all the same move --
+  shipping work already judged as poor and making the maintainer say so. The
+  economics are lopsided: another pass now costs minutes because the
+  reference, the preview and the last failed attempt are all still loaded,
+  while the same pass after a round trip costs their attention and a full
+  context rebuild. A prop that took five exchanges usually took one exchange
+  and four caveats that should have been four more iterations. The stated
+  exception is a genuine fork between two defensible directions, which is a
+  question rather than a caveat.
+  Applied immediately to the thing that prompted it. The stoop had been
+  handed over the turn before with exactly that hedge -- proportionally
+  correct, reads flat, I'd rather see it in situ. Looked at again it was two
+  treads and no LANDING, which is a flight of steps rather than a stoop: the
+  landing at the door IS the object and the steps are its approach. Remade
+  from a fresh reference (36in minimum landing, wider than the door by a foot
+  each side, 6-7in rise to 11-12in run) with side cheeks closing the step
+  ends so the treads never float. It reads from every heading now.
+
 - **2026-07 -- THE PROP PIPELINE: props became data (maintainer: "the issue
   is the creation process... if this can take us from 5 prompts an object to
   one or two that would be perfect").** Diagnosis first, because the

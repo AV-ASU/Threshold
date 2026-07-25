@@ -51,37 +51,46 @@ def _mailbox():
 
 
 # ------------------------------------------------------------------ stoop
-# Reference: 7in rise to 11in run, 48-60in wide. The version this replaces
-# was about twice as wide as its rise where the real thing is seven times --
-# which is why two correct-in-isolation slabs still read as slabs. The
-# nosing (each tread overhanging its riser) is the other identifying tell.
-def _stoop(steps=2):
-    # +x is the CLIMB (the run), +y the width you walk across. The version
-    # this replaces was about twice as wide as its rise where the real thing
-    # is seven times, so two individually-correct slabs still read as slabs.
-    rise_in, run_in, wide_in = 7.0, 11.0, 52.0
-    k = 22.0 / wide_in                 # 22 world units wide
-    rise, run, wide = rise_in * k, run_in * k, wide_in * k
+# Reference: a stoop is the LANDING at the door with steps coming off it.
+# The first model was two treads and no landing, which is a flight of steps,
+# and it read as slabs lying on grass however correct its rise-to-run was --
+# so it was remade rather than shipped with a caveat (VISION, "if it isn't
+# good, remake it now"). Side cheeks close the step ends; the nosing shadow
+# is what reads as a step at distance.
+def _stoop(steps=3):
+    rise_in, run_in, wide_in, landing_in = 7.0, 11.0, 60.0, 36.0
+    k = 24.0 / wide_in                 # 24 world units wide
+    rise, run = rise_in * k, run_in * k
+    wide, landing = wide_in * k, landing_in * k
     parts = []
+    # THE LANDING: the platform at the door, the thing that makes it a stoop
+    top = steps * rise
+    parts.append(Part(prim.box(landing, wide, rise * 0.9, z0=top - rise * 0.9),
+                      at=(landing / 2 + (steps - 1) * run, 0, 0),
+                      mat="plank", name="landing"))
+    parts.append(Part(prim.box(landing, wide, top - rise * 0.9),
+                      at=(landing / 2 + (steps - 1) * run, 0, 0),
+                      mat="concrete", name="landing_base"))
+    # THE STEPS, coming down off it toward -x
     for i in range(steps):
-        # each riser sits back one run, and its tread overhangs it (the
-        # nosing) -- the shadow line under that overhang is what reads as a
-        # step rather than a stacked slab
-        back = (steps - 1 - i) * run
-        parts.append(Part(prim.box(run, wide, rise, z0=i * rise),
-                          at=(back, 0, 0), mat="concrete",
-                          name=f"riser{i}"))
-        # the tread is BOARDS, not a slab: two planks with a gap, which
-        # gives the seam and the end grain that say timber step. A single
-        # box tread reads as a poured slab however correct its proportions.
+        back = i * run
+        parts.append(Part(prim.box(run, wide, (i + 1) * rise),
+                          at=(back, 0, 0), mat="concrete", name=f"riser{i}"))
         nb = 2
         bw = wide / nb
         for b in range(nb):
             parts.append(Part(
-                prim.box(run + rise * 0.30, bw * 0.94, rise * 0.26,
-                         z0=(i + 1) * rise - rise * 0.26),
-                at=(back - rise * 0.15, (b - (nb - 1) / 2.0) * bw, 0),
+                prim.box(run + rise * 0.34, bw * 0.94, rise * 0.28,
+                         z0=(i + 1) * rise - rise * 0.28),
+                at=(back - rise * 0.17, (b - (nb - 1) / 2.0) * bw, 0),
                 mat="plank", name=f"tread{i}_{b}"))
+    # SIDE CHEEKS: the boards closing the step ends, so the treads never
+    # float. Without them a flight reads as loose slabs from the side.
+    for sgn in (-1, 1):
+        parts.append(Part(
+            prim.wedge(steps * run, 1.4, steps * rise),
+            at=((steps - 1) * run / 2 + run / 2, sgn * (wide / 2 + 0.5), 0),
+            yaw=math.pi, mat="plank", name=f"cheek{sgn}"))
     return Assembly(*parts)
 
 

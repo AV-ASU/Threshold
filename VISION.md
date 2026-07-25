@@ -70,6 +70,33 @@ sheet. The maintainer wants to see it, not audit it. Pick the clearest angle.
 
 ---
 
+## IF IT ISN'T GOOD, REMAKE IT NOW
+
+**When you look at a model or a design and think it is not good enough, do
+not hand it over with a caveat. Remake it, in the same breath, until you
+think it is good.** Not "it's proportionally correct but reads flat", not
+"I'd rather judge it in situ", not "acceptable for now" -- those are all the
+same move, which is shipping work you have already judged as poor and making
+someone else say so.
+
+This is not a licence to gold-plate. The bar is your own honest read: if you
+would not defend it, it is not done. If you WOULD defend it and the
+maintainer disagrees, that is a normal correction and costs one round.
+Handing over something you already know is weak costs a round AND the trust
+that your "this is done" means anything.
+
+The economics are lopsided and worth being explicit about. Another iteration
+now costs minutes, because everything is already loaded: the reference, the
+preview, what you just tried, why it failed. The same iteration after a round
+trip costs the maintainer's attention, a re-explanation, and your own
+reconstruction of all that context. A prop that took five exchanges to get
+right almost always took one exchange and four caveats that should have been
+four more iterations.
+
+The exception is a genuine fork -- two defensible directions where the choice
+is a matter of taste, not quality. Then render both and ask. That is a real
+question, not a caveat.
+
 ## TWO TILT TRAPS TO CATCH
 
 **1. Camera-facing is the EXCEPTION, not the norm.** A sprite that looks the

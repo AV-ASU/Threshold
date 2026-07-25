@@ -932,6 +932,16 @@ section is the CODE MAP only — where each system lives:
   stale in another is rot). A change is not "done" until its docs match it,
   so before you commit, ask which of the six canon docs (plus `README.md`)
   your diff just made stale and fix them in the same breath.
+- **IF IT ISN'T GOOD, REMAKE IT NOW (`VISION.md`).** When you look at a
+  model, a scene, or a design and judge it not good enough, remake it in the
+  same breath rather than handing it over with a caveat attached. "Reads a
+  bit flat", "acceptable for now", "I'd rather judge it in situ" are all the
+  same move: shipping work you have already decided is poor and making the
+  maintainer say so. Another pass now is minutes, because the reference, the
+  preview and the last failed attempt are all still loaded; the same pass
+  after a round trip costs their attention and your context. The one
+  exception is a genuine fork between two defensible directions, which is a
+  question, not a caveat.
 - **MAKE THE CHECK, NOT THE NOTE (the highest-leverage habit here).** When
   you break a rule, or the maintainer catches the same class of mistake
   twice, the fix is **not** another paragraph in a doc. Prose rules on this
