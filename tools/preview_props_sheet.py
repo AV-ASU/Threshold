@@ -42,6 +42,7 @@ import os
 import sys
 import math
 import argparse
+import textwrap
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -51,7 +52,10 @@ sys.path.insert(0, _ROOT)
 import pygame
 
 from rendering.camera import Camera
-from rendering.props import SOLID_PROPS, draw_prop_solid
+from rendering.props import draw_prop_solid
+from rendering.assemblies import ASSEMBLIES
+from rendering.assembly import validate
+from rendering import references as R
 from entities.decoration import Decoration
 from scenes.base import _TILT_WALL_RISE
 
@@ -76,10 +80,11 @@ def _cell(surf, cam, x, y, kind, kw, yaw):
     cam.origin = (x, y)
     cam.yaw = yaw
     d = Decoration(0, 0, kind, **kw)
-    if kind in SOLID_PROPS:
-        draw_prop_solid(surf, cam, d)
-    else:
-        d.draw(surf, -x, -y)                # flat draw at the anchor
+    # draw_prop_solid handles BOTH paths -- an assembly if the kind has one,
+    # otherwise its hand-written function -- and returns False only for a
+    # flat decal, which falls through to the Decoration draw.
+    if not draw_prop_solid(surf, cam, d):
+        d.draw(surf, -x, -y)
 
 
 def main():
@@ -97,7 +102,7 @@ def main():
     pygame.init()
     pygame.display.set_mode((1, 1))
     cw, ch = 190, 240
-    W = cw * len(yaws) + 240
+    W = cw * len(yaws) + 300
     H = ch * len(specs) + 30
     surf = pygame.Surface((W, H))
     surf.fill((38, 36, 42))
@@ -108,20 +113,38 @@ def main():
         kind, kw = _parse(spec)
         y = 40 + r * ch
         for c, yaw in enumerate(yaws):
-            x = 150 + c * cw
+            x = 240 + c * cw
             _cell(surf, cam, x, y + 130, kind, kw, yaw)
             surf.blit(font.render(f"yaw {math.degrees(yaw):.0f}", True,
                                   (128, 126, 134)), (x - 24, y + 150))
-        surf.blit(font.render(spec[:22], True, (232, 232, 180)), (12, y + 120))
+        surf.blit(font.render(spec[:22], True, (232, 232, 180)), (12, y + 30))
+        # THE REFERENCE, printed beside the render. This is the whole 5-to-1
+        # mechanism: a wrong proportion is visible at the moment of judging
+        # rather than three revisions later.
+        small = pygame.font.Font(None, 17)
+        lines = R.describe(kind, width=30)
+        asm = ASSEMBLIES.get(kind)
+        if asm is not None:
+            pm = R.check_proportion(kind, asm)
+            vm = validate(asm, kind)
+            lines.append("")
+            lines.append("PROPORTION: " + ("off -- see below" if pm else "ok"))
+            if pm:
+                lines += textwrap.wrap(pm, 30)
+            for m in vm:
+                lines += textwrap.wrap("! " + m, 30)
+        for li, ln in enumerate(lines[:11]):
+            surf.blit(small.render(ln[:40], True, (150, 148, 156)),
+                      (12, y + 50 + li * 15))
 
     # the wall-height ruler: judge every prop against what a wall rises to
-    cam.origin = (W - 60, 40 + 130)
+    cam.origin = (W - 50, 40 + 130)
     cam.yaw = yaws[0]
     p0 = cam.project(0, 0, 0)
     p1 = cam.project(0, 0, _TILT_WALL_RISE)
     pygame.draw.line(surf, (150, 150, 160), p0, p1, 2)
     surf.blit(font.render(f"wall {_TILT_WALL_RISE}", True, (200, 200, 208)),
-              (W - 110, 40 + 160))
+              (W - 110, 40 + 172))
 
     out = "/tmp/props_sheet.png"
     pygame.image.save(surf, out)

@@ -13,6 +13,8 @@ import random
 import pygame
 from rendering.solids import (draw_solid, draw_box, draw_billboard,
                               draw_log, _shade)
+from rendering.assemblies import ASSEMBLIES
+from rendering.assembly import draw as _assembly_draw
 
 
 def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
@@ -4360,10 +4362,6 @@ SOLID_PROPS = {
     "neon_pylon":    _draw_neon_pylon_solid,
     "chain_fence":   _draw_chain_fence_solid,
     "bridge_rail":   _draw_bridge_rail_solid,
-    "mailbox":       _draw_mailbox_solid,
-    "yard_fence":    _draw_yard_fence_solid,
-    "stoop":         _draw_stoop_solid,
-    "woodpile":      _draw_woodpile_solid,
     "boulder":       _draw_boulder_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,
@@ -4493,9 +4491,23 @@ def is_solid_prop(kind):
 
 
 def draw_prop_solid(surf, cam, deco):
-    """Draw one decoration as a volumetric body-of-revolution prop or a grounded
-    standee. Returns True if it was a known solid/standee (and drawn), False
-    otherwise so the caller can fall back."""
+    """Draw one decoration as a volumetric prop or a grounded standee.
+    Returns True if it was a known solid/standee (and drawn), False otherwise
+    so the caller can fall back.
+
+    ASSEMBLIES WIN. A kind declared in `rendering/assemblies.py` is drawn by
+    the central assembly renderer, which culls, sorts and shades once for
+    every prop instead of each prop doing its own (`rendering/assembly.py`
+    explains why that split exists). Anything not yet converted keeps its
+    hand-written function -- the two paths coexist on purpose, so props move
+    over as they are touched rather than in one unverifiable sweep."""
+    asm = ASSEMBLIES.get(deco.kind)
+    if asm is not None:
+        kw = getattr(deco, "kwargs", {})
+        yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
+        _assembly_draw(surf, cam, asm, deco.x, deco.y, yaw=yaw,
+                       scale=(getattr(deco, "scale", 1.0) or 1.0))
+        return True
     fn = SOLID_PROPS.get(deco.kind)
     if fn is not None:
         fn(surf, cam, deco)

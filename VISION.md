@@ -47,6 +47,14 @@ revolution -- `draw_solid` with equal radii is a drum, which is how a stoop
 shipped looking like a butter-churn lid and a woodpile like a perforated
 barrel.
 
+**Build it from a REFERENCE, not from your own description.** Search for the
+real object first and record what it is in `rendering/references.py` — real
+dimensions, shape language, the tells. It is not a formality: "a tunnel with
+an arched top and flat front, back and bottom, 23 x 11 x 13 inches" is what
+turned a mailbox that had gone five revisions as a grey lozenge into one that
+reads at a glance. `check_proportion` then compares the model against that
+ratio in the gate, so a wrong shape fails before it is ever rendered.
+
 **A repeated shape is many OBJECTS, not one faked volume.** A woodpile is
 logs, a fence is posts, a stack is things stacked. Every attempt to imply
 that from a single mass failed at a different depth (a barrel with dots on

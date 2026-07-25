@@ -111,11 +111,16 @@ TILT_EXEMPT = {
 def _tilt_sets():
     from scenes import SCENE_BUILDERS, load_scene
     from rendering.props import SOLID_PROPS, _STANDEE_KINDS
+    from rendering.assemblies import ASSEMBLIES
     from rendering.furniture import FURNITURE
     from scenes.terrain import (_FLOOR_DECAL_KINDS, _SURFACE_DECAL_KINDS,
                                 _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
-    sets = (SOLID_PROPS, _STANDEE_KINDS, FURNITURE, _FLOOR_DECAL_KINDS,
-            _SURFACE_DECAL_KINDS, _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
+    # ASSEMBLIES is the newest tilt registration: a kind declared as PARTS
+    # (rendering/assemblies.py) is drawn by the central assembly renderer
+    # and is as real a volume as anything in SOLID_PROPS.
+    sets = (SOLID_PROPS, ASSEMBLIES, _STANDEE_KINDS, FURNITURE,
+            _FLOOR_DECAL_KINDS, _SURFACE_DECAL_KINDS, _WALL_DECO_KINDS,
+            _TABLETOP_PROP_KINDS)
     orphan = {}
     for key in sorted(SCENE_BUILDERS):
         try:
@@ -276,7 +281,45 @@ def _exit_chars_walkable():
                 "  walks onto.\n" + "\n".join(rows))
 
 
-# ------------------------------------------------------- 8. TOOLS.md fresh
+# ------------------------------------------- 8. assemblies match their refs
+# THE RULE: a prop declared as PARTS is built to a recorded reference
+# (`rendering/references.py`), and both the structure and the proportion are
+# machine-checkable BECAUSE it is data. This is the check that could not
+# exist while props were imperative draw calls, and it is the whole reason
+# the rework was worth doing.
+# It has already earned its keep: on its first run it caught a mailbox being
+# measured with its post included, a stoop whose reference axes were quoted
+# the way a catalogue quotes them (and so was compared ninety degrees out),
+# and a woodpile modelled with its logs along the stack instead of across it.
+# All three were found before anything was rendered.
+@check("every parts-built prop matches its recorded reference")
+def _assemblies():
+    from rendering.assemblies import ASSEMBLIES
+    from rendering.assembly import validate
+    from rendering import references as R
+    rows = []
+    for kind, asm in sorted(ASSEMBLIES.items()):
+        for m in validate(asm, kind):
+            rows.append("    " + m)
+        if kind not in R.REFERENCES:
+            rows.append(f"    {kind}: built as parts but has NO reference on "
+                        "record -- search for one and add it to "
+                        "rendering/references.py")
+            continue
+        pm = R.check_proportion(kind, asm)
+        if pm:
+            rows.append("    " + pm)
+    if rows:
+        return ("  a parts-built prop is checked against the real object's "
+                "proportions.\n"
+                "  Fix the model, or correct the reference if the reference "
+                "is what is wrong\n"
+                "  (its `real` is in the MODEL's axes: +x length, +y across, "
+                "+z up).\n"
+                + "\n".join(rows))
+
+
+# ------------------------------------------------------- 9. TOOLS.md fresh
 # THE RULE: TOOLS.md is GENERATED from each tool's own docstring
 # (`python tools/index.py --md`) precisely so a hand-maintained list of 40+
 # tools cannot rot the way the canon's dead file references did. This check

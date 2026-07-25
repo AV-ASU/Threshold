@@ -139,6 +139,49 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- THE PROP PIPELINE: props became data (maintainer: "the issue
+  is the creation process... if this can take us from 5 prompts an object to
+  one or two that would be perfect").** Diagnosis first, because the
+  individual bugs were symptoms: a prop was a function emitting polygons, so
+  every prop re-derived face culling, draw order, shading and world-vs-screen
+  placement, and every prop got them wrong independently. Worse, I built the
+  shape the primitives made easy rather than the shape the object is -- the
+  library was four shapes wide, so a rural mailbox (a tunnel arch) shipped as
+  a rectangular prism and a stoop as two slabs, and no amount of bug-fixing
+  touched that.
+  Four new files. `prim.py` returns FACES rather than pixels, and is wide
+  enough to model things: box, plate, arch, cylinder on either axis, prism,
+  wedge, revolve. `materials.py` is the one colour table, shading from the
+  face's role and how far up it faces, so a cylinder gets its crown-to-belly
+  gradient for free and two props meant to be the same cedar are. 
+  `assembly.py` holds `Part`/`Assembly` and does culling, depth-sorting and
+  shading ONCE for everything -- which makes the old failures inexpressible
+  rather than merely fixed. `assemblies.py` declares the props.
+  **`references.py` is the piece that changes the hit rate.** The maintainer's
+  observation was that the best prop in the game is the one built from a
+  reference they handed over, and everything built from my own description of
+  it went five revisions. Fetching reference IMAGES turned out to be blocked
+  by this environment's egress policy (403 on CONNECT; the proxy README says
+  report it rather than route around), but web SEARCH works and carries most
+  of the value, because what a photo fixes is shape language and proportion
+  and both are written down. The Joroleman mailbox is "a tunnel with an
+  arched top and flat front, back and bottom", 23.2 x 11 x 13.4in. A stoop is
+  7in rise to 11in run, 48-60in wide. Recording that and checking against it
+  in the gate is `tests/conventions.py` check 8.
+  It paid immediately, and this is the part worth keeping: on its first run
+  the proportion check caught three errors BEFORE anything was rendered -- a
+  mailbox measured with its post included, a stoop whose reference axes were
+  quoted the way a catalogue quotes them and so was compared ninety degrees
+  out, and a woodpile modelled with its logs running along the stack instead
+  of across it (a stack runs along a wall with the ends out, so a log lies
+  across it). That last one was the actual reason the pile had looked wrong
+  through three previous rewrites.
+  The four yard props are rebuilt on it. `draw_prop_solid` prefers an
+  assembly and falls back to the hand-written function, so the ~80 existing
+  props are untouched and convert as they are contacted -- a mass conversion
+  would mean re-verifying eighty props by eye, which is the expensive thing
+  the rework exists to stop.
+
 - **2026-07 -- `draw_box` was drawing its own back faces (maintainer:
   "occlusion is wrong, I can see inside some logs").** The primitive picked
   which faces to draw from a FIXED world axis -- "near, left, right" measured

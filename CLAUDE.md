@@ -351,6 +351,33 @@ it renders the procedural sprites to a labelled PNG strip.
     unchanged; add a new prop kind by dropping a `_draw_<kind>` method
     into the fitting mixin.
 - `rendering/`
+  - **THE PROP PIPELINE (2026-07 rework).** A prop is DATA, not a draw
+    function. Four files, and the split between them is the point:
+    - `prim.py` — parametric solids returning FACES (`verts, normal, role`)
+      in local space, drawing nothing: `box` / `plate` / `arch` (a tunnel
+      vault) / `cyl` (z or x axis) / `prism` / `wedge` / `revolve`, plus
+      `bounds`. The library is wide on purpose — props used to be built out
+      of whatever primitive was closest rather than the shape the object IS
+      (a rural mailbox is a tunnel arch and shipped as a rectangular prism).
+    - `materials.py` — the ONE colour table (`MATERIALS`, `ROLE_SHADE`,
+      `shade_for`). Every prop used to inline its own RGB, which is why
+      things didn't sit together. Shading takes the face role AND how far up
+      it faces, so a cylinder gets a crown-to-belly gradient for free.
+    - `assembly.py` — `Part` (a primitive + local transform + material) and
+      `Assembly`, plus `draw()` which culls, depth-sorts and shades ONCE for
+      every prop, and `validate()`. Culling/order/shading being central is
+      what makes the old failures inexpressible: a box painting its own back
+      faces, parts placed off `cam.yaw`, pieces painted in loop order.
+    - `assemblies.py` — the declared props themselves, and
+      `references.py` — what each one is SUPPOSED to be (real dimensions,
+      shape language, tells, source URL). `check_proportion` compares the
+      model's L:W:H against the real object's; `real` is in the MODEL's axes
+      (+x length, +y across, +z up), not the way a catalogue quotes it.
+    `draw_prop_solid` prefers an assembly and falls back to the hand-written
+    function, so kinds convert as they're touched rather than in one sweep.
+    Guarded by `tests/conventions.py` check 8. Preview with
+    `tools/preview_props_sheet.py`, which turntables and prints the reference
+    beside the render.
   - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). This is now a
     thin **facade** that re-exports the public surface from themed siblings, so
     `from rendering.sprites import <name>` is unchanged. The siblings:
