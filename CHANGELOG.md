@@ -1210,6 +1210,28 @@
     is the single source for the draw AND for collision, sight and nav
     through `Scene._obj_solid_here`. Jitter + foot is bounded under 0.7 of a
     tile so a tree cannot seal a corridor it was never authored into.
+  - **Then the walk-through tree was retired entirely** (maintainer, on
+    seeing the round feet: "that's perfect and allows for natural gaps for
+    the player to slip through so we don't need collision-less trees").
+    `p` -- 967 tiles, about half the forest -- existed because full-tile
+    square collision makes a stand of trees a wall, so permeability had to
+    be authored by hand. With round feet and a point-collided player the
+    gaps are a property of the geometry: a band of solid trees still admits
+    a straight north crossing at 25-55% of its width, far more diagonally.
+    `_TILT_BRUSH_CHARS` is empty now and undergrowth is a `bush` decoration
+    placed deliberately. `j` stays passable -- it is a hidden doorway -- and
+    draws as an ordinary tree again, which is what made it hidden.
+  - Two guards had to follow. `tests/smoke.py`'s reachability flood was
+    tile-granular and 4-way, so it called a whole cell solid when most of it
+    was clear and could not see a diagonal gap at all; it floods sub-tile
+    through `is_solid_at` now in any scene with solid plants. And three
+    hand-placed hide spots / noisemakers turned out to be sitting on
+    scattered plants that had been harmless while plants were walk-through
+    -- `scenes/__init__.py` clears a solid plant under authored content, so
+    scatter can never win over a placement again.
+  - Tree stature raised on the maintainer's mark-up: the old 40-54 spread
+    became 50-64 (a wall is 26). The floor came up rather than the ceiling
+    going higher -- the short ones were what read as scrubby.
   - Also: `OBJECT_DEFS` had claimed for some time that `p` is a "passable
     secret tree -- looks identical to T". It renders as low scrub and has
     not looked identical to `T` in a while; the comment was the wrong half

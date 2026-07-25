@@ -168,12 +168,15 @@ OBJECT_DEFS = {
     "#": {"solid": True, "kind": "stone_wall"},
     "W": {"solid": True, "kind": "wood_wall"},
     "T": {"solid": True, "kind": "tree"},
-    # WALK-THROUGH growth. The comment here used to claim 'looks identical
-    # to T', and it has not for some time: `p` renders as low scrub, so the
-    # places you may push through the treeline are VISIBLE. That is a design
-    # choice either way -- see `_TILT_BRUSH_CHARS` -- but the two statements
-    # disagreed in-tree, and this is the one that was wrong.
-    "p": {"solid": False, "kind": "tree"},   # walk-through -- drawn as low scrub
+    # A NORMAL TREE. `p` used to be a walk-through tree -- 967 of them,
+    # about half the forest -- because a forest of full-tile square
+    # collision cells is a wall, so permeability had to be authored in by
+    # hand. Round sub-tile feet (`tree_footprint`) make the gaps FALL OUT of
+    # the geometry instead, and the player collides as a point, so a stand of
+    # solid trees is already something you thread rather than something you
+    # bounce off. Undergrowth is a `bush` DECORATION now, placed where a
+    # scene wants it, rather than half the treeline.
+    "p": {"solid": True, "kind": "tree"},
     "C": {"solid": True, "kind": "cornstalk"},
     "A": {"solid": False, "kind": "cornstalk"},   # passable corn -- looks like C
     "R": {"solid": True, "kind": "rock"},
@@ -1367,7 +1370,11 @@ _TREE_CARD_CAP = 1600
 # than a full tree, so the player can tell at a glance which growth blocks them
 # ('T', solid) and which they can slip through -- a stealth-navigation tell --
 # and the woods get a low understory layer instead of one stamped canopy height.
-_TILT_BRUSH_CHARS = frozenset({"p", "j"})
+# Terrain chars drawn as low scrub rather than as a tree. EMPTY on purpose:
+# undergrowth is a `bush` decoration a scene places deliberately, and the
+# forest is trees. `j` is not here either -- it is a hidden doorway, and it
+# only works as one if it looks like every other tree.
+_TILT_BRUSH_CHARS = frozenset()
 
 
 def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
@@ -1533,8 +1540,8 @@ def tree_height(seed, species, scale=1.0):
     screen it covered and a knee-high bush over-reported it by triple."""
     if species == "brush":
         return (9 + (_vary(seed, 3) % 6)) * 1.10 * scale
-    trunk_h = 13 + (_vary(seed, 1) % 7)
-    canopy_h = 24 + (_vary(seed, 3) % 9)
+    trunk_h = 17 + (_vary(seed, 1) % 6)
+    canopy_h = 31 + (_vary(seed, 3) % 8)
     if species == "bare":
         return (trunk_h + canopy_h * 1.05) * scale
     return (trunk_h * 0.16 + canopy_h * 1.30 * 0.82 + canopy_h * 1.30 * 0.40) \
@@ -1667,10 +1674,15 @@ def draw_tree_body(surf, camera, wx, wy, seed, species, scale=1.0, far=False):
                          lr, hgt * 0.44, ramp, seed ^ (li * 40503), far)
         return
 
-    trunk_r = (1.3 + (_vary(seed, 0) % 10) * 0.07) * scale
-    trunk_h = (13 + (_vary(seed, 1) % 7)) * scale
-    canopy_r = (11 + (_vary(seed, 2) % 6)) * scale
-    canopy_h = (24 + (_vary(seed, 3) % 9)) * scale
+    # SIZE. The maintainer picked the tall end of the old 40-54 spread as
+    # the right stature for a tree, so the FLOOR comes up rather than the
+    # ceiling going higher: the short ones were what read as scrubby, and
+    # a stand wants a canopy well over the buildings it stands behind
+    # (a wall rises 26, the player stands 20).
+    trunk_r = (1.5 + (_vary(seed, 0) % 10) * 0.07) * scale
+    trunk_h = (17 + (_vary(seed, 1) % 6)) * scale
+    canopy_r = (12 + (_vary(seed, 2) % 6)) * scale
+    canopy_h = (31 + (_vary(seed, 3) % 8)) * scale
 
     if species == "spruce":
         # the bole is almost entirely behind the skirt; what shows is a stub

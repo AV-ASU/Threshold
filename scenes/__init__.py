@@ -138,6 +138,9 @@ SCENE_BUILDERS = {
 # resolves falls back to "bedroom" via load_scene below.
 
 
+from constants import TILE
+
+
 def load_scene(key):
     if key not in SCENE_BUILDERS:
         # Any save or exit pointing at a deleted scene falls back to the
@@ -155,7 +158,50 @@ def load_scene(key):
     from systems.config import UNDERGROUND_SCENES
     if key in UNDERGROUND_SCENES or key in ("dark", "threshold", "maras_room"):
         sc.door_style = "cave"
+    _clear_plants_under_content(sc)
     return sc
+
+
+def _clear_plants_under_content(sc):
+    """AUTHORED CONTENT BEATS SCATTERED GREENERY.
+
+    Hide spots and noisemakers are placed by hand on ground the designer
+    means the player to stand on; the forest band is scattered
+    procedurally around them. When walk-through trees became solid, three
+    of those hand-placed spots ended up inside a trunk -- not because the
+    spot was wrong, but because a scattered plant had been sitting on it
+    harmlessly for as long as plants were walk-through.
+
+    Applied here rather than per builder so a new hide spot can never
+    drift into the same trap. Only PLANT chars are cleared: a wall over a
+    declared spot is a real authoring error and stays a gate failure.
+    """
+    from scenes import terrain as _t
+    spots = []
+    for s in (getattr(sc, "hide_spots", None) or []):
+        spots.append((s[0], s[1]))
+    for n in (getattr(sc, "noisemakers", None) or []):
+        if isinstance(n, dict):
+            if n.get("x") is not None:
+                spots.append((n["x"], n["y"]))
+        elif len(n) >= 2:
+            spots.append((n[0], n[1]))
+    if not spots:
+        return
+    grid = None
+    for (px, py) in spots:
+        tx, ty = int(px // TILE), int(py // TILE)
+        if not (0 <= ty < sc.h and 0 <= tx < sc.w):
+            continue
+        ch = sc.objects[ty][tx]
+        od = _t.OBJECT_DEFS.get(ch) or {}       # '.' maps to None, not {}
+        if od.get("kind") != "tree" or not od.get("solid"):
+            continue
+        if grid is None:
+            grid = [list(r) for r in sc.objects]
+        grid[ty][tx] = "."
+    if grid is not None:
+        sc.objects = grid
 
 
 __all__ = [

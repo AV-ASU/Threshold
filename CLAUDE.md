@@ -518,6 +518,14 @@ it renders the procedural sprites to a labelled PNG strip.
     **Heights are real** (`tree_height`): the depth key and the occluder fade
     box in `render_mixin` take the object's own height, not the flat wall
     rise of 26 that every occluder but a counter used to claim.
+    **There are no walk-through trees.** `p` used to be a passable tree (967
+    of them, about half the forest) because full-tile square collision makes
+    a stand a wall, so permeability had to be authored by hand. Round feet
+    plus a POINT-collided player make the gaps fall out of the geometry, so
+    `p` is now an ordinary solid tree and `_TILT_BRUSH_CHARS` is empty;
+    undergrowth is a `bush` decoration a scene places deliberately. `j` stays
+    passable because it is a hidden DOORWAY, and it now draws as a normal
+    tree, which is what made it hidden in the first place.
   - **Blind-spot vision (`sight.py`, DESIGN.md §10):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, and
     the world-rot decals — flagged `_sight_gated`) to a forward sight

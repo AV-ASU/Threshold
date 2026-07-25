@@ -593,6 +593,16 @@ Built into the procedural draw layer (`scenes/base.py`,
   of a grid and the player slips between trunks on the diagonal the way the
   silhouette promises. Jitter plus foot is held under 0.7 of a tile so a tree
   can never seal a corridor it was not authored into.
+  Because the player collides as a POINT and a trunk is a circle, the gaps
+  between trees are now a property of the stand rather than something a
+  designer marks tile by tile. That retired the walk-through tree outright
+  (about half the forest was one); a band of solid trees still admits a
+  straight north crossing at 25-55% of its width, and far more on the
+  diagonal, which is the "push through the woods" feel the permeable band
+  was hand-authored to fake. It also retired the tile-granular reachability
+  guard: `tests/smoke.py` floods sub-tile through `is_solid_at` in any scene
+  with solid plants, because a coarse 4-way tile walk cannot see a diagonal
+  gap and was rejecting real routes.
   Occlusion is then a consequence of geometry rather than of draw order.
   Two rules make that true: **nothing gets a privileged layer** (anything
   with height joins the one depth-sorted pass -- `bush` used to be a floor
