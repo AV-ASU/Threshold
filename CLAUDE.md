@@ -368,7 +368,8 @@ it renders the procedural sprites to a labelled PNG strip.
       in local space, drawing nothing: `box` / `plate` / `arch` (a tunnel
       vault) / `cyl` (z or x axis) / `prism` / `frustum` (a TAPERED prism —
       `sides=4` a lantern housing, `r1=0` a peaked cap, high `sides` a cone)
-      / `wedge` / `revolve`, plus `bounds`. The library is wide on purpose —
+      / `wedge` / `star` (an upright extruded STARBURST, the shape that says
+      1960s roadside on sight) / `revolve`, plus `bounds`. The library is wide on purpose —
       props used to be built out of whatever primitive was closest rather
       than the shape the object IS (a rural mailbox is a tunnel arch and
       shipped as a rectangular prism; a lantern head TAPERS and shipped as a
@@ -383,7 +384,10 @@ it renders the procedural sprites to a labelled PNG strip.
       the preview sheet's neutral card flatters everything, and `lift`
       compounds it (an upward face lands near `(1 + lift) x base`, and under
       the 55° camera most of a low prop IS its top).
-    - `assembly.py` — `Part` (a primitive + local transform + material) and
+    - `assembly.py` — `Part` (a primitive + local transform + material; `yaw`
+      spins it about the vertical and `pitch` TIPS it in its own x-z, which is
+      what anything leaning needs -- a splayed sign leg, a knee brace, a
+      cantilever) and
       `Assembly`, plus `draw()` which culls, depth-sorts and shades ONCE for
       every prop, and `validate()`. Culling/order/shading being central is
       what makes the old failures inexpressible: a box painting its own back

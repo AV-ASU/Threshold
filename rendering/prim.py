@@ -193,6 +193,41 @@ def frustum(sides, r0, r1, h, z0=0.0, rot=0.0):
     return faces
 
 
+def star(points, r_out, r_in, thick, z0=0.0):
+    """A STARBURST: a flat star standing UPRIGHT in the x-z plane, extruded
+    a little way through +/-y so it has real body seen edge-on.
+
+    The atomic star is the single most identifying shape in 1950s-60s roadside
+    signage (the Welcome to Fabulous Las Vegas sign, every googie pylon), and
+    nothing in the library could make one: `prism` walks a regular polygon at
+    ONE radius, and a star is the alternation between two. Faked out of
+    crossed boxes it reads as a plus sign.
+
+    Unlike every other builder here this one stands UP rather than lying flat,
+    because a sign's artwork faces the reader: `points` spikes around the x-z
+    plane starting at the top, and the thin axis is +/-y, the way you look at
+    it.
+    """
+    n = max(3, int(points))
+    ring = []
+    for i in range(n * 2):
+        ang = math.pi / 2 - i * math.pi / n
+        rr = r_out if i % 2 == 0 else r_in
+        ring.append((math.cos(ang) * rr, math.sin(ang) * rr + z0))
+    ht = thick / 2.0
+    front = [(x, -ht, z) for x, z in ring]
+    back = [(x, ht, z) for x, z in ring]
+    faces = [(front, (0, -1, 0), SIDE),
+             (list(reversed(back)), (0, 1, 0), SIDE)]
+    for i in range(len(ring)):
+        j = (i + 1) % len(ring)
+        ax, az = ring[j][0] - ring[i][0], ring[j][1] - ring[i][1]
+        # the rim's outward normal is perpendicular to the edge, in x-z
+        faces.append(_quad(back[i], back[j], front[j], front[i],
+                           _n(az, 0, -ax), END))
+    return faces
+
+
 def wedge(w, d, h, z0=0.0):
     """A ramp: full height at -x, falling to nothing at +x. Roof pitches,
     spoil slopes, a cellar door."""

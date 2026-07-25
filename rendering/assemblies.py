@@ -377,138 +377,197 @@ def _pickup_truck():
 
 
 # ------------------------------------------------------------- town sign
-# Reference: a 4x8ft painted panel in a battened frame, on two squared posts,
-# panel bottom about 3 1/2ft up. The version this replaces was a flat tan
-# rectangle on two sticks with its three lines rendered in a SYSTEM FONT and
-# blitted at the board's projected centre -- so the words stayed
-# screen-horizontal while the board foreshortened, and from the east they
-# floated off the plank and hung over the post. It also painted its own BACK:
-# the same three lines read perfectly from behind a board the fiction says
-# nobody ever painted (the SPREAD ending's drive-out shows "the side they
-# never painted"). Both faults are structural here rather than fixed: the
-# lettering is an OVERLAY in the panel's own plane, and it is drawn only when
-# the panel's front normal faces the viewer.
+# Reference: the 1959 "Welcome to Fabulous Las Vegas" board and its googie
+# family -- a BRIGHT cream panel in a coral frame, a bulb-lined atomic
+# STARBURST rising behind it, and two splayed steel legs. The maintainer
+# asked for "bright, very 1960-1970, like that sign in Back to the Future",
+# and this is that sign's older and more famous cousin: the archetype for a
+# roadside board whose whole job is to WELCOME.
+#
+# It is also the fix for the thing that kept failing. Two earlier cuts were
+# weathered farm boards, dark green on dark ground, and the lower two lines
+# could not be read at play zoom at either size. Contrast, not scale, was the
+# missing ingredient: near-black ink on a cream panel reads where bone on
+# municipal green never did, and giving each subordinate line its OWN
+# coloured band means it is bounded by its background instead of dissolving
+# into the field. In fiction this is the last bright thing in Brimley --
+# built when the town still had a future, and still burning out on the road
+# with nobody left to read it.
 _SIGN_LINES = ("BRIMLEY", "NORTHERNMOST CORN", "EST. 1894")
 
 
-def _sign_paint(lines, x0, x1, plane_y):
-    """The board's lettering, painted in the panel's plane.
+def _sign_paint(lines, plane_y, bulbs=None):
+    """The sign's artwork: its lettering, and the bulbs around its panel.
 
-    `lines` is (text, z bottom, z top, brush weight). The paint SHADES with
-    the face it sits on -- same material table, same `toward` the renderer
-    culled by -- so the letters dim as the board turns away instead of
-    staying flat and giving the surface away as a sticker.
+    Everything here is drawn in the PANEL's own plane through the prop's
+    local-to-screen projector, so it foreshortens and goes edge-on with the
+    board. `lines` is (text, x0, x1, z bottom, z top, ink material, weight);
+    `bulbs` is a closed outline in panel coordinates to run a bulb string
+    around. The paint SHADES with the face it sits on, using the same
+    `toward` the renderer culled by, so the whole sign dims together as it
+    turns away instead of the artwork staying flat and giving the surface
+    away as a sticker.
     """
     def paint(surf, to_screen, toward_viewer):
+        import pygame
         toward = toward_viewer(0.0, -1.0, 0.0)
         if toward <= 0.001:
             return                       # the back of the board is bare
-        col = shade_for("sign_paint", "side", 0.0, toward)
-        chip = shade_for("sign_field", "side", 0.0, toward)
-
         def proj(lx, lz):
             return to_screen(lx, plane_y, lz)
-
-        for text, zb, zt, weight in lines:
-            lettering.paint_word(surf, proj, text, x0, x1, zb, zt, col,
-                                 wear=chip, weight=weight,
+        if bulbs:
+            # The bulb string. Mid-century signage is lit by BULBS in a
+            # row, not by an even glow, and the row of separate points is
+            # the tell -- an edge-lit outline reads as a modern LED strip.
+            warm = shade_for("sign_star", "top", 0.4, toward)
+            hot = tuple(min(255, c + 46) for c in warm)
+            for i, (bx, bz) in enumerate(bulbs):
+                px, py = proj(bx, bz)
+                r = 2 if (i % 2) else 3
+                pygame.draw.circle(surf, warm, (int(px), int(py)), r)
+                pygame.draw.circle(surf, hot, (int(px), int(py)), max(1, r - 1))
+        for text, x0, x1, zb, zt, ink, weight in lines:
+            lettering.paint_word(surf, proj, text, x0, x1, zb, zt,
+                                 shade_for(ink, "side", 0.0, toward),
+                                 wear=None, weight=weight,
                                  seed=sum(ord(c) for c in text))
     return paint
 
 
-def _town_sign(text="BRIMLEY", welcome=True):
-    """A painted board on two posts.
+def _ring(x0, x1, z0, z1, step):
+    """Evenly spaced points around a rectangle, for a bulb string."""
+    pts = []
+    w, h = x1 - x0, z1 - z0
+    nx, nz = max(2, int(w / step)), max(2, int(h / step))
+    for i in range(nx):
+        f = i / nx
+        pts.append((x0 + w * f, z0))
+        pts.append((x1 - w * f, z1))
+    for i in range(nz):
+        f = i / nz
+        pts.append((x1, z0 + h * f))
+        pts.append((x0, z1 - h * f))
+    return pts
 
-    `welcome` is the town's civic board at the road in: the full 4x8 panel
-    carrying all three lines. Without it you get the compact single-word
-    wayfinding board, which is what five of this kind's six placements
-    actually are. That USED to be inferred from the text reading "BRIMLEY",
-    which meant the three directional boards pointing travellers toward town
-    each rendered the whole civic welcome board, founding year and all --
-    four welcome signs for one town, three of them nowhere near its edge.
+
+def _town_sign(text="BRIMLEY", welcome=True):
+    """The town's sign.
+
+    `welcome` is the civic board at the road in: the full googie sign with
+    the starburst and all three lines. Without it you get the compact
+    single-word wayfinding board, which is what five of this kind's six
+    placements actually are. That USED to be inferred from the text reading
+    "BRIMLEY", which meant the three directional boards pointing travellers
+    toward town each rendered the whole civic welcome board, founding year
+    and all -- four welcome signs for one town, three of them nowhere near
+    its edge.
     """
-    # An 8 x 16ft board: DOUBLE the 4x8 sheet a small sign is cut from, and
-    # the size the town's own board actually wants to be. Three lines on a
-    # 4x8 left the name 8px high at play zoom with one-pixel strokes, which
-    # is a smudge -- a sign nobody can read is not a sign. Doubling the real
-    # object rather than inflating a small one keeps the model honest: a
-    # 16ft board genuinely stands about twice a wall, so the world size below
-    # is close to true scale instead of an exaggeration to be apologised for.
-    # The panel holds the same 2:1 either way.
+    # An 8 x 16ft panel: double the 4x8 sheet a small sign is cut from, and
+    # the size this board needs for three lines to READ at play zoom. The
+    # panel holds 2:1 either way.
     real = (192.0, 2.0, 96.0)
     if welcome:
         pw = 72.0                            # panel width, world units
-        base_z = 10.0                        # bottom edge, about 3 1/2ft up
-        post_t, rail_h, stile_w, cap_h = 3.4, 2.8, 2.4, 1.3
-        post_in, post_rise = 5.0, 1.0
+        base_z = 12.0                        # the panel is held UP, googie
+        frame, leg_t, leg_splay = 2.6, 3.0, 0.20
     else:
         pw = 34.0
         base_z = 12.0
-        post_t, rail_h, stile_w, cap_h = 1.9, 1.5, 1.3, 0.75
-        post_in, post_rise = 2.2, 0.5
+        frame, leg_t, leg_splay = 1.5, 1.9, 0.13
     k = _k(real, pw)
     ph = (real[2] * k) if welcome else 10.0  # a wayfinding board is squatter
-    pt = max(0.8, real[1] * k)               # panel thickness
+    pt = max(0.9, real[1] * k)               # panel thickness
     top_z = base_z + ph
-    # THE POSTS ARE MEASURED IN WORLD UNITS, not scaled off `k`: how far a
-    # board stands off the ground is a fact about the world, not about the
-    # exaggeration baked into the model (the mailbox lesson).
-    post_h = top_z + post_rise
-    post_x = pw / 2 - post_in                     # inset from the panel ends
-    post_y = pt / 2 + post_t / 2                  # the board hangs on the FRONT
-    rail_w = pw + rail_h * 0.8
-    # the frame stands PROUD of the panel toward the reader; that shadow line
-    # is what makes it a board rather than a painted plank
-    fy = -(pt / 2) - 0.45
+    fy = -(pt / 2) - 0.5                     # the frame stands proud
     parts = [
-        # TWO plates, not one box, because only ONE side of a board ever gets
-        # painted. A single `sign_field` box carries the municipal green on
-        # all six faces, so from behind you get a smart green panel instead
-        # of the bare weathered plank the fiction is explicit about (the
-        # SPREAD ending's drive-out: "the side they never painted").
+        # TWO plates, not one box, because only ONE side is the artwork. A
+        # single box carries the cream on all six faces, so from behind you
+        # get a bright panel instead of the sign's plain back.
         Part(prim.box(pw, pt * 0.5, ph), at=(0, -pt * 0.25, base_z),
              mat="sign_field", name="panel_face"),
         Part(prim.box(pw, pt * 0.5, ph), at=(0, pt * 0.25, base_z),
-             mat="plank", name="panel_back"),
-        Part(prim.box(rail_w, rail_h * 0.8, rail_h), at=(0, fy, top_z - rail_h),
-             mat="plank", name="rail_top"),
-        Part(prim.box(rail_w, rail_h * 0.7, rail_h * 0.8),
-             at=(0, fy, base_z - rail_h * 0.2),
-             mat="plank", name="rail_bottom"),
-        *[Part(prim.box(stile_w, rail_h * 0.55, ph - rail_h * 2.0),
-               at=(sx * (pw / 2 - stile_w / 2 + 0.8), fy + 0.1,
-                   base_z + rail_h),
-               mat="plank", name=f"stile{sx}")
+             mat="sign_steel", name="panel_back"),
+        # the coral frame: two rails and two stiles, standing proud
+        Part(prim.box(pw + frame * 1.6, frame * 0.7, frame),
+             at=(0, fy, top_z - frame * 0.2), mat="sign_accent",
+             name="frame_top"),
+        Part(prim.box(pw + frame * 1.6, frame * 0.7, frame),
+             at=(0, fy, base_z - frame * 0.8), mat="sign_accent",
+             name="frame_bottom"),
+        *[Part(prim.box(frame, frame * 0.6, ph),
+               at=(sx * (pw / 2 + frame * 0.3), fy + 0.1, base_z),
+               mat="sign_accent", name=f"frame_stile{sx}")
           for sx in (1, -1)],
-        *[Part(prim.box(post_t, post_t, post_h), at=(sx * post_x, post_y, 0),
-               mat="cedar", name=f"post{sx}")
-          for sx in (1, -1)],
-        # a shallow pyramid cap so the post end grain is not left open to the
-        # weather, which is both what a builder does and what gives the
-        # silhouette its two small peaks
-        *[Part(prim.frustum(4, post_t * 0.76, 0.2, cap_h, rot=math.pi / 4),
-               at=(sx * post_x, post_y, post_h), mat="cedar", name=f"cap{sx}")
+        # THE SPLAYED LEGS. Two posts straight down is a farm board; a
+        # mid-century sign stands on legs that lean out, which is what
+        # `Part.pitch` was added for.
+        # Lifted by exactly the amount the lean drops its low corner, or the
+        # leg's foot sinks under the ground -- which `validate()` reports and
+        # the tilt camera would show as a post growing out of nothing.
+        *[Part(prim.box(leg_t, leg_t, base_z + 4.0),
+               at=(sx * (pw * 0.26), pt / 2 + leg_t * 0.6,
+                   leg_t * 0.5 * math.sin(leg_splay)),
+               pitch=sx * leg_splay, mat="sign_steel", name=f"leg{sx}")
           for sx in (1, -1)],
     ]
-    inner = pw / 2 - stile_w - 0.6           # the lettering field, inside the frame
-    fz0, fz1 = base_z + rail_h * 0.7, top_z - rail_h * 1.1
+    plaque_h = ph * 0.26                     # the hanging year-plaque
     if welcome:
-        # Three lines, and the town name is the one you read from a moving
-        # car, so it takes half the field. The other two are the town's own
-        # boast and its founding year (NARRATIVE §1: est. 1894, the world's
-        # northernmost corn town) and sit small under it.
-        h = fz1 - fz0
-        # The NAME takes half the field. It is the only line anybody reads
-        # at speed or at distance; the boast and the year are what you find
-        # when you stop, and at play zoom they are honest texture.
-        lines = [(_SIGN_LINES[0], fz0 + h * 0.46, fz0 + h * 0.95, 0.17),
-                 (_SIGN_LINES[1], fz0 + h * 0.25, fz0 + h * 0.40, 0.24),
-                 (_SIGN_LINES[2], fz0 + h * 0.04, fz0 + h * 0.19, 0.24)]
+        # THE STARBURST, rising behind the panel and clearing its top. An
+        # eight-point atomic star is the shape that says 1960s roadside on
+        # sight, and it is the sign's silhouette above the board.
+        # The star clears the panel's top, but only just. Sized off the real
+        # archetype it lands the whole sign at 81 units, over three times a
+        # wall -- which is honest for the 25ft Vegas board and absurd for a
+        # dying corn town's own sign. Brimley built a small one.
+        parts.append(Part(prim.star(8, pw * 0.26, pw * 0.10, 1.4),
+                          at=(0, pt * 0.55, top_z + pw * 0.02),
+                          mat="sign_star", name="star"))
+        # the hanging plaque that carries the founding year, so the smallest
+        # line gets a panel of its own instead of a strip of the big one
+        parts.append(Part(prim.box(pw * 0.46, pt * 0.6, plaque_h),
+                          at=(0, 0, base_z - plaque_h - 1.2),
+                          mat="sign_accent", name="plaque"))
+        # the hanger, BETWEEN the plaque's top and the panel's underside --
+        # a plaque swinging under a gap is a floating part, which is exactly
+        # what `validate()` exists to catch
+        parts.append(Part(prim.box(pw * 0.10, pt * 0.4, 2.0),
+                          at=(0, 0, base_z - 1.4),
+                          mat="sign_steel", name="plaque_hanger"))
+    inner = pw / 2 - frame * 0.9             # the artwork field
+    if welcome:
+        # THE NAME takes the top two thirds of the panel and is the only
+        # line anybody reads at speed. The boast sits under it in cream on
+        # the coral band, and the year on its own hanging plaque: each
+        # subordinate line bounded by its own colour rather than dissolving
+        # into the field, which is what made them unreadable before.
+        band0, band1 = base_z + ph * 0.04, base_z + ph * 0.36
+        parts.append(Part(prim.box(pw * 0.96, pt * 0.42, band1 - band0),
+                          at=(0, -pt * 0.46, band0), mat="sign_accent",
+                          name="band"))
+        pz0 = base_z - plaque_h - 1.2
+        lines = [
+            (_SIGN_LINES[0], -inner, inner,
+             base_z + ph * 0.44, base_z + ph * 0.93, "sign_paint", 0.17),
+            # The subordinate lines get as much of their own band as the band
+            # can give them. Squeezed into a fifth of it they were unreadable
+            # at play zoom even in cream on coral, which was the maintainer's
+            # standing complaint through two rebuilds: the fix is a bigger
+            # share of the board, not a heavier brush.
+            (_SIGN_LINES[1], -inner * 0.96, inner * 0.96,
+             band0 + (band1 - band0) * 0.16, band1 - (band1 - band0) * 0.14,
+             "sign_accent_ink", 0.20),
+            (_SIGN_LINES[2], -pw * 0.20, pw * 0.20,
+             pz0 + plaque_h * 0.22, pz0 + plaque_h * 0.80,
+             "sign_accent_ink", 0.20),
+        ]
+        bulbs = _ring(-pw / 2 - frame * 0.2, pw / 2 + frame * 0.2,
+                      base_z - frame * 0.5, top_z + frame * 0.3, pw * 0.075)
     else:
-        lines = [(text, fz0 + (fz1 - fz0) * 0.16,
-                  fz0 + (fz1 - fz0) * 0.84, 0.18)]
-    return Assembly(*parts, overlay=_sign_paint(lines, -inner, inner,
-                                                -(pt / 2) - 0.01))
+        lines = [(text, -inner, inner, base_z + ph * 0.20,
+                  base_z + ph * 0.80, "sign_paint", 0.18)]
+        bulbs = None
+    return Assembly(*parts,
+                    overlay=_sign_paint(lines, -(pt / 2) - 0.7, bulbs))
 
 
 # A VALUE here is a finished assembly; a FUNCTION is a variant factory that

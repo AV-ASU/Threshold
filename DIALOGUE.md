@@ -1273,7 +1273,7 @@ them, so the contract binds them like any other line.
   ever (NARRATIVE §5, guarded `tests/flow.py` §33).
 
 - **BRIMLEY / NORTHERNMOST CORN / EST. 1894** (`_SIGN_LINES` in
-  `rendering/assemblies.py`; the town's painted welcome board). Three lines on
+  `rendering/assemblies.py`; the town's googie welcome board). Three lines on
   the civic board at the road into town, and the same three on the board the
   PI drives past in the opening (`ui/cutscenes.py _draw_road_sign`) -- one
   object, so the two must always agree. Spelled in the procedural PAINTED
@@ -1282,8 +1282,13 @@ them, so the contract binds them like any other line.
   his own words ("Northernmost corn in the world, grown on this ground since
   1894") and by NARRATIVE §1's timeline; the corn is never the door's doing.
   Guarded by `tests/flow.py` §19c. The board's BACK carries no lettering at
-  all, which is the same fact the SPREAD ending states as "the side they
-  never painted".
+  all: leaving, you only ever see the side they never painted.
+
+  The board it is lettered ON is a bright 1960s googie sign, bulbs and
+  starburst and all, and that is a fiction beat as much as an art one. It is
+  the last bright thing on the road, raised when Brimley still thought it had
+  a future, and it is still welcoming a town nobody can drive into. Nothing
+  about it is uncanny; it is only out of date.
 
   The smaller wayfinding boards of the same kind carry a single plain word
   (**TOWN**, **BRIMLEY**, **LODGE**, **ARCADIA**). Like the safe path's road

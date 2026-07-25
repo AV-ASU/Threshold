@@ -43,26 +43,37 @@ class Part:
     the rule the flag, the log ends and the treads all broke.
     """
 
-    __slots__ = ("faces", "at", "yaw", "mat", "name")
+    __slots__ = ("faces", "at", "yaw", "pitch", "mat", "name")
 
     def __init__(self, faces, at=(0.0, 0.0, 0.0), yaw=0.0, mat="wood",
-                 name=""):
+                 name="", pitch=0.0):
         self.faces = faces
         self.at = at
         self.yaw = yaw
+        # PITCH tips a part in its own x-z plane (about +y), which `yaw`
+        # alone cannot do: yaw spins a part about the vertical, so every part
+        # stayed dead upright or dead flat. Anything that LEANS -- a splayed
+        # sign leg, a knee brace, a ladder, a cantilever -- had to be faked
+        # out of stacked boxes or left out of the model entirely.
+        self.pitch = pitch
         self.mat = mat
         self.name = name
 
     def placed(self):
         """This part's faces in ASSEMBLY space."""
         c, s = math.cos(self.yaw), math.sin(self.yaw)
+        cp, sp = math.cos(self.pitch), math.sin(self.pitch)
         ox, oy, oz = self.at
         out = []
         for verts, nrm, role in self.faces:
-            vs = [(x * c - y * s + ox, x * s + y * c + oy, z + oz)
-                  for x, y, z in verts]
+            vs = []
+            for x, y, z in verts:
+                # pitch first, in the part's own x-z, then yaw about z
+                px, pz = x * cp + z * sp, -x * sp + z * cp
+                vs.append((px * c - y * s + ox, px * s + y * c + oy, pz + oz))
             nx, ny, nz = nrm
-            out.append((vs, (nx * c - ny * s, nx * s + ny * c, nz), role,
+            pnx, pnz = nx * cp + nz * sp, -nx * sp + nz * cp
+            out.append((vs, (pnx * c - ny * s, pnx * s + ny * c, pnz), role,
                         self.mat))
         return out
 

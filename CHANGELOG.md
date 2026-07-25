@@ -1234,6 +1234,27 @@
   - New tool: `tools/preview_lettering.py`, the alphabet flat and large
     beside the same text at the size it really lands, because "is this a
     good R" and "can this be read from the road" are different questions.
+  - **Then restyled to GOOGIE, on the maintainer's call** ("make it bright
+    and very 1960-1970, like that one sign in Back to the Future"), after
+    the lower two lines were still called unreadable on the enlarged
+    weathered board. The reference moved to the 1959 Welcome to Fabulous
+    Las Vegas sign, the archetype of exactly this object: a BRIGHT cream
+    panel in a coral frame, a bulb string around it, a bulb-lit atomic
+    starburst clearing the top, and splayed steel legs. Two new pieces of
+    vocabulary, because the shapes did not exist: `prim.star` (an upright
+    extruded starburst -- `prism` walks ONE radius and a star is the
+    alternation of two, so it had been unbuildable) and `Part.pitch` (tips
+    a part in its own x-z, so a leg can LEAN; yaw only spins about the
+    vertical, so anything leaning had to be faked out of stacked boxes).
+    The legibility fix turned out to be CONTRAST and OWNERSHIP rather than
+    size: near-black ink on cream reads where bone on municipal green never
+    did, and each subordinate line now sits on its own coloured ground (a
+    band across the panel, a plaque hung beneath) instead of dissolving
+    into the field. Sizing it off the real archetype put the whole sign at
+    81 units, over three times a wall -- honest for the 25ft Vegas board
+    and absurd for a dying corn town, so Brimley's is a small one. In
+    fiction it is the last bright thing on the road, raised when the town
+    still thought it had a future.
 
 - **2026-07 — Trees consolidated, un-bound from tiles, and occluding by
   height.** A sprite-by-sprite audit found seven tree sprites and six of them

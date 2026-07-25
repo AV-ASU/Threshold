@@ -548,25 +548,56 @@ class CutsceneMixin:
         """
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
-        bw, bh = 112, 52
+        bw, bh = 118, 54
         bx, by = x - bw // 2, y - bh
-        # the posts run WELL below the panel, or the board reads as
-        # hanging in the air rather than standing on two legs
-        for px in (x - 30, x + 30):                    # inset from the ends
-            pygame.draw.rect(s, L((62, 44, 28)), (px - 3, by + 6, 6, 70))
-            pygame.draw.rect(s, L((78, 58, 38)), (px - 4, by + 2, 8, 5))
-        pygame.draw.rect(s, L((46, 56, 44)), (bx, by, bw, bh))
-        for r in ((bx - 3, by - 3, bw + 6, 7), (bx - 3, by + bh - 4, bw + 6, 6),
-                  (bx - 3, by, 5, bh), (bx + bw - 2, by, 5, bh)):
-            pygame.draw.rect(s, L((80, 66, 48)), r)   # the frame, proud
-        col, chip = L((156, 148, 122)), L((46, 56, 44))
-        for text, z0, z1, wt in (("BRIMLEY", 0.50, 0.94, 0.17),
-                                 ("NORTHERNMOST CORN", 0.28, 0.45, 0.22),
-                                 ("EST. 1894", 0.05, 0.21, 0.22)):
+        # splayed legs (the world sign's `pitch`, drawn flat here)
+        for sgn in (-1, 1):
+            fx = x + sgn * 40
+            pygame.draw.polygon(s, L((92, 96, 104)), [
+                (x + sgn * 30, by + 18), (x + sgn * 34, by + 18),
+                (fx + sgn * 4, by + 78), (fx, by + 78)])
+        # the starburst, clearing the panel's top
+        star = []
+        for i in range(16):
+            ang = -math.pi / 2 + i * math.pi / 8
+            rr = 30 if i % 2 == 0 else 11
+            star.append((x + math.cos(ang) * rr, by + 4 + math.sin(ang) * rr))
+        pygame.draw.polygon(s, L((228, 176, 54)), star)
+        pygame.draw.rect(s, L((176, 58, 52)), (bx - 4, by - 4, bw + 8, bh + 8))
+        pygame.draw.rect(s, L((214, 206, 186)), (bx, by, bw, bh))
+        band = (bx + 2, by + int(bh * 0.60), bw - 4, int(bh * 0.30))
+        pygame.draw.rect(s, L((176, 58, 52)), band)
+        # the hanging year-plaque
+        pw2, ph2 = int(bw * 0.46), 15
+        px2, py2 = x - pw2 // 2, by + bh + 6
+        pygame.draw.rect(s, L((92, 96, 104)), (x - 3, by + bh, 6, 7))
+        pygame.draw.rect(s, L((176, 58, 52)), (px2, py2, pw2, ph2))
+        # the bulb string around the panel
+        warm, hot = L((228, 186, 84)), L((255, 236, 170))
+        for i in range(19):
+            f = i / 18
+            for bxp, byp in ((bx + (bw - 1) * f, by - 3),
+                             (bx + (bw - 1) * f, by + bh + 2)):
+                pygame.draw.circle(s, warm, (int(bxp), int(byp)), 2)
+                pygame.draw.circle(s, hot, (int(bxp), int(byp)), 1)
+        for i in range(9):
+            f = i / 8
+            for bxp in (bx - 3, bx + bw + 2):
+                byp = by + (bh - 1) * f
+                pygame.draw.circle(s, warm, (int(bxp), int(byp)), 2)
+                pygame.draw.circle(s, hot, (int(bxp), int(byp)), 1)
+        ink, cream = L((38, 42, 60)), L((238, 230, 208))
+        for text, r0, r1, col, wt in (
+                ("BRIMLEY", 0.06, 0.52, ink, 0.17),
+                ("NORTHERNMOST CORN", 0.62, 0.88, cream, 0.20)):
             lettering.paint_word(
                 s, lambda lx, lz: (bx + lx, by + bh - lz), text,
-                bw * 0.07, bw * 0.93, bh * z0, bh * z1, col,
-                wear=chip, weight=wt, seed=sum(ord(c) for c in text))
+                bw * 0.05, bw * 0.95, bh * (1 - r1), bh * (1 - r0), col,
+                wear=None, weight=wt, seed=sum(ord(c) for c in text))
+        lettering.paint_word(
+            s, lambda lx, lz: (px2 + lx, py2 + ph2 - lz), "EST. 1894",
+            pw2 * 0.10, pw2 * 0.90, ph2 * 0.20, ph2 * 0.80, cream,
+            wear=None, weight=0.20, seed=71)
 
 
     def _draw_lodge_sign(self, s, x, ground_y, f):

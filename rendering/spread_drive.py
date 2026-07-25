@@ -251,17 +251,30 @@ def _sign_back(s, x, y, light, fonts_none=None):
     """
     def L(v):
         return (int(v[0] * light), int(v[1] * light), int(v[2] * light))
-    bw, bh = 112, 52
+    bw, bh = 118, 54
     bx, by = x - bw // 2, y - bh
-    for px in (x - 30, x + 30):
-        pygame.draw.rect(s, L((50, 44, 36)), (px - 3, by + 6, 6, 70))
-        pygame.draw.rect(s, L((62, 54, 44)), (px - 4, by + 2, 8, 5))
-    pygame.draw.rect(s, L((72, 62, 48)), (bx, by, bw, bh))
-    pygame.draw.rect(s, L((34, 31, 27)), (bx, by, bw, bh), 2)
-    # Weathering streaks down the bare board.
+    for sgn in (-1, 1):
+        fx = x + sgn * 40
+        pygame.draw.polygon(s, L((70, 74, 80)), [
+            (x + sgn * 30, by + 18), (x + sgn * 34, by + 18),
+            (fx + sgn * 4, by + 78), (fx, by + 78)])
+    # the star's plain back, still clearing the panel
+    star = []
+    for i in range(16):
+        ang = -math.pi / 2 + i * math.pi / 8
+        rr = 30 if i % 2 == 0 else 11
+        star.append((x + math.cos(ang) * rr, by + 4 + math.sin(ang) * rr))
+    pygame.draw.polygon(s, L((104, 84, 34)), star)
+    pygame.draw.rect(s, L((84, 88, 96)), (bx - 4, by - 4, bw + 8, bh + 8))
+    pygame.draw.rect(s, L((66, 70, 78)), (bx, by, bw, bh))
+    pygame.draw.rect(s, L((34, 36, 40)), (bx, by, bw, bh), 2)
+    # the sheet's ribs, and the plaque hanging blank underneath
     for i in range(5):
-        sx = bx + 12 + i * 22
-        pygame.draw.line(s, L((58, 50, 40)), (sx, by + 4), (sx + 2, by + bh - 5), 1)
+        sx = bx + 14 + i * 22
+        pygame.draw.line(s, L((52, 56, 62)), (sx, by + 3), (sx, by + bh - 3), 1)
+    pw2, ph2 = int(bw * 0.46), 15
+    pygame.draw.rect(s, L((70, 74, 80)), (x - 3, by + bh, 6, 7))
+    pygame.draw.rect(s, L((62, 66, 72)), (x - pw2 // 2, by + bh + 6, pw2, ph2))
 
 
 def _exterior_road(s, t):
