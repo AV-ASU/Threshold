@@ -139,6 +139,31 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- `draw_box` was drawing its own back faces (maintainer:
+  "occlusion is wrong, I can see inside some logs").** The primitive picked
+  which faces to draw from a FIXED world axis -- "near, left, right" measured
+  outward from +y -- and drew them unconditionally. That is only correct
+  while the camera looks down -y. At other headings it painted the box's back
+  over its front and left the real front undrawn, so a box showed a concave
+  scoop into its own inside. It affected every box prop (visible on the
+  mailbox and the stoop) and it is the reason a woodpile could not be stacked
+  out of boxes at all. Faces are now chosen by the CAMERA: each of the four
+  vertical faces is kept or dropped by whether its outward normal points at
+  the viewer, and the one pointing most toward the viewer takes the shaded
+  near colour. A box is convex so the survivors never overlap. Verified
+  against the render regression set: identical within tolerance on every
+  shipping scene, so the fix corrected the geometry without disturbing what
+  was already tuned around it.
+  **And a log is its own object now** (`solids.draw_log`, the maintainer's
+  call: "just make one log and then create a stack of those"). It is a closed
+  cylinder with sawn end caps that draws only the surface facing the viewer,
+  and the woodpile is a depth-sorted stack of them. That is what finally made
+  the pile occlude honestly, after three failed attempts to fake it from a
+  single volume. The stoop's treads were sorted back-to-front for the same
+  reason -- drawing them in index order let the upper, further step paint
+  over the nearer one, so the flight read as one slab with a notch bitten
+  out of it.
+
 - **2026-07 -- `draw_box` could not stack (maintainer: "can't you see that the
   log pile looks wrong?").** It is the primitive every flat-sided prop is
   built from, and it always drew from z=0 to z=h -- there was no way to sit a

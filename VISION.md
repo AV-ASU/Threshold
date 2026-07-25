@@ -47,6 +47,15 @@ revolution -- `draw_solid` with equal radii is a drum, which is how a stoop
 shipped looking like a butter-churn lid and a woodpile like a perforated
 barrel.
 
+**A repeated shape is many OBJECTS, not one faked volume.** A woodpile is
+logs, a fence is posts, a stack is things stacked. Every attempt to imply
+that from a single mass failed at a different depth (a barrel with dots on
+it, a table with coins beside it, ends floating off a raft), and each one
+looked fine from the one angle it was tuned at. Build the unit, then place
+the units, and **sort them back to front by `cam.depth()`** -- painting them
+in loop order lets the further one cover the nearer one, which is what a
+notch bitten out of a solid always means.
+
 **For SHOWING the maintainer: one angle is enough.** When you share a scene,
 send **one** representative PNG (`SendUserFile`), not the whole four-facing
 sheet. The maintainer wants to see it, not audit it. Pick the clearest angle.

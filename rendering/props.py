@@ -11,7 +11,8 @@ falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 import math
 import random
 import pygame
-from rendering.solids import draw_solid, draw_box, draw_billboard, _shade
+from rendering.solids import (draw_solid, draw_box, draw_billboard,
+                              draw_log, _shade)
 
 
 def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
@@ -2884,12 +2885,20 @@ def _draw_stoop_solid(surf, cam, deco):
     pal = {"top": (122, 102, 74), "side": (88, 72, 52), "dark": (54, 44, 32)}
     ca, sa = math.cos(yaw), math.sin(yaw)
     depth = 7.0 * s_
+    # BACK TO FRONT. Drawing the treads in index order let the upper, further
+    # step paint over the nearer one it should sit behind, so the flight read
+    # as one slab with a notch bitten out of it.
+    treads = []
     for i in range(n):
         # the lowest tread is furthest OUT from the door; each one above it
         # steps back toward the threshold
         back = ((n - 1) / 2.0 - i) * depth
-        draw_box(surf, cam, wx + ca * back, wy + sa * back,
-                 half_w * 2, depth, 5.0 * s_, pal, yaw=yaw, z0=5.0 * s_ * i)
+        tx, ty = wx + ca * back, wy + sa * back
+        treads.append((cam.depth(tx, ty, 5.0 * s_ * i), tx, ty, i))
+    treads.sort(key=lambda t: t[0])
+    for _d, tx, ty, i in treads:
+        draw_box(surf, cam, tx, ty, half_w * 2, depth, 5.0 * s_,
+                 pal, yaw=yaw, z0=5.0 * s_ * i)
 
 
 def _draw_woodpile_solid(surf, cam, deco):
@@ -2900,78 +2909,56 @@ def _draw_woodpile_solid(surf, cam, deco):
     January and it is April, so the household's last unfinished job has been
     sitting out three months.
 
-    **It is built FROM LOGS, and that is the point.** Two earlier cuts drew a
-    single box with cut ends decorating one face, and both read as a crate --
-    or worse, as a table with coins spilled beside it. A woodpile has no
-    smooth faces: what identifies it is a stack of separate pieces, each a
-    slightly different length, so the ends are a ragged plane and the top is
-    a lumpy one. So each log is its own little squared volume (split firewood
-    IS roughly squared), jittered in length and seated with a small gap, and
-    the pale sawn END is drawn in that log's own end plane so it foreshortens
-    with it. Courses offset half a log, the way a real stack settles.
+    **It is a stack of LOG OBJECTS** (`solids.draw_log`), depth-sorted back
+    to front, and that is what makes it occlude honestly. Everything else was
+    tried first and all of it failed on the same point: a `draw_solid` body of
+    revolution read as a barrel with dots on it; a `draw_box` crate with the
+    ends painted on one face read as a table with coins spilled beside it;
+    and a stack of `draw_box` logs let you see INSIDE them, because that
+    primitive paints all four vertical faces unconditionally and always calls
+    +y the near one, so at most headings it draws its own back over its
+    front. A log is a closed cylinder that only draws the surface facing you,
+    and a pile of them sorts like any other set of solids.
 
-    Rows and columns are DERIVED from the stack's size and the log diameter,
-    never chosen, so nothing overhangs at any scale."""
+    Each log is jittered in length and seating so the ends are a ragged plane
+    and the top a lumpy one; courses offset half a log the way a stack
+    settles. Rows and columns derive from the size and the log diameter, so
+    nothing overhangs at any scale."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     kw = getattr(deco, "kwargs", {})
     seed = int(abs(wx) * 13 + abs(wy) * 17) & 0xffff
-    bark = (72, 56, 38)
-    bark_top = (92, 74, 52)
-    cut = (152, 128, 94)
+    pal = {"bark": (86, 68, 46), "bark_lo": (48, 37, 25),
+           "cut": (156, 132, 96)}
     rows = int(kw.get("rows", 4))
+    ncols = int(kw.get("cols", 3))
     yaw = float(kw.get("yaw", getattr(deco, "yaw", 0.0)) or 0.0)
     ca, sa = math.cos(yaw), math.sin(yaw)
-    # A split round is about a foot and a half; the stack is only a little
-    # longer than it is tall. At 27 long x 3 courses it read as a RAFT of
-    # logs lying on the ground rather than a pile you stack against a wall.
-    LOG = 5.2 * s                     # a split log's thickness
+    LOG = 5.4 * s                      # a split log's diameter
     length = 19.0 * s
-    ncols = 3
-    # the near face is lifted off near-black: at (38,29,19) the whole stack
-    # went to a silhouette from the headings that show it, and a woodpile
-    # you cannot see the logs in is just a dark lump
-    pal = {"top": bark_top, "side": bark, "dark": (54, 42, 28)}
-    # back courses first so the near ones overlap them
-    order = []
+    logs = []
     for row in range(rows):
         for c in range(ncols):
-            order.append((row, c))
-    order.sort(key=lambda rc: (-rc[1], rc[0]))
-    for row, c in order:
-        h = (seed + row * 31 + c * 17)
-        # each log a little shorter or longer, and shoved a little along its
-        # own axis -- this is what makes the ends ragged instead of a plane
-        ln = length * (0.88 + ((h >> 2) % 5) * 0.05)
-        shove = (((h >> 5) % 7) - 3) * 0.6 * s
-        v = (c - (ncols - 1) / 2.0) * LOG + (row % 2) * (LOG * 0.5)
-        z = row * LOG * 0.94 + LOG / 2
-        lx = wx - sa * v + ca * shove
-        ly = wy + ca * v + sa * shove
-        draw_box(surf, cam, lx, ly, ln, LOG * 0.92, LOG * 0.92, pal, yaw=yaw,
-                 z0=z - LOG * 0.46)
-        # the sawn END of this log, in the log's own end plane, both ends
-        r = LOG * 0.40
-        for endn in (1.0, -1.0):
-            nx, ny = ca * endn, sa * endn
-            if not _face_vis(cam, nx, ny):
-                continue
-            ex = lx + nx * ln / 2
-            ey = ly + ny * ln / 2
-            ring = [cam.project(ex - sa * math.cos(k * math.tau / 10) * r,
-                                ey + ca * math.cos(k * math.tau / 10) * r,
-                                z + math.sin(k * math.tau / 10) * r)
-                    for k in range(10)]
-            shade = 1.0 - ((h >> 8) % 5) * 0.07
-            pygame.draw.polygon(surf, _shade(cut, shade), ring)
-            pygame.draw.polygon(surf, (48, 37, 24), ring, 1)
+            h = (seed + row * 31 + c * 17)
+            ln = length * (0.86 + ((h >> 2) % 5) * 0.06)
+            shove = (((h >> 5) % 7) - 3) * 0.7 * s
+            v = (c - (ncols - 1) / 2.0) * LOG * 0.97 + (row % 2) * (LOG * 0.5)
+            z = row * LOG * 0.90 + LOG / 2
+            lx = wx - sa * v + ca * shove
+            ly = wy + ca * v + sa * shove
+            logs.append((cam.depth(lx, ly, z), lx, ly, z, ln, h))
+    # back to front: the pile is a set of solids and sorts like one
+    logs.sort(key=lambda t: t[0])
+    for _d, lx, ly, z, ln, h in logs:
+        draw_log(surf, cam, lx, ly, z, yaw, ln, LOG * 0.47, pal, seed=h)
     if kw.get("axe"):
         # the chopping block a stride off the stack's flank, the axe left
         # standing in the round
         bx, by = wx - sa * 15 * s, wy + ca * 15 * s
         draw_solid(surf, cam, bx, by,
                    [(0.0, 5.0 * s, 5.0 * s), (9.0 * s, 5.0 * s, 5.0 * s)],
-                   {"body": bark, "lo": (38, 30, 20), "rim": cut})
+                   {"body": pal["bark"], "lo": pal["bark_lo"],
+                    "rim": pal["cut"]})
         h0 = cam.project(bx, by, 9.0 * s)
         h1 = cam.project(bx + 2.0 * s, by - 3.0 * s, 22.0 * s)
         pygame.draw.line(surf, (108, 88, 62), h0, h1, max(2, int(2 * s)))

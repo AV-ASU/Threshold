@@ -151,16 +151,104 @@ def draw_box(surf, cam, wx, wy, w, d, h, palette, yaw=0.0, z0=0.0):
         rx = sx * math.cos(yaw) - sy * math.sin(yaw)
         ry = sx * math.sin(yaw) + sy * math.cos(yaw)
         return cam.project(wx + rx, wy + ry, sz)
-    ftl, ftr = P(-hw, -hd, z0), P(hw, -hd, z0)
-    fbr, fbl = P(hw, hd, z0), P(-hw, hd, z0)
+    # WHICH faces are drawn is decided by the CAMERA, not by a fixed world
+    # axis. The original picked "near, left, right" from the +y face outward
+    # and drew them unconditionally, which is only correct while the camera
+    # looks down -y: at other headings it painted the box's BACK over its
+    # front and left the real front undrawn, so you saw a concave scoop into
+    # the inside of it. Visible on every box prop -- the mailbox and the
+    # stoop both showed it -- and it is why a woodpile could not be stacked
+    # out of boxes at all.
+    # A box is convex, so its visible vertical faces never overlap each
+    # other and can be drawn in any order; the top goes last.
+    cy_, sy_ = cam._cy, cam._sy
+    corners = ((-hw, -hd), (hw, -hd), (hw, hd), (-hw, hd))
+    for i in range(4):
+        ax, ay = corners[i]
+        bx, by = corners[(i + 1) % 4]
+        # outward normal of this face, rotated into world by the object yaw
+        mx, my = (ax + bx) / 2.0, (ay + by) / 2.0
+        nx = mx * math.cos(yaw) - my * math.sin(yaw)
+        ny = mx * math.sin(yaw) + my * math.cos(yaw)
+        if (-nx * sy_ + ny * cy_) <= 0.0:
+            continue                       # faces away: never drawn
+        # the face pointing most toward the viewer reads as the shaded near
+        # side, the others as flanks
+        quad = [P(ax, ay, z0), P(bx, by, z0),
+                P(bx, by, z0 + h), P(ax, ay, z0 + h)]
+        near = (-nx * sy_ + ny * cy_) > (abs(nx) + abs(ny)) * 0.5
+        pygame.draw.polygon(surf, dark if near else side, quad)
     ttl, ttr = P(-hw, -hd, z0 + h), P(hw, -hd, z0 + h)
     tbr, tbl = P(hw, hd, z0 + h), P(-hw, hd, z0 + h)
-    # front (near, larger world-y) and the two visible sides
-    pygame.draw.polygon(surf, dark, [fbl, fbr, tbr, tbl])   # near face
-    pygame.draw.polygon(surf, side, [ftl, fbl, tbl, ttl])   # left
-    pygame.draw.polygon(surf, side, [ftr, fbr, tbr, ttr])   # right
     pygame.draw.polygon(surf, top, [ttl, ttr, tbr, tbl])    # top
     pygame.draw.polygon(surf, _shade(top, 0.6), [ttl, ttr, tbr, tbl], 1)
+
+
+def draw_log(surf, cam, wx, wy, wz, yaw, length, radius, palette, seed=0):
+    """ONE split log lying horizontally: a real closed cylinder with sawn end
+    caps, centred at (wx, wy, wz) and running along `yaw`.
+
+    A log is its own object, and a woodpile is a stack of these -- which is
+    the only way the stack can occlude honestly. Building the pile out of
+    `draw_box` instead could not work: that primitive paints all four of its
+    vertical faces unconditionally and always treats +y as the near one, so
+    at most camera headings it draws its own BACK faces over its front and
+    you see inside it.
+
+    Here only the surface facing the camera is drawn. The barrel is swept as
+    quads around the cross-section, each kept or dropped by whether its
+    outward normal points at the viewer, and each end cap is drawn only when
+    that end faces us. `palette` = dict(bark=, bark_lo=, cut=).
+    """
+    bark, bark_lo = palette["bark"], palette["bark_lo"]
+    cut = palette["cut"]
+    ca, sa = math.cos(yaw), math.sin(yaw)
+    # the cross-section's two basis vectors: across the log, and up
+    axx, axy = -sa, ca
+    half = length / 2.0
+    # camera-facing test for a horizontal outward normal, as used elsewhere
+    cy_, sy_ = cam._cy, cam._sy
+    N = 12
+
+    def _pt(th, end):
+        """A point on the rim at angle `th`, at the +/- end of the log."""
+        c, sn = math.cos(th), math.sin(th)
+        ox, oy = axx * c * radius, axy * c * radius
+        return cam.project(wx + ca * half * end + ox,
+                           wy + sa * half * end + oy,
+                           wz + sn * radius)
+
+    # THE BARREL, back to front so the lit crown lands over the shaded belly
+    segs = []
+    for i in range(N):
+        th0 = i * math.tau / N
+        th1 = (i + 1) * math.tau / N
+        thm = (th0 + th1) / 2.0
+        # outward normal of this strip, in world terms
+        nx = axx * math.cos(thm)
+        ny = axy * math.cos(thm)
+        nz = math.sin(thm)
+        # a strip is visible if it faces the camera horizontally OR faces up
+        toward = (-nx * sy_ + ny * cy_)
+        vis = toward * cam._cp + nz * cam._sp
+        if vis <= 0.0:
+            continue
+        segs.append((vis, th0, th1, nz))
+    segs.sort(key=lambda t: t[0])
+    for vis, th0, th1, nz in segs:
+        # crown lit, belly dark: shade by how far up the strip faces
+        f = 0.70 + 0.45 * max(0.0, nz)
+        col = _shade(bark if nz > -0.2 else bark_lo, f)
+        pygame.draw.polygon(surf, col, [_pt(th0, -1), _pt(th1, -1),
+                                        _pt(th1, 1), _pt(th0, 1)])
+    # THE SAWN ENDS, each only while it faces us
+    for end in (1.0, -1.0):
+        nx, ny = ca * end, sa * end
+        if (-nx * sy_ + ny * cy_) <= 0.02:
+            continue
+        rim = [_pt(i * math.tau / N, end) for i in range(N)]
+        pygame.draw.polygon(surf, _shade(cut, 1.0 - (seed % 5) * 0.06), rim)
+        pygame.draw.polygon(surf, _shade(bark, 0.65), rim, 1)
 
 
 def draw_billboard(surf, cam, wx, wy, sprite, h_anchor=1.0):
