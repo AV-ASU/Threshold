@@ -78,3 +78,4 @@ terminal version is `python tools/index.py [word]`.
 ## Other
 
 - `tools/preview_look_control.py` — Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
+- `tools/screen_to_world.py` — Turn SCREEN positions in a capture back into WORLD TILES.

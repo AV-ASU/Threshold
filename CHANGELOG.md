@@ -139,6 +139,25 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- Lamp positions came off a marked-up screenshot, and reading it
+  became a tool.** The maintainer drew X's on a capture ("lights on all the
+  yellow Xs and nowhere else"); a rhythm placed to match them by eye hit none
+  of them. Under the oblique tilt the marks are not eyeballable -- the view is
+  yawed and foreshortened, and the same screen row covers very different world
+  rows depending on depth. `tools/screen_to_world.py` inverts the projection
+  by brute force (project every tile centre through the real camera, take the
+  nearest), so a marked screenshot becomes a tile list in one step; `--grid`
+  writes the same view with tile coordinates drawn on it, so a scene can be
+  discussed in numbers.
+  What the marks said once read: masts belong on the OUTER edge of the
+  shoulder (not halfway across it), they STAGGER between the two sides rather
+  than pairing off across the road, and NOTHING stands at the junction --
+  poles flank the crossing instead. So `LAMP_OFF` moved out a tile, the
+  junction station was cut, and `build_path` gained a `lamps=` override so a
+  scene's lighting can be art-directed outright rather than approximated. The
+  country lane's eight are the maintainer's own positions, verified to match
+  exactly; the other two scenes keep the re-tuned default.
+
 - **2026-07 -- A lamp post was standing in the middle of the road
   (maintainer, marked on a screenshot).** The junction mast was offset from
   the junction along ONE axis, which is clear of the road only when the scene

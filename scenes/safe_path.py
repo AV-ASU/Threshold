@@ -51,7 +51,9 @@ from entities.decoration import Decoration
 # ---- the road's cross-section, in tiles ---------------------------------
 ROAD_HALF = 2        # asphalt half-width -> a 5-tile carriageway
 SHOULDER = 2         # gravel shoulder each side -> a 9-tile corridor
-LAMP_OFF = ROAD_HALF + 1             # lamp masts stand just off the asphalt
+LAMP_OFF = ROAD_HALF + SHOULDER      # lamp masts stand at the OUTER edge of
+                     # the shoulder, where the right-of-way ends and the grass
+                     # starts -- not halfway across the gravel.
 LAMP_STEP = 9        # tiles between mid-run stations. DELIBERATELY sparse
                      # (maintainer: "the streets have way too much light"):
                      # see the lighting note below.
@@ -181,7 +183,7 @@ def _river_tiles(w, h, river):
 
 def build_path(key, arms, w, h, *, music="outside", river=None,
                verge_char=("T", "p"), lost=(), seed=1994, exits=(),
-               spawns=(), fence_flank=None):
+               spawns=(), fence_flank=None, lamps=None):
     """Build a safe-path scene.
 
     `arms`      subset of "nesw" -- see the shape vocabulary above.
@@ -192,6 +194,13 @@ def build_path(key, arms, w, h, *, music="outside", river=None,
     `lost`      ((sides, lost_scene_key), ...) -- the flanks that are mouths.
     `exits`     ((side, char, target, spawn_id), ...) -- one per arm.
     `spawns`    ((name, side_or_None), ...) -- named at each arm's inner end.
+    `lamps`     ((tx, ty), ...) -- place the masts EXACTLY here and nowhere
+                else, overriding the derived rhythm. Lamp placement is a thing
+                the maintainer art-directs on a screenshot, and a derived
+                rhythm that looks reasonable is not the same as the one that
+                was asked for; `tools/screen_to_world.py` turns marks on a
+                capture into this list. A scene nobody has directed keeps the
+                default.
     """
     cx, cy = w // 2, h // 2
     floor = [["g"] * w for _ in range(h)]
@@ -323,7 +332,12 @@ def build_path(key, arms, w, h, *, music="outside", river=None,
     #    pools overlap into one unbroken lit band down the carriageway. This
     #    is the mechanism, not the mood: an unlit stretch of road is a stretch
     #    where the flank's mouth reaches the asphalt.
-    for tx, ty, _s in _lamp_stations(sc, w, h, cx, cy, arms):
+    stations = ([(tx, ty, "!") for tx, ty in lamps] if lamps is not None
+                else _lamp_stations(sc, w, h, cx, cy, arms))
+    for tx, ty, _s in stations:
+        if sc.floor[ty][tx] in ("P", "Y", "-"):
+            raise ValueError(f"{key}: lamp at ({tx},{ty}) stands on the "
+                             "carriageway. A mast belongs on the shoulder.")
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "street_lamp"))
     # 8. a busted fence line along one flank shoulder, so the verge reads as
@@ -381,33 +395,24 @@ def _lamp_stations(sc, w, h, cx, cy, arms):
     THE LIGHT IS INFORMATION, not coverage. Stations are placed for what they
     TELL you, and the mid-run stride is deliberately too long to join them up:
 
-    * THE JUNCTION, in a CORNER. Standing in the dark further down an arm, a
-      glow ahead means the place where the road decides.
-    * EACH ARM'S FAR END, at the map edge. A second glow, further off, means
-      a way on. Between the two the road is dark and you walk it faster.
+    * EACH ARM'S FAR END, at the map edge, so a glow far off down the dark
+      means a way on.
+    * A staggered mid-run rhythm every LAMP_STEP tiles, alternating between
+      the two shoulders rather than pairing off across the road -- a county
+      road lit one pole at a time, not an avenue.
+
+    NOTHING stands at the junction itself. The art-directed lane (see
+    `build_path`'s `lamps`) flanks its crossing instead of lighting it, which
+    points at the decision without putting a post in the middle of it, and
+    the derived default follows that reading.
 
     **NO MAST EVER STANDS ON THE CARRIAGEWAY.** A lamp post in the middle of
     a road is a thing you would swerve around in a car and walk into on foot,
-    and it is the first thing anybody notices. The junction pole is the trap:
-    offsetting it along ONE axis puts it clear of the road only when the
-    scene has no arm on the other axis, so on a T or an L (which have both)
-    the first cut planted it squarely in the cross. It goes DIAGONALLY into a
-    corner quadrant instead, which is off both carriageways by construction
-    and is where a junction light belongs anyway. Guarded by
-    `tests/flow.py` §34.
+    and it is the first thing anybody notices. Every station is pushed
+    outward until its tile is not asphalt, and dropped if it cannot get
+    clear. Guarded by `tests/flow.py` §34.
     """
     out = []
-    # THE JUNCTION, diagonally into a corner. Prefer the quadrant between two
-    # arms that actually exist (an inner corner reads as lighting the turn);
-    # fall back to any corner on a straight run.
-    corners = [("n", "e", -1, -1), ("n", "w", 1, -1),
-               ("s", "e", -1, 1), ("s", "w", 1, 1)]
-    pick = next((c for c in corners if c[0] in arms and c[1] in arms), None)
-    if pick is None:
-        pick = next((c for c in corners if c[0] in arms or c[1] in arms),
-                    corners[0])
-    _a, _b, qx, qy = pick
-    out.append((cx + qx * LAMP_OFF, cy + qy * LAMP_OFF, "*"))
     flip = 0
     for side in sorted(arms):
         dx, dy = _AXIS[side]
@@ -557,6 +562,16 @@ def build_country_lane():
                ("n", "^", "river_road", "from_country_lane")),
         spawns=(("from_brimley", "w"), ("from_arrival_road", "e"),
                 ("from_lodge_yard", "e"), ("from_river_road", "n")),
+        # ART-DIRECTED (maintainer marked these on a capture; read back with
+        # tools/screen_to_world.py). Masts sit on the OUTER shoulder edge and
+        # STAGGER between the two sides rather than pairing off across the
+        # road, so the lane reads as a county road somebody lit one pole at a
+        # time and not as an avenue. Nothing at the junction itself -- two
+        # flank it instead, which points at the crossing without standing in
+        # it.
+        lamps=((10, 13), (17, 13), (24, 13), (33, 13),     # north shoulder
+               (10, 21), (21, 21), (33, 21),               # south shoulder
+               (25, 3)),                                   # up the north arm
         seed=2028)
     cx, cy = sc.junction
 

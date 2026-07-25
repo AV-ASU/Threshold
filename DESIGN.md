@@ -1917,20 +1917,27 @@ every path scene, driven end to end at ev3 with the lamps sparse, none of
 which may fall out of the world.
 
 The LAMPS are therefore not the safety, and there are far fewer than the
-first cut's end-to-end coverage (which read like an airport runway). What
-survives is placed for what it TELLS you: one mast in a corner of the
-junction, one at each arm's end, and a mid-run rhythm alternating down the
-two shoulders. A glow ahead in the dark means a decision or a way out; the
-stretches between are dark and you walk them faster.
+first cut's end-to-end coverage (which read like an airport runway). They sit
+on the OUTER edge of the shoulder, where the right-of-way ends and the grass
+starts, and they STAGGER between the two sides rather than pairing off across
+the road: a county road lit one pole at a time, not an avenue. One stands at
+each arm's end, so a glow far off down the dark means a way on. Nothing
+stands at the junction itself; poles flank its crossing instead, which points
+at the decision without putting a post in the middle of it.
+
+**Placement is ART-DIRECTED, not derived, where it matters.**
+`build_path(..., lamps=((tx, ty), ...))` overrides the rhythm outright, and
+`tools/screen_to_world.py` turns marks on a capture into that list. Lamp
+positions are a thing the maintainer draws on a screenshot, and a derived
+rhythm that looks reasonable is not the same as the one that was asked for --
+the country lane's eight are the maintainer's own. A scene nobody has
+directed keeps the default.
 
 **No mast ever stands on the carriageway.** A lamp post in the middle of a
-road is a thing you would swerve around in a car and walk into on foot. The
-junction pole is the trap: offsetting it along ONE axis is only clear of the
-road when the scene has no arm on the other axis, so on a T or an L it lands
-squarely in the cross. It goes DIAGONALLY into a corner quadrant, which is
-off both carriageways by construction, and every other station is pushed
-outward until its tile is not asphalt (and dropped if it cannot get clear).
-`tests/flow.py` §34 fails on any mast in the road.
+road is a thing you would swerve around in a car and walk into on foot. Every
+station is pushed outward until its tile is not asphalt and dropped if it
+cannot get clear; an explicit `lamps=` position on asphalt raises at build
+time. `tests/flow.py` §34 fails on any mast in the road.
 
 The light still does real work. It keeps the verge's dark off the asphalt at
 the rim, and standing under a mast makes you VISIBLE to anything hunting

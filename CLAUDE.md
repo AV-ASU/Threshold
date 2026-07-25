@@ -124,6 +124,13 @@ python tools/capture_facings.py <scene_key> [--bright]
 python tools/preview_props_sheet.py <kind> [...]
 python tools/kind.py <kind> [...]        # also: --stains, --unplaced
 
+# THE MAINTAINER MARKED UP A SCREENSHOT -- turn the marks into tile coords.
+# Under the tilt this is NOT eyeballable (yawed, foreshortened, the same
+# screen row covers different world rows by depth); guessing has produced
+# placements that looked plausible and matched none of the marks.
+python tools/screen_to_world.py <scene> --facing S --ev 2 --at 60,245 --at ...
+python tools/screen_to_world.py <scene> --facing S --grid /tmp/g.png
+
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
 ```
@@ -232,11 +239,15 @@ it renders the procedural sprites to a labelled PNG strip.
     tile), and a flank edge carries no asphalt; so the asphalt is safe
     everywhere while the verge beside it lets go like any flank. Guarded by
     `tests/flow.py` §34 as a WALK (every lane of every arm at ev3, none may
-    fall). The LAMPS are SPARSE and never on the asphalt: one mast in a
-    CORNER of the junction (a one-axis offset lands in the cross on a T or an
-    L), one per arm end, and a mid-run rhythm alternating down the shoulders,
-    every station pushed outward until it is off the carriageway — light as
-    information, so a glow ahead means a decision or a way out. `street_lamp`
+    fall). The LAMPS are SPARSE, sit on the OUTER shoulder edge, and never on
+    the asphalt (every station is pushed outward until its tile is not
+    asphalt, and dropped if it cannot get clear): one per arm end plus a
+    staggered mid-run rhythm alternating between the two shoulders, and
+    NOTHING at the junction itself. Placement is ART-DIRECTED per scene where
+    it matters — `build_path(..., lamps=((tx,ty), ...))` overrides the derived
+    rhythm outright, and `tools/screen_to_world.py` turns marks on a capture
+    into that list (the country lane's eight are the maintainer's own).
+    `street_lamp`
     (a new `SOLID_PROPS` volume, in BOTH light tables and in
     `_ELECTRIC_KINDS`) still gates stealth cover and dies with the gensets. Arms paint in two
     passes (all gravel, then all asphalt) so a junction is surfaced, not
