@@ -54,9 +54,9 @@ SHOULDER = 2         # gravel shoulder each side -> a 9-tile corridor
 LAMP_OFF = ROAD_HALF + SHOULDER      # lamp masts stand at the OUTER edge of
                      # the shoulder, where the right-of-way ends and the grass
                      # starts -- not halfway across the gravel.
-LAMP_STEP = 9        # tiles between mid-run stations. DELIBERATELY sparse
-                     # (maintainer: "the streets have way too much light"):
-                     # see the lighting note below.
+LAMP_STEP = 11       # tiles between run PAIRS. Read off the maintainer's own
+                     # marks (the lane's pairs sit 11 and 12 tiles either side
+                     # of its junction), not chosen.
 RIVER_BANK = 3       # tiles of open bank kept clear either side of the water,
                      # so the river is SEEN from the road instead of buried
                      # behind the verge growth
@@ -76,11 +76,10 @@ VERGE = 10           # how deep the verge growth reaches in from the map edge.
 # stretch in the middle of one is safe too.
 #
 # That frees the lamps to do the job they are actually good at, which is to
-# MEAN something. What survives is a station at the junction and one at each
-# arm's end -- so a glow ahead in the dark tells you there is a decision or a
-# way out there -- plus a rare mid-run pole every LAMP_STEP tiles so a long
-# arm is not pitch black from end to end. Between them the road is dark and
-# you walk it faster.
+# MEAN something. The pattern is the maintainer's, read off marks drawn on a
+# capture and generalised in `_lamp_stations`: corners at a junction, facing
+# PAIRS every LAMP_STEP down a run, and the ends of a run left dark. Between
+# the pairs the road is black and you walk it faster.
 #
 # The light still does real work: it is what keeps the verge's dark off the
 # asphalt at the rim, it makes you VISIBLE to anything hunting (stealth reads
@@ -389,22 +388,29 @@ def _rail_the_deck(sc, bridge, road_set):
 
 
 def _lamp_stations(sc, w, h, cx, cy, arms):
-    """(tx, ty, side) for each lamp mast: masts stand just off the asphalt,
-    alternating flanks as they march out along each arm.
+    """(tx, ty, side) for each lamp mast, in the pattern the maintainer drew.
 
-    THE LIGHT IS INFORMATION, not coverage. Stations are placed for what they
-    TELL you, and the mid-run stride is deliberately too long to join them up:
+    THE PATTERN, read off eight X's marked on a capture of the country lane
+    (`tools/screen_to_world.py` turned them into tiles) and generalised so
+    every road in the network is lit the same way:
 
-    * EACH ARM'S FAR END, at the map edge, so a glow far off down the dark
-      means a way on.
-    * A staggered mid-run rhythm every LAMP_STEP tiles, alternating between
-      the two shoulders rather than pairing off across the road -- a county
-      road lit one pole at a time, not an avenue.
+    * **THE JUNCTION IS LIT AT ITS CORNERS, never at its centre.** A mast goes
+      in each corner that lies BETWEEN TWO ARMS, so the poles flank the mouth
+      of the side road rather than standing in the crossing. On a side with no
+      arm at all there is nothing to flank, so that shoulder takes a single
+      mast on the centreline instead -- it closes the junction's fourth side
+      without lighting a road that is not there.
+    * **THE RUNS ARE LIT IN PAIRS**, one on each shoulder facing each other,
+      every `LAMP_STEP` tiles out from the junction. Pairs rather than a
+      stagger: a stagger is what the derived rhythm did before the marks
+      arrived, and the marks are unambiguous that the long runs come in twos
+      (cols 10 and 33 of the lane both carry a mast on each shoulder).
+    * **THE ENDS OF A RUN GO DARK.** The last pair falls where the stride
+      falls; nothing is added to light the way out. A road that fades into
+      unlit distance is the point.
 
-    NOTHING stands at the junction itself. The art-directed lane (see
-    `build_path`'s `lamps`) flanks its crossing instead of lighting it, which
-    points at the decision without putting a post in the middle of it, and
-    the derived default follows that reading.
+    Masts sit on the OUTER edge of the shoulder (`LAMP_OFF`), where the
+    right-of-way ends and the grass starts.
 
     **NO MAST EVER STANDS ON THE CARRIAGEWAY.** A lamp post in the middle of
     a road is a thing you would swerve around in a car and walk into on foot,
@@ -413,23 +419,30 @@ def _lamp_stations(sc, w, h, cx, cy, arms):
     clear. Guarded by `tests/flow.py` §34.
     """
     out = []
-    flip = 0
+    # 1. THE JUNCTION: corners between two arms, and a single mast centred on
+    #    any side that has no arm to flank.
+    for a, b, qx, qy in (("n", "e", 1, -1), ("n", "w", -1, -1),
+                         ("s", "e", 1, 1), ("s", "w", -1, 1)):
+        if a in arms and b in arms:
+            out.append((cx + qx * LAMP_OFF, cy + qy * LAMP_OFF, "*"))
+    for side in "nesw":
+        if side in arms:
+            continue
+        dx, dy = _AXIS[side]
+        out.append((cx + dx * LAMP_OFF, cy + dy * LAMP_OFF, "*"))
+    # 2. THE RUNS: a facing PAIR every LAMP_STEP tiles out along each arm.
     for side in sorted(arms):
         dx, dy = _AXIS[side]
         vertical = dx == 0
         steps = (cy + 1 if side == "n" else h - cy if side == "s"
                  else cx + 1 if side == "w" else w - cx)
-        stations = list(range(LAMP_STEP, steps, LAMP_STEP))
-        if steps - 1 not in stations:
-            stations.append(steps - 1)          # always light the way out
-        for i in stations:
-            flip += 1
-            off = LAMP_OFF if (flip % 2) else -LAMP_OFF
+        for i in range(LAMP_STEP, steps, LAMP_STEP):
             px, py = cx + dx * i, cy + dy * i
-            tx = px + (off if vertical else 0)
-            ty = py + (0 if vertical else off)
-            if 0 <= tx < w and 0 <= ty < h:
-                out.append((tx, ty, side))
+            for off in (LAMP_OFF, -LAMP_OFF):
+                tx = px + (off if vertical else 0)
+                ty = py + (0 if vertical else off)
+                if 0 <= tx < w and 0 <= ty < h:
+                    out.append((tx, ty, side))
     # OFF THE ROAD, structurally. A station derived from ITS OWN arm's
     # cross-axis can still land on ANOTHER arm's carriageway where the two
     # cross, so rather than tuning the stride until that stops happening,

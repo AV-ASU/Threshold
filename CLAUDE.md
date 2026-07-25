@@ -239,14 +239,16 @@ it renders the procedural sprites to a labelled PNG strip.
     tile), and a flank edge carries no asphalt; so the asphalt is safe
     everywhere while the verge beside it lets go like any flank. Guarded by
     `tests/flow.py` §34 as a WALK (every lane of every arm at ev3, none may
-    fall). The LAMPS are SPARSE, sit on the OUTER shoulder edge, and never on
-    the asphalt (every station is pushed outward until its tile is not
-    asphalt, and dropped if it cannot get clear): one per arm end plus a
-    staggered mid-run rhythm alternating between the two shoulders, and
-    NOTHING at the junction itself. Placement is ART-DIRECTED per scene where
-    it matters — `build_path(..., lamps=((tx,ty), ...))` overrides the derived
-    rhythm outright, and `tools/screen_to_world.py` turns marks on a capture
-    into that list (the country lane's eight are the maintainer's own).
+    fall). The LAMP PATTERN is the maintainer's, read off marks on a capture
+    and generalised: a junction is lit at its CORNERS between two arms (plus
+    one centred mast on any armless side), runs carry facing PAIRS every
+    `LAMP_STEP` (11) tiles out, and the ends of a run go DARK. Masts sit on
+    the OUTER shoulder edge and never on asphalt (each is pushed outward until
+    its tile is not asphalt, dropped if it cannot get clear, and an explicit
+    position on asphalt raises at build time). `build_path(..., lamps=((tx,ty),
+    ...))` overrides the pattern outright where a scene is art-directed;
+    `tools/screen_to_world.py` turns marks on a capture into that list (the
+    country lane's eight are the maintainer's own).
     `street_lamp`
     (a new `SOLID_PROPS` volume, in BOTH light tables and in
     `_ELECTRIC_KINDS`) still gates stealth cover and dies with the gensets. Arms paint in two

@@ -1917,13 +1917,24 @@ every path scene, driven end to end at ev3 with the lamps sparse, none of
 which may fall out of the world.
 
 The LAMPS are therefore not the safety, and there are far fewer than the
-first cut's end-to-end coverage (which read like an airport runway). They sit
-on the OUTER edge of the shoulder, where the right-of-way ends and the grass
-starts, and they STAGGER between the two sides rather than pairing off across
-the road: a county road lit one pole at a time, not an avenue. One stands at
-each arm's end, so a glow far off down the dark means a way on. Nothing
-stands at the junction itself; poles flank its crossing instead, which points
-at the decision without putting a post in the middle of it.
+first cut's end-to-end coverage (which read like an airport runway). The
+pattern is the maintainer's own, read off eight X's drawn on a capture of the
+country lane and generalised in `_lamp_stations` so every road in the network
+is lit the same way:
+
+* **A junction is lit at its CORNERS, never at its centre.** A mast goes in
+  each corner that lies between two arms, so the poles flank the mouth of the
+  side road instead of standing in the crossing. A side with no arm has
+  nothing to flank, so that shoulder takes one mast on the centreline, which
+  closes the junction's fourth side without lighting a road that is not there.
+* **Runs are lit in PAIRS**, facing each other across the road every
+  `LAMP_STEP` (11) tiles out from the junction.
+* **The ends of a run go dark.** The last pair falls where the stride falls
+  and nothing is added to light the way out. A road fading into unlit distance
+  is the point.
+
+Masts sit on the OUTER edge of the shoulder, where the right-of-way ends and
+the grass starts.
 
 **Placement is ART-DIRECTED, not derived, where it matters.**
 `build_path(..., lamps=((tx, ty), ...))` overrides the rhythm outright, and

@@ -139,6 +139,24 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The marked lamp pattern generalised to the whole network.**
+  The eight X's on the country lane were decomposed rather than copied, and
+  they turned out to encode a consistent rule: a junction is lit at the
+  CORNERS between two arms (the poles flank the side road's mouth instead of
+  standing in the crossing), a side with no arm takes one centred mast to
+  close the fourth side, runs carry FACING PAIRS every 11 tiles out, and the
+  ends of a run are left dark. `_lamp_stations` now implements that, which is
+  a change of kind as well as spacing -- the old derived rhythm staggered
+  poles down alternating shoulders, and the marks are unambiguous that the
+  long runs come in twos.
+  Checked against the ground truth rather than assumed: the derived pattern
+  reproduces four of the maintainer's eight marks exactly, three more within
+  one tile, and differs meaningfully only on the short north arm. The lane
+  keeps its explicit `lamps=` list either way; `river_road` and `river_bend`
+  now follow the rule (10 and 7 masts, five clean pairs down the river run).
+  Still on the old thin-road treatment and therefore unlit: `gravel_road_north`
+  and `arrival_road`, queued as `TODO.md` #26's path rebuild.
+
 - **2026-07 -- Lamp positions came off a marked-up screenshot, and reading it
   became a tool.** The maintainer drew X's on a capture ("lights on all the
   yellow Xs and nowhere else"); a rhythm placed to match them by eye hit none
