@@ -584,6 +584,22 @@ Built into the procedural draw layer (`scenes/base.py`,
   one damp April family: the dirt paths must never be the brightest thing
   outdoors, and wet ground gets its darkness from the puddles drawn on it,
   not from a near-black base.
+- **OBJECTS ARE NOT TILES, AND OCCLUSION FOLLOWS FROM HEIGHT.** The rule
+  walls established with `_wall_slab` -- authored per tile, but carrying a
+  real sub-tile footprint that is the SINGLE SOURCE for the draw layers and
+  for `is_solid_at` / `blocks_sight` / `_nav_solid_at` -- now applies to
+  plants too (`scenes/terrain.py` `tree_footprint`). A tree stands off its
+  cell centre and blocks as a round foot, so a stand reads as a wood instead
+  of a grid and the player slips between trunks on the diagonal the way the
+  silhouette promises. Jitter plus foot is held under 0.7 of a tile so a tree
+  can never seal a corridor it was not authored into.
+  Occlusion is then a consequence of geometry rather than of draw order.
+  Two rules make that true: **nothing gets a privileged layer** (anything
+  with height joins the one depth-sorted pass -- `bush` used to be a floor
+  decal, drawn before the pass, and so could never occlude anything at any
+  position), and **every occluder reports its own height** (`tree_height`)
+  to both the depth key and the fade box, instead of the flat wall rise of
+  26 that a 50-tall spruce and a knee-high scrub both used to claim.
 - **Interior walls render as thin-slab geometry, per material (current
   state; `scenes/terrain.py`; how this evolved -- bevel -> slab -> rounded ->
   materials -> the mine as hewn rock -- is in `CHANGELOG.md`, "Walls &

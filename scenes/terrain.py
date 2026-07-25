@@ -168,7 +168,12 @@ OBJECT_DEFS = {
     "#": {"solid": True, "kind": "stone_wall"},
     "W": {"solid": True, "kind": "wood_wall"},
     "T": {"solid": True, "kind": "tree"},
-    "p": {"solid": False, "kind": "tree"},   # passable secret tree -- looks identical to T
+    # WALK-THROUGH growth. The comment here used to claim 'looks identical
+    # to T', and it has not for some time: `p` renders as low scrub, so the
+    # places you may push through the treeline are VISIBLE. That is a design
+    # choice either way -- see `_TILT_BRUSH_CHARS` -- but the two statements
+    # disagreed in-tree, and this is the one that was wrong.
+    "p": {"solid": False, "kind": "tree"},   # walk-through -- drawn as low scrub
     "C": {"solid": True, "kind": "cornstalk"},
     "A": {"solid": False, "kind": "cornstalk"},   # passable corn -- looks like C
     "R": {"solid": True, "kind": "rock"},
@@ -1365,46 +1370,6 @@ _TREE_CARD_CAP = 1600
 _TILT_BRUSH_CHARS = frozenset({"p", "j"})
 
 
-def _draw_brush_body(surf, camera, wx, wy, seed, far):
-    """A low scrub bush: a short woody stem under a clumped, ground-hugging mound
-    of foliage (a couple of offset lobes near rank). Clearly under knee/waist
-    height next to a tree, so passable growth reads as passable."""
-    from rendering.solids import draw_solid
-    g = _vary(seed, 5) % 12
-    r = 8 + (_vary(seed, 2) % 5)            # spread 8..12
-    hgt = 9 + (_vary(seed, 3) % 6)          # low: 9..14 world tall
-    foliage = {
-        "body": (30 + g, 50 + g, 26 + g // 2),
-        "lo":   (18 + g // 2, 34 + g, 16 + g // 2),
-        "rim":  (54 + g, 78 + g, 42 + g),
-    }
-    stem = {"body": (54 + g // 3, 42 + g // 4, 28 + g // 4),
-            "lo": (30, 22, 14), "rim": (86, 62, 40)}
-    # stubby woody base
-    draw_solid(surf, camera, wx, wy,
-               [(0, 1.6, 1.6), (hgt * 0.5, 1.2, 1.2)], stem)
-    # main low foliage mound
-    z0 = hgt * 0.30
-    draw_solid(surf, camera, wx, wy,
-               [(z0,             r * 0.5,  r * 0.5),
-                (z0 + hgt * 0.45, r,        r),
-                (z0 + hgt * 0.85, r * 0.7,  r * 0.7),
-                (z0 + hgt * 1.10, r * 0.25, r * 0.25)],
-               foliage)
-    # a clumped side lobe or two so it reads as a bush, not a green ball
-    if not far:
-        for li in range(1 + (_vary(seed, 6) % 2)):
-            ox = ((_vary(seed, 7 + li * 3) % 11) - 5) * 0.8
-            oy = ((_vary(seed, 8 + li * 3) % 7) - 3) * 0.4
-            rr = r * 0.55
-            zb = z0 * 0.6
-            draw_solid(surf, camera, wx + ox, wy + oy,
-                       [(zb,            rr * 0.4, rr * 0.4),
-                        (zb + rr,       rr,       rr),
-                        (zb + rr * 1.9, rr * 0.3, rr * 0.3)],
-                       foliage)
-
-
 def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
     """Draw a tree by blitting its cached card (see _TREE_CARD_CACHE). The 3D
     body is rendered through `_tilt_tree_draw` on a cache miss; identical look,
@@ -1452,20 +1417,149 @@ def _build_tree_card(camera, scene, tx, ty, ch, far):
     return (card, anchor[0] - rect.x, anchor[1] - rect.y)
 
 
-def _spruce_tier(surf, camera, wx, wy, z0, r, h, pal, seed, far=False):
+# ============================ THE TREE ====================================
+# ONE renderer, THREE species, one light. Before this there were separate
+# draws for the spruce, the bare deciduous, the passable scrub, the `bush`
+# decoration (a flat floor sticker) and the `creepy_tree` decoration (a
+# camera-facing card). Five ways to draw a plant, five palettes, five ideas
+# about where the light comes from, and every one of them judged on its own.
+# The result was a treeline where nothing matched anything: a flat dark
+# cutout beside a bright faceted lump beside a lily pad on a black pot.
+#
+# Species differ in SHAPE. They share the palette family, the light
+# direction, the shading ramp, and the height model, because those are what
+# make a stand read as one wood rather than as a prop shelf.
+#
+# `_tree_height` is public to this module on purpose: DESIGN.md's occlusion
+# model needs an object's REAL height, and every one of these used to be
+# depth-keyed and fade-tested at the flat wall rise of 26 whatever it
+# actually was.
+
+TREE_SPECIES = ("spruce", "bare", "brush")
+
+# How far a tree may stand off its cell centre, and how wide its foot is,
+# both as a fraction of a tile. Kept so that jitter + foot < 0.7 of a tile:
+# past that a tree can seal a corridor it was never authored into.
+_TREE_JITTER = 0.22
+_TREE_FOOT = 0.42
+
+# Screen-space light, upper LEFT, matching the wall faces and the prop
+# materials. Every species shades off this one vector.
+_TREE_LIT = (-0.62, -0.78)
+
+
+def _tree_ramp(g, species):
+    """The four-stop foliage ramp + the bark, for one species and tint."""
+    if species == "brush":
+        # scrub is the youngest, greyest growth here -- it must NOT be the
+        # brightest green in the frame, which is what it was
+        dark = (11, 24, 15 + g // 3)
+        base = (17, 34, 20 + g // 3)
+        mid = (24 + g // 2, 46 + g // 2, 27 + g // 3)
+        lite = (34 + g // 2, 60 + g // 2, 36 + g // 3)
+    else:
+        dark = (9, 21, 14 + g // 3)
+        base = (15 + g // 3, 33 + g // 2, 20 + g // 3)
+        mid = (23 + g // 2, 48 + g // 2, 29 + g // 3)
+        lite = (36 + g // 2, 68 + g // 2, 42 + g // 2)
+    return (dark, base, mid, lite)
+
+
+def _tree_bark(g):
+    """Bark, kept COLD and dark. The old bole ran (60, 42, 26) up to a
+    (102, 72, 46) rim, which against near-black foliage read as bright
+    orange -- a traffic cone with twigs in it."""
+    return {"body": (42 + g // 4, 34 + g // 5, 26 + g // 5),
+            "lo": (20, 16, 13),
+            "rim": (58 + g // 4, 47 + g // 5, 36 + g // 5)}
+
+
+def _tree_lerp(ramp, t):
+    t = max(0.0, min(0.999, t))
+    i = t * (len(ramp) - 1)
+    a, b = ramp[int(i)], ramp[min(len(ramp) - 1, int(i) + 1)]
+    f = i - int(i)
+    return (int(a[0] + (b[0] - a[0]) * f),
+            int(a[1] + (b[1] - a[1]) * f),
+            int(a[2] + (b[2] - a[2]) * f))
+
+
+def tree_species_for(seed, ch):
+    """Which species a tile/instance is. Passable growth ('p'/'j') is scrub;
+    a solid tree is two-thirds spruce, one-third bare April deciduous."""
+    if ch in _TILT_BRUSH_CHARS:
+        return "brush"
+    return "bare" if (_vary(seed, 6) % 3) == 2 else "spruce"
+
+
+def tree_footprint(tx, ty, ch):
+    """Where a plant actually STANDS and how wide its foot is, in WORLD
+    units: `(wx, wy, r)`.
+
+    THIS IS THE 'TREES ARE TREATED LIKE WALLS' CONTRACT. Walls stopped being
+    tiles when `_wall_slab` gave them a real sub-tile footprint and made that
+    footprint the SINGLE SOURCE for the draw layers AND for
+    `is_solid_at` / `blocks_sight` / `_nav_solid_at` -- so what the player
+    bumps is what the player sees. Trees now get the same deal: authored per
+    tile, but placed freely inside it and blocking as a ROUND foot rather
+    than as a square 32x32 cell.
+
+    Two things come out of that. The stand stops reading as a grid, which is
+    DESIGN.md 6's core principle and the single biggest RimWorld tell left
+    outdoors. And the player can slip between trunks on the diagonal the way
+    the silhouette says they should, instead of being stopped by the corner
+    of a cell that has nothing drawn in it.
+
+    The jitter is deliberately bounded. At `_TREE_JITTER` 0.22 and a foot of
+    0.42 the circle reaches at most 0.64 of a tile from its cell centre, so a
+    tree can never seal a neighbouring corridor it was not authored into --
+    which smoke's flood-fill would fail on anyway.
+    """
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    species = tree_species_for(seed, ch)
+    jx = ((_vary(seed, 91) % 19) - 9) / 9.0 * (TILE * _TREE_JITTER)
+    jy = ((_vary(seed, 92) % 19) - 9) / 9.0 * (TILE * _TREE_JITTER)
+    if species == "brush":
+        r = TILE * 0.30
+    else:
+        r = TILE * _TREE_FOOT * (0.88 + (_vary(seed, 93) % 5) * 0.06)
+    return (tx * TILE + TILE * 0.5 + jx, ty * TILE + TILE * 0.5 + jy, r)
+
+
+def tree_height(seed, species, scale=1.0):
+    """How tall this plant STANDS, in world units (the player is 20, a wall
+    is 26). The occlusion pass needs the real number: everything here used to
+    be sorted and fade-tested at 26, so a 50-tall spruce under-reported the
+    screen it covered and a knee-high bush over-reported it by triple."""
+    if species == "brush":
+        return (9 + (_vary(seed, 3) % 6)) * 1.10 * scale
+    trunk_h = 13 + (_vary(seed, 1) % 7)
+    canopy_h = 24 + (_vary(seed, 3) % 9)
+    if species == "bare":
+        return (trunk_h + canopy_h * 1.05) * scale
+    return (trunk_h * 0.16 + canopy_h * 1.30 * 0.82 + canopy_h * 1.30 * 0.40) \
+        * scale
+
+
+def _spruce_tier(surf, camera, wx, wy, z0, r, h, ramp, seed, far=False):
     """One drooping, needled TIER of a spruce, as its own silhouette.
 
     Tiers used to be `draw_solid` bodies of revolution, and draw_solid gives
     every body a `lo` ellipse ring around its base and a BRIGHTENED filled
-    ellipse across its top -- correct for a barrel or a churn, and for a
-    conifer it stacks three or four glowing hoops up the tree. That is the
-    "stacked lampshades" read: the rings are the most contrasted thing on the
-    tree and they are all perfect ellipses.
+    ellipse across its top -- correct for a barrel, and up a conifer it
+    stacks three or four glowing hoops. That is the "stacked lampshades"
+    read: the rings are the most contrasted thing on the tree and every one
+    is a perfect ellipse.
 
     What says spruce is the SAW-TOOTH: branch tips drooping at the rim, so
-    the lower edge of every tier is broken and no two are alike. Built here
-    from the projected footprint directly, so it still foreshortens and yaws
+    the lower edge of every tier is broken and no two are alike. Built from
+    the projected footprint directly, so it still foreshortens and yaws
     exactly like a body of revolution -- it just has no lid.
+
+    Each tier is also SHADED across its own width off the shared light, not
+    filled flat. Filled flat, a stand of these read as paper cutouts: right
+    silhouette, no volume, and the only thing in the scene with no light
+    direction at all.
     """
     cp = camera.ground_squash()
     ca, sa = math.cos(camera.yaw), math.sin(camera.yaw)
@@ -1477,162 +1571,157 @@ def _spruce_tier(surf, camera, wx, wy, z0, r, h, pal, seed, far=False):
         return
     lift = h * camera.height_rise()
     n = 4 if far else 7
-    pts = [(ax, ay)]
+    # The tier is drawn as a fan of wedges from the apex, each wedge shaded
+    # by where it sits across the light. One polygon per tier cannot carry a
+    # gradient; a fan can, at the same silhouette.
+    rim = []
     for i in range(n + 1):
         u = -1.0 + 2.0 * i / n
         arc = ydep * math.sqrt(max(0.0, 1.0 - u * u))
         droop = (_vary(seed, 40 + i) % 4) * 0.16 * max(1.0, ydep)
-        pts.append((bx + half * u, by + arc + droop))
+        rim.append((bx + half * u, by + arc + droop, u))
         if i < n:
             um = u + 1.0 / n
             arcm = ydep * math.sqrt(max(0.0, 1.0 - um * um))
             notch = lift * (0.20 + (_vary(seed, 60 + i) % 3) * 0.06)
-            pts.append((bx + half * um, by + arcm - notch))
-    if len(pts) >= 3:
-        pygame.draw.polygon(surf, pal["body"], pts)
-        # form without a ring: the light catches the upper-LEFT slope and the
-        # lower-right falls away, matching the wall faces
-        pygame.draw.line(surf, pal["rim"], (ax, ay),
-                         (bx - half * 0.86, by + ydep * 0.42), 2)
-        pygame.draw.line(surf, pal["lo"], (ax, ay),
-                         (bx + half * 0.86, by + ydep * 0.42), 1)
+            rim.append((bx + half * um, by + arcm - notch, um))
+    for k in range(len(rim) - 1):
+        x0, y0, u0 = rim[k]
+        x1, y1, _u1 = rim[k + 1]
+        # lit where the wedge faces the light, dark where it turns away
+        t = 0.50 - 0.46 * u0 + 0.10 * ((_vary(seed, 80 + k) % 5) - 2) * 0.1
+        pygame.draw.polygon(surf, _tree_lerp(ramp, t),
+                            [(ax, ay), (x0, y0), (x1, y1)])
 
 
-def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
-    """A tree as a real volumetric body: a brown cylindrical trunk + a tapered
-    canopy projected through the camera as a body of revolution. Anchored to
-    the tile, the silhouette varies correctly under yaw (a billboard never
-    does -- it always faces the camera, swinging with the head turn). Per-
-    tile seed varies trunk girth, canopy size, lean, palette + an occasional
-    secondary lobe so a band of trees doesn't read as a stamped row.
-    Rendered once per (tile, angle) into a card by _tilt_tree_solid."""
-    from rendering.solids import draw_solid
-    seed = (tx * 73856093) ^ (ty * 19349663)
-    wx = tx * TILE + 16
-    wy = ty * TILE + 16
-    if ch in _TILT_BRUSH_CHARS:
-        _draw_brush_body(surf, camera, wx, wy, seed, far)
+def _bare_limb(surf, camera, bark, levels, bx0, by0, bz0, ang, tilt, ln,
+               wdt, lvl, sd):
+    """One limb, then its children. A leafless tree is READ by its forking:
+    each split shorter and thinner than its parent until the crown is a haze
+    of twigs. Single straight strokes radiating off the leader at random
+    angles -- which is what this was -- is a bottle brush."""
+    ex = bx0 + math.cos(ang) * ln
+    ey = by0 + math.sin(ang) * ln * 0.5      # the ground plane foreshortens
+    ez = bz0 + ln * tilt
+    col = bark["body"] if wdt > 1 else bark["lo"]
+    pygame.draw.line(surf, col, camera.project(bx0, by0, bz0),
+                     camera.project(ex, ey, ez), wdt)
+    if lvl >= levels:
         return
-    # A BOLE, not a barrel. At 2.4-3.5 against an 11-16 canopy the trunk was
-    # a fifth as wide as the whole tree and, with the spruce tiers starting
-    # well up it, the exposed stub below read as a keg standing under the
-    # branches. A conifer's bole is a tenth of its spread and mostly hidden.
-    trunk_r = 1.3 + (_vary(seed, 0) % 10) * 0.07   # 1.3..1.9
-    trunk_h = 13 + (_vary(seed, 1) % 7)            # 13..19
-    canopy_r = 11 + (_vary(seed, 2) % 6)           # 11..16
-    canopy_h = 24 + (_vary(seed, 3) % 9)           # 24..32
-    lean_x = ((_vary(seed, 4) % 7) - 3) * 0.6      # -1.8..1.8
+    for c in range(2):
+        spread = 0.55 + (_vary(sd, 3 + c) % 9) * 0.06
+        _bare_limb(surf, camera, bark, levels, ex, ey, ez,
+                   ang + (spread if c else -spread)
+                   + ((_vary(sd, 7 + c) % 5) - 2) * 0.10,
+                   min(1.4, tilt + 0.28 + (_vary(sd, 11 + c) % 4) * 0.06),
+                   ln * (0.60 + (_vary(sd, 15 + c) % 4) * 0.05),
+                   max(1, wdt - 1), lvl + 1, sd ^ ((c + 1) * 2654435761))
+
+
+def _tapered_bole(surf, camera, bark, wx, wy, top_x, top_h, r, scale):
+    """A trunk that CONTINUES into whatever it carries, instead of a capped
+    cylinder. `draw_solid` finishes every body with a base ring and a
+    brightened cap disc, so a bole drawn that way ends in a lit lid partway
+    up the tree -- which is what made the bare deciduous a fence post."""
+    bw = r * scale
+    b0 = camera.project(wx, wy, 0.0)
+    b1 = camera.project(top_x, wy, top_h)
+    pygame.draw.polygon(surf, bark["body"], [
+        (b0[0] - bw * 1.22, b0[1]), (b0[0] + bw * 1.22, b0[1]),
+        (b1[0] + bw * 0.55, b1[1]), (b1[0] - bw * 0.55, b1[1])])
+    pygame.draw.line(surf, bark["rim"], (b0[0] - bw * 1.0, b0[1]),
+                     (b1[0] - bw * 0.45, b1[1]), 1)
+    pygame.draw.line(surf, bark["lo"], (b0[0] + bw * 1.0, b0[1]),
+                     (b1[0] + bw * 0.45, b1[1]), 1)
+
+
+def draw_tree_body(surf, camera, wx, wy, seed, species, scale=1.0, far=False):
+    """THE one plant renderer. `wx, wy` is the foot, in WORLD units and free
+    of the tile grid; `scale` sizes the individual."""
     g = _vary(seed, 5) % 12
-    # Trunk -- the gnarled bole, slight base flare
-    trunk_pal = {
-        "body": (60 + g // 3, 42 + g // 4, 26 + g // 4),
-        "lo":   (32 + g // 4, 22 + g // 4, 14 + g // 4),
-        "rim":  (78 + g // 2, 56 + g // 3, 36 + g // 3),
-    }
-    species = _vary(seed, 6) % 3
-    if species < 2:
-        # SPRUCE: the bole is almost entirely behind the skirt, so a body of
-        # revolution costs nothing and reads fine where it peeks out.
-        draw_solid(surf, camera, wx, wy,
-                   [(0, trunk_r * 1.22, trunk_r * 1.22),
-                    (trunk_h * 0.5, trunk_r, trunk_r),
-                    (trunk_h, trunk_r * 0.86, trunk_r * 0.86)],
-                   trunk_pal)
-    else:
-        # BARE: nothing hides this bole, and draw_solid finishes every body
-        # with a base ellipse ring and a BRIGHTENED cap disc -- so a leafless
-        # tree got a lit lid partway up its trunk and read as a fence post
-        # with branches above it. The bole is drawn as a tapered quad that
-        # simply CONTINUES into the leader instead.
-        _bw = trunk_r * camera.scale
-        b0 = camera.project(wx, wy, 0.0)
-        b1 = camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.7)
-        pygame.draw.polygon(surf, trunk_pal["body"], [
-            (b0[0] - _bw * 1.22, b0[1]), (b0[0] + _bw * 1.22, b0[1]),
-            (b1[0] + _bw * 0.62, b1[1]), (b1[0] - _bw * 0.62, b1[1])])
-        pygame.draw.line(surf, trunk_pal["lo"],
-                         (b0[0] + _bw * 1.0, b0[1]),
-                         (b1[0] + _bw * 0.5, b1[1]), 1)
-    # The stand is NORTH-WOODS APRIL (2026-07 quality sprint; the old
-    # summer-green canopy blobs read as "weird shaped trees" -- a smooth
-    # body of revolution at this size is a lampshade). Two species by
-    # seed: ~2/3 boreal SPRUCE -- a ragged dark cone of stacked, jittered
-    # tiers, the shape this renderer is genuinely good at -- and ~1/3
-    # BARE deciduous, a taller trunk with seeded branch strokes and no
-    # canopy at all (the sealed winter only just let go; nothing has
-    # leafed). Seasonally true (NARRATIVE §3: April, last year's corn
-    # dead standing) and darker on the skyline than the green ever was.
-    if species < 2:
-        # SPRUCE: stacked drooping tiers, each ring jittered so no two
-        # trees repeat and no tier is a clean circle.
-        spruce_pal = {
-            "body": (18 + g // 2, 38 + g // 2, 26 + g // 3),
-            "lo":   (10 + g // 3, 24 + g // 3, 16 + g // 3),
-            "rim":  (32 + g // 2, 56 + g // 2, 38 + g // 2),
-        }
-        # the lowest tier hangs almost to the ground -- a spruce is skirted,
-        # and any gap under it shows the bole it does not have
+    ramp = _tree_ramp(g, species)
+    bark = _tree_bark(g)
+    lean_x = ((_vary(seed, 4) % 7) - 3) * 0.6 * scale
+
+    if species == "brush":
+        # LOW SCRUB: knee-to-waist, a couple of clumped lobes over a woody
+        # stub. Built from tiers like the spruce so it shares the shading --
+        # as a `draw_solid` body at this size it was a handful of flat
+        # faceted quads with a red-brown pot at its foot (draw_solid's base
+        # ring and cap on the stem).
+        r = (8 + (_vary(seed, 2) % 5)) * scale
+        hgt = (9 + (_vary(seed, 3) % 6)) * scale
+        _tapered_bole(surf, camera, bark, wx, wy, wx, hgt * 0.34,
+                      1.0, scale)
+        # SQUAT and clumped. Built from the same tier as the spruce (that is
+        # what shares the shading) but wide and short, so the cone flattens
+        # into a mound -- at a tall tier the lobes read as two miniature
+        # conifers standing together, which is the opposite of scrub.
+        lobes = 2 if far else 3 + (_vary(seed, 6) % 2)
+        for li in range(lobes):
+            ox = ((_vary(seed, 7 + li * 3) % 11) - 5) * 0.22 * r
+            oy = ((_vary(seed, 8 + li * 3) % 7) - 3) * 0.14 * r
+            lr = r * (0.66 + (_vary(seed, 9 + li) % 5) * 0.09)
+            lz = hgt * (0.10 + (_vary(seed, 17 + li) % 4) * 0.06)
+            _spruce_tier(surf, camera, wx + ox, wy + oy, lz,
+                         lr, hgt * 0.44, ramp, seed ^ (li * 40503), far)
+        return
+
+    trunk_r = (1.3 + (_vary(seed, 0) % 10) * 0.07) * scale
+    trunk_h = (13 + (_vary(seed, 1) % 7)) * scale
+    canopy_r = (11 + (_vary(seed, 2) % 6)) * scale
+    canopy_h = (24 + (_vary(seed, 3) % 9)) * scale
+
+    if species == "spruce":
+        # the bole is almost entirely behind the skirt; what shows is a stub
+        _tapered_bole(surf, camera, bark, wx, wy, wx + lean_x * 0.3,
+                      trunk_h * 0.6, trunk_r, 1.0)
         z0 = trunk_h * 0.16
         h = canopy_h * 1.30
-        # More tiers, each shallower and overlapping the one below, so the
-        # profile is a continuous needled cone rather than three fat drums.
         tiers = 3 if far else 4 + (_vary(seed, 7) % 2)
         for i in range(tiers):
-            t = i / max(1, tiers - 1)              # 0 bottom .. 1 top
+            t = i / max(1, tiers - 1)
             jr = 0.86 + (_vary(seed, 8 + i) % 9) * 0.035
             rr = canopy_r * (1.10 - 0.74 * t) * jr
             tz = z0 + h * (0.02 + 0.80 * t)
-            th = h * 0.40
-            jx = ((_vary(seed, 12 + i) % 7) - 3) * 0.5
-            _spruce_tier(surf, camera, wx + lean_x + jx, wy, tz, rr, th,
-                         spruce_pal, seed ^ (i * 2654435761), far)
-    else:
-        # BARE: a leafless April deciduous. What makes one readable is that
-        # its limbs FORK -- each split thinner and shorter than its parent,
-        # two or three levels deep, until the crown is a haze of twigs. The
-        # old version put single straight strokes radiating off the leader at
-        # random angles, which is a bottle brush; with the bole drawn as a
-        # solid cylinder underneath, the whole thing read as a fence post
-        # with a few nails in it.
-        bare = (54 + g // 3, 40 + g // 4, 28 + g // 4)
-        thin = (bare[0] - 14, bare[1] - 11, bare[2] - 8)
-        top_h = trunk_h + canopy_h * 1.05
-        levels = 2 if far else 3
+            jx = ((_vary(seed, 12 + i) % 7) - 3) * 0.5 * scale
+            _spruce_tier(surf, camera, wx + lean_x + jx, wy, tz, rr,
+                         h * 0.40, ramp, seed ^ (i * 2654435761), far)
+        return
 
-        def _limb(bx0, by0, bz0, ang, tilt, ln, wdt, lvl, sd):
-            """One limb from (bx0, by0, bz0), then its children."""
-            ex = bx0 + math.cos(ang) * ln
-            ey = by0 + math.sin(ang) * ln * 0.5   # ground plane foreshortens
-            ez = bz0 + ln * tilt
-            pygame.draw.line(surf, bare if wdt > 1 else thin,
-                             camera.project(bx0, by0, bz0),
-                             camera.project(ex, ey, ez), wdt)
-            if lvl >= levels:
-                return
-            for c in range(2):
-                spread = 0.55 + (_vary(sd, 3 + c) % 9) * 0.06
-                _limb(ex, ey, ez,
-                      ang + (spread if c else -spread)
-                      + ((_vary(sd, 7 + c) % 5) - 2) * 0.10,
-                      min(1.4, tilt + 0.28 + (_vary(sd, 11 + c) % 4) * 0.06),
-                      ln * (0.60 + (_vary(sd, 15 + c) % 4) * 0.05),
-                      max(1, wdt - 1), lvl + 1,
-                      sd ^ ((c + 1) * 2654435761))
+    # BARE: a leafless April deciduous.
+    top_h = trunk_h + canopy_h * 1.05
+    _tapered_bole(surf, camera, bark, wx, wy, wx + lean_x * 0.4,
+                  trunk_h * 0.7, trunk_r, 1.0)
+    levels = 2 if far else 3
+    pygame.draw.line(surf, bark["body"],
+                     camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.7),
+                     camera.project(wx + lean_x, wy, top_h), max(1, int(2 * scale)))
+    n_br = 3 if far else 4 + (_vary(seed, 7) % 3)
+    for i in range(n_br):
+        fz = 0.24 + 0.68 * ((_vary(seed, 8 + i) % 97) / 97.0)
+        bz = trunk_h * 0.7 + (top_h - trunk_h * 0.7) * fz
+        ang = ((_vary(seed, 16 + i) % 628) / 100.0)
+        ln = canopy_r * (0.52 + (_vary(seed, 24 + i) % 7) * 0.07) \
+            * (1.0 - 0.42 * fz)
+        _bare_limb(surf, camera, bark, levels, wx + lean_x * fz, wy, bz,
+                   ang, 0.62, ln, max(1, int(2 * scale)), 1,
+                   seed ^ (i * 40503))
 
-        # the leader, carrying on past the bole
-        lead_x = wx + lean_x
-        pygame.draw.line(surf, bare,
-                         camera.project(wx + lean_x * 0.4, wy, trunk_h * 0.7),
-                         camera.project(lead_x, wy, top_h), 2)
-        n_br = 2 if far else 3 + (_vary(seed, 7) % 2)
-        for i in range(n_br):
-            fz = 0.30 + 0.62 * ((_vary(seed, 8 + i) % 97) / 97.0)
-            bz = trunk_h * 0.7 + (top_h - trunk_h * 0.7) * fz
-            ang = ((_vary(seed, 16 + i) % 628) / 100.0)
-            ln = canopy_r * (0.52 + (_vary(seed, 24 + i) % 7) * 0.07) \
-                * (1.0 - 0.42 * fz)
-            _limb(wx + lean_x * fz, wy, bz, ang, 0.62, ln, 2, 1,
-                  seed ^ (i * 40503))
+
+def _draw_brush_body(surf, camera, wx, wy, seed, far):
+    """Back-compat shim -- the scrub species by its old name."""
+    draw_tree_body(surf, camera, wx, wy, seed, "brush", 1.0, far)
+
+
+def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
+    """One plant at a tile, dispatched to the shared renderer by species.
+    Rendered once per (tile, angle) into a card by `_tilt_tree_solid`."""
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    fx, fy, _r = tree_footprint(tx, ty, ch)
+    draw_tree_body(surf, camera, fx, fy, seed,
+                   tree_species_for(seed, ch), 1.0, far)
+
 
 
 # Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster
@@ -4208,7 +4297,10 @@ _FLOOR_DECAL_KINDS = frozenset((
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
-    "bush",
+    # "bush" was HERE, and being a floor decal is why it could never
+    # occlude anything: the flat layer is drawn before the depth pass, so
+    # a bush was under every tree at any position. It is a real volume now
+    # (rendering/props.py `_draw_bush_solid` -> the shared plant renderer).
     # Marks scratched into the floor or the body of something laid in the dirt:
     # all read as ground decals and want to turn with the room under tilt.
     "mud_footprint", "claw_marks", "dead_crow", "watching_wound",
@@ -4302,7 +4394,7 @@ _FLOOR_DECAL_SCALE_BKT = 0.05
 # only pitch-squashed onto the floor, so they hold still and cost nothing on a
 # turn. Directional decals (signs, prints, the Yellow Sign, a dead crow) keep
 # the yaw rotate so they stay pinned to the ground as it turns.
-_FLOOR_DECAL_YAW_INVARIANT = frozenset({"bush", "mist", "leaves"})
+_FLOOR_DECAL_YAW_INVARIANT = frozenset({"mist", "leaves"})
 
 
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):

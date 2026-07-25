@@ -1734,7 +1734,8 @@ class RenderMixin:
         # list stays in legacy insertion order -> the flat view is byte-identical.
         if _tilt:
             from scenes.base import (_TILT_WALL_RISE, _COUNTER_RISE,
-                                     _COUNTER_CHARS, _tilt_tile_box)
+                                     _COUNTER_CHARS, _tilt_tile_box,
+                                     _TILT_BILLBOARD_CHARS)
             from rendering.occlusion import (focus_occ_data,
                                               occluder_alpha_box, _screen_span)
             _whalf = TILE * 0.5 * self.camera.scale
@@ -1754,7 +1755,22 @@ class RenderMixin:
                 _wty = ty % _sh if self.scene.wrap_y else ty
                 _ch = (self.scene.objects[_wty][_wtx]
                        if 0 <= _wty < _sh and 0 <= _wtx < _sw else "")
-                rise = _COUNTER_RISE if _ch in _COUNTER_CHARS else _TILT_WALL_RISE
+                # THE OBJECT'S REAL HEIGHT, not a flat 26 for everything.
+                # This `rise` does two jobs -- it keys the depth sort and it
+                # sizes the screen box the fade test uses -- and every
+                # occluder but a counter used to claim the wall height of 26.
+                # A spruce stands about 50, so it under-reported the screen
+                # it covers and could fail to fade off an actor it was
+                # completely hiding; knee-high scrub over-reported by triple
+                # and faded for actors it could not possibly have covered.
+                if _ch in _COUNTER_CHARS:
+                    rise = _COUNTER_RISE
+                elif _ch in _TILT_BILLBOARD_CHARS:
+                    from scenes.terrain import tree_height, tree_species_for
+                    _tsd = (tx * 73856093) ^ (ty * 19349663)
+                    rise = tree_height(_tsd, tree_species_for(_tsd, _ch))
+                else:
+                    rise = _TILT_WALL_RISE
                 wa = 255
                 if _focus_pre:
                     _od = self.camera.depth(wcx, wcy)

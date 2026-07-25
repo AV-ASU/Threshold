@@ -623,6 +623,20 @@ class Scene:
         ch = self.char_object_at(x_px, y_px)
         if not (is_object_solid(ch) or ch in _WALL_CHARS):
             return False
+        if ch in _terrain._TILT_BILLBOARD_CHARS and \
+                _terrain.OBJECT_DEFS.get(ch, {}).get("kind") == "tree":
+            # A TREE BLOCKS AS A ROUND FOOT AT ITS OWN POSITION, not as the
+            # whole 32x32 cell it was authored in -- the same contract the
+            # thin-slab walls have, and read from the same function the draw
+            # uses (`_terrain.tree_footprint`). A tree standing off-centre in
+            # its cell blocks off-centre; the corner of the cell it does not
+            # occupy is walkable, which is what the silhouette has always
+            # promised.
+            tx, ty = int(x_px // TILE), int(y_px // TILE)
+            fx, fy, r = _terrain.tree_footprint(tx, ty, ch)
+            if (x_px - fx) ** 2 + (y_px - fy) ** 2 > r * r:
+                return False
+            return True
         if ch in _WALL_CHARS and getattr(self, "key", None) in _terrain._SLAB_SCENES:
             foot = _terrain._wall_slab(self, int(x_px // TILE), int(y_px // TILE))
             if foot is not None:

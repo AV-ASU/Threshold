@@ -1182,6 +1182,39 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — Trees consolidated, un-bound from tiles, and occluding by
+  height.** A sprite-by-sprite audit found seven tree sprites and six of them
+  failing: the spruce a flat cutout with no light direction, the bare
+  deciduous an orange bole ending dead where its leader began, the scrub a
+  set of faceted quads with a red pot at its foot (`draw_solid`'s base ring
+  and cap on the stem), `bush` a flat floor sticker reading as a lily pad on
+  a black pot, `creepy_tree` a camera-facing standee that swivelled to watch
+  you, and the cutscene forest no longer closing into a canopy (a regression
+  from the previous entry's crown narrowing). Only the skybox treeline
+  passed. Three stages, all approved before starting:
+  - **One renderer, three species.** `draw_tree_body` with
+    `spruce` / `bare` / `brush`, sharing one palette family, one light
+    direction and one height model -- which is what makes a stand read as one
+    wood rather than a prop shelf. Five separate draws collapse into it,
+    including the two decorations.
+  - **Real heights.** `render_mixin` keyed EVERY occluder's depth sort and
+    fade box at `_TILT_WALL_RISE` (26), counters excepted. A spruce stands
+    about 50 and so under-reported the screen it covered; knee-high scrub
+    over-reported by triple. Each object reports `tree_height` now.
+  - **No privileged layers.** `draw_terrain_tilted` draws the flat layer
+    first and returns the upright occluders for the caller to interleave, so
+    a `_FLOOR_DECAL_KINDS` decoration could never occlude anything at any
+    position. `bush` was one. It is a volume now, in the depth pass.
+  - **`tree_footprint` -- the wall contract, for plants.** Authored per tile,
+    placed freely inside it, blocking as a round foot, and that one function
+    is the single source for the draw AND for collision, sight and nav
+    through `Scene._obj_solid_here`. Jitter + foot is bounded under 0.7 of a
+    tile so a tree cannot seal a corridor it was never authored into.
+  - Also: `OBJECT_DEFS` had claimed for some time that `p` is a "passable
+    secret tree -- looks identical to T". It renders as low scrub and has
+    not looked identical to `T` in a while; the comment was the wrong half
+    of the contradiction and now describes what actually ships.
+
 - **2026-07 — Ground and trees redesigned; the black patches in the grass
   found.** The maintainer: "update the design of dirt, grass, trees. They are
   all looking off. Are there black patches in the grass at certain angles."

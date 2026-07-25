@@ -496,15 +496,28 @@ it renders the procedural sprites to a labelled PNG strip.
     collection + `_tilt_tile_box` dispatch, which routes by KIND and is
     guarded by `tests/conventions.py` check 8c so a new billboard kind with
     no branch fails instead of drawing nothing). Collision is unchanged.
-    A tree is one of two species by seed: a **spruce**, a stack of drooping
-    needled tiers built by `_spruce_tier` (its own saw-toothed silhouette
-    rather than a `draw_solid` body — draw_solid rings every body with a base
-    ellipse and a brightened cap disc, which up a conifer reads as stacked
-    lampshades), or a **bare deciduous**, a tapered bole continuing into a
-    leader with recursively forking limbs. The flat `_draw_tree` /
-    `_draw_corn` are NOT this: they are the pitch-0 tile art, live only in
-    the cutscene forest (`ui/cutscenes.py`). Editing them does not change
-    what the player sees.
+    **EVERY plant is ONE renderer, `draw_tree_body`, with three species**
+    (`TREE_SPECIES`): `spruce` (drooping needled tiers via `_spruce_tier`,
+    each tier a shaded fan rather than a `draw_solid` body — draw_solid rings
+    every body with a base ellipse and a brightened cap disc, which up a
+    conifer reads as stacked lampshades), `bare` (a tapered bole continuing
+    into a leader with recursively forking limbs), and `brush` (squat clumped
+    mounds — walk-through growth). They share one palette family, one light
+    direction and one height model, which is what makes a stand read as one
+    wood. The `bush` and `creepy_tree` DECORATIONS route here too
+    (`props.py` `_draw_bush_solid` / `_draw_creepy_tree_solid`) — `bush` was
+    a flat floor decal and `creepy_tree` a camera-facing standee. The flat
+    `_draw_tree` / `_draw_corn` are NOT this: they are the pitch-0 tile art,
+    live only in the cutscene forest (`ui/cutscenes.py`).
+    **A tree is not bound to its tile** (`tree_footprint`, the same contract
+    `_wall_slab` gave walls): authored per tile, placed freely inside it, and
+    blocking as a ROUND foot at its own position. That one function is the
+    single source for the draw AND for `is_solid_at` / `blocks_sight` /
+    `_nav_solid_at` (via `Scene._obj_solid_here`), so what the player bumps
+    is what the player sees, and the stand stops reading as a grid.
+    **Heights are real** (`tree_height`): the depth key and the occluder fade
+    box in `render_mixin` take the object's own height, not the flat wall
+    rise of 26 that every occluder but a counter used to claim.
   - **Blind-spot vision (`sight.py`, DESIGN.md §10):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, and
     the world-rot decals — flagged `_sight_gated`) to a forward sight

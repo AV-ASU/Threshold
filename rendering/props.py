@@ -4219,7 +4219,36 @@ def _draw_bell_stock_solid(surf, cam, deco):
         pygame.draw.line(surf, (40, 38, 40), g0, g1, max(1, int(1.6 * s)))
 
 
+def _draw_bush_solid(surf, cam, deco):
+    """A scrub bush -- the SAME plant renderer the terrain uses, so a bush
+    beside a tree is the same species of thing lit the same way. It used to
+    be a flat floor sticker with a dark ellipse under it: a lily pad on a
+    black pot, and structurally unable to occlude anything because floor
+    decals draw before the depth pass."""
+    from scenes.terrain import draw_tree_body
+    seed = int(getattr(deco, "seed", 0) or 0) ^ int(deco.x) * 73856093 \
+        ^ int(deco.y) * 19349663
+    draw_tree_body(surf, cam, deco.x, deco.y, seed, "brush",
+                   (getattr(deco, "scale", 1.0) or 1.0) * 0.85)
+    return True
+
+
+def _draw_creepy_tree_solid(surf, cam, deco):
+    """The wrong tree: a bare April deciduous, but taller and drawn with the
+    dead-wood bark. It was a camera-facing standee card -- identical outline
+    from all four facings, so it swivelled to watch you, which VISION allows
+    for flame and thin foliage and not for a thing with a solid trunk."""
+    from scenes.terrain import draw_tree_body
+    seed = int(getattr(deco, "seed", 0) or 0) ^ int(deco.x) * 19349663 \
+        ^ int(deco.y) * 83492791
+    draw_tree_body(surf, cam, deco.x, deco.y, seed | 2, "bare",
+                   (getattr(deco, "scale", 1.0) or 1.0) * 1.25)
+    return True
+
+
 SOLID_PROPS = {
+    "bush":          _draw_bush_solid,
+    "creepy_tree":   _draw_creepy_tree_solid,
     "bell_stock":    _draw_bell_stock_solid,
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -4318,7 +4347,7 @@ _STANDEE_HANG = frozenset(("hanging_figure",))
 # here is genuinely organic (trees, grass, corn-husk effigies) or too slight to
 # volumize (the doll), where a stood-up card is the right read.
 _STANDEE_GROUND = frozenset((
-    "creepy_tree", "corn_doll", "tall_grass", "grass_tuft", "doll",
+    "corn_doll", "tall_grass", "grass_tuft", "doll",
     "husk_bundle",
 ))
 _STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
