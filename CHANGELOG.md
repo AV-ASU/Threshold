@@ -1255,6 +1255,26 @@
     and absurd for a dying corn town, so Brimley's is a small one. In
     fiction it is the last bright thing on the road, raised when the town
     still thought it had a future.
+  - **Then MEASURED, which is what should have happened first.** The
+    maintainer's verdict on the googie board was that it was less readable
+    than before, and it was: the restyle had improved contrast while
+    quietly keeping the panel narrow. Cropping the sign at 1:1 and counting
+    settled in one line what three rebuilds of styling had not -- the panel
+    rendered 80 x 44 SCREEN PIXELS and "NORTHERNMOST CORN" is seventeen
+    characters, so each got 4.5px. No alphabet, contrast or brush weight
+    resolves 4.5px a character; only fewer characters per line or a wider
+    board can. Every judgement until then had been made on a capture taken
+    at play zoom and then ENLARGED to inspect, which is still looking at a
+    magnified image, and a magnified image of 4px lettering looks fine.
+    So the panel went from 8x16ft to 8x24ft (3:1, 144 x 54 px on screen)
+    and the three lines took an explicit hierarchy: the name unmistakable
+    at 14px a character, the boast readable at 8px, the founding year fine
+    print at 6px -- which is what it is on a real sign too. Locked by
+    `assemblies.sign_legibility()` + `tests/render_smoke.py` [6/6], which
+    computes what each line lands at in pixels and fails under the floor,
+    so this cannot regress by eye again. VISION gained the rule the whole
+    episode was teaching: when the question is legibility, count the
+    pixels, do not look.
 
 - **2026-07 — Trees consolidated, un-bound from tiles, and occluding by
   height.** A sprite-by-sprite audit found seven tree sprites and six of them

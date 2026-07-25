@@ -156,23 +156,24 @@ REFERENCES = {
     },
     "town_sign": {
         "is": "A 1960s GOOGIE roadside welcome sign, of the 1959 Welcome to "
-              "Fabulous Las Vegas family: a BRIGHT cream 8x16ft panel in a "
+              "Fabulous Las Vegas family: a BRIGHT cream 8x24ft panel in a "
               "coral frame, lined with light bulbs, a bulb-lit atomic "
               "STARBURST rising clear above it, a coloured band carrying the "
               "second line, a small hanging plaque for the third, and two "
               "SPLAYED steel legs. Not a weathered farm board.",
-        # 192 x 96in panel (two 4x8 sheets each way), nominal 2in with its
-        # frame. +x is the board's WIDTH (the way you read it), +y its
-        # thickness, +z its height -- the model's axes, which is not how a
-        # sign shop quotes a sheet.
-        "real": (192.0, 2.0, 96.0),
+        # 288 x 96in: an 8 x 24ft panel, three sheets wide. The WIDTH is set
+        # by legibility, not by taste -- see `sign_legibility()`. At 8x16 the
+        # board rendered 80 x 44 screen pixels and its long line got 4.5px a
+        # character, which no lettering resolves. +x is the board's WIDTH
+        # (the way you read it), +y its thickness, +z its height.
+        "real": (288.0, 2.0, 96.0),
         "part": "panel",   # the face + back plates together
-        # A googie welcome sign is TALL on purpose -- it is built to be seen
-        # over whatever is in front of it, and the archetype stands 25ft,
-        # which here would be 81 units, over three times a wall. That is
-        # honest for Vegas and absurd for a dying corn town, so Brimley's is
-        # a small one: the panel and its starburst come to about 21ft.
-        "world_h": 68.0,   # ~2.6x a wall, star included
+        # A googie welcome sign is TALL on purpose -- built to be seen over
+        # whatever is in front of it. The archetype stands 25ft, which here
+        # is about 81 units, and Brimley's lands just under that: not for
+        # grandeur, but because the panel had to grow until its lettering
+        # could be read at the shipping camera.
+        "world_h": 78.0,   # ~3x a wall, star included
         "mount": "held UP, the panel's bottom edge around 5ft, with the "
                  "starburst clearing the top: a googie sign is meant to be "
                  "seen over whatever is in front of it. Legs inset from the "

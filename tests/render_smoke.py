@@ -262,6 +262,42 @@ def check_painted_lettering(_g):
     return errors
 
 
+def check_sign_legibility(_g):
+    """World lettering has to be READABLE at play zoom, in pixels.
+
+    The town sign was rebuilt four times -- a bigger board, then a doubled
+    board, then a bright googie restyle -- and the maintainer called it
+    unreadable every time, because every judgement was made from a MAGNIFIED
+    capture. At the shipping camera the panel lands about 143 x 39 screen
+    pixels, and "NORTHERNMOST CORN" is seventeen characters: 4.5px each. The
+    eye cannot see that in a 4x crop, and no alphabet, contrast or brush
+    weight resolves it. It is arithmetic, so it gets arithmetic.
+
+    Verified to fail: narrow the welcome panel back toward its old width and
+    the long line drops under the floor here.
+    """
+    from rendering.assemblies import base, sign_legibility
+    errors = 0
+    asm = base("town_sign")
+    if not asm.lines:
+        return fail("the town sign publishes no lettering layout to measure")
+    metrics = sign_legibility(asm.lines)
+    # the town's NAME is the one thing that must read at a glance
+    name, cap, per = metrics[0]
+    if per < 12.0 or cap < 13.0:
+        errors += fail(f"sign: {name!r} lands {per:.1f}px/char, {cap:.1f}px "
+                       "cap -- the town's name must be unmistakable "
+                       "(>=12px/char, >=13px cap)")
+    # and no line may fall to the mush the first four cuts shipped
+    for text, cap, per in metrics:
+        if per < 5.8 or cap < 6.4:
+            errors += fail(f"sign: {text!r} lands {per:.1f}px/char, "
+                           f"{cap:.1f}px cap -- under about 6px a character "
+                           "the letters merge into a bar. Widen the panel or "
+                           "shorten the line; styling will not save it.")
+    return errors
+
+
 def main():
     g = Game()
     g.save.new()
@@ -269,16 +305,18 @@ def main():
     g._start_play()
 
     failures = 0
-    print("[1/5] draw pipeline across scenes ...")
+    print("[1/6] draw pipeline across scenes ...")
     failures += check_draw_pipeline(g)
-    print("[2/5] core vignette overlays paint ...")
+    print("[2/6] core vignette overlays paint ...")
     failures += check_vignette_paints(g)
-    print("[3/5] ending cutscenes draw ...")
+    print("[3/6] ending cutscenes draw ...")
     failures += check_ending_cutscenes(g)
-    print("[4/5] heightfield + see-through door sight-gating ...")
+    print("[4/6] heightfield + see-through door sight-gating ...")
     failures += check_phase6_and_doors(g)
-    print("[5/5] painted world lettering is never mirrored ...")
+    print("[5/6] painted world lettering is never mirrored ...")
     failures += check_painted_lettering(g)
+    print("[6/6] world lettering is legible at play zoom ...")
+    failures += check_sign_legibility(g)
 
     if failures:
         print(f"\n{failures} failure(s).")

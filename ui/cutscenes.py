@@ -548,13 +548,13 @@ class CutsceneMixin:
         """
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
-        bw, bh = 118, 54
+        bw, bh = 146, 48
         bx, by = x - bw // 2, y - bh
         # splayed legs (the world sign's `pitch`, drawn flat here)
         for sgn in (-1, 1):
-            fx = x + sgn * 40
+            fx = x + sgn * 52
             pygame.draw.polygon(s, L((92, 96, 104)), [
-                (x + sgn * 30, by + 18), (x + sgn * 34, by + 18),
+                (x + sgn * 38, by + 16), (x + sgn * 42, by + 16),
                 (fx + sgn * 4, by + 78), (fx, by + 78)])
         # the starburst, clearing the panel's top
         star = []
@@ -565,7 +565,7 @@ class CutsceneMixin:
         pygame.draw.polygon(s, L((228, 176, 54)), star)
         pygame.draw.rect(s, L((176, 58, 52)), (bx - 4, by - 4, bw + 8, bh + 8))
         pygame.draw.rect(s, L((214, 206, 186)), (bx, by, bw, bh))
-        band = (bx + 2, by + int(bh * 0.60), bw - 4, int(bh * 0.30))
+        band = (bx + 2, by + int(bh * 0.46), bw - 4, int(bh * 0.52))
         pygame.draw.rect(s, L((176, 58, 52)), band)
         # the hanging year-plaque
         pw2, ph2 = int(bw * 0.46), 15
@@ -588,8 +588,8 @@ class CutsceneMixin:
                 pygame.draw.circle(s, hot, (int(bxp), int(byp)), 1)
         ink, cream = L((38, 42, 60)), L((238, 230, 208))
         for text, r0, r1, col, wt in (
-                ("BRIMLEY", 0.06, 0.52, ink, 0.17),
-                ("NORTHERNMOST CORN", 0.62, 0.88, cream, 0.20)):
+                ("BRIMLEY", 0.04, 0.42, ink, 0.17),
+                ("NORTHERNMOST CORN", 0.54, 0.82, cream, 0.20)):
             lettering.paint_word(
                 s, lambda lx, lz: (bx + lx, by + bh - lz), text,
                 bw * 0.05, bw * 0.95, bh * (1 - r1), bh * (1 - r0), col,

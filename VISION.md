@@ -205,13 +205,24 @@ reveal each wall face, not just dead-on.
   thing WORKS.** The magnification that lets you see a prop properly is
   flattery, and some questions only exist at the size the player actually
   gets: whether a detail survives, whether a shape still reads, whether
-  lettering can be READ. The town board was signed off from four-facing
-  shots at `--zoom 4`, where it looked finished, and the maintainer's first
-  words on it in play were "that sign is illegible" -- at 1x its name was
-  eight pixels high. So when a prop's whole job is to be read or recognised,
-  finish the pass with a plain `capture_facings.py` at play zoom and ask the
-  blunt question there. If it fails at 1x it has failed, however good the
-  close-up was.
+  lettering can be READ. So when a prop's whole job is to be read or
+  recognised, finish the pass at play zoom. If it fails at 1x it has failed,
+  however good the close-up was.
+
+  **And when the question is legibility, COUNT THE PIXELS. Do not look.**
+  This is the one place the eye is not merely unreliable but useless, and it
+  cost four rebuilds of the town sign. Every one was judged from a capture
+  taken at play zoom and then enlarged to inspect -- which is still looking
+  at a magnified image, and a magnified image of 4px lettering looks fine.
+  The maintainer said "illegible" three times before anyone measured, and
+  the measurement settled it in one line: the panel rendered 80 x 44 screen
+  pixels and "NORTHERNMOST CORN" is seventeen characters, so each got 4.5px.
+  Nothing about alphabet, contrast, colour or brush weight can resolve 4.5px
+  a character; only fewer characters or a wider board can. Crop the region
+  at 1:1 and measure it, or compute it (`assemblies.sign_legibility`), and
+  let the number decide. The rule of thumb it produced: **about 6px per
+  character to read at all, 12px+ for anything that must be read at a
+  glance.** `tests/render_smoke.py` [6/6] now holds the town sign to it.
 - **The GROUND and its plants, in isolation:**
 
   ```bash

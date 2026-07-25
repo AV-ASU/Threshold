@@ -100,6 +100,10 @@ class Assembly:
         # floating without it -- and is wrong on something that sits flush,
         # where the prop's own dark under-face already does the job.
         self.shadow = shadow
+        # optional metadata a prop may hang on itself (the town sign
+        # publishes the lettering layout it drew, so a test can measure
+        # the real thing rather than a copy that can drift)
+        self.lines = ()
         self._cache = None
 
     def faces(self):

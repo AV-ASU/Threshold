@@ -251,12 +251,12 @@ def _sign_back(s, x, y, light, fonts_none=None):
     """
     def L(v):
         return (int(v[0] * light), int(v[1] * light), int(v[2] * light))
-    bw, bh = 118, 54
+    bw, bh = 146, 48
     bx, by = x - bw // 2, y - bh
     for sgn in (-1, 1):
-        fx = x + sgn * 40
+        fx = x + sgn * 52
         pygame.draw.polygon(s, L((70, 74, 80)), [
-            (x + sgn * 30, by + 18), (x + sgn * 34, by + 18),
+            (x + sgn * 38, by + 16), (x + sgn * 42, by + 16),
             (fx + sgn * 4, by + 78), (fx, by + 78)])
     # the star's plain back, still clearing the panel
     star = []

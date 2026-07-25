@@ -450,6 +450,30 @@ def _ring(x0, x1, z0, z1, step):
     return pts
 
 
+def sign_legibility(lines, cam_scale=1.10, sin_pitch=0.8191520442889918):
+    """How big each line of a sign's lettering actually lands, IN SCREEN
+    PIXELS, at play zoom.
+
+    This exists because four rebuilds of the town sign were judged by eye
+    from zoomed captures and the maintainer kept, correctly, calling the
+    result unreadable. The eye cannot tell 9px from 5px in a magnified crop,
+    and the answer was never a matter of taste: at the shipping camera the
+    board renders about 143 x 39 pixels, and seventeen characters across it
+    is 4.5px each. No alphabet resolves that.
+
+    A vertical face is barely foreshortened here (`sin_pitch`, ~0.82 of the
+    horizontal), so WIDTH-PER-CHARACTER is almost always the binding
+    constraint, not cap height. Returns (text, cap_px, per_char_px) per line.
+    """
+    out = []
+    for text, x0, x1, zb, zt, _ink, _w in lines:
+        total, _cells = lettering.layout(text)
+        cap = (zt - zb)
+        per = min((x1 - x0) / max(total, 0.001), cap * 0.72)
+        out.append((text, cap * cam_scale * sin_pitch, per * cam_scale))
+    return out
+
+
 def _town_sign(text="BRIMLEY", welcome=True):
     """The town's sign.
 
@@ -462,13 +486,18 @@ def _town_sign(text="BRIMLEY", welcome=True):
     and all -- four welcome signs for one town, three of them nowhere near
     its edge.
     """
-    # An 8 x 16ft panel: double the 4x8 sheet a small sign is cut from, and
-    # the size this board needs for three lines to READ at play zoom. The
-    # panel holds 2:1 either way.
-    real = (192.0, 2.0, 96.0)
+    # An 8 x 24ft panel. The width is not a style choice, it is arithmetic.
+    # MEASURED at play zoom, an 8x16 board renders 80 x 44 SCREEN PIXELS, and
+    # "NORTHERNMOST CORN" is seventeen characters: 4.5px each, which no
+    # alphabet and no amount of contrast can resolve. Three rebuilds went
+    # into styling before anyone counted the pixels. Characters-per-line
+    # against panel-width-in-pixels is the whole problem, so the board went
+    # WIDE (3:1 rather than 2:1) until the long line cleared 8px a
+    # character. `sign_legibility()` below keeps it there.
+    real = (288.0, 2.0, 96.0)
     if welcome:
-        pw = 72.0                            # panel width, world units
-        base_z = 12.0                        # the panel is held UP, googie
+        pw = 130.0                           # panel width, world units
+        base_z = 15.0                        # clears the hanging plaque
         frame, leg_t, leg_splay = 2.6, 3.0, 0.20
     else:
         pw = 34.0
@@ -510,17 +539,16 @@ def _town_sign(text="BRIMLEY", welcome=True):
                pitch=sx * leg_splay, mat="sign_steel", name=f"leg{sx}")
           for sx in (1, -1)],
     ]
-    plaque_h = ph * 0.26                     # the hanging year-plaque
+    plaque_h = ph * 0.30                     # the hanging year-plaque
     if welcome:
         # THE STARBURST, rising behind the panel and clearing its top. An
         # eight-point atomic star is the shape that says 1960s roadside on
         # sight, and it is the sign's silhouette above the board.
-        # The star clears the panel's top, but only just. Sized off the real
-        # archetype it lands the whole sign at 81 units, over three times a
-        # wall -- which is honest for the 25ft Vegas board and absurd for a
-        # dying corn town's own sign. Brimley built a small one.
-        parts.append(Part(prim.star(8, pw * 0.26, pw * 0.10, 1.4),
-                          at=(0, pt * 0.55, top_z + pw * 0.02),
+        # The star clears the panel's top, but only just: it is the
+        # silhouette, not the subject, and the panel has to stay the thing
+        # you look at.
+        parts.append(Part(prim.star(8, pw * 0.14, pw * 0.055, 1.4),
+                          at=(0, pt * 0.55, top_z + pw * 0.012),
                           mat="sign_star", name="star"))
         # the hanging plaque that carries the founding year, so the smallest
         # line gets a panel of its own instead of a strip of the big one
@@ -540,24 +568,22 @@ def _town_sign(text="BRIMLEY", welcome=True):
         # the coral band, and the year on its own hanging plaque: each
         # subordinate line bounded by its own colour rather than dissolving
         # into the field, which is what made them unreadable before.
-        band0, band1 = base_z + ph * 0.04, base_z + ph * 0.36
-        parts.append(Part(prim.box(pw * 0.96, pt * 0.42, band1 - band0),
+        band0, band1 = base_z + ph * 0.03, base_z + ph * 0.50
+        parts.append(Part(prim.box(pw * 0.97, pt * 0.42, band1 - band0),
                           at=(0, -pt * 0.46, band0), mat="sign_accent",
                           name="band"))
         pz0 = base_z - plaque_h - 1.2
+        # A HIERARCHY, because the pixels only stretch so far. The town's
+        # name is unmistakable, the boast is readable, and the founding year
+        # is fine print -- which is what it is on a real sign too. Trying to
+        # give all three the same weight is what kept all three small.
         lines = [
             (_SIGN_LINES[0], -inner, inner,
-             base_z + ph * 0.44, base_z + ph * 0.93, "sign_paint", 0.17),
-            # The subordinate lines get as much of their own band as the band
-            # can give them. Squeezed into a fifth of it they were unreadable
-            # at play zoom even in cream on coral, which was the maintainer's
-            # standing complaint through two rebuilds: the fix is a bigger
-            # share of the board, not a heavier brush.
-            (_SIGN_LINES[1], -inner * 0.96, inner * 0.96,
-             band0 + (band1 - band0) * 0.16, band1 - (band1 - band0) * 0.14,
-             "sign_accent_ink", 0.20),
-            (_SIGN_LINES[2], -pw * 0.20, pw * 0.20,
-             pz0 + plaque_h * 0.22, pz0 + plaque_h * 0.80,
+             base_z + ph * 0.56, base_z + ph * 0.97, "sign_paint", 0.17),
+            (_SIGN_LINES[1], -inner * 0.97, inner * 0.97,
+             base_z + ph * 0.19, base_z + ph * 0.44, "sign_accent_ink", 0.20),
+            (_SIGN_LINES[2], -pw * 0.21, pw * 0.21,
+             pz0 + plaque_h * 0.24, pz0 + plaque_h * 0.82,
              "sign_accent_ink", 0.20),
         ]
         bulbs = _ring(-pw / 2 - frame * 0.2, pw / 2 + frame * 0.2,
@@ -566,8 +592,12 @@ def _town_sign(text="BRIMLEY", welcome=True):
         lines = [(text, -inner, inner, base_z + ph * 0.20,
                   base_z + ph * 0.80, "sign_paint", 0.18)]
         bulbs = None
-    return Assembly(*parts,
-                    overlay=_sign_paint(lines, -(pt / 2) - 0.7, bulbs))
+    asm = Assembly(*parts,
+                   overlay=_sign_paint(lines, -(pt / 2) - 0.7, bulbs))
+    # the very lines the overlay paints, so a legibility check can never
+    # be measuring a layout the sign does not actually draw
+    asm.lines = lines
+    return asm
 
 
 # A VALUE here is a finished assembly; a FUNCTION is a variant factory that
