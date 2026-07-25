@@ -674,8 +674,8 @@ def build_brimley():
         "No deliveries. In a while now. But we manage. We always.",
         "I keep the lights on. So they know. Someone's keeping them on.",
     ], movement="homebody", radius=34)
-    # Old Pell -- BESIDE the schoolhouse door (2 tiles east of the step), the
-    # stopped calendar behind him. He never ducks inside (the schoolhouse is
+    # Old Pell -- BESIDE the schoolhouse door (2 tiles east of the step), his
+    # unopened seed corn beside him. He never ducks inside (the schoolhouse is
     # enterable and empty), and he no longer stands ON the door: his home is
     # clear of the door tile, its approach, and the return spawn, so he never
     # blocks the way in (play-notes: no NPC on a door or its approach).
@@ -684,22 +684,22 @@ def build_brimley():
               vanish=False,
         beats=[
             # The newspaper's ripple (TODO #2): once the PI has spent the
-            # one copy on him, the stopped-calendar stoop line would be a
-            # lie -- he picked the pencil back up. The marked beat fires
-            # first and the coal beat stands down for good.
+            # one copy on him, the sewn-shut stoop line would be a lie --
+            # he has cut a sack open. The sown beat fires first and the
+            # coal beat stands down for good.
             ("beat_pell_marked",
              lambda g: g.save.arg("paper_given") == "pell", [
-                 "Wrote the date in this morning. April 15, plain as "
-                 "you like. First one since the winter.",
-                 "[c=dim]Can't say it did anything. Can't say it "
-                 "didn't. I'll write tomorrow in tomorrow.[/c]",
+                 "Cut the string on a sack this morning. First one "
+                 "since the winter.",
+                 "[c=dim]Can't say I'll get a crop out of it. Can't say "
+                 "I won't. I'll put a few rows in and see.[/c]",
              ]),
             ("beat_pell_coal",
              lambda g: (g._evidence_count() >= 1
                         and g.save.arg("paper_given") != "pell"), [
                  "You've been digging at it. I can tell. It's on you like "
                  "coal dust.",
-                 "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped.",
+                 "Whatever you're finding out there, don't bring it up my step. I've got my seed where I want it. Sewn shut. Some of us need it left that way.",
              ]),
         ])
     # Mrs. Calder -- by the east-bank square. She sets a place for a guest
@@ -776,9 +776,17 @@ def build_brimley():
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
     sc.add_decoration(Decoration(8 * TILE + 16, 23 * TILE + 16, "missing_flyer"))
-    # The calendar, marked up to JAN 15 (the seal) and then stopped.
+    # Old Pell's SEED CORN, still sewn shut on its pallet by his step
+    # (TODO #28, replacing the stopped calendar). It is April: a corn man
+    # who has not opened his seed has not started the year. His refusal to
+    # mark time, said in his own trade instead of on a prop every room in
+    # town also had.
     # Nailed to the schoolhouse wall beside the (south) door.
-    sc.add_decoration(Decoration(24 * TILE + 16, 23 * TILE + 16, "calendar"))
+    # Two tiles east of Pell himself and four clear of the schoolhouse door,
+    # on the grass above the road so it reads from the lane: a solid pallet
+    # dropped on his own tile would stand inside the man.
+    sc.add_decoration(Decoration(26 * TILE + 16, 23 * TILE + 12,
+                                 "seed_corn"))
     sc.add_decoration(Decoration(54 * TILE + 16, 30 * TILE + 16, "pickup_truck"))
 
     # Mrs. Calder's table, laid out in the open by the kid's house: two

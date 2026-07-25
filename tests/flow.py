@@ -2230,8 +2230,8 @@ def main():
           and any(isinstance(e, dict) and e.get("name") == "paper_sable"
                   for e in g8.save.arg("notes", [])),
           "paper: Sable's door is the null -- no reward, only the note")
-    # Pell's ripple: the stoop line flips from the stopped calendar to
-    # the marked one (he would contradict himself otherwise).
+    # Pell's ripple: the stoop line flips from the sewn-shut seed to the
+    # opened sack (he would contradict himself otherwise).
     g9 = new_game()
     g9.load_scene_now("brimley")
     ready(g9)
@@ -2248,9 +2248,9 @@ def main():
                            _p9_orig(pages, *a, **k))[-1])
         _pell9.dialogue_fn(g9, _pell9)
         _p9_txt = " ".join(_p9_seen)
-        check("Wrote the date in" in _p9_txt
-              and "Stopped" not in _p9_txt,
-              "paper: Pell's stoop swaps to the marked calendar")
+        check("Cut the string on a sack" in _p9_txt
+              and "Sewn shut" not in _p9_txt,
+              "paper: Pell's stoop swaps to the opened seed")
         g9.dialog.show = _p9_orig
     # Hettie's counter: the offer is a CHOICE now, not an auto-trade;
     # declining keeps the copy and reopens as her menu question.
@@ -2517,7 +2517,7 @@ def main():
     check(gp.player.inventory.count("pistol_ammo") == _ammo1,
           "paper: the trade fires exactly once (can't be farmed)")
 
-    # (a2) The calendar sweep: the seal is mid-January
+    # (a2) The chronology sweep: the seal is mid-January
     # 1994, so nothing may date the cut-off to spring. Hettie's till went
     # empty at the new year, and the case note has Mara driving north in
     # the fall and going quiet by the new year.
@@ -2525,9 +2525,9 @@ def main():
     import scenes.dialogue as _dlg
     _dlg_src = _insp.getsource(_dlg)
     check("since the spring" not in _dlg_src and "since spring" not in _dlg_src,
-          "calendar: no dialogue dates the cut-off to spring")
+          "dates: no dialogue dates the cut-off to spring")
     check("since the new year" in _dlg_src,
-          "calendar: Hettie's till went empty at the new year (the seal)")
+          "dates: Hettie's till went empty at the new year (the seal)")
     _case_n = next((e for e in gp.save.arg("notes", [])
                     if isinstance(e, dict) and e.get("name") == "the_case"),
                    None)
@@ -2535,7 +2535,27 @@ def main():
     check("drove north in the fall" in _case_t
           and "by the new year" in _case_t
           and "spring" not in _case_t and "thaw" not in _case_t,
-          "calendar: the case note keeps Mara's fall drive + new-year silence")
+          "dates: the case note keeps Mara's fall drive + new-year silence")
+
+    # (a3) The CALENDARS ARE CUT (TODO #28, maintainer ruling). The seal's
+    # date is load-bearing and used to be shown by the stopped calendars, so
+    # the guard pins where it lives now: the frozen news rack, dated January
+    # 15, and the Casebook timeline that points at it. Nothing may reinstate
+    # the prop.
+    from rendering.props import SOLID_PROPS as _SP
+    from rendering.assemblies import ASSEMBLIES as _ASM
+    from scenes.terrain import _WALL_DECO_KINDS as _WD
+    check("calendar" not in _SP and "calendar" not in _ASM
+          and "calendar" not in _WD,
+          "calendars: the prop stays cut from every tilt set")
+    import scenes.brimley as _brim
+    import systems.narrative_mixin as _nm
+    check("January 15" in _insp.getsource(_brim),
+          "calendars: the news rack still carries the seal's date")
+    _tl_src = _insp.getsource(_nm._case_timeline if hasattr(_nm, "_case_timeline")
+                              else _nm.NarrativeMixin._case_timeline)
+    check("news rack" in _tl_src and "calendar" not in _tl_src,
+          "calendars: the Casebook timeline points at the rack, not a calendar")
 
     # (b) Sheriff Vane's murder beat is a one-shot gated on the player
     # having SEEN the church floor -- he can never announce the killing

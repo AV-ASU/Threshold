@@ -519,40 +519,42 @@ def draw_vane_tableau(surf, t, state):
         pygame.draw.line(surf, (64, 61, 55), (bx, 0), (bx, wains), 3)
     pygame.draw.line(surf, (74, 70, 62), (int(W * 0.07), 0), (int(W * 0.07), wains), 4)
 
-    # -- the JAN 15 calendar (every calendar in town stops there) --
-    cx_, cy_ = int(W * 0.145), int(H * 0.12)
-    cw, ch = 88, 104
+    # -- the COUNTY ROAD MAP, pinned and worked over --
+    # This is where the JAN 15 calendar hung before the calendars were cut
+    # (TODO #28). A map is the better object in this room by a distance: it
+    # is the thing Vane has actually been doing for a year -- driving every
+    # road out and being handed back -- and it says so without a line. The
+    # ring around the town is his own pen.
+    cx_, cy_ = int(W * 0.135), int(H * 0.11)
+    cw, ch = 104, 112
     pygame.draw.rect(surf, (24, 21, 16), (cx_ + 4, cy_ + 5, cw, ch))      # drop shadow
-    pygame.draw.rect(surf, (202, 194, 174), (cx_, cy_, cw, ch))
-    pygame.draw.rect(surf, (126, 42, 36), (cx_, cy_, cw, 24))             # month band
-    pygame.draw.circle(surf, (74, 66, 50), (cx_ + cw // 2, cy_ + 6), 3)   # the pin
-    ink = (222, 212, 192)                                                 # J A N
-    jx, jy = cx_ + 26, cy_ + 7
-    pygame.draw.line(surf, ink, (jx - 4, jy), (jx + 4, jy), 2)
-    pygame.draw.line(surf, ink, (jx + 2, jy), (jx + 2, jy + 9), 2)
-    pygame.draw.line(surf, ink, (jx + 2, jy + 9), (jx - 3, jy + 9), 2)
-    ax = cx_ + 42
-    pygame.draw.line(surf, ink, (ax - 4, jy + 10), (ax, jy), 2)
-    pygame.draw.line(surf, ink, (ax, jy), (ax + 4, jy + 10), 2)
-    pygame.draw.line(surf, ink, (ax - 2, jy + 6), (ax + 2, jy + 6), 1)
-    nx_ = cx_ + 58
-    pygame.draw.line(surf, ink, (nx_ - 3, jy + 10), (nx_ - 3, jy), 2)
-    pygame.draw.line(surf, ink, (nx_ - 3, jy), (nx_ + 3, jy + 10), 2)
-    pygame.draw.line(surf, ink, (nx_ + 3, jy + 10), (nx_ + 3, jy), 2)
-    seg = (56, 50, 42)                                                    # big 15
-    ox, oy = cx_ + 20, cy_ + 38
-    pygame.draw.line(surf, seg, (ox + 8, oy), (ox + 8, oy + 46), 8)
-    pygame.draw.line(surf, seg, (ox, oy + 9), (ox + 8, oy), 6)
-    ox = cx_ + 42
-    pygame.draw.line(surf, seg, (ox, oy), (ox + 26, oy), 7)
-    pygame.draw.line(surf, seg, (ox + 3, oy), (ox + 3, oy + 20), 7)
-    pygame.draw.line(surf, seg, (ox, oy + 20), (ox + 22, oy + 20), 7)
-    pygame.draw.line(surf, seg, (ox + 22, oy + 20), (ox + 22, oy + 46), 7)
-    pygame.draw.line(surf, seg, (ox, oy + 46), (ox + 24, oy + 46), 7)
-    pygame.draw.polygon(surf, (176, 168, 148),                            # curled corner
-                        [(cx_ + cw - 16, cy_ + ch), (cx_ + cw, cy_ + ch), (cx_ + cw, cy_ + ch - 16)])
+    pygame.draw.rect(surf, (186, 178, 156), (cx_, cy_, cw, ch))           # the paper
+    pygame.draw.rect(surf, (132, 124, 104), (cx_, cy_, cw, ch), 1)
+    for px_, py_ in ((cx_ + 6, cy_ + 6), (cx_ + cw - 6, cy_ + 6),
+                     (cx_ + 6, cy_ + ch - 6), (cx_ + cw - 6, cy_ + ch - 6)):
+        pygame.draw.circle(surf, (74, 66, 50), (px_, py_), 2)             # the pins
+    # section lines: a survey grid, the way a county actually platted it
+    for i in range(1, 4):
+        gx = cx_ + cw * i // 4
+        gy = cy_ + ch * i // 4
+        pygame.draw.line(surf, (162, 152, 128), (gx, cy_ + 3), (gx, cy_ + ch - 3), 1)
+        pygame.draw.line(surf, (162, 152, 128), (cx_ + 3, gy), (cx_ + cw - 3, gy), 1)
+    # the two roads that matter, heavier: the north road in, the river road
+    pygame.draw.line(surf, (86, 78, 62), (cx_ + cw // 2, cy_ + 4),
+                     (cx_ + cw // 2, cy_ + ch - 4), 3)
+    pygame.draw.lines(surf, (86, 78, 62), False,
+                      [(cx_ + 4, cy_ + ch - 34), (cx_ + cw // 3, cy_ + ch - 46),
+                       (cx_ + cw - 18, cy_ + ch - 30)], 2)
+    # the river, thinner and paler, running past the town
+    pygame.draw.lines(surf, (108, 116, 118), False,
+                      [(cx_ + 8, cy_ + 22), (cx_ + cw // 2 - 6, cy_ + 48),
+                       (cx_ + cw - 10, cy_ + 62)], 2)
+    # and the ring he drew around Brimley, gone over more than once
+    for r in (17, 19):
+        pygame.draw.circle(surf, (128, 44, 38),
+                           (cx_ + cw // 2, cy_ + ch - 44), r, 1)
 
-    # -- a pinned list beside the calendar: names, some struck through --
+    # -- a pinned list beside the map: names, some struck through --
     lx_, ly_ = int(W * 0.265), int(H * 0.15)
     pygame.draw.rect(surf, (24, 21, 16), (lx_ + 3, ly_ + 4, 54, 86))
     pygame.draw.rect(surf, (188, 180, 160), (lx_, ly_, 54, 86))

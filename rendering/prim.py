@@ -193,6 +193,49 @@ def frustum(sides, r0, r1, h, z0=0.0, rot=0.0):
     return faces
 
 
+def _rrect(l, w, r, segs=3):
+    """A rounded rectangle in x-y, as a point ring."""
+    hw, hd = max(0.0, l / 2.0 - r), max(0.0, w / 2.0 - r)
+    pts = []
+    for cx, cy, a0 in ((hw, hd, 0.0), (-hw, hd, math.pi / 2),
+                       (-hw, -hd, math.pi), (hw, -hd, 3 * math.pi / 2)):
+        for i in range(segs + 1):
+            a = a0 + (math.pi / 2) * (i / segs)
+            pts.append((cx + math.cos(a) * r, cy + math.sin(a) * r))
+    return pts
+
+
+def pillow(l, w, h, z0=0.0, waist=0.74, segs=3):
+    """A stuffed SACK: a rounded oblong that BULGES at its waist and draws
+    in top and bottom, `l` along x and `w` across y.
+
+    The shape a filled bag actually is, and the library had nothing for it.
+    `frustum` looked like the answer and is RADIAL -- equal in x and y -- so
+    a 30 x 18in seed sack modelled with it came out square in plan and the
+    proportion check caught it at 0.89 : 1 against a real 1.67 : 1. A `box`
+    is worse: crisp square sides read as a carton, which is precisely the
+    mistaken identity a sack has to dodge. Also serves bedrolls, cushions,
+    sandbags -- anything soft and filled.
+    """
+    r = min(l, w) * 0.30
+    mid = _rrect(l, w, r, segs)
+    end = _rrect(l * waist, w * waist, r * waist, segs)
+    z1, zm = z0 + h, z0 + h * 0.5
+    bot = [(x, y, z0) for x, y in end]
+    belly = [(x, y, zm) for x, y in mid]
+    top = [(x, y, z1) for x, y in end]
+    faces = [(list(reversed(bot)), (0, 0, -1), UNDER),
+             (top, (0, 0, 1), TOP)]
+    for ring_a, ring_b, up in ((bot, belly, -0.45), (belly, top, 0.45)):
+        for i in range(len(ring_a)):
+            j = (i + 1) % len(ring_a)
+            mx = (ring_a[i][0] + ring_a[j][0]) / 2.0
+            my = (ring_a[i][1] + ring_a[j][1]) / 2.0
+            faces.append(_quad(ring_a[i], ring_a[j], ring_b[j], ring_b[i],
+                               _n(mx, my, up * max(l, w) * 0.25), SIDE))
+    return faces
+
+
 def star(points, r_out, r_in, thick, z0=0.0):
     """A STARBURST: a flat star standing UPRIGHT in the x-z plane, extruded
     a little way through +/-y so it has real body seen edge-on.

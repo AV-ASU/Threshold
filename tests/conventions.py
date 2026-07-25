@@ -59,15 +59,15 @@ def check(label):
 # whole file would let a new font slip in beside an old one (the first cut of
 # this check did exactly that and a fault-injection test caught it). To add a
 # font use you must raise a number here, which is the decision point.
-#   entities/deco_horror.py 3 -- the stopped-calendar month/day label
 #   entities/deco_structure.py 1 -- the tiny wall_sign label
+# entities/deco_horror.py went to zero when the calendars were cut (TODO
+# #28): its whole budget was the stopped-calendar month/day label.
 # rendering/props.py held the LAST world lettering rendered in a font (the
 # BRIMLEY welcome board's three lines) and is now at zero: the board was
 # remade with the painted stroke alphabet in `rendering/lettering.py`, whose
 # letters are geometry in the board's own plane. Absent from this table means
 # a budget of 0, so the file is locked shut.
 FONT_BUDGET = {
-    "entities/deco_horror.py": 3,
     "entities/deco_structure.py": 1,
 }
 FONT_SCAN_DIRS = ("rendering", "entities", "scenes")

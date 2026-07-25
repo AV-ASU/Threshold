@@ -154,6 +154,27 @@ REFERENCES = {
                   "posts are round or roughly split, never milled square"],
         "src": "(provenance rule, CLAUDE.md scene-dressing #1)",
     },
+    "seed_corn": {
+        # WHAT IT HAS TO SAY comes first: it is APRIL, and these are not
+        # open. A corn man with unopened seed in April is a man who has not
+        # started the year, which is Old Pell's whole beat now that the
+        # calendars are gone -- so the sacks must read as SEALED and STACKED,
+        # never as a spilled or working heap.
+        "is": "A pallet of 50lb seed-corn sacks, unopened: woven paper sacks "
+              "stacked flat and squared up, ends folded and sewn, sitting on "
+              "a rough wooden pallet clear of the ground.",
+        "real": (30.0, 18.0, 6.0),       # one full 50lb sack, inches
+        "part": "sack0",
+        "world_h": 10.4,   # about knee high on a 20-tall player
+        "mount": "on a pallet, so the bottom sack never touches wet ground",
+        "tells": ["a full sack BULGES -- straight square sides read as "
+                  "cardboard boxes",
+                  "they are STACKED and squared, because nobody has started "
+                  "on them; a leaning or spilled heap says the opposite",
+                  "the pallet under them is the tell that they were delivered "
+                  "and set down, not carried out of a shed"],
+        "src": "(50lb seed sack, standard US agricultural packaging)",
+    },
     "town_sign": {
         "is": "A 1960s GOOGIE roadside welcome sign, of the 1959 Welcome to "
               "Fabulous Las Vegas family: a BRIGHT cream 8x24ft panel in a "

@@ -109,7 +109,7 @@ class TableauMixin:
     # ----------------------------------------------------- Vane conversation
     def _open_vane_tableau(self, npc):
         """Sheriff Vane's office talk, PRESENTED as a frozen close-up: cold
-        window daylight, the JAN 15 calendar, the cell-bars sliver, the gun
+        window daylight, his worked-over county road map, the cell-bars sliver, the gun
         cabinet in the back. His POSE reads the hidden despair ledger the
         same way the menu's framing line does (mood, never a number), and
         the desk carries what the talk has earned (the newspaper he was

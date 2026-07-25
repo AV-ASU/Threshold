@@ -464,9 +464,9 @@ intro:" / "Opener photo:").
 - **Opener intro:** (npc) "A detective. On my step." / (npc) "There's a foulness set over this whole town, son. You feel it more than smell it. Folk are tired under it, all of them, and sleep doesn't mend it." / (npc) "[c=dim]You're breathing it now too. Same as the rest of us.[/c]"
 - **Opener photo:** (npc) "(He tips the photograph toward the light, slow about it.)" / (npc) "Could be she went by in the fall. Could be she didn't. The new faces all ran together after a while. Then they stopped going by at all."
 - **Exchange `corn`** — "Nobody brought the corn in?" / "All that corn west of the river, dead and still standing in April. Nobody brought it in?": (npc) "That's Pell corn, son. Northernmost corn in the world, grown on this ground since 1894. My father took ribbons on it. So did I." / (npc) "Nobody cut it last fall. First harvest this town ever missed. It stood there and died standing." / (npc) "[c=dim]I don't look at the fields long anymore.[/c]"
-- **Exchange `paper`** (avail: intro asked + carries newspaper; TODO #2, mercy, no item) — "I brought yesterday's newspaper." / "It's yesterday's paper, Mr. Pell. Out of the Cities. I'd like you to have it.": (npc) "(He doesn't reach for it. He reads the masthead where it sits in your hand, slow, like a man reading a headstone.)" / (npc) "April 14. Out there it got to April 14." / (npc) "I quit marking days, son. Nothing was coming that a marked day would bring any closer." / (npc) "(He takes it, folds it once, and tucks it under his arm the way you carry tools.)" / (npc) "There'll be a corn report in here somewhere. Prices. Somebody's weather. Somebody still growing, somewhere south of us." / (npc) "I believe I'll pencil today in when I get home. Just today. We'll see about the one after it." / (pi) "[c=dim]Nothing came back across for it. I wasn't waiting on anything to.[/c]"
-- **Stoop beat `beat_pell_coal`** (1+ evidence, gated OFF once the paper has gone to him): "You've been digging at it. I can tell. It's on you like coal dust." / "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped."
-- **Stoop beat `beat_pell_marked`** (after the paper; TODO #2 ripple, replaces the coal beat): "Wrote the date in this morning. April 15, plain as you like. First one since the winter." / "[c=dim]Can't say it did anything. Can't say it didn't. I'll write tomorrow in tomorrow.[/c]"
+- **Exchange `paper`** (avail: intro asked + carries newspaper; TODO #2, mercy, no item) — "I brought yesterday's newspaper." / "It's yesterday's paper, Mr. Pell. Out of the Cities. I'd like you to have it.": (npc) "(He doesn't reach for it. He reads the masthead where it sits in your hand, slow, like a man reading a headstone.)" / (npc) "April 14. Out there it got to April 14." / (npc) "I quit marking days, son. Nothing was coming that a marked day would bring any closer." / (npc) "(He takes it, folds it once, and tucks it under his arm the way you carry tools.)" / (npc) "There'll be a corn report in here somewhere. Prices. Somebody's weather. Somebody still growing, somewhere south of us." / (npc) "I believe I'll cut a sack open when I get home. Put a few rows in. We'll see about the rest." / (pi) "[c=dim]Nothing came back across for it. I wasn't waiting on anything to.[/c]"
+- **Stoop beat `beat_pell_coal`** (1+ evidence, gated OFF once the paper has gone to him): "You've been digging at it. I can tell. It's on you like coal dust." / "Whatever you're finding out there, don't bring it up my step. I've got my seed where I want it. Sewn shut. Some of us need it left that way."
+- **Stoop beat `beat_pell_marked`** (after the paper; TODO #2 ripple, replaces the coal beat): "Cut the string on a sack this morning. First one since the winter." / "[c=dim]Can't say I'll get a crop out of it. Can't say I won't. I'll put a few rows in and see.[/c]"
 
 ### Mrs. Calder (blip_mid)
 - **Framing:** "Mrs. Calder watches the road past my shoulder."
@@ -761,9 +761,9 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   - `paper_royce`: "Spent the paper on Royce. He paid in hoarded flashlight
     batteries and the one road that held longest: river road south, two
     bends past the bridge." / "His account, not mine. But he would know."
-  - `paper_pell`: "Gave Old Pell the paper. He said he'd pencil today into
-    his calendar. He'd stopped marking days at all." / "No trade. Didn't
-    want one."
+  - `paper_pell`: "Gave Old Pell the paper. He said he'd cut a sack of
+    seed open and put a few rows in. It has sat sewn shut since the
+    winter." / "No trade. Didn't want one."
   - `paper_toby`: "Gave the kid the funny pages. His mother reads over his
     shoulder, and she doesn't hum while she's reading." / "Best price I
     got for it all day."
@@ -806,7 +806,7 @@ first person, none of it evidence.
   Starting to come apart." / "Went under with the rest. Copied the Sign in
   her own hand, willing." / "Last thing she wrote is the letter in her
   cell. A boy. \"I'm not lost.\"" Footer: "No dates on most of it. Ordering
-  by what comes before what." / "And the calendars all stopped in January.
+  by what comes before what." / "And the news rack still says January.
   It's spring now."
 - *(The old soft-lead `_current_lead` strings are DEAD CODE, cut from the
   notebook display in the TODO #13 opening rework; they render nowhere and
@@ -1037,8 +1037,9 @@ text:
   (`rite_envelope_given`). Escape (or walking the talk out) closes it.
 - **Sheriff Vane's office** (`_open_vane_tableau`, opened from
   `sheriff_dialogue`; words under **Sheriff Hollis Vane** in Part A). Cold
-  window daylight, the stopped JAN 15 calendar, the cell bars at the frame's
-  edge, the gun cabinet in the back. Reactive on two axes: his **pose** reads
+  window daylight, his worked-over county road map (pinned, the ring
+  around Brimley drawn in his own pen and gone over more than once), the
+  cell bars at the frame's edge, the gun cabinet in the back. Reactive on two axes: his **pose** reads
   the despair ledger exactly as the mood prompt does (`_vane_tableau_state`
   mirrors `_vane_prompt`'s thresholds; mood, never a number), and the desk
   carries what the talk has earned: the **newspaper** stays spread flat once

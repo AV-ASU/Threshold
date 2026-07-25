@@ -793,7 +793,7 @@ def build_threshold():
         (1.60, "bush"), (1.75, "tall_grass"), (1.90, "firewood"),
         (2.05, "grass_tuft"), (2.20, "crate"), (2.35, "barrel"),
         (2.50, "chair"), (2.65, "kerosene_lamp"), (2.80, "corn_doll"),
-        (2.95, "wheelbarrow"), (3.10, "calendar"), (3.25, "photo"),
+        (2.95, "wheelbarrow"), (3.10, "seed_corn"), (3.25, "photo"),
         (3.40, "radio"), (3.55, "doll"), (3.70, "stalk_marker"),
         (3.85, "pew"), (4.05, "town_sign"),
     ]

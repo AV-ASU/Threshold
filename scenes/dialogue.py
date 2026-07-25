@@ -515,10 +515,10 @@ def _royce_paper_given(game):
 
 
 def _pell_paper_given(game):
-    """Old Pell: mercy, no item. He starts marking days again."""
+    """Old Pell: mercy, no item. He decides to put a few rows in."""
     _paper_given(game, "pell", "paper_pell", [
-        "Gave Old Pell the paper. He said he'd pencil today into his "
-        "calendar. He'd stopped marking days at all.",
+        "Gave Old Pell the paper. He said he'd cut a sack of seed open "
+        "and put a few rows in. It has sat sewn shut since the winter.",
         "No trade. Didn't want one.",
     ])
 
@@ -1819,8 +1819,8 @@ def _garrick_roads_told(game):
 # northernmost-in-the-world pride (TODO #11, a mundane human feat, never
 # the door's doing), dead standing since the missed fall harvest. Stasis
 # register; he turns at rot stage 3, so this talk is his pre-turn
-# window. The stopped calendar stays a rot-layer detail (the decoration
-# + his turned lines), deliberately NOT an ask topic. (His old
+# window. His unopened seed stays a rot-layer detail (the decoration
+# by his step + his stoop beats), deliberately NOT an ask topic. (His old
 # persistent-cold line was CUT, maintainer call (2026-07):
 # the ice goes out and the season turns -- weather stasis would be a
 # second impossible thing.)
@@ -1872,7 +1872,7 @@ PELL_CONVO = {
             ],
         },
         # The newspaper (TODO #2): mercy, no item. An old man who
-        # stopped marking days picks the calendar back up. His stoop
+        # stopped marking days decides to plant a few rows. His stoop
         # beat swaps to match (scenes/brimley.py).
         {
             "key": "paper",
@@ -1895,8 +1895,8 @@ PELL_CONVO = {
                 ("npc", "There'll be a corn report in here somewhere. "
                         "Prices. Somebody's weather. Somebody still "
                         "growing, somewhere south of us."),
-                ("npc", "I believe I'll pencil today in when I get home. "
-                        "Just today. We'll see about the one after it."),
+                ("npc", "I believe I'll cut a sack open when I get home. "
+                        "Put a few rows in. We'll see about the rest."),
                 ("pi", "[c=dim]Nothing came back across for it. I wasn't "
                        "waiting on anything to.[/c]"),
             ],

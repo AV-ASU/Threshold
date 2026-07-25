@@ -286,12 +286,14 @@ def build_sheriff_office():
                                  z=42))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 8, "candle"))
     # Hunting-country office: a mounted buck + the trophy walleye over the desk
-    # (N wall, the pair), the calendar of months he stopped reporting (stopped
-    # JAN 15), a cobweb.
+    # (N wall, the pair), a missing-person flyer nobody will ever answer
+    # (TODO #28: it carries what the stopped calendar used to, and carries
+    # it better in a lawman's office), a cobweb.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
     sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "mounted_fish"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 22, "calendar"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 22,
+                                 "missing_flyer"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
 
     # ---- FRONT (SW): the public entry, off the field ----

@@ -376,6 +376,48 @@ def _pickup_truck():
     )
 
 
+# ------------------------------------------------------------- seed corn
+# Reference: a pallet of 50lb seed-corn sacks, unopened. This is what
+# replaced Old Pell's stopped calendar (TODO #28): the calendar said "a man
+# who quit marking days" in a generic prop that every room in town also had,
+# and the seed says the same thing in HIS language and only his. It is April.
+# A corn man's seed is still sewn shut.
+def _seed_corn(rows=4):
+    real = (30.0, 18.0, 6.0)
+    k = _k(real, 11.4)                   # 11.4 world units long
+    L, W, H = real[0] * k, real[1] * k, real[2] * k
+    pallet_h = 1.5
+    parts = [
+        # the pallet: boards, not a slab, so it reads as something delivered
+        *[Part(prim.box(L * 1.06, W * 0.17, pallet_h * 0.55),
+               at=(0, (b - 1.5) * W * 0.30, pallet_h * 0.45),
+               mat="pallet", name=f"deck{b}")
+          for b in range(4)],
+        *[Part(prim.box(L * 0.12, W * 1.02, pallet_h * 0.45),
+               at=(sx * L * 0.40, 0, 0), mat="pallet", name=f"bearer{sx}")
+          for sx in (1, -1)],
+    ]
+    for i in range(rows):
+        # A full sack BULGES. A six-sided frustum tapering toward its top
+        # reads as a stuffed sack; a box reads as a carton, which is the
+        # mistaken-identity failure this shape exists to dodge.
+        turn = 0.06 if i % 2 else -0.05
+        parts.append(Part(
+            prim.pillow(L, W, H),
+            at=(L * (0.03 if i % 2 else -0.03), W * (0.02 if i % 2 else -0.02),
+                pallet_h + i * H * 0.92),
+            yaw=turn, mat="sack", name=f"sack{i}"))
+        # the sewn end-folds that say SEALED, one at each end of the sack
+        for sx in (1, -1):
+            parts.append(Part(
+                prim.box(L * 0.09, W * 0.46, H * 0.34),
+                at=(sx * L * 0.40 + L * (0.03 if i % 2 else -0.03),
+                    W * (0.02 if i % 2 else -0.02),
+                    pallet_h + i * H * 0.92 + H * 0.30),
+                yaw=turn, mat="sack", name=f"seam{i}_{'a' if sx > 0 else 'b'}"))
+    return Assembly(*parts)
+
+
 # ------------------------------------------------------------- town sign
 # Reference: the 1959 "Welcome to Fabulous Las Vegas" board and its googie
 # family -- a BRIGHT cream panel in a coral frame, a bulb-lined atomic
@@ -612,6 +654,7 @@ ASSEMBLIES = {
     "lantern": _lantern(),
     "pickup_truck": _pickup_truck(),
     "town_sign": _town_sign,
+    "seed_corn": _seed_corn,
 }
 
 # Built variants, keyed by (kind, the kwargs that mattered). An assembly is

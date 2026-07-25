@@ -1006,58 +1006,6 @@ class DecoHorrorMixin:
         # faint gold gleam on the page -- the Sign in the names
         _light_pool(surf, x, y - 1, 13, (220, 190, 90), 24)
 
-    def _draw_calendar(self, surf, x, y):
-        """Stripped-down wall calendar. Just the month abbreviation
-        and the day number on a small paper card -- no grid, no X
-        marks, no week-day headers. Reads kwargs:
-          today_d -- 1-based day-of-month shown on the card
-          month   -- numeric month (10, 11, 12, or 1)
-        `month_days` is still accepted for compatibility but ignored.
-
-        CANON (NARRATIVE §1 setting note 3): every calendar in town
-        stopped at the mid-January seal, so the default card reads
-        JAN 15 -- the last day anyone marked, three months before the
-        PI's mid-April arrival. (The old day-cycle that advanced this
-        on sleep is removed; the stopped date IS the prop now.)
-        Cached SysFont surface so we don't re-rasterise every frame."""
-        today_d = self.kwargs.get("today_d", 15)
-        month = self.kwargs.get("month", 1)
-        # Paper. Smaller now that the grid is gone -- a tear-off
-        # day-card pinned to the wall.
-        paper_w, paper_h = 26, 26
-        px = x - paper_w // 2
-        py = y - paper_h // 2
-        pygame.draw.rect(surf, (224, 218, 200), (px, py, paper_w, paper_h))
-        pygame.draw.rect(surf, (50, 40, 30), (px, py, paper_w, paper_h), 1)
-        # Header band carries the month abbreviation.
-        pygame.draw.rect(surf, (40, 30, 24), (px, py, paper_w, 8))
-        name = {10: "OCT", 11: "NOV", 12: "DEC", 1: "JAN"}.get(month, "JAN")
-        # The day number, big and centred on the lower portion.
-        day_str = str(today_d)
-        try:
-            cache = self.kwargs.get("_label_cache")
-            cache_key = self.kwargs.get("_label_cache_key")
-            target_key = (name, day_str)
-            if cache is None or cache_key != target_key:
-                month_font = pygame.font.SysFont(None, 10)
-                day_font = pygame.font.SysFont(None, 18)
-                month_surf = month_font.render(
-                    name, False, (224, 218, 200))
-                day_surf = day_font.render(
-                    day_str, False, (40, 30, 24))
-                cache = (month_surf, day_surf)
-                self.kwargs["_label_cache"] = cache
-                self.kwargs["_label_cache_key"] = target_key
-            month_surf, day_surf = cache
-            surf.blit(month_surf,
-                      (px + (paper_w - month_surf.get_width()) // 2,
-                       py + 1))
-            surf.blit(day_surf,
-                      (px + (paper_w - day_surf.get_width()) // 2,
-                       py + 9))
-        except Exception:
-            pass
-
     def _draw_mud_footprint(self, surf, x, y):
         # A single BOOT print -- one connected sole (rounded toe/ball, a
         # narrow arch, a heel) with a faint tread, NOT separate toe dabs

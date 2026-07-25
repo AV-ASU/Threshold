@@ -4368,7 +4368,7 @@ _TABLETOP_PROP_KINDS = frozenset((
 # before (Scene.draw).
 _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
-    "banner", "calendar", "clock", "apology_wall",
+    "banner", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard", "wall_cross",
     # the Yellow Sign daubed on a wall face (the Sign Chamber apse; the

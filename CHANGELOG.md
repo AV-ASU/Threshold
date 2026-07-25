@@ -1182,6 +1182,44 @@
 
 ## Terrain & prop read (2026-07 quality sprint)
 
+- **2026-07 — The calendars are cut (TODO #28).** Maintainer ruling: "I hate
+  it." The `calendar` decoration is gone from the game, along with the three
+  system-font uses that drew its month/day label, so `entities/deco_horror.py`
+  joins `rendering/props.py` at a font budget of zero. Two things had to be
+  reinvented rather than deleted, because the prop was load-bearing:
+  - **The seal's date.** Jan 15 is canon and the calendars were what SHOWED
+    it. It moves to the **frozen news rack**, which already dated itself
+    ("Dated January 15. Every copy in the stack") and is a sharper object for
+    it: a calendar stops because a person stopped writing, a news rack stops
+    because the trucks stopped coming. The Casebook timeline's closing line
+    follows it. Guarded by three new `tests/flow.py` checks that also pin the
+    prop out of every tilt set, so nothing reinstates it.
+  - **Old Pell's only mechanical beat**, which was built entirely on his
+    ("I've got the calendar where I want it. Stopped."). It becomes his
+    **unopened seed corn**: it is April, and a corn man whose seed is still
+    sewn shut has not started the year. Same refusal to mark time, said in
+    his own trade instead of on a prop every room in town also had, and it
+    now carries his WANT (the harvest endures) rather than being generic.
+    The newspaper ripple pays off harder for it: he cuts a sack open and
+    puts a few rows in.
+  - New prop `seed_corn` (a pallet of 50lb sacks, sewn shut) with its
+    reference, and a new primitive it needed: **`prim.pillow`**, a rounded
+    oblong that bulges at the waist. `frustum` looked like the answer and is
+    RADIAL, so a 30 x 18in sack came out square in plan and the proportion
+    check caught it at 0.89 : 1 against a real 1.67 : 1; a `box` reads as a
+    carton, the exact mistaken identity a sack has to dodge.
+  - The other two calendars were replaced by what those rooms actually
+    wanted: a **missing-person flyer** in the sheriff's office (a report
+    nobody will answer says what a stopped calendar said, and says it in a
+    lawman's room), and nothing at all in Hettie's nook, where the clock
+    already says it better by still running toward nothing.
+  - **Vane's close-up tableau** loses the JAN 15 calendar off his wall and
+    gains a pinned, worked-over **county road map** with his own pen ring
+    around Brimley. It is the better object in that room by a distance: it
+    is the thing he has actually been doing for a year, driving every road
+    out and being handed back, and it says so without a line.
+
+
 - **2026-07 — The town sign remade, and the last font left the world
   (TODO #27).** The maintainer asked for the BRIMLEY board to be redone. A
   look pass found it was not only plain but broken in three ways, all of

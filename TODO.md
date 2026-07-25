@@ -118,32 +118,6 @@ Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
   interior cover as styles land; extend `tests/stealth.py` §16; VISION
   toward the Darkwood organic read.
 
-### 28. **[Opus + Fable]** Cut the calendars (maintainer: "I hate it")
-
-**Maintainer ruling: remove the calendars from the game**, including the beat
-built entirely on one (Old Pell's) — explicitly acknowledged and accepted.
-This is a canon change, not just a prop deletion, so it needs a decision on
-the replacement before it is built:
-
-- **The prop.** The `calendar` decoration (`entities/deco_horror.py
-  _draw_calendar`, placed in `scenes/brimley.py` and read in the Vane
-  tableau's dressing). Removing it also clears that file's 3 `FONT_BUDGET`
-  entries (the month/day label), so the guard tightens for free.
-- **Pell's whole thread rides it** (`scenes/dialogue.py`, `scenes/brimley.py`):
-  the `beat_pell_coal` stoop line ("I've got the calendar where I want it.
-  Stopped."), the `beat_pell_marked` ripple after the newspaper, and the
-  `paper_pell` note ("He said he'd pencil today into his calendar"). His WANT
-  (`DESIGN.md` §8: legacy, the harvest endures) survives fine; what needs
-  reinventing is the **object that shows a man refusing to mark time**. Pick
-  the new carrier deliberately — it is his only mechanical beat.
-- **Canon to reconcile** (`NARRATIVE.md` §3 timeline, §4 chorus, and the
-  invariant "every calendar in town stops at Jan 15"): the seal's date is
-  load-bearing and is currently *shown* by the calendars. Decide what carries
-  the stopped-January fact instead (the frozen news rack already dates itself
-  Jan 15 and may be enough), then update NARRATIVE + DIALOGUE together.
-- **Guards:** `tests/flow.py` asserts several Pell/paper beats; expect to
-  update them in the same commit.
-
 ### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
 
 Promote Royce to the man who drove Brimley's supply run (Hettie's shelves

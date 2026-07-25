@@ -333,15 +333,14 @@ def build_shop():
     sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 16, "mirror"))
     sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 22,
                                  "wrong_photo", stage=1))
-    # --- Hettie's office nook (north-east, curtain): the calendar, clock, radio ---
+    # --- Hettie's office nook (north-east, curtain): the clock + radio ---
     # A low goods shelf, and the wrong radio sits ON it (its art is a thing on
     # a surface; on the bare floor it read as a sticker under the tilt).
     sc.add_furniture("shelf", [(13, 1)], w=28, h=16, seed=7)
     sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 22, "wrong_radio"))
     sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 22, "clock"))
-    # Hettie's calendar -- "no deliveries in a while now," the days with
-    # nowhere left to count toward (stasis, not a loop -- NARRATIVE §2).
-    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 24, "calendar"))
+    # (Her calendar was cut with the rest, TODO #28. The clock says the
+    # same thing better: it is still running, toward nothing.)
     sc.add_furniture("chair", [(13, 3)], w=22, h=28)
     for mx, my in [(11, 9), (5, 9), (9, 11)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,

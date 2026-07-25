@@ -401,7 +401,7 @@ class NarrativeMixin:
         out.append("No dates on most of it. Ordering by what comes before "
                    "what.")
         if s.flag("crossed_a_fold") or self._evidence_count() >= 3:
-            out.append("And the calendars all stopped in January. It's spring "
+            out.append("And the news rack still says January. It's spring "
                        "now.")
         return out
 

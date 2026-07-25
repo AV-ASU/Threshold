@@ -62,6 +62,8 @@ MATERIALS = {
     # shading darker on the faces that turn away, so the head glows evenly
     # instead of having a dim side.
     "flame_glass": ((255, 186, 108), 0.02),
+    "sack":       ((116, 104, 82), 0.24),  # woven paper seed sacks
+    "pallet":     ((92, 78, 58), 0.24),   # rough pallet boards
     "wood":       ((88, 70, 50), 0.32),   # generic fallback
 }
 
