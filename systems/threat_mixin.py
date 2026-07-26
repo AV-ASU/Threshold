@@ -1009,7 +1009,12 @@ class ThreatMixin:
             d = math.hypot(host.x - self.player.x, host.y - self.player.y)
             if (self.player.hidden is None and self.player.invuln <= 0
                     and d < APEX_CATCH_DIST):
-                self._trigger_death("king")
+                # Its OWN death kind. It used to borrow "king", which meant the
+                # apex catch played THE UNFOLDING's throat-swallow -- the art of
+                # the body this is replacing. Maintainer: do not use the existing
+                # death card. "apex" draws a wordless placeholder until the
+                # amalgam's own catch animation is made (TODO #25).
+                self._trigger_death("apex")
             return
         # SEEKING: drift toward the nearest unit it can wear, or toward the
         # player when the flood has not opened one yet.
@@ -1284,7 +1289,7 @@ class ThreatMixin:
         self._death_t = 0.0
         self._closure_locked = True
         self.audio.force_silence()
-        if kind == "king":
+        if kind in ("king", "apex"):
             self.audio.play("void_sting", 0.9)
             self.audio.play("low_pulse", 0.8)
         elif kind == "sheriff":
@@ -1426,10 +1431,13 @@ class ThreatMixin:
                 self.audio.music_muted = False
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
-        else:  # king
+        else:  # king / apex -- His deaths, same length
             if self._death_t >= 3.8:
+                was = self._death_kind
                 self._death_kind = None
                 self._closure_locked = False
+                if was == "apex":
+                    self._apex_end()          # the Mask + its host go with it
                 self._despawn_king()          # full teardown: NPC + FX + tone,
                                               # not just nulling the ref
                 self.visibility = 0.40        # not zero; never zero

@@ -660,8 +660,10 @@ section is the CODE MAP only — where each system lives:
   unit) is `Game._apex` + `_tick_apex`/`_apex_take`/`_apex_lose_host`
   (threat_mixin) + `npc._apex_tick`; `APEX_*` config. It ignores light entirely,
   runs at `KING_ROAM_SPEED`, and the axe/gun kill its HOST not the Mask (hooked in
-  `_dispel_watcher`); its catch is the King's death and `_tick_king_roam` stands
-  the Unfolding down while a host is worn. **A storm draws 22 sprites, so
+  `_dispel_watcher`); its catch fires its OWN
+  `_death_kind == "apex"` (a wordless PLACEHOLDER fade -- never the Unfolding's
+  card; the amalgam's real catch animation is owed, TODO #25), and
+  `_tick_king_roam` stands the Unfolding down while a host is worn. **A storm draws 22 sprites, so
   `draw_amalgam_sprite` CACHES each unit's composed surface and refreshes it at
   `UNIT_ANIM_HZ`, staggered per unit by a hashed seed offset** (a modulo offset
   clusters neighbouring seeds and the whole storm re-renders in lockstep --

@@ -1792,6 +1792,58 @@ def main():
     ga._tick_king_roam(1 / 30.0)
     check(ga._king is None and kdummy not in asc.npcs,
           "apex: the roaming King stands down while the Mask is worn")
+    # THE CATCH IS ITS OWN, NOT THE KING'S CARD. The apex used to fire
+    # _trigger_death("king"), which played THE UNFOLDING's throat-swallow -- the
+    # art of the very body the storm replaces. Maintainer: do not use the
+    # existing death card. This asserts the apex death never reaches it.
+    import rendering.king_unfold as _ku
+    gd = new_game()
+    gd.load_scene_now("well_passage", "default")
+    tick(gd, 20)
+    gd.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    dsc = gd.scene
+    dspots = [(tx * TILE + 16, ty * TILE + 16)
+              for ty in range(3, dsc.h - 3) for tx in range(3, dsc.w - 3)
+              if not dsc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    gd.player.x, gd.player.y = dspots[len(dspots) // 2]
+    gd.player.hidden = None
+    gd.visibility = min(0.95, APEX_VIS_GATE + 0.2)
+    dprey = _NPC4(gd.player.x + 40, gd.player.y, "", "amalgam",
+                  movement="storm", speed=STORM_UNIT_SPEED,
+                  no_prompt=True, solid=False)
+    dprey.tag = "watcher"; dprey.sprite_seed = 4242
+    dsc.add_npc(dprey); gd._watchers.append(dprey)
+    for _ in range(3000):
+        gd._tick_apex(1 / 30.0)
+        dh = gd.apex_host()
+        if dh is not None:
+            dh.update(1 / 30.0, dsc, gd.player)
+        if gd._death_kind is not None:
+            break
+    check(gd._death_kind == "apex",
+          f"apex: the catch fires its OWN death kind, not the King's "
+          f"(got {gd._death_kind!r})")
+    # ...and drawing that card must not touch the Unfolding art at all.
+    calls = []
+    _real = _ku.draw_unfold_catch
+    _ku.draw_unfold_catch = lambda *a, **k: calls.append(1)
+    import systems.render_mixin as _rm
+    _real_rm = getattr(_rm, "draw_unfold_catch", None)
+    if _real_rm is not None:
+        _rm.draw_unfold_catch = lambda *a, **k: calls.append(1)
+    try:
+        for tstep in (0.1, 0.6, 1.4, 2.9):
+            gd._death_t = tstep
+            gd._draw_death_screen()
+    finally:
+        _ku.draw_unfold_catch = _real
+        if _real_rm is not None:
+            _rm.draw_unfold_catch = _real_rm
+    check(not calls,
+          f"apex: its death card never draws the Unfolding catch "
+          f"({len(calls)} call(s))")
+
     # AND IT LEAVES when the player drops below the threshold.
     ga.visibility = APEX_VIS_GATE - 0.25
     ga._tick_apex(1 / 30.0)

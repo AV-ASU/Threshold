@@ -113,7 +113,16 @@
   That cooldown is the entire reward for fighting it, on purpose: re-hosting
   near you means you buy SECONDS, never distance, or driving it off would be a
   free pressure valve and the apex would become the safest thing in the room.
-  Contact is the King's own death (verified: `_death_kind == "king"`), and
+  Contact ends the run, and — after the maintainer caught it — on its OWN death
+  card rather than the King's. It briefly fired `_trigger_death("king")`, which
+  played THE UNFOLDING's throat-swallow: the art of the very body the storm
+  exists to replace, shipped as the new apex's signature. `"apex"` is now its own
+  kind, drawing a wordless placeholder fade at the King's same 3.8s so the pacing
+  is right when the real animation lands, with its teardown clearing the Mask and
+  host instead of the King. Sound stays His. Guarded both ways: the kind must be
+  `"apex"`, and drawing that card must never call `draw_unfold_catch` (borrowing
+  the King's kind again produces 4 calls). The amalgam's own catch animation is
+  now the top open item on #25. And
   **while a host is worn `_tick_king_roam` stands the roaming Unfolding down** --
   "the impossible count stays at one" is a canon fence, not a preference. Gated
   on a host actually being borne rather than a storm merely being up, so nothing

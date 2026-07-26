@@ -1060,8 +1060,28 @@ class RenderMixin:
 
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
-        furnace of masks (sprites.draw_king_death), wordless;
-        cultist = a stark CAPTURED card over a near-black wash."""
+        furnace of masks (sprites.draw_king_death), wordless; APEX = a wordless
+        placeholder fade, deliberately NOT the King's card (TODO #25 owes it a
+        real animation); cultist = a stark CAPTURED card over a near-black
+        wash."""
+        if self._death_kind == "apex":
+            # THE APEX'S CATCH -- deliberately NOT the Unfolding's throat-swallow
+            # (maintainer: "do not use the existing death card"). That art belongs
+            # to the body the storm is replacing, so borrowing it would ship the
+            # thing being retired as the new apex's signature.
+            #
+            # PLACEHOLDER, and honest about it: a wordless fade to near-black at
+            # the same 3.8s the King's death runs, so the pacing is already right
+            # when the real animation drops in. WORDLESS by design -- His deaths
+            # carry no label (the cult's CAPTURED card is a different register),
+            # so there is no player-facing text here and none to write.
+            # The amalgam's own catch animation is on TODO #25.
+            w, h = self.screen.get_size()
+            wash = pygame.Surface((w, h))
+            wash.fill((5, 4, 6))
+            wash.set_alpha(min(255, int(self._death_t / 1.1 * 255)))
+            self.screen.blit(wash, (0, 0))
+            return
         if self._death_kind == "king":
             if KING_UNFOLD:
                 # the Unfolding takes you DOWN THE THROAT (mouth iris -> tunnel

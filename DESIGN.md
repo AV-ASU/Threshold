@@ -252,9 +252,12 @@ its head) and pings the cult to **investigate the body**, and the body
   and it moves at `KING_ROAM_SPEED`, above player sprint, so it cannot be outrun
   either. **The answer is the axe or a round**, which destroys the HOST and not
   the Mask: the Mask drops to seeking and re-hosts on the nearest unit after
-  `APEX_MIGRATE_CD`, so fighting it buys seconds and never distance. Contact is
-  the King's own death. **While a host is worn the roaming Unfolding stands
-  down** ("the impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
+  `APEX_MIGRATE_CD`, so fighting it buys seconds and never distance. Contact ends the run on its
+  OWN death card (`_death_kind == "apex"`) -- deliberately NOT the Unfolding's
+  throat-swallow, which is the art of the body the storm replaces; it is a
+  wordless placeholder fade until the amalgam's own catch animation is made
+  (TODO #25). **While a host is worn the roaming Unfolding stands down** ("the
+  impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
   high-visibility trigger is retired.) **The gaze wears two skins (the

@@ -447,8 +447,18 @@ the hop is EARNED, not on a dwell.
   above sprint, so it cannot be outrun, which is the locked ratio (error class 9).
   Light will not stop it and hiding is not where it should be, so the answer is
   the axe or a round.
-- **The catch is the King's own death** (`_trigger_death("king")`, verified:
-  `_death_kind == "king"`). The art rewire is the retire slice below.
+- **The catch has its OWN death kind, `"apex"` — NOT the King's card**
+  (maintainer, 2026-07: "do not use the existing death card"). It briefly fired
+  `_trigger_death("king")`, which played THE UNFOLDING's throat-swallow: the art
+  of the very body the storm exists to replace, shipped as the new apex's
+  signature. `"apex"` now draws a **wordless placeholder fade** at the King's
+  same 3.8s, so the pacing is already right when the real animation lands, and
+  its teardown clears the Mask + host (`_apex_end`) rather than the King. Sound
+  is still His (`void_sting` + `low_pulse`). Wordless is deliberate: His deaths
+  carry no label, so there is no player-facing text here and none owed to
+  `DIALOGUE.md`. Guarded — `tests/stealth.py` §20 asserts the kind is `"apex"`
+  AND that drawing that card never calls `draw_unfold_catch` (proven: borrowing
+  the King's kind again produces 4 calls).
 - **ONE IMPOSSIBLE THING AT A TIME:** while a host is worn, `_tick_king_roam`
   stands the roaming Unfolding down and clears him from the room. Gated on a host
   actually being borne, not on a storm merely being up, so nothing changes for the
@@ -460,10 +470,16 @@ the hop is EARNED, not on a dwell.
   `APEX_CATCH_DIST`; and the King stand-down check asserted `_king is None` after
   a bare tick, which was true anyway, and now puts a King in the room first.
 
-**OPEN, in build order:** (1) **retire THE UNFOLDING** and rewire the catch /
-death card / Carcosa cutscene (flow-guarded) onto the storm — the apex already
-routes its catch to `_trigger_death("king")`, so this is the ART, not the wiring;
-(2) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each
+**OPEN, in build order:** (1) **THE AMALGAM'S CATCH ANIMATION** — the apex's
+death card is a placeholder wordless fade right now, on purpose. It needs its own
+art, built from the amalgam grammar rather than the Unfolding's: the parts, the
+gold cuts, the Mask coming in. Hooked up and timed already (`_death_kind ==
+"apex"`, 3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing.
+Land it through a VISION look-pass, and note the King's death is wordless — no
+label, no text to write. (2) **retire THE UNFOLDING** and rewire the roaming
+King's own card / the Carcosa cutscene (flow-guarded) onto the storm; the apex no
+longer touches that art at all, so what remains is the King path itself;
+(3) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each
 piece lands — the docs still describe THE UNFOLDING because that is what SHIPS
 until (1). Land each visual beat through a VISION look-pass.
 
