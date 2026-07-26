@@ -419,31 +419,53 @@ round); **light is the only safety**; and **the amalgam is the default skin now*
   constant-vs-constant "cap" check, and a smear check that silently skipped on
   an empty wave).
 
-**THE APEX / THE MASK NPC — specced by the maintainer, NOT built.** The next
-slice, and it supersedes `systems/storm.py`'s timer-driven migration:
-- The Mask **spawns in and floats to an amalgam**, then **deletes it and becomes
-  it**, reusing that amalgam's EXACT parts and adding 2-3 more.
-- **The apex pierces the protection of the light** — a lit spot does not hold it
-  off the way it holds a regular unit — and **the apex is immune to light**, so
-  the flashlight is not enough for it.
-- **The axe works, and the gun works.** Hitting the apex destroys the AMALGAM but
-  not the Mask: the Mask then **seeks another amalgam and continues its assault**,
-  until the player drops **below the visibility threshold**. (Maintainer on the
-  gun: "I know the whole 'gun exists to fail', but we have such limited ammo it
-  will fail regardless. And it makes the loop more fun if the player can do
-  something to survive.")
-- Player-driven migration is the point: the hop is EARNED, not on a dwell timer.
-  Two things to settle when building it — the Mask must live as game state that
-  projects into a scene (one bearer storm-wide is a fence, so `scene.npcs` cannot
-  be its home; `_king` already does this), and it should REPLACE its host rather
-  than stack on it, or the two NPCs z-fight in the depth sort.
+**LANDED — THE APEX (2026-07).** The Mask that wears a unit, built to the
+maintainer's spec. It supersedes `systems/storm.py`'s timer-driven migration:
+the hop is EARNED, not on a dwell.
+- **Game state, not scene state** (`Game._apex`, like `_king`): one bearer
+  storm-wide is a fence and `scene.npcs` is cleared on every load, so the Mask
+  lives on the Game and PROJECTS a host into whatever room you are in.
+- **It floats in and BECOMES an amalgam.** Two states: `seeking` (a free-floating
+  Mask drifting to the nearest unit it can reach) and `borne` (it IS that unit).
+  Taking a host DELETES the amalgam and rebuilds it wearing that unit's own seed
+  — its exact deal, reused verbatim — plus `APEX_EXTRA_LO..HI` (2-3) added parts
+  (`assemble(seed, extra=)`, on a separate rng so every ordinary unit's deal
+  stays byte-identical). Replacing rather than stacking keeps the two from
+  z-fighting in the depth sort.
+- **It pierces and ignores light.** `npc._apex_tick` has no light probe at all —
+  neither a fixture pool nor the flashlight beam turns it aside, where both hold a
+  regular unit off. Guarded by a contrast check: through the same beam, the apex
+  reaches contact while a regular unit stays 100px out.
+- **The axe and the gun destroy the HOST, not the Mask.** Every family dispel
+  routes through `_dispel_watcher`, which now hands off to `_apex_lose_host`: the
+  body dies, the Mask drops to seeking and re-hosts. It re-hosts on the NEAREST
+  unit after `APEX_MIGRATE_CD`, so fighting it buys SECONDS, never distance —
+  otherwise it would be a free pressure valve and the safest thing in the room.
+- **It comes at `APEX_VIS_GATE` visibility and withdraws below it** (the
+  maintainer's "until you get below the vis threshold", read from both sides).
+- **Speed is `KING_ROAM_SPEED` verbatim** (117 px/s vs a player sprint of 105):
+  above sprint, so it cannot be outrun, which is the locked ratio (error class 9).
+  Light will not stop it and hiding is not where it should be, so the answer is
+  the axe or a round.
+- **The catch is the King's own death** (`_trigger_death("king")`, verified:
+  `_death_kind == "king"`). The art rewire is the retire slice below.
+- **ONE IMPOSSIBLE THING AT A TIME:** while a host is worn, `_tick_king_roam`
+  stands the roaming Unfolding down and clears him from the room. Gated on a host
+  actually being borne, not on a storm merely being up, so nothing changes for the
+  King anywhere the apex has not taken a body.
+- Guards: `tests/stealth.py` §20, every check proven to fail. Two first drafts
+  were vacuous and are worth remembering: the light check used a "got closer than
+  d0-40" threshold that passed even with a light probe bolted on (the apex just
+  stopped at the pool edge, inside the margin) and now asserts it reaches
+  `APEX_CATCH_DIST`; and the King stand-down check asserted `_king is None` after
+  a bare tick, which was true anyway, and now puts a King in the room first.
 
-**OPEN, in build order:** (1) **the apex / Mask NPC** (specced above);
-(2) **retire THE UNFOLDING** and rewire the catch / death card / Carcosa
-cutscene (flow-guarded) onto the storm; (3) reconcile canon (NARRATIVE §4/§8 the
-King, DESIGN §1 the apex) ONLY as each piece lands —
-the docs still describe THE UNFOLDING because that is what SHIPS until (2). Land
-each visual beat through a VISION look-pass.
+**OPEN, in build order:** (1) **retire THE UNFOLDING** and rewire the catch /
+death card / Carcosa cutscene (flow-guarded) onto the storm — the apex already
+routes its catch to `_trigger_death("king")`, so this is the ART, not the wiring;
+(2) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each
+piece lands — the docs still describe THE UNFOLDING because that is what SHIPS
+until (1). Land each visual beat through a VISION look-pass.
 
 **The storm CUTS wear the rift's gold rim (approved 2026-07, option (a)+gold).**
 The amalgam apertures should read as the same portal family as the fold/King

@@ -90,6 +90,44 @@
 
 ## Stealth & threat
 
+- **2026-07 — THE APEX lands: the Mask that wears a unit (`TODO.md` #25).** The
+  storm had a flood but no threat -- regular units cannot touch you by ruling --
+  so this is the piece that makes it dangerous, built to the maintainer's spec.
+  The Mask is **Game state, not scene state** (`Game._apex`, the pattern `_king`
+  already uses): one bearer storm-wide is a locked fence and `scene.npcs` is
+  cleared on every load, so it projects a host into whatever room you are in.
+  It arrives at `APEX_VIS_GATE` visibility, FLOATS to the nearest unit it can
+  reach, then **deletes that amalgam and becomes it** -- wearing the unit's own
+  seed, so its exact deal is reused verbatim, plus 2-3 added parts via a new
+  `assemble(seed, extra=)` on a separate rng so every ordinary unit stays
+  byte-identical. Replacing rather than stacking was deliberate: two NPCs at one
+  position z-fight in the depth sort.
+  **It pierces and ignores light** -- `_apex_tick` has no light probe at all,
+  where `_storm_tick` refuses both a lamp pool and the beam -- and it runs at
+  `KING_ROAM_SPEED` (117 px/s against a player sprint of 105), above sprint by
+  the locked ratio, so it cannot be outrun either. That leaves the axe and the
+  gun, which is the loop the maintainer wanted ("it makes the loop more fun if
+  the player can do something to survive"): every family dispel routes through
+  `_dispel_watcher`, which now hands to `_apex_lose_host` -- the HOST dies, the
+  Mask does not, and it re-hosts on the NEAREST unit after `APEX_MIGRATE_CD`.
+  That cooldown is the entire reward for fighting it, on purpose: re-hosting
+  near you means you buy SECONDS, never distance, or driving it off would be a
+  free pressure valve and the apex would become the safest thing in the room.
+  Contact is the King's own death (verified: `_death_kind == "king"`), and
+  **while a host is worn `_tick_king_roam` stands the roaming Unfolding down** --
+  "the impossible count stays at one" is a canon fence, not a preference. Gated
+  on a host actually being borne rather than a storm merely being up, so nothing
+  changes for the King anywhere the apex has not taken a body.
+  Guarded by `tests/stealth.py` §20, every check proven to fail. **Two of those
+  checks were vacuous on the first draft and both are instructive:** the
+  light-piercing check asserted "closed to within d0-40", which passed even with
+  a light probe bolted onto the apex (it simply stopped at the pool's edge, well
+  inside that margin) and now asserts it reaches `APEX_CATCH_DIST`; and the
+  King-stand-down check asserted `_king is None` after a bare tick, which was
+  already true since he does not spawn in one tick, and now puts a King in the
+  room first. Verified in a live storm capture: the bearer reads clearly beside
+  the player, and running it to contact fired the death.
+
 - **2026-07 — The storm earns its requested size back: 22 units at a flat 32fps.**
   The self-assessment had cut `STORM_MAX` from the maintainer's 20-25 to a
   measured 10, because 22 units cost 53.3ms a frame (18.8 fps). Rather than leave

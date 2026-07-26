@@ -457,6 +457,32 @@ KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
 KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
 KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
+
+# ---- THE APEX: the Mask that wears a unit (TODO #25) ----------------------
+# The storm's one real threat. Regular units cannot touch you; this can.
+# Maintainer's spec: the Mask spawns in and FLOATS to an amalgam, deletes it and
+# BECOMES it -- reusing that amalgam's exact parts and adding 2-3 more -- it
+# PIERCES the protection of light and is IMMUNE to light (the flashlight is not
+# enough for it), the axe and the gun destroy the HOST but not the Mask, and the
+# Mask then seeks another amalgam and continues its assault until the player
+# drops below the visibility threshold.
+#
+# Speed is KING_ROAM_SPEED verbatim, because it IS Him: 1.95 (~117 px/s) against
+# a player walk of 84 and a sprint of 105. Above sprint on purpose (error class
+# 9, the locked ratio): the apex cannot be outrun. Light does not stop it and
+# hiding is not where it should be yet, so the answer is the axe or a round --
+# which is the loop the maintainer asked for ("it makes the loop more fun if the
+# player can do something to survive").
+APEX_VIS_GATE = 0.55          # visibility at/above which the Mask comes for you
+APEX_SEEK_SPEED = 46.0        # px/s the free-floating Mask drifts to its host
+APEX_MIGRATE_CD = 2.2         # s before it takes a new host after losing one
+APEX_EXTRA_LO, APEX_EXTRA_HI = 2, 3     # parts added to the host's own deal
+APEX_SPEED = KING_ROAM_SPEED
+APEX_CATCH_DIST = KING_CATCH_DIST
+# Driving it off must COST something or it becomes a free pressure valve: kill
+# the host and the Mask re-hosts on the NEAREST unit it can reach, so you buy
+# APEX_MIGRATE_CD seconds of breathing room, never distance.
+
                              # ~117 px/s, just above the player's ~105 px/s
                              # sprint so a locked King always closes the gap
                              # (play-notes rebalance)

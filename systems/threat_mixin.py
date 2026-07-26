@@ -899,6 +899,139 @@ class ThreatMixin:
             return False
         return self.scene_gloom() > 0
 
+    # ======================= THE APEX (TODO #25) ==========================
+    # The Mask that wears a unit. Regular storm units cannot touch you; this can.
+    # It is GAME state, not scene state -- one bearer storm-wide is a locked
+    # fence, and `scene.npcs` is cleared on every load, so the Mask lives on the
+    # Game (like `_king`) and PROJECTS a host into whatever room you are in.
+    #
+    # Two states:
+    #   "seeking" -- a free-floating Mask drifting toward a chosen amalgam
+    #   "borne"   -- it IS that amalgam: the host is deleted and the Mask becomes
+    #                it, wearing its exact deal plus APEX_EXTRA parts.
+
+    def _apex_wanted(self):
+        """Does the Mask want you right now? A storm, and visibility at or above
+        `APEX_VIS_GATE` -- the maintainer's "until you get below the vis
+        threshold" is the same line read from the other side."""
+        return self._storm_active() and self.visibility >= APEX_VIS_GATE
+
+    def apex_host(self):
+        """The NPC the Mask is currently wearing, or None."""
+        ap = getattr(self, "_apex", None)
+        return ap.get("host") if ap and ap.get("state") == "borne" else None
+
+    def _apex_end(self, reason="left"):
+        """The Mask withdraws entirely (below the vis gate, or the storm ended)."""
+        ap = getattr(self, "_apex", None)
+        if not ap:
+            return
+        host = ap.get("host")
+        if host is not None and self.scene is not None:
+            if host in self.scene.npcs:
+                self.scene.npcs.remove(host)
+            if host in self._watchers:
+                self._watchers.remove(host)
+        self._apex = None
+
+    def _apex_lose_host(self):
+        """The axe or a round destroyed the HOST -- never the Mask (maintainer).
+        It drops back to seeking and re-hosts after APEX_MIGRATE_CD.
+
+        The cooldown IS the reward for fighting it, and the only one: it re-hosts
+        on the NEAREST unit it can reach, so you buy seconds of breathing room,
+        never distance. Without that, staring down or axing the bearer would be a
+        free pressure valve and the apex would become the safest thing in the
+        room."""
+        ap = getattr(self, "_apex", None)
+        if not ap:
+            return
+        host = ap.get("host")
+        if host is not None:
+            ap["x"], ap["y"] = host.x, host.y
+        ap["host"] = None
+        ap["state"] = "seeking"
+        ap["cd"] = APEX_MIGRATE_CD
+        self.audio.play("void_sting", 0.7)
+
+    def _apex_take(self, unit):
+        """The Mask reaches a unit and BECOMES it: the amalgam is deleted and the
+        Mask wears its exact parts plus 2-3 more (maintainer's spec). Replacing
+        the host rather than stacking on it keeps the two from z-fighting in the
+        depth sort and keeps one body where the fiction has one."""
+        ap = self._apex
+        seed = getattr(unit, "sprite_seed", 1)
+        if unit in self.scene.npcs:
+            self.scene.npcs.remove(unit)
+        if unit in self._watchers:
+            self._watchers.remove(unit)
+        host = NPC(unit.x, unit.y, "", "amalgam",
+                   voice="blip_low", portrait="watcher",
+                   movement="apex", speed=APEX_SPEED,
+                   no_prompt=True, solid=False)
+        host.tag = "watcher"          # shares every dispel path the family has
+        host.dialogue_fn = None
+        host.sprite_seed = seed       # the host's OWN deal, reused verbatim
+        host._birth = 1.0
+        host._apex = True
+        host._apex_extra = random.randint(APEX_EXTRA_LO, APEX_EXTRA_HI)
+        self.scene.add_npc(host)
+        self._watchers.append(host)
+        ap["host"] = host
+        ap["state"] = "borne"
+        ap["seed"] = seed
+
+    def _tick_apex(self, dt):
+        """Drive the Mask: arrive, seek a host, wear it, and catch."""
+        if self.scene is None or self.player is None:
+            return
+        ap = getattr(self, "_apex", None)
+        if not self._apex_wanted():
+            if ap:
+                self._apex_end()
+            return
+        if ap is None:
+            # It ARRIVES: a free-floating Mask, out in the dark, coming in.
+            ang = random.uniform(0, math.tau)
+            r = random.uniform(STORM_SPAWN_NEAR, STORM_SPAWN_FAR)
+            self._apex = ap = {"state": "seeking", "cd": 0.0,
+                               "x": self.player.x + math.cos(ang) * r,
+                               "y": self.player.y + math.sin(ang) * r,
+                               "host": None, "seed": 0}
+        if ap["state"] == "borne":
+            host = ap.get("host")
+            if host is None or host not in self.scene.npcs:
+                self._apex_lose_host()       # swept some other way
+                return
+            # THE CATCH. Light does not stop it and it cannot be outrun, so
+            # contact is the run ending -- the King's own death, because it is
+            # the King (the art rewire is TODO #25's retire slice).
+            d = math.hypot(host.x - self.player.x, host.y - self.player.y)
+            if (self.player.hidden is None and self.player.invuln <= 0
+                    and d < APEX_CATCH_DIST):
+                self._trigger_death("king")
+            return
+        # SEEKING: drift toward the nearest unit it can wear, or toward the
+        # player when the flood has not opened one yet.
+        ap["cd"] = max(0.0, ap["cd"] - dt)
+        cands = [w for w in self._watchers
+                 if getattr(w, "_apex", False) is False
+                 and getattr(w, "alive", True)]
+        target = None
+        if cands and ap["cd"] <= 0.0:
+            target = min(cands, key=lambda w: (w.x - ap["x"]) ** 2
+                         + (w.y - ap["y"]) ** 2)
+        tx = target.x if target is not None else self.player.x
+        ty = target.y if target is not None else self.player.y
+        dx, dy = tx - ap["x"], ty - ap["y"]
+        d = math.hypot(dx, dy) or 1.0
+        step = APEX_SEEK_SPEED * dt
+        if target is not None and d <= max(step, 10.0):
+            self._apex_take(target)
+            return
+        ap["x"] += dx / d * step
+        ap["y"] += dy / d * step
+
     def actor_smear_range(self, npc):
         """How far out this actor stays SENSED in the blind-spot fog, or 0.0 to
         obey the sight cone outright (read by draw_world's `_vis_alpha`).
@@ -1065,7 +1198,15 @@ class ThreatMixin:
 
     def _dispel_watcher(self, w, reason="gaze"):
         """Dissolve one Watcher. If it was the last one and we're not merely
-        being suppressed by a safe room, the curse lifts (you're cured)."""
+        being suppressed by a safe room, the curse lifts (you're cured).
+
+        If it was the APEX's host, the HOST dies and the Mask does not: it drops
+        to seeking and takes another (maintainer). Every dispel the family has
+        works on the host -- gaze, light, axe, round -- which is the whole point:
+        light will not hold the apex off, so the player needs something that
+        does."""
+        if getattr(w, "_apex", False):
+            self._apex_lose_host()
         if w in self._watchers:
             self._watchers.remove(w)
         if self.scene is not None and w in self.scene.npcs:

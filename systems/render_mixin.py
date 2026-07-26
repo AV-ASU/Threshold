@@ -1290,6 +1290,17 @@ class RenderMixin:
         self.scene._door_actor_sight = _sight
         from rendering.solids import draw_with_alpha
 
+        def _apex_mask_for(npc):
+            """The Mask dict for the APEX's host, else None (TODO #25). An
+            ordinary unit passes None and draws exactly as before."""
+            if not getattr(npc, "_apex", False):
+                return None
+            px, py = self.player.x, self.player.y
+            gx, gy = px - npc.x, py - npc.y
+            gl = math.hypot(gx, gy) or 1.0
+            return {"deploy": 1.0, "extra": getattr(npc, "_apex_extra", 2),
+                    "gaze": (gx / gl, gy / gl), "seed": 7}
+
         def _vis_alpha(wx, wy, exempt=False, king=False, smear=0.0):
             """0..255 alpha to draw a world thing at (wx, wy) under the sight
             gate, or None to skip it (fully in the blind spot). 255 when the
@@ -1586,7 +1597,8 @@ class RenderMixin:
                                         to_player=king_to_player,
                                         lean=king_lean, scale_mul=king_scale_mul,
                                         pose=getattr(npc, "pose", None),
-                                        gape=getattr(npc, "_gape", 0.0))
+                                        gape=getattr(npc, "_gape", 0.0),
+                                        apex_mask=_apex_mask_for(npc))
                     # The rising "?" tell (DESIGN.md §12 Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.

@@ -212,6 +212,30 @@ class NPC:
             self._cult_tick(dt, scene, player)
         elif self.movement == "storm":
             self._storm_tick(dt, scene, player)
+        elif self.movement == "apex":
+            self._apex_tick(dt, scene, player)
+
+    def _apex_tick(self, dt, scene, player):
+        """THE APEX -- the Mask wearing a unit (TODO #25). It walks at you and
+        NOTHING in the room stops it.
+
+        The maintainer's rule: it "pierces the protection of the light" and is
+        "immune to light, so our flashlight isn't enough for it". So unlike
+        `_storm_tick` there is no light probe here at all -- neither a fixture
+        pool nor the beam turns it aside. Light is the only safety from the
+        flood; there is no safety from this.
+
+        The answer is the axe or a round, which destroys the HOST and not the
+        Mask (Game._tick_apex re-hosts it). Its speed is the King's, above player
+        sprint, so it cannot be outrun either -- the fight is the loop.
+        """
+        dx = scene.world_dx(self.x, player.x)
+        dy = scene.world_dy(self.y, player.y)
+        d = math.hypot(dx, dy) or 1.0
+        self.facing = (dx / d, dy / d)
+        if d < 2.0:
+            return
+        self._step_toward((player.x, player.y), dt, scene)
 
     def _storm_tick(self, dt, scene, player):
         """A storm unit (TODO #25): it WALKS AT YOU and stops at the light.

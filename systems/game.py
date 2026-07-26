@@ -464,6 +464,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Genset blackout timers (the power link, TODO #21): scene key ->
         # seconds of blackout left. Cleared per run; _tick_power drains it.
         self._genset_down = {}
+        self._apex = None      # the Mask (TODO #25) is per-RUN game state
         # Where a lost space puts you back (TODO #26): (scene_key, x, y),
         # written by _tick_lost_edge when the world lets go and spent by the
         # hunted exit light. None = the field was entered some other way (a
@@ -3131,6 +3132,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
                 self._tick_watchers(dt)
+                self._tick_apex(dt)
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)
                 self._tick_cult_ambient(dt)

@@ -240,7 +240,21 @@ its head) and pings the cult to **investigate the body**, and the body
   obeying the sight cone and take the apex's fog curve instead
   (`Game.actor_smear_range`, `STORM_SEE_RANGE`): a live 22-unit storm had ZERO
   units pass the plain cone, so the flood was invisible and "they ring the light"
-  was unreadable. Guarded, `tests/stealth.py` §19. The **true refuges stay gaze-free**
+  was unreadable. Guarded, `tests/stealth.py` §19.
+  **THE APEX is the storm's one real threat** (TODO #25, 2026-07): the Mask that
+  WEARS a unit. It is Game state, not scene state (`Game._apex`, like `_king`) --
+  one bearer storm-wide is a fence and the wave is cleared on every load, so the
+  Mask projects a host into whatever room you are in. It arrives at
+  `APEX_VIS_GATE` visibility and withdraws below it, FLOATS to the nearest unit,
+  then DELETES that amalgam and becomes it, wearing the unit's own deal verbatim
+  plus 2-3 added parts. **It pierces and is immune to light** -- neither a lamp
+  pool nor the flashlight turns it aside, where both hold a regular unit off --
+  and it moves at `KING_ROAM_SPEED`, above player sprint, so it cannot be outrun
+  either. **The answer is the axe or a round**, which destroys the HOST and not
+  the Mask: the Mask drops to seeking and re-hosts on the nearest unit after
+  `APEX_MIGRATE_CD`, so fighting it buys seconds and never distance. Contact is
+  the King's own death. **While a host is worn the roaming Unfolding stands
+  down** ("the impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
   high-visibility trigger is retired.) **The gaze wears two skins (the

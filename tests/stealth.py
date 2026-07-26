@@ -1646,6 +1646,160 @@ def main():
     check(all(w.movement == "watch" and w.speed == 0.0 for w in g._watchers),
           "storm: units revert to standing still when it ends")
 
+    # ---- §20: THE APEX -- the Mask that wears a unit (TODO #25) -----------
+    # The maintainer's spec, end to end: it floats in, BECOMES an amalgam
+    # (reusing its exact parts plus 2-3), pierces and ignores light, the axe/gun
+    # destroy the HOST but not the Mask, it re-hosts and continues, and it leaves
+    # when the player drops below the visibility threshold.
+    from systems.config import (APEX_VIS_GATE, APEX_SPEED, APEX_CATCH_DIST,
+                                APEX_EXTRA_LO, APEX_EXTRA_HI, APEX_MIGRATE_CD,
+                                KING_ROAM_SPEED, PLAYER_SPRINT_MULT)
+    from rendering.amalgam import assemble
+    print("[20] apex: floats in, wears a host, survives the axe, leaves on vis")
+    # It IS the King, so it moves at his speed -- above player sprint, the locked
+    # ratio (error class 9): the apex cannot be outrun.
+    check(APEX_SPEED == KING_ROAM_SPEED,
+          "apex: moves at the King's own speed (it is Him)")
+    check(APEX_SPEED * 60 > 84 * PLAYER_SPRINT_MULT,
+          f"apex: faster than player sprint ({APEX_SPEED*60:.0f} vs "
+          f"{84*PLAYER_SPRINT_MULT:.0f} px/s) -- cannot be outrun")
+    # the host's deal is reused VERBATIM with parts appended
+    base = assemble(4321)
+    for ex in (APEX_EXTRA_LO, APEX_EXTRA_HI):
+        grown = assemble(4321, extra=ex)
+        check(grown[:len(base)] == base and len(grown) == len(base) + ex,
+              f"apex: wears the host's exact deal plus {ex} more parts")
+    ga = new_game()
+    ga.load_scene_now("well_passage", "default")
+    tick(ga, 20)
+    ga.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    asc = ga.scene
+    adark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, asc.h - 2) for tx in range(2, asc.w - 2)
+             if not asc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not asc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    ga.player.x, ga.player.y = adark[len(adark) // 2]
+    ga.player.hidden = None
+    # BELOW the gate it does not come.
+    ga.visibility = APEX_VIS_GATE - 0.2
+    ga._tick_apex(1 / 30.0)
+    check(getattr(ga, "_apex", None) is None,
+          "apex: below the visibility gate the Mask does not come")
+    # AT the gate it arrives, seeking.
+    ga.visibility = min(0.95, APEX_VIS_GATE + 0.2)
+    ga._tick_apex(1 / 30.0)
+    check(ga._apex is not None and ga._apex["state"] == "seeking",
+          "apex: at the gate it arrives, floating and seeking")
+    # give it a unit to wear, and let it reach it
+    from entities.npc import NPC as _NPC4
+    prey = _NPC4(ga.player.x + 60, ga.player.y, "", "amalgam",
+                 movement="storm", speed=STORM_UNIT_SPEED,
+                 no_prompt=True, solid=False)
+    prey.tag = "watcher"; prey.sprite_seed = 8181
+    asc.add_npc(prey); ga._watchers.append(prey)
+    for _ in range(600):
+        ga._tick_apex(1 / 30.0)
+        if ga._apex and ga._apex["state"] == "borne":
+            break
+    check(ga._apex is not None and ga._apex["state"] == "borne",
+          "apex: it reaches a unit and BECOMES it")
+    host = ga.apex_host()
+    check(host is not None and getattr(host, "_apex", False),
+          "apex: a host exists and is flagged as the bearer")
+    check(prey not in asc.npcs,
+          "apex: the amalgam it took is DELETED, not stacked on")
+    check(host.sprite_seed == 8181,
+          "apex: the host keeps the taken unit's own seed (its exact parts)")
+    check(APEX_EXTRA_LO <= getattr(host, "_apex_extra", 0) <= APEX_EXTRA_HI,
+          "apex: it adds 2-3 parts of its own")
+    # LIGHT DOES NOT STOP IT. Sit it in a lit pool, aim the beam at it, and it
+    # still closes -- unlike a regular unit, which both of those hold off.
+    alit = [(tx * TILE + 16, ty * TILE + 16)
+            for ty in range(2, asc.h - 2) for tx in range(2, asc.w - 2)
+            if asc.lit_at(tx * TILE + 16, ty * TILE + 16)
+            and not asc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    # Needs a LIT player spot with a CLEAR walkable line to stand the apex on --
+    # dropping it 100px south blind put it against rock and it slid 20px of a
+    # possible 350, which reads as "the light held it" and is not the same thing.
+    apair = None
+    for lx, ly in alit:
+        for off in (100.0, 84.0, 120.0):
+            cand = (lx, ly + off)
+            if (not asc.is_solid_at(*cand)
+                    and asc.clear_sight_line(cand[0], cand[1], lx, ly)):
+                apair = ((lx, ly), cand, off)
+                break
+        if apair:
+            break
+    if apair:
+        (ga.player.x, ga.player.y), astart, d0 = apair
+        ga.player.facing = (0, 1)
+        ga.player.inventory.add("flashlight", 1)
+        ga.flashlight_on = True
+        ga._stamp_beam()
+        assert ga._flashlight_lit(), "beam must be lit for this check"
+        assert asc.lit_at(ga.player.x, ga.player.y), "player must stand in light"
+        host.x, host.y = astart
+        for _ in range(90):
+            host.update(1 / 30.0, asc, ga.player)
+        d1 = math.hypot(host.x - ga.player.x, host.y - ga.player.y)
+        # Must reach CONTACT range, not merely "closer": a d0-40 threshold
+        # passed even with a light probe bolted on, because the apex simply
+        # stopped at the pool's edge, which is well inside that margin.
+        check(d1 <= APEX_CATCH_DIST,
+              f"apex: light and the beam do NOT hold it off -- reaches contact "
+              f"({d0:.0f} -> {d1:.0f}px, catch at {APEX_CATCH_DIST:.0f})")
+        # the contrast that gives it meaning: a REGULAR unit is held by the same
+        # light the apex walks through.
+        reg = _NPC4(astart[0], astart[1], "", "amalgam", movement="storm",
+                    speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+        for _ in range(90):
+            reg.update(1 / 30.0, asc, ga.player)
+        dreg = math.hypot(reg.x - ga.player.x, reg.y - ga.player.y)
+        check(dreg > d1 + 20,
+              f"apex: a regular unit IS held by that same light "
+              f"(unit {dreg:.0f}px vs apex {d1:.0f}px)")
+    # THE AXE KILLS THE HOST, NOT THE MASK.
+    ga._dispel_watcher(host, reason="axe")
+    check(ga._apex is not None and ga._apex["state"] == "seeking",
+          "apex: killing the host does not kill the Mask -- it seeks again")
+    check(host not in asc.npcs, "apex: the host body is gone")
+    check(ga._apex["cd"] > 0.0,
+          "apex: re-hosting is on a cooldown (driving it off must cost it time)")
+    # it CONTINUES: give it another unit and it takes that one too
+    prey2 = _NPC4(ga.player.x + 70, ga.player.y, "", "amalgam",
+                  movement="storm", speed=STORM_UNIT_SPEED,
+                  no_prompt=True, solid=False)
+    prey2.tag = "watcher"; prey2.sprite_seed = 9292
+    asc.add_npc(prey2); ga._watchers.append(prey2)
+    for _ in range(900):
+        ga._tick_apex(1 / 30.0)
+        if ga._apex and ga._apex["state"] == "borne":
+            break
+    check(ga._apex is not None and ga._apex["state"] == "borne",
+          "apex: it re-hosts on another amalgam and continues the assault")
+    # ONE IMPOSSIBLE THING AT A TIME: the roaming King does not also walk.
+    # Put a King in the room FIRST -- asserting `_king is None` after a bare
+    # tick was vacuous, since he does not spawn in a single tick anyway.
+    kdummy = _NPC4(ga.player.x + 200, ga.player.y, "", "yellow_king",
+                   movement="chaser", speed=KING_ROAM_SPEED,
+                   no_prompt=True, solid=False)
+    kdummy._birth = 1.0
+    asc.add_npc(kdummy)
+    ga._king = kdummy
+    check(ga.apex_host() is not None, "apex: (a host is worn for this check)")
+    ga._tick_king_roam(1 / 30.0)
+    check(ga._king is None and kdummy not in asc.npcs,
+          "apex: the roaming King stands down while the Mask is worn")
+    # AND IT LEAVES when the player drops below the threshold.
+    ga.visibility = APEX_VIS_GATE - 0.25
+    ga._tick_apex(1 / 30.0)
+    check(getattr(ga, "_apex", None) is None,
+          "apex: below the vis threshold it withdraws entirely")
+    check(not any(getattr(n, "_apex", False) for n in asc.npcs),
+          "apex: and takes its host body with it")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

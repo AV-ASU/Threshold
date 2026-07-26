@@ -855,7 +855,7 @@ SENSE = [("eyes", f_eye_bulge), ("pair", f_ember_pair), ("vent", f_vent),
          ("cilia", f_cilia), ("lure", f_lure)]
 
 
-def assemble(seed):
+def assemble(seed, extra=0):
     """Deal a creature: 3-5 parts under the composition rules. The prefix
     (weights + masses) caps at 4 so there is ALWAYS room for the first
     sense slot, which is always an eye-bearing part: every amalgam
@@ -922,7 +922,21 @@ def assemble(seed):
         nm, fn = (rng.choice(SENSE[:2]) if i == 0 else rng.choice(SENSE))
         sx = int(round(max(-26, min(26, cx + rng.randint(-11, 11)))))
         parts.append((nm, fn, sx, 96 - rng.randint(12, 32), rng.random() < 0.5))
-    return parts[:5]
+    out = parts[:5]
+    if extra > 0:
+        # THE APEX wears its host's deal and adds to it (TODO #25): the Mask
+        # "deletes it and becomes it, reusing that amalg's exact parts while
+        # adding 2-3 more". A SEPARATE rng so the base deal is untouched --
+        # extra=0 must stay byte-identical for every ordinary unit.
+        rng2 = random.Random(seed * 31 + 7)
+        for i in range(extra):
+            nm, fn = rng2.choice(MASS if i % 2 else SENSE)
+            ex = int(round(max(-26, min(26, cx + rng2.randint(-14, 14)))))
+            out.append((nm, fn, ex,
+                        _MASS_DY.get(nm, 46) + rng2.randint(40, 58)
+                        if (i % 2) else 96 - rng2.randint(10, 30),
+                        rng2.random() < 0.5))
+    return out
 
 
 # ===================== THE PALLID MASK -- the 18th part ======================
@@ -1359,13 +1373,13 @@ def reset_amalgam_cache():
     _UNIT_CACHE.clear()
 
 
-def _compose_unit(seed, b, g, gaze, t, bearer):
+def _compose_unit(seed, b, g, gaze, t, bearer, extra=0):
     """Render ONE unit -- parts, tissue, outline, ghost, body -- into its own
     padded surface. Returns (surface, dx, dy) where (dx, dy) is where to blit it
     relative to the unit's feet. Pure in its arguments, which is what makes the
     cache above safe."""
     global _GAZE
-    parts = assemble(seed)
+    parts = assemble(seed, extra=extra)
     n = len(parts)
     LW, LH = 150, 104
     lay = pygame.Surface((LW, LH), pygame.SRCALPHA)
@@ -1449,6 +1463,9 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     b = 1.0 if birth is None else _clamp(birth)
     g = 0.0 if dispel is None else _clamp(dispel)
     bearer = mask is not None
+    # THE APEX wears its host's deal plus 2-3 added parts (TODO #25). It rides in
+    # the mask dict so an ordinary unit's call is untouched.
+    extra = int(mask.get("extra", 0)) if bearer else 0
     # Quantise the animation clock and cache on it -- see the cache note above.
     #
     # STAGGERED per unit. With one shared clock every unit's bucket rolled over
@@ -1470,13 +1487,13 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # every unit missed at once -- so the sawtooth survived the stagger: 22 units
     # still spiked to 51.7ms. Holding a single entry per unit means the cache
     # never exceeds the unit count and nothing is ever mass-invalidated.
-    ident = (seed, bearer)
+    ident = (seed, bearer, extra)
     state = (round(b, 2), round(g, 2), bool(gaze), bucket)
     hit = _UNIT_CACHE.get(ident)
     if hit is None or hit[0] != state:
         hit = (state, _compose_unit(seed, b, g, gaze,
                                     (bucket - off) / float(UNIT_ANIM_HZ),
-                                    bearer))
+                                    bearer, extra))
         _UNIT_CACHE[ident] = hit
     hit = hit[1]
     body, dx, dy = hit
