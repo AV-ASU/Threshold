@@ -206,6 +206,47 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The Mask remade as a HALF-mask; the amalgams made visible, their
+  cuts made gold, and six more parts.** A maintainer look-pass on the dormant
+  storm art (`TODO.md` #25) and the four things it asked for.
+  - **The Pallid Mask read as a wooden egg.** Three causes, and the first was
+    the real one. (1) It was modelled as a full closed OVAL, but canon says a
+    **half-mask** (NARRATIVE §6a, stated twice including in the invariants
+    index) -- a featureless closed oval IS an egg, and no shading fixes a
+    silhouette. `draw_pallid_3d` now bounds the sheet with a `_mask_hem` cut:
+    brow, eyes and cheekbones, then it STOPS, which also makes the canon "no
+    mouth" honest (there is no lower face to put one on). (2) Ambient was 0.58,
+    squeezing the whole shell into a 0.58-1.0 value range; now 0.20, so light
+    falls ACROSS the form. (3) The sockets were 0.2r pinpricks in dark brown;
+    they are ~1.8x bigger, go to true black, carry a pale orbit rim and take a
+    CAST SHADOW from the brow, plus cheek hollows for one more plane change.
+    The gold is an **ember down a hole**, not a pupil: a filled gold disc in a
+    dark socket read instantly as a cartoon eye (tried, rejected), so there is
+    no solid pupil at all -- just a soft additive bloom and a tiny hot core.
+    Bloom size was picked off a 4-way sweep rendered at r=68/26/13 rather than
+    tuned at preview size alone.
+  - **"Black creatures in black environments are invisible"** (maintainer).
+    Amalgams now carry a visibility GLOW: a blurred silhouette halo, then the
+    body PUNCHED back to near-black over it, so the glow reads as a rim and the
+    creature stays a shadow you can locate. Fenced as draw-only -- not in
+    `Scene._LIGHT_KINDS` or `FIXTURE_POOLS`, casts no pool, invisible to
+    `lit_at`, so it cannot deny a Watcher a spawn spot or gate the lost-space
+    mouth. Two rendering traps on the way, both worth knowing: tinting a sprite
+    with `BLEND_RGBA_MULT` does NOTHING when the sprite is near-black
+    (near-black x anything is near-black), and an additive blit does not weight
+    by alpha, so stencilling the alpha channel alone lights the whole sprite
+    RECTANGLE. The RGB has to be premultiplied by the mask (`_emissive`).
+  - **The cuts wear the rift's GOLD** (`CUT_RIM` / `CUT_RIM_HOT` + a faint
+    bleed), so every hole He opens reads as one portal family with the fold and
+    the King rift. This was already the approved direction in #25; it is now
+    real on the amalgams. The cool `RIM` stays for FLESH lips inside a part.
+  - **Six more parts, 16 -> 22**: `hoof` + `crutch` (weight), `sack` + `plate`
+    (mass), `cilia` + `lure` (sense). The deal was already varied as data, but
+    16 parts meant the same shapes recurred; 390 distinct deals in 400 seeds
+    now, and the always-eye-bearing first-sense rule is preserved by appending
+    after `SENSE[:2]`. Every seed re-deals, which is expected for procedural
+    creatures and depended on by nothing.
+  Full gate green.
 - **2026-07 -- A way to LOOK at an amalgam (`tools/preview_amalgam.py`), and
   the part count corrected to 16.** The family had no isolation preview: they
   are near-black by design, so they are unreadable both in a whole-scene

@@ -231,9 +231,18 @@ its head) and pings the cult to **investigate the body**, and the body
   high-visibility trigger is retired.) **The gaze wears two skins (the
   shadow family):** a manifestation arrives as the OG shroud Watcher or,
   with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
-  seeded assembly of 3-5 parts from a 16-part library, each part emerging
+  seeded assembly of 3-5 parts from a 22-part library, each part emerging
   from its own free-form CUT (flesh clipped dead flat against the line,
   rim lip on the absent side, haze the only tissue; nothing touches).
+  **Its CUTS wear the rift's GOLD** (`CUT_RIM`, 2026-07): an aperture He opens
+  reads as the same portal family as the fold / King rift (§7), not a separate
+  cold-blue phenomenon. **And an amalgam carries a visibility GLOW** -- a rim
+  halo with the body punched back to near-black behind it, so a shadow in a
+  black room can be SEEN and located while still reading as a shadow. It is
+  **presentation only** and must stay so: it is not in `Scene._LIGHT_KINDS` or
+  `FIXTURE_POOLS`, casts no pool, and is invisible to `lit_at`, so it can never
+  deny a Watcher a spawn spot, burn anything, or gate the lost-space mouth. The
+  creature is visible, not lit.
   Composition rules bind every deal: at least one weight-bearing part on
   the ground, masses centre, and ALWAYS at least one eye-bearing part
   (every amalgam watches; the dim-ember tone is bright enough to survive

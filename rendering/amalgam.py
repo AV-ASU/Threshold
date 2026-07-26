@@ -7,7 +7,7 @@ side, gold motes bleeding off it). Nothing touches anything else -- the
 parts hang in formation around one anchor, thin haze threads the only
 tissue, and the brain stitches "one creature" out of their synchrony.
 
-Assembly is DATA: `assemble(seed)` deals 3-5 parts from the 16-part
+Assembly is DATA: `assemble(seed)` deals 3-5 parts from the 22-part
 library under the composition rules (at least one weight-bearing part on
 the ground, masses centre, senses high, and ALWAYS at least one
 eye-bearing part -- every amalgam watches). A different seed is a
@@ -35,6 +35,26 @@ SHROUD = (24, 22, 28)
 SHROUD_LO = (12, 11, 15)
 VOID = (6, 6, 9)
 RIM = (46, 46, 60)
+# The APERTURE rim is GOLD, so an amalgam's cuts read as the same portal
+# family as the fold / King rift (rendering/portal.py) rather than as a
+# separate cold-blue phenomenon -- one grammar for every hole He opens
+# (TODO #25, maintainer-approved). RIM above stays cool: it is the FLESH lip
+# drawn inside a part, not the hole itself.
+CUT_RIM = (150, 116, 40)
+CUT_RIM_HOT = (206, 164, 62)
+# The visibility halo (see draw_amalgam_sprite). Deliberately dim and barely
+# tinted: enough to lift a near-black body off a near-black room, not enough
+# to read as the creature emitting light.
+AMALGAM_GLOW = (120, 116, 155, 235)
+# The halo alone was not enough (maintainer: "those amlgs are really hard to
+# see"): a halo only draws a bloom AROUND the body, so the body itself stayed
+# a black hole in the middle of it. AMALGAM_LIFT is an additive pass over the
+# silhouette ITSELF, which is what actually makes the limbs and masses
+# readable against a black room. Same fence as the halo: draw-only, no light.
+AMALGAM_LIFT = (46, 44, 58)
+AMALGAM_LIFT_A = 0.10            # how much of the silhouette's own alpha to use
+_EMIT_FLOOR = 90                 # alpha below this is atmosphere, not flesh
+AMALGAM_CORE = (13, 12, 17)      # the body punched back out of the halo
 EMBER_G = (54, 46, 20)
 EMBER = (110, 88, 30)
 EMBER_DIM = (90, 74, 27)
@@ -49,6 +69,53 @@ def _ease(d):
 
 def _clamp(v):
     return max(0.0, min(1.0, v))
+
+
+def _emissive(src, col, strength=1.0):
+    """`src`'s silhouette rendered as LIGHT: a solid `col` masked by the
+    sprite's alpha and PREMULTIPLIED by it, ready to blit with BLEND_RGB_ADD.
+
+    Two traps, both hit while building this:
+    1. Tinting the sprite with BLEND_RGBA_MULT does nothing. That scales the
+       pixels already present, and an amalgam's flesh is near-black by design
+       (SHROUD is 24,22,28), so near-black x anything is still near-black.
+    2. An additive blit does NOT weight by alpha -- BLEND_RGB_ADD adds src RGB
+       to dst RGB at every pixel, transparent ones included. Stencilling the
+       alpha channel alone therefore lit the entire sprite RECTANGLE as a
+       glowing box. The RGB itself has to carry the mask, which is what
+       premultiplying here does.
+    """
+    import numpy as _np
+    out = pygame.Surface(src.get_size(), pygame.SRCALPHA)
+    out.fill((0, 0, 0, 0))
+    a = pygame.surfarray.array_alpha(src).astype(_np.float32)
+    # Only reasonably solid pixels emit: the part layer also carries _haze
+    # atmosphere and cut smoke, and lighting those reads as fog, not a body.
+    a = _np.clip((a - _EMIT_FLOOR) * (1.0 / (255 - _EMIT_FLOOR)), 0.0, 1.0)
+    a *= strength
+    rgb = pygame.surfarray.pixels3d(out)
+    for i in range(3):
+        rgb[:, :, i] = (col[i] * a).astype(_np.uint8)
+    del rgb
+    alp = pygame.surfarray.pixels_alpha(out)
+    alp[:] = (a * 255).astype(_np.uint8)
+    del alp
+    return out
+
+
+def _stencil(src, col, strength=1.0):
+    """A solid `col` in the shape of `src`, for a NORMAL (source-over) blit.
+    Used to punch the body back to dark after the halo, so the glow reads as
+    a RIM around the creature instead of washing its whole silhouette pale."""
+    import numpy as _np
+    out = pygame.Surface(src.get_size(), pygame.SRCALPHA)
+    out.fill((*col, 0))
+    a = pygame.surfarray.array_alpha(src).astype(_np.float32)
+    a = _np.clip((a - _EMIT_FLOOR) * (1.0 / (255 - _EMIT_FLOOR)), 0.0, 1.0)
+    alp = pygame.surfarray.pixels_alpha(out)
+    alp[:] = (a * 255 * strength).astype(_np.uint8)
+    del alp
+    return out
 
 
 def _with_alpha(s, a):
@@ -130,9 +197,17 @@ def _cut_line(s, cx, cy, ang, ln, alpha=1.0, side=1):
     def lp(f, off):
         return (p0[0] + (p1[0] - p0[0]) * f + nx * off,
                 p0[1] + (p1[1] - p0[1]) * f + ny * off)
-    pygame.draw.line(g, RIM + (a,), lp(0.02, 1.5), lp(0.42, 1.5), 2)
-    pygame.draw.line(g, RIM + (a,), lp(0.56, 1.5), lp(0.98, 1.5), 2)
+    pygame.draw.line(g, CUT_RIM + (a,), lp(0.02, 1.5), lp(0.42, 1.5), 2)
+    pygame.draw.line(g, CUT_RIM + (a,), lp(0.56, 1.5), lp(0.98, 1.5), 2)
+    pygame.draw.line(g, CUT_RIM_HOT + (int(a * 0.75),),
+                     lp(0.22, 1.5), lp(0.34, 1.5), 1)
     s.blit(g, (0, 0))
+    # a faint gold bleed off the lip, the rift's glow at aperture size
+    gb = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+    for off, ga in ((2.5, 16), (4.5, 9), (7.0, 4)):
+        pygame.draw.line(gb, (*CUT_RIM, int(ga * alpha)),
+                         lp(0.05, off), lp(0.95, off), 2)
+    s.blit(gb, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
     rng = random.Random(int(cx * 7 + cy * 13) & 0xffff)
     for k in range(2):
         mx = cx + nx * rng.uniform(3, 8) + rng.uniform(-2, 2)
@@ -156,7 +231,7 @@ def _cl(d):
     return min(1.0, 0.35 + 0.8 * d)
 
 
-# ============================= THE 17 PARTS ==================================
+# ============================= THE 22 PARTS ==================================
 # Each: (surf, x, y, d, mode, k) -- d deploy 0..1, mode "enter"/"idle"/
 # "leave", k a continuous 0..1 idle phase. Limbs lead with their extremity
 # and walk or fold home; masses inflate, breathe, and can breathe shut.
@@ -565,12 +640,159 @@ def f_ember_pair(s, x, y, d, mode, k):
             _eye(s, cx + dx * 4, cy + dy * 4, r=2, dim=blink)
 
 
+# ---- 2026-07: six more parts (maintainer: "more almg parts?"). The deal was
+# already varied as DATA -- 198 distinct combinations in 200 seeds -- but the
+# library was only 16, so the same shapes recurred once you had seen a few
+# dozen. These widen the vocabulary in the directions it was thinnest: two
+# more ways to MEET THE GROUND, two more body masses, two more senses.
+
+def f_hoof(s, x, y, d, mode, k):
+    """A short pastern ending in a splayed two-toe hoof, planted hard."""
+    cx, cy = x + 4, y - 30
+    r = _ease(d)
+    gy = GY
+    splay = (1.0 + 0.18 * k) if mode == "idle" else (1.35 if mode == "enter"
+                                                     else 0.8)
+
+    def dd(lay):
+        _lump(lay, cx, cy + 2, 7 * min(1, r * 1.5), 8 * min(1, r * 1.5))
+        _tent(lay, [(cx, cy + 6 * r), (cx - 2 * r, gy - 9)], 5.0 * r, 3.4 * r)
+        if d > 0.4:
+            for sgn in (-1, 1):
+                tip = (cx - 2 + sgn * 5 * splay, gy - 1)
+                _tent(lay, [(cx - 2 * r, gy - 9), tip], 3.0, 1.6)
+                pygame.draw.line(lay, VOID, (int(tip[0]), int(tip[1] - 3)),
+                                 (int(tip[0]), int(tip[1])), 1)
+        if d > 0.65:
+            pygame.draw.line(lay, RIM, (int(cx - 5), int(cy + 8 * r)),
+                             (int(cx + 4), int(cy + 6 * r)), 1)
+    _part(s, cx, cy, 1.35, -1, dd)
+    _cut_line(s, cx, cy, 1.35, 20 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_crutch(s, x, y, d, mode, k):
+    """Two thin struts meeting under a padded shoulder: it PROPS rather than
+    stands, so the mass above always looks borrowed."""
+    cx, cy = x - 4, y - 58
+    r = _ease(d)
+    gy = GY
+    lean = (2.0 * k - 1.0) if mode == "idle" else 0.0
+
+    def dd(lay):
+        _lump(lay, cx, cy + 3, 8 * min(1, r * 1.4), 6 * min(1, r * 1.4))
+        for sgn in (-1, 1):
+            foot = (cx + sgn * (9 + 3 * r) + lean, gy - 1)
+            _tent(lay, [(cx + sgn * 2, cy + 6 * r), foot], 2.8 * r, 1.4)
+            if d > 0.55:
+                pygame.draw.line(lay, VOID,
+                                 (int(foot[0] - 3), int(foot[1])),
+                                 (int(foot[0] + 3), int(foot[1])), 1)
+        if d > 0.7:
+            _eye(lay, cx + 1, cy + 4, dim=True)
+    _part(s, cx, cy, 0.55, 1, dd)
+    _cut_line(s, cx, cy, 0.55, 22 * _cl(d), alpha=_cl(d), side=1)
+
+
+def f_sack(s, x, y, d, mode, k):
+    """A distended sack slung under the mass, swinging a beat behind it."""
+    cx, cy = x + 2, y - 58
+    r = _ease(d)
+    sway = (-3 + 6 * k) if mode == "idle" else 0
+    drop = 0.55 if mode == "leave" else 1.0
+
+    def dd(lay):
+        _lump(lay, cx, cy + 4, 6 * r, 5 * r, lo=False)
+        _lump(lay, cx + sway * 0.4, cy + 13 * drop, 11 * r, 12 * r * drop)
+        _lump(lay, cx + sway * 0.7, cy + 23 * drop, 7 * r, 7 * r * drop,
+              lo=False)
+        if r > 0.5:
+            pygame.draw.arc(lay, SHROUD_LO,
+                            (int(cx - 9 + sway * 0.4), int(cy + 8 * drop),
+                             18, max(2, int(14 * drop))), 3.5, 5.9, 1)
+            pygame.draw.line(lay, RIM, (int(cx - 6), int(cy + 5)),
+                             (int(cx + 5), int(cy + 4)), 1)
+        if r > 0.75:
+            _eye(lay, cx + sway * 0.5, cy + 20 * drop, dim=True)
+    _part(s, cx, cy, 0.2, -1, dd)
+    _cut_line(s, cx, cy, 0.2, 24 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_plate(s, x, y, d, mode, k):
+    """Overlapping carapace plates that lift and settle as it breathes."""
+    cx, cy = x - 2, y - 48
+    sc = _ease(d)
+    lift = k if mode == "idle" else (1.0 if mode == "enter" else 0.2)
+
+    def dd(lay):
+        _lump(lay, cx, cy + 9 * sc, 14 * sc, 9 * sc)
+        n = max(1, int(4 * sc))
+        for j in range(n):
+            py = cy + (2 + j * 5) * sc
+            w = (13 - j * 2) * sc
+            gap = lift * (1.0 - j / max(1, n)) * 2.2
+            rct = (int(cx - w), int(py - 4 * sc - gap),
+                   max(2, int(w * 2)), max(2, int(7 * sc)))
+            pygame.draw.ellipse(lay, SHROUD, rct)
+            pygame.draw.arc(lay, VOID, rct, 3.3, 6.1, 1)
+            if j == 0:
+                pygame.draw.arc(lay, RIM, rct, 3.5, 5.9, 1)
+        if sc > 0.6:
+            _eye(lay, cx + 10 * sc, cy + 11 * sc, dim=True)
+    _part(s, cx, cy, 0.25, -1, dd)
+    _cut_line(s, cx, cy, 0.25, 28 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_cilia(s, x, y, d, mode, k):
+    """A fringe of fine filaments, combing the air toward whatever it senses."""
+    cx, cy = x, y - 56
+    n = max(1, int(9 * d))
+    wave = k if mode == "idle" else (0.9 if mode == "enter" else 0.15)
+
+    def dd(lay):
+        _lump(lay, cx, cy + 4, 6 * _ease(d), 4 * _ease(d), lo=False)
+        for j in range(n):
+            fx = cx - 10 + j * 2.6
+            ph = math.sin(wave * math.tau + j * 0.8)
+            ln = 7 + (j % 3) * 3
+            _tent(lay, [(fx, cy + 4), (fx + ph * 3, cy + 4 - ln)], 1.5, 0.8)
+        if d > 0.6:
+            _eye(lay, cx - 1, cy + 5, dim=True)
+    _part(s, cx, cy, 1.5, -1, dd)
+    _cut_line(s, cx, cy, 1.5, 18 * _cl(d), alpha=_cl(d), side=-1)
+
+
+def f_lure(s, x, y, d, mode, k):
+    """A stalk carried out ahead of the body with one ember at its tip: the
+    part that arrives BEFORE the creature does."""
+    cx, cy = x - 6, y - 62
+    r = _ease(d)
+    reach = r * (1.0 + 0.16 * (k if mode == "idle" else 0.0))
+    tipx, tipy = cx + 20 * reach, cy - 12 * reach
+
+    def dd(lay):
+        _lump(lay, cx, cy + 3, 5 * min(1, r * 1.6), 5 * min(1, r * 1.6),
+              lo=False)
+        _tent(lay, [(cx + 2, cy + 2), (cx + 11 * reach, cy - 3 * reach),
+                    (tipx, tipy)], 2.6, 1.1)
+        if d > 0.45:
+            _lump(lay, tipx, tipy, 3.0, 2.6, lo=False)
+    _part(s, cx, cy, 0.95, -1, dd)
+    if d > 0.5:
+        _eye(s, tipx, tipy, r=2)                  # rides OUTSIDE the clip
+    _cut_line(s, cx, cy, 0.95, 16 * _cl(d), alpha=_cl(d), side=-1)
+
+
 WEIGHT = [("leg", f_leg), ("stump", f_stump), ("elbow", f_elbow_prop),
-          ("arm", f_support_arm), ("hand", f_crawl_hand)]
+          ("arm", f_support_arm), ("hand", f_crawl_hand),
+          ("hoof", f_hoof), ("crutch", f_crutch)]
 MASS = [("haunch", f_haunch), ("hump", f_hump), ("rib", f_rib_flank),
-        ("gut", f_gut_sac), ("spine", f_spine_ridge)]
+        ("gut", f_gut_sac), ("spine", f_spine_ridge),
+        ("sack", f_sack), ("plate", f_plate)]
+# SENSE[:2] is the ALWAYS-eye-bearing prefix that assemble() draws the first
+# sense slot from (every amalgam watches), so new senses append AFTER it.
 SENSE = [("eyes", f_eye_bulge), ("pair", f_ember_pair), ("vent", f_vent),
-         ("fan", f_finger_fan), ("tail", f_tail), ("wing", f_wing_stub)]
+         ("fan", f_finger_fan), ("tail", f_tail), ("wing", f_wing_stub),
+         ("cilia", f_cilia), ("lure", f_lure)]
 
 
 def assemble(seed):
@@ -714,14 +936,36 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
         return tuple(max(0, min(255, int(x * f))) for x in c)
 
     Rx, Ry, Rz = r * 0.78, r * 1.05, r * 0.42
-    amb = 0.58                                               # high -> smooth, pale like the 2D
+
+    def _mask_hem(lx):
+        """The lower HEM of the sheet, in face-plane units: how far down the
+        mask reaches at horizontal position `lx`.
+
+        It is a HALF-MASK (NARRATIVE §6a, canon, stated twice: "the King's own
+        pale half-mask"). It had been modelled as a full oval, and that single
+        wrong decision is most of why the object read as a wooden egg -- an
+        egg is exactly what a featureless closed oval IS, and no amount of
+        shading fixes a silhouette. A half-mask covers brow, eyes and
+        cheekbones and STOPS, so the outline itself says "mask" before any
+        detail is read, and it stays honest about the canon: there is no
+        mouth here because there is no lower face to put one on.
+
+        Deepest at the centre and rising at the temples, with a shallow jag so
+        the hem reads as carved and broken rather than die-cut."""
+        u = max(-1.0, min(1.0, lx / Rx))
+        return Ry * (0.54 - 0.20 * u * u)
+    # Ambient is LOW on purpose (2026-07 remake). It was 0.58, which squeezed
+    # the whole shell into a 0.58..1.0 value range: a flat tan oval that read as
+    # a wooden egg or a river stone, not a carved face. Carving is only legible
+    # as light falling ACROSS a form, so the shell needs most of the range.
+    amb = 0.20
     Lx, Ly, Lz = -0.38, -0.52, 0.76
     ll = math.sqrt(Lx * Lx + Ly * Ly + Lz * Lz)
     Lx, Ly, Lz = Lx / ll, Ly / ll, Lz / ll
     cpsi, spsi = math.cos(yaw), math.sin(yaw)
     lrr = math.radians(lean)
     cl, sl = math.cos(lrr), math.sin(lrr)
-    nphi, nth = 22, 48
+    nphi, nth = 34, 56
 
     def rp(x, y, z):                                          # rotate + roll -> screen
         xr = x * cpsi + z * spsi
@@ -746,7 +990,7 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
             nx, ny, nz = nx / nl, ny / nl, nz / nl
             sx, sy, zr = rp(x, y, z)
             row.append((z, sx, sy, zr, nx * cpsi + nz * spsi, ny,
-                        -nx * spsi + nz * cpsi))
+                        -nx * spsi + nz * cpsi, x, y))
         grid.append(row)
 
     quads = []
@@ -757,6 +1001,10 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
             zc = (a[0] + b[0] + c2[0] + e[0]) * 0.25
             if zc < 0.0:                                       # FRONT cap only (no
                 continue                                       # closed-egg far cap)
+            lxq = (a[7] + b[7] + c2[7] + e[7]) * 0.25
+            lyq = (a[8] + b[8] + c2[8] + e[8]) * 0.25
+            if lyq > _mask_hem(lxq):                           # below the jaw cut
+                continue
             nzr = (a[6] + b[6] + c2[6] + e[6]) * 0.25
             nxr = (a[4] + b[4] + c2[4] + e[4]) * 0.25
             nyr = (a[5] + b[5] + c2[5] + e[5]) * 0.25
@@ -788,7 +1036,10 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
 
     seam = []                                                # the centre seam
     for k in range(13):
-        px, py, f_ = shell_pt(0.0, -Ry * 0.72 + k / 12.0 * Ry * 1.48)
+        ly = -Ry * 0.78 + k / 12.0 * Ry * 1.30
+        if ly > _mask_hem(0.0) - Ry * 0.05:                  # stop at the hem
+            break
+        px, py, f_ = shell_pt(0.0, ly)
         if f_ > 0.14:
             seam.append((int(px), int(py)))
     if len(seam) >= 2:
@@ -803,40 +1054,106 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
     if len(brow) >= 2:
         pygame.draw.lines(surf, dk(P["grain"], 0.85), False, brow, 2)
 
-    # the two DEEP jagged sockets + gold pupils (front hemisphere, gaze-aimed)
+    # ---- the two sockets. These are the whole face (there is no nose and no
+    # mouth, NARRATIVE §6a), so if they do not read as HOLES the object is a
+    # pebble with two dots on it -- which is exactly how it shipped. Three
+    # things make a hole read, and the old version had none of them: it must be
+    # BIG relative to the face, it must go BLACK at the centre rather than
+    # dark-brown, and the brow above it must throw a CAST SHADOW down into it.
     gx_, gy_ = max(-1, min(1, gaze[0])), max(-1, min(1, gaze[1]))
-    exl, eyl = Rx * 0.44, -Ry * 0.13
+    exl, eyl = Rx * 0.46, -Ry * 0.16
     for sgn in (-1, 1):
         px, py, fac = shell_pt(sgn * exl, eyl)
         if fac <= 0.16:                                      # gone past the edge
             continue
-        srx = max(1.0, r * 0.2 * (0.35 + 0.65 * fac))        # compresses toward profile
-        sry = max(1.0, r * 0.25)
-        for (rr, ccol) in ((1.0, (66, 55, 42)), (0.72, (34, 27, 20)), (0.44, (7, 6, 4))):
+        # ~1.8x the old socket: it now occupies the face the way an eye socket
+        # in a carved mask does, instead of sitting on it like a drilled pin.
+        srx = max(1.5, r * 0.34 * (0.35 + 0.65 * fac))       # compresses toward profile
+        sry = max(1.5, r * 0.36)
+        # the orbit RIM first -- a pale raised lip catching light on the
+        # outside, which is what tells the eye the middle is sunk below it
+        _pmask_jag(surf, px, py - sry * 0.06, srx * 1.16, sry * 1.14,
+                   dk(P["base"], 1.07), seed + 5, n=13, jit=0.14)
+        # then down the wall of the hole into true black
+        for (rr, ccol) in ((1.0, dk(P["grain"], 0.72)), (0.80, (30, 24, 18)),
+                           (0.60, (12, 10, 7)), (0.40, (2, 2, 2))):
             _pmask_jag(surf, px, py, srx * rr, sry * rr, ccol,
                        seed + 11 + int(rr * 13), n=12, jit=0.18)
+        # the BROW's cast shadow: an arc of dark laid over the TOP of the
+        # socket, so the ridge above reads as standing proud of the hole
+        sh_r = pygame.Rect(int(px - srx), int(py - sry * 1.02),
+                           max(2, int(srx * 2)), max(2, int(sry * 1.15)))
+        shl = pygame.Surface((sh_r.w, sh_r.h), pygame.SRCALPHA)
+        pygame.draw.ellipse(shl, (0, 0, 0, 132),
+                            (0, -int(sh_r.h * 0.30), sh_r.w, int(sh_r.h * 1.3)))
+        surf.blit(shl, sh_r.topleft)
+        # The gold is an EMBER DOWN A HOLE, never an eyeball. A filled gold disc
+        # in a dark socket reads instantly as a cartoon eye (or an owl), which
+        # is a worse failure than the pebble it replaced -- so there is no solid
+        # pupil here at all. What carries it is a soft ADDITIVE bloom, widest
+        # and faintest at the outside, with one tiny hot core: light coming up
+        # out of the socket rather than an object sitting in it. The bloom is
+        # also what survives at play size, when the socket is a few pixels.
         if ember > 0.05:
-            ppx = px + gx_ * r * 0.05 * fac
-            ppy = py + gy_ * r * 0.05
-            gs = int(r * 0.5) + 2
+            ppx = px + gx_ * r * 0.07 * fac
+            ppy = py + gy_ * r * 0.07
+            gs = int(r * 0.9) + 2
             gl = pygame.Surface((gs, gs), pygame.SRCALPHA)
             gr = gs // 2
-            pygame.draw.circle(gl, (*_PMASK_GOLD, int(60 * ember * fac)), (gr, gr),
-                               max(1, int(r * 0.1)))
+            for (rr, aa) in ((0.09, 26), (0.055, 44), (0.03, 66)):
+                pygame.draw.circle(gl, (*_PMASK_GOLD, int(aa * ember * fac)),
+                                   (gr, gr), max(1, int(r * rr)))
             surf.blit(gl, (int(ppx) - gr, int(ppy) - gr), special_flags=pygame.BLEND_RGBA_ADD)
-            gcol = tuple(int((60, 50, 24)[i] + (_PMASK_GOLD[i] - (60, 50, 24)[i]) * ember)
-                         for i in range(3))
-            pygame.draw.circle(surf, gcol, (int(ppx), int(ppy)), max(1, int(r * 0.045)))
             if ember > 0.4:
-                pygame.draw.circle(surf, _PMASK_HOT, (int(ppx), int(ppy)), max(1, int(r * 0.02)))
+                pygame.draw.circle(surf, _PMASK_HOT, (int(ppx), int(ppy)),
+                                   max(1, int(r * 0.022)))
+
+    # ---- CHEEK HOLLOWS. A carved face is planes meeting at edges; a smooth
+    # bulge is a pebble. Two soft hollows under the sockets give the shell one
+    # more plane change below the eyes, which is what stops the lower half
+    # reading as blank shell once the sockets are dark.
+    for sgn in (-1, 1):
+        chx, chy, cfac = shell_pt(sgn * Rx * 0.50, Ry * 0.18)
+        if cfac <= 0.20:
+            continue
+        cw = max(2, int(r * 0.30 * cfac))
+        ch = max(2, int(r * 0.34))
+        cl_ = pygame.Surface((cw * 2, ch * 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(cl_, (0, 0, 0, int(30 * cfac)), (0, 0, cw * 2, ch * 2))
+        surf.blit(cl_, (int(chx) - cw, int(chy) - ch))
 
     crack = []                                               # a hairline crack, lower-right
-    for (lx, ly) in ((Rx * 0.34, Ry * 0.04), (Rx * 0.44, Ry * 0.40), (Rx * 0.30, Ry * 0.72)):
+    for (lx, ly) in ((Rx * 0.30, -Ry * 0.34), (Rx * 0.40, -Ry * 0.02), (Rx * 0.30, Ry * 0.26)):
         px, py, f_ = shell_pt(lx, ly)
         if f_ > 0.14:
             crack.append((int(px), int(py)))
     if len(crack) >= 2:
         pygame.draw.lines(surf, P["edge"], False, crack, 1)
+
+    # ---- the cut EDGE of the sheet. It is a bent plate of finite thickness,
+    # not a soft blob: tracing its silhouette in the dark edge tone reads as
+    # the sawn rim and stops the object dissolving into whatever is behind it.
+    rim = []
+    for k in range(49):                       # over the crown, left to right
+        th = math.pi + k / 48.0 * math.pi
+        lx, ly = math.cos(th) * Rx * 0.995, math.sin(th) * Ry * 0.995
+        if ly > _mask_hem(lx):
+            continue
+        px, py, _f = shell_pt(lx, ly)
+        rim.append((int(px), int(py)))
+    hem = []                                  # back along the cut jaw
+    for k in range(33):
+        lx = Rx * (1.0 - 2.0 * k / 32.0) * 0.985
+        ly = min(_mask_hem(lx), Ry * 0.985)
+        u = lx / Rx
+        if u * u + (ly / Ry) ** 2 > 1.0:      # stay on the shell
+            continue
+        px, py, _f = shell_pt(lx, ly)
+        hem.append((int(px), int(py)))
+    outline = rim + hem
+    if len(outline) >= 3:
+        pygame.draw.lines(surf, dk(P["edge"], 0.85), True, outline,
+                          max(1, int(r * 0.045)))
 
 
 def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
@@ -963,6 +1280,33 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     base = int(GY * sc) + 2
     phase = 0.42 + 0.45 * (math.sin(t * 1.1 + seed) * 0.5 + 0.5)
     phase *= (1.0 - 0.5 * g)                      # thins as it is stared apart
+    # ---- THE GLOW (maintainer, 2026-07: "black creatures in black
+    # environments are invisible ... a natural glow just so the player can see
+    # them with no gameplay effect"). A soft additive halo of the silhouette,
+    # so an amalgam separates from a black room instead of dissolving into it.
+    #
+    # PRESENTATION ONLY, and it must stay that way: this does NOT go in
+    # Scene._LIGHT_KINDS or FIXTURE_POOLS, casts no pool, lights nothing, and
+    # is invisible to lit_at -- so it cannot deny a Watcher a spawn spot, burn
+    # anything, gate the lost-space mouth, or otherwise touch a rule. It is
+    # the creature being VISIBLE, not the creature being LIT.
+    pad = max(4, int(min(sw, sh) * 0.30))
+    sil = _emissive(scaled, AMALGAM_GLOW[:3], 1.0)
+    small = pygame.transform.smoothscale(
+        sil, (max(1, sw // 5), max(1, sh // 5)))
+    halo = pygame.transform.smoothscale(small, (sw + pad * 2, sh + pad * 2))
+    halo.set_alpha(AMALGAM_GLOW[3])
+    surf.blit(halo, (int(x - sw // 2) - pad, int(y - base) - pad),
+              special_flags=pygame.BLEND_RGB_ADD)
+    # PUNCH the body back out of the halo. The blur covers the interior as
+    # well as the edge, so without this the creature reads as a pale glowing
+    # ghost rather than a black shape you can locate -- the halo has to be a
+    # RIM. The body then gets only a whisper of lift so it is not a dead void.
+    surf.blit(_stencil(scaled, AMALGAM_CORE), (int(x - sw // 2), int(y - base)))
+    surf.blit(_emissive(scaled, AMALGAM_LIFT, AMALGAM_LIFT_A),
+              (int(x - sw // 2), int(y - base)),
+              special_flags=pygame.BLEND_RGB_ADD)
+
     ghost = scaled.copy()
     ghost.set_alpha(int(230 * phase * 0.45))
     surf.blit(ghost, (int(x - sw // 2) - 3, int(y - base) - 1))
