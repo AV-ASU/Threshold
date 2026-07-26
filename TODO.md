@@ -357,8 +357,13 @@ half-out). Locked with the maintainer this pass:
   yard-lights as ISLANDS and the flashlight enabled outdoors (so the
   light-draws-Him double-edge applies there too). This is world rot's LIGHT twin
   (understanding, not a clock — the daytime invariant holds, NARRATIVE §canon).
-  VISUAL + flashlight only so far; no new threat mechanic yet — it is the STAGE
-  the storm fills.
+  It already gates one REAL mechanic: the lost-space MOUTH opens at
+  `LOST_EDGE_GLOOM` (92 = `STORM_DARK_GLOOM[2]`, rot stage 2), so the edges of
+  the authored world only let go once understanding has put the lights out
+  (#26). What it does NOT yet carry is the cover/exposure split — outdoors the
+  dark is still not concealment (`_tick_dark_cover` reads `DARK_SCENES`) and
+  still opens no Watchers (`_tick_watchers` reads `DIM_INTERIOR_SCENES`). That
+  split is (1) below, and it is the STAGE the storm fills.
 
 **OPEN, in build order:** (1) the **light/dark SPLIT as a MECHANIC** (the
 visual darkening landed, above; #4/#21) — outdoors, light pools = cover and the

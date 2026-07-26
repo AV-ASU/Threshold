@@ -302,7 +302,12 @@ What rises with the stage:
   part of the night rather than a bright gray wash floating over a dark town.
   It is the ashfall's LIGHT twin — the veil thinning as His attention gathers,
   never a day/night cycle (no `day_phase`/`day_count`; the daytime invariant
-  holds, NARRATIVE §canon). VISUAL + flashlight so far; it is the STAGE the
+  holds, NARRATIVE §canon). It already gates a real mechanic: the lost-space
+  MOUTH (§13) only lets go at `LOST_EDGE_GLOOM` (stage 2), so falling out of the
+  world is a consequence of this darkening. It does NOT yet carry the
+  cover/exposure split — outdoors the dark is not concealment
+  (`_tick_dark_cover` reads `DARK_SCENES`) and opens no Watchers
+  (`_tick_watchers` reads `DIM_INTERIOR_SCENES`). That split is the STAGE the
   amalgam-cut storm (TODO #25) will fill (no light = danger, taken outdoors).
 - **The people do NOT change — the man hearing them does (TODO #22c,
   2026-07).** The town stays ordinary end to end: every local keeps their
