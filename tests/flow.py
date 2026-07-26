@@ -3737,9 +3737,25 @@ def main():
             continue
         if isinstance(_s, SafePath):
             paths[_k] = _s
-    check(sorted(paths) == ["country_lane", "gravel_road_north", "river_bend",
-                            "river_road", "store_row"],
-          "path: the network is " + ", ".join(sorted(paths)))
+    # WELL-FORMED, not a fixed roster. Frozen as a list of scene keys this
+    # needed editing every time a street landed, which made it a chore rather
+    # than a guard. What actually matters is that every ARM of every path goes
+    # somewhere real: an arm with no exit dead-ends at the map edge, and an
+    # exit pointing at an unregistered scene drops the player into the bedroom
+    # fallback. Both are silent.
+    _illformed = []
+    for _k, _s in sorted(paths.items()):
+        _targets = {v[0] for v in _s.exits.values()}
+        if len(_s.exits) != len(_s.arms):
+            _illformed.append("%s has %d arms but %d exits"
+                              % (_k, len(_s.arms), len(_s.exits)))
+        for _t in sorted(_targets):
+            if _t not in _SB_M:
+                _illformed.append("%s exits to unregistered %r" % (_k, _t))
+    check(not _illformed and len(paths) >= 5,
+          "path: every arm of every path goes somewhere real ("
+          + ", ".join(sorted(paths)) + ")"
+          + (" -- " + "; ".join(_illformed) if _illformed else ""))
     # The shape VOCABULARY is actually used -- not a network of straights.
     # An INCLUSION, not an equality: the network GROWS as the town's own
     # streets land (DESIGN.md §15), and a guard that pins the exact shape

@@ -544,9 +544,14 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
     sc.skybox_kind = "overcast"
     sc.is_yard = True            # the layer marker, as SafePath.is_safe_path
     sc.add_exit(path_char, path_target, path_spawn)
-    sc.add_exit(door_char, interior, interior_spawn)
     sc.set_spawn("default", out[0], out[1])
-    sc.set_spawn("from_" + interior, out[0], out[1])
+    if interior is not None:
+        sc.add_exit(door_char, interior, interior_spawn)
+        sc.set_spawn("from_" + interior, out[0], out[1])
+    # interior=None is a FACADE house: the door char is solid ('l'), no
+    # interior is modelled, and the yard carries the whole household. A
+    # facade door is honest here in a way it would not be in Brimley -- the
+    # layer's promise is that you read a household from OUTSIDE.
     sc.set_spawn("from_" + path_target, ex + ax, ey + ay)
     # EVERY EDGE THAT IS NOT THE ROAD IS A MOUTH (DESIGN.md §13). A yard is
     # the last lit ground before the world stops caring: the way you came is
@@ -611,4 +616,257 @@ def build_shop_yard():
     sc.add_decoration(Decoration((y.left - 1) * TILE + 16,
                                  (y.bot + 3) * TILE + 16,
                                  "burn_barrel", seed=62))
+    return sc
+
+
+def build_school_yard():
+    """THE SCHOOLHOUSE. Canon-empty: this is where the congregation bedded
+    down before they went below (NARRATIVE §3), and walking into that
+    emptiness is the beat, so the yard has to say it from the gate.
+
+    Everything here is a thing that should have happened in the spring and
+    did not. The bed was turned over in the autumn and never planted. The
+    genset is cold with its can over. Nobody has walked the ground since
+    January, so the grass has the lot -- and the layer does that on its own,
+    because the rough growth is seeded against distance from a track that
+    barely exists here.
+    """
+    sc, y = build_yard_scene(
+        "school_yard",
+        door_face="e", door_char="D",
+        interior="schoolhouse", interior_spawn="from_school_yard",
+        path_side="w", path_char="e",
+        path_target="store_row", path_spawn="from_school_yard",
+        verge=("C", "A"), building=(10, 6), seed=53)
+    y.step()
+    y.genset(running=False, side="n", along=0.7)
+    y.bed(y.left + 2, y.bot + 4, tended=False, w=120, h=78)
+    y.fence("w", at=y.lot[0], span=(y.lot[2] + 2, y.lot[3] - 2), gap=False)
+    y.put("flagpole", y.left - 2, y.top + 1)
+    return sc
+
+
+def build_church_yard():
+    """THE CHURCH. Rev. Crane kept this place up until the day he walked down
+    to the river after his flock (NARRATIVE §4), so the yard is KEPT and then
+    stops mid-sentence: the genset still running for a congregation that is
+    under the ground, and the axe still standing in the round.
+
+    The hedge is the churchyard line. It is older than wire and it is the
+    boundary a church would actually have.
+    """
+    sc, y = build_yard_scene(
+        "church_yard",
+        door_face="s", door_char="D",
+        interior="church", interior_spawn="from_church_yard",
+        path_side="e", path_char="e",
+        path_target="chapel_row", path_spawn="from_church_yard",
+        verge=("T", "p"), building=(10, 7), seed=11)
+    y.step()
+    y.genset(running=True, side="w", along=0.3)
+    y.woodpile("n", along=0.35, axe=True, rows=4)
+    y.mailbox(y.lot[1] - 1, y.out[1] + 2, toward="e", full=True)
+    y.hedge("s", n=13, at=y.lot[3], span=(y.lot[0], y.lot[1]))
+    for i, tx in enumerate((y.left + 1, y.left + 4, y.right - 3, y.right)):
+        y.put("headstone", tx, y.bot + 3, seed=91 + i * 7)
+        y.put("headstone", tx, y.bot + 5, seed=131 + i * 7)
+    return sc
+
+
+def build_barn_yard():
+    """THE BARN. The other canon-empty one, and the one a crowd used: the
+    congregation slept here (NARRATIVE §3).
+
+    So the yard reads as a place a lot of people used and then all left at
+    once. The washing they strung up is still on the line, frozen since
+    winter. The genset that kept them warm is cold with the can on its side.
+    And the fence has a bay pushed flat rather than a gate, because what went
+    through here was not a household on its way to the road.
+    """
+    sc, y = build_yard_scene(
+        "barn_yard",
+        door_face="n", door_char="D",
+        interior="barn", interior_spawn="from_barn_yard",
+        path_side="w", path_char="e",
+        path_target="chapel_row", path_spawn="from_barn_yard",
+        verge=("T", "p"), building=(11, 7), seed=23)
+    y.step()
+    y.genset(running=False, side="e", along=0.3)
+    y.washing(y.left + 3, y.top - 3, laundry=6, yaw=0.0)
+    y.washing(y.left + 3, y.bot + 3, laundry=5, yaw=0.0, seed=29)
+    y.fence("w", at=y.lot[0], span=(y.lot[2] + 2, y.lot[3] - 2),
+            gap=y.out[1] + 3)
+    return sc
+
+
+def build_sheriff_yard():
+    """SHERIFF VANE'S. Still here, still going through it.
+
+    The one yard in town where the machine is RUNNING and the can beside it is
+    already empty and on its side. That is the whole man (DESIGN.md §2, his
+    ledger and his fall): the lights are on and the fuel is gone. His car is
+    slewed at the gate with the driver's door still standing open, because he
+    tried the road like everyone did and walked back inside.
+    """
+    sc, y = build_yard_scene(
+        "sheriff_yard",
+        door_face="s", door_char="D",
+        interior="sheriff_office", interior_spawn="from_sheriff_yard",
+        path_side="e", path_char="e",
+        path_target="south_row", path_spawn="from_sheriff_yard",
+        verge=("C", "A"), building=(10, 7), seed=67)
+    y.step()
+    y.genset(running=True, side="w", along=0.4, can_tipped=True)
+    y.fence("s", at=y.lot[3], span=(y.lot[0], y.lot[1]), gate=y.lot[1] - 4)
+    y.put("yard_light", y.right + 2, y.bot + 2)
+    return sc
+
+
+def build_farm_yard():
+    """THE ABANDONED FARMHOUSE -- THE WRONG YARD.
+
+    Newcomers took this lot and keep it in a way nobody from Brimley would.
+    The crates are squared off too neatly. There is a husk thing propped by
+    the step. The door-motif is chalked on the siding where the weather has
+    nearly taken it. The bed is dug too deep and the wrong shape for anything
+    you would eat.
+
+    The genset is cold because whoever is here does not need the light, and
+    that is the tell that separates this from the two empty yards: those are
+    dark because nobody is left, this one is dark on purpose.
+    """
+    sc, y = build_yard_scene(
+        "farm_yard",
+        door_face="w", door_char="D",
+        interior="abandoned_farmhouse", interior_spawn="from_farm_yard",
+        path_side="e", path_char="e",
+        path_target="south_row", path_spawn="from_farm_yard",
+        verge=("C", "A"), building=(9, 7), seed=79)
+    y.step()
+    y.genset(running=False, side="n", along=0.65)
+    y.crates(y.left - 3, y.bot + 2, courses=3, tarp=True)
+    y.crates(y.left - 3, y.bot + 4, courses=2, seed=83)
+    y.put("husk_bundle", y.out[0], y.out[1] + 2)
+    y.siding("chalk_door_wall", y.left - 1, y.top + 2)
+    y.bed(y.right + 3, y.top + 2, tended=False, w=84, h=104, seed=87)
+    for i, (dx, dy) in enumerate(((-2, -1), (-3, 1), (-2, 3))):
+        y.put("candle", y.out[0] + dx, y.out[1] + dy)
+    y.put("yellow_sign", y.out[0] - 1, y.out[1] + 4)
+    y.fence("n", at=y.lot[2], span=(y.lot[0], y.lot[1]), gap=False)
+    return sc
+
+
+def build_toby_yard():
+    """TOBY'S HOUSE. Lived in, and a child lives in it.
+
+    The wood is half split with the axe still standing in the block, because
+    the person whose job that was went below in January. The bed by the wall
+    is the one tended patch left on the string: somebody here still has to be
+    fed. The line has small clothes on it, frozen since winter.
+    """
+    sc, y = build_yard_scene(
+        "toby_yard",
+        door_face="s", door_char="D",
+        interior="toby_house", interior_spawn="from_toby_yard",
+        path_side="e", path_char="e",
+        path_target="bank_row", path_spawn="from_toby_yard",
+        verge=("T", "p"), building=(9, 6), seed=91)
+    y.step()
+    y.genset(running=True, side="n", along=0.35)
+    y.woodpile("w", along=0.5, axe=True)
+    y.washing(y.left + 2, y.bot + 3, laundry=5, small=True, yaw=0.0)
+    y.bed(y.right + 3, y.bot + 2, tended=True, w=104, h=70, seed=41)
+    y.mailbox(y.lot[1] - 1, y.out[1], toward="e", full=True)
+    y.fence("s", at=y.lot[3], span=(y.lot[0], y.lot[1]), gate=y.out[0] + 2)
+    return sc
+
+
+def build_calder_yard():
+    """MRS. CALDER'S. She sets a place at supper for a guest she cannot name
+    and watches the road it will come up (NARRATIVE §3).
+
+    So the yard is KEPT, and its centrepiece is the table laid out IN THE OPEN
+    where the road can see it: two settings, a candle burned down, one chair
+    knocked over. Her gate stands open, which is the same gesture as the
+    unlatched door she mentions. The house door is a facade -- no interior is
+    modelled, and a woman who leaves her door unlatched for a guest is not a
+    house you walk into uninvited.
+    """
+    sc, y = build_yard_scene(
+        "calder_yard",
+        door_face="w", door_char="l",
+        interior=None, interior_spawn=None,
+        path_side="w", path_char="e",
+        path_target="bank_row", path_spawn="from_calder_yard",
+        verge=("T", "p"), building=(8, 6), seed=127)
+    y.step()
+    y.genset(running=True, side="s", along=0.6)
+    y.mailbox(y.lot[0] + 2, y.out[1] + 1, toward="w", full=False)
+    y.fence("w", at=y.lot[0], span=(y.lot[2] + 1, y.lot[3] - 1),
+            gate=y.out[1])
+    # THE TABLE, out where the road can see it. Two settings, always.
+    tx, ty = y.out[0] - 3, y.out[1] + 3
+    sc.add_furniture("table", [(tx, ty)], w=30, h=26)
+    y.put("place_setting", tx, ty, ox=10, oy=12)
+    y.put("place_setting", tx, ty, ox=24, oy=12)
+    y.put("candle", tx, ty, ox=16, oy=2)
+    y.put("overturned_chair", tx + 1, ty + 1)
+    sc.hide_spots = [(tx * TILE + 16, (ty + 1) * TILE + 16, "under")]
+    return sc
+
+
+def build_royce_yard():
+    """ROYCE'S. He tried to drive out like everyone in town did and the corn
+    handed him back, and he has not stopped trying (NARRATIVE §3).
+
+    The car is nosed at the gate, pointed out of town and SHUT: ready to be
+    tried again, which is a different sentence from Vane's door left hanging
+    open. The genset runs and the can beside it is already empty, because all
+    of it goes into the tank.
+    """
+    sc, y = build_yard_scene(
+        "royce_yard",
+        door_face="e", door_char="l",
+        interior=None, interior_spawn=None,
+        path_side="e", path_char="e",
+        path_target="lane_end", path_spawn="from_royce_yard",
+        verge=("C", "A"), building=(8, 6), seed=107)
+    y.step()
+    y.genset(running=True, side="n", along=0.6, can_tipped=True)
+    y.mailbox(y.lot[1] - 1, y.out[1] + 2, toward="e", full=False)
+    y.fence("e", at=y.lot[1], span=(y.lot[2] + 1, y.lot[3] - 1),
+            gate=y.out[1])
+    from .base import dead_cars
+    objs = [list(r) for r in sc.objects]
+    cars = dead_cars(objs, [(y.out[0] + 2, y.out[1] + 3, "rust_coupe",
+                             -1.28, 57, "h")])
+    sc.objects = objs
+    for d in cars:
+        sc.add_decoration(d)
+    return sc
+
+
+def build_garrick_yard():
+    """GARRICK'S. The old man who tells you to stay on the roads (NARRATIVE
+    §4), which is advice he takes: he gave the lights up and sits out at the
+    burn barrel instead.
+
+    So his genset is cold with the can over, and the wood he was splitting
+    when he stopped is still in the round. His boundary is a hedge, older than
+    wire and older than him.
+    """
+    sc, y = build_yard_scene(
+        "garrick_yard",
+        door_face="w", door_char="l",
+        interior=None, interior_spawn=None,
+        path_side="w", path_char="e",
+        path_target="lane_end", path_spawn="from_garrick_yard",
+        verge=("T", "p"), building=(8, 6), seed=149)
+    y.step()
+    y.genset(running=False, side="s", along=0.7)
+    y.woodpile("n", along=0.4, axe=True, rows=3)
+    y.hedge("w", n=11, at=y.lot[0], span=(y.lot[2], y.lot[3]), gap=y.out[1])
+    sc.add_decoration(Decoration((y.out[0] - 2) * TILE + 16,
+                                 (y.out[1] + 2) * TILE + 16,
+                                 "burn_barrel", seed=61))
     return sc

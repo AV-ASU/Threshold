@@ -398,15 +398,20 @@ def build_barn():
         "W..............W",   # 8
         "W..............W",   # 9
         "W..............W",   # 10
-        "WWWWWWWWWWWWWWWW",   # 11
+        "WWWWWWWWFWWWWWWW",   # 11
     ]
     sc = Scene("barn", floor, objects, music="home")
     # Barn now sits deep south-east on the brimley east bank.
     sc.add_exit("n", "brimley", "from_barn")
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "barn_yard", "from_barn")
     # The workbench (Mara's journal) and the boarded hatch both sit in the
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
+    sc.set_spawn("from_barn_yard", 8, 10)
 
     # #4c -- the barn reads as a divided working building now, not one open
     # box + a back stall. A row-5 partition splits the upper floor into a
@@ -591,7 +596,7 @@ def build_toby_house():
         "W....W.......W",   # 2
         "W............W",   # 3  curtain doorway in the partition (col 5)
         "W....W.......W",   # 4
-        "WWWWWW.......W",   # 5  closet sealed off below
+        "WWWWWW.......F",   # 5  closet sealed off below
         "W........K...W",   # 6  K = Toby
         "W............W",   # 7
         "W............W",   # 8
@@ -600,8 +605,13 @@ def build_toby_house():
     sc = Scene("toby_house", floor, objects, music="home")
     # Kid's house now sits middle-south on the brimley east bank.
     sc.add_exit("J", "brimley", "from_toby_house")
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "toby_yard", "from_toby_house")
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
+    sc.set_spawn("from_toby_yard", 12, 5)
     # The closet doorway (#4c): a maroon CURTAIN across the col-5 partition gap
     # (row 3), the gentlest leaf in the set -- this is the refuge (a SAFE_SCENE),
     # and a drape over a child's closet nook fits a kid's room where a plank door

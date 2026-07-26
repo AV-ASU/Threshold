@@ -29,7 +29,7 @@ def build_church():
         "W.....W........W",   # 3   vestry (cols 1-5) | nave (cols 7-14)
         "W.....W..O.....W",   # 4  O = preacher, out in the nave
         "W.....W........W",   # 5
-        "WWW.WWW........W",   # 6  vestry south wall; doorway gap at col 3
+        "WWW.WWW........F",   # 6  vestry south wall; doorway gap at col 3
         "W..............W",   # 7   the nave opens out under the vestry
         "W..............W",   # 8
         "W..............W",   # 9
@@ -48,10 +48,15 @@ def build_church():
     # Church now sits on the brimley west bank. The `m` exit routes
     # to the brimley.
     sc.add_exit("m", "brimley", "from_church")
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "church_yard", "from_church")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
     sc.set_spawn("default", 8, 8)
     sc.set_spawn("from_brimley", 8, 10)        # one tile north of the m door
+    sc.set_spawn("from_church_yard", 14, 6)
     sc.set_spawn("from_graveyard", 10, 1)      # one tile south of the ? door
     sc.set_spawn("from_bell_tower", 2, 2)      # at the foot of the U stairs
 
@@ -220,7 +225,7 @@ def build_sheriff_office():
         "W.....W........W",   # 2
         "W..............W",   # 3  (6,3) office<->records doorway
         "W..Y..W........W",   # 4  Y = Sheriff Vane, at his desk
-        "W.....W........W",   # 5
+        "W.....W........F",   # 5
         "WWW.WWWWWW.WWWWW",   # 6  cross wall; (3,6) counter, (10,6) records door
         "W.....W........W",   # 7  FRONT (cols 1-5) | BOOKING (cols 7-14)
         "W.....W.....W.WW",   # 8  cell north wall; bars gate at (13,8)
@@ -238,8 +243,13 @@ def build_sheriff_office():
     # The Sheriff's office stands on the Brimley bank; its door opens back onto
     # the field.
     sc.add_exit("y", "brimley", "from_sheriff_office")
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "sheriff_yard", "from_sheriff_office")
     sc.set_spawn("default", 3, 8)            # in the public front
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
+    sc.set_spawn("from_sheriff_yard", 14, 5)
     # Four rooms, connected by inner doors in VARIED walls (error class 8):
     #  - the FRONT COUNTER: a see-over `half` leaf on the row-6 wall (swings
     #    N-S), so the public front and Vane's office read across it.
@@ -420,13 +430,18 @@ def build_abandoned_farmhouse():
         "W.....W....W",   # 6
         "W.....W....W",   # 7
         "W.....W....W",   # 8
-        "WWWWWWWWWWWW",   # 9  sealed south wall
+        "WWWWWWWFWWWW",   # 9  sealed south wall
     ]
     sc = Scene("abandoned_farmhouse", floor, objects, music="home")
     # Abandoned farmhouse, deep south on the brimley west bank.
     sc.add_exit("o", "brimley", "from_abandoned_farmhouse")
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "farm_yard", "from_abandoned_farmhouse")
     sc.set_spawn("default",     3, 1)      # in the kitchen, at the door
     sc.set_spawn("from_brimley", 3, 1)
+    sc.set_spawn("from_farm_yard", 7, 8)
 
     # Three inner doors quartering the house, placed in VARIED walls (error
     # class 8): the kitchen<->parlor door sits in the N-S col-6 wall so it

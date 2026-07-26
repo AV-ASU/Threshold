@@ -58,6 +58,13 @@ OUTDOOR_DECAY = {
 # in these scenes so the world never feels safe between buildings.
 # Brimley runs its own (heavier) vignette via _draw_brimley_haze
 # and is intentionally NOT in this set so the two don't stack.
+# THE YARDS (DESIGN.md §15). Named as their own set because they are outdoor
+# but NOT seamless: a yard is an ISLAND, and the black past its verge is the
+# point of it. See SEAMLESS_WORLD_SCENES below.
+YARD_SCENES = {"shop_yard", "school_yard", "church_yard", "barn_yard",
+               "sheriff_yard", "farm_yard", "toby_yard", "calder_yard",
+               "royce_yard", "garrick_yard"}
+
 OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "clearing", "graveyard",
                   "country_lane", "cornfield_maze",
@@ -70,7 +77,7 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
     # the town's own streets, and THE YARDS off them (DESIGN.md §15). They
     # have to be here for the storm to darken them, and the storm darkening
     # them is what opens their edges as mouths (LOST_EDGE_GLOOM below).
-    "store_row", "shop_yard"}
+    "store_row", "chapel_row", "south_row", "bank_row", "lane_end"} | YARD_SCENES
 
 # The continuous outside world. Crossing between any two of these is
 # a seamless transition: no fade, no door sound, the player position
@@ -80,7 +87,16 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
 # design jobs), but the EDGE BETWEEN them is continuous. Brimley is
 # in this set even though it isn't in OUTDOOR_SCENES (it has its own
 # vignette and doesn't want the outdoor one stacked on top).
-SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
+# THE YARDS ARE NOT IN IT, and that is the whole shape of the layer. A
+# seamless scene draws its neighbour's floor into the void past its own bounds
+# (`terrain._draw_neighbor_strips`) and takes the "overcast" skybox, so a yard
+# left in this set painted the adjoining street's asphalt right across the
+# black rim -- which is the one thing the maintainer asked to keep ("I like how
+# it is a transition of blackness on the edges"). Brimley is being replaced by
+# a STRING OF HOUSE ISLANDS in a sea of spatial manipulation, and an island
+# whose edges show you the mainland is not an island. So a yard gets the void
+# skybox, no neighbour bleed, and a real transition on the way in and out.
+SEAMLESS_WORLD_SCENES = (OUTDOOR_SCENES - YARD_SCENES) | {
     "brimley",
     # The rite-hidden grove -- reached only through the school rite's
     # pane; the crossing shouldn't feel a transition.

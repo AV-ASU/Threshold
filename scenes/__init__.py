@@ -28,8 +28,13 @@ from .brimley import build_brimley
 from .hidden_folds import build_effigy_grove
 from .safe_path import (build_country_lane, build_river_road,
                         build_river_bend,
-                        build_gravel_road_north, build_store_row)
-from .yards import build_shop_yard
+                        build_gravel_road_north, build_store_row,
+                        build_chapel_row, build_south_row, build_bank_row,
+                        build_lane_end)
+from .yards import (build_shop_yard, build_school_yard, build_church_yard,
+                    build_barn_yard, build_sheriff_yard, build_farm_yard,
+                    build_toby_yard, build_calder_yard, build_royce_yard,
+                    build_garrick_yard)
 from .lost_space import (build_lost_space, build_lost_corn,
                          build_lost_forest, build_lost_road)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
@@ -117,10 +122,25 @@ SCENE_BUILDERS = {
     "river_road":         build_river_road,        # the I run along the water
     "river_bend":         build_river_bend,        # the L, over the bridge
     "gravel_road_north":  build_gravel_road_north,
-    "store_row":          build_store_row,         # the town's first street
+    # THE TOWN'S OWN STREETS: the string the house islands hang on.
+    "store_row":          build_store_row,
+    "chapel_row":         build_chapel_row,
+    "south_row":          build_south_row,
+    "bank_row":           build_bank_row,
+    "lane_end":           build_lane_end,
     # THE YARDS (DESIGN.md §15): safe path -> yard -> house, one building
     # each, never shared.
     "shop_yard":          build_shop_yard,
+    "school_yard":        build_school_yard,
+    "church_yard":        build_church_yard,
+    "barn_yard":          build_barn_yard,
+    "sheriff_yard":       build_sheriff_yard,
+    "farm_yard":          build_farm_yard,
+    "toby_yard":          build_toby_yard,
+    # the three households that had no building at all
+    "calder_yard":        build_calder_yard,
+    "royce_yard":         build_royce_yard,
+    "garrick_yard":       build_garrick_yard,
     "backwoods_cabin":    build_backwoods_cabin,
     "backwoods_cabin_interior": build_backwoods_cabin_interior,
     "bell_tower":         build_bell_tower,

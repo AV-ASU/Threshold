@@ -35,7 +35,7 @@ def build_schoolhouse():
         "W..............W",    # 3
         "W..............W",    # 4
         "W..............W",    # 5
-        "W..............W",    # 6
+        "W..............F",    # 6
         "W..............W",    # 7
         "W..............W",    # 8
         "W..............W",    # 9
@@ -50,9 +50,14 @@ def build_schoolhouse():
     objects[4] = objects[4][:9] + "O" + objects[4][10:]
     sc = Scene("schoolhouse", floor, objects, music="home")
     sc.add_exit("H", "brimley", "from_school")
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "school_yard", "from_schoolhouse")
     sc.add_exit("O", "effigy_grove", "from_school", direction="north")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
+    sc.set_spawn("from_school_yard", 14, 6)
     # Back through the pane from the grove: one tile south of it, carried
     # southward so arrival never re-fires the north-walked crossing.
     sc.set_spawn("from_grove", 9, 5)

@@ -619,10 +619,92 @@ def build_country_lane():
     return sc
 
 
-def build_store_row():
-    """The **L**: the first of the town's own streets.
+# The town's own streets. Brimley is being replaced by a STRING OF HOUSE
+# ISLANDS in a sea of spatial manipulation (the maintainer's shape for it), so
+# these are the string: ordinary safe paths whose arms end at yards instead of
+# at more road. Each street grows L -> T -> X as households land on it, so one
+# street serves several doors while every yard behind it stays its own.
+#
+#   gravel_road_north --E-- [store_row  X] --N-- shop_yard
+#                                 |  |E---------- school_yard
+#                                 S
+#                           [chapel_row X] --W-- church_yard
+#                                 |  |E---------- barn_yard
+#                                 S
+#                            [south_row X] --W-- sheriff_yard
+#                                 |  |E---------- farm_yard
+#                                 S
+#                             [bank_row X] --W-- toby_yard
+#                                 |  |E---------- calder_yard
+#                                 S
+#                             [lane_end T] --W-- royce_yard
+#                                    |E---------- garrick_yard
 
-    It turns east off the gravel road and runs north to the store's gate.
+
+def build_chapel_row():
+    """The **X** below the store: the church one way, the barn the other."""
+    return build_path(
+        "chapel_row", "nswe", 36, 36,
+        verge_char=("T", "p"),
+        exits=(("n", "4", "store_row", "from_chapel_row"),
+               ("s", "^", "south_row", "from_chapel_row"),
+               ("w", "e", "church_yard", "from_chapel_row"),
+               ("e", "a", "barn_yard", "from_chapel_row")),
+        spawns=(("from_store_row", "n"), ("from_south_row", "s"),
+                ("from_church_yard", "w"), ("from_barn_yard", "e")),
+        seed=2043)
+
+
+def build_south_row():
+    """The **X** at the bottom of town: the law one way, the empty farmhouse
+    the other. The two yards on it disagree about everything."""
+    return build_path(
+        "south_row", "nswe", 36, 36,
+        verge_char=("C", "A"),
+        exits=(("n", "4", "chapel_row", "from_south_row"),
+               ("s", "^", "bank_row", "from_south_row"),
+               ("w", "e", "sheriff_yard", "from_south_row"),
+               ("e", "a", "farm_yard", "from_south_row")),
+        spawns=(("from_chapel_row", "n"), ("from_bank_row", "s"),
+                ("from_sheriff_yard", "w"), ("from_farm_yard", "e")),
+        seed=2047)
+
+
+def build_bank_row():
+    """The **X** on the near bank: the kid's house one way, Mrs. Calder's the
+    other, and they are neighbours because the layer says so rather than
+    because a map ran out of room."""
+    return build_path(
+        "bank_row", "nswe", 36, 36,
+        verge_char=("T", "p"),
+        exits=(("n", "4", "south_row", "from_bank_row"),
+               ("s", "^", "lane_end", "from_bank_row"),
+               ("w", "e", "toby_yard", "from_bank_row"),
+               ("e", "a", "calder_yard", "from_bank_row")),
+        spawns=(("from_south_row", "n"), ("from_lane_end", "s"),
+                ("from_toby_yard", "w"), ("from_calder_yard", "e")),
+        seed=2053)
+
+
+def build_lane_end():
+    """The **T** where the town stops: two lots and no road onward. The last
+    lit thing on the string before the dark takes over."""
+    return build_path(
+        "lane_end", "nwe", 36, 34,
+        verge_char=("C", "A"),
+        exits=(("n", "4", "bank_row", "from_lane_end"),
+               ("w", "e", "royce_yard", "from_lane_end"),
+               ("e", "a", "garrick_yard", "from_lane_end")),
+        spawns=(("from_bank_row", "n"), ("from_royce_yard", "w"),
+                ("from_garrick_yard", "e")),
+        seed=2059)
+
+
+def build_store_row():
+    """The **X**: the first of the town's own streets.
+
+    It turns east off the gravel road; the store's gate is north, the school's
+    east, and the rest of the string runs on south.
     This is the layer's connective tissue -- SAFE PATH -> YARD -> HOUSE
     (DESIGN.md §15) -- and it is a path like any other, which is the point:
     the walk to somebody's door is on ground that never lies to you, and the
@@ -633,11 +715,14 @@ def build_store_row():
     doors while every yard behind it stays its own.
     """
     return build_path(
-        "store_row", "wn", 36, 34,
+        "store_row", "wnes", 36, 36,
         verge_char=("C", "A"),
         exits=(("w", "4", "gravel_road_north", "from_store_row"),
-               ("n", "e", "shop_yard", "from_store_row")),
-        spawns=(("from_gravel_road_north", "w"), ("from_shop_yard", "n")),
+               ("n", "e", "shop_yard", "from_store_row"),
+               ("e", "a", "school_yard", "from_store_row"),
+               ("s", "^", "chapel_row", "from_store_row")),
+        spawns=(("from_gravel_road_north", "w"), ("from_shop_yard", "n"),
+                ("from_school_yard", "e"), ("from_chapel_row", "s")),
         seed=2039)
 
 

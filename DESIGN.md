@@ -2113,6 +2113,16 @@ distance from the house and the worn track. What stays short is exactly the
 ground the household actually crosses, which fills a big lot without unsaying
 "kept": the read is a yard somebody keeps the middle of, not a lawn.
 
+**A YARD IS NOT A SEAMLESS SCENE, and that is the shape of the layer.** A
+scene in `SEAMLESS_WORLD_SCENES` draws its neighbour's floor into the void
+past its own bounds (`terrain._draw_neighbor_strips`) and takes the overcast
+skybox. A yard left in that set paints the adjoining street's asphalt straight
+across its black rim, and an island whose edges show you the mainland is not
+an island. So `YARD_SCENES` is subtracted from the seamless set: a yard is
+outdoor (the storm darkens it, which is what lets its mouths open) but it gets
+the VOID skybox, no neighbour bleed, and a real transition on the way in and
+out. The streets stay seamless with each other, because a road does continue.
+
 **And the OUTER RING carries growth too.** The scene ends before the camera
 does and its edge dissolves into black -- which is wanted, and only works if
 there is something out there to dissolve. An edge of bare grass stopping dead
