@@ -1060,11 +1060,12 @@ class RenderMixin:
         self.screen.blit(card, (sx - R, sy - R))
 
     def _draw_death_screen(self):
-        """Render the active death card over everything. King = the
-        furnace of masks (sprites.draw_king_death), wordless; APEX = a wordless
-        placeholder fade, deliberately NOT the King's card (TODO #25 owes it a
-        real animation); cultist = a stark CAPTURED card over a near-black
-        wash."""
+        """Render the active death card over everything. King = the furnace of
+        masks (sprites.draw_king_death), wordless; APEX = the amalgam family's own
+        catch (amalgam.draw_amalgam_catch: ringed gold cuts, limbs through them,
+        the half-mask overflowing the frame, a socket swallowing it), wordless and
+        deliberately NOT the King's card; cultist = a stark CAPTURED card over a
+        near-black wash."""
         if self._death_kind == "apex":
             # THE APEX'S CATCH -- deliberately NOT the Unfolding's throat-swallow
             # (maintainer: "do not use the existing death card"). That art belongs
