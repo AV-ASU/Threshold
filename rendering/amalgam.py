@@ -45,16 +45,10 @@ CUT_RIM_HOT = (206, 164, 62)
 # The visibility halo (see draw_amalgam_sprite). Deliberately dim and barely
 # tinted: enough to lift a near-black body off a near-black room, not enough
 # to read as the creature emitting light.
-AMALGAM_GLOW = (120, 116, 155, 235)
-# The halo alone was not enough (maintainer: "those amlgs are really hard to
-# see"): a halo only draws a bloom AROUND the body, so the body itself stayed
-# a black hole in the middle of it. AMALGAM_LIFT is an additive pass over the
-# silhouette ITSELF, which is what actually makes the limbs and masses
-# readable against a black room. Same fence as the halo: draw-only, no light.
-AMALGAM_LIFT = (46, 44, 58)
-AMALGAM_LIFT_A = 0.10            # how much of the silhouette's own alpha to use
+# The visibility OUTLINE (see draw_amalgam_sprite).
+AMALGAM_EDGE = (206, 202, 196)   # bone; see the colour note in the docstring
+AMALGAM_EDGE_W = 1               # px. 2 reads as cartoon line-art.
 _EMIT_FLOOR = 90                 # alpha below this is atmosphere, not flesh
-AMALGAM_CORE = (13, 12, 17)      # the body punched back out of the halo
 EMBER_G = (54, 46, 20)
 EMBER = (110, 88, 30)
 EMBER_DIM = (90, 74, 27)
@@ -71,49 +65,35 @@ def _clamp(v):
     return max(0.0, min(1.0, v))
 
 
-def _emissive(src, col, strength=1.0):
-    """`src`'s silhouette rendered as LIGHT: a solid `col` masked by the
-    sprite's alpha and PREMULTIPLIED by it, ready to blit with BLEND_RGB_ADD.
+def _outline(src, col, width=1, strength=1.0):
+    """A hard OUTLINE traced around `src`'s silhouette, for a normal blit UNDER
+    the sprite: the shape stated in one pixel of `col`, body untouched.
 
-    Two traps, both hit while building this:
-    1. Tinting the sprite with BLEND_RGBA_MULT does nothing. That scales the
-       pixels already present, and an amalgam's flesh is near-black by design
-       (SHROUD is 24,22,28), so near-black x anything is still near-black.
-    2. An additive blit does NOT weight by alpha -- BLEND_RGB_ADD adds src RGB
-       to dst RGB at every pixel, transparent ones included. Stencilling the
-       alpha channel alone therefore lit the entire sprite RECTANGLE as a
-       glowing box. The RGB itself has to carry the mask, which is what
-       premultiplying here does.
+    Bone rather than pure white by default. White is the brightest value in the
+    game and pops off a Darkwood-dark room like a sticker outline; bone states
+    the edge just as clearly and still belongs to the palette. Gold was the
+    other candidate and was rejected on purpose -- gold is the PORTAL language
+    here (the rift, the folds, and an amalgam's own cuts all wear it), so
+    outlining the whole creature in gold would blur the one distinction the
+    family is built on: the holes He opens are gold, the flesh that comes
+    through them is not.
     """
     import numpy as _np
-    out = pygame.Surface(src.get_size(), pygame.SRCALPHA)
-    out.fill((0, 0, 0, 0))
-    a = pygame.surfarray.array_alpha(src).astype(_np.float32)
-    # Only reasonably solid pixels emit: the part layer also carries _haze
-    # atmosphere and cut smoke, and lighting those reads as fog, not a body.
-    a = _np.clip((a - _EMIT_FLOOR) * (1.0 / (255 - _EMIT_FLOOR)), 0.0, 1.0)
-    a *= strength
-    rgb = pygame.surfarray.pixels3d(out)
-    for i in range(3):
-        rgb[:, :, i] = (col[i] * a).astype(_np.uint8)
-    del rgb
-    alp = pygame.surfarray.pixels_alpha(out)
-    alp[:] = (a * 255).astype(_np.uint8)
-    del alp
-    return out
-
-
-def _stencil(src, col, strength=1.0):
-    """A solid `col` in the shape of `src`, for a NORMAL (source-over) blit.
-    Used to punch the body back to dark after the halo, so the glow reads as
-    a RIM around the creature instead of washing its whole silhouette pale."""
-    import numpy as _np
+    a = pygame.surfarray.array_alpha(src)
+    solid = a > _EMIT_FLOOR
+    grown = solid.copy()
+    for _ in range(max(1, int(width))):
+        g = grown.copy()
+        g[1:, :] |= grown[:-1, :]
+        g[:-1, :] |= grown[1:, :]
+        g[:, 1:] |= grown[:, :-1]
+        g[:, :-1] |= grown[:, 1:]
+        grown = g
+    ring = grown & ~solid
     out = pygame.Surface(src.get_size(), pygame.SRCALPHA)
     out.fill((*col, 0))
-    a = pygame.surfarray.array_alpha(src).astype(_np.float32)
-    a = _np.clip((a - _EMIT_FLOOR) * (1.0 / (255 - _EMIT_FLOOR)), 0.0, 1.0)
     alp = pygame.surfarray.pixels_alpha(out)
-    alp[:] = (a * 255 * strength).astype(_np.uint8)
+    alp[:] = (ring * int(255 * strength)).astype(_np.uint8)
     del alp
     return out
 
@@ -1280,32 +1260,26 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     base = int(GY * sc) + 2
     phase = 0.42 + 0.45 * (math.sin(t * 1.1 + seed) * 0.5 + 0.5)
     phase *= (1.0 - 0.5 * g)                      # thins as it is stared apart
-    # ---- THE GLOW (maintainer, 2026-07: "black creatures in black
-    # environments are invisible ... a natural glow just so the player can see
-    # them with no gameplay effect"). A soft additive halo of the silhouette,
-    # so an amalgam separates from a black room instead of dissolving into it.
+    # ---- THE OUTLINE (maintainer, 2026-07: "can't you just give each sprite a
+    # white border pixel? ... The glowing mist isn't good"). A one-pixel stroke
+    # around the silhouette, drawn UNDER the body.
     #
-    # PRESENTATION ONLY, and it must stay that way: this does NOT go in
-    # Scene._LIGHT_KINDS or FIXTURE_POOLS, casts no pool, lights nothing, and
-    # is invisible to lit_at -- so it cannot deny a Watcher a spawn spot, burn
-    # anything, gate the lost-space mouth, or otherwise touch a rule. It is
-    # the creature being VISIBLE, not the creature being LIT.
-    pad = max(4, int(min(sw, sh) * 0.30))
-    sil = _emissive(scaled, AMALGAM_GLOW[:3], 1.0)
-    small = pygame.transform.smoothscale(
-        sil, (max(1, sw // 5), max(1, sh // 5)))
-    halo = pygame.transform.smoothscale(small, (sw + pad * 2, sh + pad * 2))
-    halo.set_alpha(AMALGAM_GLOW[3])
-    surf.blit(halo, (int(x - sw // 2) - pad, int(y - base) - pad),
-              special_flags=pygame.BLEND_RGB_ADD)
-    # PUNCH the body back out of the halo. The blur covers the interior as
-    # well as the edge, so without this the creature reads as a pale glowing
-    # ghost rather than a black shape you can locate -- the halo has to be a
-    # RIM. The body then gets only a whisper of lift so it is not a dead void.
-    surf.blit(_stencil(scaled, AMALGAM_CORE), (int(x - sw // 2), int(y - base)))
-    surf.blit(_emissive(scaled, AMALGAM_LIFT, AMALGAM_LIFT_A),
-              (int(x - sw // 2), int(y - base)),
-              special_flags=pygame.BLEND_RGB_ADD)
+    # It replaced a blurred additive halo, and the instinct behind it was
+    # right. A bloom has to be BRIGHT to register at all, and brightness spread
+    # across a near-black creature reads as a glowing spirit rather than a
+    # shadow you can see; every attempt to tune it just traded one failure for
+    # the other (too dim to find, or a pale ghost). A stroke costs nothing in
+    # VALUE -- the body stays exactly as black as it was, only its edge is
+    # stated -- and it stays sharp at small sizes, where a blur is only fog.
+    # Each part is stroked on its own, which is correct: they are separate
+    # apertures and nothing touches (see the module docstring).
+    #
+    # PRESENTATION ONLY, and it must stay that way: no entry in
+    # Scene._LIGHT_KINDS or FIXTURE_POOLS, no pool cast, invisible to lit_at.
+    # It cannot deny a Watcher a spawn spot, burn anything, or gate the
+    # lost-space mouth. The creature is VISIBLE, not LIT.
+    surf.blit(_outline(scaled, AMALGAM_EDGE, AMALGAM_EDGE_W),
+              (int(x - sw // 2), int(y - base)))
 
     ghost = scaled.copy()
     ghost.set_alpha(int(230 * phase * 0.45))
