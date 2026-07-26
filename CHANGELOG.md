@@ -90,6 +90,39 @@
 
 ## Stealth & threat
 
+- **2026-07 — The apex gets its own catch animation (`draw_amalgam_catch`).**
+  The placeholder fade is gone. Built entirely from the amalgam family's
+  vocabulary and nothing the Unfolding used: cuts wearing the rift's gold rim,
+  near-black flesh edged in bone, ember eyes, the pallid half-mask. Three beats
+  over the King's same 3.8s (completing at 3.4, holding black): the room is TAKEN
+  as cuts open in a ring, LIMBS come through them reaching in, then His face
+  presses in until it OVERFLOWS the frame and one socket dilates until it is
+  everything. Wordless, like every death of His.
+  **Four look-passes, and each one fixed something the code read as fine:**
+  1. `_cut_line` is tuned for a 16-30px part cut, so stretched to 90px+ its
+     fixed 2px gold lip read as a gold LADDER. `_catch_cut` sizes the lip
+     proportionally, so a long slit keeps a hairline of rim light.
+  2. The limbs were small with a full bone outline. On a black card the outline
+     is all you see, so they read as pale PAPER CONES. Made large and black with
+     the edge as a highlight on the leading side only.
+  3. The Mask sat complete and centred, which reads as a mask on a poster --
+     symmetrical, comic, two eyes looking at you. It now grows PAST the frame, so
+     you are seeing part of something too close, and the socket ends up where the
+     swallow needs it. A woodier blend was tried to darken it and made the
+     full-frame result a brown barrel; it stays pale (canon) and gets pushed back
+     with a flat wash instead. The radial wash tried first darkened the MIDDLE
+     between the sockets and left the bright cheeks and brow untouched.
+  4. **The cartoon-eyeball failure, for the third time in this program.**
+     `draw_pallid_3d` sizes its gold bloom as a fraction of r, so at r~500 it
+     stacked into a solid yellow disc. Fixed by passing `ember=0` and drawing the
+     embers at card scale -- then getting THAT wrong too at 0.035*mr before
+     settling at 0.012, a pinpoint in a socket ~0.34*mr across.
+  Guarded three ways (`tests/stealth.py` §20): the kind is `"apex"`, the card
+  never calls `draw_unfold_catch`, and it DOES call the amalgam catch *and*
+  renders real contrast at mid-animation -- because absence-only checks would
+  have passed for a blank screen, which is exactly what the placeholder was.
+  Proven by stubbing the card to return early. Full gate green.
+
 - **2026-07 — THE APEX lands: the Mask that wears a unit (`TODO.md` #25).** The
   storm had a flood but no threat -- regular units cannot touch you by ruling --
   so this is the piece that makes it dangerous, built to the maintainer's spec.

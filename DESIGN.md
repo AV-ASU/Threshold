@@ -253,10 +253,12 @@ its head) and pings the cult to **investigate the body**, and the body
   either. **The answer is the axe or a round**, which destroys the HOST and not
   the Mask: the Mask drops to seeking and re-hosts on the nearest unit after
   `APEX_MIGRATE_CD`, so fighting it buys seconds and never distance. Contact ends the run on its
-  OWN death card (`_death_kind == "apex"`) -- deliberately NOT the Unfolding's
-  throat-swallow, which is the art of the body the storm replaces; it is a
-  wordless placeholder fade until the amalgam's own catch animation is made
-  (TODO #25). **While a host is worn the roaming Unfolding stands down** ("the
+  OWN death card (`_death_kind == "apex"` -> `amalgam.draw_amalgam_catch`),
+  deliberately NOT the Unfolding's throat-swallow, which is the art of the body
+  the storm replaces. It is drawn in the family's vocabulary: cuts wearing the
+  rift's gold rim open in a ring, near-black limbs edged in bone come THROUGH
+  them, then His pallid half-mask presses in until it overflows the frame and one
+  socket dilates until it is everything. Wordless, like every death of His. **While a host is worn the roaming Unfolding stands down** ("the
   impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND

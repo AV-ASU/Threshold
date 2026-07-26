@@ -1843,6 +1843,33 @@ def main():
     check(not calls,
           f"apex: its death card never draws the Unfolding catch "
           f"({len(calls)} call(s))")
+    # ...and it DOES draw its own. Asserting only the absence would have passed
+    # for a blank screen, which is what the placeholder was.
+    import rendering.amalgam as _am2
+    drew = []
+    _real_c = _am2.draw_amalgam_catch
+    _rm_c = getattr(_rm, "draw_amalgam_catch", None)
+    _am2.draw_amalgam_catch = lambda *a, **k: drew.append(1)
+    if _rm_c is not None:
+        _rm.draw_amalgam_catch = lambda *a, **k: drew.append(1)
+    try:
+        gd._death_t = 1.2
+        gd._draw_death_screen()
+    finally:
+        _am2.draw_amalgam_catch = _real_c
+        if _rm_c is not None:
+            _rm.draw_amalgam_catch = _rm_c
+    check(len(drew) == 1,
+          f"apex: its death card draws the AMALGAM catch ({len(drew)} call(s))")
+    # and it must actually put something on screen at mid-animation, not just
+    # run: a card that draws nothing is the placeholder wearing a new name.
+    import pygame as _pg
+    probe = _pg.Surface((320, 240))
+    probe.fill((40, 38, 34))
+    _real_c(probe, 0.55)
+    px_ = _pg.surfarray.array3d(probe)
+    check(px_.max() > 90 and px_.min() < 20,
+          "apex: the catch renders real contrast at mid-animation")
 
     # AND IT LEAVES when the player drops below the threshold.
     ga.visibility = APEX_VIS_GATE - 0.25
