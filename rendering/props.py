@@ -3869,50 +3869,6 @@ def _draw_street_lamp_solid(surf, cam, deco):
                            mast=True)
 
 
-def _draw_generator_solid(surf, cam, deco):
-    """A portable gas generator, tucked against a building's outside wall.
-    The fold cut Brimley off the grid with everything else (NARRATIVE §1),
-    so the town keeps its lights on off gasoline now: a low steel frame, a
-    fuel tank slung on top, a control panel of outlets, a stub muffler, and
-    a bare work-bulb clamped to the frame -- a small WARM light, the running
-    tell. A DETAIL, kept small (it must sit OUTSIDE, so it fronts the doors)."""
-    wx, wy = deco.x, deco.y
-    s = (getattr(deco, "scale", 1.0) or 1.0)
-    t = getattr(deco, "t", 0.0)
-    steel = {"top": (86, 84, 92), "side": (56, 54, 62), "dark": (34, 33, 40)}
-    bw, bd, bh = 12 * s, 8 * s, 6 * s               # the engine frame
-    draw_box(surf, cam, wx, wy, bw, bd, bh, steel)
-    # fuel tank: a short upright canister on the frame's top
-    tank = {"body": (120, 62, 46), "lo": (66, 34, 26), "rim": (150, 92, 70)}
-    draw_solid(surf, cam, wx - 1.5 * s, wy,
-               [(bh, 3.0 * s, 3.0 * s), (bh + 3.4 * s, 3.0 * s, 3.0 * s)], tank)
-    # stub muffler canister on the frame's other end
-    draw_solid(surf, cam, wx + bw * 0.34, wy,
-               [(bh, 1.4 * s, 1.4 * s), (bh + 2.2 * s, 1.4 * s, 1.4 * s)],
-               {"body": (52, 50, 54), "lo": (30, 28, 32), "rim": (80, 78, 82)})
-    # control panel + two outlet dots on the near (south) face
-    panel = cam.project(wx, wy + bd * 0.5, bh * 0.5)
-    pw = max(2, int(3 * s * cam.scale))
-    ph = max(2, int(2 * s * cam.scale))
-    pygame.draw.rect(surf, (40, 40, 46),
-                     (int(panel[0] - pw), int(panel[1] - ph), pw * 2, ph * 2))
-    for ox in (-pw // 2, pw // 2):
-        pygame.draw.circle(surf, (150, 150, 158),
-                           (int(panel[0] + ox), int(panel[1])),
-                           max(1, int(1 * s)))
-    # a bare work-bulb clamped to the frame corner, warm, faintly wavering
-    stalk_base = cam.project(wx + bw * 0.5, wy - bd * 0.3, bh)
-    bl = cam.project(wx + bw * 0.5 + 1.5 * s, wy - bd * 0.3, bh + 2.4 * s)
-    pygame.draw.line(surf, (70, 68, 74), stalk_base, bl, max(1, int(1 * s)))
-    fl = 0.9 + 0.1 * math.sin(t * 5 + deco.seed)
-    br = max(2, int(2.0 * s * cam.scale))
-    glow = pygame.Surface((br * 6, br * 6), pygame.SRCALPHA)
-    pygame.draw.circle(glow, (255, 210, 150, int(70 * fl)),
-                       (br * 3, br * 3), br * 3)
-    surf.blit(glow, (int(bl[0] - br * 3), int(bl[1] - br * 3)))
-    pygame.draw.circle(surf, (255, 224, 170), (int(bl[0]), int(bl[1])), br)
-
-
 def draw_inner_door(surf, cam, wx, wy, ew, swing, kind="plank", seed=0):
     """An interior door leaf between two subrooms, swinging on its hinge from
     across-the-gap (swing 0, SHUT) to along-the-wall (swing 1, OPEN). `ew` =
@@ -4315,7 +4271,6 @@ SOLID_PROPS = {
     "kerosene_lamp": _draw_kerosene_lamp_solid,
     "yard_light":    _draw_yard_light_solid,
     "street_lamp":   _draw_street_lamp_solid,
-    "generator":     _draw_generator_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
     "wall_lamp":     _draw_wall_lamp_solid,

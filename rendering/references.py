@@ -143,6 +143,77 @@ REFERENCES = {
                   "the hood is lower again, so it steps down twice"],
         "src": "(period half-ton regular cab dimensions)",
     },
+    "generator": {
+        # WHAT IT IS was settled by the fiction first: the fold cut Brimley
+        # off the grid, so every light in town now comes off one of these
+        # (NARRATIVE §1). It is the yard layer's keystone prop -- running or
+        # dead is the household's own state, readable from the road -- so it
+        # has to look like a MACHINE somebody wheels out and fuels, not a
+        # toolbox with a lamp on it.
+        "is": "A 1990s portable open-frame gasoline generator: a tubular "
+              "steel ROLL CAGE with a horizontal engine slung inside it, a "
+              "fuel tank across the top rails, a control panel of outlets on "
+              "one end, a stub muffler on the other, and a clamp work-light "
+              "on the cage.",
+        # a period 5kW unit (Coleman Powermate / Generac class), inches
+        "real": (27.0, 21.0, 22.0),
+        "part": "frame",
+        "world_h": 16.0,   # knee-high on a 20-tall player, plus its work light
+        "mount": "stands on rubber feet on the ground, always OUTSIDE (it "
+                 "runs on gasoline and has to breathe), so it fronts a door "
+                 "or hugs a wall",
+        "tells": ["the CAGE is the silhouette -- an open frame you see the "
+                  "engine through, not a solid box",
+                  "the fuel tank sits ON TOP, across the cage's top rails",
+                  "the work-light is the running tell: lit means somebody is "
+                  "still keeping the place"],
+        "src": "(period portable-genset class dimensions)",
+    },
+    "fuel_can": {
+        "is": "A steel NATO-pattern jerry can: a flat slab of a body with "
+              "three vertical ribs pressed into each face, a tri-handle "
+              "across the top and a short pouring spout at one shoulder.",
+        # 20L NATO can: 18.5in tall, 13.6in wide across the face, 6.6in deep
+        "real": (13.6, 6.6, 18.5),
+        "world_h": 8.0,    # knee height beside the genset it feeds
+        "mount": "stands on the ground beside the thing it fuels; on its "
+                 "side when it is empty and nobody has taken it to be filled",
+        "tells": ["it is a SLAB, far wider than it is deep -- a square "
+                  "canister reads as an oil drum",
+                  "the tri-handle across the top is the identifying part",
+                  "the ribs run vertically down the wide faces"],
+        "src": "(NATO 20L jerry can standard dimensions)",
+    },
+    "clothesline": {
+        "is": "A domestic T-post clothesline: two timber posts with a short "
+              "crossarm on each, three or four lines strung between them, "
+              "sagging under whatever is pegged out.",
+        # 20ft span, 36in crossarm, 7ft posts
+        "real": (240.0, 36.0, 84.0),
+        "world_h": 24.0,   # crossarm just over the head of a 20-tall player
+        "mount": "posts sunk in the ground at each end of the run",
+        "tells": ["the CROSSARM is what makes it a clothesline and not two "
+                  "fence posts -- the lines have to spread across it",
+                  "the lines SAG, deepest at mid-span and deeper still under "
+                  "a load",
+                  "washing left out since winter hangs STIFF -- frozen cloth "
+                  "does not drape, it stands out like board"],
+        "src": "(standard residential T-post line dimensions)",
+    },
+    "crate_stack": {
+        "is": "A stack of rough wooden shipping crates on a yard, slats "
+              "showing, sometimes with a tarp roped over the top course.",
+        # one wirebound produce crate, inches -- what `part` measures
+        "real": (20.0, 13.0, 12.0),
+        "part": "crate",
+        "world_h": 14.0,   # waist high: three courses of crates
+        "mount": "stacked on the ground, usually on a pallet or a board",
+        "tells": ["it is separate CRATES -- the courses have to step and "
+                  "misalign or it reads as one painted box",
+                  "the slats and the gaps between them are the surface",
+                  "a tarp is roped DOWN over the top, not draped"],
+        "src": "(standard wirebound produce crate dimensions)",
+    },
     "yard_fence": {
         "is": "A rural boundary fence: split cedar posts with two or three "
               "sagging wire strands. NOT chain-link, which is the filling "

@@ -45,6 +45,17 @@ MATERIALS = {
     # shading darker on the faces that turn away, so the head glows evenly
     # instead of having a dim side.
     "flame_glass": ((255, 186, 108), 0.02),
+    # THE YARD LAYER's materials (DESIGN.md §14). A yard is read at a glance
+    # from the road, so the few things in it that are NOT weathered wood have
+    # to hold a colour of their own -- but only just. Painted enamel in this
+    # town is twenty winters old.
+    "enamel_red": ((112, 46, 38), 0.24),  # a gas can, a spout cap
+    "crate_pine": ((92, 78, 58), 0.26),   # rough sawn crate boards
+    "canvas":     ((70, 66, 56), 0.20),   # a tarp roped over a stack
+    # Washing left out since January. Not white: bleached to bone by three
+    # months of weather and frozen stiff, which is the whole read.
+    "linen":      ((116, 114, 106), 0.16),
+    "wool":       ((74, 66, 62), 0.20),   # a blanket on the same line
     "wood":       ((88, 70, 50), 0.32),   # generic fallback
 }
 
