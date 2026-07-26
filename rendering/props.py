@@ -983,8 +983,60 @@ def _rust_car_solid(surf, cam, deco, L, W, cf, cb, cab_up, wagon=False,
                            "dark": _shade(colc, 0.6)}, yaw=yaw)
                     _lp(surf, P, (lcx, -chW * 0.6, cz1 + 1.5 + hh),
                         (lcx, chW * 0.6, cz1 + 1.5 + hh), (40, 34, 30), 1)
-        _lp(surf, P, ((cb + cf) / 2, ny, z0 + 1), ((cb + cf) / 2, ny, z1),
-            _shade(body["dark"], 0.8), 1)          # door seam
+        if deco.kwargs.get("door_open"):
+            # THE DOOR NOBODY WENT BACK AND SHUT (the yard layer,
+            # DESIGN.md §14): how a car is left is the characterisation.
+            # Squared away is somebody who gave up early; slewed at the
+            # road with the driver's door still standing open is somebody
+            # who tried it and walked back inside.
+            #
+            # Hinged at the FRONT of the cabin and swung out over the near
+            # flank -- and the near flank is resolved from the projection
+            # (`ns`), so the open door faces the player from every heading
+            # instead of hiding behind the hull at half of them.
+            dang = 1.35            # near square to the flank: a door
+            #                          left half-open reads as a panel gap
+            hx = cf - 2
+            span = (cf - 2) - (cb + 3)
+            fx = hx - span * math.cos(dang)
+            fy = ny + span * math.sin(dang) * ns
+            # The opening starts at the ROCKER, not at the ground: taken all
+            # the way down the flank it is a black slot the length of the
+            # car, which reads as an open bed rather than a door.
+            dz0 = z0 + (z1 - z0) * 0.45
+            sill = z1 + 2.5 * s
+            # what the door was covering: the cabin dark above the sill, the
+            # sill-to-rocker band a lit interior rather than more black. All
+            # one value it reads as a hole punched in the car instead of an
+            # opening with a car behind it.
+            _qp(surf, P, [(hx, ny, sill - 1), (cb + 3, ny, sill - 1),
+                          (cb + 3, ny, cz1 - 2), (hx, ny, cz1 - 2)],
+                (14, 14, 17))
+            _qp(surf, P, [(hx, ny, dz0), (cb + 3, ny, dz0),
+                          (cb + 3, ny, sill - 1), (hx, ny, sill - 1)],
+                _shade(body["dark"], 0.72))
+            # THE DOOR IS A VOLUME, not two flat quads. Painted flat it is a
+            # vertical sheet pointing at a 55-degree camera, which projects
+            # to a sliver: correct geometry, unreadable object. As a box it
+            # gets a lit TOP face, and the top face is most of what the tilt
+            # ever shows of anything.
+            mx, my = (hx + fx) / 2.0, (ny + fy) / 2.0
+            dyaw = yaw + math.atan2(fy - ny, fx - hx)
+            dc, ds_ = math.cos(yaw), math.sin(yaw)
+            _vbox(surf, cam, wx + mx * dc - my * ds_,
+                  wy + mx * ds_ + my * dc,
+                  math.hypot(fx - hx, fy - ny), 1.8 * s, dz0, sill,
+                  {"top": _shade(body["top"], 1.2),
+                   "side": _shade(body["side"], 1.1),
+                   "dark": body["dark"]}, yaw=dyaw)
+            _qp(surf, P, [(hx, ny, sill), (fx, fy, sill),
+                          (fx, fy, cz1 - 2), (hx, ny, cz1 - 2)], glass)
+            _lp(surf, P, (hx, ny, cz1 - 2), (fx, fy, cz1 - 2),
+                _shade(body["top"], 1.35), 1)
+        else:
+            _lp(surf, P, ((cb + cf) / 2, ny, z0 + 1),
+                ((cb + cf) / 2, ny, z1),
+                _shade(body["dark"], 0.8), 1)      # door seam
     # bumpers dulled to dead steel; the rear one sometimes hangs
     _qp(surf, P, [(hL, -hW, z0), (hL, hW, z0), (hL, hW, z0 + 2.5 * s),
                   (hL, -hW, z0 + 2.5 * s)], steel)

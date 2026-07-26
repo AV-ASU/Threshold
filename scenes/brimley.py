@@ -18,6 +18,7 @@ from constants import TILE
 from entities.decoration import Decoration
 from entities.npc import NPC
 from .base import Scene, dead_cars
+from .yards import Yard
 from .dialogue import (_evidence, preacher_body_examine, chorus_dialogue,
                        PELL_CONVO, CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO)
 
@@ -306,6 +307,33 @@ def build_brimley():
     kid_dt, kid_out = _stamp_building(
         objects_l, kid_left, kid_right, kid_top, kid_bot, "J", "n", 46)
 
+    # ---- Three SMALL HOUSES for the three locals who had none ----
+    # Mrs. Calder, Royce and Garrick stood on open ground with no building at
+    # all, which left them the only people in town with nothing behind them to
+    # read (TODO, THE YARDS). The three EMPTY buildings are the wrong three to
+    # move them into: the schoolhouse and the barn are where the congregation
+    # bedded down before they went below and the farmhouse is abandoned in its
+    # own name (NARRATIVE §3/§4), and walking into that emptiness is the beat.
+    # A corn town has more than seven buildings anyway.
+    #
+    # These are 5x4 -- smaller than the six-by-five civic buildings -- and
+    # their doors are the FACADE char 'l': solid, closed, no interior modelled.
+    # The yard is what tells you about the household; the door only has to be
+    # a door somebody comes out of.
+    royce_left, royce_right, royce_top, royce_bot = 21, 25, 29, 32
+    royce_dt, royce_out = _stamp_building(
+        objects_l, royce_left, royce_right, royce_top, royce_bot, "l", "n", 23)
+
+    calder_left, calder_right, calder_top, calder_bot = 52, 56, 32, 35
+    calder_dt, calder_out = _stamp_building(
+        objects_l, calder_left, calder_right, calder_top, calder_bot,
+        "l", "w", 34)
+
+    garrick_left, garrick_right, garrick_top, garrick_bot = 54, 58, 19, 22
+    garrick_dt, garrick_out = _stamp_building(
+        objects_l, garrick_left, garrick_right, garrick_top, garrick_bot,
+        "l", "w", 20)
+
     # Hand-placed cultist spawn ANCHORS (the maintainer's marks) -- 9 spread
     # over town + 5 at the SE camp. Defined here so the scattered-tree pass
     # below can keep them clear; wired to the scene as `cult_spawns` at the end.
@@ -315,9 +343,37 @@ def build_brimley():
         (40, 50), (44, 50), (41, 52), (43, 52), (42, 49),   # the camp crew
     ]
 
+    # ---- THE YARDS: kept ground, so nothing scatters onto it ----
+    # A yard is the household's own ground and it reads as kept or let go on
+    # PURPOSE. Scattered field trees and the forest band both grew over the
+    # building aprons on their own, which flattened the distinction the layer
+    # exists to make -- an abandoned yard has to look abandoned NEXT TO a kept
+    # one, and both look the same under a stand of volunteer trees. Each rect
+    # is (left, right, top, bot) of the yard, not the building.
+    _YARD_PLOTS = [
+        (4, 14, 6, 14),      # church:     out east onto the plaza
+        (17, 28, 6, 15),     # barn:       out west onto the plaza
+        (6, 15, 16, 23),     # shop:       out south onto the fold road
+        (18, 27, 16, 23),    # school:     out south onto the fold road
+        (5, 15, 42, 50),     # sheriff:    out east onto the spine
+        (16, 28, 42, 52),    # farmhouse:  out west onto the spine
+        (42, 51, 33, 42),    # Toby:       out north onto the connector
+        (19, 27, 26, 34),    # Royce:      out north onto the fold road
+        (48, 58, 30, 37),    # Mrs Calder: out west onto the connector
+        (52, 59, 17, 24),    # Garrick:    out west onto the well square
+    ]
+
+    def _in_yard(tx, ty):
+        for (yl, yr, yt, yb) in _YARD_PLOTS:
+            if yl <= tx <= yr and yt <= ty <= yb:
+                return True
+        return False
+
     # Road corridors poke cleanly through the 7-tile forest band so the
     # scattered trees don't grow over an exit or the lodge square.
     def _border_protected(tx, ty):
+        if _in_yard(tx, ty):
+            return True
         if tx in (21, 22, 23) and ty <= 6:
             return True                                  # cornfield_maze corridor
         if tx in (35, 36, 37) and ty <= 6:
@@ -395,6 +451,13 @@ def build_brimley():
     _carve_track(floor_ll, objects_l, [(50, 26), (48, 33), (48, 35), (46, 35)], trk)
     # A cult path worn off the east bank out to the standing stones.
     _carve_track(floor_ll, objects_l, [(44, 20), (42, 17), (40, 15)], trk)
+    # The three small houses: a path worn from each door to the road it
+    # fronts. WORN, not grown over -- all three are still lived in, and the
+    # occupancy tell you read from the road before you commit to the yard is
+    # whether the ground has feet on it.
+    _carve_track(floor_ll, objects_l, [(23, 28), (23, 27), (23, 26)], trk)
+    _carve_track(floor_ll, objects_l, [(51, 34), (48, 34)], trk)
+    _carve_track(floor_ll, objects_l, [(53, 20), (51, 20)], trk)
 
     # ---- THE FOLD ROAD ----
     # A dirt road east-west across town at row 25, right over the bridge.
@@ -568,6 +631,14 @@ def build_brimley():
         (38, 27, "rust_van", 3.05, 33, "h"),
         # a nose in the corn on the east bank
         (46, 14, "rust_sedan", 0.35, 41, "h"),
+        # ROYCE'S OWN, nosed at the fold road east of his door. He has not
+        # given the road up like the rest of them did: the car is pointed
+        # out of town and shut, ready to be tried again (NARRATIVE §3).
+        (26, 27, "rust_coupe", -1.28, 57, "h"),
+        # SHERIFF VANE'S OWN, in his side yard: nosed at the spine, slewed,
+        # the driver's door still standing open. He tried it like everyone
+        # did and walked back inside (NARRATIVE §1, DESIGN.md §2).
+        (13, 44, "rust_sedan", -0.34, 51, "h", {"door_open": True}),
     ])
     # South exit to cornfield_maze (the bottom of the loop): the spine
     # cuts down through the southern tree wall via a single 'M' tile.
@@ -640,8 +711,14 @@ def build_brimley():
     rng_corn = random.Random(4242)
     for (pl, pt, pr, pb) in corn_patches:
         for _ in range(max(5, (pr - pl) * (pb - pt) // 7)):
-            gx = rng_corn.randint(pl, pr) * TILE + rng_corn.randint(2, 28)
-            gy = rng_corn.randint(pt, pb) * TILE + rng_corn.randint(2, 28)
+            _gtx = rng_corn.randint(pl, pr)
+            _gty = rng_corn.randint(pt, pb)
+            gx = _gtx * TILE + rng_corn.randint(2, 28)
+            gy = _gty * TILE + rng_corn.randint(2, 28)
+            # only onto open ground: a patch rectangle can overlap a wall or
+            # a roof, and a tuft that lands there stands up INSIDE a building
+            if sc.objects[_gty][_gtx] != ".":
+                continue
             sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
     for tx, ty, kind in [(19, 28, "dead_crow"), (5, 38, "creepy_tree"),
                          (34, 46, "hanging_figure"), (43, 10, "creepy_tree"),
@@ -702,9 +779,10 @@ def build_brimley():
                  "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped.",
              ]),
         ])
-    # Mrs. Calder -- by the east-bank square. She sets a place for a guest
-    # she can't name. She watches the road. She does not wave.
-    _resident(50, 22, "Mrs. Calder", "townswoman",
+    # Mrs. Calder -- on her own doorstep now, on the east bank a lot north of
+    # Toby's. She sets a place for a guest she can't name. She watches the
+    # road, and the road is right there. She does not wave.
+    _resident(calder_out[0], calder_out[1] + 1, "Mrs. Calder", "townswoman",
               movement="idle", convo=CALDER_CONVO,
         beats=[("beat_calder_unlatched",
                 lambda g: g._evidence_count() >= 1, [
@@ -781,17 +859,21 @@ def build_brimley():
     sc.add_decoration(Decoration(24 * TILE + 16, 23 * TILE + 16, "calendar"))
     sc.add_decoration(Decoration(54 * TILE + 16, 30 * TILE + 16, "pickup_truck"))
 
-    # Mrs. Calder's table, laid out in the open by the kid's house: two
-    # settings (hers, and the extra she lays every night for the guest she
-    # can't name), a candle burned down, a chair knocked over.
-    sc.add_decoration(Decoration(42 * TILE + 10, 42 * TILE + 12, "place_setting"))
-    sc.add_decoration(Decoration(42 * TILE + 24, 42 * TILE + 12, "place_setting"))
-    sc.add_decoration(Decoration(42 * TILE + 16, 42 * TILE + 2, "candle"))
-    sc.add_decoration(Decoration(42 * TILE + 28, 44 * TILE + 12, "overturned_chair"))
+    # Mrs. Calder's table, out in her own front yard now that she has one:
+    # two settings (hers, and the extra she lays every night for the guest she
+    # can't name), a candle burned down, a chair knocked over. It stood in
+    # open ground three lots away from her before, which read as nobody's.
+    _cal_tx, _cal_ty = 49, 33
+    sc.add_decoration(Decoration(_cal_tx * TILE + 10, _cal_ty * TILE + 12,
+                                 "place_setting"))
+    sc.add_decoration(Decoration(_cal_tx * TILE + 24, _cal_ty * TILE + 12,
+                                 "place_setting"))
+    sc.add_decoration(Decoration(_cal_tx * TILE + 16, _cal_ty * TILE + 2,
+                                 "candle"))
+    sc.add_decoration(Decoration(_cal_tx * TILE + 28, (_cal_ty + 2) * TILE + 12,
+                                 "overturned_chair"))
 
     # ---- Gardens, on some lots and not others (food scarcity) ----
-    sc.add_decoration(Decoration(int(43.5 * TILE), 41 * TILE, "garden_patch",
-                                 tended=True, w=110, h=72, seed=41))
     sc.add_decoration(Decoration(int(25.5 * TILE), 49 * TILE,
                                  "garden_patch",
                                  tended=False, w=100, h=64, seed=42))
@@ -808,21 +890,12 @@ def build_brimley():
     sc.add_decoration(Decoration(9 * TILE + 16, 16 * TILE + 6, "crow"))
 
     # ---- Light is the mood: the town runs on electric, off gasoline ----
-    # A gas GENERATOR tucked outside each occupied building. The fold cut
-    # Brimley off the grid with everything else (NARRATIVE §1), so the town
-    # keeps the lights on off gas now; a genset MUST sit outdoors (exhaust),
-    # so it fronts the door and throws a small warm work-light across the
-    # threshold (the pool the door lantern used to). Placed one tile off the
-    # door -- the provenance behind the town's lights.
-    for (lx, ly) in [(church_out[0], church_out[1] + 1),
-                     (barn_out[0], barn_out[1] + 1),
-                     (shop_out[0] - 1, shop_out[1]),     # beside the S door
-                     (school_out[0] - 1, school_out[1]),  # beside the S door
-                     (sheriff_out[0], sheriff_out[1] + 1),
-                     (farm_out[0], farm_out[1] + 1),
-                     (kid_out[0] + 1, kid_out[1])]:
-        sc.add_decoration(Decoration(lx * TILE + 20,
-                                     ly * TILE + 16, "generator"))
+    # THE GENSETS MOVED INTO THE YARDS (see "THE YARDS" below). They used to
+    # be laid out here in one loop, one tile off every door and all seven
+    # running, which said the same thing about every household in Brimley --
+    # including the abandoned farmhouse and the two buildings the congregation
+    # walked out of. A genset's state is the household's, so it belongs to the
+    # yard that owns it.
     # The bridge keeps a single HUNG lantern on the exposed crossing (a
     # personal light, not the civic grid), a creepy_tree on each bank for a
     # held-breath pocket.
@@ -939,6 +1012,152 @@ def build_brimley():
                      (54 * TILE + 28, 16 * TILE + 22)]:
         sc.add_decoration(Decoration(fx, fy, "missing_flyer"))
 
+    # ================= THE YARDS (DESIGN.md §14, scenes/yards.py) =========
+    # Ten households, ten yards, and the point is that they DIFFER. A yard
+    # tells you who lives here and what they stopped doing without anybody
+    # speaking: the seal was January 15 and it is April, so what is standing
+    # in a back garden has been standing there three months.
+    #
+    # Read them against each other. The genset is the fastest sentence in the
+    # town -- running with a full can at the shop, the sheriff's office,
+    # Toby's, Royce's and Mrs. Calder's; running beside an EMPTY can at Vane's
+    # only, because he is the one still going through the motions of a job
+    # while the fuel runs out; cold at the barn, the schoolhouse, the
+    # farmhouse and Garrick's. Four of those five dark yards are dark for four
+    # different reasons, and none of them is stated anywhere in words.
+    #
+    # THE MINIMUM FOR ANY YARD: a boundary, a step, one interrupted task, and
+    # one occupancy tell. Everything past that is per household.
+
+    # THE CHURCH -- Rev. Crane kept this place up until the day he walked
+    # down to the river after his flock (NARRATIVE §4). So the yard is KEPT
+    # and then stops mid-sentence: the genset still running for a
+    # congregation that is under the ground, the axe still in the round.
+    _y = Yard(sc, (church_left, church_right, church_top, church_bot),
+              "e", church_out, depth=3, flank=1, seed=11)
+    _y.step()
+    _y.genset(running=True, side="e", along=0.15)
+    _y.mailbox(14, 10, toward="e", full=True)
+    _y.woodpile("n", along=0.32, axe=True, rows=4)
+    _y.hedge("s", n=11, at=13)               # the line into the burying ground
+
+    # THE BARN -- canon-empty. The congregation bedded down here before they
+    # went below (NARRATIVE §3), so the yard has to read as a place a lot of
+    # people used and then all left at once: the washing they strung up still
+    # on the line, frozen since winter, and the genset that kept them warm
+    # cold with the can on its side. The rank of cars at the south wall is
+    # already theirs.
+    _y = Yard(sc, (barn_left, barn_right, barn_top, barn_bot),
+              "w", barn_out, depth=2, flank=2, seed=23)
+    _y.step()
+    # Everything the barn yard carries sits on its SOUTH side, between the
+    # wall and the school: the front is two tiles of walking lane onto the
+    # plaza spine and nothing survives being put in it. The line strung
+    # behind the barn was geometrically fine and nobody would ever have
+    # seen it.
+    _y.genset(running=False, side="s", along=0.0)
+    _y.washing(22, 15, laundry=5, yaw=0.0)
+    _y.fence("s", at=17, span=(18, 28), gap=22)  # the gap where the feet went
+
+    # THE SHOP -- Hettie, open, keeping the lights on so they know somebody
+    # is keeping them on. Her front yard IS the fold road; the interrupted
+    # task is the delivery that never came back for its crates, and the box
+    # she still walks out to every morning is empty because it always is.
+    _y = Yard(sc, (shop_left, shop_right, shop_top, shop_bot),
+              "s", shop_out, depth=1, flank=2, seed=37)
+    _y.step()
+    _y.genset(running=True, side="e", along=0.5)
+    _y.mailbox(6, 23, toward="s", full=False)
+    _y.crates(14, 21, opened=True)
+    _y.fence("w", at=6, span=(17, 23))
+
+    # THE SCHOOLHOUSE -- canon-empty, the other place they slept. Old Pell
+    # loiters at the step and it is not his. Everything here is a thing that
+    # should have happened in the spring and did not: the bed turned over in
+    # the autumn and never planted, the fence gone slack, the genset cold.
+    # The calendar nailed by the door stopped on the same day.
+    _y = Yard(sc, (school_left, school_right, school_top, school_bot),
+              "s", school_out, depth=1, flank=1, seed=53)
+    _y.step()
+    _y.genset(running=False, side="e", along=0.5)
+    _y.bed(19, 20, tended=False, w=92, h=70)
+    _y.fence("e", at=26, span=(17, 23))
+
+    # THE SHERIFF'S OFFICE -- Vane, still here, still going through it. The
+    # one yard in town where the machine is running and the can beside it is
+    # already empty and on its side, which is the whole man (DESIGN.md §2:
+    # his ledger, his fall). His car is nosed at the road with the door still
+    # open: he tried it, like everyone did, and walked back inside.
+    _y = Yard(sc, (sheriff_left, sheriff_right, sheriff_top, sheriff_bot),
+              "e", sheriff_out, depth=2, flank=2, seed=67)
+    _y.step()
+    _y.genset(running=True, side="n", along=0.45, can_tipped=True)
+    _y.fence("s", at=50, span=(5, 14))
+
+    # THE ABANDONED FARMHOUSE -- THE WRONG YARD. Newcomers took this lot and
+    # kept it in a way nobody from Brimley would: the crates squared off too
+    # neatly, a husk thing propped by the step, the door-motif chalked on the
+    # siding where the weather has nearly taken it. The yellow signs, candles
+    # and brazier already lining the west approach are the same hand. The
+    # genset is cold because whoever is here does not need the light.
+    _y = Yard(sc, (farm_left, farm_right, farm_top, farm_bot),
+              "w", farm_out, depth=3, flank=2, seed=79)
+    _y.step()
+    _y.genset(running=False, side="n", along=0.7)
+    _y.crates(22, 50, courses=3, tarp=True)
+    _y.put("husk_bundle", 18, 45)
+    _y.siding("chalk_door_wall", 18, 47)
+    _y.fence("s", at=51, span=(17, 26))
+
+    # TOBY'S HOUSE -- lived in, and a child lives in it. The wood is half
+    # split with the axe still standing in the block, because the person
+    # whose job that was went below in January. The bed by the west wall is
+    # the one tended patch left in Brimley: somebody here still has to be fed.
+    _y = Yard(sc, (kid_left, kid_right, kid_top, kid_bot),
+              "n", kid_out, depth=2, flank=2, seed=91)
+    _y.step()
+    _y.genset(running=True, side="e", along=0.5)
+    _y.mailbox(48, 33, toward="n", full=True)
+    _y.woodpile("s", along=0.35, axe=True)
+    _y.bed(43, 41, tended=True, w=110, h=72, seed=41)
+    _y.fence("s", at=42, span=(43, 51))
+
+    # ROYCE'S HOUSE -- he tried to drive out like everyone in town did and
+    # the corn handed him back, and he has not stopped trying: the car nosed
+    # at the fold road with the driver's door open, the genset running, and
+    # the can beside it already empty from all of it.
+    _y = Yard(sc, (royce_left, royce_right, royce_top, royce_bot),
+              "n", royce_out, depth=3, flank=2, seed=107)
+    _y.step()
+    _y.genset(running=True, side="e", along=0.15, can_tipped=True)
+    _y.mailbox(25, 27, toward="n", full=False)
+    _y.fence("w", at=19, span=(27, 34))
+
+    # MRS. CALDER'S HOUSE -- she sets a place at supper for a guest she can't
+    # name and watches the road it will come up (NARRATIVE §3). So the yard is
+    # KEPT, and its centrepiece is the table laid out in the open where the
+    # road can see it: two settings, a candle burned down, one chair knocked
+    # over. Her gate stands open, which is the same gesture as the unlatched
+    # door she mentions.
+    _y = Yard(sc, (calder_left, calder_right, calder_top, calder_bot),
+              "w", calder_out, depth=3, flank=2, seed=127)
+    _y.step()
+    _y.genset(running=True, side="s", along=0.5)
+    _y.mailbox(49, 35, toward="w", full=False)
+    _y.fence("w", at=49, span=(30, 32), gap=31)
+    _y.fence("w", at=49, span=(34, 35), gap=False)
+
+    # GARRICK'S HOUSE -- the old man at the well. He gave the lights up and
+    # sits out at the burn barrel instead, so his genset is cold and the can
+    # is over. The wood he was splitting when he stopped is still there. His
+    # boundary is a picked stone line, older than wire and older than him.
+    _y = Yard(sc, (garrick_left, garrick_right, garrick_top, garrick_bot),
+              "w", garrick_out, depth=3, flank=2, seed=149)
+    _y.step()
+    _y.genset(running=False, side="s", along=0.8)
+    _y.woodpile("n", along=0.4, axe=True, rows=3)
+    _y.hedge("w", n=10, at=52, span=(17, 24), gap=20)
+
     # ---- Placed noisemakers ----
     # The stalled pickup's cab radio: an E-toggleable lure.
     sc.add_noise_source(
@@ -958,7 +1177,7 @@ def build_brimley():
                         face=(0, -1), dwell=(6.0, 10.0))
     sc.add_cult_station(52 * TILE + 16, 18 * TILE + 16,
                         face=(1, 0), dwell=(4.0, 7.0))
-    sc.add_cult_station(42 * TILE + 16, 43 * TILE + 16,
+    sc.add_cult_station(_cal_tx * TILE + 16, (_cal_ty + 1) * TILE + 16,
                         face=(0, -1), dwell=(5.0, 9.0))
 
     # ---- Cult-taken territory: the farmhouse's WEST front yard ----
@@ -998,7 +1217,7 @@ def build_brimley():
         (53 * TILE + 16, 31 * TILE + 8, "under"),
         # The 2026-07 stealth pass (TODO #5): a second rooted hide on the
         # east bank, under Mrs. Calder's outdoor supper table.
-        (42 * TILE + 16, 43 * TILE + 16, "under"),
+        (_cal_tx * TILE + 16, (_cal_ty + 1) * TILE + 16, "under"),
     ]
 
     # UNDER THE BRIDGE (TODO #5, maintainer pick): the mud shelf at the
@@ -1045,7 +1264,7 @@ def build_brimley():
     # two place settings + candle seated on its top (2026-07 audit fix: it
     # was a raw 't' object tile, which no tilt set draws -- the settings
     # and candle sat on bare ground over an invisible collision block).
-    sc.add_furniture("table", [(42, 42)], w=30, h=26)
+    sc.add_furniture("table", [(_cal_tx, _cal_ty)], w=30, h=26)
 
     # ---- The cult camp footprint + the cultist spawn pool ----
     # The camp sits in the SE corn. At 0 evidence it is just a stand of corn

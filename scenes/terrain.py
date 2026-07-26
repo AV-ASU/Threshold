@@ -4500,14 +4500,37 @@ def _draw_water_channel_tilt(surf, camera, deco, woff=(0.0, 0.0)):
 
 
 def _wall_normal(scene, wx, wy):
-    """The inward normal of the wall a decoration hangs on -- the way it FACES,
-    forward off the wall into the room. Rooms are scene-sized, so a wall is the
-    nearest perimeter; face inward from the closest scene edge."""
+    """The outward normal of the wall a decoration hangs on -- the way it
+    FACES, off the wall into open air.
+
+    THE LOCAL WALL WINS. The original rule was "a room is the whole scene, so
+    the wall is the nearest scene EDGE", which is exactly right for an
+    interior and completely wrong for a building standing in an outdoor map:
+    a mark chalked on a farmhouse's west siding in a 60x60 town was mounted
+    against whichever map edge happened to be closest and drew edge-on into
+    nothing. So look at the tile's own neighbours first, and only fall back
+    to the scene edge when there is no wall next to it at all.
+
+    Candidates are ranked by the SAME nearest-edge key the fallback uses, so
+    an interior -- where the nearest edge IS the wall -- resolves identically
+    and every existing wall decoration is unchanged.
+    """
     tx, ty = int(wx // TILE), int(wy // TILE)
     W, H = scene.w, scene.h
     opts = [(ty, (0, 1)), (H - 1 - ty, (0, -1)),
             (tx, (1, 0)), (W - 1 - tx, (-1, 0))]
     opts.sort(key=lambda o: o[0])
+
+    def _blocks(x, y):
+        if not (0 <= x < W and 0 <= y < H):
+            return True                  # off-map reads as the room's shell
+        d = OBJECT_DEFS.get(scene.objects[y][x]) or {}
+        return d.get("kind") in ("wood_wall", "stone_wall", "window", "roof")
+
+    for _d, (nx, ny) in opts:
+        # the wall sits BEHIND (against -n) and open air lies ahead
+        if _blocks(tx - nx, ty - ny) and not _blocks(tx + nx, ty + ny):
+            return (nx, ny)
     return opts[0][1]
 
 

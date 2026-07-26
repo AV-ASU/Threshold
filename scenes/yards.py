@@ -1,0 +1,310 @@
+"""THE YARD LAYER -- a household's own ground, read without anybody speaking.
+
+The middle of the three layers (interior -> YARD -> safe path <-> lost
+spaces; DESIGN.md §14). A yard's job is to tell you who lives here and what
+they stopped doing, before you knock and without a line of dialogue: the seal
+was January 15 and it is April, so three months of stasis is sitting in
+everyone's back garden.
+
+`lodge_yard` was the worked example and this is what it generalises to. The
+class is deliberately thin -- it knows the BUILDING's geometry (its footprint,
+which face the door is on, and where the walkable tile outside it is) and
+nothing else, so every placement can be expressed relative to that instead of
+as a tile number somebody has to keep in their head. What goes in a yard stays
+a per-household decision written out in the scene, because the whole point of
+the layer is that the yards DIFFER.
+
+    y = Yard(sc, rect=(6, 11, 8, 12), face="e", out=church_out, depth=4)
+    y.step()
+    y.genset(running=True)
+    y.mailbox(14, 10)
+    y.fence("s", gap=True)
+
+WHY THE PLACEMENT ASSERT. Every yard piece goes through `put`, which refuses a
+tile that is the building, the door, or the door's approach. That is playtest
+error class #8 (a prop across the way in) turned into a build-time failure
+instead of something you find by rendering all four facings and noticing. It
+fires while the scene is being built, so a bad placement cannot reach a
+capture, let alone a player.
+"""
+import math
+
+from constants import TILE
+from entities.decoration import Decoration
+
+# Which way you CLIMB, given the wall the door is in. A stoop's local +x is
+# the direction of the climb (rendering/references.py), so this is the stoop's
+# yaw -- and, negated, the direction the yard runs away from the house in.
+_CLIMB = {"s": -math.pi / 2, "n": math.pi / 2, "e": math.pi, "w": 0.0}
+# The outward step from a face, in tiles.
+_OUT = {"n": (0, -1), "s": (0, 1), "e": (1, 0), "w": (-1, 0)}
+# Which yaw runs ALONG a face (a fence line, a woodpile against a wall).
+_ALONG = {"n": 0.0, "s": 0.0, "e": math.pi / 2, "w": math.pi / 2}
+
+# One fence bay's own width in world units -- `_yard_fence`'s default. Bays
+# are laid END TO END at this, never on a tile multiple: spaced every four
+# tiles they leave 86-unit holes between 42-unit bays, which reads as four
+# abandoned fence FRAGMENTS rather than one line, and a boundary that is
+# mostly hole cannot make a gap mean anything.
+BAY = 33.0
+
+
+class Yard(object):
+    """The ground around one building, and the vocabulary you dress it with.
+
+    `rect` is the building footprint (left, right, top, bot) in tiles,
+    inclusive; `face` is the wall its door is in; `out` is the walkable tile
+    just outside that door (what `_stamp_building` hands back). `depth` is how
+    far the yard reaches out in FRONT of the door and `flank` how far out the
+    other three sides -- the front is deeper because the front is what you
+    walk up.
+    """
+
+    def __init__(self, sc, rect, face, out, depth=4, flank=2, seed=0):
+        self.sc = sc
+        self.left, self.right, self.top, self.bot = rect
+        self.face = face
+        self.out = tuple(out)
+        self.depth = depth
+        self.flank = flank
+        self.seed = seed
+        # the approach tile: the one square nobody may build on, because it
+        # is the only way in
+        ox, oy = _OUT[face]
+        self.approach = (self.out[0] + ox, self.out[1] + oy)
+
+    # ------------------------------------------------------------ geometry
+    def bounds(self):
+        """The yard's own tile bounds, deep in front and flanking elsewhere."""
+        l, r = self.left - self.flank, self.right + self.flank
+        t, b = self.top - self.flank, self.bot + self.flank
+        if self.face == "n":
+            t = self.top - self.depth
+        elif self.face == "s":
+            b = self.bot + self.depth
+        elif self.face == "e":
+            r = self.right + self.depth
+        else:
+            l = self.left - self.depth
+        return (max(0, l), min(self.sc.w - 1, r),
+                max(0, t), min(self.sc.h - 1, b))
+
+    def is_building(self, tx, ty):
+        return (self.left <= tx <= self.right and self.top <= ty <= self.bot)
+
+    def wall(self, side, along=0.5, out=1):
+        """A tile hugging one of the building's walls.
+
+        `along` walks the wall from its low end (0) to its high end (1);
+        `out` is how many tiles clear of the wall it stands. This is how a
+        genset gets against a gable end or a woodpile against a shed without
+        anybody counting tiles.
+        """
+        if side in ("n", "s"):
+            tx = int(round(self.left + along * (self.right - self.left)))
+            ty = (self.top - out) if side == "n" else (self.bot + out)
+        else:
+            ty = int(round(self.top + along * (self.bot - self.top)))
+            tx = (self.left - out) if side == "w" else (self.right + out)
+        return (tx, ty)
+
+    # ------------------------------------------------------------- placing
+    def siding(self, kind, tx, ty, **kw):
+        """Hang something on the building's OUTSIDE wall: a `_WALL_DECO` kind,
+        which is the one yard piece that is on the house rather than in front
+        of it (a chalked door-motif is chalked on the siding).
+
+        The tile is the open one the wall FACES, not the wall itself. A wall
+        decoration is drawn at its own position and depth-sorted against the
+        walls, so one placed on the wall tile sits inside the wall's own
+        volume and is painted over by it -- correct-looking code, nothing on
+        screen. `terrain._wall_normal` then reads which side the wall is on
+        from these same neighbours.
+        """
+        if self.is_building(tx, ty):
+            raise ValueError(
+                "yard %r: %s at (%d,%d) is ON the wall tile. A wall "
+                "decoration goes on the open tile the wall faces, or the "
+                "wall paints over it." % (self.sc.key, kind, tx, ty))
+        if not any(self.is_building(tx + dx, ty + dy)
+                   for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0))):
+            raise ValueError(
+                "yard %r: %s at (%d,%d) has no wall of this building next to "
+                "it to hang on" % (self.sc.key, kind, tx, ty))
+        d = Decoration(tx * TILE + 16, ty * TILE + 16, kind, **kw)
+        self.sc.add_decoration(d)
+        return d
+
+    def put(self, kind, tx, ty, ox=16, oy=16, **kw):
+        """Place a yard prop at a tile, refusing the three tiles it must not
+        take: the building itself, the door, and the door's approach."""
+        if self.is_building(tx, ty):
+            raise ValueError(
+                "yard %r: %s at (%d,%d) is inside the building footprint"
+                % (self.sc.key, kind, tx, ty))
+        if (tx, ty) in (self.out, self.approach):
+            raise ValueError(
+                "yard %r: %s at (%d,%d) stands on the way in (the door's "
+                "tile or its one approach)" % (self.sc.key, kind, tx, ty))
+        d = Decoration(tx * TILE + ox, ty * TILE + oy, kind, **kw)
+        self.sc.add_decoration(d)
+        return d
+
+    # ---------------------------------------------------------- vocabulary
+    def step(self, **kw):
+        """A STEP: something between the ground and the door, so going in
+        reads as arriving. Sits on the door's own outside tile, climbing in."""
+        ox, oy = _OUT[self.face]
+        d = Decoration(self.out[0] * TILE + 16 - ox * 6,
+                       self.out[1] * TILE + 16 - oy * 6,
+                       "stoop", yaw=_CLIMB[self.face], **kw)
+        self.sc.add_decoration(d)
+        return d
+
+    def genset(self, running=True, side=None, along=0.72, can=True,
+               can_tipped=None):
+        """THE GENSET, and its state is the household's.
+
+        The grid died with the seal and the town runs on gasoline
+        (NARRATIVE §5). Running means a warm work-bulb and a fuel can standing
+        beside it: somebody is still keeping the place. Dead means a cold bulb
+        and the can empty on its side. `running=False` also passes `broken`,
+        which is what BOTH light tables read to stop a fixture emitting, so
+        the dark bulb and the dark ground can never disagree.
+
+        It goes against a wall that is NOT the door's -- a genset has to sit
+        outside because it breathes, but it does not sit in the doorway.
+
+        `can_tipped` defaults to matching the genset, and is worth setting
+        apart where the two disagree: a machine still running beside a can
+        already empty is a household about to go dark, and that is a different
+        sentence from either half of it.
+        """
+        if side is None:
+            side = {"n": "e", "s": "e", "e": "s", "w": "s"}[self.face]
+        if can_tipped is None:
+            can_tipped = not running
+        tx, ty = self.wall(side, along=along)
+        g = self.put("generator", tx, ty, running=running,
+                     broken=not running)
+        if can:
+            cx, cy = _OUT[side]
+            self.put("fuel_can", tx + cx, ty + cy,
+                     ox=16 - cx * 4, oy=16 - cy * 4, tipped=can_tipped)
+        return g
+
+    def mailbox(self, tx, ty, toward="s", full=True):
+        """THE MAIL, out at the road -- exactly where the yard meets the safe
+        path. Deliveries stopped with the fold, so a box is either still
+        stuffed with January's last one or has hung open ever since.
+        `toward` is the side the carrier comes from, which is where its door
+        and flag face."""
+        return self.put("mailbox", tx, ty, oy=24,
+                        yaw=math.atan2(_OUT[toward][1], _OUT[toward][0]),
+                        full=full)
+
+    def _line(self, side, at, span):
+        """(cross tile, span low, span high) for a boundary run on one side.
+        `at` overrides where the line sits, `span` how far it runs; both
+        default to the yard's own bounds, which is right until a neighbour's
+        wall is in the way and the yard has to stop short of it."""
+        l, r, t, b = self.bounds()
+        if side in ("n", "s"):
+            return ((t if side == "n" else b) if at is None else at,
+                    span[0] if span else l, span[1] if span else r)
+        return ((l if side == "w" else r) if at is None else at,
+                span[0] if span else t, span[1] if span else b)
+
+    def fence(self, side, gap=True, seed=None, span=None, at=None,
+              kind="yard_fence"):
+        """A BOUNDARY THAT IS NOT A WALL: wire on wooden posts along one side
+        of the yard. Mechanically this is where a mouth would sit, so it has
+        to read as an edge and be pushed through, never climbed -- which is
+        why one bay's wire is down by default.
+
+        `gap` may be True (put the down bay in the middle of the run), False
+        (an unbroken line), or a tile coordinate along the run, for when the
+        way through has to line up with the path somebody actually wore.
+        """
+        cross, a0, a1 = self._line(side, at, span)
+        seed = self.seed if seed is None else seed
+        p0, p1 = a0 * TILE, (a1 + 1) * TILE
+        n = max(1, int((p1 - p0) / BAY))
+        if gap is True:
+            hole = n // 2
+        elif gap is False:
+            hole = -1
+        else:
+            hole = max(0, min(n - 1, int((gap * TILE + 16 - p0) / BAY)))
+        ew = side in ("n", "s")
+        out = []
+        for i in range(n):
+            a = p0 + (i + 0.5) * BAY
+            c = cross * TILE + 20
+            px, py = (a, c) if ew else (c, a)
+            out.append(self.sc.add_decoration(Decoration(
+                px, py, kind, seed=seed + i, gap=(i == hole),
+                yaw=0.0 if ew else math.pi / 2)))
+        return out
+
+    def hedge(self, side, n=9, seed=None, span=None, at=None, gap=None):
+        """The other boundary this town builds: an overgrown hedge line where
+        the mowing stopped. Same job as the fence and older -- for a
+        churchyard or a plot that has been somebody's since before wire.
+
+        A line of picked field STONES was the first version of this and it is
+        why the method is a hedge. `boulder` is a fresh-broken rock at
+        (92, 92, 100), the palest thing in a Darkwood-dark yard, and nine of
+        them in a row read as a parade of little grey tents pulling the eye to
+        the least important object on the lot (VISION.md: judge a colour in a
+        SCENE, not on the contact sheet). Growth is dark, and it is already
+        the thing this game's plant renderer is best at.
+        """
+        cross, a0, a1 = self._line(side, at, span)
+        seed = (self.seed if seed is None else seed) * 17 + 3
+        out = []
+        for i in range(n):
+            # NOT A RULED ROW OF IDENTICAL LUMPS: uneven in size, uneven in
+            # spacing, and wandering either side of the line, or it reads as
+            # the grid lockstep (playtest error class #8).
+            h = (seed + i * 37) % 101
+            f = (i + 0.5 + ((h % 7) - 3) * 0.11) / n
+            a = (a0 + f * (a1 - a0)) * TILE + 16 + (((h >> 4) % 11) - 5)
+            c = cross * TILE + 16 + (((h >> 2) % 13) - 6)
+            # THE WAY THROUGH. A boundary the path walks straight into is not
+            # a boundary with a gate, it is a boundary somebody forgot to
+            # check against the track they had already worn.
+            if gap is not None and abs(a - (gap * TILE + 16)) < TILE * 0.8:
+                continue
+            px, py = (a, c) if side in ("n", "s") else (c, a)
+            out.append(self.sc.add_decoration(
+                Decoration(px, py, "bush", scale=0.85 + (h % 5) * 0.14,
+                           seed=seed + i * 13)))
+        return out
+
+    def woodpile(self, side, along=0.5, axe=False, rows=5, out=1, **kw):
+        """Firewood STACKED AGAINST something -- a stack standing alone in
+        open dirt reads as dumped lumber. `axe` leaves it half split with the
+        axe still standing in the round."""
+        tx, ty = self.wall(side, along=along, out=out)
+        return self.put("woodpile", tx, ty, yaw=_ALONG[side],
+                        axe=axe, rows=rows, **kw)
+
+    def washing(self, tx, ty, laundry=4, small=False, seed=None, yaw=0.0):
+        """THE LINE. Out since winter, so it hangs stiff. The span is over two
+        tiles wide, so it is placed by hand rather than derived from a wall."""
+        return self.put("clothesline", tx, ty, laundry=laundry, small=small,
+                        seed=self.seed if seed is None else seed, yaw=yaw)
+
+    def crates(self, tx, ty, tarp=False, opened=False, courses=3, seed=None):
+        """The deliveries that stopped in January, still where the last truck
+        left them."""
+        return self.put("crate_stack", tx, ty, tarp=tarp, opened=opened,
+                        courses=courses,
+                        seed=(self.seed if seed is None else seed))
+
+    def bed(self, tx, ty, tended=False, w=96, h=64, seed=None):
+        """A vegetable bed. Turned over in the autumn and never planted, or
+        still being kept by somebody who has not given up on April."""
+        return self.put("garden_patch", tx, ty, tended=tended,
+                        w=w, h=h, seed=(self.seed if seed is None else seed))
