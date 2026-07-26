@@ -2107,6 +2107,18 @@ deliberately SMALLER than the camera window: the black beyond the verge is
 wanted, and it is what makes a yard read as a lit clearing with nothing
 around it rather than as a room.
 
+**The grass thickens where nobody walks.** Nothing has been mown in three
+months and a lot's far corners go over first, so growth is seeded against
+distance from the house and the worn track. What stays short is exactly the
+ground the household actually crosses, which fills a big lot without unsaying
+"kept": the read is a yard somebody keeps the middle of, not a lawn.
+
+**And the OUTER RING carries growth too.** The scene ends before the camera
+does and its edge dissolves into black -- which is wanted, and only works if
+there is something out there to dissolve. An edge of bare grass stopping dead
+reads as the end of a level; growth thinning into the dark reads as the world
+going on without you. Every side gets it, so the four facings agree.
+
 **EVERY EDGE THAT IS NOT THE ROAD IS A MOUTH.** A yard is the last lit ground
 before the world stops caring: the way you came is the only way that stays
 true, and walking off the back of somebody's lot in the dark drops you into

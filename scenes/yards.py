@@ -464,6 +464,59 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
         _wy = _wr.choice([bt - 1, bb + 1]) * TILE + _wr.randint(2, 28)
         if objects[int(_wy // TILE)][int(_wx // TILE)] == ".":
             sc.add_decoration(Decoration(_wx, _wy, "grass_tuft"))
+
+    def _open(tx, ty):
+        return (0 <= tx < w and 0 <= ty < h and objects[ty][tx] == "."
+                and floor[ty][tx] != "d")
+
+    # THE LOT GOES ROUGH WHERE NOBODY WALKS. Nothing is mown three months
+    # after everybody stopped, and a lot's far corners go over first; what
+    # stays short is the ground the household actually crosses. So the grass
+    # thickens with DISTANCE from the house and the track, which fills the
+    # empty half of a big lot without unsaying "kept" -- the read is a yard
+    # somebody keeps the middle of, not a lawn.
+    _track = [(qx, qy) for qy in range(h) for qx in range(w)
+              if floor[qy][qx] == "d"]
+
+    def _walked(tx, ty):
+        """How far this tile is from anything the household uses: the house
+        itself (distance to the RECT, not to its corners -- corners put the
+        midpoint of a long wall four tiles 'away' from a building it is
+        touching) or the worn track."""
+        dh = max(bl - tx, 0, tx - br) + max(bt - ty, 0, ty - bb)
+        dt = min([abs(tx - qx) + abs(ty - qy) for qx, qy in _track] or [99])
+        return min(dh, dt)
+
+    for ty in range(lot[2], lot[3] + 1):
+        for tx in range(lot[0], lot[1] + 1):
+            if not _open(tx, ty):
+                continue
+            rough = min(0.85, 0.16 + 0.13 * max(0, _walked(tx, ty) - 1))
+            for _ in range(2 if _wr.random() < rough * 0.5 else 1):
+                if _wr.random() < rough:
+                    sc.add_decoration(Decoration(
+                        tx * TILE + _wr.randint(3, 29),
+                        ty * TILE + _wr.randint(3, 29),
+                        "tall_grass" if _wr.random() < 0.78
+                        else "grass_tuft"))
+
+    # AND THE OUTER RING CARRIES THINGS TOO. The scene ends before the camera
+    # does, so its edge dissolves into black -- which is wanted, and only
+    # works if there is something out there to dissolve. An edge of bare
+    # mown grass stopping dead reads as the end of a level; growth thinning
+    # into the dark reads as the world going on without you. Every side, so
+    # the four facings agree.
+    for ty in range(h):
+        for tx in range(w):
+            inside = (lot[0] <= tx <= lot[1] and lot[2] <= ty <= lot[3])
+            if inside or not _open(tx, ty):
+                continue
+            for _ in range(2):
+                if _wr.random() < 0.55:
+                    sc.add_decoration(Decoration(
+                        tx * TILE + _wr.randint(3, 29),
+                        ty * TILE + _wr.randint(3, 29),
+                        "tall_grass" if _wr.random() < 0.72 else "bush"))
     sc.skybox_kind = "overcast"
     sc.is_yard = True            # the layer marker, as SafePath.is_safe_path
     sc.add_exit(path_char, path_target, path_spawn)
