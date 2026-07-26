@@ -28,7 +28,8 @@ from .brimley import build_brimley
 from .hidden_folds import build_effigy_grove
 from .safe_path import (build_country_lane, build_river_road,
                         build_river_bend,
-                        build_gravel_road_north)
+                        build_gravel_road_north, build_store_row)
+from .yards import build_shop_yard
 from .lost_space import (build_lost_space, build_lost_corn,
                          build_lost_forest, build_lost_road)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
@@ -116,6 +117,10 @@ SCENE_BUILDERS = {
     "river_road":         build_river_road,        # the I run along the water
     "river_bend":         build_river_bend,        # the L, over the bridge
     "gravel_road_north":  build_gravel_road_north,
+    "store_row":          build_store_row,         # the town's first street
+    # THE YARDS (DESIGN.md §15): safe path -> yard -> house, one building
+    # each, never shared.
+    "shop_yard":          build_shop_yard,
     "backwoods_cabin":    build_backwoods_cabin,
     "backwoods_cabin_interior": build_backwoods_cabin_interior,
     "bell_tower":         build_bell_tower,

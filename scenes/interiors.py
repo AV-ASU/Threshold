@@ -161,7 +161,7 @@ def build_shop():
         "W....W.........W",   # 2  office door (col 10, a SIDE wall)
         "WW.WWW....W....W",   # 3  pantry<->stockroom door (col 2)
         "W....W....WWWWWW",   # 4  stockroom | shop | office SW corner (col 10)
-        "W..............W",   # 5  stockroom door (col 5, a SIDE wall)
+        "W..............F",   # 5  stockroom door (col 5); F = out to the yard
         "W....W.........W",   # 6  stockroom | shop
         "W....W.........W",   # 7
         "WWWWWW.........W",   # 8  stockroom S wall closes its SE corner (col 5)
@@ -181,8 +181,15 @@ def build_shop():
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
     sc.add_exit("D", "brimley", "from_shop")
+    # THE YARD DOOR (DESIGN.md §15). The store's own ground is a scene now,
+    # off the store row, and it needs its own way in: a second door in the
+    # east wall, opening onto the yard. The south `D` still goes to Brimley
+    # and stays until Brimley is retired, so both routes are live and each
+    # returns you where you came from.
+    sc.add_exit("F", "shop_yard", "from_shop")
     sc.set_spawn("default", 8, 10)
     sc.set_spawn("from_brimley", 8, 11)      # one tile north of the D door
+    sc.set_spawn("from_shop_yard", 14, 5)    # one tile west of the F door
 
     # The three interior doors (2026-07), a nested chain + one nook, deliberately
     # NOT all in the same wall: the stockroom and office doors sit in SIDE (N-S)

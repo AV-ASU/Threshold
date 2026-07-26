@@ -434,19 +434,32 @@ road in the game is now on it** -- `country_lane` (T), `river_road` (I),
 `arrival_road` keeps its treadmill/render-band machinery but took the same
 cross-section and lamps.
 
-**THE YARD LAYER LANDED** (`DESIGN.md` §15, `scenes/yards.py`): ten Brimley
-yards plus three new small houses for Mrs. Calder, Royce and Garrick, on top of
-`lodge_yard`'s worked example. The vocabulary, the per-household authoring
-rule, and what each of the ten says are in `DESIGN.md` §15; how it landed is
-`CHANGELOG.md`. So all three layers now exist.
+**THE YARD LAYER IS IN PROGRESS** (`DESIGN.md` §15, `scenes/yards.py`).
+**Maintainer, settling the shape:** *"It's safe path -> yard -> house. Each
+building gets its own yard scene. They do not share."* A yard is a SCENE with
+one building in it, not dressed ground inside a bigger map -- `lodge_yard` and
+`backwoods_cabin` were already that shape.
 
-Follow-ons on it, none blocking: the yards do NOT yet open §13 mouths on their
-non-road edges (Brimley sets no `lost_edges` at all, and that waits on the
-restructure decision below); the three new houses have no INTERIORS, which is
-deliberate but is the obvious next ask if the maintainer wants them enterable;
-and the schoolhouse still shows lit windows with a figure behind the glass,
-which predates the layer and now reads oddly beside a yard that says plainly
-that nobody is home.
+**Brimley is kept exactly as it is until the whole town has moved**, then
+retired in one piece. Nothing is deleted from it on the way; the yard scenes
+are built beside it and both routes stay live (an interior gets a SECOND door
+pointing at its yard).
+
+**Done:** the vocabulary and its props; `build_yard_scene`; the network grown
+to carry yards (`gravel_road_north` T -> X, and `store_row`, the first of the
+town's streets); and **`shop_yard`** end to end as the pattern -- 
+`store_row -> shop_yard -> shop`.
+
+**Open:** the remaining nine yards (church, barn, schoolhouse, sheriff's
+office, farmhouse, Toby's, and one each for Mrs. Calder, Royce and Garrick),
+each with its own street arm; a street grows L -> T -> X as households land on
+it. Then, once every building has moved: retire Brimley, and reconcile
+NARRATIVE §5 / DESIGN §7, which still describe the one-square town.
+
+Smaller, still open: yards do not yet open §13 mouths on their non-road edges;
+the three new households have no INTERIORS (deliberate, but the obvious next
+ask); and the schoolhouse's lit windows with a figure behind the glass predate
+the layer and read oddly beside a yard that says nobody is home.
 
 **OPEN, in build order:** (1) the
 rest of the **dark manipulation layer**: the observer-dependent reshuffle

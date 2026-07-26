@@ -2082,12 +2082,31 @@ two real landmarks, a full-width dirt row and the car footprint.)
 
 ## 15. The yards -- a household without a word (TODO #26)
 
-The innermost of the three layers: **interior -> YARD -> safe path <-> lost
-spaces** (`scenes/yards.py`). A yard is one household's own ground, and its
-whole job is to tell you who lives there and what they stopped doing, before
-you knock and without anybody speaking. The seal was January 15 and it is
-April, so whatever is standing in a back garden has been standing there three
-months.
+The innermost of the three layers: **safe path -> YARD -> house**
+(`scenes/yards.py`). A yard is one household's own ground, and its whole job
+is to tell you who lives there and what they stopped doing, before you knock
+and without anybody speaking. The seal was January 15 and it is April, so
+whatever is standing in a back garden has been standing there three months.
+
+**A YARD IS A SCENE.** One building in it, a road exit on one edge and that
+building's door on the other side of the ground you cross. Not a dressed
+patch of a bigger map: the walk from the road to somebody's door is the
+layer, and it only exists if it is a place you travel to.
+`lodge_yard` and `backwoods_cabin` were already this shape;
+`yards.build_yard_scene` is that shape made general, and it hands back the
+scene together with a `Yard` bound to the building so the caller dresses it
+with the vocabulary below instead of counting tiles.
+
+**Each building gets its OWN yard. They are never shared** -- a yard is a
+household's ground, and sharing one flattens the thing the layer exists to
+say.
+
+The chain is wired with ordinary parts, no new engine: the street is a
+`SafePath` like any other and the yard hangs off one of its ARMS, and the
+interior gets a SECOND door in a spare wall pointing at its yard. Which means
+the old route keeps working while the new one lands -- `shop` still has its
+south door to Brimley and now an east door to `shop_yard` -- and nothing has
+to be torn out to build forward.
 
 **The rule that makes it work is that yards DIFFER.** A vocabulary applied
 evenly says the same thing about every house in town, which is exactly what
@@ -2131,10 +2150,19 @@ interior (a room IS the scene) and wrong for a building standing in an
 outdoor map. Local geometry wins now, ranked by the same nearest-edge key, so
 interiors resolve identically.
 
-### What the ten Brimley yards say
+### The town's own streets
 
-`lodge_yard` was the worked example; Brimley's ten are what it generalises
-to, and they are meant to be read against each other.
+The path network grew to carry the yards. `gravel_road_north` was the only
+shipped path with a side that had no road on it, so it went from a T to an X
+and its east arm is the town turning; `store_row` is the first of the town's
+streets, an L that runs off it to the store's gate. A street GROWS as
+households land on it (an L becomes a T becomes an X), so one street ends up
+serving several doors while every yard behind it stays its own.
+
+### What each household says
+
+These read against each other; the table is the plan for all ten, and it is
+what the interim dressing inside the Brimley scene already carries.
 
 | yard | state | what it carries |
 |---|---|---|
@@ -2148,6 +2176,13 @@ to, and they are meant to be read against each other.
 | Royce's house | still fighting | genset running, can already empty, the car nosed out of town and shut, ready to be tried again |
 | Mrs. Calder's house | kept, waiting | the supper table laid out in the open where the road can see it, two settings, a candle burned down, a chair over; her gate stands open |
 | Garrick's house | given up on lights | genset cold, can over; the wood he was splitting when he stopped; a hedge line older than wire |
+
+**Brimley is kept, untouched, until the whole town has moved.** Every
+building, exit, NPC and prop in the 60x60 scene stays exactly as it is and
+keeps working while the yard scenes are built beside it; the town is retired
+in one piece at the end, not eroded a building at a time. Nothing is deleted
+from it on the way. The per-household dressing inside Brimley is the interim
+reading of the table above, and it goes when Brimley does.
 
 **The three small houses.** Mrs. Calder, Royce and Garrick stood on open
 ground with no building at all. The three EMPTY buildings are the wrong three

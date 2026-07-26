@@ -619,6 +619,28 @@ def build_country_lane():
     return sc
 
 
+def build_store_row():
+    """The **L**: the first of the town's own streets.
+
+    It turns east off the gravel road and runs north to the store's gate.
+    This is the layer's connective tissue -- SAFE PATH -> YARD -> HOUSE
+    (DESIGN.md §15) -- and it is a path like any other, which is the point:
+    the walk to somebody's door is on ground that never lies to you, and the
+    yard behind the gate is where that stops being true.
+
+    It grows. Each further household on this side of town takes another arm
+    (an L becomes a T becomes an X), so the street ends up serving several
+    doors while every yard behind it stays its own.
+    """
+    return build_path(
+        "store_row", "wn", 36, 34,
+        verge_char=("C", "A"),
+        exits=(("w", "4", "gravel_road_north", "from_store_row"),
+               ("n", "e", "shop_yard", "from_store_row")),
+        spawns=(("from_gravel_road_north", "w"), ("from_shop_yard", "n")),
+        seed=2039)
+
+
 def build_gravel_road_north():
     """The **T** north of town: Brimley south, the backwoods north, the river
     bend west.
@@ -635,13 +657,18 @@ def build_gravel_road_north():
     """
     W, H = 32, 36
     sc = build_path(
-        "gravel_road_north", "nsw", W, H,
+        "gravel_road_north", "nsew", W, H,
         verge_char=("T", "p"),
         exits=(("s", "a", "brimley", "from_gravel_road"),
                ("n", "e", "backwoods_cabin", "from_road"),
-               ("w", "^", "river_bend", "from_gravel_road_north")),
+               ("w", "^", "river_bend", "from_gravel_road_north"),
+               # THE TOWN TURNING. The T became an X when the town's own
+               # streets started hanging off the network (DESIGN.md §15):
+               # its east flank was the only side of any shipped path with
+               # no road already on it.
+               ("e", "4", "store_row", "from_gravel_road_north")),
         spawns=(("from_brimley", "s"), ("from_backwoods_cabin", "n"),
-                ("from_river_bend", "w")),
+                ("from_river_bend", "w"), ("from_store_row", "e")),
         seed=2031)
     cx, cy = sc.junction
     # THE BOARDED PANEL, still in the east treeline: nailed planks over a

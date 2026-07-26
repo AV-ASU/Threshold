@@ -3690,7 +3690,7 @@ def main():
         if getattr(_s, "lost_edges", None):
             _opted.append(_k)
     check(_opted == ["country_lane", "gravel_road_north", "lodge_yard",
-                     "river_bend", "river_road"],
+                     "river_bend", "river_road", "store_row"],
           "mouth: only the yard and the safe paths open (" + ", ".join(_opted) + ")")
 
     # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
@@ -3708,11 +3708,15 @@ def main():
         if isinstance(_s, SafePath):
             paths[_k] = _s
     check(sorted(paths) == ["country_lane", "gravel_road_north", "river_bend",
-                            "river_road"],
+                            "river_road", "store_row"],
           "path: the network is " + ", ".join(sorted(paths)))
-    # The shape VOCABULARY is actually used -- not four straights.
+    # The shape VOCABULARY is actually used -- not a network of straights.
+    # An INCLUSION, not an equality: the network GROWS as the town's own
+    # streets land (DESIGN.md §15), and a guard that pins the exact shape
+    # multiset fails on every new street rather than on the thing it is
+    # guarding, which is that the vocabulary is real.
     shapes = sorted(shape_of(p.arms) for p in paths.values())
-    check(set(shapes) == {"I", "L", "T"},
+    check({"I", "L", "T"} <= set(shapes) <= {"I", "L", "T", "X"},
           f"path: the network ships an I, an L and a T (got {shapes})")
 
     # NOT TOO THIN (maintainer). A carriageway plus both shoulders.

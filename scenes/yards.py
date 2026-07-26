@@ -28,6 +28,7 @@ fires while the scene is being built, so a bad placement cannot reach a
 capture, let alone a player.
 """
 import math
+import random
 
 from constants import TILE
 from entities.decoration import Decoration
@@ -308,3 +309,189 @@ class Yard(object):
         still being kept by somebody who has not given up on April."""
         return self.put("garden_patch", tx, ty, tended=tended,
                         w=w, h=h, seed=(self.seed if seed is None else seed))
+
+
+# =====================================================================
+# THE YARD AS A SCENE
+# =====================================================================
+# The chain is SAFE PATH -> YARD -> HOUSE, and a yard is its own scene with
+# exactly ONE building in it. `lodge_yard` and `backwoods_cabin` were already
+# this shape; everything below is that shape made general so the rest of the
+# town can be built the same way instead of each one being drawn again.
+#
+# The scene is small on purpose. A yard is the ground you cross between the
+# road and somebody's door -- long enough that arriving is a walk and short
+# enough that the walk is not the point. The building sits clear of the
+# middle, the road exit spans three tiles (an exit you have to thread is a
+# wall), and a worn track runs between the two.
+
+_YARD_W, _YARD_H = 20, 16
+# Which wall of the scene an exit sits in, and the step INTO the scene from it.
+_EDGE_IN = {"n": (0, 1), "s": (0, -1), "e": (-1, 0), "w": (1, 0)}
+
+
+def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
+                     path_side, path_char, path_target, path_spawn,
+                     w=_YARD_W, h=_YARD_H, building=(6, 5), verge=("T", "p"),
+                     music="village", seed=7):
+    """One household's ground: a walled clearing, one building, two ways out.
+
+    Returns `(scene, yard)` -- the scene registered like any other, and a
+    `Yard` already bound to the building's geometry so the caller dresses it
+    with the vocabulary above instead of counting tiles.
+
+    `door_face` is the wall of the BUILDING its door is in; `path_side` the
+    edge of the SCENE the road exit sits in. They are independent: a house
+    can front the road or turn its back on it, and which it does is one of
+    the things a yard says.
+    """
+    from .base import Scene, scatter_forest_band
+
+    bw, bh = building
+    bl = (w - bw) // 2
+    bt = (h - bh) // 2
+    # Push the building AWAY from the road, so the yard is in front of it
+    # rather than wrapped around it: the ground you cross is the layer.
+    ax, ay = _EDGE_IN[path_side]
+    bl += ax * 2
+    bt += ay * 2
+    br, bb = bl + bw - 1, bt + bh - 1
+
+    floor = [["g"] * w for _ in range(h)]
+    objects = [["."] * w for _ in range(h)]
+
+    # the building: wall ring, roof inside, one door punched through a face
+    for x in range(bl, br + 1):
+        objects[bt][x] = objects[bb][x] = "W"
+    for y in range(bt + 1, bb):
+        objects[y][bl] = objects[y][br] = "W"
+        for x in range(bl + 1, br):
+            objects[y][x] = "r"
+    if door_face in ("n", "s"):
+        dtx, dty = (bl + br) // 2, (bt if door_face == "n" else bb)
+    else:
+        dtx, dty = (bl if door_face == "w" else br), (bt + bb) // 2
+    objects[dty][dtx] = door_char
+    dx, dy = _OUT[door_face]
+    out = (dtx + dx, dty + dy)
+
+    # THE ROAD EXIT, three tiles wide across the middle of its edge
+    ex, ey = ((w // 2, 0 if path_side == "n" else h - 1)
+              if path_side in ("n", "s")
+              else (0 if path_side == "w" else w - 1, h // 2))
+    for k in (-1, 0, 1):
+        px, py = (ex + k, ey) if path_side in ("n", "s") else (ex, ey + k)
+        if 0 <= px < w and 0 <= py < h:
+            objects[py][px] = path_char
+
+    # THE TRACK the feet wore between the two, laid on the floor so the
+    # ground itself shows the way in. It ROUTES AROUND the building: a
+    # straight L walked x-then-y goes clean through the house whenever the
+    # door is in a side wall, and paints a dirt path across the roof.
+    tx, ty = out
+    for _ in range(w + h):
+        if (tx, ty) == (ex, ey):
+            break
+        if 0 <= ty < h and 0 <= tx < w and objects[ty][tx] == ".":
+            floor[ty][tx] = "d"
+        # step along whichever axis has further to go, so the track runs
+        # out and then TURNS rather than hugging one column to the map edge
+        # and stopping short of the gate
+        steps = []
+        if abs(ex - tx) >= abs(ey - ty) and tx != ex:
+            steps.append((tx + (1 if ex > tx else -1), ty))
+        if ty != ey:
+            steps.append((tx, ty + (1 if ey > ty else -1)))
+        if tx != ex:
+            steps.append((tx + (1 if ex > tx else -1), ty))
+        nxt = next((st for st in steps
+                    if not (bl <= st[0] <= br and bt <= st[1] <= bb)), None)
+        if nxt is None:
+            break
+        tx, ty = nxt
+
+    # THE EDGE OF THE LOT: a scattered, permeable band, not a one-tile ring
+    # of the verge char. Built as a ring it reads as a FENCE made of corn --
+    # a hard rectangle framing the scene -- and it is also a lie about the
+    # geometry, since a treeline in this game is something you thread. The
+    # same helper the town and the lodge yard use, so a yard's edge is the
+    # same kind of thing as every other outdoor edge.
+    def _keep_clear(tx, ty):
+        if bl - 1 <= tx <= br + 1 and bt - 1 <= ty <= bb + 1:
+            return True                       # the house and its apron
+        if floor[ty][tx] == "d":
+            return True                       # the worn track in
+        if path_side in ("n", "s"):
+            return abs(tx - ex) <= 2          # the gate, and room to aim at it
+        return abs(ty - ey) <= 2
+
+    _bushes = []
+    scatter_forest_band(floor, objects, w, h, depth=3, seed=seed * 31 + 5,
+                        tree_density=0.55, passable_ratio=0.6,
+                        bush_density=0.16,
+                        solid_char=verge[0], passable_char=verge[1],
+                        protected=_keep_clear,
+                        place_bush=lambda px, py: _bushes.append((px, py)))
+
+    sc = Scene(key, ["".join(r) for r in floor],
+               ["".join(r) for r in objects], music=music)
+    for _bx, _by in _bushes:
+        sc.add_decoration(Decoration(_bx, _by, "bush"))
+    # weeds crowding the foundations, so the wall meets the ground in an
+    # overgrown line instead of a cut edge
+    _wr = random.Random(seed * 977 + 13)
+    for _ in range(14):
+        _wx = _wr.randint(bl - 1, br + 1) * TILE + _wr.randint(2, 28)
+        _wy = _wr.choice([bt - 1, bb + 1]) * TILE + _wr.randint(2, 28)
+        if objects[int(_wy // TILE)][int(_wx // TILE)] == ".":
+            sc.add_decoration(Decoration(_wx, _wy, "grass_tuft"))
+    sc.skybox_kind = "overcast"
+    sc.add_exit(path_char, path_target, path_spawn)
+    sc.add_exit(door_char, interior, interior_spawn)
+    sc.set_spawn("default", out[0], out[1])
+    sc.set_spawn("from_" + interior, out[0], out[1])
+    sc.set_spawn("from_" + path_target, ex + ax, ey + ay)
+    yard = Yard(sc, (bl, br, bt, bb), door_face, out,
+                depth=3, flank=2, seed=seed)
+    return sc, yard
+
+
+# ---------------------------------------------------------------------
+# THE SHIPPING YARDS. One per building, none shared.
+# ---------------------------------------------------------------------
+
+def build_shop_yard():
+    """HETTIE'S. The store's own ground, off the store row.
+
+    She is the one person in Brimley still performing normality at full
+    volume -- open, lit, swept -- so her yard is the KEPT one, and every
+    piece of it is a thing she is still doing on a schedule nobody needs
+    any more. The genset runs, the can beside it is full, and the box out
+    at the gate is empty because she walks out and empties it every
+    morning and nothing has come since January.
+
+    The one thing she is NOT still doing is the delivery, because it was
+    never hers: the crates the last truck left are broken open at the side
+    of the building where they were dropped, and they will not be
+    collected (NARRATIVE §1, the severed supply).
+    """
+    sc, y = build_yard_scene(
+        "shop_yard",
+        door_face="e", door_char="D",
+        interior="shop", interior_spawn="from_shop_yard",
+        path_side="s", path_char="e",
+        path_target="store_row", path_spawn="from_shop_yard",
+        verge=("C", "A"), building=(7, 5), seed=37)
+    # KEPT, and every piece of it is an errand she is still running to a
+    # schedule nobody needs. The genset burns and the can beside it is full.
+    y.step()
+    y.genset(running=True, side="s", along=0.25)
+    y.crates(y.right + 2, y.bot, opened=True)
+    y.mailbox(y.left + 6, 14, toward="s", full=False)
+    y.fence("s", at=14, span=(2, 17), gap=y.out[0] - 3)
+    y.hedge("w", n=7, at=y.left - 3, span=(2, 12))
+    # her burn barrel, out where she can see the road from it
+    sc.add_decoration(Decoration((y.left - 1) * TILE + 16,
+                                 (y.bot + 3) * TILE + 16,
+                                 "burn_barrel", seed=62))
+    return sc
