@@ -225,17 +225,32 @@
     no solid pupil at all -- just a soft additive bloom and a tiny hot core.
     Bloom size was picked off a 4-way sweep rendered at r=68/26/13 rather than
     tuned at preview size alone.
-  - **"Black creatures in black environments are invisible"** (maintainer).
-    Amalgams now carry a visibility GLOW: a blurred silhouette halo, then the
-    body PUNCHED back to near-black over it, so the glow reads as a rim and the
-    creature stays a shadow you can locate. Fenced as draw-only -- not in
+  - **"Black creatures in black environments are invisible"** (maintainer),
+    answered the wrong way twice before the maintainer supplied the right one:
+    *"can't you just give each sprite a white border pixel? ... The glowing
+    mist isn't good."* The failed attempts are recorded because the reasoning
+    generalises. A bloom must be BRIGHT to register, and brightness spread over
+    a near-black body reads as a glowing spirit, so every tuning pass just
+    traded "too dim to find" for "pale ghost" -- first too subtle, then washed
+    out, then a rim-with-punched-body that was better but still misty. The
+    answer is a one-pixel OUTLINE (`_outline`, `AMALGAM_EDGE`): it states the
+    EDGE and spends nothing on VALUE, so the body stays exactly as black as it
+    was, and it stays sharp at small sizes where a blur is only fog. Each part
+    strokes separately, which is right -- they are separate apertures and
+    nothing touches. **Bone, not gold**, though gold was offered: gold is the
+    PORTAL language (the rift, the folds, and the cuts below), so a gold
+    outline would blur the distinction the family is built on -- the holes are
+    gold, the flesh coming through them is not. Pure white read as a sticker
+    against the Darkwood-dark palette. Fenced as draw-only: not in
     `Scene._LIGHT_KINDS` or `FIXTURE_POOLS`, casts no pool, invisible to
     `lit_at`, so it cannot deny a Watcher a spawn spot or gate the lost-space
-    mouth. Two rendering traps on the way, both worth knowing: tinting a sprite
-    with `BLEND_RGBA_MULT` does NOTHING when the sprite is near-black
-    (near-black x anything is near-black), and an additive blit does not weight
-    by alpha, so stencilling the alpha channel alone lights the whole sprite
-    RECTANGLE. The RGB has to be premultiplied by the mask (`_emissive`).
+    mouth.
+    Two rendering traps found while the glow was still being attempted, kept
+    because they are easy to repeat: tinting a sprite with `BLEND_RGBA_MULT`
+    does NOTHING when the sprite is near-black (near-black x anything is
+    near-black), and an additive blit does not weight by alpha, so stencilling
+    the alpha channel alone lights the whole sprite RECTANGLE -- the RGB has to
+    be premultiplied by the mask.
   - **The cuts wear the rift's GOLD** (`CUT_RIM` / `CUT_RIM_HOT` + a faint
     bleed), so every hole He opens reads as one portal family with the fold and
     the King rift. This was already the approved direction in #25; it is now

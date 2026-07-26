@@ -236,10 +236,16 @@ its head) and pings the cult to **investigate the body**, and the body
   rim lip on the absent side, haze the only tissue; nothing touches).
   **Its CUTS wear the rift's GOLD** (`CUT_RIM`, 2026-07): an aperture He opens
   reads as the same portal family as the fold / King rift (§7), not a separate
-  cold-blue phenomenon. **And an amalgam carries a visibility GLOW** -- a rim
-  halo with the body punched back to near-black behind it, so a shadow in a
-  black room can be SEEN and located while still reading as a shadow. It is
-  **presentation only** and must stay so: it is not in `Scene._LIGHT_KINDS` or
+  cold-blue phenomenon. **And each part is OUTLINED** (`AMALGAM_EDGE`, one bone
+  pixel around its silhouette) so a shadow in a black room can be seen and
+  located while staying as black as it ever was. A blurred glow was tried first
+  and cut: a bloom has to be BRIGHT to register, and brightness spread over a
+  near-black body reads as a glowing spirit rather than a shadow. An outline
+  states the EDGE and spends nothing on VALUE. Bone and not gold on purpose --
+  **gold is the portal language** here (the rift, the folds, and an amalgam's
+  own cuts all wear it), so a gold outline would blur the distinction the
+  family is built on: the holes are gold, the flesh coming through them is not.
+  It is **presentation only** and must stay so: it is not in `Scene._LIGHT_KINDS` or
   `FIXTURE_POOLS`, casts no pool, and is invisible to `lit_at`, so it can never
   deny a Watcher a spawn spot, burn anything, or gate the lost-space mouth. The
   creature is visible, not lit.
