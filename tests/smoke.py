@@ -484,28 +484,81 @@ def check_no_diagonal_wall_joins():
     return errors
 
 
+def check_yard_scene_shapes():
+    """EVERY door-face x road-side layout a yard scene can be asked for.
+
+    WHY THIS CHECK: `build_yard_scene` is a generator, and the town will ask it
+    for sixteen different layouts before it is finished -- a house can face the
+    road, turn its back on it, or stand side-on. Only ONE of those sixteen had
+    ever been built, and four of them were broken: where the door faces AWAY
+    from the road, the worn track walked into the house, found every step
+    blocked and stopped in the middle of the lot, so the ground never showed
+    the way in. That is invisible in the one shipping yard and would have been
+    invisible in the next three.
+    """
+    from scenes.yards import build_yard_scene
+    errors = 0
+    for df in "nesw":
+        for ps in "nesw":
+            key = "_probe_%s%s" % (df, ps)
+            sc, y = build_yard_scene(
+                key, door_face=df, door_char="D", interior="shop",
+                interior_spawn="a", path_side=ps, path_char="e",
+                path_target="store_row", path_spawn="b", seed=11)
+            gate = [(tx, ty) for ty in range(sc.h) for tx in range(sc.w)
+                    if sc.objects[ty][tx] == "e"]
+            region = _flood(sc, y.out[0], y.out[1])
+            if not any(_reachable(region, gx, gy) for gx, gy in gate):
+                errors += fail("%s: the road exit is unreachable from the door"
+                               % key)
+            dirt = {(tx, ty) for ty in range(sc.h) for tx in range(sc.w)
+                    if sc.floor[ty][tx] == "d"}
+            if not dirt:
+                errors += fail("%s: no worn track at all" % key)
+            elif not any(abs(dx - gx) + abs(dy - gy) <= 1
+                         for dx, dy in dirt for gx, gy in gate):
+                errors += fail("%s: the worn track never reaches the gate "
+                               "(it strands in the lot)" % key)
+            want = set("nesw") - {ps}
+            if set((sc.lost_edges or {}).keys()) != want:
+                errors += fail("%s: mouths on %s, want %s"
+                               % (key, sorted(sc.lost_edges or {}),
+                                  sorted(want)))
+            sp = sc.spawns.get("from_store_row")
+            if sp is None or sc.is_solid_at(sp[0], sp[1]):
+                errors += fail("%s: the road spawn is missing or solid" % key)
+            onsolid = sorted({d.kind for d in sc.decorations
+                              if sc.is_solid_at(d.x, d.y)})
+            if onsolid:
+                errors += fail("%s: decorations on solid tiles: %s"
+                               % (key, onsolid))
+    return errors
+
+
 def main():
     failures = 0
-    print("[1/10] scene builders ...")
+    print("[1/11] scene builders ...")
     failures += check_scene_builds()
-    print("[2/10] spawn walkability + non-overlapping with exits ...")
+    print("[2/11] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/10] exits resolve to target spawns ...")
+    print("[3/11] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/10] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/11] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/10] canonical evidence beats wired to scenes ...")
+    print("[5/11] canonical evidence beats wired to scenes ...")
     failures += check_canonical_evidence_wired()
-    print("[6/10] per-run state reset coverage ...")
+    print("[6/11] per-run state reset coverage ...")
     failures += check_reset_coverage()
-    print("[7/10] sprite-seed variant coverage (all 6 cultist masks) ...")
+    print("[7/11] sprite-seed variant coverage (all 6 cultist masks) ...")
     failures += check_sprite_seed_variants()
-    print("[8/10] no dead movement-mode / sprite-kind labels ...")
+    print("[8/11] no dead movement-mode / sprite-kind labels ...")
     failures += check_no_dead_labels()
-    print("[9/10] no raw furniture tiles (invisible under tilt) ...")
+    print("[9/11] no raw furniture tiles (invisible under tilt) ...")
     failures += check_no_raw_furniture_tiles()
-    print("[10/10] no diagonal-only wall joins in slab scenes ...")
+    print("[10/11] no diagonal-only wall joins in slab scenes ...")
     failures += check_no_diagonal_wall_joins()
+    print("[11/11] every yard-scene layout routes door -> gate ...")
+    failures += check_yard_scene_shapes()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

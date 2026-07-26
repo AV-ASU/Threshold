@@ -272,11 +272,16 @@ it renders the procedural sprites to a labelled PNG strip.
     channel keeps `RIVER_BANK` tiles of bank clear so the water is SEEN, and a
     crossing gets a paved deck plus a `bridge_rail` parapet down both lips.
     Ships `country_lane` (T) / `river_road` (I) / `river_bend` (L).
-  - `scenes/yards.py` — **the YARDS** (`Yard`; the SYSTEM is `DESIGN.md` §15):
-    the innermost of the three layers (INTERIOR → **YARD** → path ↔ lost
-    spaces). A yard's job is to tell you about a household without anybody
-    speaking, so the module is deliberately THIN and the authoring is PER
-    HOUSEHOLD: `Yard` knows only the building's footprint, which face the door
+  - `scenes/yards.py` — **the YARDS** (the SYSTEM is `DESIGN.md` §15):
+    **SAFE PATH → YARD → HOUSE.** A yard is the innermost of the three layers
+    and it is a **SCENE** — one building in it, a road exit on one edge and
+    that building's door on the other side of the ground you cross; never a
+    dressed patch of a bigger map. **Each building gets its own; they are
+    never shared.** Every edge that is not the road is a §13 mouth.
+    `build_yard_scene` makes the scene (footprint, door, road exit, the worn
+    track routed AROUND the house, the verge band and the lot inside it);
+    `Yard` is the vocabulary you dress that lot with, deliberately THIN and
+    authored PER HOUSEHOLD: `Yard` knows only the building's footprint, which face the door
     is in, and the walkable tile outside it, and offers the vocabulary against
     that geometry (`step` / `genset` / `mailbox` / `fence` / `hedge` /
     `woodpile` / `washing` / `crates` / `bed` / `siding` / `put`). WHAT a yard
@@ -289,8 +294,11 @@ it renders the procedural sprites to a labelled PNG strip.
     never on the wall tile, or the wall's own volume paints over it. The genset
     is the layer's keystone (`running=False` also passes `broken`, which both
     light tables read, so a dark bulb and dark ground can never disagree).
-    Ships ten yards in `brimley` plus three new small houses (facade door `l`,
-    no interior) for Mrs. Calder, Royce and Garrick.
+    Ships `shop_yard` off `store_row` as the worked chain. **Brimley is kept
+    exactly as it is** until the whole town has moved into yard scenes, then
+    retired in one piece; its ten in-scene yard dressings and three new small
+    houses are the INTERIM and go when it does. An interior served by a yard
+    gets a SECOND door pointing at it, so both routes stay live meanwhile.
   - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
     the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt

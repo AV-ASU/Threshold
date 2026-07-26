@@ -3702,6 +3702,26 @@ def main():
     check(not _stray and "lodge_yard" in _opted,
           "mouth: only yards and safe paths open (" + ", ".join(_opted)
           + (" -- STRAY: " + ", ".join(_stray) if _stray else "") + ")")
+    # AND THE POSITIVE HALF, which generalising the guard above dropped on the
+    # floor: "no stray scene opens" is only half the rule. A yard whose edges
+    # silently stopped opening would have sailed through, and that is the more
+    # likely regression of the two -- it is a missing call, not an added one.
+    _shut = []
+    for _k in sorted(_SB_M):
+        try:
+            _s = _ls_m(_k)
+        except Exception:
+            continue
+        if not getattr(_s, "is_yard", False):
+            continue
+        _road = [c for c, v in _s.exits.items() if not v[0].startswith("lost_")
+                 and _s.key not in v[0]]
+        _want = set("nesw") - set((_s.lost_edges or {}).keys())
+        if len(_want) != 1 or len(_s.lost_edges or {}) != 3:
+            _shut.append("%s opens %s" % (_k, sorted((_s.lost_edges or {}))))
+    check(not _shut,
+          "mouth: every yard opens its three non-road edges"
+          + (" -- " + "; ".join(_shut) if _shut else ""))
 
     # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
     # The layer's promise is mechanical, so every part of it is checked

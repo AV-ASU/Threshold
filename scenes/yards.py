@@ -1,24 +1,39 @@
 """THE YARD LAYER -- a household's own ground, read without anybody speaking.
 
-The middle of the three layers (interior -> YARD -> safe path <-> lost
-spaces; DESIGN.md §14). A yard's job is to tell you who lives here and what
-they stopped doing, before you knock and without a line of dialogue: the seal
-was January 15 and it is April, so three months of stasis is sitting in
-everyone's back garden.
+**SAFE PATH -> YARD -> HOUSE** (`DESIGN.md` §15). A yard is the INNERMOST of
+the three layers and it is a SCENE: one building in it, a road exit on one
+edge, and that building's door on the other side of the ground you cross. Not
+a dressed patch of a bigger map -- the walk from the road to somebody's door
+IS the layer, and it only exists if it is a place you travel to. `lodge_yard`
+and `backwoods_cabin` were already this shape.
 
-`lodge_yard` was the worked example and this is what it generalises to. The
-class is deliberately thin -- it knows the BUILDING's geometry (its footprint,
-which face the door is on, and where the walkable tile outside it is) and
-nothing else, so every placement can be expressed relative to that instead of
-as a tile number somebody has to keep in their head. What goes in a yard stays
-a per-household decision written out in the scene, because the whole point of
-the layer is that the yards DIFFER.
+A yard's job is to tell you who lives there and what they stopped doing,
+before you knock and without a line of dialogue: the seal was January 15 and
+it is April, so three months of stasis is sitting in everyone's back garden.
+Every edge that is not the road is a §13 MOUTH -- a yard is the last lit
+ground before the world stops caring, and the way you came is the only way
+that stays true.
 
-    y = Yard(sc, rect=(6, 11, 8, 12), face="e", out=church_out, depth=4)
+TWO THINGS LIVE HERE.
+
+`build_yard_scene` builds the scene: the footprint, the door, the road exit,
+the worn track routed AROUND the house, the verge band, and the lot inside it.
+
+`Yard` is the vocabulary you dress that lot with. It is deliberately thin --
+it knows the BUILDING's geometry (its footprint, which face the door is in,
+and the walkable tile outside it) and nothing else, so every placement is
+expressed against that instead of as a tile number somebody has to keep in
+their head:
+
+    sc, y = build_yard_scene("shop_yard", door_face="e", ...)
     y.step()
-    y.genset(running=True)
-    y.mailbox(14, 10)
-    y.fence("s", gap=True)
+    y.genset(running=True, side="s")
+    y.mailbox(14, 10, full=False)
+    y.fence("s", at=y.lot[3], gate=y.out[0])
+
+WHAT a yard says stays a per-household decision written out in the scene,
+because the whole point of the layer is that the yards DIFFER. A vocabulary
+applied evenly says the same thing about every house in town.
 
 WHY THE PLACEMENT ASSERT. Every yard piece goes through `put`, which refuses a
 tile that is the building, the door, or the door's approach. That is playtest
@@ -399,30 +414,39 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
             objects[py][px] = path_char
 
     # THE TRACK the feet wore between the two, laid on the floor so the
-    # ground itself shows the way in. It ROUTES AROUND the building: a
-    # straight L walked x-then-y goes clean through the house whenever the
-    # door is in a side wall, and paints a dirt path across the roof.
-    tx, ty = out
-    for _ in range(w + h):
-        if (tx, ty) == (ex, ey):
+    # ground itself shows the way in.
+    #
+    # ROUTED, not walked. Two earlier versions stepped greedily from the door
+    # toward the gate and refused to enter the house: the first painted a
+    # dirt path across the roof whenever the door was in a side wall, and the
+    # second stranded the track in the middle of the lot for every layout
+    # where the door faces AWAY from the road -- it would walk out, find both
+    # candidate steps blocked by the building, and stop. Four of the sixteen
+    # door-face x road-side combinations were broken, which is exactly the
+    # kind of thing that hides when only one of them has ever been built.
+    # A breadth-first search over the tiles that are not the house always
+    # finds the way round if there is one, so the router cannot strand it.
+    _blocked = set()
+    for _by in range(bt, bb + 1):
+        for _bx in range(bl, br + 1):
+            _blocked.add((_bx, _by))
+    _prev, _q = {out: None}, [out]
+    while _q:
+        _cur = _q.pop(0)
+        if _cur == (ex, ey):
             break
-        if 0 <= ty < h and 0 <= tx < w and objects[ty][tx] == ".":
-            floor[ty][tx] = "d"
-        # step along whichever axis has further to go, so the track runs
-        # out and then TURNS rather than hugging one column to the map edge
-        # and stopping short of the gate
-        steps = []
-        if abs(ex - tx) >= abs(ey - ty) and tx != ex:
-            steps.append((tx + (1 if ex > tx else -1), ty))
-        if ty != ey:
-            steps.append((tx, ty + (1 if ey > ty else -1)))
-        if tx != ex:
-            steps.append((tx + (1 if ex > tx else -1), ty))
-        nxt = next((st for st in steps
-                    if not (bl <= st[0] <= br and bt <= st[1] <= bb)), None)
-        if nxt is None:
-            break
-        tx, ty = nxt
+        for _dx, _dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            _n = (_cur[0] + _dx, _cur[1] + _dy)
+            if (_n in _prev or _n in _blocked
+                    or not (0 <= _n[0] < w and 0 <= _n[1] < h)):
+                continue
+            _prev[_n] = _cur
+            _q.append(_n)
+    _at = (ex, ey) if (ex, ey) in _prev else None
+    while _at is not None:
+        if objects[_at[1]][_at[0]] == ".":
+            floor[_at[1]][_at[0]] = "d"
+        _at = _prev[_at]
 
     # THE LOT is kept ground and the band stops at its line. Left to grow
     # where it liked, the scatter put standing corn in the middle of a
