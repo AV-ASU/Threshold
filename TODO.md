@@ -26,13 +26,48 @@
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — remaining revisit-nudges
+### 1. **[Fable]** Make evidence ASKABLE — the investigation loop
 
-The ask-questions conversation engine shipped for all five principals plus
-the chorus (`CHANGELOG.md`, "Close-up tableaux & the dialogue verb").
-**Still open:** `_REVISIT_NUDGES` entries for Hettie, Toby, and Crane as
-their case hooks land — a discovery should nudge the PI back to ask them
-about it, the way `the_preacher` already points back to Vane.
+**Reframed by the 2026-07 story audit** (which superseded this ticket's old
+"remaining revisit-nudges" scope: nudges tell the player to go ask, and #13b
+is cutting them; a question that is simply THERE when he arrives is the same
+beat without the hand-holding).
+
+**What the audit measured.** Of 31 authored questions across the whole cast,
+three opened on something the PI had found, and two of those three were the
+Ledger, which is not case evidence. Not one of the five canonical pieces
+except the journal opened a question anywhere. You could lift Mara's booking
+slip out of the Sheriff's own cabinet and never mention it to the Sheriff.
+Finding and asking were parallel activities that never touched, so the case
+accumulated instead of compounding, and the town went inert once every
+principal's rows were spent.
+
+**The shape.** A find should open a question with the person it came from,
+or the person it points at. No new systems: the engine already does it with
+`avail` + `beats`, and every piece of the pattern is worked in Vane.
+
+**LANDED: the detention night, the pilot** (`CHANGELOG.md`). The photograph
+now earns the booking slip off Vane himself (he booked her, so he recognizes
+her); the office drawer demoted to the dead/hollow fallback; the slip opens
+`the_night`, his account of the arrest, filed as a statement note; and his
+answer leaves a second witness as plain stated fact, unpointed.
+
+**Open, in build order:**
+- **Garrick's witness** — canon since NARRATIVE §6 and DESIGN §9 and still
+  unbuilt: he saw her curse at the sky, and Vane's `the_night` now points at
+  him without naming him. He has exactly one question today. This closes the
+  detention night at both ends and is the payoff for the pilot's unpointed
+  lead, so it goes first.
+- **The receipt** → Hettie (a year of her own handwriting), Vane (paper with
+  dates, his stated appetite).
+- **The journal** → Crane (she sat his pews twice, so he can date when she
+  stopped), Toby (the barn he named).
+- **Not the deep two.** The dig leaf and the letter reach nobody by design;
+  there is no one down there to tell, and that isolation is doing work.
+
+**Fences:** a statement is a note, never evidence (NARRATIVE §6); the lead is
+stated, never pointed at (no "I should go ask him" append, #13b); every new
+line lands in `DIALOGUE.md` in the same commit.
 
 ### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
 
@@ -690,6 +725,13 @@ compression pass (#4b).
 - **The corn is mundane, never the door's doing.** Keep the impossible
   count at **one**: the single unexplained door, everything else ordinary
   cause-and-effect downstream of it.
+- **Sable's misdirection is never resolved in text** (maintainer ruling,
+  2026-07 story audit). He points suspicion at the cold old families;
+  Hettie says the warm easy ones went soonest. They contradict each other,
+  Sable is the wrong one, and **that is on purpose and for the player to
+  notice.** Do NOT build a beat where the PI puts one man's line to the
+  other, and do NOT file a note that draws the conclusion. The audit
+  flagged this as a gap; it is not one.
 - **No dashes in player-facing text** (HARD RULE; flow-guarded).
 - **L5 — complexity hotspots (awareness only, not a ticket).** The largest
   function bodies (`tests/flow.py main`, `scenes/brimley.build_brimley`,

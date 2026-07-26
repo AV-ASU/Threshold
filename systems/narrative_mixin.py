@@ -445,7 +445,7 @@ class NarrativeMixin:
             return
         notes.insert(0, {"name": "the_case", "lines": [
             "Client: Walter Blaine, Minneapolis. Wants his girl home.",
-            "Subject: his daughter Mara, 26. Drove north in the fall, quit"
+            "Subject: his daughter Mara, 24. Drove north in the fall, quit"
             " calling home by the new year, and that was the last of her.",
             "I told him what he already knew. She's grown, and nobody makes a"
             " grown woman come home who won't. \"See what you can do,\" he"

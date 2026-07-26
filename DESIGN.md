@@ -1280,10 +1280,31 @@ temperature though the player walks them in any order:
 The NPC is the **warm delivery** (show the photograph, they react and
 hand it over); the paper is **world-persistent**, so it outlives them
 (the Sable-drop precedent: the receipt is still on the shop spike, the
-record still in the office files, if the local is dead) — **no
-soft-lock, no looting a corpse required.** This makes Hettie, Vane, and
-Toby the load-bearing locals, and deepens three who were already
-central rather than inventing new ones.
+record still in the office files) — **no soft-lock, no looting a corpse
+required.** This makes Hettie, Vane, and Toby the load-bearing locals,
+and deepens three who were already central rather than inventing new
+ones.
+
+**The fallback is a fallback, not a second front door.** The paper opens
+only once the person can no longer hand it over — Hettie dead, Vane dead
+or **hollow** (his despair latch is reachable before the photograph ever
+comes out, so it counts). While they still stand there, the drawer and
+the spike refuse. Leave both paths live at once and the warm delivery
+becomes optional set-dressing on a pickup, which is how the record shipped
+for months: an `[E]` on a filing cabinet, liftable from a Sheriff who had
+never been spoken to and whose answer to her photograph did not mention
+the night he arrested her.
+
+**A find should open a question.** The trail is walked, and each piece of
+it is worth carrying back to the person it came from: the paper says what
+was written down, and the person says what they saw. Vane is the worked
+model at both ends — the photograph earns the booking slip, and the slip
+opens `the_night`, his account of the arrest, which is a **statement**
+(a note, never counted) and which leaves a second witness as a plain
+stated fact. **The lead is never pointed at.** He says the man who
+fetched him sits the square all day; he does not say Garrick, and no PI
+line closes the gap. Connecting it is the player's, and that act is the
+whole difference between investigating and collecting.
 
 **The secret fourth — the bear.** The private Mara, against the three
 public records. The PI is numb everywhere but soft with children, and

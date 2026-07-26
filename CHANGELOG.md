@@ -32,6 +32,65 @@
 
 ## Evidence & the case
 
+- **2026-07 — The story audit, and the detention night (the investigation-loop
+  pilot; `TODO.md` #1).** A story audit aimed at "make investigating feel much
+  better" measured the loop instead of describing it, and what it found was
+  that there was no loop. Of 31 authored questions across the whole cast,
+  **three** opened on something the PI had found, and two of those three were
+  the Ledger, which is not case evidence. Every `evidence_maras_*` flag was
+  read by nothing but its own re-fire guard and the derived theory/timeline.
+  Two of the three surface pieces needed no investigation at all: the journal
+  a walk-over in the barn, the record an `[E]` on a filing cabinet. So finding
+  and asking were parallel activities that never touched — the case
+  accumulated rather than compounding, and once each principal's rows were
+  spent the town went inert with nothing left to bring anyone.
+
+  The sharpest instance was the record, which had also quietly stopped
+  implementing its own design: `DESIGN.md` §9 specifies the NPC as the **warm
+  delivery** (show the photograph, they react and hand it over) with the paper
+  world-persistent as the no-soft-lock fallback. The receipt did exactly that
+  through Hettie. The record did not — and worse, **Vane's answer to Mara's
+  photograph did not mention that he had arrested her.** He takes her picture
+  to the window, works it corner to corner, and places her only as "one of the
+  new folk," about a woman he personally booked, held overnight and signed a
+  slip for four months earlier. That is `DIALOGUE.md` voice rule 5 (knowledge
+  the speaker can have) and it threw away the best investigative beat on the
+  surface.
+
+  **What shipped (the pilot, scoped to Vane on the maintainer's direction).**
+  The photograph is now a recognition: he knows the face, names the December
+  night, and goes to the files, handing the slip over mid-exchange through a
+  `("do", grant_record)` beat. `grant_record` is the single funnel both ways
+  in share, mirroring `grant_receipt`. The office records drawer is demoted to
+  the **fallback**, opening only once he is no longer the man behind the desk —
+  dead **or hollow**. The hollow case is a real hazard rather than a
+  hypothetical: the newspaper (+2) and the preacher's murder (+1) latch the
+  turn at `VANE_HOLLOW_AT`, which a player can reach before ever showing him
+  the photograph, so without the fallback that ordering would have soft-locked
+  the descent. Both are guarded.
+
+  Holding the slip then opens **`the_night`**, his account of the arrest: the
+  paper says what he wrote down, this is what he saw, and it files as a
+  **statement** note (`the_disturbance`), never counted. Its last beat leaves a
+  second witness as a plain stated fact — the man who fetched him sits the
+  square all day — and **the lead is never pointed at.** He does not say
+  Garrick, and no PI line closes the gap; connecting it is the player's, which
+  is the whole difference between investigating and collecting, and the
+  opposite move from the revisit-nudges #13b is cutting.
+
+  Also from the audit: **Mara was two different ages.** The case-file intake
+  said 26 in both its surfaces while the booking slip said `AGE: 24` on a date
+  four months before the present — in the one class of text the game asks the
+  player to read as self-evident, and the two are read side by side in the
+  Casebook. The maintainer ruled 24; the fact now has one home in
+  `NARRATIVE.md` §4 and a guard holds the intake and the slip together.
+
+  **Ruled, not built:** Sable's misdirection (he points at the cold old
+  families, Hettie says the warm ones went soonest) stays unresolved in text.
+  The audit flagged it as a gap and the maintainer ruled it deliberate and for
+  the player to notice, so it is now a standing fence in `TODO.md` against a
+  later session "fixing" it.
+
 - **2026-07 — Evidence reworked into Mara's trail (`TODO.md` #22, `DESIGN.md`
   §9, `NARRATIVE.md` §6).** The original model was a "pool of six, any 3"
   evidence set. Run against a rubric (must be Mara's, must be a pickup item,

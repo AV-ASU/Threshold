@@ -999,6 +999,44 @@ def _vane_share(game):
     _vane_ledger(game, VANE_HOPE_ACT)
 
 
+# Mara's booking slip -- surface evidence (the record; NARRATIVE §6,
+# DESIGN.md §9). WORLD-PERSISTENT on the same contract as Hettie's tab, and
+# the same warm delivery: the way in is VANE HIMSELF (show him the
+# photograph, and the man who booked her goes to the files), while the
+# office records drawer is only the FALLBACK, opened once he is no longer
+# the man behind that desk -- shot, or turned hollow -- so neither can
+# soft-lock the descent. Both ways funnel HERE so it can never double-fire.
+def grant_record(game):
+    if game.save.flag("evidence_maras_record"):
+        return
+    game.player.inventory.add("detention_record", 1)
+    game.audio.play("pickup_rare", 0.7)
+    # Files silently and reads from the item (its desc carries the slip); the
+    # log excerpt is the case entry.
+    _evidence(game, "maras_record", [
+        "A booking slip in the Sheriff's records. Blaine, Mara.",
+        "Held a night for a disturbance on the main road, shouting at "
+        "the sky. Released at dawn, no charge filed.",
+    ], show=False)
+    if hasattr(game, "show_notice"):
+        game.show_notice("Her booking slip.")
+
+
+def _vane_night_told(game):
+    """His account of the detention night -- a STATEMENT, so it files as a
+    note, never evidence (NARRATIVE §6). The slip says what he wrote down;
+    this is what he saw, and what he did not: he came late to it, fetched by
+    a man who watches the square. The lead is left as the fact he states,
+    with no PI line pointing at who that is."""
+    _log_note(game, "the_disturbance", [
+        "Vane booked her the eleventh of December. Middle of the main road "
+        "at night, head back, shouting at nothing he could see. Not drunk "
+        "and not hurt.",
+        "He came late to it. One of the men who sits the square fetched "
+        "him, and watched the whole of it before the law got there.",
+    ])
+
+
 def _vane_paper_given(game):
     """The newspaper handed to Vane (TODO #2: his is a TRAP, not a
     gift). To a man who wants it all to end, the front page reads as
@@ -1158,12 +1196,24 @@ VANE_CONVO = {
         ],
         photo_beats=[
             ("npc", "(He takes it to the window light and works it corner "
-                    "to corner, a lawman's look.)"),
-            ("npc", "The new folk came in numbers and they kept to their "
-                    "own. She'd have been one of them."),
-            ("npc", "They filled the school, the barn, the lodge. Then one "
-                    "night those rooms were empty, all at once. Wherever "
-                    "your girl is, that's the direction."),
+                    "to corner, a lawman's look. Then he stops working "
+                    "it.)"),
+            ("npc", "I know that face. I had her in my cell one night in "
+                    "December."),
+            ("pi", "You booked her."),
+            ("npc", "Disturbance on the main road, near midnight. She was "
+                    "not drunk and she was not hurt, so I held her till "
+                    "first light and let her go. No charge. There was "
+                    "nothing to charge her with."),
+            ("npc", "She thanked me for the blanket. Polite as Sunday. "
+                    "Then she walked back out into it."),
+            ("npc", "(He goes to the files and comes back with a slip, and "
+                    "holds it out without reading it.) Take it. It is the "
+                    "only paper in this office with her name on it."),
+            ("do", grant_record),
+            ("npc", "The new folk filled the school, the barn, the lodge. "
+                    "Then one night those rooms were empty, all at once. "
+                    "Wherever your girl is, that's the direction."),
         ],
     ) + [
         {
@@ -1195,6 +1245,37 @@ VANE_CONVO = {
             "q": "What happened to this town, Sheriff?",
             "label": "What happened to this town?",
             "beats": _vane_town_beats,
+        },
+        # The detention night, opened by the slip itself: the paper says
+        # what he WROTE DOWN, and this is what he saw. He came late to it,
+        # and the man who fetched him watched the whole of it -- the lead is
+        # left as the plain fact he states (he sits the square), with no PI
+        # line pointing at who that is. Finding it is the player's.
+        {
+            "key": "the_night",
+            "q": "Tell me about the night you booked her. What was she "
+                 "doing out on that road?",
+            "label": "The night you booked her.",
+            "avail": lambda g: (g.save.flag("convo_vane_photo_asked")
+                                and g.save.flag("evidence_maras_record")),
+            "once": True,
+            "on_ask": _vane_night_told,
+            "beats": [
+                ("npc", "I did not see the start of it. By the time I "
+                        "walked up she was standing in the middle of the "
+                        "road with her head back."),
+                ("pi", "Shouting at what?"),
+                ("npc", "Nothing that was there. Words, plain enough, and "
+                        "not one of them for me. I could not tell you a "
+                        "single one now."),
+                ("npc", "I have booked drunks and I have booked men out of "
+                        "their heads. She was neither. She was answering "
+                        "somebody."),
+                ("pi", "Who came and got you?"),
+                ("npc", "One of the old boys who sits the square all day. "
+                        "He stood and watched the whole of it before he "
+                        "ever thought to come for me."),
+            ],
         },
         # The SHARES (DESIGN.md §2): the PI bringing a real discovery to the
         # one other investigator in town. Each opens as its find lands,

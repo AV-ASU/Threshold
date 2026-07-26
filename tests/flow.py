@@ -570,10 +570,22 @@ def main():
     check(ge.player.inventory.has("receipt")
           and has_evidence(ge, "maras_receipt"),
           "shop: Hettie hands over the store tab shown Mara's photo (surface evidence)")
-    fire(ge, "sheriff_office", "_record_pos")          # maras_record
+    # The booking slip is Vane's WARM handover on the same contract: he
+    # booked her himself, so the photograph is a recognition and he goes to
+    # the files. The office records drawer is only the world-persistent
+    # FALLBACK for a Sheriff who is dead or hollow, so it must REFUSE while
+    # the man still keeps that desk.
+    from scenes.dialogue import VANE_CONVO as _VCE
+    fire(ge, "sheriff_office", "_record_pos")
+    check(not ge.player.inventory.has("detention_record"),
+          "office: the records drawer refuses while Vane still keeps the desk")
+    _vphoto_ex = next(ex for ex in _VCE["exchanges"] if ex["key"] == "photo")
+    for _vb in _vphoto_ex["beats"]:
+        if _vb[0] == "do":
+            _vb[1](ge)                                 # maras_record
     check(ge.player.inventory.has("detention_record")
           and has_evidence(ge, "maras_record"),
-          "office: the booking slip is a world-persistent pickup (surface evidence)")
+          "office: Vane hands over the booking slip shown Mara's photo (surface evidence)")
     # The journal is a WALK-OVER pickup now (play-notes), not an [E] interact.
     ge.load_scene_now("barn")
     ready(ge)
@@ -612,6 +624,16 @@ def main():
     fire(gwp, "sheriff_office", "_record_pos")
     check(has_evidence(gwp, "maras_record"),
           "persist: the booking slip is reachable with Vane recorded dead")
+    # And with Vane HOLLOW, the other way to lose the man behind the desk.
+    # This one is a real soft-lock hazard, not a hypothetical: the newspaper
+    # (+2) and the preacher's murder (+1) latch the hollow turn at
+    # VANE_HOLLOW_AT, which a player can reach before ever showing him the
+    # photograph. The drawer has to open for him too.
+    ghv = new_game()
+    ghv.save.set_flag("vane_hollow", True)
+    fire(ghv, "sheriff_office", "_record_pos")
+    check(has_evidence(ghv, "maras_record"),
+          "persist: the booking slip is reachable with Vane gone hollow")
 
     # --- 10. The Kid is the witness (NARRATIVE §4): tells, grants no item ---
     from scenes.dialogue import TOBY_CONVO as _TOBY_CV
@@ -1837,6 +1859,56 @@ def main():
           "vane: taking the cabinet arms the office ammo drop")
     check(not _cache["avail"](gca),
           "vane: the cabinet does not re-offer once given")
+
+    # (Vane, the detention night) The booking slip is a WARM DELIVERY off the
+    # photograph (NARRATIVE §6 / DESIGN.md §9): the man who booked her
+    # recognizes her and goes to the files, and the office records drawer is
+    # only the world-persistent fallback for a Vane who is dead or hollow.
+    # The night exchange opens on the slip and files a STATEMENT note.
+    from scenes.dialogue import grant_record as _gr
+    _vphoto = next(ex for ex in _VC["exchanges"] if ex["key"] == "photo")
+    _pbeats = [b for b in _vphoto["beats"] if b[0] == "do"]
+    check(any(b[1] is _gr for b in _pbeats),
+          "vane: showing him the photograph hands over the booking slip")
+    check(any("booked her" in b[1] for b in _vphoto["beats"]
+              if b[0] == "pi"),
+          "vane: he recognizes a woman he personally booked")
+    grc = new_game()
+    _gr(grc)
+    check(grc.player.inventory.has("detention_record"),
+          "vane: the warm handover puts the slip in the coat")
+    check(any(isinstance(e, dict) and e.get("name") == "maras_record"
+              for e in grc.save.arg("evidence", [])),
+          "vane: the handover files the record as canonical evidence")
+    _gr(grc)
+    check(grc.player.inventory.count("detention_record") == 1,
+          "vane: the slip can never double-fire across its two ways in")
+    _night = next(ex for ex in _VC["exchanges"] if ex["key"] == "the_night")
+    gnt = new_game()
+    check(not _night["avail"](gnt), "vane: the night waits on the slip")
+    gnt.save.set_flag("convo_vane_photo_asked", True)
+    gnt.save.set_flag("evidence_maras_record", True)
+    check(_night["avail"](gnt), "vane: the slip opens the night he booked her")
+    _night["on_ask"](gnt)
+    check(any(isinstance(e, dict) and e.get("name") == "the_disturbance"
+              for e in gnt.save.arg("notes", [])),
+          "vane: his account of the night files as a NOTE")
+    check(not any(isinstance(e, dict) and e.get("name") == "the_disturbance"
+                  for e in gnt.save.arg("evidence", [])),
+          "vane: testimony never counts toward the gate")
+    check(not any("square" in b[1] for b in _night["beats"] if b[0] == "pi"),
+          "vane: the witness lead is stated, never pointed at (no nudge)")
+
+    # (Mara's age) The intake and the booking slip are read side by side in
+    # the Casebook; they must agree. She is 24 (NARRATIVE §4).
+    from systems.items import ITEM_DEFS as _IDF
+    gage = new_game()
+    gage._log_case_entry()
+    _intake = " ".join(next(n["lines"] for n in gage.save.arg("notes", [])
+                            if n.get("name") == "the_case"))
+    check("Mara, 24" in _intake, "case: the intake puts Mara at 24")
+    check("AGE: 24" in _IDF["detention_record"]["desc"],
+          "case: the booking slip agrees with the intake")
 
     # (Vane tableau, #2b) Talking to Vane opens the office close-up: the
     # conversation runs in tableau presentation mode, the close-up's POSE

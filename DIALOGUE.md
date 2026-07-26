@@ -241,10 +241,29 @@ intro:" / "Opener photo:").
   - (pi) "If I were one of them, would I be standing in the law's office announcing myself?"
   - (npc) "No. No, they never had questions. That's the one thing you've got going for you."
   - (npc) "I'd head home if I were you. I'm supposed to say that."
-- **Opener photo:**
-  - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look.)"
-  - (npc) "The new folk came in numbers and they kept to their own. She'd have been one of them."
-  - (npc) "They filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction."
+- **Opener photo** (the WARM DELIVERY of the booking slip, NARRATIVE §6: he
+  personally booked her, so the photograph is a recognition, not a shrug. The
+  `("do", grant_record)` beat hands the slip over mid-exchange; the office
+  records drawer is only the fallback for a dead or hollow Vane):
+  - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look. Then he stops working it.)"
+  - (npc) "I know that face. I had her in my cell one night in December."
+  - (pi) "You booked her."
+  - (npc) "Disturbance on the main road, near midnight. She was not drunk and she was not hurt, so I held her till first light and let her go. No charge. There was nothing to charge her with."
+  - (npc) "She thanked me for the blanket. Polite as Sunday. Then she walked back out into it."
+  - (npc) "(He goes to the files and comes back with a slip, and holds it out without reading it.) Take it. It is the only paper in this office with her name on it."
+  - (npc) "The new folk filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction."
+- **Exchange `the_night`** (avail: photo shown + the record held; once; files
+  the `the_disturbance` note) — "The night you booked her." / "Tell me about
+  the night you booked her. What was she doing out on that road?" — the slip
+  says what he WROTE DOWN; this is what he saw, and what he did not. The lead
+  it leaves (a man who sits the square all day) is stated as plain fact and
+  never pointed at: connecting it to Garrick is the player's.
+  - (npc) "I did not see the start of it. By the time I walked up she was standing in the middle of the road with her head back."
+  - (pi) "Shouting at what?"
+  - (npc) "Nothing that was there. Words, plain enough, and not one of them for me. I could not tell you a single one now."
+  - (npc) "I have booked drunks and I have booked men out of their heads. She was neither. She was answering somebody."
+  - (pi) "Who came and got you?"
+  - (npc) "One of the old boys who sits the square all day. He stood and watched the whole of it before he ever thought to come for me."
 - **Exchange `car`** — "My car died the night I drove in." / "My car died at the lodge steps the night I drove in. It won't turn over now." (files the fold note, no chained reflection)
   - (npc) "Won't start. Won't ever. Nothing with an engine leaves Brimley."
   - (pi) "Engines don't all quit at once. Somebody got to it."
@@ -620,10 +639,18 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   headed 'M. Blaine' in her hand." / "Matches, canned milk, the same short
   list run down most of a year. The staples a resident buys, week on week." /
   "She lived here."
-- **`maras_record`** (`_office_interact`, `scenes/villager_houses.py`): "A
-  booking slip in the Sheriff's records. Blaine, Mara." / "Held a night for a
-  disturbance on the main road, shouting at the sky. Released at dawn, no
-  charge filed." Pickup notice: "Her booking slip."
+- **`maras_record`** (`grant_record`, `scenes/dialogue.py`; the WARM handover
+  is Vane's photo opener in Part A, the office records drawer only the
+  fallback once he is dead or hollow): "A booking slip in the Sheriff's
+  records. Blaine, Mara." / "Held a night for a disturbance on the main road,
+  shouting at the sky. Released at dawn, no charge filed." Pickup notice:
+  "Her booking slip."
+- **`the_disturbance`** (`_vane_night_told`, note; his account of the
+  detention night, a STATEMENT so it never counts): "Vane booked her the
+  eleventh of December. Middle of the main road at night, head back, shouting
+  at nothing he could see. Not drunk and not hurt." / "He came late to it.
+  One of the men who sits the square fetched him, and watched the whole of it
+  before the law got there."
 - **`maras_journal`** (`_barn_update`, `scenes/interiors.py`; a walk-over
   pickup, fires the door-dream ON PICKUP, files quietly): "A notebook,
   shoved down behind the workbench. You know the hand. It's hers." / "Her
@@ -781,7 +808,7 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 The Case tab's derived text (`systems/narrative_mixin.py`; TODO #13). All
 first person, none of it evidence.
 - **`the_case`** (the intake, seeded at run start): "Client: Walter Blaine,
-  Minneapolis. Wants his girl home." / "Subject: his daughter Mara, 26.
+  Minneapolis. Wants his girl home." / "Subject: his daughter Mara, 24.
   Drove north in the fall, quit calling home by the new year, and that was
   the last of her." / "I told him what he already knew. She's grown, and
   nobody makes a grown woman come home who won't. \"See what you can do,\"
@@ -1130,7 +1157,7 @@ text:
   draws the eye."
   - **The case file** (`_tableau_read_case`, sets `read_journal`): "CLIENT:
     Walter Blaine. Wants his daughter found and brought home." / "MARA BLAINE,
-    26. Cut ties, drove north, quit calling home. The trail runs cold at
+    24. Cut ties, drove north, quit calling home. The trail runs cold at
     Brimley." / "The job: ask my questions, find the girl, drive home by
     morning." / "The drive in was easy. Then the engine died at the lodge
     steps and wouldn't catch again."
