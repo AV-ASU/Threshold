@@ -348,6 +348,36 @@ CRANE_CONVO = {
     ) + [
         # Earned by the intro: his "they arrived too easy" answer is what
         # the PI is following up on.
+        # TODO #1: the DISCOVERY-gated question. The per-discovery revisit
+        # nudge ("...I should go back and ask him") was cut as hand-holding;
+        # what was always meant to carry it is this -- the follow-up
+        # QUESTION opening on the evidence itself, the way Vane's
+        # share_journal / share_ledger do. Crane's frame is that the
+        # congregation were led off, and a man who is led off can be led
+        # back. Her own hand is what takes that away from him.
+        {
+            "key": "share_journal",
+            "q": "The young woman from your back pew. I have her journal "
+                 "now. She wrote that she was digging, and that she had "
+                 "never been happier.",
+            "label": "I found the girl's journal.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("convo_crane_intro_asked")
+                                and g.save.flag("evidence_maras_journal")),
+            "beats": [
+                ("npc", "(He takes a long while over that.)"),
+                ("npc", "I have buried people who went hard and people who "
+                        "went easy. I never buried one who went glad."),
+                ("npc", "I have been preaching at them like men who were "
+                        "led off. A man who is led off can be led back."),
+                ("pi", "And if he walked?"),
+                ("npc", "Then there is nothing in my book for him. My book "
+                        "is for the lost. She is not lost. She is gone, and "
+                        "she went on her own two feet."),
+                ("npc", "[c=dim]I will say the words on Sunday regardless. "
+                        "Somebody has to say them at something.[/c]"),
+            ],
+        },
         {
             "key": "flock",
             "q": "You watch this town from a pulpit. Tell me about the "
@@ -596,6 +626,30 @@ TOBY_CONVO = {
                     "what you carry.[/c]"),
         ],
     ) + [
+        # TODO #1: the discovery-gated question. The journal came out of
+        # the barn, and Toby is the one who watched the barn fill up.
+        {
+            "key": "share_barn",
+            "q": "I found something of hers pushed down behind the "
+                 "workbench in the barn. You said they slept in there.",
+            "label": "I found her book in the barn.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("convo_toby_intro_asked")
+                                and g.save.flag("evidence_maras_journal")),
+            "beats": [
+                ("npc", "They did. All down both sides of it, on the "
+                        "straw."),
+                ("npc", "I used to get shooed out of that barn. Then it "
+                        "was full of them and nobody shooed anybody."),
+                ("npc", "[c=dim]They kept their boots on to sleep. All of "
+                        "them. I remember because my mom would never let "
+                        "me.[/c]"),
+                ("pi", "Did any of them ever talk to you?"),
+                ("npc", "The lady in your picture did. She asked me my "
+                        "name, and then she said it back to me a couple of "
+                        "times, like she wanted to keep it."),
+            ],
+        },
         {
             "key": "home",
             "q": "How are things at home? Anything strange?",
@@ -767,6 +821,30 @@ HETTIE_CONVO = {
     ) + [
         # Earned by the intro: she only said "don't go where they tell
         # you it's safe" to a man who told her what he is.
+        # TODO #1: the discovery-gated question. The booking slip puts
+        # Mara's worst night on this street, and Hettie's value has always
+        # been what it costs her to say a thing out loud.
+        {
+            "key": "share_record",
+            "q": "The Sheriff kept a slip on her. Held one night for "
+                 "shouting at the sky on the main road, let go at dawn. "
+                 "That was out there, on this street.",
+            "label": "The Sheriff booked her one night.",
+            "once": True,
+            "avail": lambda g: (g.save.flag("convo_hettie_intro_asked")
+                                and g.save.flag("evidence_maras_record")),
+            "beats": [
+                ("npc", "(She stops wiping the counter.)"),
+                ("npc", "I heard her. Everybody on this street heard her."),
+                ("npc", "Middle of the night, stood out there saying it "
+                        "over and over, and not one door opened. Mine "
+                        "least of all."),
+                ("npc", "We listened to a girl come apart in the road and "
+                        "we let the Sheriff carry her off it."),
+                ("npc", "[c=dim]I have thought about that door of mine a "
+                        "good deal since.[/c]"),
+            ],
+        },
         {
             "key": "safe",
             "q": "You said don't go where they tell me it's safe. Who is "

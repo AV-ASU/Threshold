@@ -1798,6 +1798,32 @@ def main():
     _qsj["on_ask"](gvh)
     check(_qhow["avail"](gvh),
           "gate: the intro plus a shared discovery opens the how")
+    # TODO #1: the OTHER three principals now carry a discovery-gated
+    # question too, so a find has somewhere to go besides Vane. The ticket
+    # asked for `_REVISIT_NUDGES` entries; those were cut as hand-holding
+    # (scenes/dialogue.py), and the surviving contract is exactly this --
+    # the follow-up QUESTION opening on the evidence itself. Guard both
+    # halves: shut before the discovery, open after it.
+    from scenes.dialogue import (HETTIE_CONVO as _HC, CRANE_CONVO as _CC,
+                                 TOBY_CONVO as _TC)
+    for _who, _convo, _key, _intro, _eviden in (
+            ("hettie", _HC, "share_record", "convo_hettie_intro_asked",
+             "maras_record"),
+            ("crane", _CC, "share_journal", "convo_crane_intro_asked",
+             "maras_journal"),
+            ("toby", _TC, "share_barn", "convo_toby_intro_asked",
+             "maras_journal")):
+        _g = new_game()
+        _ex = next(e for e in _convo["exchanges"] if e["key"] == _key)
+        check(not _ex["avail"](_g),
+              f"gate: {_who}'s {_key} is shut cold")
+        _g.save.set_flag(_intro, True)
+        check(not _ex["avail"](_g),
+              f"gate: the intro alone does not open {_who}'s {_key}")
+        _evfn2(_g, _eviden, "a", show=False)
+        check(_ex["avail"](_g),
+              f"gate: the discovery opens {_who}'s {_key}")
+
     _ev_h = len(gvh.save.arg("evidence", []))
     _vane_how_told(gvh)
     check(any(isinstance(e, dict) and e.get("name") == "the_how"

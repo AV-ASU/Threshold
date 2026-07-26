@@ -808,6 +808,34 @@
 
 ## Close-up tableaux & the dialogue verb
 
+- **2026-07 — A find has somewhere to go besides Vane (TODO #1).** The
+  ticket asked for `_REVISIT_NUDGES` entries for Hettie, Toby and Crane, and
+  it was written before those nudges were cut: the per-discovery
+  "...I should go back and ask him" append was removed as hand-holding, and
+  the comment that replaced it states the surviving contract outright, that
+  "the follow-up QUESTION still opens on the same evidence in each NPC's
+  conversation, so nothing is lost but the hand-holding append". So the
+  ticket was delivered through that contract rather than by reinstating the
+  thing a play-note had already ruled out. An audit found Vane alone had
+  questions gated on real DISCOVERIES (`share_journal`, `share_ledger`); the
+  other three were gated only on conversational state. Each now has one:
+  - **Hettie ← the booking slip.** It puts Mara's worst night on her street,
+    and Hettie's value has always been what it costs her to say a thing out
+    loud: everybody heard the girl come apart in the road, and not one door
+    opened, hers least of all.
+  - **Crane ← the journal.** His whole frame is that the congregation were
+    led off, and a man who is led off can be led back. Her own hand takes
+    that away from him: he has buried people who went hard and people who
+    went easy, and never one who went glad.
+  - **Toby ← the barn**, where the journal was found and which he watched
+    fill up with strangers who kept their boots on to sleep. He is the one
+    person Mara spoke to, and what he reports is that she asked his name and
+    said it back to him a few times, like she wanted to keep it.
+  - Guarded both ways in `tests/flow.py`: each question is shut cold, stays
+    shut on the intro alone, and opens on the discovery. Verified to fail by
+    dropping the evidence half of one gate.
+
+
 - **2026-07 -- #13b interior-voice trim, first pass.** The maintainer's
   grievance was that "every interaction does something and never leaves the
   player thinking" -- on-screen narrator captions fire on nearly every

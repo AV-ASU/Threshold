@@ -26,14 +26,6 @@
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — remaining revisit-nudges
-
-The ask-questions conversation engine shipped for all five principals plus
-the chorus (`CHANGELOG.md`, "Close-up tableaux & the dialogue verb").
-**Still open:** `_REVISIT_NUDGES` entries for Hettie, Toby, and Crane as
-their case hooks land — a discovery should nudge the PI back to ask them
-about it, the way `the_preacher` already points back to Vane.
-
 ### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
 
 The newspaper's one-copy, six-recipient choice shipped as the pilot
