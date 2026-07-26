@@ -2077,3 +2077,83 @@ boards moved out onto the verge. (One flow guard had to change with it: the
 band-is-landmark-free check tested for "no `d` in the row", which was a valid
 proxy only while dirt appeared solely on the E-W crossing; it now tests the
 two real landmarks, a full-width dirt row and the car footprint.)
+
+---
+
+## 15. The yards -- a household without a word (TODO #26)
+
+The innermost of the three layers: **interior -> YARD -> safe path <-> lost
+spaces** (`scenes/yards.py`). A yard is one household's own ground, and its
+whole job is to tell you who lives there and what they stopped doing, before
+you knock and without anybody speaking. The seal was January 15 and it is
+April, so whatever is standing in a back garden has been standing there three
+months.
+
+**The rule that makes it work is that yards DIFFER.** A vocabulary applied
+evenly says the same thing about every house in town, which is exactly what
+the layer exists not to do. So the module is thin and the authoring is per
+household: a `Yard` knows the building's footprint, which face the door is
+in, and the walkable tile just outside it, and offers the vocabulary against
+that geometry. What any one yard actually says is written out in the scene.
+
+### The vocabulary
+
+A yard PICKS from this; it never gets all of it.
+
+| piece | what it says | code |
+|---|---|---|
+| **the genset** | the fastest sentence in town, one per yard. Running: a warm work-bulb and a fuel can standing. Dead: a cold bulb and the can on its side. `running=False` also passes `broken`, which both light tables read to stop a fixture emitting, so the dark bulb and the dark ground can never disagree. | `Yard.genset` |
+| **one interrupted task, and only one** | firewood half split with the axe still in the round; washing frozen on the line since winter; the delivery crates nobody came back for; a bed turned over in autumn and never planted. | `woodpile` / `washing` / `crates` / `bed` |
+| **the mail** | deliveries stopped with the fold. Still stuffed with January's last one, or hanging open ever since. It sits on the seam where the yard meets the safe path. | `Yard.mailbox` |
+| **an occupancy tell from the ROAD** | before you commit to the path: the track worn through the dead grass or grown over, a lit window, the genset's pool at night. | the scene's `_carve_track` + the `i` window tiles |
+| **the car that will not start** | everyone drove in and nothing leaves (NARRATIVE §1). How it is PARKED is the characterisation: squared away by somebody who gave up early, or slewed at the road with the driver's door still open by somebody who tried and walked back (`door_open` on the `rust_*` kinds). | `base.dead_cars` |
+| **a boundary that is not a wall** | wire on leaning posts with one bay's wire down, or an overgrown hedge line. It has to read as an edge and be pushed through, because mechanically this is where a §13 mouth sits. | `Yard.fence` / `Yard.hedge` |
+| **a step** | something between the ground and the door, so going in reads as arriving. | `Yard.step` |
+| **the WRONG yard** | for a lot a newcomer took: the same vocabulary, subtly off. Crates squared away too neatly, a husk thing by the step, the door-motif chalked on the siding where the weather has nearly taken it. | `Yard.siding` + the cult dressing already on that lot |
+
+**The minimum for any yard:** a boundary, a step, one interrupted task, and
+one occupancy tell.
+
+### The placement assert
+
+Every piece goes through `Yard.put`, which refuses three tiles: the building
+itself, the door, and the door's one approach. That is playtest error class
+#8 (a prop across the way in) turned into a build-time failure instead of
+something you find by rendering four facings and noticing. `Yard.siding` is
+the one exception and has its own rule: a `_WALL_DECO` goes on the OPEN tile
+the wall faces, never on the wall tile, because a wall decoration is drawn at
+its own position and depth-sorted against the walls -- one placed on the wall
+tile sits inside the wall's own volume and is painted over by it.
+
+`terrain._wall_normal` reads which side the wall is on from the same
+neighbours. It used to answer "the nearest scene EDGE", which is right for an
+interior (a room IS the scene) and wrong for a building standing in an
+outdoor map. Local geometry wins now, ranked by the same nearest-edge key, so
+interiors resolve identically.
+
+### What the ten Brimley yards say
+
+`lodge_yard` was the worked example; Brimley's ten are what it generalises
+to, and they are meant to be read against each other.
+
+| yard | state | what it carries |
+|---|---|---|
+| church | kept, then stopped mid-sentence | genset running for a congregation that is under the ground; the axe still in the round; a hedge line into the burying ground |
+| barn | **canon-empty** (NARRATIVE §3) | the congregation's washing still frozen on the line, the genset cold with the can over, the fence trodden through where the feet went |
+| shop | occupied, lit | Hettie's genset running; the delivery crates broken open and never collected; a box she still walks out to that is always empty |
+| schoolhouse | **canon-empty** | the spring bed turned over and never planted, the fence slack, the genset cold, the calendar by the door stopped on the same day |
+| sheriff's office | occupied, failing | the ONE yard where the machine runs and the can beside it is already empty; his car slewed at the spine with the door still open |
+| farmhouse | **the wrong yard** | crates squared too neatly, a husk thing by the step, the door-motif chalked on the siding, the genset cold because whoever is here does not need light |
+| Toby's house | lived in, a child in it | the wood half split with the axe still in the block, because whose job that was went below; the one tended bed left in town |
+| Royce's house | still fighting | genset running, can already empty, the car nosed out of town and shut, ready to be tried again |
+| Mrs. Calder's house | kept, waiting | the supper table laid out in the open where the road can see it, two settings, a candle burned down, a chair over; her gate stands open |
+| Garrick's house | given up on lights | genset cold, can over; the wood he was splitting when he stopped; a hedge line older than wire |
+
+**The three small houses.** Mrs. Calder, Royce and Garrick stood on open
+ground with no building at all. The three EMPTY buildings are the wrong three
+to move them into: the schoolhouse and the barn are where the congregation
+bedded down before they went below and the farmhouse is abandoned in its own
+name (NARRATIVE §3/§4), and walking into that emptiness is a beat. So they
+got new 5x4 houses with the FACADE door `l` -- solid, closed, no interior
+modelled. The yard is what tells you about the household; the door only has
+to be a door somebody comes out of.

@@ -387,6 +387,63 @@
   the module docstring, all of which had stated lamp coverage as the
   mechanism.
 
+- **2026-07 -- THE YARDS: ten households, ten yards (`TODO.md` #26 step 1,
+  `DESIGN.md` §15, `scenes/yards.py`).** The innermost of the three layers,
+  and the last one missing. `lodge_yard` had been dressed by hand as the
+  worked example; this is what it generalises to, plus the three people in
+  Brimley who had no building at all.
+  **The design finding is that the module had to stay thin.** A yard's job is
+  to tell you about a household without anybody speaking, and a vocabulary
+  applied evenly says the same thing about every house in town -- which is
+  the one thing the layer exists not to do. So `Yard` knows only the
+  building's geometry (footprint, which face the door is in, the walkable
+  tile outside it) and offers the vocabulary against it; WHAT any one yard
+  says is authored per household in `brimley.py`. The genset carries most of
+  it: running at five yards, running beside an already-empty can at Sheriff
+  Vane's alone, cold at four more for four different reasons, none of them
+  stated in words.
+  **Three new small houses** for Mrs. Calder, Royce and Garrick, rather than
+  moving them into the three empty buildings -- the schoolhouse and barn are
+  where the congregation bedded down before they went below and the farmhouse
+  is abandoned in its own name (NARRATIVE §3/§4), and walking into that
+  emptiness is a beat. They use the FACADE door `l` (solid, closed, no
+  interior modelled). Mrs. Calder's laid supper table moved onto her own lot
+  with her; it had been standing in open ground three lots away, which read
+  as nobody's.
+  `Yard.put` refuses the building, the door and the door's one approach, so
+  playtest error class #8 (a prop across the way in) is a build-time failure
+  instead of something you find by rendering four facings.
+  **What the looking turned up, each fixed rather than noted.** A boundary of
+  picked field STONES was the first version and it shipped as a parade of
+  pale grey tents: `boulder` is a fresh-broken rock at (92, 92, 100), and
+  nine in a row were the palest thing in a Darkwood-dark yard, pulling the
+  eye to the least important object on the lot. It is a hedge now. The
+  generator's first work-light was a cone shade, which under a 55-degree
+  camera you look down INTO -- so the one part carrying the household's state
+  was occluded from every facing; it is a droplight whose bulb hangs wider
+  than its cap. The barn's clothesline was first strung behind the barn,
+  geometrically fine and somewhere no player would ever stand. A `door_open`
+  car door painted as two flat quads projects to a sliver, so it is built as
+  a real slab. And `terrain._wall_normal` answered "the nearest scene EDGE",
+  which is right for an interior and wrong for a building in an outdoor map:
+  a mark chalked on the farmhouse's siding in a 60x60 town was mounted
+  against a map edge and drew into nothing. Local geometry wins now, ranked
+  by the same key, so every interior renders byte-identical.
+  **Four props joined the vocabulary.** `generator` moved onto the prop
+  pipeline with a real reference and a `running` variant (the hand-written
+  draw deleted, not left to disagree with what ships); `fuel_can` (NATO jerry
+  can, `tipped` when empty); `clothesline` (washing out since January hangs
+  STIFF, which is what flat-sided parts are good at); `crate_stack` (the
+  deliveries that stopped, and its `opened` crate comes OFF the stack,
+  because an open crate built in place reads as a shut one under a downward
+  camera).
+  **Two tools were lying and got fixed in passing.** `tools/kind.py` did not
+  know the `ASSEMBLIES` table, so it reported every parts-built prop as
+  "NONE -- draws as a FLAT STAIN", which is the single question it exists to
+  answer. `tools/preview_props_sheet.py` crashed on a boolean kwarg, which
+  meant the only variant anybody ever previewed was the default -- on a
+  vocabulary that is almost entirely boolean variants.
+
 - **2026-07 -- THE SAFE PATH: the lit spine (`TODO.md` #26 step 1,
   `DESIGN.md` §14).** The middle of the three layers, and the last one
   missing after the mouth closed the loop. The maintainer asked for "safe

@@ -272,6 +272,25 @@ it renders the procedural sprites to a labelled PNG strip.
     channel keeps `RIVER_BANK` tiles of bank clear so the water is SEEN, and a
     crossing gets a paved deck plus a `bridge_rail` parapet down both lips.
     Ships `country_lane` (T) / `river_road` (I) / `river_bend` (L).
+  - `scenes/yards.py` — **the YARDS** (`Yard`; the SYSTEM is `DESIGN.md` §15):
+    the innermost of the three layers (INTERIOR → **YARD** → path ↔ lost
+    spaces). A yard's job is to tell you about a household without anybody
+    speaking, so the module is deliberately THIN and the authoring is PER
+    HOUSEHOLD: `Yard` knows only the building's footprint, which face the door
+    is in, and the walkable tile outside it, and offers the vocabulary against
+    that geometry (`step` / `genset` / `mailbox` / `fence` / `hedge` /
+    `woodpile` / `washing` / `crates` / `bed` / `siding` / `put`). WHAT a yard
+    says is written out in the scene, because a vocabulary applied evenly says
+    the same thing about every house in town, which is the one thing the layer
+    exists not to do. **Every piece goes through `put`**, which refuses the
+    building, the door and the door's one approach, so error class #8 (a prop
+    across the way in) is a build-time failure. `siding` is the exception and
+    has the opposite rule: a `_WALL_DECO` goes on the OPEN tile the wall faces,
+    never on the wall tile, or the wall's own volume paints over it. The genset
+    is the layer's keystone (`running=False` also passes `broken`, which both
+    light tables read, so a dark bulb and dark ground can never disagree).
+    Ships ten yards in `brimley` plus three new small houses (facade door `l`,
+    no interior) for Mrs. Calder, Royce and Garrick.
   - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
     the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
@@ -834,6 +853,15 @@ section is the CODE MAP only — where each system lives:
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+  **`tools/kind.py` answers "which set is it in" for any kind** (including the
+  `ASSEMBLIES` table), so ask it rather than grepping the tables by hand.
+  **A `_WALL_DECO` goes on the OPEN tile the wall FACES, never on the wall
+  tile.** It is drawn at its own position and depth-sorted against the walls,
+  so one placed on the wall tile sits inside that wall's volume and is painted
+  over by it: correct-looking code, nothing on screen. `terrain._wall_normal`
+  reads which side the wall is on from the same neighbours (local geometry
+  first, the nearest-scene-edge rule only as a fallback, so an outdoor building
+  and an interior both resolve).
   **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
   `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius the
   stealth `lit_at`/shadow-cover gate reads) AND `FIXTURE_POOLS`

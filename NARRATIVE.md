@@ -256,13 +256,23 @@ never predation.
 
 - **Brimley (surface).** One connected sprawl, one continuous town: the
   well at the centre, the church, the store, the sheriff's office, the
-  school, the barn, the kid's house, the named locals on their stoops,
-  and the car at the edge. The well is a dead town shaft — dread
-  set-dressing, and the descent runs elsewhere. The **grid died with the
-  seal** (the power lines run to the outside the fold no longer reaches,
-  §1), so the town keeps its lights on with **gasoline generators** now —
-  the same severed-supply logic as the stopped trucks and dead phones;
-  nobody sabotaged it, the fold did.
+  school, the barn, the kid's house, the small houses the rest of the
+  named locals keep, and the car at the edge. The well is a dead town
+  shaft — dread set-dressing, and the descent runs elsewhere. The **grid
+  died with the seal** (the power lines run to the outside the fold no
+  longer reaches, §1), so the town keeps its lights on with **gasoline
+  generators** now — the same severed-supply logic as the stopped trucks
+  and dead phones; nobody sabotaged it, the fold did.
+- **Everybody in Brimley has a doorstep, and the ground in front of it
+  says what the household is.** The seal was January 15 and it is April,
+  so every yard in town is holding three months of a stopped errand: wood
+  half split, washing frozen on a line, a bed turned over and never
+  planted, deliveries nobody came back for. The generator is the plainest
+  of them — running with a can of gasoline standing beside it, or cold
+  with the can empty on its side. None of this is ever said out loud by
+  anyone. The three empty buildings (the school and the barn, where the
+  congregation bedded down; the farmhouse, abandoned in its own name)
+  have yards that read empty too.
 - **The Arcadia Lodge.** The two-storey hotel the PI is staying at: the
   common room (Sable's reception desk keeps the clean sign-in book and the
   lead pointing down), a guest wing of mostly-locked rooms kept empty and

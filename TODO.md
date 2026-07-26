@@ -432,96 +432,31 @@ maintainer's own lamp pattern, and the river both seen and crossed. **Every
 road in the game is now on it** -- `country_lane` (T), `river_road` (I),
 `river_bend` (L) and `gravel_road_north` (T) are path scenes, and
 `arrival_road` keeps its treadmill/render-band machinery but took the same
-cross-section and lamps. So two of the three layers exist. The missing one is
-the YARD.
+cross-section and lamps.
 
-**THE YARDS (maintainer: "I want each house to have its own yard").** Brimley
-has **seven enterable buildings**, so **seven yards**, one each, plus the
-Lodge's existing one: church, barn, shop, schoolhouse, sheriff's office, the
-abandoned farmhouse, Toby's house. (An earlier pass proposed grouping the
-three facing PAIRS into shared yards; overruled -- a yard is a household's
-own ground, and sharing one flattens exactly the thing the layer exists to
-say.)
+**THE YARD LAYER LANDED** (`DESIGN.md` §15, `scenes/yards.py`): ten Brimley
+yards plus three new small houses for Mrs. Calder, Royce and Garrick, on top of
+`lodge_yard`'s worked example. The vocabulary, the per-household authoring
+rule, and what each of the ten says are in `DESIGN.md` §15; how it landed is
+`CHANGELOG.md`. So all three layers now exist.
 
-**Who has a doorstep and who does not (audited).** Hettie stands at the shop,
-Vane at his office, Crane at the church, Toby at his house. **Mrs. Calder,
-Royce and Garrick stand on open ground with no building at all**, and Old
-Pell loiters at the schoolhouse step, which is not his (he is the
-`vanish=False` homebody precisely because that room is empty).
+Follow-ons on it, none blocking: the yards do NOT yet open §13 mouths on their
+non-road edges (Brimley sets no `lost_edges` at all, and that waits on the
+restructure decision below); the three new houses have no INTERIORS, which is
+deliberate but is the obvious next ask if the maintainer wants them enterable;
+and the schoolhouse still shows lit windows with a figure behind the glass,
+which predates the layer and now reads oddly beside a yard that says plainly
+that nobody is home.
 
-**On filling the empty three with them:** the maintainer's "we can put people
-without houses into some empty ones" is right in principle but the three
-empty buildings are the wrong three. The **schoolhouse** and the **barn** are
-where the congregation bedded down before they went below (NARRATIVE §3/§4),
-and their cobwebbed emptiness is a story beat the player is meant to walk
-into; the **farmhouse** is abandoned in its own name. Moving locals in
-overwrites all three. So: **add three small houses** for Calder, Royce and
-Garrick instead. A corn town has more than seven buildings anyway, the yard
-layer wants more to do, and an empty yard that reads empty is one of the best
-details the layer can carry.
-
-**WHAT GOES IN A YARD** (the vocabulary; a yard picks from it, it does not
-get all of it). The point of the layer is that you learn a household without
-talking to anyone.
-
-- **The genset, one per occupied yard, and its state IS the household's.**
-  The grid died with the seal and the town runs on gasoline (NARRATIVE §5).
-  Running: a warm work-bulb, a fuel can standing beside it. Dead: cold, the
-  can empty on its side. One glance tells you if anyone is still keeping the
-  place. It is already a prop, it is a light source, a noise source, and it
-  makes the blackout (#21) land per house instead of per scene.
-- **One interrupted task, and only one.** The seal was January 15; it is
-  April. Firewood half split with the axe still in the round. A car up on
-  blocks with one wheel never put back. Laundry frozen on the line since
-  winter. Storm windows half taken down. A bed turned over and never planted.
-  Three months of stasis said without a line of dialogue, different per
-  household.
-- **The mail.** Deliveries stopped with the fold. A box out at the road,
-  which is exactly where the yard meets the safe path: stuffed with January's
-  last delivery and never emptied, or hanging open and empty since. The
-  cheapest legible piece of the whole fiction, sitting on the layer seam.
-- **An occupancy tell readable FROM THE ROAD**, before you commit to the
-  path: the path itself worn through the dead grass or grown over; a lit
-  window against the dark (worth much more now the streets are barely lit);
-  curtains open or drawn; a dog chain with no dog.
-- **The car that will not start.** Everyone drove in and nothing leaves
-  (NARRATIVE §1). How it is parked is the characterisation: squared away by
-  someone who gave up early, or nosed at the road with the driver's door
-  still open by someone who tried and walked back.
-- **A boundary that is not a wall**: wire on wooden posts, a hedge, a line of
-  stones, or just the line where the mowing stopped. Mechanically this is
-  where the mouth is, so it has to READ as an edge and be pushed through.
-- **A step.** A stoop, a porch, two boards. Something between the ground and
-  the door so going in reads as arriving.
-- **The wrong yard**, for any house a newcomer took: the same vocabulary,
-  subtly off. Tools stacked too neatly. A bed dug too deep and the wrong
-  shape. A husk thing on the porch rail. The door-motif chalked on the siding
-  where the weather has nearly taken it.
-
-**The minimum for any yard**: a boundary, a step, one interrupted task, and
-one occupancy tell. Everything else is per household.
-
-**`lodge_yard` IS THE WORKED EXAMPLE NOW** (the props exist, the yard is
-dressed): the stoop at the back door, the running genset against the Lodge's
-east wall, the still-full mailbox on the road seam, the half-stacked
-firewood with the axe in the block against the woodshed, and a wire fence
-along the south with one bay's wire down where the mouth is. Every piece is
-a parts-built prop with a recorded reference (`rendering/assemblies.py`), so
-the other yards assemble from the same vocabulary rather than being drawn
-again. `pickup_truck` and `lantern` were remade to match. Sizes are pinned
-to the player (20) and the wall (26) by `check_stature`.
-
-**OPEN, in build order:** (1) the **YARDS**, per the spec above: seven of
-them plus three new small houses, generalising what `lodge_yard` now does by
-hand. Each yard's non-road edges are mouths like a path's flanks; (2) the
+**OPEN, in build order:** (1) the
 rest of the **dark manipulation layer**: the observer-dependent reshuffle
 landed, but the **asymmetric return** (the way back is not the way you came)
 and **breathe-with-threat** (the space stretching as the meter fills) have
-not; (3) **per-chunk** landmark/exit generation + a silent **re-origin** for
-a truly endless walk (today: a large finite bound + spawn-at-centre); (4) the
+not; (2) **per-chunk** landmark/exit generation + a silent **re-origin** for
+a truly endless walk (today: a large finite bound + spawn-at-centre); (3) the
 **ev-warp** variants (the field swaps for a longer / warped / more-hostile
 version with evidence) + richer linear field features (fences, ruined
-buildings you can't enter); (5) IF the maintainer commits: the full Brimley **re-home** (the
+buildings you can't enter); (4) IF the maintainer commits: the full Brimley **re-home** (the
 fences: the car, the well, the refuges, the descent chain) + the canon
 rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- the
 mouth is opt-in per scene precisely so judging the feel costs no canon.
