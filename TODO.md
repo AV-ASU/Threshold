@@ -486,6 +486,29 @@ exit-takes-a-beat vulnerability window on enclosed hides. Spitballed and
 parked for a decision: the crouch stance (after the next playtest) and
 the window-vault prototype (one building, look-passed, last).
 
+**Also needs a person walking it: how PERMEABLE the treelines feel.** Since
+trees became solid with round sub-tile feet, a stand is something you thread
+and the gaps fall out of the geometry, which is right and has one cost --
+connectivity passing says only that SOME route exists, not that pushing north
+at a treeline feels like walking rather than pinball.
+`tools/band_gaps.py` measures the thing the eye cannot: what fraction of
+sub-tile lanes admit a STRAIGHT walk through a band (straight, because a
+player holding north holds north). Where it stands today, pushing 8 tiles in:
+
+| scene | n | e | s | w |
+|---|---|---|---|---|
+| brimley | 25% | 31% | 24% | **14%** |
+| lodge_yard | **14%** | 52% | 25% | 27% |
+| cornfield_path | 24% | 27% | 29% | 35% |
+
+Brimley's WEST band and the lodge yard's NORTH band are the two tightest real
+outdoor bands in the game, and the lodge yard's north is also the §13 MOUTH,
+where tight may well be the point. Nothing here is broken; the question is
+whether ~14% reads as a wood you thread or a wood you fight, and only a person
+walking it can answer that. (The `clearing`, `effigy_grove` and
+`cornfield_maze` figures the tool also prints are hard tree WALLS with one
+authored doorway, so their low numbers are the design, not a finding.)
+
 ### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 
 Not bugs; deliberate choices worth confirming rather than leaving by
