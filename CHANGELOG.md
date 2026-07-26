@@ -206,6 +206,41 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The legs find the body, and every part can MIRROR (maintainer:
+  "those legs need a way to detect the body and attach, and the ability to flip
+  parts so we double our parts for free").**
+  - **ATTACH.** `assemble` deals the MASS first and places weight parts under
+    it -- a stance around the mass centroid, widening with leg count -- instead
+    of taking fixed offsets off a shared list with no knowledge of where the
+    body was. A wide deal used to put the legs one side and the mass the other.
+    They still never TOUCH (the family rule): they reach up and stop.
+    Vertically, `_MASS_DY` records each mass function's own `cy = y - N` offset
+    (they range 40..62) so the deal can aim at a body HEIGHT rather than a raw
+    number; passing every mass the same y0 was putting some bodies 22px higher
+    than others.
+  - **Some floating is CORRECT and stays** (maintainer, same pass): a part
+    arrives through its own aperture, so a mass hanging clear of anything
+    holding it is the portal carrying it, not a defect. About a quarter of deals
+    ride high deliberately. The bug was that floating happened by ACCIDENT, from
+    the offset spread above, to nearly every deal.
+  - **FLIP doubles the library for free**: each part carries a mirror flag, so
+    22 draw functions cover 44 silhouettes. Implemented by rendering the part to
+    its own layer and flipping THAT, so flesh, clipped cut edge, rim lip and
+    motes all mirror together; the flipped layer is re-blitted at `2*px - W + 1`
+    to return the part's own centre to where it started, since flipping a
+    surface mirrors about the surface centre.
+  - **Guard: `tests/conventions.py` check 10** verifies `_MASS_DY` against each
+    mass function's actual source. A hand-copied table like that rots silently
+    -- nothing crashes, bodies just drift back to floating, which is precisely
+    the defect it was added to fix. Proven to fail both ways (a wrong table
+    entry, and a part whose `cy` moves without the table following). Worth
+    noting the first version of the check was green for the wrong reason: it
+    used `r"cy\s*=\s*y\s*-\s*(\d+)"`, which never matches the tuple form
+    `cx, cy = x + 2, y - 58`, and "passed" three parts by running past the end
+    of their bodies into a later function's line.
+  399 distinct deals in 400 seeds; always-eye-bearing rule intact. Full gate
+  green.
+
 - **2026-07 -- Why the amalgams looked "weird": three causes, all of them the
   maintainer's guesses.** Asked *"Is it eyes? Too dark? The shapes they
   make?"*, and rendered at 4x on black the answer was all three.

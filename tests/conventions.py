@@ -412,6 +412,48 @@ def _tools_md():
                 "    Regenerate: python tools/index.py --md")
 
 
+# ------------------------------------------- 10. amalgam _MASS_DY in sync
+# THE RULE: rendering/amalgam.py's `_MASS_DY` records how far ABOVE its `y`
+# each MASS part draws itself, so `assemble` can aim at a body HEIGHT rather
+# than a raw offset. Those numbers are a copy of each function's own
+# `cy = y - N`, and a copy rots: change a part's cy and the table silently
+# lies, which puts a body back to floating clear of the legs holding it up --
+# exactly the defect the table was added to fix, and one no test would notice
+# because nothing crashes. So the copy is verified against the source.
+@check("amalgam _MASS_DY matches each mass part's own cy offset")
+def _mass_dy():
+    import re
+    src = open(os.path.join(_ROOT, "rendering", "amalgam.py")).read()
+    sys.path.insert(0, _ROOT)
+    from rendering.amalgam import MASS, _MASS_DY
+    rows = []
+    for name, fn in MASS:
+        body = src[src.index("def %s(" % fn.__name__):]
+        nxt = body.find("\ndef ")
+        body = body[:nxt] if nxt > 0 else body      # THIS function only
+        # The assignment is a TUPLE -- `cx, cy = x + 2, y - 58` -- so a naive
+        # r"cy\s*=\s*y\s*-\s*(\d+)" never matches it. It silently "passed"
+        # three parts by running past the end of their bodies and matching a
+        # LATER function's line, which is the failure mode a check must not
+        # have: green for the wrong reason.
+        m = re.search(r"\bcy\s*=[^\n]*?\by\s*-\s*(\d+)", body)
+        if not m:
+            rows.append("    %-8s %s has no 'cy = y - N' to check against"
+                        % (name, fn.__name__))
+            continue
+        real = int(m.group(1))
+        if _MASS_DY.get(name) != real:
+            rows.append("    %-8s table says %s, %s draws at y - %d"
+                        % (name, _MASS_DY.get(name), fn.__name__, real))
+    missing = [n for n, _ in MASS if n not in _MASS_DY]
+    if missing:
+        rows.append("    not in _MASS_DY at all: " + ", ".join(missing))
+    if rows:
+        return ("  _MASS_DY is out of sync with the mass parts it describes;\n"
+                "  assemble() will place these bodies at the wrong height.\n"
+                + "\n".join(rows))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

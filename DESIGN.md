@@ -231,7 +231,9 @@ its head) and pings the cult to **investigate the body**, and the body
   high-visibility trigger is retired.) **The gaze wears two skins (the
   shadow family):** a manifestation arrives as the OG shroud Watcher or,
   with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
-  seeded assembly of 3-5 parts from a 22-part library, each part emerging
+  seeded assembly of 3-5 parts from a 22-part library (44 with MIRRORING --
+  every part carries a flip flag, so a limb on the left is not the same
+  silhouette as the same limb on the right), each part emerging
   from its own free-form CUT (flesh clipped dead flat against the line,
   rim lip on the absent side, haze the only tissue; nothing touches).
   **Its CUTS wear the rift's GOLD** (`CUT_RIM`, 2026-07): an aperture He opens
@@ -258,6 +260,14 @@ its head) and pings the cult to **investigate the body**, and the body
   eye-discs cluster into berries; and the parts sit CLOSE (spread tightened
   from 58px of scatter) with visible haze threads between them, so a deal reads
   as one creature rather than debris. They still never touch.
+  **The BODY is dealt first and the legs find it** (2026-07): weight parts
+  distribute under the mass centroid as a stance, so a thing stands on its legs
+  instead of standing beside them, and `_MASS_DY` normalises each mass part's
+  own vertical offset (they range 40..62) so a body lands where the legs reach.
+  **Some FLOATING is correct and stays** -- a part arrives through its own
+  aperture, so a mass hanging clear of anything holding it is the portal
+  carrying it; about a quarter of deals ride high on purpose. What was fixed is
+  that floating used to happen by ACCIDENT, to nearly every deal.
   Composition rules bind every deal: at least one weight-bearing part on
   the ground, masses centre, and ALWAYS at least one eye-bearing part
   (every amalgam watches; the dim-ember tone is bright enough to survive

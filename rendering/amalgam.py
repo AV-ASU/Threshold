@@ -8,6 +8,7 @@ parts hang in formation around one anchor, thin haze threads the only
 tissue, and the brain stitches "one creature" out of their synchrony.
 
 Assembly is DATA: `assemble(seed)` deals 3-5 parts from the 22-part
+(44 with mirroring)
 library under the composition rules (at least one weight-bearing part on
 the ground, masses centre, senses high, and ALWAYS at least one
 eye-bearing part -- every amalgam watches). A different seed is a
@@ -237,6 +238,27 @@ def _cut_line(s, cx, cy, ang, ln, alpha=1.0, side=1):
     if 0.05 < alpha < 0.95:
         _haze(s, cx + nx * 4, cy + ny * 4, 4, (1 - alpha) * 55)
         _haze(s, cx - dx * 5, cy - dy * 5, 3, (1 - alpha) * 40)
+
+
+def _draw_maybe_flipped(lay, fn, px, py, d, mode, k, flip):
+    """Run a part draw, optionally MIRRORED about its own x.
+
+    Doubles the library for free: 22 draw functions cover 44 silhouettes.
+
+    The part renders to its own full-size layer and THAT is flipped, so
+    everything it draws mirrors together -- flesh, the clipped cut edge, the rim
+    lip, the motes. Flipping a surface mirrors about the SURFACE centre, so the
+    result is re-blitted with an offset returning the part's own centre to where
+    it started: a point at px lands at W-1-px, so the offset is 2*px - W + 1.
+    """
+    if not flip:
+        fn(lay, px, py, d, mode, k)
+        return
+    W = lay.get_width()
+    tmp = pygame.Surface(lay.get_size(), pygame.SRCALPHA)
+    fn(tmp, px, py, d, mode, k)
+    lay.blit(pygame.transform.flip(tmp, True, False),
+             (int(round(2 * px)) - W + 1, 0))
 
 
 def _part(s, cx, cy, ang, side, draw_fn):
@@ -808,6 +830,15 @@ WEIGHT = [("leg", f_leg), ("stump", f_stump), ("elbow", f_elbow_prop),
 MASS = [("haunch", f_haunch), ("hump", f_hump), ("rib", f_rib_flank),
         ("gut", f_gut_sac), ("spine", f_spine_ridge),
         ("sack", f_sack), ("plate", f_plate)]
+# How far ABOVE its `y` each mass actually draws itself (the `cy = y - N` in
+# each function). They range 40..62, so passing every mass the same y0 put some
+# bodies a full 22px higher than others -- floating clear of the legs meant to
+# be holding them up, by accident rather than intent. assemble() subtracts
+# these so it can aim at a BODY HEIGHT instead. Verified against the source by
+# tests/conventions.py check 10, because a hand-copied table like this rots
+# silently: nothing crashes, bodies just drift.
+_MASS_DY = {"haunch": 40, "hump": 46, "rib": 42, "gut": 62, "spine": 52,
+            "sack": 58, "plate": 48}
 # SENSE[:2] is the ALWAYS-eye-bearing prefix that assemble() draws the first
 # sense slot from (every amalgam watches), so new senses append AFTER it.
 SENSE = [("eyes", f_eye_bulge), ("pair", f_ember_pair), ("vent", f_vent),
@@ -819,29 +850,69 @@ def assemble(seed):
     """Deal a creature: 3-5 parts under the composition rules. The prefix
     (weights + masses) caps at 4 so there is ALWAYS room for the first
     sense slot, which is always an eye-bearing part: every amalgam
-    watches. Same seed, same creature."""
+    watches. Same seed, same creature.
+
+    Returns 5-tuples `(name, fn, x0, y0, flip)`.
+
+    THE BODY IS DEALT FIRST AND THE LEGS FIND IT (2026-07). Before, weight
+    parts took fixed offsets off a shared list and masses were placed
+    independently, so a leg had no idea where the body was: a wide deal put the
+    legs one side and the mass the other, reading as scattered limbs beside an
+    unrelated lump. Now the body is placed, and the weight parts distribute
+    under IT -- a stance around the mass centroid, widening with leg count.
+    They still never TOUCH it (the family rule, module docstring): they reach up
+    and stop, and the eye closes that gap like every other one here.
+
+    FLIP doubles the library for free: each part carries a mirror flag, so 22
+    draw functions cover 44 silhouettes and a limb on the left is not the same
+    shape as the same limb on the right.
+    """
     rng = random.Random(seed)
     parts = []
-    nw = rng.choice((1, 2, 2, 3))
-    # The horizontal SPREAD was -28..30 with masses at +/-12 and senses at
-    # +/-22, which is up to 58px of scatter in a 150px space. Combined with the
-    # family's "nothing touches" rule that read as DEBRIS -- several unrelated
-    # objects rather than one creature -- and the per-part outline made it
-    # plainer still by drawing a separate contour around each clump. Tightened
-    # so the parts sit in each other's company. They still never touch; they
-    # are just close enough that the eye stitches them, which is the whole
-    # premise (see the module docstring).
-    for x0 in rng.sample([-20, -10, 0, 10, 20], nw):
-        nm, fn = rng.choice(WEIGHT)
-        parts.append((nm, fn, x0, 96 + rng.randint(-8, 2)))
+
+    # 1. THE BODY, so everything else has something to relate to.
+    masses = []
     for _ in range(rng.choice((1, 1, 2))):
         nm, fn = rng.choice(MASS)
-        parts.append((nm, fn, rng.randint(-9, 9), 96 - rng.randint(6, 24)))
+        mx = rng.randint(-9, 9)
+        # Aim at a BODY HEIGHT and convert to the y0 this mass needs
+        # (_MASS_DY): the legs rise to about y=42, so a body centre in the
+        # mid-40s sits where they reach.
+        #
+        # SOME FLOATING IS RIGHT (maintainer, 2026-07): a part arrives through
+        # its own aperture, so a mass hanging clear of anything holding it is
+        # the portal carrying it, not a defect. What was wrong before is that
+        # floating happened by ACCIDENT -- from the 22px offset spread above --
+        # and happened to nearly every deal. So a body the legs reach is the
+        # default, and about a quarter ride high on purpose.
+        if rng.random() < 0.26:
+            y0 = _MASS_DY.get(nm, 46) + rng.randint(58, 74)
+        else:
+            y0 = _MASS_DY.get(nm, 46) + rng.randint(42, 56)
+        masses.append((nm, fn, mx, y0, rng.random() < 0.5))
+    cx = sum(m[2] for m in masses) / float(len(masses))
+
+    # 2. THE LEGS, under the body they carry. One sits below the centroid;
+    #    more spread into a stance either side of it.
+    nw = rng.choice((1, 2, 2, 3))
+    span = 7 + 4 * nw
+    offs = [0] if nw == 1 else [-span + 2 * span * i / (nw - 1)
+                                for i in range(nw)]
+    rng.shuffle(offs)
+    for off in offs:
+        nm, fn = rng.choice(WEIGHT)
+        lx = int(round(max(-26, min(26, cx + off))))
+        parts.append((nm, fn, lx, 96 + rng.randint(-8, 2), rng.random() < 0.5))
+
+    parts.extend(masses)
     parts = parts[:4]
+
+    # 3. THE SENSES, high and near the body's own column.
     ns = rng.choice((1, 2, 2))
     for i in range(ns):
         nm, fn = (rng.choice(SENSE[:2]) if i == 0 else rng.choice(SENSE))
-        parts.append((nm, fn, rng.randint(-15, 15), 96 - rng.randint(12, 32)))
+        sx = int(round(max(-26, min(26, cx + rng.randint(-11, 11)))))
+        parts.append((nm, fn, sx, 96 - rng.randint(12, 32), rng.random() < 0.5))
     return parts[:5]
 
 
@@ -1288,7 +1359,7 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
             # tissue should NOT take an outline, or the parts start touching
             # and the family's "nothing touches" rule dies with it.
             _haze(lay, hx, hy, 4 + rng.uniform(0, 2.5), 74)
-    for idx, (nm, fn, x0, y0) in enumerate(parts):
+    for idx, (nm, fn, x0, y0, flip) in enumerate(parts):
         if g > 0.0:
             # the peeling: last parts first, each back into its cut
             dg = _clamp((g - (n - 1 - idx) * 0.13) / 0.48)
@@ -1302,7 +1373,8 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
         dx_ = math.sin(t * 0.6 + idx * 2.1 + seed) * 1.2
         dy_ = math.cos(t * 0.5 + idx * 1.3) * 1.0
         if d > 0.01:
-            fn(lay, 75 + x0 + dx_, y0 + dy_, d, mode, k)
+            _draw_maybe_flipped(lay, fn, 75 + x0 + dx_, y0 + dy_,
+                                d, mode, k, flip)
         else:
             # its cut alone, dying
             _cut_line(lay, 75 + x0 + dx_, (y0 + dy_) - 44, 1.2, 10,
