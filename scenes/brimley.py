@@ -429,7 +429,17 @@ def build_brimley():
     # the door so they read together on the street front.
     for (wy, wx) in [(22, 21), (22, 23),     # school (south wall)
                      (22, 9), (22, 11),      # shop (south wall)
-                     (36, 45), (36, 47)]:    # kid's house (north wall)
+                     (36, 45), (36, 47),     # kid's house (north wall)
+                     # The church's south wall, over the burying ground.
+                     # Crane keeps the place lit for a congregation that is
+                     # already under it, and the light does not go out when
+                     # he walks down to the river. On the SOUTH wall and not
+                     # the door's east front, because a window in a side
+                     # wall has a building between it and anyone standing
+                     # south of it (`tests/stealth.py` §14 throws a stone
+                     # through the nearest window with a clear approach, and
+                     # a pane you cannot reach is a pane that fails it).
+                     (12, 8), (12, 10)]:
         objects_l[wy][wx] = "i"
 
     # ---- Worn dirt tracks + the roads ----

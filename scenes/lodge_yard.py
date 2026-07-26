@@ -183,7 +183,12 @@ def build_lodge_yard():
     # keeps the desk of an empty hotel lit and ready (NARRATIVE §4). The
     # grid died with the seal, so a warm work-bulb burning out here is the
     # tell that somebody is still keeping the place.
-    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "generator"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "generator",
+                                 running=True))
+    # and the can standing beside it, which is the other half of the same
+    # sentence: somebody is still walking out here to fuel this thing
+    # (DESIGN.md §15). A dead yard's can lies on its side and empty.
+    sc.add_decoration(Decoration(11 * TILE + 12, 4 * TILE + 16, "fuel_can"))
     # THE MAILBOX out at the road, exactly on the seam where the yard meets
     # the safe path. Deliveries stopped with the fold in January, so it is
     # still FULL: nobody has emptied it because nothing has come to replace
