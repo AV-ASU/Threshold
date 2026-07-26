@@ -37,7 +37,6 @@ NOTE_TITLES = {
     "maras_room":              "Mara's Letter",
     # Real finds that are not Mara (notes, never evidence).
     "the_disturbance":         "The Night on the Road",
-    "gas_receipt":             "A Newcomer's Receipt",
     "the_ledger":              "The Old Registers",
     "the_preacher":            "The Preacher on the Bank",
     "the_congregation":        "The Ones Who Knelt",

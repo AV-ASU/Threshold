@@ -8,7 +8,7 @@ import random
 from constants import TILE
 from entities.decoration import Decoration
 from .base import Scene
-from .dialogue import _evidence, _log_note
+from .dialogue import _evidence
 
 
 def _backwoods_note_pickup(game):
@@ -204,20 +204,13 @@ def build_schoolhouse():
     sc.add_interactable(sc._fire_pos[0], sc._fire_pos[1], 36)
 
     def _take_gas_receipt(game):
-        """A newcomer's ordinary paper, and the note is what it PROVES about
-        an ordinary drive: they came a long way by car, like anyone. It
-        corroborates Vane without a word of testimony. A note, never
-        evidence (it is not Mara's; NARRATIVE §6)."""
+        """A newcomer's ordinary paper. It writes NOTHING to the case
+        (maintainer, 2026-07): the receipt IS the record, and its own
+        description in Papers carries the whole of it. A note here would be
+        the PI reading the thing back to the player who just picked it
+        up."""
         game.save.set_flag("gas_receipt_taken", True)
         game.show_notice("A gas receipt, under a cot.")
-        _log_note(game, "gas_receipt", [
-            "Under one of the cots in the school: a pump receipt out of "
-            "Seymour, Wisconsin, dated the second of July. Fourteen gallons, "
-            "cash.",
-            "Four hundred miles south of here. Whoever slept on that cot "
-            "drove up the same roads I did, and stopped for gas like "
-            "anybody.",
-        ])
 
     def _school_on_enter(game, scene):
         # Glimmer-mark the rite components still on offer (the woodshed

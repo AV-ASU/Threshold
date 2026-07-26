@@ -1960,12 +1960,19 @@ def main():
     check(len(_rc) == 1,
           "school: the gas receipt lies under a cot as a walk-over pickup")
     _ev_before = len(gdt.save.arg("evidence", []))
+    _nt_before = len(gdt.save.arg("notes", []))
     _rc[0]["on_pickup"](gdt)
-    check(any(isinstance(e, dict) and e.get("name") == "gas_receipt"
-              for e in gdt.save.arg("notes", [])),
-          "school: the receipt files a NOTE")
+    gdt.player.inventory.add("gas_receipt", 1)
+    # The receipt IS the record: it writes nothing to the case, because its
+    # own description in Papers carries the whole of it (maintainer, 2026-07).
+    check(len(gdt.save.arg("notes", [])) == _nt_before,
+          "school: the receipt writes no note (the paper is the record)")
     check(len(gdt.save.arg("evidence", [])) == _ev_before,
           "school: the receipt never counts toward the gate")
+    from systems.items import ITEM_DEFS as _IDF2
+    _rdesc = _IDF2["gas_receipt"]["desc"]
+    check("SEYMOUR" in _rdesc.upper() and "CASH" in _rdesc.upper(),
+          "school: the receipt's own text carries the drive and the cash")
     gdt.load_scene_now("schoolhouse")
     ready(gdt)
     check(not [it for it in gdt.scene.items if it["key"] == "gas_receipt"],

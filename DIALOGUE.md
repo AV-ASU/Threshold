@@ -1302,12 +1302,14 @@ ones landed so far:
   column of addition, worked down in a child's hand, the answer circled by
   the teacher.)[/c]" then "[c=dim]Over it, the same door drawn again and
   again, smaller and smaller, into the corner.[/c]"
-- **`gas_receipt`** (a walk-over pickup under a schoolhouse cot; a NOTE,
-  never evidence, and not Mara's). Pickup notice: "A gas receipt, under a
-  cot." Note: "Under one of the cots in the school: a pump receipt out of
-  Seymour, Wisconsin, dated the second of July. Fourteen gallons, cash." /
-  "Four hundred miles south of here. Whoever slept on that cot drove up the
-  same roads I did, and stopped for gas like anybody."
+- **`gas_receipt`** (a walk-over pickup under a schoolhouse cot). It writes
+  NOTHING to the case: the receipt IS the record, and its item text in
+  Papers carries the whole of it, so a note would only read the thing back
+  to the player who just picked it up. Pickup notice: "A gas receipt, under
+  a cot." The paper itself (`ITEM_DEFS`, quoted here because the player
+  reads it): "CLARK OIL / SEYMOUR, WIS." / "JULY 2 1993" / "14.2 GAL   REG
+  $16.75" / "CASH", closing "Four hundred miles south of here, and paid for
+  in cash. Whoever slept on that cot drove up the same roads I did."
 - **the lodge-candle callback** (`lodge_candle_callback`, after the
   Cistern): "[c=dim]The same guttering candles as the dark below, kept
   burning up here too.[/c]"
