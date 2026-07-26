@@ -331,17 +331,22 @@ class Yard(object):
 # middle, the road exit spans three tiles (an exit you have to thread is a
 # wall), and a worn track runs between the two.
 
-_YARD_W, _YARD_H = 20, 16
+# A yard is a PLACE, not a doorstep with a road attached. The first cut was
+# 20x16 and read as a corridor with a house in it; the walk from the gate to
+# the door has to be a walk. The scene is still deliberately smaller than the
+# camera window -- the black rim beyond the verge is wanted, not a defect, and
+# it is what makes a yard feel like a lit clearing with nothing around it.
+_YARD_W, _YARD_H = 30, 24
 # How deep the scattered verge reaches in from the map edge. Everything
 # inside it is the LOT, and the lot stays clear.
-_BAND = 2
+_BAND = 3
 # Which wall of the scene an exit sits in, and the step INTO the scene from it.
 _EDGE_IN = {"n": (0, 1), "s": (0, -1), "e": (-1, 0), "w": (1, 0)}
 
 
 def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
                      path_side, path_char, path_target, path_spawn,
-                     w=_YARD_W, h=_YARD_H, building=(6, 5), verge=("T", "p"),
+                     w=_YARD_W, h=_YARD_H, building=(8, 6), verge=("T", "p"),
                      music="village", seed=7):
     """One household's ground: a walled clearing, one building, two ways out.
 
@@ -460,11 +465,21 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
         if objects[int(_wy // TILE)][int(_wx // TILE)] == ".":
             sc.add_decoration(Decoration(_wx, _wy, "grass_tuft"))
     sc.skybox_kind = "overcast"
+    sc.is_yard = True            # the layer marker, as SafePath.is_safe_path
     sc.add_exit(path_char, path_target, path_spawn)
     sc.add_exit(door_char, interior, interior_spawn)
     sc.set_spawn("default", out[0], out[1])
     sc.set_spawn("from_" + interior, out[0], out[1])
     sc.set_spawn("from_" + path_target, ex + ax, ey + ay)
+    # EVERY EDGE THAT IS NOT THE ROAD IS A MOUTH (DESIGN.md §13). A yard is
+    # the last lit ground before the world stops caring: the way you came is
+    # the only way that stays true, and walking off the back of somebody's lot
+    # in the dark drops you into the in-between. Which field you land in is
+    # derived from the verge you pushed through -- never corn on this side and
+    # pine on the other -- so it is the same rule the safe path's flanks use.
+    from .safe_path import _VERGE_LOST
+    _mouths = "".join(sd for sd in "nesw" if sd != path_side)
+    sc.set_lost_edge(_mouths, _VERGE_LOST.get(tuple(verge), "lost_forest"))
     yard = Yard(sc, (bl, br, bt, bb), door_face, out,
                 depth=3, flank=2, seed=seed)
     # the KEPT rectangle, for the boundary to sit on. `Yard.bounds()` derives
@@ -499,7 +514,7 @@ def build_shop_yard():
         interior="shop", interior_spawn="from_shop_yard",
         path_side="s", path_char="e",
         path_target="store_row", path_spawn="from_shop_yard",
-        verge=("C", "A"), building=(7, 5), seed=37)
+        verge=("C", "A"), building=(9, 6), seed=37)
     # KEPT, and every piece of it is an errand she is still running to a
     # schedule nobody needs. The genset burns and the can beside it is full.
     y.step()

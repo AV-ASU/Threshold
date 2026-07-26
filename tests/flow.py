@@ -3689,9 +3689,19 @@ def main():
             continue
         if getattr(_s, "lost_edges", None):
             _opted.append(_k)
-    check(_opted == ["country_lane", "gravel_road_north", "lodge_yard",
-                     "river_bend", "river_road", "store_row"],
-          "mouth: only the yard and the safe paths open (" + ", ".join(_opted) + ")")
+    # THE RULE, not a snapshot of it: an edge is a mouth only on ground the
+    # layers own -- a safe path's flank, or a yard's non-road edge (DESIGN.md
+    # §13/§15). Frozen as a literal list this failed on every new street and
+    # every new yard rather than on the thing it guards, which is that no
+    # ordinary scene quietly grows a way out of the world.
+    from scenes.safe_path import SafePath as _SP
+    _stray = [k for k in _opted
+              if not (isinstance(_ls_m(k), _SP)
+                      or getattr(_ls_m(k), "is_yard", False)
+                      or k == "lodge_yard")]
+    check(not _stray and "lodge_yard" in _opted,
+          "mouth: only yards and safe paths open (" + ", ".join(_opted)
+          + (" -- STRAY: " + ", ".join(_stray) if _stray else "") + ")")
 
     # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
     # The layer's promise is mechanical, so every part of it is checked

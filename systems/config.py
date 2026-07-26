@@ -66,7 +66,11 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "backwoods_cabin"} | {
     # THE SAFE PATH network (DESIGN.md §14): the lit paved spine east and
     # north of town. `country_lane` above is one of these too -- it is the T.
-    "river_road", "river_bend"}
+    "river_road", "river_bend",
+    # the town's own streets, and THE YARDS off them (DESIGN.md §15). They
+    # have to be here for the storm to darken them, and the storm darkening
+    # them is what opens their edges as mouths (LOST_EDGE_GLOOM below).
+    "store_row", "shop_yard"}
 
 # The continuous outside world. Crossing between any two of these is
 # a seamless transition: no fade, no door sound, the player position

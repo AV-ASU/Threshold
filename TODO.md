@@ -456,10 +456,13 @@ each with its own street arm; a street grows L -> T -> X as households land on
 it. Then, once every building has moved: retire Brimley, and reconcile
 NARRATIVE §5 / DESIGN §7, which still describe the one-square town.
 
-Smaller, still open: yards do not yet open §13 mouths on their non-road edges;
-the three new households have no INTERIORS (deliberate, but the obvious next
-ask); and the schoolhouse's lit windows with a figure behind the glass predate
-the layer and read oddly beside a yard that says nobody is home.
+A yard's non-road edges ARE §13 mouths now, biome derived from the verge, so
+walking off the back of a lot in the dark drops you into the in-between.
+
+Smaller, still open: the three new households have no INTERIORS (deliberate,
+but the obvious next ask); and the schoolhouse's lit windows with a figure
+behind the glass predate the layer and read oddly beside a yard that says
+nobody is home.
 
 **OPEN, in build order:** (1) the
 rest of the **dark manipulation layer**: the observer-dependent reshuffle

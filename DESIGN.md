@@ -2101,6 +2101,21 @@ with the vocabulary below instead of counting tiles.
 household's ground, and sharing one flattens the thing the layer exists to
 say.
 
+**A yard is a PLACE, not a doorstep with a road attached.** The lot is large
+enough that the walk from the gate to the door is a walk. It is still
+deliberately SMALLER than the camera window: the black beyond the verge is
+wanted, and it is what makes a yard read as a lit clearing with nothing
+around it rather than as a room.
+
+**EVERY EDGE THAT IS NOT THE ROAD IS A MOUTH.** A yard is the last lit ground
+before the world stops caring: the way you came is the only way that stays
+true, and walking off the back of somebody's lot in the dark drops you into
+the in-between (§13). Which field you land in is derived from the VERGE you
+pushed through -- `_VERGE_LOST`, the same rule the safe path's flanks use --
+so it is never corn on this side and pine on the other. The mouth is still
+light-gated, so at ev0 a yard's edge is the wall it has always been and it
+only lets go once the storm has darkened the surface.
+
 The chain is wired with ordinary parts, no new engine: the street is a
 `SafePath` like any other and the yard hangs off one of its ARMS, and the
 interior gets a SECOND door in a spare wall pointing at its yard. Which means
