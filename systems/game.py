@@ -1669,36 +1669,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return True
         return False
 
-    # ---- Darkness as concealment (DESIGN.md §12) ----
-    def _tick_dark_cover(self):
-        """Stamp player._in_dark once per frame: True in a DARK scene
-        with the flashlight unlit and the player outside every light
-        pool (Scene.lit_at). systems/stealth.concealment_factor reads
-        the stamp, so the gloom scales every cult eye's score (and the
-        gaze pressure) by SUS_CONCEAL_DARK -- leaky cover, like corn.
-        Apex pursuers ignore all cover as ever.
-
-        DARK_SCENES, and deliberately NOT the storm-darkened SURFACE
-        (STORM_STAGE_SCENES). Maintainer ruling, 2026-07: standing in the
-        dark outdoors must NOT hide you. Indoors the dark is a room you
-        chose to be in and the lit room is the alternative, so trading
-        cover for exposure is a real decision; out under the open sky at
-        stage 3 the dark is EVERYWHERE, and letting it conceal would hand
-        the player a free permanent hide over the whole map at exactly the
-        point the game should be closing in. So outdoors the storm dark
-        cuts one way only: it EXPOSES you to His gaze
-        (ThreatMixin._dark_is_exposure) and never conceals you from the
-        cult. Light is the last refuge, not the dark.
-        Guarded by tests/stealth.py section 18."""
-        p = self.player
-        if p is None or self.scene is None:
-            return
-        in_dark = (self.scene.key in DARK_SCENES
-                   and not self._flashlight_lit()
-                   and not self.scene.lit_at(p.x, p.y))
-        # Entering shadow cover is WORDLESS (2026-07 playtest ruling: no
-        # narrator box on stealth entry; the old one-shot teach is cut).
-        p._in_dark = in_dark
+    # ---- Darkness is NOT cover (maintainer ruling, 2026-07) ----
+    # There is no _tick_dark_cover anymore, and no player._in_dark stamp. The
+    # dark used to scale every cult eye's score by SUS_CONCEAL_DARK; that whole
+    # mechanic was cut on the ruling "darkness shouldn't hide you AT ALL."
+    # Cover is what you put BETWEEN yourself and an eye (corn, a hide, a wall);
+    # an unlit spot is not that. The dark belongs to Him -- it is the condition
+    # His things need in order to open at all -- so hiding in it was hiding
+    # inside the threat. See systems/stealth.concealment_factor (no darkness
+    # term) and tests/stealth.py §11, which fails if one comes back.
 
     # ---- Animated doors + the one-hop noise bleed ----
     def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
@@ -3037,11 +3016,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
-                # Stamp darkness-concealment BEFORE the cult ticks run
-                # (NPC updates inside scene.update + the enemy loop
-                # below both read player._in_dark through the shared
-                # concealment_factor).
-                self._tick_dark_cover()
                 self.scene.update(dt, self)
             self.text_input.update(dt)
             for e in list(self.scene.enemies):

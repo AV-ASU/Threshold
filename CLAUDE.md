@@ -644,10 +644,10 @@ section is the CODE MAP only — where each system lives:
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
-  (threat_mixin); `WATCHER_*` config; light pools + the beam BURN them
-  (`WATCHER_LIGHT_BURN`); where being UNLIT is what exposes you (the dim
-  interiors, plus the surface once the storm has darkened it)
-  `_dark_is_exposure`; stealth §11 + §18.
+  (threat_mixin); `WATCHER_*` config. Light works on THEM, never on you: it
+  denies them a spawn spot (`_spawn_watcher` needs dark + line of sight) and
+  BURNS one caught in a pool/beam (`WATCHER_LIGHT_BURN`), but standing in light
+  is NOT cover — exposed means not-in-cover, full stop. stealth §11 + §18.
 - **Killing locals / corpses** — `_kill_npc` → `_make_corpse` + the
   `dead_locals` ledger, laid back down by `_apply_dead_locals` on every
   load; enemy cultists synthesize a corpse in `_kill_enemy`. Flow
@@ -815,12 +815,12 @@ section is the CODE MAP only — where each system lives:
   DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
   (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
   become islands and the flashlight works outdoors. Understanding-driven, NOT a
-  day cycle. **That dark cuts ONE WAY** (ruling, 2026-07): it EXPOSES you to the
-  Watchers' gaze from stage 1 (`_dark_is_exposure`, so a lamp pool is the
-  refuge) and it NEVER conceals you from the cult — `_tick_dark_cover` stays
-  keyed to `DARK_SCENES` alone, because a map-wide free hide at stage 3 relieves
-  exactly the pressure the storm exists to apply. Don't "fix" the asymmetry;
-  `tests/stealth.py` §18 guards both halves. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
+  day cycle. **The dark is never the player's tool** (ruling, 2026-07:
+  "darkness shouldn't hide you AT ALL"): it does not conceal you from the cult
+  anywhere in the game (there is no `SUS_CONCEAL_DARK`), and standing in a lamp
+  pool is not cover from a Watcher's gaze either. The dark is the CONDITION His
+  things need to open, so hiding in it would be hiding inside the threat.
+  `tests/stealth.py` §11 + §18 fail if either comes back. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
   `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
   island reads as a bright island in a black sea (TODO #26).
 - `visibility` persists across scene loads (only `_reset_run_state`
@@ -842,8 +842,9 @@ section is the CODE MAP only — where each system lives:
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
   **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
-  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius the
-  stealth `lit_at`/shadow-cover gate reads) AND `FIXTURE_POOLS`
+  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius
+  `Scene.lit_at` reads — the Watcher spawn/burn gate and the lost-edge gate;
+  NOT a concealment gate, darkness never hides you) AND `FIXTURE_POOLS`
   (`systems/render_mixin.py`, the VISIBLE light `_draw_dark` casts in a dark
   scene: `radius, color, peak, src_z, arm, flicker_amp, flicker_speed`).
   `_draw_dark` iterates EVERY emitter through `FIXTURE_POOLS` (not just

@@ -207,23 +207,18 @@ its head) and pings the cult to **investigate the body**, and the body
   `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
   `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
   in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
-  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
-  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
-  the flashlight is the cover, and a Watcher caught in a pool / the beam
-  **BURNS** out (`WATCHER_LIGHT_BURN`). **The SURFACE runs that same rule once
-  the storm has put the lights out** (TODO #25, 2026-07): `_dark_is_exposure`
-  returns true for a `STORM_STAGE_SCENES` scene whose `scene_gloom()` is above
-  zero, so from rot stage 1 the outdoor dark is what opens His gaze and a yard
-  light / lamp pool is the refuge. Watchers wake at `WATCHER_WAKE_EV` (1), the
-  same stage the gloom first lifts, so outdoors the rule is live from the very
-  first one. At stage 0 the surface is full daylight, the gloom is 0, and
-  exposure falls back to plain not-in-cover exactly as before. **The dark
-  outdoors cuts ONE WAY** (maintainer ruling, 2026-07): it EXPOSES you to the
-  gaze and never CONCEALS you from the cult -- `_tick_dark_cover` stays keyed
-  to `DARK_SCENES` alone, because a map-wide free hide at stage 3 would relieve
-  exactly the pressure the storm exists to apply. Indoors the dark is a room
-  you chose over the lit one; outdoors it is everywhere. Light is the last
-  refuge, not the dark. Both halves guarded, `tests/stealth.py` §18. **A Watcher can only OPEN at a spot
+  #21; `WATCHER_OPEN_SCENES` folds in `DIM_INTERIOR_SCENES`).** **EXPOSED means
+  NOT IN COVER, and nothing else** (maintainer ruling, 2026-07: "Watchers should
+  be able to gaze at you while you're standing in the light, that's the whole
+  point of them"). **Light is NOT cover from the gaze.** A Watcher holds you
+  perfectly well in a lamp pool; the wave keeps building while you stand in one.
+  Being seen when you cannot hide is what they ARE, so a lamp can never be a
+  safe square -- that would let the player opt out of the one threat that must
+  not be opt-out-able. Every way light does work against them is about the light
+  on **THEM**, never the light on you: it denies them anywhere to open (the
+  spawn rule below) and it **BURNS** one caught in a pool or the beam
+  (`WATCHER_LIGHT_BURN`). **You clear them with light; you never hide in it.**
+  Guarded, `tests/stealth.py` §11 + §18. **A Watcher can only OPEN at a spot
   that is DARK and holds LINE OF SIGHT to the player (2026-07 spawn rule,
   `_spawn_watcher`):** it manifests where you could answer it with your
   gaze, never in a sealed room or an out-of-bounds pocket, so there is no
@@ -315,14 +310,13 @@ What rises with the stage:
   part of the night rather than a bright gray wash floating over a dark town.
   It is the ashfall's LIGHT twin — the veil thinning as His attention gathers,
   never a day/night cycle (no `day_phase`/`day_count`; the daytime invariant
-  holds, NARRATIVE §canon). It carries two real mechanics now. The lost-space
-  MOUTH (§13) only lets go at `LOST_EDGE_GLOOM` (stage 2), so falling out of
-  the world is a consequence of this darkening. And the **EXPOSURE** half of
-  "no light = danger" runs out here from stage 1: standing unlit opens His gaze
-  and a lamp pool is the refuge (§1, `_dark_is_exposure`). What the storm dark
-  pointedly does NOT do is CONCEAL you from the cult (§1, §12) -- outdoors it
-  only ever costs you. What is still missing is the flood itself: the
-  amalgam-cut storm (TODO #25) that this stage exists to fill.
+  holds, NARRATIVE §canon). It carries one real mechanic today: the lost-space
+  MOUTH (§13) only lets go at `LOST_EDGE_GLOOM` (stage 2), so falling out of the
+  world is a consequence of this darkening. What the dark pointedly does NOT do
+  is help the player -- it is never concealment (§12) and a lamp pool is never
+  cover from the gaze (§1). The dark is the CONDITION His things need, not a
+  tool you get to use; what is still missing is the flood it exists to hold: the
+  amalgam-cut storm (TODO #25).
 - **The people do NOT change — the man hearing them does (TODO #22c,
   2026-07).** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the
@@ -1693,19 +1687,20 @@ This adds the classic "have they spotted me yet?" window.
 
 ### Pillar 2 -- two cover classes with opposite trade-offs
 
-**A. Concealment cover (mobile, leaky)** -- corn, shadow, behind low props.
+**A. Concealment cover (mobile, leaky)** -- corn, behind low props.
 You can keep moving through it; it weakens LOS at range, but a close enemy
 with LOS still builds suspicion (you cannot camp it next to a searcher);
 moving fast rustles → a noise event. Corn scales score + gaze by
-`SUS_CONCEAL_CORN`. **Shadow cover:** `SUS_CONCEAL_DARK` for an unlit
-player in a DARK scene outside every light pool (`Scene.lit_at` /
-`Game._tick_dark_cover`). **`DARK_SCENES` only, and never the storm-darkened
-SURFACE** (maintainer ruling, 2026-07): indoors the dark is a room you chose
-over the lit one, so trading concealment for exposure is a real decision; out
-under the open sky at stage 3 the dark is EVERYWHERE, and concealing there
-would be a free permanent map-wide hide arriving exactly as the game should be
-closing in. Outdoors the storm dark cuts one way only -- it EXPOSES you to His
-gaze (§1) and conceals you from nothing. Guarded, `tests/stealth.py` §18.
+`SUS_CONCEAL_CORN`.
+
+**DARKNESS IS NOT COVER** (maintainer ruling, 2026-07: "darkness shouldn't hide
+you AT ALL"). There is no shadow-cover class and no `SUS_CONCEAL_DARK` in
+config. Cover is something you put BETWEEN yourself and an eye -- corn, a hide,
+a wall. An unlit spot is not that. **The dark belongs to Him:** it is the
+condition His things need in order to open at all (§1), so hiding in it was
+hiding inside the threat, and it read as a reward for turning the flashlight
+off in exactly the rooms that should be worst. It cuts against the player only,
+everywhere, indoors and out. Guarded, `tests/stealth.py` §11 + §18.
 
 **B. Enclosed hide (rooted, strong, a trap)** -- under bed, closet, locker,
 "in". A hard LOS break vs enemies that do not come check it (strong at

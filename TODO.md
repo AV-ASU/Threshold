@@ -357,29 +357,34 @@ half-out). Locked with the maintainer this pass:
   yard-lights as ISLANDS and the flashlight enabled outdoors (so the
   light-draws-Him double-edge applies there too). This is world rot's LIGHT twin
   (understanding, not a clock — the daytime invariant holds, NARRATIVE §canon).
-  It gates two REAL mechanics. The lost-space MOUTH opens at `LOST_EDGE_GLOOM`
+  It gates one REAL mechanic: the lost-space MOUTH opens at `LOST_EDGE_GLOOM`
   (92 = `STORM_DARK_GLOOM[2]`, rot stage 2), so the edges of the authored world
-  only let go once understanding has put the lights out (#26). And the EXPOSURE
-  half of "no light = danger" runs outdoors from stage 1 (below).
-- **Dark = EXPOSURE outdoors (LANDED, and the cover half is RULED OUT).**
-  `ThreatMixin._dark_is_exposure` extends the dim interiors' Watcher rule to any
-  `STORM_STAGE_SCENES` scene whose `scene_gloom()` is above zero: standing unlit
-  under the open sky opens His gaze, a yard light / lamp pool is the refuge, and
-  the flashlight still burns them. Watchers wake at `WATCHER_WAKE_EV` (1), the
-  same stage the gloom first lifts, so it is live from the first Watcher on; at
-  stage 0 it is full day and the outdoors is unchanged. It reads `scene_gloom()`
-  rather than a set of its own, so the gaze can never disagree with the darkness
-  the player sees. **The maintainer RULED (2026-07) that the dark must NOT
-  conceal you outdoors**, so the shadow-cover half of the old item (1) is closed
-  as a decision, not deferred: `_tick_dark_cover` stays keyed to `DARK_SCENES`.
-  Indoors the dark is a room you chose over the lit one; outdoors it is
-  everywhere, and concealing there would hand over a free map-wide hide exactly
-  as the game should be closing in. Out here the dark only costs you, and light
-  is the last refuge. Both halves guarded, `tests/stealth.py` §18.
+  only let go once understanding has put the lights out (#26).
+- **THE DARK IS NEVER THE PLAYER'S TOOL (ruled 2026-07, and the old item (1) is
+  CLOSED because of it).** The ticket used to ask for a light/dark SPLIT as a
+  mechanic: outdoors, light pools = cover, dark = exposure. **The maintainer
+  ruled that whole framing out** — "darkness shouldn't hide you AT ALL", and
+  "Watchers should be able to gaze at you while you're standing in the light,
+  that's the whole point of them." So both halves of the split are gone, and the
+  pre-existing shadow-cover pass went with them:
+  - Darkness is not concealment anywhere. `SUS_CONCEAL_DARK` and
+    `_tick_dark_cover` are DELETED (they had been live in `DARK_SCENES` since
+    the 2026-07 stealth rework).
+  - Light is not cover from the gaze anywhere. Exposed means NOT IN COVER and
+    nothing else; a lamp pool no longer suppresses a Watcher wave or drops the
+    hold, in the dim interiors or outdoors.
+  The dark is the CONDITION His things need in order to open, so letting the
+  player hide in it was letting them hide inside the threat — and a lamp that
+  turns the gaze off makes the one unopt-out-able threat opt-out-able. Light
+  still does real work, but all of it lands on the THREAT, never on you: it
+  denies a Watcher anywhere to open (`_spawn_watcher` needs a dark spot with
+  line of sight, so a fully lit room is still secured) and it BURNS one caught
+  in a pool or the beam (`WATCHER_LIGHT_BURN`). You clear them with light; you
+  never hide in it. Guarded, `tests/stealth.py` §11 + §18.
 
 **OPEN, in build order.** The old item (1) — the light/dark split as a MECHANIC
-— is CLOSED: the exposure half landed and the cover half was ruled out (both
-above). What remains: (1) **wire the storm engine in** — real scene
+— is CLOSED, ruled out entirely (above). What remains: (1) **wire the storm
+engine in** — real scene
 dark-spots as anchors (off the darkening), tilt-camera projection, spawn density
 off evidence, and the **catch** (a bearer reaching you = the King-catch death);
 (2) **retire THE UNFOLDING** and rewire the catch / death card / Carcosa
@@ -626,7 +631,17 @@ sprint, light is the ONE system to perfect** — the game's missing
 mastery verb. The doctrine that keeps it coherent with everything
 shipped: **light is safety from the small things and a beacon to the big
 one** (Watchers die in it; the flashlight burn + the King's attention
-still price it). Landed already: the lighting foundation, interior
+still price it).
+
+**Read "safety" as ACTIVE, not passive (ruled 2026-07).** Light is a WEAPON and
+a DENIAL, never a hiding place. It kills Watchers and it takes away the dark
+spots they need to open. It does **not** shelter you: standing in a pool is not
+cover from the gaze, and standing in the dark is not cover from anything (the
+`SUS_CONCEAL_DARK` shadow-cover pass was CUT — see #25). The player's tool is
+the beam they point, not the square they stand on. Every future item here is
+judged against that: a light verb that makes a tile safe is the wrong verb.
+
+Landed already: the lighting foundation, interior
 lighting, `WATCHER_LIGHT_BURN`, the beam-off retirement (light works
 everywhere), and the flashlight opening on the PI's desk
 (`CHANGELOG.md`, "Lighting" / "The light pillar"). Open, in build order:
@@ -668,14 +683,14 @@ everywhere), and the flashlight opening on the PI's desk
   response, rides #23), and any screen-dim beat beyond the lights
   themselves dying.
 - **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
-  line-of-sight spots only, 2026-07), and the SURFACE now runs the
-  dark-is-exposure rule too once the storm has darkened it
-  (`_dark_is_exposure`, #25). Still open: dark-only EXISTENCE (a live
-  Watcher caught by a room relighting should burn or flee, in any
-  scene) and the UNDERGROUND, which still treats plain not-in-cover as
-  exposure — a lit pool in the deep is not yet a refuge from the gaze,
-  and extending it there is a real threat change to weigh, not a
-  mechanical sweep. Keep the below-3 threat role.
+  line-of-sight spots only, 2026-07), and that is the ONE place a room's
+  light state gates them: a fully lit room has nowhere for one to open.
+  The old "a lit spot is cover from the gaze" half was CUT (ruled
+  2026-07, #25) — do not rebuild it in any scene. Still open: dark-only
+  EXISTENCE (a live Watcher caught by a room RELIGHTING should burn or
+  flee where it stands, in any scene, not only when the player's beam
+  finds it — this is light acting on THEM, so it is the right kind of
+  rule). Keep the below-3 threat role.
 - The **capture→King-unleashed** thread and **procession-across-scenes**
   staging sit here too, unscoped. **The capture fork is RULED (2026-07,
   maintainer): capture is GAME OVER** — the CAPTURED card stays a hard

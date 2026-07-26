@@ -599,14 +599,19 @@ def main():
     check(n._cult_state == "chase",
           "apex: _force_chase bypasses suspicion and cover entirely")
 
-    # --- 8. darkness is concealment + the hide-exit beat -----------------
-    # Pillar 2A's "shadow" cover: in a DARK scene an unlit player
-    # (flashlight off, outside every light pool) reads at
-    # SUS_CONCEAL_DARK -- leaky like corn, never stacking, ignored by
-    # apex eyes. And leaving an enclosed hide takes HIDE_EXIT_BEAT of
+    # --- 8. darkness is NOT concealment + the hide-exit beat --------------
+    # Maintainer ruling, 2026-07: "darkness shouldn't hide you AT ALL." The
+    # dark belongs to Him -- it is the condition His things need to open, so
+    # hiding in it was hiding inside the threat. Cover is what you put BETWEEN
+    # yourself and an eye: corn, a hide, a wall. The old SUS_CONCEAL_DARK
+    # shadow-cover pass is CUT, and this locks it staying cut in the darkest
+    # room in the game. Leaving an enclosed hide still takes HIDE_EXIT_BEAT of
     # rooted vulnerability (the deferred exit-takes-a-beat window).
     from systems.stealth import concealment_factor as _cf
-    from systems.config import SUS_CONCEAL_DARK, HIDE_EXIT_BEAT
+    from systems.config import HIDE_EXIT_BEAT, SUS_CONCEAL_CORN
+    import systems.config as _cfg
+    check(not hasattr(_cfg, "SUS_CONCEAL_DARK"),
+          "dark: SUS_CONCEAL_DARK is gone from config (no shadow cover)")
     g = new_game()
     g.load_scene_now("the_cells", "default")
     tick(g, 10)
@@ -617,23 +622,18 @@ def main():
     if g.scene.lit_at(p.x, p.y):
         p.x, p.y = 4 * TILE + 16, 2 * TILE + 16
     tick(g, 2)
-    check(getattr(p, "_in_dark", False)
-          and abs(_cf(p) - SUS_CONCEAL_DARK) < 1e-9,
-          "dark: the unlit gloom conceals at SUS_CONCEAL_DARK")
-    p.inventory.add("flashlight", 1)
-    g.flashlight_on = True
-    tick(g, 2)
-    check(not getattr(p, "_in_dark", False) and _cf(p) == 1.0,
-          "dark: a lit flashlight burns the cover away")
-    g.flashlight_on = False
+    assert not g.scene.lit_at(p.x, p.y) and not g._flashlight_lit()
+    check(_cf(p) == 1.0,
+          "dark: standing unlit in the deepest dark conceals NOTHING")
+    # ...and no stray _in_dark stamp survives to be read by a future eye.
+    check(not getattr(p, "_in_dark", False),
+          "dark: nothing stamps player._in_dark anymore")
+    p.hidden = "corn"
+    check(abs(_cf(p) - SUS_CONCEAL_CORN) < 1e-9,
+          "dark: real cover still works in the dark (corn is unaffected)")
     p.hidden = "under"
     check(_cf(p) == 0.0, "dark: an enclosed hide still zeroes the score")
     p.hidden = None
-    g2 = new_game()
-    g2.load_scene_now("brimley", "default")
-    tick(g2, 10)
-    check(not getattr(g2.player, "_in_dark", False),
-          "dark: the daylit surface never grants it")
 
     g = new_game()
     g.load_scene_now("works_cistern", "default")
@@ -766,8 +766,9 @@ def main():
           and "effigy_grove" in WATCHER_OPEN_SCENES
           and "works_sign" in WATCHER_OPEN_SCENES,
           "watchers: the open sky and the deep stay in it")
-    # Inside the shop, standing in the DARK (unlit, flashlight off): the gaze
-    # opens now.
+    # Inside the shop, out of cover: the gaze opens. (The player stands at a
+    # dark spot because the SPAWN rule needs one in view -- not because being
+    # unlit is what exposes you. Being out of cover is.)
     g = new_game()
     g.load_scene_now("shop", "default")
     tick(g, 30)
@@ -801,15 +802,29 @@ def main():
     check(len(g._watchers) == n0,
           "watchers: no dark spot with sight of you = nothing opens "
           "(the sealed pantry)")
-    # Step into a light POOL: exposure drops, so the wave stops driving
-    # visibility (the hold releases).
+    # Step into a light POOL: it changes NOTHING about the hold (maintainer
+    # ruling, 2026-07 -- "Watchers should be able to gaze at you while you're
+    # standing in the light, that's the whole point of them"). A lamp is not a
+    # safe square; the gaze holds you in it. This is the check that fails if
+    # anyone re-adds light-as-cover.
     lit_x, lit_y = 12 * TILE + 16, 9 * TILE + 16   # inside the hooded fan
     assert g.scene.lit_at(lit_x, lit_y)
     g.player.x, g.player.y = lit_x, lit_y
     g.player.hidden = None
     g._tick_watchers(1 / 30.0)
+    check(g._watcher_gaze == float(len(g._watchers)) and g._watcher_gaze > 0.0,
+          "watchers: a light pool does NOT drop the gaze hold (it sees you)")
+    # And the wave keeps BUILDING while you stand in the light: the timer runs.
+    t_before = g._watcher_clone_t
+    g._tick_watchers(1 / 30.0)
+    check(g._watcher_clone_t < t_before,
+          "watchers: the spawn timer keeps running while you stand in light")
+    # Real cover is the only thing that stops it.
+    g.player.hidden = "under"
+    g._tick_watchers(1 / 30.0)
     check(g._watcher_gaze == 0.0,
-          "watchers: standing in a light pool drops the gaze hold (cover)")
+          "watchers: an enclosed hide (real cover) drops the hold")
+    g.player.hidden = None
     # Light BURNS a Watcher: one caught IN a pool dissolves fast.
     g._cursed = True
     g._spawn_watcher()
@@ -1348,54 +1363,41 @@ def main():
     check("brimley" in STORM_STAGE_SCENES,
           "storm stage: Brimley is a staged surface scene")
 
-    # The storm dark cuts ONE WAY (maintainer ruling, 2026-07): outdoors it
-    # EXPOSES you to His gaze and never CONCEALS you from the cult. Both
-    # halves are locked here, because the tempting "symmetry" fix is to make
-    # the dark cover too -- which would hand the player a free map-wide hide
-    # at exactly the point the game should be closing in.
+    # The storm dark is not a mechanic the PLAYER gets to use (maintainer
+    # ruling, 2026-07: "darkness shouldn't hide you AT ALL"). It sets the
+    # stage the storm will fill; it never conceals, and standing in a lamp
+    # pool out here does not buy safety from the gaze either.
     from systems.stealth import concealment_factor
     g = new_game()
     g.load_scene_now("country_lane", "default")
     tick(g, 30)
-    # Stage 0 first: full daylight, so the surface behaves as it always has.
-    check(g.scene_gloom() == 0 and not g._dark_is_exposure(),
-          "storm dark: at ev0 the surface is day, dark is not exposure")
-    # Now let the storm in.
-    g.save.set_arg("evidence", [{"name": f"w{i}"}
-                                for i in range(WATCHER_WAKE_EV)])
-    check(g.scene_gloom() > 0 and g._dark_is_exposure(),
-          "storm dark: once the gloom is up, outdoor dark IS exposure")
+    g.save.set_arg("evidence", [{"name": f"w{i}"} for i in range(3)])
+    check(g.scene_gloom() > 0,
+          "storm dark: by stage 3 the lane is genuinely dark")
     sc = g.scene
     spots = [(tx * TILE + 16, ty * TILE + 16)
              for ty in range(sc.h) for tx in range(sc.w)
              if not sc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
     lit_x, lit_y = next(p for p in spots if sc.lit_at(*p))
     dark_x, dark_y = next(p for p in spots if not sc.lit_at(*p))
-    # EXPOSURE: standing unlit under the open sky opens the gaze.
+    # NOT COVER: full night, unlit, flashlight off -- conceals nothing.
+    g.player.x, g.player.y = dark_x, dark_y
+    g.player.hidden = None
+    g.flashlight_on = False
+    tick(g, 2)
+    check(concealment_factor(g.player) == 1.0,
+          "storm dark: the outdoor night conceals nothing from the cult")
+    # NOT A REFUGE EITHER: a yard-light pool does not stop the gaze.
     for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
-        g.player.x, g.player.y = dark_x, dark_y
+        g.player.x, g.player.y = lit_x, lit_y
         g.player.hidden = None
         g._tick_watchers(1 / 30.0)
         if g._watchers:
             break
     check(bool(g._watchers),
-          "storm dark: standing in the outdoor dark opens a Watcher")
-    # REFUGE: a lamp pool is the cover out here, so the hold releases.
-    g.player.x, g.player.y = lit_x, lit_y
-    g.player.hidden = None
-    g._tick_watchers(1 / 30.0)
-    check(g._watcher_gaze == 0.0,
-          "storm dark: an outdoor light pool drops the gaze hold (refuge)")
-    # NOT COVER: the same dark spot, at full night, hides you from NOTHING.
-    g.save.set_arg("evidence", [{"name": f"w{i}"} for i in range(3)])
-    g.player.x, g.player.y = dark_x, dark_y
-    g.player.hidden = None
-    g.flashlight_on = False
-    g._tick_dark_cover()
-    check(getattr(g.player, "_in_dark", False) is False,
-          "storm dark: outdoor dark never stamps _in_dark (not concealment)")
-    check(concealment_factor(g.player) == 1.0,
-          "storm dark: outdoor dark gives no concealment from the cult")
+          "storm dark: Watchers open on you while you stand in a lamp pool")
+    check(g._watcher_gaze > 0.0,
+          "storm dark: and they HOLD you there (light is not cover)")
 
     print()
     if FAILS:

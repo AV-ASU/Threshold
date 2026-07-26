@@ -512,13 +512,12 @@ SUS_NEAR = 44.0               # px: inside this, facing no longer matters
 SUS_CONE_HALF = 1.40          # rad (~80 deg) enemy sight-cone half-angle
 SUS_CONE_FEATHER = 0.35       # rad soft edge on the cone lip
 SUS_CONCEAL_CORN = 0.30       # concealment factor in corn (leaky, not zero)
-# Darkness is CONCEALMENT too (DESIGN.md §12 "corn, shadow"):
-# in a DARK scene, with the flashlight unlit and outside every light
-# pool (Scene.lit_at), the player reads as half-swallowed by the gloom.
-# Weaker than corn (a shape in the dark is still a shape), and it never
-# stacks with other cover (the better factor wins). Apex pursuers and
-# respects_hide=False eyes ignore it like all cover.
-SUS_CONCEAL_DARK = 0.45
+# DARKNESS IS NOT COVER (maintainer ruling, 2026-07: "darkness shouldn't hide
+# you AT ALL"). There is deliberately no SUS_CONCEAL_DARK here. The dark is
+# where He is, not somewhere to get away from Him -- it is the CONDITION the
+# threats need, never the player's tool. Cover is a thing you put between you
+# and an eye: the corn, a hide, a wall. Standing in an unlit spot is not.
+# Do not re-add it; tests/stealth.py §11 fails if darkness ever conceals again.
 # Leaving an enclosed hide takes a BEAT (the deferred exit-takes-a-beat
 # window): you are out, visible, and unable to move while you unfold.
 HIDE_EXIT_BEAT = 0.35

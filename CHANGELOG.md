@@ -90,6 +90,45 @@
 
 ## Stealth & threat
 
+- **2026-07 — Darkness stops hiding you, and light stops sheltering you from
+  the gaze (maintainer ruling; supersedes the entry below and half of the
+  2026-07 "no light = danger" pass).** The maintainer read the entry below and
+  rejected its whole framing: *"Watchers should be able to gaze at you while
+  you're standing in the light, that's the whole point of them?? Darkness
+  shouldn't hide you AT ALL."* Both mechanics are now cut, not narrowed.
+  - **Darkness is no longer concealment, anywhere.** `SUS_CONCEAL_DARK` (0.45),
+    `Game._tick_dark_cover`, the `player._in_dark` stamp and the darkness term
+    in `stealth.concealment_factor` are all DELETED. Shadow cover had been live
+    in every `DARK_SCENES` room since the stealth rework.
+  - **A light pool is no longer cover from a Watcher.** `_tick_watchers` now
+    reads `exposed = player.hidden is None` and nothing else, so a lamp neither
+    suppresses the wave nor drops the hold. `_dark_is_exposure` (added in the
+    entry below) is deleted with it.
+  **Why the ruling is right.** The dark is the CONDITION His things need in
+  order to open at all, so letting the player hide in it was letting them hide
+  *inside* the threat — and it paid them for switching the flashlight off in
+  exactly the rooms that should be worst. Symmetrically, a lamp that switches
+  the gaze off makes the one threat that must not be opt-out-able opt-out-able.
+  Light still does real work, but every bit of it lands on the THREAT rather
+  than on the player: it denies a Watcher anywhere to open (`_spawn_watcher`
+  still needs a dark spot with line of sight, so a fully lit room remains
+  secured) and it BURNS one caught in a pool or the beam
+  (`WATCHER_LIGHT_BURN`). You clear them with light; you never hide in it. The
+  doctrine in `TODO.md` #21 ("light is safety from the small things") is
+  therefore ACTIVE safety — a weapon and a denial, never a safe square — and
+  that reading is now written into the ticket so future light verbs are judged
+  against it.
+  **A latent NameError fell out of it.** Removing dark cover let cult chases
+  lock in dark rooms for the first time, which reached
+  `entities/enemy.py:_cult_tick`'s chase branch and crashed on
+  `CULT_CHASE_MULT` — used there but never imported (`enemy.py` has no star
+  import, unlike `threat_mixin`). Fixed, and an AST sweep confirmed it was the
+  only such name in the stealth/threat files.
+  Guards: `tests/stealth.py` §11 (config has no `SUS_CONCEAL_DARK`; the
+  deepest dark conceals nothing; corn and hides still work; a lamp pool does
+  NOT drop the hold and the spawn timer keeps running in it) and §18 (the same
+  outdoors at stage 3). Docs: `DESIGN.md` §1 + §2 + §12, `TODO.md` #21 + #25,
+  `CLAUDE.md`. Full gate green.
 - **2026-07 — The outdoor dark EXPOSES you, and was ruled never to hide you
   (`TODO.md` #25 item 1, closed).** The surface darkening had been visual for
   two slices; this gives it teeth. `ThreatMixin._dark_is_exposure` extends the
