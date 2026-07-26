@@ -2412,8 +2412,8 @@ def main():
         "tasting it", "tallow", "the rendering at", "feed what waits",
         "grain threaded through", "fold back on themselves",
         "comes home for dinner",
-        # The cauldron is REMOVED game-wide (eat-cult imagery; the old
-        # clearing centrepiece is now the burn site's dead fire pit).
+        # The cauldron is REMOVED game-wide (eat-cult imagery; the
+        # clearing's centrepiece is a plain dead fire pit).
         "cauldron",
     ]
     _hits = []

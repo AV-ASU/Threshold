@@ -769,9 +769,10 @@ def build_brimley():
     well_x, well_y = 52 * TILE + 16, 17 * TILE + 16
     sc.add_decoration(Decoration(well_x, well_y, "well"))
     sc._well_pos = (well_x, well_y)
-    # A wheelbarrow of "rusted" tools left by the square (the shed that
-    # stood here is gone, but the cleaned tools remain -- the
-    # contradiction is the point, still an evidence beat).
+    # A wheelbarrow left by the square. DECORATION ONLY (maintainer ruling,
+    # 2026-07: it is a prop, not a find -- the old `barrow_tools` examine,
+    # its [E] cue and its "the edges are still bright" contradiction are all
+    # cut).
     barrow_x, barrow_y = 49 * TILE + 16, 18 * TILE + 16
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
@@ -1107,15 +1108,6 @@ def build_brimley():
             game.show_notice("Cold air climbs out of the dark. No way "
                              "down for you here.")
             return
-        # Wheelbarrow of "rusted" tools -- the diggers keep them cleaned.
-        bx, by = sc._barrow_pos
-        if abs(game.player.x - bx) < 36 and abs(game.player.y - by) < 36:
-            if not game.save.flag("barrow_inspected"):
-                game.save.set_flag("barrow_inspected", True)
-                _evidence(game, "barrow_tools",
-                          "Digging tools left in the barrow, rusted over. "
-                          "The edges are still bright.")
-            return
         # The news rack outside the shop -- the last issue it was fed.
         nx_, ny_ = sc._news_rack_pos
         if abs(game.player.x - nx_) < 36 and abs(game.player.y - ny_) < 36:
@@ -1131,7 +1123,6 @@ def build_brimley():
         # silent set-dressing (the prop), but the narrator no longer says its
         # line for you. It carries no evidence or pointer, so nothing is lost.
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
-    sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
     sc.add_interactable(sc._news_rack_pos[0], sc._news_rack_pos[1], 36)
 
     sc.on_interact_fn = _brimley_interact

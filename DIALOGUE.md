@@ -1220,9 +1220,6 @@ ones landed so far:
   `scenes/lodge.py`; every locked 'l' door in the guest wing): "[c=dim](Locked.
   A row of them, all the same, all shut.)[/c]" (the uncanny hotel of shut
   rooms kept ready for guests who won't come, NARRATIVE §4).
-- **`the_burning`** (`build_clearing._void_boss_interact`,
-  `scenes/interiors.py`): "A cold fire pit. In the ash, what would not burn:
-  buckles, bowl rims, boot eyelets, a watch case, slagged together."
 - **the procession candles** (`build_depths_procession._candles_interact`,
   first read): "[c=dim]A line of candles down the dark, burned to coins.
   Each one stands in older wax, and older wax under that.[/c]" /
@@ -1230,8 +1227,6 @@ ones landed so far:
   The wax says nobody ever hurried.[/c]" Re-read: "[c=dim]The wax holds its little
   lights steady. Nobody hurried here. The wax says nobody ever
   hurried.[/c]" (files `the_procession`, above)
-- **`barrow_tools`** (`_brimley` barrow examine, note): "Digging tools left
-  in the barrow, rusted over. The edges are still bright."
 - **the emptied church** (`old_man_house_on_enter`, after `preacher_doomed`):
   "[c=dim]Mud on the aisle boards, dried in a line toward the door. River
   mud.[/c]" (the atmospheric "lectern stands empty / stove is cold" line was

@@ -63,7 +63,6 @@ NOTE_TITLES = {
     "worn_stone":              "The Worn Stone",
     "bell_tower_view":         "From the Bell Tower",
     "backwoods_note":          "The Backwoods Stash",
-    "barrow_tools":            "The Barrow",
     "lodge_candle_callback":   "Candles at the Lodge",
     "scarecrow":               "The Scarecrow",
     "the_old_stores_shelves":  "The Old Stores",
