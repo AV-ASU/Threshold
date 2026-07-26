@@ -1765,18 +1765,27 @@ def main():
                   for e in gsf.save.arg("notes", [])),
           "ask: the revisit nudges are cut (no note on a silent discovery)")
 
-    # Vane's car answer files the fold note WITHOUT hijacking the
+    # The CAR exchange is CUT (maintainer, 2026-07): the dead engines are a
+    # symptom of what is happening to the town, not a separate errand about
+    # the PI's own vehicle, so the fold material lives in the town answer
+    # now. That answer files the fold note WITHOUT hijacking the
     # conversation's float chain (reflect=False), and it opens Sable's
     # folded-roads reproach.
-    from scenes.dialogue import _vane_car_told
+    from scenes.dialogue import _vane_town_beats
+    check(not any(ex["key"] == "car" for ex in _VC["exchanges"]),
+          "vane: the car question is cut")
+    _town_txt = " ".join(b[1].lower() for b in _vane_town_beats(new_game())
+                         if b[0] in ("npc", "pi"))
+    check("engine" in _town_txt and "it's the town" in _town_txt,
+          "vane: the town answer carries the dead engines (the fold material)")
     gvf = new_game()
     _sentinel = lambda: None
     gvf.float_speech.active = True
     gvf.float_speech.on_complete = _sentinel
-    _vane_car_told(gvf)
+    _vane_town_beats(gvf)
     check(any(isinstance(e, dict) and e.get("name") == "the_fold_told"
               for e in gvf.save.arg("notes", [])),
-          "vane: the car answer files the PI's fold note")
+          "vane: the town answer files the PI's fold note")
     check(gvf.float_speech.on_complete is _sentinel,
           "vane: the fold note never hijacks the conversation float chain")
     _qf2 = next(ex for ex in SABLE_CONVO["exchanges"]
@@ -1796,30 +1805,46 @@ def main():
     from scenes.dialogue import _vane_how_told
     gvh = new_game()
     _qhow = next(ex for ex in _VC["exchanges"] if ex["key"] == "how")
-    check(_qhow.get("once"),
-          "vane: the blind-cultist story is spent once")
+    # ASK ANYTIME, HE REFUSES (maintainer ruling, 2026-07): the row opens on
+    # THE TALK alone, so the player can always put the question. Trust decides
+    # the ANSWER, not the availability -- untrusted he gives the where (which
+    # he does not know) and withholds the how, and the row stays askable.
+    check(not _qhow.get("once"),
+          "vane: the cult question is re-askable after a refusal")
     check(not _qhow["avail"](gvh),
-          "gate: the how waits before the intro and any trust")
+          "gate: the cult question waits on the Talk")
     gvh.save.set_flag("convo_vane_intro_asked", True)
-    check(not _qhow["avail"](gvh),
-          "gate: the intro alone does not open the how")
+    gvh.save.set_flag("cult_talk_given", True)
+    check(_qhow["avail"](gvh),
+          "gate: the Talk opens the cult question with no trust at all")
+    _refused = " ".join(b[1].lower() for b in _qhow["beats"](gvh)
+                        if b[0] in ("npc", "pi"))
+    check("blind" not in _refused,
+          "vane: untrusted, he refuses to spend his one card")
+    check("school" in _refused and "barn" in _refused,
+          "vane: he still answers the where, which costs him nothing")
+    check(not any(b[0] == "do" for b in _qhow["beats"](gvh)),
+          "vane: a refusal never files the how note")
     _evfn2(gvh, "maras_journal", "a", show=False)
-    check(not _qhow["avail"](gvh),
-          "gate: a discovery found but never shared does not open the how")
     _qsj = next(ex for ex in _VC["exchanges"] if ex["key"] == "share_journal")
     check(_qsj["avail"](gvh),
           "gate: finding the journal opens its share")
     _qsj["on_ask"](gvh)
-    check(_qhow["avail"](gvh),
-          "gate: the intro plus a shared discovery opens the how")
     _ev_h = len(gvh.save.arg("evidence", []))
-    _vane_how_told(gvh)
+    for _b in _qhow["beats"](gvh):
+        if _b[0] == "do":
+            _b[1](gvh)
+    check(gvh.save.flag("vane_how_told"),
+          "vane: trusted, the account is told and the row retires")
+    check(not _qhow["avail"](gvh),
+          "vane: the how is spent once it has actually been told")
     check(any(isinstance(e, dict) and e.get("name") == "the_how"
               for e in gvh.save.arg("notes", [])),
           "vane: asking the how files the PI's NOTE")
     check(len(gvh.save.arg("evidence", [])) == _ev_h,
           "vane: the how never inflates the evidence count")
-    _how_txt = " ".join(b[1].lower() for b in _qhow["beats"])
+    _how_txt = " ".join(b[1].lower() for b in _qhow["beats"](gvh)
+                        if b[0] in ("npc", "pi"))
     check("blind" in _how_txt and "dream" in _how_txt,
           "canon: the account is the blind cultist promised by the dream")
     check(not any(w in _how_txt for w in ("below", "down there", "under the",
@@ -1847,16 +1872,28 @@ def main():
 
     # (Vane cache) The office gun cabinet is EARNED: trust-gated like the how,
     # spent once, and granting it arms the office ammo drop (vane_gave_cache).
+    # Same ask-anytime/refuse contract as the cult question: the row is there
+    # from the intro, and trust decides whether he opens the cabinet or tells
+    # you to come back having done some work.
     _cache = next(ex for ex in _VC["exchanges"] if ex["key"] == "cache")
-    check(_cache.get("once"), "vane: the cabinet is handed over once")
+    check(not _cache.get("once"),
+          "vane: the cabinet ask is re-askable after a refusal")
     gca = new_game()
-    check(not _cache["avail"](gca), "vane: the cabinet waits before trust")
+    check(not _cache["avail"](gca), "vane: the cabinet waits on the intro")
     gca.save.set_flag("convo_vane_intro_asked", True)
+    check(_cache["avail"](gca),
+          "vane: the cabinet can be asked for with no trust at all")
+    for _b in _cache["beats"](gca):
+        if _b[0] == "do":
+            _b[1](gca)
+    check(not gca.save.flag("vane_gave_cache"),
+          "vane: untrusted, the refusal never arms the ammo drop")
     gca.save.set_arg("vane_informed", 1)
-    check(_cache["avail"](gca), "vane: intro plus a shared find opens the cabinet")
-    _cache["on_ask"](gca)
+    for _b in _cache["beats"](gca):
+        if _b[0] == "do":
+            _b[1](gca)
     check(gca.save.flag("vane_gave_cache"),
-          "vane: taking the cabinet arms the office ammo drop")
+          "vane: a shared find opens the cabinet and arms the office drop")
     check(not _cache["avail"](gca),
           "vane: the cabinet does not re-offer once given")
 

@@ -69,6 +69,14 @@ answer leaves a second witness as plain stated fact, unpointed.
 stated, never pointed at (no "I should go ask him" append, #13b); every new
 line lands in `DIALOGUE.md` in the same commit.
 
+**And the pattern the rest of the cast follows** (from the maintainer's pass
+on Vane, `CHANGELOG.md`): **a POSSESSION gate hides the row** (you cannot ask
+about a thing you are not holding), but a **TRUST or disposition gate does
+NOT** — the question is askable and the character refuses it in their own
+voice, naming what would change their mind. Hidden options teach nothing;
+refusals are characterisation and a reason to come back. The refusal branch
+must never fire the grant.
+
 ### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
 
 The newspaper's one-copy, six-recipient choice shipped as the pilot

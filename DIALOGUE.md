@@ -264,16 +264,13 @@ intro:" / "Opener photo:").
   - (npc) "I have booked drunks and I have booked men out of their heads. She was neither. She was answering somebody."
   - (pi) "Who came and got you?"
   - (npc) "One of the old boys who sits the square all day. He stood and watched the whole of it before he ever thought to come for me."
-- **Exchange `car`** — "My car died the night I drove in." / "My car died at the lodge steps the night I drove in. It won't turn over now." (files the fold note, no chained reflection)
-  - (npc) "Won't start. Won't ever. Nothing with an engine leaves Brimley."
-  - (pi) "Engines don't all quit at once. Somebody got to it."
-  - (npc) "Nobody touched your car. I know how that sounds. I've watched men tear three trucks down to the block hunting the part that failed. There is no part."
-  - (npc) "[c=dim]It's the town.[/c]"
-  - (pi) "[c=dim]He said it flat.[/c]"
-- **Exchange `town`** — "What happened to this town?" / "What happened to this town, Sheriff?" (dynamic beats, `_vane_town_beats`: Vane's lived arc, then a reaction that branches on whether the PI already knows the seal)
+- **Exchange `town`** — "What's happening to this town?" / "What's happening to this town, Sheriff?" (dynamic beats, `_vane_town_beats`: Vane's lived arc, then a reaction that branches on whether the PI already knows the seal). **Present tense by design** (maintainer, 2026-07): not a history lesson about something finished, the thing still happening to him. It absorbed the retired `car` exchange, so the dead engines are a symptom of the town here rather than an errand about the PI's own vehicle, and this is where the fold note is filed now.
   - (npc) "Brimley was dying before any of this. Half the town gone south for work, storefronts boarded up. Some weeks the phone never rang once."
   - (npc) "Then last summer the strangers started coming up the north road, and they didn't stop. More than we had beds for. Polite, every one. Kept to their own. Not one could tell me where they'd driven in from, or why they'd want a dead town like this."
   - (npc) "I kept waiting on the trouble strangers bring. It never came. Something quieter did. The trucks stopped running. The mail stopped. And the road out stopped taking anybody anywhere."
+  - (npc) "Nothing with an engine leaves Brimley. Not yours, not mine. I have watched men tear three trucks down to the block hunting the part that failed. There is no part."
+  - (npc) "[c=dim]It's the town.[/c]"
+  - (pi) "[c=dim]He said it flat.[/c]"
   - (npc) "You need to get out of here. We all do. No one has been able to leave in months."
   - **first time** (has not learned the seal yet; marks the fold heard): (pi) "Wait. What are you saying, Sheriff? No one has left?" / (npc) "Not a soul, not since the winter. They try. I tried, more times than I'll admit to a stranger. Every road out of Brimley turns you around and sets you back at that well." / (npc) "You'll learn that yourself soon enough. Everybody does."
   - **already knows** (heard the roads loop / walked one / re-asking): (pi) "Then you tell me how, Sheriff. Every road out, every engine, a whole town that can't leave. It's not right. How?" / (npc) "You think I haven't stood right where you're standing and asked that, every night for a year? I don't have a how for you. Just this badge, and a list of folks I can't help."
@@ -283,11 +280,6 @@ intro:" / "Opener photo:").
   - (npc) "A year I've been asking this town for one honest page. You walk in off a dead road and hand me her whole hand."
   - (npc) "That's the first real piece of work anybody has brought through that door since it all shut. I won't forget you did."
   - (pi) "[c=dim]Something in him let go a notch.[/c]"
-- **Exchange `share_ledger`** (avail: intro asked + Ledger read) — "The lodge registers are wrong." / "The lodge's old registers. A year of guests signed in and not one of them ever signed out. The clean book on the desk starts right where the boxes stop."
-  - (npc) "Now that is evidence. Paper with dates on it. God, I have missed paper with dates on it."
-  - (npc) "I never got past that desk. Sable smiles, the whole building goes polite, and you walk out without whatever you came in for."
-  - (npc) "Keep pulling threads like that and this town might finally owe somebody the truth. Watch who sees you pull them."
-  - (pi) "[c=dim]He wrote it down.[/c]"
 - **Exchange `paper`** (avail: intro asked + carries newspaper) — "I brought yesterday's newspaper." / "I've got yesterday's paper in my coat. April fourteenth. Figured the law here should have some word from outside." (despair lever, +VANE_PAPER_DESPAIR)
   - (npc) "(He takes it in both hands, careful, like something that might go out.)"
   - (npc) "(He spreads it flat on the desk and stands over the front page a long time.)"
@@ -298,19 +290,44 @@ intro:" / "Opener photo:").
   - (npc) "So it isn't just here. That's what a front page is for, I guess. Telling you the weather's the same all over."
   - (npc) "Thank you for the paper, son. Go on home now. (He doesn't look up from the page again.)"
   - (pi) "[c=dim]I meant it as a kindness. Walking out, I couldn't remember why I thought it would land as one.[/c]"
-- **Exchange `how`** (avail: intro asked + at least one share, the trust gate) — "How were the newcomers gathered?" / "A hundred strangers drove north to the same dying town. Nobody talks that many people into anything. How was it done?" — his one card, the honest *how* fragment (NARRATIVE §4).
-  - (npc) "I asked that question every night for a year. What I've got is one conversation. I'll spend it on you."
-  - (npc) "After the rooms emptied, one of them came back up the road to this office. Blind. Born blind, he said. Walked in without a stick and sat down square in that chair."
-  - (npc) "No name. I asked twice. He sat there lit up like a man warming his hands at a stove. Said the dream had promised him his eyes. Said when the work is finished he'll open them, and they'll work."
-  - (pi) "He wasn't there to confess anything. He was there to fetch you."
-  - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time and he left smiling."
-  - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it."
-  - (npc) "What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
-- **Exchange `cache`** (avail: intro asked + at least one share, the trust gate; once; sets `vane_gave_cache` and drops the office ammo) — "Am I on my own out there?" / "If this goes the way it's been going, I'll be out there alone. Is there anything you can put in my hand, Sheriff?"
-  - (npc) "Protection. That's a thing this office used to hand out."
-  - (npc) "I've got no deputies, no cell that holds, and a law nobody up here answers to anymore. What I've got is a cabinet in the back. Shells, and a spare piece I kept oiled for no reason I could name."
-  - (npc) "Take what you need. It won't help you against what took this town. But it'll make you feel like it might, and some nights that's the whole of the job."
-  - (pi) "[c=dim]He unlocks the cabinet and steps back. The last thing the law here has to give.[/c]"
+- **Exchange `how`** (avail: THE TALK has happened, and he has not told it
+  yet; re-askable) — "Where are the cultists gathered?" / "One of them put a
+  hand on me today. Where are they gathered, Sheriff?" — **ask anytime, he
+  refuses** (maintainer ruling, 2026-07): the row opens on the Talk alone, so
+  the question can always be put; TRUST decides the ANSWER, not the
+  availability. He answers the WHERE either way, because it costs him nothing
+  and he does not know it (NARRATIVE §4). What he withholds is the HOW, his
+  one card (`_vane_where_beats`).
+  - **untrusted** (no discovery shared yet; the row stays askable):
+    - (npc) "Gathered where? The school, the barn, the lodge. Then one night those rooms were empty, and I have not found the room they went to since."
+    - (pi) "That isn't all you have."
+    - (npc) "(He looks at you a while.) No. It isn't."
+    - (npc) "You have been walking my town asking after one girl, and you have not put one thing in my hand. The ones who came before you were friendly too, son."
+    - (npc) "Bring me something I can hold. Then we will see what I have got."
+  - **trusted** (at least one discovery shared; files `the_how` and retires
+    the row):
+    - (npc) "Gathered where? The school, the barn, the lodge. Then one night those rooms were empty, and I have not found the room they went to since. So I cannot give you where."
+    - (npc) "I can give you how. I have given it to nobody."
+    - (npc) "I asked that question every night for a year. What I've got is one conversation. I'll spend it on you."
+    - (npc) "After the rooms emptied, one of them came back up the road to this office. Blind. Born blind, he said. Walked in without a stick and sat down square in that chair."
+    - (npc) "No name. I asked twice. He sat there lit up like a man warming his hands at a stove. Said the dream had promised him his eyes. Said when the work is finished he'll open them, and they'll work."
+    - (pi) "He wasn't there to confess anything. He was there to fetch you."
+    - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time and he left smiling."
+    - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it."
+    - (npc) "What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
+- **Exchange `cache`** (avail: intro asked, cabinet not yet given;
+  re-askable) — "Am I on my own out there?" / "If this goes the way it's been
+  going, I'll be out there alone. Is there anything you can put in my hand,
+  Sheriff?" — the same ask-anytime/refuse contract (`_vane_cache_beats`).
+  - **untrusted** (the refusal never arms the ammo drop):
+    - (npc) "I've got no deputies, no cell that holds, and a law nobody up here answers to anymore."
+    - (npc) "What I have got, I am not handing to a man who drove in off that road last week and has told me nothing since."
+    - (npc) "Work the case. Come back and show me you did. Then ask me again."
+  - **trusted** (sets `vane_gave_cache` and drops the office ammo):
+    - (npc) "Protection. That's a thing this office used to hand out."
+    - (npc) "I've got no deputies, no cell that holds, and a law nobody up here answers to anymore. What I've got is a cabinet in the back. Shells, and a spare piece I kept oiled for no reason I could name."
+    - (npc) "Take what you need. It won't help you against what took this town. But it'll make you feel like it might, and some nights that's the whole of the job."
+    - (pi) "[c=dim]He unlocks the cabinet and steps back. The last thing the law here has to give.[/c]"
 - **On leave** (`vane_on_leave`, once):
   - (npc) "Hey. If you do find her, don't bring her by the office. There's no report worth filing anymore."
   - (npc) "Just get her out. If you find a way that works, that is. And then you come tell me what it was."

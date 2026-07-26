@@ -325,11 +325,24 @@ What rises with the stage:
   framing line, the beats, and (2026-07) his **pose in the office
   tableau** (`_vane_tableau_state` mirrors `_vane_prompt`'s thresholds:
   despair turns him to the window, hope leans him in) — never a number). **Hope has one
-  currency:** the PI **sharing a real discovery** with him (the
-  `share_*` exchanges in `VANE_CONVO`, `_vane_share`) — the same act is
-  the **trust** that opens his investigation thread (the blind-cultist
-  *how* waits on a share, not on evidence found), so tending him and
-  earning his help are one gesture. **Despair** comes from the beats
+  currency:** the PI **sharing a real discovery** with him
+  (`share_journal` in `VANE_CONVO`, `_vane_share` — Mara's journal, the
+  case he is being asked to believe in; the Ledger share was cut 2026-07,
+  the registers being Sable's thread), so tending him and earning his help
+  are one gesture.
+
+  **Trust gates the ANSWER, never the QUESTION** (maintainer ruling,
+  2026-07). His withheld exchanges — the cult question (the blind-cultist
+  *how*) and the gun cabinet — are **askable from the moment their
+  situation exists**, and a Vane who has been given nothing simply refuses
+  them, in his own voice, saying what would change his mind. He is a
+  mistrusting man, so let him be seen mistrusting: an option greyed out of
+  the menu teaches the player nothing, while a refusal is characterisation,
+  a stated price, and a reason to come back. Both rows stay askable until
+  he has actually answered (`vane_how_told` / `vane_gave_cache` retire
+  them), so a refusal is never a lockout, and the refusal branch must never
+  fire the grant — the `("do", ...)` beat sits at the END of the trusted
+  branch only. **Despair** comes from the beats
   that read, to a man who wants it all to *end*, as permission: the
   preacher's murder (`+VANE_DESPAIR_ACT`) and the newspaper's front page
   (`+VANE_PAPER_DESPAIR` — the break lever, TODO #2; the give-beat

@@ -1064,18 +1064,12 @@ def _vane_prompt(game):
     return "Vane waits you out, thumbs in his belt."
 
 
-def _vane_car_told(game):
-    """The car answer is a fold account (looping roads, nothing with an
-    engine leaves). File the PI's fold note WITHOUT the chained narrator
-    reflection -- the exchange carries the reflection as its own closing
-    beat, and the conversation owns the float's on_complete chain."""
-    if hasattr(game, "_fold_mentioned"):
-        game._fold_mentioned("Sheriff Vane", reflect=False)
-
-
 def _vane_how_told(game):
     """Vane's blind-cultist account is the case's one honest piece of the
-    HOW (NARRATIVE §4). File it as a NOTE, never evidence."""
+    HOW (NARRATIVE §4). File it as a NOTE, never evidence. Latches
+    `vane_how_told` so the question retires only once he has actually TOLD
+    it -- a refusal must leave the row askable again."""
+    game.save.set_flag("vane_how_told", True)
     _log_note(game, "the_how", [
         "[c=dim]The sheriff spent his one card. A blind man, no name, lit "
         "up with certainty, promised his own eyes by the dream once the "
@@ -1083,6 +1077,89 @@ def _vane_how_told(game):
         "him for refusing.",
         "Nobody was argued north. Each of them was promised the one thing they were starving for, and every one came gladly.[/c]",
     ])
+
+
+def _vane_where_beats(game):
+    """The cult question, opened by THE TALK (a hand has landed on the PI's
+    shoulder, so he is asking about them as people who are HERE and not as
+    history). Two branches, and the gate is TRUST rather than availability
+    (maintainer ruling, 2026-07): the row appears the moment the Talk lands,
+    and a Vane who has been given nothing simply REFUSES it. He answers the
+    WHERE honestly either way, because it costs him nothing and he does not
+    know the answer (NARRATIVE §4: where the line went is beyond him). What
+    he is withholding is the HOW, his one card, and he will not spend it on
+    an outsider who has only ever taken."""
+    if int(game.save.arg("vane_informed", 0)) < 1:
+        return [
+            ("npc", "Gathered where? The school, the barn, the lodge. Then "
+                    "one night those rooms were empty, and I have not found "
+                    "the room they went to since."),
+            ("pi", "That isn't all you have."),
+            ("npc", "(He looks at you a while.) No. It isn't."),
+            ("npc", "You have been walking my town asking after one girl, "
+                    "and you have not put one thing in my hand. The ones "
+                    "who came before you were friendly too, son."),
+            ("npc", "Bring me something I can hold. Then we will see what "
+                    "I have got."),
+        ]
+    return [
+        ("npc", "Gathered where? The school, the barn, the lodge. Then one "
+                "night those rooms were empty, and I have not found the "
+                "room they went to since. So I cannot give you where."),
+        ("npc", "I can give you how. I have given it to nobody."),
+        ("npc", "I asked that question every night for a year. What I've "
+                "got is one conversation. I'll spend it on you."),
+        ("npc", "After the rooms emptied, one of them came back up the road "
+                "to this office. Blind. Born blind, he said. Walked in "
+                "without a stick and sat down square in that chair."),
+        ("npc", "No name. I asked twice. He sat there lit up like a man "
+                "warming his hands at a stove. Said the dream had promised "
+                "him his eyes. Said when the work is finished he'll open "
+                "them, and they'll work."),
+        ("pi", "He wasn't there to confess anything. He was there to fetch "
+               "you."),
+        ("npc", "He made the offer. Told me to name the thing I want most "
+                "in this world, and come with him, and it would be waiting. "
+                "I put him out. He thanked me for my time and he left "
+                "smiling."),
+        ("npc", "You don't talk a hundred strangers onto one road. They "
+                "weren't tricked. Every one of them was going toward "
+                "something, and glad of it."),
+        ("npc", "What it was, who was holding it out, I never got closer "
+                "than that chair. That's the piece that keeps my lights on "
+                "at night."),
+        ("do", _vane_how_told),
+    ]
+
+
+def _vane_cache_beats(game):
+    """The office gun cabinet, on the same ask-anytime/refuse contract as the
+    cult question. Without a share he says no, and says why; with one he
+    unlocks it. The grant rides a ("do", ...) at the END so a refusal never
+    arms the drop."""
+    if int(game.save.arg("vane_informed", 0)) < 1:
+        return [
+            ("npc", "I've got no deputies, no cell that holds, and a law "
+                    "nobody up here answers to anymore."),
+            ("npc", "What I have got, I am not handing to a man who drove "
+                    "in off that road last week and has told me nothing "
+                    "since."),
+            ("npc", "Work the case. Come back and show me you did. Then "
+                    "ask me again."),
+        ]
+    return [
+        ("npc", "Protection. That's a thing this office used to hand out."),
+        ("npc", "I've got no deputies, no cell that holds, and a law nobody "
+                "up here answers to anymore. What I've got is a cabinet in "
+                "the back. Shells, and a spare piece I kept oiled for no "
+                "reason I could name."),
+        ("npc", "Take what you need. It won't help you against what took "
+                "this town. But it'll make you feel like it might, and some "
+                "nights that's the whole of the job."),
+        ("pi", "[c=dim]He unlocks the cabinet and steps back. The last "
+               "thing the law here has to give.[/c]"),
+        ("do", _vane_give_cache),
+    ]
 
 
 def _vane_town_beats(game):
@@ -1109,6 +1186,14 @@ def _vane_town_beats(game):
         ("npc", "I kept waiting on the trouble strangers bring. It never came. "
                 "Something quieter did. The trucks stopped running. The mail "
                 "stopped. And the road out stopped taking anybody anywhere."),
+        # The fold material, moved here off the retired car exchange: the
+        # engines are part of what is happening to the town, not a separate
+        # errand about the PI's own vehicle.
+        ("npc", "Nothing with an engine leaves Brimley. Not yours, not "
+                "mine. I have watched men tear three trucks down to the "
+                "block hunting the part that failed. There is no part."),
+        ("npc", "[c=dim]It's the town.[/c]"),
+        ("pi", "[c=dim]He said it flat.[/c]"),
         ("npc", "You need to get out of here. We all do. No one has been able "
                 "to leave in months."),
     ]
@@ -1217,33 +1302,21 @@ VANE_CONVO = {
         ],
     ) + [
         {
-            "key": "car",
-            "q": "My car died at the lodge steps the night I drove in. It "
-                 "won't turn over now.",
-            "label": "My car died the night I drove in.",
-            "on_ask": _vane_car_told,
-            "beats": [
-                ("npc", "Won't start. Won't ever. Nothing with an engine "
-                        "leaves Brimley."),
-                ("pi", "Engines don't all quit at once. Somebody got to it."),
-                ("npc", "Nobody touched your car. I know how that sounds. "
-                        "I've watched men tear three trucks down to the "
-                        "block hunting the part that failed. There is no "
-                        "part."),
-                ("npc", "[c=dim]It's the town.[/c]"),
-                ("pi", "[c=dim]He said it flat.[/c]"),
-            ],
-        },
-        {
             # Vane tells the town's fall as he lived it: a dying quiet town,
-            # the summer influx of unplaceable newcomers, the exits closing.
-            # The "no one has left in months" reveal RECOILS the first time and
-            # goes assertive-investigator once the PI already knows the seal
-            # (dynamic beats, _vane_town_beats). Either way Vane has no HOW for
-            # the seal (distinct from his gated recruitment "how" below).
+            # the summer influx of unplaceable newcomers, the exits closing,
+            # and the engines that will not carry anybody out. PRESENT TENSE
+            # by design (maintainer, 2026-07): this is not a history lesson
+            # about something finished, it is the thing still happening to
+            # him. It also absorbed the retired `car` exchange -- the dead
+            # engines are a symptom of the town, never an errand about the
+            # PI's own vehicle. The "no one has left in months" reveal
+            # RECOILS the first time and goes assertive-investigator once the
+            # PI already knows the seal (dynamic beats, _vane_town_beats).
+            # Either way Vane has no HOW for the seal (distinct from his
+            # trust-gated recruitment answer below).
             "key": "town",
-            "q": "What happened to this town, Sheriff?",
-            "label": "What happened to this town?",
+            "q": "What's happening to this town, Sheriff?",
+            "label": "What's happening to this town?",
             "beats": _vane_town_beats,
         },
         # The detention night, opened by the slip itself: the paper says
@@ -1277,14 +1350,16 @@ VANE_CONVO = {
                         "ever thought to come for me."),
             ],
         },
-        # The SHARES (DESIGN.md §2): the PI bringing a real discovery to the
-        # one other investigator in town. Each opens as its find lands,
-        # spends once, and is both the trust that opens his thread (the
-        # how, below) and the hope that holds him back from the hollow
-        # turn (_vane_share). Only the two surface-reachable finds an
-        # honest PI could put on his desk pre-descent (the journal, the
-        # Ledger); the preacher he learns of on his own, and it cuts the
-        # other way.
+        # THE SHARE (DESIGN.md §2): the PI bringing a real discovery to the
+        # one other investigator in town. It opens as the find lands, spends
+        # once, and is both the trust that unlocks his withheld answers (the
+        # cult question and the cabinet, below) and the hope that holds him
+        # back from the hollow turn (_vane_share). The LEDGER share was CUT
+        # (maintainer, 2026-07) -- the registers are Sable's thread and pay
+        # off at that desk, and Vane's trust should turn on MARA's trail, the
+        # case he is actually being asked to believe in. So the journal is
+        # the one thing an honest PI can put on this desk pre-descent; the
+        # preacher he learns of on his own, and it cuts the other way.
         {
             "key": "share_journal",
             "q": "I found her journal. They all dreamed the same door, "
@@ -1307,28 +1382,6 @@ VANE_CONVO = {
                         "brought through that door since it all shut. I "
                         "won't forget you did."),
                 ("pi", "[c=dim]Something in him let go a notch.[/c]"),
-            ],
-        },
-        {
-            "key": "share_ledger",
-            "q": "The lodge's old registers. A year of guests signed in "
-                 "and not one of them ever signed out. The clean book on "
-                 "the desk starts right where the boxes stop.",
-            "label": "The lodge registers are wrong.",
-            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
-                                and g.save.flag("evidence_the_ledger")),
-            "once": True,
-            "on_ask": _vane_share,
-            "beats": [
-                ("npc", "Now that is evidence. Paper with dates on it. "
-                        "God, I have missed paper with dates on it."),
-                ("npc", "I never got past that desk. Sable smiles, the "
-                        "whole building goes polite, and you walk out "
-                        "without whatever you came in for."),
-                ("npc", "Keep pulling threads like that and this town "
-                        "might finally owe somebody the truth. Watch who "
-                        "sees you pull them."),
-                ("pi", "[c=dim]He wrote it down.[/c]"),
             ],
         },
         # The newspaper (TODO #2): to everyone else in Brimley the paper
@@ -1381,40 +1434,12 @@ VANE_CONVO = {
         # destination, no direction, only the offer.
         {
             "key": "how",
-            "q": "A hundred strangers drove north to the same dying "
-                 "town. Nobody talks that many people into anything. How "
-                 "was it done?",
-            "label": "How were the newcomers gathered?",
-            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
-                                and int(g.save.arg("vane_informed", 0)) >= 1),
-            "once": True,
-            "on_ask": _vane_how_told,
-            "beats": [
-                ("npc", "I asked that question every night for a year. "
-                        "What I've got is one conversation. I'll spend "
-                        "it on you."),
-                ("npc", "After the rooms emptied, one of them came back "
-                        "up the road to this office. Blind. Born blind, "
-                        "he said. Walked in without a stick and sat down "
-                        "square in that chair."),
-                ("npc", "No name. I asked twice. He sat there lit up "
-                        "like a man warming his hands at a stove. Said "
-                        "the dream had promised him his eyes. Said when "
-                        "the work is finished he'll open them, and "
-                        "they'll work."),
-                ("pi", "He wasn't there to confess anything. He was "
-                       "there to fetch you."),
-                ("npc", "He made the offer. Told me to name the thing I "
-                        "want most in this world, and come with him, and "
-                        "it would be waiting. I put him out. He thanked "
-                        "me for my time and he left smiling."),
-                ("npc", "You don't talk a hundred strangers onto one road. "
-                        "They weren't tricked. Every one of them was going "
-                        "toward something, and glad of it."),
-                ("npc", "What it was, who was holding it out, I never got "
-                        "closer than that chair. That's the piece that keeps "
-                        "my lights on at night."),
-            ],
+            "q": "One of them put a hand on me today. Where are they "
+                 "gathered, Sheriff?",
+            "label": "Where are the cultists gathered?",
+            "avail": lambda g: (g.save.flag("cult_talk_given")
+                                and not g.save.flag("vane_how_told")),
+            "beats": _vane_where_beats,
         },
         # The office gun cabinet -- the best ammo in town, and EARNED (the
         # trust-gated LEAD, DESIGN.md §2). Opens like the "how" (intro + at
@@ -1430,24 +1455,8 @@ VANE_CONVO = {
                  "alone. Is there anything you can put in my hand, Sheriff?",
             "label": "Am I on my own out there?",
             "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
-                                and int(g.save.arg("vane_informed", 0)) >= 1
                                 and not g.save.flag("vane_gave_cache")),
-            "once": True,
-            "on_ask": _vane_give_cache,
-            "beats": [
-                ("npc", "Protection. That's a thing this office used to hand "
-                        "out."),
-                ("npc", "I've got no deputies, no cell that holds, and a law "
-                        "nobody up here answers to anymore. What I've got is "
-                        "a cabinet in the back. Shells, and a spare piece I "
-                        "kept oiled for no reason I could name."),
-                ("npc", "Take what you need. It won't help you against what "
-                        "took this town. But it'll make you feel like it "
-                        "might, and some nights that's the whole of the "
-                        "job."),
-                ("pi", "[c=dim]He unlocks the cabinet and steps back. The "
-                       "last thing the law here has to give.[/c]"),
-            ],
+            "beats": _vane_cache_beats,
         },
     ],
 }
@@ -1500,7 +1509,7 @@ def sheriff_dialogue(game, npc):
 # families -- which is the exact trap the game punishes (the warm ones are
 # the cult; NARRATIVE §4, Hettie's "don't trust the easy ones"). He is the
 # most-attuned LOCAL: he knows, and never says he knows. The mask only
-# thins as the case grows (the ledger and the journal each open a colder
+# thins as the case grows (the ledger and the fold each open a colder
 # follow-up). Compulsion, never a confessed scheme. Engine:
 # ui/conversation.Conversation.
 

@@ -32,6 +32,47 @@
 
 ## Evidence & the case
 
+- **2026-07 — Vane's menu, cut down and un-gated (the maintainer's pass on the
+  pilot).** Reviewing the gate list for Vane, the maintainer cut and reshaped:
+
+  - **The `car` question is CUT.** "We really dgaf about the car." Its fold
+    material (nothing with an engine leaves, "It's the town.") moved into the
+    town question, where it belongs: the dead engines are a symptom of what is
+    happening to Brimley, not an errand about the PI's own vehicle. The fold
+    note files from there now, and `_vane_car_told` is retired.
+  - **The town question went PRESENT TENSE** — "What's happening to this
+    town?" It was "What happened", which framed the seal as finished history
+    rather than the thing still happening to the man being asked.
+  - **The Ledger share is CUT.** The registers are Sable's thread and pay off
+    at that desk (`checkouts`); Vane's trust should turn on Mara's trail, the
+    case he is actually being asked to believe in. `share_journal` is now the
+    single share, so trust has one clear price.
+  - **The recruitment question became "Where are the cultists gathered?"**,
+    gated on THE TALK rather than the intro: the PI asks after a hand has
+    landed on his shoulder, so he is asking about them as people who are
+    *here*, not as history. Vane answers the WHERE honestly (the school, the
+    barn, the lodge, and then nothing, because he does not know) and the HOW
+    is what he withholds.
+
+  **And the rule the whole menu now follows: trust gates the ANSWER, never
+  the QUESTION.** The two trust-gated rows used to vanish from the menu until
+  earned. They are askable from the moment their situation exists, and an
+  untrusted Vane refuses them in his own voice, saying what would change his
+  mind ("Bring me something I can hold"; "Work the case. Come back and show me
+  you did"). He is written as a mistrusting man, so the mistrust should be
+  something the player *meets*, not an absence they never see. A hidden option
+  teaches nothing; a refusal is characterisation, a stated price, and a reason
+  to come back. Both rows stay askable until he has actually answered, so a
+  refusal is never a lockout, and the grant rides a `("do", ...)` at the end of
+  the trusted branch so a refusal can never arm it.
+
+  Left deliberately un-gated: the booking-slip handover on the photograph. The
+  maintainer raised whether an untrusting Vane should hand it over at all and
+  flagged the soft-lock risk in the same breath; gating it on a share would
+  have forced journal-before-slip and broken the "findable in ANY order"
+  property `DESIGN.md` §9 holds for the surface trail. The reluctance lives in
+  how he gives it instead.
+
 - **2026-07 — The story audit, and the detention night (the investigation-loop
   pilot; `TODO.md` #1).** A story audit aimed at "make investigating feel much
   better" measured the loop instead of describing it, and what it found was
