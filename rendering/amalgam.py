@@ -7,7 +7,7 @@ side, gold motes bleeding off it). Nothing touches anything else -- the
 parts hang in formation around one anchor, thin haze threads the only
 tissue, and the brain stitches "one creature" out of their synchrony.
 
-Assembly is DATA: `assemble(seed)` deals 3-5 parts from the 17-part
+Assembly is DATA: `assemble(seed)` deals 3-5 parts from the 16-part
 library under the composition rules (at least one weight-bearing part on
 the ground, masses centre, senses high, and ALWAYS at least one
 eye-bearing part -- every amalgam watches). A different seed is a

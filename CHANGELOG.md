@@ -206,6 +206,29 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- A way to LOOK at an amalgam (`tools/preview_amalgam.py`), and
+  the part count corrected to 16.** The family had no isolation preview: they
+  are near-black by design, so they are unreadable both in a whole-scene
+  capture and on `preview_bearer.py`'s sheet (which is lit for the Mask). The
+  new tool renders the DEALS side by side against the player for scale, plus
+  the birth build-out, the dispel peel and gaze on/off, with a `--bg
+  dark|mid|lit` switch. What the first look turned up, recorded here so the
+  storm pass (`TODO.md` #25) starts from it rather than rediscovering it:
+  - **Composition is healthy** -- 198 distinct deals in 200 seeds, whole
+    library in use, though unevenly (`eyes` 122 vs `wing` 8 per 200).
+  - **The RENDER flattens it.** On a lit card the deals are plainly different
+    creatures; at their shipped near-black value range on a dark ground the
+    silhouette is the only thing carrying the design, and there is nothing
+    behind it to silhouette against. Fine for a lone Watcher you half-see;
+    a real question for the storm, whose whole premise is FILLING the dark
+    with them (black shapes on black = noise, not dread). Decide before the
+    engine is wired, not after.
+  - **Gaze on vs off is not visually distinguishable**, though it is the tell
+    that you are staring one down.
+  The library is **16 parts** (5 weight, 5 mass, 6 sense), not the 17 that
+  `CLAUDE.md`, `DESIGN.md` and the module docstring all claimed; corrected in
+  those three. The older entry below still says 17 -- it is history, left as
+  written per this file's append-only rule.
 - **2026-07 -- "If it isn't good, remake it now" (maintainer).** Written into
   `VISION.md` with a pointer from `CLAUDE.md`'s working agreements: when you
   look at a model or a design and judge it not good enough, remake it in the

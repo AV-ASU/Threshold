@@ -460,7 +460,7 @@ it renders the procedural sprites to a labelled PNG strip.
     `tools/preview_king_unfold.py`.
   - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
     from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel,mask)`):
-    a seeded 3-5 part deal from a 17-part library, each part emerging
+    a seeded 3-5 part deal from a 16-part library, each part emerging
     from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
     this skin, behavior unchanged (DESIGN.md §1). The **Pallid Mask part**
     (`draw_pallid_3d` — the one 3D shell — driven through

@@ -231,7 +231,7 @@ its head) and pings the cult to **investigate the body**, and the body
   high-visibility trigger is retired.) **The gaze wears two skins (the
   shadow family):** a manifestation arrives as the OG shroud Watcher or,
   with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
-  seeded assembly of 3-5 parts from a 17-part library, each part emerging
+  seeded assembly of 3-5 parts from a 16-part library, each part emerging
   from its own free-form CUT (flesh clipped dead flat against the line,
   rim lip on the absent side, haze the only tissue; nothing touches).
   Composition rules bind every deal: at least one weight-bearing part on
