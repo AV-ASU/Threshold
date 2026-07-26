@@ -18,6 +18,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                view_from_facing, KING_UNFOLD,
                                KING_UNFOLD_SCALE)
 from rendering.king_unfold import draw_unfold_catch, reset_king_unfold_fx
+from rendering.amalgam import reset_amalgam_cache
 from rendering.spread_drive import SPREAD_BEAT_DURS
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
@@ -870,6 +871,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._king = None
         reset_king_fx()        # his trail/particles don't follow across scenes
         reset_king_unfold_fx() # nor the UNFOLDING's mask-bond state
+        # The composed-amalgam cache is keyed by unit seed, and the wave is
+        # cleared on every load, so its entries would otherwise be surfaces for
+        # units that no longer exist. Correctness does not depend on this (the
+        # key carries every input) -- it is just not holding dead sprites.
+        reset_amalgam_cache()
         self._king_anchor = (self.player.x, self.player.y)
         # A torn portal belongs to the room it opened in: leaving the scene
         # (through the rift or any other exit) collapses it. The roaming King's

@@ -90,6 +90,33 @@
 
 ## Stealth & threat
 
+- **2026-07 — The storm earns its requested size back: 22 units at a flat 32fps.**
+  The self-assessment had cut `STORM_MAX` from the maintainer's 20-25 to a
+  measured 10, because 22 units cost 53.3ms a frame (18.8 fps). Rather than leave
+  the design short, the DRAW was made cheap enough: `draw_amalgam_sprite` now
+  composes each unit into a cached surface and refreshes it at `UNIT_ANIM_HZ`
+  (12) instead of every frame. The render is a pure function of
+  (seed, birth, dispel, gaze, t) -- every part draw is deterministic and the only
+  randomness is seeded off position -- so quantising the clock makes it cacheable.
+  Re-measured: 22 units 27.2ms avg / 31.0ms worst (~32 fps), 25 units starts to
+  graze 30. `STORM_MAX` is 22.
+  **Three wrong turns on the way, each caught only by measuring the thing I had
+  just claimed to fix:**
+  1. Caching alone left a SAWTOOTH -- 22ms most frames, 51ms every fifth -- because
+     every unit shared one clock and rolled over together. The average (28.7ms)
+     hid it completely; only the per-frame sequence showed it.
+  2. The first stagger used `seed % 251`, which maps nearby seeds to nearly
+     identical offsets, so a batch of sequential seeds still refreshed in lockstep
+     and the sawtooth survived. Fixed with a multiplicative hash. Guarded by
+     `tests/conventions.py` check 11, which fails on the modulo version.
+  3. Keying the cache by bucket grew it until a size limit triggered a WHOLESALE
+     clear, re-spiking every unit at once. One entry per unit, replaced in place,
+     removes mass invalidation entirely.
+  Verified by A/B against the pre-cache render at a fixed clock: 2.65% of pixels
+  differ, all of it the animation sampled at a slightly different phase, and the
+  creatures are visually identical. `reset_amalgam_cache()` is called on scene
+  load so the cache never holds sprites for units that no longer exist.
+
 - **2026-07 — Self-assessment pass on the storm: four real bugs, all of them
   claims I had not measured.** Corrects the entry below, which stated a
   `STORM_MAX` of 22 "for frame time".

@@ -1337,16 +1337,34 @@ def _bearer_crown(surf, mcx, mcy, mr, power, seed):
             _eye(surf, cx, cy, r=1)
 
 
-def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
-                        dispel=None, mask=None):
-    """Feet at (x, y). `birth` 0..1 is the manifest ramp (parts build out
-    staggered); `dispel` 0..1 is the gaze-dispel fraction (parts peel back
-    into their cuts in reverse); `gaze` darkens every ember while the
-    player stares (the family rule)."""
+# ---- the per-unit COMPOSE CACHE ------------------------------------------
+# A storm unit cost ~2.8ms of a real frame, measured, nearly all of it inside
+# this module: 22 units put a frame at 53.3ms (18.8 fps), so the maintainer's
+# requested soft cap of 20-25 was unreachable and the cap had to sit at 10.
+#
+# The way to earn it back is fewer RENDERS, not a braver cap. A unit's whole
+# appearance is a pure function of (seed, birth, dispel, gaze, t) -- every part
+# draw is deterministic and the only randomness (`_cut_line`'s motes) is seeded
+# off position -- so QUANTISING t makes the render cacheable. At UNIT_ANIM_HZ the
+# flesh wobbles 12 times a second instead of 60 and each unit re-renders on one
+# frame in five. For a creeping shadow the lower cadence is not a loss; if
+# anything the slight stutter suits it.
+UNIT_ANIM_HZ = 12
+_UNIT_CACHE = {}                 # (seed, bearer) -> (state, (surf, dx, dy))
+_UNIT_PAD = 5                    # room for the outline + the ghost's offset
+
+
+def reset_amalgam_cache():
+    """Drop the composed-unit cache (scene load, or a palette/tuning change)."""
+    _UNIT_CACHE.clear()
+
+
+def _compose_unit(seed, b, g, gaze, t, bearer):
+    """Render ONE unit -- parts, tissue, outline, ghost, body -- into its own
+    padded surface. Returns (surface, dx, dy) where (dx, dy) is where to blit it
+    relative to the unit's feet. Pure in its arguments, which is what makes the
+    cache above safe."""
     global _GAZE
-    t = pygame.time.get_ticks() / 1000.0
-    b = 1.0 if birth is None else _clamp(birth)
-    g = 0.0 if dispel is None else _clamp(dispel)
     parts = assemble(seed)
     n = len(parts)
     LW, LH = 150, 104
@@ -1361,12 +1379,9 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
             hx = a0[0] + (b0[0] - a0[0]) * f + rng.uniform(-2, 2)
             hy = a0[1] + (b0[1] - a0[1]) * f + rng.uniform(-2, 2)
             # The threads are the ONLY tissue between parts (module docstring:
-            # the brain stitches "one creature" out of them), and at alpha 26
-            # they were invisible -- so a 5-part deal read as five unrelated
-            # objects, which the per-part outline then made worse by drawing a
-            # separate contour around each. Kept below _EMIT_FLOOR on purpose:
-            # tissue should NOT take an outline, or the parts start touching
-            # and the family's "nothing touches" rule dies with it.
+            # the brain stitches "one creature" out of them). Kept below
+            # _EMIT_FLOOR on purpose: tissue should NOT take an outline, or the
+            # parts start touching and "nothing touches" dies with it.
             _haze(lay, hx, hy, 4 + rng.uniform(0, 2.5), 74)
     for idx, (nm, fn, x0, y0, flip) in enumerate(parts):
         if g > 0.0:
@@ -1390,12 +1405,15 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
                       alpha=0.3, side=1)
     _GAZE = False
     # THE BEARER is simply a BIGGER amalgam -- that size IS the power-up tell.
-    sc = 0.8 * (BEARER_SCALE if mask is not None else 1.0)
+    sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
     sw, sh = int(LW * sc), int(LH * sc)
     scaled = pygame.transform.scale(lay, (sw, sh))
     base = int(GY * sc) + 2
     phase = 0.42 + 0.45 * (math.sin(t * 1.1 + seed) * 0.5 + 0.5)
     phase *= (1.0 - 0.5 * g)                      # thins as it is stared apart
+
+    pad = _UNIT_PAD
+    out = pygame.Surface((sw + pad * 2, sh + pad * 2), pygame.SRCALPHA)
     # ---- THE OUTLINE (maintainer, 2026-07: "can't you just give each sprite a
     # white border pixel? ... The glowing mist isn't good"). A one-pixel stroke
     # around the silhouette, drawn UNDER the body.
@@ -1407,21 +1425,65 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # the other (too dim to find, or a pale ghost). A stroke costs nothing in
     # VALUE -- the body stays exactly as black as it was, only its edge is
     # stated -- and it stays sharp at small sizes, where a blur is only fog.
-    # Each part is stroked on its own, which is correct: they are separate
-    # apertures and nothing touches (see the module docstring).
     #
     # PRESENTATION ONLY, and it must stay that way: no entry in
     # Scene._LIGHT_KINDS or FIXTURE_POOLS, no pool cast, invisible to lit_at.
     # It cannot deny a Watcher a spawn spot, burn anything, or gate the
     # lost-space mouth. The creature is VISIBLE, not LIT.
-    surf.blit(_outline(scaled, AMALGAM_EDGE, AMALGAM_EDGE_W),
-              (int(x - sw // 2), int(y - base)))
-
+    out.blit(_outline(scaled, AMALGAM_EDGE, AMALGAM_EDGE_W), (pad, pad))
     ghost = scaled.copy()
     ghost.set_alpha(int(230 * phase * 0.45))
-    surf.blit(ghost, (int(x - sw // 2) - 3, int(y - base) - 1))
+    out.blit(ghost, (pad - 3, pad - 1))
     scaled.set_alpha(int(230 * phase))
-    surf.blit(scaled, (int(x - sw // 2), int(y - base)))
+    out.blit(scaled, (pad, pad))
+    return out, -(sw // 2) - pad, -base - pad
+
+
+def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
+                        dispel=None, mask=None):
+    """Feet at (x, y). `birth` 0..1 is the manifest ramp (parts build out
+    staggered); `dispel` 0..1 is the gaze-dispel fraction (parts peel back
+    into their cuts in reverse); `gaze` darkens every ember while the
+    player stares (the family rule)."""
+    t = pygame.time.get_ticks() / 1000.0
+    b = 1.0 if birth is None else _clamp(birth)
+    g = 0.0 if dispel is None else _clamp(dispel)
+    bearer = mask is not None
+    # Quantise the animation clock and cache on it -- see the cache note above.
+    #
+    # STAGGERED per unit. With one shared clock every unit's bucket rolled over
+    # on the SAME frame, so the whole storm re-rendered at once: measured, 22
+    # units averaged 28.7ms but spiked to 59ms (17 fps) once per bucket, and the
+    # average hid the hitch entirely. Offsetting each unit's phase by its seed
+    # spreads those refreshes across the bucket's frames, so the cost per frame
+    # is flat instead of a sawtooth. The offset is folded back out of the time
+    # handed to _compose_unit, so each unit still animates smoothly in its own
+    # phase rather than snapping.
+    # HASH the seed, do not modulo it. `seed % 251` mapped nearby seeds to
+    # nearly identical offsets, so a batch of units with sequential seeds all
+    # rolled over together anyway and the sawtooth survived (measured: 22ms most
+    # frames, 51ms every fifth). A multiplicative hash scatters neighbours.
+    off = (((seed * 2654435761) & 0xffffffff) % 4096) / 4096.0
+    bucket = int(t * UNIT_ANIM_HZ + off)
+    # ONE ENTRY PER UNIT, replaced in place. Keying by (bucket, ...) grew the
+    # cache until it hit a size limit and was cleared WHOLESALE, at which point
+    # every unit missed at once -- so the sawtooth survived the stagger: 22 units
+    # still spiked to 51.7ms. Holding a single entry per unit means the cache
+    # never exceeds the unit count and nothing is ever mass-invalidated.
+    ident = (seed, bearer)
+    state = (round(b, 2), round(g, 2), bool(gaze), bucket)
+    hit = _UNIT_CACHE.get(ident)
+    if hit is None or hit[0] != state:
+        hit = (state, _compose_unit(seed, b, g, gaze,
+                                    (bucket - off) / float(UNIT_ANIM_HZ),
+                                    bearer))
+        _UNIT_CACHE[ident] = hit
+    hit = hit[1]
+    body, dx, dy = hit
+    surf.blit(body, (int(x) + dx, int(y) + dy))
+    sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
+    sw, sh = int(150 * sc), int(104 * sc)
+    base = int(GY * sc) + 2
     # THE BEARER, when the storm passes `mask` (None for every ordinary
     # amalgam, so their draw is byte-identical). The power-up is the BIGGER
     # body drawn above; here we add the Mask itself + His crown of cuts.

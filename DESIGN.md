@@ -229,9 +229,8 @@ its head) and pings the cult to **investigate the body**, and the body
   **THE STORM is this same wave in a second MODE** (TODO #25, 2026-07), not a
   separate spawner: `Game._storm_active()` is true past `STORM_GATE_EVIDENCE`
   (3) in a room the dark has taken (`scene_gloom() > 0`). While it is up the cap
-  lifts (`WATCHER_MAX` 5 → `STORM_MAX`, a MEASURED frame-time bound -- each
-  unit costs ~2.8ms of a real frame, so the cap is 10 and not the 20-25 first
-  asked for; see the config note), the cadence tightens, spawns drop the line-of-sight requirement and
+  lifts (`WATCHER_MAX` 5 → `STORM_MAX` 22, a MEASURED bound -- see the config
+  note; the per-unit sprite cache below is what makes 22 affordable), the cadence tightens, spawns drop the line-of-sight requirement and
   open across the whole room, and every unit switches from standing still to
   **walking at the player** (`npc._storm_tick`), refusing any step into light --
   so **light is the only safety** and standing in a pool makes them ring its

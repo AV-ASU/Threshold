@@ -363,19 +363,18 @@ WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
 # gate, in a room the darkness has actually taken (`Game.scene_gloom() > 0`,
 # the one darkness source, so the flood literally fills the dark).
 STORM_GATE_EVIDENCE = 3       # = KING_GATE_EVIDENCE; the apex is armed
-# MEASURED, not guessed. The first value here was 22 (the maintainer's "soft
-# capped at 20-25 for lag reasons") with a comment claiming it was bounded for
-# frame time -- asserted without measuring. A real frame in well_passage, dark,
-# storm on: 0 units 12.1ms, 5 units 26.2ms, 8 units 34.5ms, 12 units 44.2ms,
-# 22 units 53.3ms (18.8 fps). Each unit costs ~2.8ms, almost all of it inside
-# draw_amalgam_sprite (profiling: ~6k blits and ~50k draw.circle per 10 frames),
-# so 22 is not a lag-safe soft cap -- it is a third of the frame rate.
-# 10 holds ~25 fps worst case and degrades gracefully.
-# TO RAISE THIS, the draw has to get cheaper, not the cap braver: caching each
-# unit's composed layer and refreshing it at ~12Hz instead of every frame would
-# cut per-unit cost roughly fivefold and put the requested 20-25 back in reach.
-# That is a hot-path change and wants its own verification pass.
-STORM_MAX = 10
+# MEASURED, not guessed, twice over. The first value was 22 with a comment
+# claiming it was frame-time-bounded, asserted without measuring; measuring said
+# 22 units cost 53.3ms a frame (18.8 fps), so it was cut to a defensible 10.
+# Then the DRAW was made cheap enough to earn the maintainer's number back --
+# each unit's composed sprite is cached and refreshed at UNIT_ANIM_HZ instead of
+# every frame (rendering/amalgam.py), with per-unit staggering so the refreshes
+# do not land on the same frame. Re-measured, same scene, realistic seeds:
+#   units:   0     5    10    16    22    25
+#   avg ms:  8.5  13.8  18.5  24.4  27.2  31.4
+#   worst:   9.8  19.1  21.1  28.0  31.0  34.8
+# 22 holds ~32 fps with a FLAT frame time (no sawtooth); 25 starts to graze 30.
+STORM_MAX = 22
 # How many units may PRESS THE METER at once. Lifting the population cap without
 # this made the storm the deadliest thing in the game by accident: the gaze term
 # is per-live-unit (WATCHER_GAZE 0.05/s) and so is the floor (WATCHER_FLOOR

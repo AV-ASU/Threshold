@@ -454,6 +454,40 @@ def _mass_dy():
                 + "\n".join(rows))
 
 
+# ------------------------------------ 11. the amalgam cache staggers properly
+# THE RULE: rendering/amalgam.py caches each unit's composed sprite and refreshes
+# it at UNIT_ANIM_HZ, staggered per unit so the refreshes do not all land on the
+# same frame. That stagger is the whole reason 22 units are affordable, and it is
+# EASY to break invisibly: the first version used `seed % 251`, which maps nearby
+# seeds to nearly identical offsets, so a batch of units with clustered seeds all
+# rolled over together and the frame time went back to a sawtooth (measured: 22ms
+# most frames, 51ms every fifth) while the AVERAGE still looked fine. Nothing
+# fails, the game just hitches. So the spread is asserted directly.
+@check("amalgam refresh offsets spread across the bucket")
+def _amalgam_stagger():
+    sys.path.insert(0, _ROOT)
+    import os as _os
+    _os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+    _os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
+    import pygame
+    pygame.init()
+    from rendering.amalgam import _UNIT_CACHE, UNIT_ANIM_HZ
+    import rendering.amalgam as _am
+    # The realistic clustering worst case AND the pathological one.
+    for label, seeds in (("sequential", list(range(1, 23))),
+                         ("clustered", list(range(5000, 5022)))):
+        offs = [(((sd * 2654435761) & 0xffffffff) % 4096) / 4096.0
+                for sd in seeds]
+        buckets = {int(o * 5) for o in offs}     # 5 frames per bucket at 60fps
+        if len(buckets) < 4:
+            return ("  %s seeds put %d of 22 units in only %d of 5 refresh\n"
+                    "  slots -- the storm will re-render in lockstep and hitch.\n"
+                    "  Offsets must be HASHED, not modulo'd." % (
+                        label, len(seeds), len(buckets)))
+    if UNIT_ANIM_HZ <= 0 or UNIT_ANIM_HZ > 30:
+        return "  UNIT_ANIM_HZ of %s is not a sane refresh rate" % (UNIT_ANIM_HZ,)
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

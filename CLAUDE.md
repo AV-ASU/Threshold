@@ -656,7 +656,11 @@ section is the CODE MAP only — where each system lives:
   `scene_gloom() > 0`), `_sync_storm_mode`, `npc._storm_tick` (walk at the
   player, refuse any step into light, cannot touch), `actor_smear_range` (units
   ignore the sight cone or the flood is invisible), `STORM_*` config. Cap lifts
-  to `STORM_MAX`; every dispel still works. stealth §19.
+  to `STORM_MAX`; every dispel still works. **A storm draws 22 sprites, so
+  `draw_amalgam_sprite` CACHES each unit's composed surface and refreshes it at
+  `UNIT_ANIM_HZ`, staggered per unit by a hashed seed offset** (a modulo offset
+  clusters neighbouring seeds and the whole storm re-renders in lockstep --
+  conventions check 11). stealth §19.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config. Light works on THEM, never on you: it
   denies them a spawn spot (`_spawn_watcher` needs dark + line of sight) and
