@@ -185,6 +185,58 @@ def _woodpile(rows=5, seed=7, axe=False):
 
 # ------------------------------------------------------------- yard fence
 # Reference: split cedar posts, two or three SAGGING wire strands. One bay.
+# ------------------------------------------------------------- yard gate
+# A GATE IS NOT A GAP. The `gap` bay below is the MOUTH -- snapped wire and a
+# shoved-over post, a boundary you push THROUGH -- and it belongs where the
+# world lets go of you (DESIGN.md §13). Using it as a household's front
+# entrance says the opposite of what a kept yard is saying with everything
+# else it has: you do not walk into somebody's lot through their broken
+# fence. So the way in that a household USES is a hung leaf, and the two are
+# different objects with different meanings.
+#
+# The DIAGONAL BRACE is the tell. It runs UP from the hinge corner, which is
+# the direction that carries the leaf's weight; drawn the other way (or left
+# off) the leaf reads as a ladder lying against the posts.
+def _yard_gate(bay=33.0, seed=5, swing=0.0):
+    real = (120.0, 3.5, 44.0)
+    LEAF = bay * 0.86
+    k = LEAF / real[0]
+    THICK, TALL = real[1] * k, real[2] * k
+    HANG = bay * 0.5
+    # ONLY the hanging post belongs to the gate. The post on the other side
+    # of the opening is the next FENCE bay's, which is both what a gate
+    # actually is and what stops the catch post from floating in the model
+    # the moment the leaf swings clear of it.
+    parts = [Part(prim.prism(6, 1.25, 15.5), at=(-HANG, 0, 0), mat="cedar",
+                  name="hang_post")]
+    c, sn = math.cos(swing), math.sin(swing)
+
+    def leaf(lx, w_, h_, z0, name):
+        """A member of the leaf, placed in the LEAF's own frame and swung
+        with it, so the frame stays square however far the gate stands open."""
+        parts.append(Part(prim.box(w_, THICK, h_, z0=z0),
+                          at=(-HANG + lx * c, lx * sn, 0),
+                          yaw=swing, mat="plank", name=name))
+
+    # SAGGING OFF SQUARE: an old gate rides low at the latch end, and that
+    # droop is most of what says this one has been swung a few thousand times.
+    for i, zf in enumerate((0.12, 0.48, 0.90)):
+        leaf(LEAF * 0.5, LEAF, TALL * 0.08, TALL * zf - i * 0.18,
+             f"leaf_rail{i}")
+    for i, lx in enumerate((THICK * 0.9, LEAF - THICK * 0.9)):
+        leaf(lx, THICK * 1.8, TALL - i * 0.5, 0.0, f"leaf_stile{i}")
+    # THE DIAGONAL BRACE, and it is the tell: it runs UP from the hinge
+    # corner, the direction that carries the leaf's weight. Parts yaw about
+    # z only, so it is STEPPED -- three short boards climbing hinge-foot to
+    # latch-head, which reads as the diagonal at play size and stays a real
+    # volume instead of a painted line.
+    for i in range(4):
+        f = (i + 0.5) / 4.0
+        leaf(LEAF * f, LEAF / 4.0 * 0.82, TALL * 0.10,
+             TALL * (0.10 + f * 0.74), f"leaf_brace{i}")
+    return Assembly(*parts)
+
+
 def _yard_fence(bay=33.0, seed=3, gap=False):
     # A wire fence is WAIST HIGH. Built at 20 units its posts stood as tall
     # as the player, which reads as a stockade and made the boundary look
@@ -660,6 +712,7 @@ ASSEMBLIES = {
     "stoop": _stoop,
     "woodpile": _woodpile,
     "yard_fence": _yard_fence,
+    "yard_gate": _yard_gate,
     "lantern": _lantern(),
     "pickup_truck": _pickup_truck(),
     # the yard layer's vocabulary (DESIGN.md §14)

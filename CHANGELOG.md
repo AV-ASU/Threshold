@@ -387,6 +387,43 @@
   the module docstring, all of which had stated lamp coverage as the
   mechanism.
 
+- **2026-07 -- A YARD IS A SCENE (`TODO.md` #26, `DESIGN.md` §15).** The
+  correction, from the maintainer: *"It's safe path -> yard -> house. Each
+  building gets its own yard scene. They do not share."* The first pass had
+  generalised `lodge_yard`'s DRESSING and missed that `lodge_yard` is a
+  SCENE -- and `backwoods_cabin` is the same shape stripped to essentials, so
+  the repo had answered the question twice already. What shipped was the yard
+  vocabulary with no yard layer under it: ten dressed patches of ground inside
+  the one Brimley scene.
+  `yards.build_yard_scene` is that shape made general. The chain is wired
+  from parts that already existed rather than new engine: the street is an
+  ordinary `SafePath` and the yard hangs off one of its ARMS, and the interior
+  gets a SECOND door in a spare wall pointing at its yard, so the old route
+  keeps working while the new one lands. Two earlier proposals were dropped as
+  over-engineering on the maintainer's call -- a "return where you came from"
+  exit sentinel (just add a door) and a driveway spur off a path flank (just
+  make more paths).
+  **Brimley is kept exactly as it is** until the whole town has moved, then
+  retired in one piece; nothing is deleted from it on the way.
+  **What the look pass caught, in the template, before it became nine copies.**
+  The lot edge was a one-tile ring of the verge char, which reads as a fence
+  made of corn and lies about the geometry besides (a treeline in this game is
+  something you thread) -- it is the same scattered permeable band the town
+  and the lodge yard use. The scatter then grew standing corn in the middle of
+  a household's mown yard, so the LOT is a protected rect and the band stops
+  at its line. And the worn track walked a straight L from door to gate, which
+  paints a dirt path across the roof whenever the door is in a side wall.
+  **A GATE IS NOT A GAP** (maintainer: *"we enter through a broken fence
+  instead of a fence gate"*). The `gap` bay -- snapped wire, a shoved-over
+  post -- was built for the §13 MOUTH, a boundary you push THROUGH, and using
+  it as a household's front entrance says the opposite of what a kept yard is
+  saying with everything else it has. `yard_gate` is a hung timber leaf on a
+  stouter post, with the diagonal brace running UP from the hinge. Its
+  reference caught two things at once: the catch post floated (it belongs to
+  the FENCE, not the gate, which is also what a gate physically is), and the
+  leaf's proportion could not be measured while it was modelled already swung
+  open, so the default is a shut gate and the scene asks for the swing.
+
 - **2026-07 -- THE YARDS: ten households, ten yards (`TODO.md` #26 step 1,
   `DESIGN.md` §15, `scenes/yards.py`).** The innermost of the three layers,
   and the last one missing. `lodge_yard` had been dressed by hand as the

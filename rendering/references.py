@@ -214,6 +214,27 @@ REFERENCES = {
                   "a tarp is roped DOWN over the top, not draped"],
         "src": "(standard wirebound produce crate dimensions)",
     },
+    "yard_gate": {
+        "is": "A timber field gate hung in a wire fence: two uprights and "
+              "three horizontal rails with a DIAGONAL BRACE running from the "
+              "bottom hinge corner up to the top latch corner, swinging on a "
+              "heavier hanging post.",
+        # a 10ft farm gate leaf, inches. It is a THIN thing -- the depth is
+        # one board -- and `part` measures the leaf, not the posts holding it
+        "real": (120.0, 3.5, 44.0),
+        "part": "leaf",
+        "world_h": 15.5,   # the same waist height as the fence it hangs in
+        "mount": "hung on a heavier post at one end, dropping onto a catch "
+                 "at the other; an old one sags off square and its latch end "
+                 "rides low",
+        "tells": ["the DIAGONAL BRACE is what says gate and not ladder -- it "
+                  "runs UP from the hinge, which is the direction that "
+                  "carries the leaf's weight",
+                  "the hanging post is visibly stouter than the fence posts",
+                  "a gate standing open is a household's habit; a gate you "
+                  "push THROUGH is a broken fence, which says the opposite"],
+        "src": "(standard 10ft timber field gate)",
+    },
     "yard_fence": {
         "is": "A rural boundary fence: split cedar posts with two or three "
               "sagging wire strands. NOT chain-link, which is the filling "

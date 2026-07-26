@@ -216,36 +216,42 @@ class Yard(object):
         return ((l if side == "w" else r) if at is None else at,
                 span[0] if span else t, span[1] if span else b)
 
-    def fence(self, side, gap=True, seed=None, span=None, at=None,
-              kind="yard_fence"):
+    def fence(self, side, gap=False, gate=None, seed=None, span=None,
+              at=None, kind="yard_fence"):
         """A BOUNDARY THAT IS NOT A WALL: wire on wooden posts along one side
         of the yard. Mechanically this is where a mouth would sit, so it has
         to read as an edge and be pushed through, never climbed -- which is
         why one bay's wire is down by default.
 
-        `gap` may be True (put the down bay in the middle of the run), False
-        (an unbroken line), or a tile coordinate along the run, for when the
-        way through has to line up with the path somebody actually wore.
+        `gate` is the way in a household USES: a hung timber leaf at that
+        tile of the run. `gap` is a different thing and means something else
+        -- the bay whose wire is DOWN, a boundary pushed THROUGH, which is
+        what a §13 mouth sits behind. Do not reach for `gap` when you want a
+        front entrance: walking onto somebody's lot through their broken
+        fence says the opposite of everything a kept yard is saying.
         """
         cross, a0, a1 = self._line(side, at, span)
         seed = self.seed if seed is None else seed
         p0, p1 = a0 * TILE, (a1 + 1) * TILE
         n = max(1, int((p1 - p0) / BAY))
-        if gap is True:
-            hole = n // 2
-        elif gap is False:
-            hole = -1
-        else:
-            hole = max(0, min(n - 1, int((gap * TILE + 16 - p0) / BAY)))
+        def _bay_at(t):
+            return max(0, min(n - 1, int((t * TILE + 16 - p0) / BAY)))
+        hole = (n // 2) if gap is True else (-1 if gap is False
+                                             else _bay_at(gap))
+        gate_bay = -1 if gate is None else _bay_at(gate)
         ew = side in ("n", "s")
         out = []
         for i in range(n):
             a = p0 + (i + 0.5) * BAY
             c = cross * TILE + 20
             px, py = (a, c) if ew else (c, a)
+            yaw = 0.0 if ew else math.pi / 2
+            if i == gate_bay:
+                out.append(self.sc.add_decoration(Decoration(
+                    px, py, "yard_gate", seed=seed + i, yaw=yaw, swing=1.05)))
+                continue
             out.append(self.sc.add_decoration(Decoration(
-                px, py, kind, seed=seed + i, gap=(i == hole),
-                yaw=0.0 if ew else math.pi / 2)))
+                px, py, kind, seed=seed + i, gap=(i == hole), yaw=yaw)))
         return out
 
     def hedge(self, side, n=9, seed=None, span=None, at=None, gap=None):
@@ -326,6 +332,9 @@ class Yard(object):
 # wall), and a worn track runs between the two.
 
 _YARD_W, _YARD_H = 20, 16
+# How deep the scattered verge reaches in from the map edge. Everything
+# inside it is the LOT, and the lot stays clear.
+_BAND = 2
 # Which wall of the scene an exit sits in, and the step INTO the scene from it.
 _EDGE_IN = {"n": (0, 1), "s": (0, -1), "e": (-1, 0), "w": (1, 0)}
 
@@ -410,6 +419,11 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
             break
         tx, ty = nxt
 
+    # THE LOT is kept ground and the band stops at its line. Left to grow
+    # where it liked, the scatter put standing corn in the middle of a
+    # household's mown yard, which unsays everything a kept yard is for.
+    lot = (_BAND, w - 1 - _BAND, _BAND, h - 1 - _BAND)
+
     # THE EDGE OF THE LOT: a scattered, permeable band, not a one-tile ring
     # of the verge char. Built as a ring it reads as a FENCE made of corn --
     # a hard rectangle framing the scene -- and it is also a lie about the
@@ -417,8 +431,8 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
     # same helper the town and the lodge yard use, so a yard's edge is the
     # same kind of thing as every other outdoor edge.
     def _keep_clear(tx, ty):
-        if bl - 1 <= tx <= br + 1 and bt - 1 <= ty <= bb + 1:
-            return True                       # the house and its apron
+        if lot[0] <= tx <= lot[1] and lot[2] <= ty <= lot[3]:
+            return True                       # THE LOT: kept ground
         if floor[ty][tx] == "d":
             return True                       # the worn track in
         if path_side in ("n", "s"):
@@ -426,7 +440,7 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
         return abs(ty - ey) <= 2
 
     _bushes = []
-    scatter_forest_band(floor, objects, w, h, depth=3, seed=seed * 31 + 5,
+    scatter_forest_band(floor, objects, w, h, depth=_BAND, seed=seed * 31 + 5,
                         tree_density=0.55, passable_ratio=0.6,
                         bush_density=0.16,
                         solid_char=verge[0], passable_char=verge[1],
@@ -453,6 +467,10 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
     sc.set_spawn("from_" + path_target, ex + ax, ey + ay)
     yard = Yard(sc, (bl, br, bt, bb), door_face, out,
                 depth=3, flank=2, seed=seed)
+    # the KEPT rectangle, for the boundary to sit on. `Yard.bounds()` derives
+    # a rect from the DOOR's facing, which is not the same thing here: a
+    # house can face one way and front the road another.
+    yard.lot = lot
     return sc, yard
 
 
@@ -488,7 +506,14 @@ def build_shop_yard():
     y.genset(running=True, side="s", along=0.25)
     y.crates(y.right + 2, y.bot, opened=True)
     y.mailbox(y.left + 6, 14, toward="s", full=False)
-    y.fence("s", at=14, span=(2, 17), gap=y.out[0] - 3)
+    # HER GATE, not a hole in her fence: she opens it every morning and it
+    # stands open all day, which is the whole of what her yard is saying.
+    y.fence("s", at=y.lot[3], span=(y.lot[0], y.lot[1]),
+            gate=y.out[0] - 3)
+    # and the line RETURNS up both sides, so the boundary ENCLOSES a lot
+    # instead of reading as one ruled line laid across the front
+    y.fence("e", at=y.lot[1], span=(y.lot[2] + 3, y.lot[3] - 1), gap=False)
+    y.fence("w", at=y.lot[0], span=(y.lot[3] - 4, y.lot[3] - 1), gap=False)
     y.hedge("w", n=7, at=y.left - 3, span=(2, 12))
     # her burn barrel, out where she can see the road from it
     sc.add_decoration(Decoration((y.left - 1) * TILE + 16,
