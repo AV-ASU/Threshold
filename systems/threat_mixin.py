@@ -842,13 +842,17 @@ class ThreatMixin:
         # it BURNS one caught in a pool or the beam (_tick_watcher_gaze,
         # WATCHER_LIGHT_BURN). You clear them with light; you never hide in it.
         exposed = self.player.hidden is None
+        # STORM MODE: the cap lifts and the wave starts walking (TODO #25).
+        storming = self._storm_active()
+        self._sync_storm_mode(storming)
+        cap = STORM_MAX if storming else WATCHER_MAX
         # A wave carried in from a fold (or across a scene) re-forms its seed.
         if self._cursed and not self._watchers:
             self._spawn_watcher()
             self._watcher_clone_t = self._watcher_spawn_interval()
         # Exposure-gated cadence: the grace before the first of a wave, the
         # evidence-scaled interval between the rest. Cover pauses the timer.
-        if exposed and len(self._watchers) < WATCHER_MAX:
+        if exposed and len(self._watchers) < cap:
             self._watcher_clone_t -= dt
             if self._watcher_clone_t <= 0.0:
                 if not self._cursed:
@@ -862,10 +866,66 @@ class ThreatMixin:
         # Staring one down dissolves it (the cure).
         self._tick_watcher_gaze(dt)
 
+    def _storm_active(self):
+        """Is a STORM up in this room right now? (TODO #25)
+
+        The storm is not a second spawner -- it is a MODE of the Watcher wave.
+        Two populations of the same creature under different rules reads as a
+        bug rather than escalation (most manifestations already wear the amalgam
+        skin), so instead the wave lifts its cap, tightens its cadence, and
+        every unit switches from standing in the dark to walking at the player.
+        Every dispel keeps working, per the maintainer: "during a storm amlgs
+        can be dispelled by any means watchers can be."
+
+        Up where His attention has already flooded: past the apex's own gate,
+        and in a room the darkness has actually taken. `scene_gloom()` is the
+        one darkness source (the same reading `_draw_dark` paints and the
+        lost-space mouth is gated on), so the flood literally fills the dark and
+        cannot disagree with what the player sees. Note Watchers do NOT stop at
+        the gate (maintainer ruling) -- they become the storm.
+        """
+        if self.scene is None or self.player is None:
+            return False
+        if self._evidence_count() < STORM_GATE_EVIDENCE:
+            return False
+        return self.scene_gloom() > 0
+
+    def actor_smear_range(self, npc):
+        """How far out this actor stays SENSED in the blind-spot fog, or 0.0 to
+        obey the sight cone outright (read by draw_world's `_vis_alpha`).
+
+        Storm units do not obey the cone. Measured on a live 22-unit storm, ZERO
+        passed it -- 7 of them inside 120px -- so the entire flood was invisible
+        and "they ring the light" was a rule the player could never see. A blanket
+        exemption would kill the dread the other way, so they take the apex's
+        curve: a dim smear at range, resolving as they press in
+        (`STORM_SEE_RANGE`, shorter than the King's).
+
+        Extracted from the draw path on purpose: as a closure this was only
+        checkable by counting pixels, and "the flood went invisible again" is
+        precisely the regression that would slip through a green gate.
+        """
+        return (STORM_SEE_RANGE
+                if getattr(npc, "movement", None) == "storm" else 0.0)
+
+    def _sync_storm_mode(self, storming):
+        """Flip live units between the two behaviours when the storm state
+        changes under them -- walking into a lit room, or out of one, must not
+        leave a tide still advancing (or a stopped unit that should be)."""
+        want = "storm" if storming else "watch"
+        for w in self._watchers:
+            if getattr(w, "movement", None) != want:
+                w.movement = want
+                w.speed = STORM_UNIT_SPEED if storming else 0.0
+
     def _watcher_spawn_interval(self):
-        """Seconds between Watcher spawns, shaved by evidence (the King floods
-        them deep) down to WATCHER_SPAWN_MIN."""
+        """Seconds between manifestations, shaved by evidence (He floods them
+        deep). A STORM runs on its own, much tighter cadence -- the flood has to
+        arrive as a flood, not at one every few seconds."""
         ev = self._evidence_count()
+        if self._storm_active():
+            return max(STORM_SPAWN_MIN,
+                       STORM_SPAWN_BASE - ev * STORM_SPAWN_STEP)
         return max(WATCHER_SPAWN_MIN,
                    WATCHER_SPAWN_BASE - ev * WATCHER_SPAWN_STEP)
 
@@ -884,20 +944,31 @@ class ThreatMixin:
         spot in view of you cannot open ANYTHING -- a fully lit room is
         secured, and a blackout un-secures it."""
         scene = self.scene
+        storming = self._storm_active()
         spot = None
+        # A STORM opens across the whole room and does NOT require line of
+        # sight. The LOS rule exists so a lone Watcher can always be answered
+        # with your gaze -- no unanswerable accumulation. A storm unit answers
+        # that differently: it WALKS AT YOU, so it delivers itself into your
+        # cone whether it opened there or not. Out of storm the rule stands
+        # exactly as ruled in 2026-07.
+        near, far = ((STORM_SPAWN_NEAR, STORM_SPAWN_FAR) if storming
+                     else (110, 200))   # closer in (play-notes: hard to see far)
         for _ in range(20):
             ang = random.uniform(0, math.tau)
-            r = random.uniform(110, 200)   # closer in (play-notes: hard to see far)
+            r = random.uniform(near, far)
             wx = self.player.x + math.cos(ang) * r
             wy = self.player.y + math.sin(ang) * r
-            if (0 < wx < scene.w * Scene.TILE
-                    and 0 < wy < scene.h * Scene.TILE
-                    and not scene.is_solid_at(wx, wy)
-                    and not scene.lit_at(wx, wy)
-                    and scene.clear_sight_line(wx, wy,
-                                               self.player.x, self.player.y)):
-                spot = (wx, wy)
-                break
+            if not (0 < wx < scene.w * Scene.TILE
+                    and 0 < wy < scene.h * Scene.TILE):
+                continue
+            if scene.is_solid_at(wx, wy) or scene.lit_at(wx, wy):
+                continue
+            if not storming and not scene.clear_sight_line(
+                    wx, wy, self.player.x, self.player.y):
+                continue
+            spot = (wx, wy)
+            break
         if spot is None:
             return
         # The shadow FAMILY: some of His gaze manifests as the OG Watcher,
@@ -907,7 +978,8 @@ class ThreatMixin:
         kind = "amalgam" if random.random() < AMALGAM_CHANCE else "watcher"
         w = NPC(spot[0], spot[1], "", kind,
                 voice="blip_low", portrait="watcher",
-                movement="watch", speed=0.0,
+                movement="storm" if storming else "watch",
+                speed=STORM_UNIT_SPEED if storming else 0.0,
                 no_prompt=True, solid=False)
         w.tag = "watcher"
         w.dialogue_fn = None

@@ -7,7 +7,7 @@ from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD, CULT_CHASE_MULT,
                             KING_LUNGE_RANGE, KING_LUNGE_TELE,
                             KING_LUNGE_DUR, KING_LUNGE_MULT,
                             KING_LUNGE_GATHER, KING_LUNGE_CD_LO,
-                            KING_LUNGE_CD_HI)
+                            KING_LUNGE_CD_HI, STORM_LIGHT_PROBE)
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
                              react_hold, errand_step, errand_drop,
@@ -190,6 +190,40 @@ class NPC:
                 self.movement = "wander"
         elif self.movement == "chaser":
             self._cult_tick(dt, scene, player)
+        elif self.movement == "storm":
+            self._storm_tick(dt, scene, player)
+
+    def _storm_tick(self, dt, scene, player):
+        """A storm unit (TODO #25): it WALKS AT YOU and stops at the light.
+
+        The maintainer's rule: "regular amalgamations will walk to the player
+        and get as close to them as possible without being in the light."
+        So the only thing that ever stops one is a lit spot -- LIGHT IS THE
+        ONLY SAFETY during a storm. Stand in a pool and they gather at its
+        edge; step out and they close.
+
+        It cannot touch or kill. `solid=False` and there is no grab path for
+        this tag, so a unit walking ONTO the player is a scare and nothing
+        more -- which is the point of letting them reach you at all.
+
+        Distinct from the non-storm `watch` mode, where a unit stands where it
+        opened and only turns its head. Out of storm they are a presence; in
+        storm they are a tide.
+        """
+        dx = scene.world_dx(self.x, player.x)
+        dy = scene.world_dy(self.y, player.y)
+        d = math.hypot(dx, dy) or 1.0
+        self.facing = (dx / d, dy / d)
+        if d < 2.0:
+            return                          # already on them; nothing to press
+        ux, uy = dx / d, dy / d
+        # Probe AHEAD, not underfoot: stopping only once already lit would let a
+        # unit stand inside the pool it is meant to refuse, and the edge is
+        # where the ring should form.
+        probe = STORM_LIGHT_PROBE
+        if scene.lit_at(self.x + ux * probe, self.y + uy * probe):
+            return                          # the light holds it off
+        self._step_toward((player.x, player.y), dt, scene)
 
     def _homebody_tick(self, dt, scene):
         """A stay-at-home local. Loiters near their own doorstep (the

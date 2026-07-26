@@ -382,11 +382,61 @@ half-out). Locked with the maintainer this pass:
   in a pool or the beam (`WATCHER_LIGHT_BURN`). You clear them with light; you
   never hide in it. Guarded, `tests/stealth.py` §11 + §18.
 
-**OPEN, in build order.** The old item (1) — the light/dark split as a MECHANIC
-— is CLOSED, ruled out entirely (above). What remains: (1) **wire the storm
-engine in** — real scene
-dark-spots as anchors (off the darkening), tilt-camera projection, spawn density
-off evidence, and the **catch** (a bearer reaching you = the King-catch death);
+**LANDED — THE FLOOD (2026-07). The storm is a MODE of the Watcher wave, not a
+second spawner.** Two populations of the same creature under different rules
+reads as a bug rather than escalation (most manifestations already wear the
+amalgam skin), so the existing wave switches instead. Maintainer rulings this
+pass: **Watchers do NOT stop at the gate** — they BECOME the storm; **amalgams
+share `WATCHER_MAX` out of storm and uncap in one** (soft `STORM_MAX` = 22 for
+frame time); **during a storm every dispel still works** (gaze, light, axe,
+round); **light is the only safety**; and **the amalgam is the default skin now**
+(`AMALGAM_CHANCE` 0.5 → 0.9, the shroud Watcher a rare variant).
+- `Game._storm_active()` — past `STORM_GATE_EVIDENCE` (3) and in a room the dark
+  has actually taken (`scene_gloom() > 0`, the one darkness source, so the flood
+  literally fills the dark and cannot disagree with what the player sees). A lit
+  refuge never storms.
+- Units run `movement="storm"` (`entities/npc.py _storm_tick`): they WALK at the
+  player and refuse any step that would put them in light, so standing in a pool
+  makes them ring its edge. They cannot touch or kill (`solid=False`, no grab
+  path) — a unit walking onto you is a SCARE. Out of storm they keep the old
+  passive `watch`. `_sync_storm_mode` flips live units when the state changes
+  under them.
+- Storm spawns drop the line-of-sight requirement and open across the whole room
+  (`STORM_SPAWN_NEAR/FAR`). The LOS rule exists so a lone Watcher is always
+  answerable; a storm unit answers it by WALKING TO YOU. Out of storm the rule
+  stands exactly as ruled.
+- **The flood has to be SEEN.** Measured on a live 22-unit storm, ZERO units
+  passed the sight cone (7 inside 120px) — the whole thing was invisible and
+  "they ring the light" was unreadable. Units now take the apex's fog curve
+  (`Game.actor_smear_range`, `STORM_SEE_RANGE` 240): a dim smear at range,
+  resolving as they press in. A blanket exemption was rejected — it kills the
+  dread the other way.
+- Guards: `tests/stealth.py` §19 (gate, real cap lift, approach, light refusal,
+  cannot touch, dispel still burns, mode revert, the smear). Every one proven to
+  fail before landing; two first drafts were green for the wrong reason (a
+  constant-vs-constant "cap" check, and a smear check that silently skipped on
+  an empty wave).
+
+**THE APEX / THE MASK NPC — specced by the maintainer, NOT built.** The next
+slice, and it supersedes `systems/storm.py`'s timer-driven migration:
+- The Mask **spawns in and floats to an amalgam**, then **deletes it and becomes
+  it**, reusing that amalgam's EXACT parts and adding 2-3 more.
+- **The apex pierces the protection of the light** — a lit spot does not hold it
+  off the way it holds a regular unit — and **the apex is immune to light**, so
+  the flashlight is not enough for it.
+- **The axe works, and the gun works.** Hitting the apex destroys the AMALGAM but
+  not the Mask: the Mask then **seeks another amalgam and continues its assault**,
+  until the player drops **below the visibility threshold**. (Maintainer on the
+  gun: "I know the whole 'gun exists to fail', but we have such limited ammo it
+  will fail regardless. And it makes the loop more fun if the player can do
+  something to survive.")
+- Player-driven migration is the point: the hop is EARNED, not on a dwell timer.
+  Two things to settle when building it — the Mask must live as game state that
+  projects into a scene (one bearer storm-wide is a fence, so `scene.npcs` cannot
+  be its home; `_king` already does this), and it should REPLACE its host rather
+  than stack on it, or the two NPCs z-fight in the depth sort.
+
+**OPEN, in build order:** (1) **the apex / Mask NPC** (specced above);
 (2) **retire THE UNFOLDING** and rewire the catch / death card / Carcosa
 cutscene (flow-guarded) onto the storm; (3) reconcile canon (NARRATIVE §4/§8 the
 King, DESIGN §1 the apex) ONLY as each piece lands —

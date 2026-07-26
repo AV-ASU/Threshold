@@ -225,7 +225,22 @@ its head) and pings the cult to **investigate the body**, and the body
   unanswerable accumulation -- and the corollary is the light-security
   promise: a room with no dark spot in view of you cannot open anything.
   **A fully lit room is SECURED; a blackout un-secures it** (guarded,
-  `tests/stealth.py` §11). The **true refuges stay gaze-free**
+  `tests/stealth.py` §11).
+  **THE STORM is this same wave in a second MODE** (TODO #25, 2026-07), not a
+  separate spawner: `Game._storm_active()` is true past `STORM_GATE_EVIDENCE`
+  (3) in a room the dark has taken (`scene_gloom() > 0`). While it is up the cap
+  lifts (`WATCHER_MAX` 5 → `STORM_MAX` 22, a frame-time bound, uncapped in
+  fiction), the cadence tightens, spawns drop the line-of-sight requirement and
+  open across the whole room, and every unit switches from standing still to
+  **walking at the player** (`npc._storm_tick`), refusing any step into light --
+  so **light is the only safety** and standing in a pool makes them ring its
+  edge. A unit **cannot touch or kill**: walking onto you is a scare, nothing
+  more. **Every dispel still works** in a storm -- gaze, light, axe, round.
+  Watchers do NOT stop at the gate; they become the storm. Units also stop
+  obeying the sight cone and take the apex's fog curve instead
+  (`Game.actor_smear_range`, `STORM_SEE_RANGE`): a live 22-unit storm had ZERO
+  units pass the plain cone, so the flood was invisible and "they ring the light"
+  was unreadable. Guarded, `tests/stealth.py` §19. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
   high-visibility trigger is retired.) **The gaze wears two skins (the

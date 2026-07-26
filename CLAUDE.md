@@ -651,6 +651,12 @@ section is the CODE MAP only — where each system lives:
   `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
+- **The STORM** (TODO #25) — a MODE of the Watcher wave, never a second
+  spawner: `_storm_active()` (past `STORM_GATE_EVIDENCE` in a room with
+  `scene_gloom() > 0`), `_sync_storm_mode`, `npc._storm_tick` (walk at the
+  player, refuse any step into light, cannot touch), `actor_smear_range` (units
+  ignore the sight cone or the flood is invisible), `STORM_*` config. Cap lifts
+  to `STORM_MAX`; every dispel still works. stealth §19.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config. Light works on THEM, never on you: it
   denies them a spawn spot (`_spawn_watcher` needs dark + line of sight) and

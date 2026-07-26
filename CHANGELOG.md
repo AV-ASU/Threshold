@@ -90,6 +90,38 @@
 
 ## Stealth & threat
 
+- **2026-07 — THE STORM lands as a MODE of the Watcher wave (`TODO.md` #25).**
+  The design question was how amalgams spawn once the storm exists, and the
+  answer was that it must NOT be a second spawner: `systems/storm.py` kept its
+  own `_Unit` list with rules that contradict the live wave's (light SLOWS vs
+  light BURNS, never-dispelled vs stare-to-dispel), and since `AMALGAM_CHANCE`
+  already put the amalgam skin on half of all manifestations, wiring it in would
+  have put two populations of the identical creature under opposite rules in one
+  room. That reads as a bug, not escalation. So the existing wave changes mode.
+  Maintainer rulings this pass, all now live: Watchers do NOT stop at the gate
+  (they BECOME the storm); amalgams share `WATCHER_MAX` out of storm and uncap in
+  one (soft `STORM_MAX` 22 for frame time); every dispel keeps working in a
+  storm; light is the only safety; units walk onto the player as a SCARE and
+  cannot touch or kill; and the amalgam is the default skin now
+  (`AMALGAM_CHANCE` 0.5 → 0.9, the shroud a rare variant).
+  Storm spawns drop the line-of-sight requirement, which is a deliberate
+  narrowing of the 2026-07 rule rather than a break of it: LOS exists so a lone
+  Watcher is always answerable, and a storm unit answers that by walking to you.
+  **The finding that only a live capture could produce:** a driven 22-unit storm
+  had **ZERO units pass the sight cone** — 7 of them inside 120px — so the entire
+  flood was invisible and "they ring the light" was a rule the player could never
+  see. Units now take the apex's fog curve (`actor_smear_range`,
+  `STORM_SEE_RANGE` 240): a dim smear at range, resolving as they press in. A
+  blanket exemption was rejected for killing the dread the other way.
+  Guarded by `tests/stealth.py` §19, every check proven to fail first. Two of
+  those checks were green for the wrong reason on the first draft and are worth
+  remembering: a "cap lifts" check that only compared two CONSTANTS (pinning
+  `cap = WATCHER_MAX` in the tick left it green — replaced with one that drives
+  the real wave past the old ceiling), and a smear check that read
+  `g._watchers[-1]` and SILENTLY SKIPPED whenever the wave was empty. Docs:
+  `DESIGN.md` §1, `CLAUDE.md`, `TODO.md` #25 (which also now carries the
+  maintainer's full spec for the un-built apex/Mask NPC). Full gate green.
+
 - **2026-07 — Darkness stops hiding you, and light stops sheltering you from
   the gaze (maintainer ruling; supersedes the entry below and half of the
   2026-07 "no light = danger" pass).** The maintainer read the entry below and

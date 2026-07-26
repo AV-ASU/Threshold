@@ -1399,6 +1399,164 @@ def main():
     check(g._watcher_gaze > 0.0,
           "storm dark: and they HOLD you there (light is not cover)")
 
+    # ---- §19: THE STORM as a MODE of the Watcher wave (TODO #25) ----------
+    # Locks the maintainer's spec: Watchers do NOT stop at the gate, they BECOME
+    # the storm; the cap lifts; units WALK at the player; light is the only
+    # thing that stops them; they cannot touch or kill; and every dispel still
+    # works. Out of storm, nothing changes.
+    from systems.config import (STORM_MAX, STORM_GATE_EVIDENCE, STORM_UNIT_SPEED,
+                                AMALGAM_CHANCE, WATCHER_MAX)
+    print("[19] storm: one wave, two modes -- cap, approach, light, dispel")
+    check(AMALGAM_CHANCE >= 0.85,
+          "storm: the amalgam is the default skin now, the shroud is rare")
+    g = new_game()
+    g.load_scene_now("well_passage", "default")
+    tick(g, 20)
+    # Below the gate: the ordinary wave, capped, standing still.
+    g.save.set_arg("evidence", [{"name": f"w{i}"}
+                                for i in range(STORM_GATE_EVIDENCE - 1)])
+    check(not g._storm_active(),
+          "storm: below the gate there is no storm")
+    # At the gate, in a dark room: the storm is up.
+    g.save.set_arg("evidence", [{"name": f"w{i}"}
+                               for i in range(STORM_GATE_EVIDENCE)])
+    check(g._storm_active() and g.scene_gloom() > 0,
+          "storm: at the gate, in the dark, a storm is up")
+    check(STORM_MAX > WATCHER_MAX,
+          "storm: the cap lifts above the Watcher max")
+    # ...and the wave ACTUALLY uses it. The constant comparison above cannot
+    # fail on a regression -- pinning `cap = WATCHER_MAX` in _tick_watchers left
+    # it green -- so drive the real wave past the old ceiling.
+    gc = new_game()
+    gc.load_scene_now("well_passage", "default")
+    tick(gc, 20)
+    gc.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    csc = gc.scene
+    cdark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, csc.h - 2) for tx in range(2, csc.w - 2)
+             if not csc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not csc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    gc.player.x, gc.player.y = cdark[len(cdark) // 2]
+    for _ in range(int(90 * 30)):
+        gc.player.hidden = None
+        gc._tick_watchers(1 / 30.0)
+        if len(gc._watchers) > WATCHER_MAX:
+            break
+    check(len(gc._watchers) > WATCHER_MAX,
+          f"storm: the live wave passes the Watcher cap "
+          f"({len(gc._watchers)} units > {WATCHER_MAX})")
+    # A safe room has no storm even at the gate (the refuge is load-bearing).
+    g2 = new_game()
+    g2.load_scene_now("bedroom", "default")
+    tick(g2, 10)
+    g2.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    check(not g2._storm_active(),
+          "storm: a lit refuge never storms (gloom 0)")
+    # --- the APPROACH. A unit walks at the player...
+    sc = g.scene
+    spots = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, sc.h - 2) for tx in range(2, sc.w - 2)
+             if not sc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    dark = [p for p in spots if not sc.lit_at(*p)]
+    g.player.x, g.player.y = dark[0]
+    g.player.hidden = None
+    u = g._spawn_watcher() or (g._watchers[-1] if g._watchers else None)
+    if u is None:                       # spawn geometry can miss; force one
+        from entities.npc import NPC
+        u = NPC(dark[-1][0], dark[-1][1], "", "amalgam", movement="storm",
+                speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+        u.tag = "watcher"
+        u.sprite_seed = 3
+        sc.add_npc(u)
+        g._watchers.append(u)
+    g._sync_storm_mode(True)
+    check(u.movement == "storm" and u.speed > 0,
+          "storm: a live unit switches to the walking mode")
+    # place it a way off, in the dark, and let it walk
+    far = max(dark, key=lambda p: (p[0] - g.player.x) ** 2
+              + (p[1] - g.player.y) ** 2)
+    u.x, u.y = far
+    d0 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+    for _ in range(240):
+        u.update(1 / 30.0, sc, g.player)
+    d1 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+    check(d1 < d0 - 8,
+          f"storm: the unit closes on the player ({d0:.0f}px -> {d1:.0f}px)")
+    # ...and STOPS at the light. Standing in a pool is the only safety.
+    lit = [p for p in spots if sc.lit_at(*p)]
+    if lit:
+        g.player.x, g.player.y = lit[0]
+        # put the unit just outside the pool, aimed in
+        import math as _m
+        for ang in range(0, 360, 15):
+            ux = g.player.x + _m.cos(_m.radians(ang)) * 70
+            uy = g.player.y + _m.sin(_m.radians(ang)) * 70
+            if (not sc.is_solid_at(ux, uy) and not sc.lit_at(ux, uy)):
+                u.x, u.y = ux, uy
+                break
+        held0 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+        for _ in range(240):
+            u.update(1 / 30.0, sc, g.player)
+        held1 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+        check(not sc.lit_at(u.x, u.y),
+              "storm: the unit never steps into the light")
+        check(held1 > 8.0,
+              f"storm: light holds it off the player ({held1:.0f}px away)")
+    # --- it cannot TOUCH you. Sit it on top of the player and tick the world.
+    g.player.x, g.player.y = dark[0]
+    u.x, u.y = g.player.x, g.player.y
+    hp0 = g.player.hp
+    dead0 = g.death_kind if hasattr(g, "death_kind") else None
+    tick(g, 60)
+    check(g.player.hp >= hp0 and g.state == "playing",
+          "storm: a unit standing ON the player deals nothing (a scare)")
+    # --- every DISPEL still works in a storm: light burns one caught in a pool.
+    if lit:
+        # a FRESH unit: the world ticks above may have swept or dispelled the
+        # earlier one, and reusing it made this check depend on that.
+        from entities.npc import NPC as _NPC
+        w2 = _NPC(lit[0][0], lit[0][1], "", "amalgam", movement="storm",
+                  speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+        w2.tag = "watcher"
+        w2.sprite_seed = 5
+        sc.add_npc(w2)
+        g._watchers.append(w2)
+        g._cursed = True
+        w2.x, w2.y = lit[0]
+        burned = False
+        for _ in range(int((WATCHER_GAZE_DISPEL / (1 + WATCHER_LIGHT_BURN)
+                            + 1.0) * 30)):
+            w2.x, w2.y = lit[0]
+            g._tick_watcher_gaze(1 / 30.0)
+            if w2 not in g._watchers:
+                burned = True
+                break
+        check(burned,
+              "storm: light still BURNS a unit caught in a pool")
+    # --- the flood must be SEEN. Storm units do not obey the sight cone: a
+    # live 22-unit storm had 0 units pass it, so the whole thing was invisible.
+    # Build the probe outright rather than reusing a live unit -- the earlier
+    # version read g._watchers[-1] and SILENTLY SKIPPED both checks whenever the
+    # wave happened to be empty, which is the one thing a guard must never do.
+    from systems.config import STORM_SEE_RANGE
+    from entities.npc import NPC as _NPC2
+    su = _NPC2(0, 0, "", "amalgam", movement="storm", speed=STORM_UNIT_SPEED,
+               no_prompt=True, solid=False)
+    check(g.actor_smear_range(su) == STORM_SEE_RANGE,
+          "storm: a storm unit stays sensed outside the sight cone")
+    su.movement = "watch"
+    check(g.actor_smear_range(su) == 0.0,
+          "storm: a standing Watcher still obeys the cone outright")
+
+    # --- and out of storm the wave is exactly as it was.
+    g.save.set_arg("evidence", [{"name": "w0"}])
+    check(not g._storm_active(), "storm: dropping below the gate ends it")
+    g._sync_storm_mode(False)
+    check(all(w.movement == "watch" and w.speed == 0.0 for w in g._watchers),
+          "storm: units revert to standing still when it ends")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

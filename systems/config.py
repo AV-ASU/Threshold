@@ -350,11 +350,48 @@ WATCHER_GAZE = 0.05           # visibility CLIMB per live Watcher per second
                               # while exposed -- the teeth of the mechanic
 WATCHER_FLOOR = 0.07          # residual visibility floor per live Watcher
 WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
+# ---- THE STORM: the flood as a MODE of the Watcher wave (TODO #25) ----
+# The storm is NOT a second spawner. Two populations of the same creature with
+# different rules read as a bug, not as escalation (half of all manifestations
+# already wear the amalgam skin), so the existing wave simply changes MODE: the
+# cap lifts, the cadence tightens, and every unit switches from standing in the
+# dark to walking at you. Every dispel still works -- gaze, light, axe, round --
+# which is the maintainer's ruling: "during a storm amlgs can be dispelled by
+# any means watchers can be."
+#
+# A storm is up where His attention has already flooded: past the King's own
+# gate, in a room the darkness has actually taken (`Game.scene_gloom() > 0`,
+# the one darkness source, so the flood literally fills the dark).
+STORM_GATE_EVIDENCE = 3       # = KING_GATE_EVIDENCE; the apex is armed
+STORM_MAX = 22                # soft cap: uncapped in fiction, bounded for frame time
+STORM_SPAWN_BASE = 2.4        # s between manifestations while a storm is up
+STORM_SPAWN_MIN = 0.9         # ... shaved by evidence down to this floor
+STORM_SPAWN_STEP = 0.5
+STORM_UNIT_SPEED = 0.34       # tiles/frame-unit: a walk, below player sprint
+# "Regular amalgamations will walk to the player and get as close to them as
+# possible without being in the light" -- so a unit refuses any step that would
+# put it in a lit spot, and LIGHT IS THE ONLY SAFETY: stand in a pool and they
+# ring its edge. They cannot touch or kill (`solid=False`, no grab path); a unit
+# walking onto you is a SCARE, not damage. The apex is the exception and is not
+# part of this slice.
+STORM_LIGHT_PROBE = 12.0      # px ahead a unit tests for light before stepping
+# How near a storm unit RESOLVES out of the blind-spot fog. Storm units are not
+# gated by the sight cone the way a standing Watcher is: measured on a live
+# storm, 0 of 22 units passed the cone (7 of them inside 120px), so the flood
+# was completely invisible and "they ring the light" was unreadable. They take
+# the King's curve instead -- a dim smear at range, resolving as they press in.
+# Shorter than KING_SEE_RANGE (360): the apex must be trackable across a room,
+# a unit only has to be sensed as it arrives.
+STORM_SEE_RANGE = 240.0
+STORM_SPAWN_NEAR = 150.0      # px: closest a storm unit opens
+STORM_SPAWN_FAR = 420.0       # px: furthest (wider than a Watcher's 200 -- the
+                              # flood comes from the whole room, not just ahead)
+
 WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
-AMALGAM_CHANCE = 0.5          # fraction of Watcher manifestations that arrive
+AMALGAM_CHANCE = 0.9          # fraction of Watcher manifestations that arrive
                               # as an AMALGAM (a seeded parts assembly,
                               # rendering/amalgam.py) instead of the OG shroud;
                               # behavior is identical either way
