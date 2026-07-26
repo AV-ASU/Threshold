@@ -821,40 +821,52 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 - *(Every case-notebook write, evidence and note alike, is now transcribed
   above or in its speaker's Part A section; see Coverage.)*
 
-## The Casebook derived surfaces
-The Case tab's derived text (`systems/narrative_mixin.py`; TODO #13). All
-first person, none of it evidence.
+## The Casebook: the PI's running notebook
+
+The Case tab is ONE RUNNING DOCUMENT (`ui/journal_ui.py`; maintainer ruling,
+2026-07). Everything he writes down goes in in the order he wrote it, headed
+if it is a thing he FOUND and unheaded if it is a thought he had, and nothing
+is ever reordered, merged or overwritten. Up and down turn the leaf.
+
 - **`the_case`** (the intake, seeded at run start): "Client: Walter Blaine,
-  Minneapolis. Wants his girl home." / "Subject: his daughter Mara, 24.
-  Drove north in the fall, quit calling home by the new year, and that was
-  the last of her." / "I told him what he already knew. She's grown, and
-  nobody makes a grown woman come home who won't. \"See what you can do,\"
-  he says. \"Please.\"" / "So I went looking. Trail ends in Brimley. Find
-  her, put her father's word to her, let her decide. That's the job." / "I
-  don't leave a case open. Whatever's up here, Walter gets his answer."
-- **Working Theory** (`_working_theory`, set-aware threads): "A resident,
-  not a drifter. She didn't wander off. Something kept her here." →
-  "She didn't pass through. She lived here and came apart here. This town
-  took her apart." → "She wasn't taken. She walked to it willing. I'm too
-  late to be solving a kidnapping." The bear+letter thread: "A boy, Sam.
-  She gave his bear to the one live kid here. His name breaks her." The
-  tail: "And the town won't let go. I've felt the ground fold back under my
-  own feet. Her or not, how do I get out?" / "The robes run this. If anyone
-  can shut it off it's them, and the only way out runs through all of them.
-  I hate it." (the WRONG lever, never corrected) / "Got the mask. And I
-  know it clean: carry it out and the town lets me go. Down doesn't come
-  back. God help me, I want out."
-- **Timeline** (`_case_timeline`): "Barn first, for somewhere to sleep. Her
-  journal's there." / "Store tab runs most of a year. She lived here, plain
-  as that." / "Booked one night for a disturbance on the main road.
-  Starting to come apart." / "Went under with the rest. Copied the Sign in
-  her own hand, willing." / "Last thing she wrote is the letter in her
-  cell. A boy. \"I'm not lost.\"" Footer: "No dates on most of it. Ordering
-  by what comes before what." / "And the calendars all stopped in January.
-  It's spring now."
-- *(The old soft-lead `_current_lead` strings are DEAD CODE, cut from the
-  notebook display in the TODO #13 opening rework; they render nowhere and
-  are deliberately not transcribed.)*
+  Minneapolis. Wants his girl home." / "Subject: his daughter Mara, 24. Drove
+  north in the fall, quit calling home by the new year, and that was the last
+  of her." / "I told him what he already knew. She's grown, and nobody makes a
+  grown woman come home who won't. \"See what you can do,\" he says.
+  \"Please.\"" / "So I went looking. Trail ends in Brimley. Find her, put her
+  father's word to her, let her decide. That's the job." / "I don't leave a
+  case open. Whatever's up here, Walter gets his answer."
+
+**What he concludes, written down ONCE each** (`_THEORY_THOUGHTS`,
+`_tick_theory_notes`). Each lands the moment he reaches it and stays on its
+page for the rest of the run. They render with no heading, because a
+conclusion he jots is a line in the flow rather than a titled find.
+- **`theory_resident`** (holds the receipt): "A resident, not a drifter. She
+  didn't wander off. Something kept her here."
+- **`theory_came_apart`** (the record or the journal): "She didn't pass
+  through. She lived here and came apart here. This town took her apart."
+- **`theory_willing`** (the dig or the letter): "She wasn't taken. She walked
+  to it willing. I'm too late to be solving a kidnapping."
+- **`theory_son`** (the letter, carrying the bear): "A boy, Sam. She gave his
+  bear to the one live kid here. His name breaks her."
+- **`theory_fold`** (`crossed_a_fold`): "And the town won't let go. I've felt
+  the ground fold back under my own feet. Her or not, how do I get out?"
+- **`theory_robes`** (has actually met them): "The robes run this. If anyone
+  can shut it off it's them, and the only way out runs through all of them. I
+  hate it." **This is the WRONG read, and the game never corrects it**
+  (NARRATIVE invariant). Because the book never rewrites itself, it stays
+  legible on its page for the whole run, including after he learns better.
+- **`theory_mask`** (holds the Pallid Mask): "Got the mask. And I know it
+  clean: carry it out and the town lets me go. Down doesn't come back. God
+  help me, I want out."
+
+> **The TIMELINE is CUT** (maintainer ruling, 2026-07). It was a derived page
+> that re-sorted his finds into Mara's chronology, which is precisely the
+> connection the player is meant to make. **He writes the dates down as he
+> finds them** (the booking slip's "Dated the eleventh of December", the
+> registers' "a year back", the receipt's year of staples, the gas receipt's
+> July) and the arithmetic of this-then-this-then-this belongs to the player.
+> The old `_current_lead` strings remain DEAD CODE, rendered nowhere.
 
 ## The descent-voice track
 `systems/game.py` `_DESCENT_VOICE`, keyed to descent milestones. The PI's own

@@ -25,7 +25,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene, chest_interact
-from .dialogue import (clerk_dialogue, _evidence, _log_note, _rewrite_note,
+from .dialogue import (clerk_dialogue, _evidence, _log_note,
                        sable_on_death)
 
 
@@ -964,12 +964,13 @@ def clerk_room_interact(game):
                 "[c=dim]I have seen one of these up close now, with a man "
                 "inside it and his hand on my shoulder.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
-            _rewrite_note(game, "clerk_robe", [
-                "A robe hanging alone in the Clerk's closet. Dark, plain, "
-                "hand-sewn, pressed and folded over the rail.",
-                "I have seen one of these up close since. A man inside it, "
-                "his hand on my shoulder, telling me to run.",
-                "By the creases, Sable's has never once been worn.",
+            _log_note(game, "clerk_robe_placed", [
+                "The robe in the Clerk's closet again. I have seen one of "
+                "these up close since: a man inside it, his hand on my "
+                "shoulder, telling me to run.",
+                "Sable has had one hanging in his room the whole time I have "
+                "been under his roof. By the creases it has never once been "
+                "worn.",
             ])
             return
         game.show_notice("The robe hangs where it hung. Never worn.")

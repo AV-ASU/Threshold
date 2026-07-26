@@ -214,8 +214,8 @@ light scavenge, never evidence). Reconcile with his worker job-loop.
 
 ### 13b. **[Fable]** Interior voice — quiet the routine reactions
 
-The Casebook structure landed (Case/Tools/Papers tabs, the Working Theory
-pinned first, the named scribble toast — `CHANGELOG.md`), and a first trim
+The Casebook structure landed (Case/Tools/Papers tabs, the Case tab now the
+PI's running notebook, the named scribble toast — `CHANGELOG.md`), and a first trim
 cut the three worst offenders. **Still open — the maintainer's actual
 grievance ("every interaction does something and never leaves the player
 thinking"):** on-screen PI narrator captions still fire on nearly every

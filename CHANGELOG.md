@@ -32,6 +32,58 @@
 
 ## Evidence & the case
 
+- **2026-07 — The Casebook becomes the PI's running notebook (maintainer:
+  "I hate how it's just a bunch of paper that just gets put randomly in the
+  tab").** The Case tab was not a record, it was a filing system. Entries
+  rendered sorted by CATEGORY (evidence first, then notes), so the order the
+  player saw them in was the order the code declared them rather than the order
+  they lived them, and the two pinned surfaces, the Working Theory and the
+  Timeline, were recomputed live on every open. The book had no memory:
+  whatever the PI used to think was silently replaced by whatever he thought
+  now.
+
+  That last part was the real loss, and it was specific to this game.
+  `NARRATIVE.md` holds that his written theory is allowed to reason WRONG and
+  the game never corrects him (the robes are the ones who could stop this).
+  That wrongness was invisible, because the theory edited itself into
+  something less wrong before the player could catch it out.
+
+  **Now it is one running document.** Everything he writes down goes in in the
+  order he wrote it and stays exactly as written. His CONCLUSIONS are journaled
+  once each, at the moment he reaches them (`_THEORY_THOUGHTS`,
+  `_tick_theory_notes`), and they render with no heading, because a conclusion
+  he jots is a line in the flow rather than a titled find. The wrong robes read
+  now sits on its page for the rest of the run, next to the later reads that
+  supersede it, and nothing ever says so. Reading the book start to finish is
+  watching a man's understanding change.
+
+  **The Timeline is CUT** (maintainer ruling): it re-sorted his finds into
+  Mara's chronology, which is exactly the connection the player is supposed to
+  make. He writes the dates down as he finds them instead, and the arithmetic
+  is theirs. The booking slip's entry gained the date it had always been
+  missing ("Dated the eleventh of December") since without it the chronology
+  was unreconstructable from the book at all.
+
+  **How it is stored.** `evidence` and `notes` stay two save lists, because
+  the King-gate counts one and must not count the other; each entry gets a
+  `seq` stamp from the new `Save.next_seq`, and the book merges and orders by
+  it. A single merged list would have been the tidier data model and would have
+  meant rewriting roughly 130 call sites, nearly all of them test fixtures, for
+  no player-visible difference. The split is bookkeeping and never reaches the
+  player.
+
+  Consequences worth recording: `_rewrite_note`, added days earlier so the robe
+  could revise its own entry after the Talk, is GONE. Under a running document
+  the second look is a LATER entry (`clerk_robe_placed`) and the first stays as
+  written; the pair, one describing a garment and one recognising it, is the
+  record of him learning, and collapsing it into one tidy paragraph erased the
+  man who did not know yet. `mc.wrap_lines` was split out of `mc.wrap` so the
+  pagination measures with exactly the rules the renderer draws with. The leaf
+  was repositioned clear of the tab ribbon, its ruling pitched to the body font
+  so his lines sit ON the rules, and the body moved from the case-file mono to
+  the same serif ink as Mara's journal, so the two books read as two hands
+  rather than a document and a typewriter.
+
 - **2026-07 — The small-detail layer, first four (the schoolhouse and the
   robe).** The discovery catalog showed the surface holding six real finds in
   37 rooms, three of them mandatory. The maintainer's diagnosis of why a

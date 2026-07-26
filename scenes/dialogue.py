@@ -67,7 +67,8 @@ def _evidence(game, name, content, weight=None, show=True, note=False,
                 isinstance(e, dict) and e.get("name") == name for e in log):
             log.append({"name": name,
                         "lines": [_strip_markup(x) for x in lines],
-                        "weight": CANONICAL_EVIDENCE[name]})
+                        "weight": CANONICAL_EVIDENCE[name],
+                        "seq": game.save.next_seq()})
             game.save.set_arg("evidence", log)
             if not quiet and hasattr(game, "_flash_notebook"):
                 game._flash_notebook(name)    # corner scribble: you wrote it down
@@ -140,32 +141,12 @@ def _log_note(game, key, lines):
     notes = game.save.arg("notes", [])
     if isinstance(notes, list) and not any(
             isinstance(e, dict) and e.get("name") == key for e in notes):
-        notes.append({"name": key, "lines": [_strip_markup(x) for x in lines]})
+        notes.append({"name": key,
+                      "lines": [_strip_markup(x) for x in lines],
+                      "seq": game.save.next_seq()})
         game.save.set_arg("notes", notes)
         if hasattr(game, "_flash_notebook"):
             game._flash_notebook(key)
-
-
-def _rewrite_note(game, key, lines):
-    """Replace an already-filed note's text in place, keeping its slot and its
-    title. For an object whose MEANING changes once the PI knows more (the
-    robe in Sable's closet, read again after a cultist has had a hand on him):
-    the find is the same find, so it should not file twice and clutter the
-    book with two entries about one closet. Flashes the scribble like any
-    other write, because the player did just learn something. Falls back to
-    filing fresh if the note is somehow absent."""
-    notes = game.save.arg("notes", [])
-    if not isinstance(notes, list):
-        return
-    plain = [_strip_markup(x) for x in lines]
-    for e in notes:
-        if isinstance(e, dict) and e.get("name") == key:
-            e["lines"] = plain
-            game.save.set_arg("notes", notes)
-            if hasattr(game, "_flash_notebook"):
-                game._flash_notebook(key)
-            return
-    _log_note(game, key, lines)
 
 
 # The per-discovery revisit nudges ("...I should go back and ask him") were
@@ -1036,7 +1017,8 @@ def grant_record(game):
     # Files silently and reads from the item (its desc carries the slip); the
     # log excerpt is the case entry.
     _evidence(game, "maras_record", [
-        "A booking slip in the Sheriff's records. Blaine, Mara.",
+        "A booking slip in the Sheriff's records. Blaine, Mara. Dated the "
+        "eleventh of December.",
         "Held a night for a disturbance on the main road, shouting at "
         "the sky. Released at dawn, no charge filed.",
     ], show=False)

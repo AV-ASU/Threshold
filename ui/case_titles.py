@@ -40,6 +40,15 @@ NOTE_TITLES = {
     "the_ledger":              "The Old Registers",
     "the_preacher":            "The Preacher on the Bank",
     "the_congregation":        "The Ones Who Knelt",
+    # What he concluded, written down once each as he reached it. They stay
+    # on their pages for the rest of the run, wrong ones included.
+    "theory_resident":         "A Resident, Not a Drifter",
+    "theory_came_apart":       "She Came Apart Here",
+    "theory_willing":          "She Walked To It",
+    "theory_son":              "The Boy",
+    "theory_fold":             "The Town Won't Let Go",
+    "theory_robes":            "The Robes Run This",
+    "theory_mask":             "What the Mask Buys",
     # Revisit nudges (kept minimal now -- one pointed thought each).
     "revisit_sable_checkouts": "Back to the Desk",
     "revisit_sable_smile":     "Ask the Clerk About Her",
@@ -60,12 +69,25 @@ NOTE_TITLES = {
     "calder_table":            "Mrs. Calder's Table",
     "crane_provoked":          "The Preacher, Provoked",
     "clerk_robe":              "The Pressed Robe",
+    "clerk_robe_placed":       "The Robe, Placed",
     "bell_tower_view":         "From the Bell Tower",
     "lodge_candle_callback":   "Candles at the Lodge",
     "the_old_stores_shelves":  "The Old Stores",
     "threshing_floor":         "The Threshing Floor",
     "works_cistern_seen":      "The Water Below",
 }
+
+
+# Entries that render in the notebook with NO heading: the PI's own thinking,
+# as opposed to a thing he found. A conclusion he jots down is just a line in
+# the flow of the page, and giving it a title made the book say everything
+# twice ("A Resident, Not a Drifter" over "A resident, not a drifter..."). The
+# titles above still exist for these, because the corner scribble toast needs
+# a name to show when one is written.
+HEADLESS_IN_BOOK = frozenset({
+    "theory_resident", "theory_came_apart", "theory_willing", "theory_son",
+    "theory_fold", "theory_robes", "theory_mask",
+})
 
 
 def humanise(slug):

@@ -197,7 +197,7 @@ class NarrativeMixin:
             " met my eye, and then it broke.",
             "I never reached it. One dream, a year ago, and it never came"
             " again. So why do I know this place.",
-        ]})
+        ], "seq": self.save.next_seq()})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):
             self._flash_notebook("the_dream")
@@ -294,116 +294,89 @@ class NarrativeMixin:
             return "trees"
         return "road"
 
-    def _working_theory(self):
-        """The PI's live working theory (TODO #13): a first-person synthesis
-        composed from WHICH clues I hold, in any order. Each thread reads only
-        its own inputs, so a partial or out-of-order case still reads true and
-        an absent thread (no bear, no fold yet) simply is not there. Never
-        evidence, never a waypoint. Its gravity leans toward carrying the Sign
-        OUT (SPREAD, the numb man's pull), and it is allowed to reason WRONG
-        about the robes: the game never corrects it (NARRATIVE invariant).
-        Returns case-card lines."""
-        s = self.save
-        if s is None:
-            return []
-        inv = getattr(self.player, "inventory", None)
+    # THE PI'S CONCLUSIONS, WRITTEN DOWN ONCE (2026-07). These used to be a
+    # single `_working_theory()` recomputed on every book open, which meant
+    # the notebook had no memory: whatever he used to think was silently
+    # replaced by whatever he thinks now, and the WRONG read he is canonically
+    # allowed to keep (the robes are the ones who could stop this, NARRATIVE
+    # invariant) could never be caught out, because it edited itself.
+    #
+    # Now each conclusion is a thing he writes down at the moment he reaches
+    # it, once, into the running document, where it stays. Read the book start
+    # to finish and you watch a man's understanding change, including the
+    # places it went wrong, and nothing ever tells you so.
+    #
+    # (key, condition, lines). Order here is only the order they are CHECKED;
+    # the order in the book is the order the player earned them.
+    _THEORY_THOUGHTS = (
+        ("theory_resident",
+         lambda g: g._ev_has("maras_receipt"),
+         ["A resident, not a drifter. She didn't wander off. Something kept "
+          "her here."]),
+        ("theory_came_apart",
+         lambda g: g._ev_has("maras_record", "maras_journal"),
+         ["She didn't pass through. She lived here and came apart here. This "
+          "town took her apart."]),
+        ("theory_willing",
+         lambda g: g._ev_has("maras_dig", "maras_room"),
+         ["She wasn't taken. She walked to it willing. I'm too late to be "
+          "solving a kidnapping."]),
+        ("theory_son",
+         lambda g: (g._ev_has("maras_room")
+                    and bool(getattr(g.player, "inventory", None))
+                    and g.player.inventory.has("bear")),
+         ["A boy, Sam. She gave his bear to the one live kid here. His name "
+          "breaks her."]),
+        ("theory_fold",
+         lambda g: g.save.flag("crossed_a_fold"),
+         ["And the town won't let go. I've felt the ground fold back under "
+          "my own feet. Her or not, how do I get out?"]),
+        # The WRONG lever, and the game never corrects it. It stays on its
+        # page for the rest of the run.
+        ("theory_robes",
+         lambda g: g._met_the_cult(),
+         ["The robes run this. If anyone can shut it off it's them, and the "
+          "only way out runs through all of them. I hate it."]),
+        ("theory_mask",
+         lambda g: (bool(getattr(g.player, "inventory", None))
+                    and g.player.inventory.has("pallid_mask")),
+         ["Got the mask. And I know it clean: carry it out and the town lets "
+          "me go. Down doesn't come back. God help me, I want out."]),
+    )
 
-        def has_item(k):
-            return bool(inv is not None and inv.has(k))
-        ev_names = {e.get("name") for e in s.arg("evidence", [])
-                    if isinstance(e, dict)}
-        note_names = {n.get("name") for n in s.arg("notes", [])
-                      if isinstance(n, dict)}
+    def _ev_has(self, *names):
+        ev = {e.get("name") for e in self.save.arg("evidence", [])
+              if isinstance(e, dict)}
+        return any(n in ev for n in names)
 
-        def ev_has(*names):
-            return any(n in ev_names for n in names)
-        out = []
-        # The case: the honest read of Mara, deepening as her trail does.
-        if ev_has("maras_dig", "maras_room"):
-            out.append("She wasn't taken. She walked to it willing. I'm too "
-                       "late to be solving a kidnapping.")
-        elif ev_has("maras_record", "maras_journal"):
-            out.append("She didn't pass through. She lived here and came "
-                       "apart here. This town took her apart.")
-        elif ev_has("maras_receipt"):
-            out.append("A resident, not a drifter. She didn't wander off. "
-                       "Something kept her here.")
-        # No clue yet means no theory yet: a run opens with the JOB, not a
-        # guess (the_case note carries that, and the notebook skips an empty
-        # theory). The tail threads below can still fire on a crossed fold or
-        # the waking cult before any clue lands.
-        # The son: only with the bear AND the letter that names him.
-        if has_item("bear") and ev_has("maras_room"):
-            out.append("A boy, Sam. She gave his bear to the one live kid "
-                       "here. His name breaks her.")
-        # The tail: what's happening to ME, split from her story by a blank
-        # line. The trap, the wrong lever, the Mask's pull.
-        tail = []
-        if s.flag("crossed_a_fold"):
-            tail.append("And the town won't let go. I've felt the ground fold "
-                        "back under my own feet. Her or not, how do I get out?")
-        # Only once he's actually RUN INTO the cult (grabbed, or their
-        # testimony / the preacher noted), not merely because the count says
-        # they've woken -- the notebook shouldn't get ahead of what he's met.
-        cult_seen = (s.flag("cult_talk_given")
-                     or any(n in note_names for n in
-                            ("the_preacher", "cult_calling", "cult_bargain",
-                             "cult_digging")))
-        if cult_seen:
-            # The WRONG lever the game never corrects (NARRATIVE invariant).
-            tail.append("The robes run this. If anyone can shut it off it's "
-                        "them, and the only way out runs through all of them. "
-                        "I hate it.")
-        if has_item("pallid_mask"):
-            # The SPREAD gravity: out is the easy road, down is the other.
-            tail.append("Got the mask. And I know it clean: carry it out and "
-                        "the town lets me go. Down doesn't come back. God help "
-                        "me, I want out.")
-        if tail:
-            if out:
-                out.append("")
-            out.extend(tail)
-        return out
+    def _met_the_cult(self):
+        """He has actually RUN INTO them, rather than the count implying they
+        have woken: grabbed, or holding their own testimony, or standing over
+        what they did to the Preacher."""
+        if self.save.flag("cult_talk_given"):
+            return True
+        names = {n.get("name") for n in self.save.arg("notes", [])
+                 if isinstance(n, dict)}
+        return bool(names & {"the_preacher", "cult_calling", "cult_bargain",
+                             "cult_digging"})
 
-    def _case_timeline(self):
-        """The PI's reconstructed order of events (TODO #13): Mara's life in
-        HER order, not the order I found it. Dated where the paper gives one,
-        best-guess order otherwise. The frozen town clock lands as the closing
-        wrongness once I've clocked it. Never evidence. Returns case-card
-        lines."""
-        s = self.save
-        if s is None:
-            return []
-        ev_names = {e.get("name") for e in s.arg("evidence", [])
-                    if isinstance(e, dict)}
-
-        def ev_has(n):
-            return n in ev_names
-        out = []
-        if ev_has("maras_journal"):
-            out.append("Barn first, for somewhere to sleep. Her journal's "
-                       "there.")
-        if ev_has("maras_receipt"):
-            out.append("Store tab runs most of a year. She lived here, plain "
-                       "as that.")
-        if ev_has("maras_record"):
-            out.append("Booked one night for a disturbance on the main road. "
-                       "Starting to come apart.")
-        if ev_has("maras_dig"):
-            out.append("Went under with the rest. Copied the Sign in her own "
-                       "hand, willing.")
-        if ev_has("maras_room"):
-            out.append("Last thing she wrote is the letter in her cell. A "
-                       "boy. \"I'm not lost.\"")
-        if not out:
-            return []
-        out.append("")
-        out.append("No dates on most of it. Ordering by what comes before "
-                   "what.")
-        if s.flag("crossed_a_fold") or self._evidence_count() >= 3:
-            out.append("And the calendars all stopped in January. It's spring "
-                       "now.")
-        return out
+    def _tick_theory_notes(self):
+        """Write down any conclusion he has just reached. Cheap enough to run
+        every frame (a handful of flag reads), and it has to be, because two
+        of the thoughts turn on what is in his HANDS rather than on a book
+        write."""
+        if self.save is None or getattr(self, "player", None) is None:
+            return
+        for key, cond, lines in self._THEORY_THOUGHTS:
+            if self.save.flag(f"wrote_{key}"):
+                continue
+            try:
+                if not cond(self):
+                    continue
+            except (AttributeError, TypeError):
+                continue
+            self.save.set_flag(f"wrote_{key}", True)
+            self._log_note(key, lines)
 
     def _log_note(self, name, lines):
         """Append a PI case-notebook NOTE (arg `notes`, never `evidence`).
@@ -417,7 +390,8 @@ class NarrativeMixin:
             notes = []
         if any(isinstance(e, dict) and e.get("name") == name for e in notes):
             return
-        notes.append({"name": name, "lines": list(lines)})
+        notes.append({"name": name, "lines": list(lines),
+                      "seq": self.save.next_seq()})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):
             self._flash_notebook(name)
@@ -454,7 +428,7 @@ class NarrativeMixin:
             " father's word to her, let her decide. That's the job.",
             "I don't leave a case open. Whatever's up here, Walter gets his"
             " answer.",
-        ]})
+        ], "seq": self.save.next_seq()})
         self.save.set_arg("notes", notes)
 
     def _descent_voice(self, name, note_only=False):
@@ -482,7 +456,8 @@ class NarrativeMixin:
             notes = []
         if not any(isinstance(e, dict) and e.get("name") == name
                    for e in notes):
-            notes.append({"name": name, "lines": list(spec["note"])})
+            notes.append({"name": name, "lines": list(spec["note"]),
+                          "seq": self.save.next_seq()})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
                 self._flash_notebook(name)
@@ -529,7 +504,7 @@ class NarrativeMixin:
                 "left in it. A fact they've all stopped arguing with.",
                 "A whole town doesn't go strange like that over a lie. [c=dim]"
                 "And my own engine turned over and died at the lodge steps.[/c]",
-            ]})
+            ], "seq": self.save.next_seq()})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
                 self._flash_notebook("the_fold_told")

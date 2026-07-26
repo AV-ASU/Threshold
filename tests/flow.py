@@ -1952,7 +1952,6 @@ def main():
     # shoved pile, and the robe in Sable's closet. None of them may touch the
     # evidence count, and the robe may not name the cult before the player
     # has met one.
-    from scenes.dialogue import _rewrite_note
     gdt = new_game()
     gdt.load_scene_now("schoolhouse")
     ready(gdt)
@@ -2008,12 +2007,21 @@ def main():
     grb.save.set_flag("cult_talk_given", True)
     ready(grb)
     grb.scene.on_interact_fn(grb)
-    _rnotes = [n for n in grb.save.arg("notes", [])
-               if n.get("name") == "clerk_robe"]
-    check(len(_rnotes) == 1,
-          "robe: the second look REWRITES the note, never files a second")
-    check("hand on my shoulder" in " ".join(_rnotes[0]["lines"]),
+    # The book is a RUNNING DOCUMENT, so the second look is a LATER entry and
+    # the first one stays exactly as he wrote it. The pair is the record of
+    # him learning; an overwrite would erase the man who did not know yet.
+    _first = [n for n in grb.save.arg("notes", [])
+              if n.get("name") == "clerk_robe"]
+    _second = [n for n in grb.save.arg("notes", [])
+               if n.get("name") == "clerk_robe_placed"]
+    check(len(_first) == 1 and len(_second) == 1,
+          "robe: the second look files a SECOND entry, later in the book")
+    check("cult" not in " ".join(_first[0]["lines"]).lower(),
+          "robe: the first entry is never edited after the fact")
+    check("hand on my shoulder" in " ".join(_second[0]["lines"]),
           "robe: after the Talk the same closet reads differently")
+    check(_second[0]["seq"] > _first[0]["seq"],
+          "robe: the later entry sorts after the earlier one in the book")
 
     # The three rot boxes are gone (maintainer ruling, 2026-07): placeholder
     # narration that recorded nothing. A scarecrow is scenery.
@@ -3093,65 +3101,60 @@ def main():
         check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
               "lead: no dashes in the thread line")
 
-    # --- 24d. The PI theory ladder (TODO #13): the notebook THINKS. The
-    # working theory + timeline are first-person syntheses derived from WHICH
-    # clues are held (any order); they revise as the case grows, never inflate
-    # the evidence count, carry no dashes, keep the cosmology unnamed, and lean
-    # toward SPREAD. The two wrong-space fold beats latch crossed_a_fold and
-    # open the trap thread; the robes-as-lever read is the WRONG conclusion the
-    # game never corrects (NARRATIVE invariant).
+    # --- 24d. THE NOTEBOOK IS A RUNNING DOCUMENT (2026-07). His conclusions
+    # are no longer a card recomputed on every open; each is written down ONCE
+    # at the moment he reaches it and stays on its page for the rest of the
+    # run, wrong ones included. The book merges evidence and notes and orders
+    # them by when he wrote them, so reading it start to finish is watching a
+    # man's understanding change. The old derived Timeline is CUT: he writes
+    # dates down as he finds them and the chronology is the player's to make.
     def _dashed(t):
-        return ("—" in t) or ("–" in t) or ("--" in t)
-
-    def _theory(g):
-        return " ".join(g._working_theory())
-
-    def _timeline(g):
-        return " ".join(g._case_timeline())
+        return ("\u2014" in t) or ("\u2013" in t) or ("--" in t)
 
     def _nnames(g):
         return {e.get("name") for e in g.save.arg("notes", [])
                 if isinstance(e, dict)}
+
+    def _wrote(g):
+        return " ".join(l for e in g.save.arg("notes", [])
+                        if isinstance(e, dict) and str(e.get("name", "")).startswith("theory_")
+                        for l in e.get("lines", []))
     gt = new_game()
-    check(gt._working_theory() == [],
-          "theory: a fresh run has no theory yet (the job lives in the_case note)")
-    check(gt._case_timeline() == [],
-          "timeline: a fresh run has no chronology yet")
-    check("get out" not in _theory(gt),
-          "theory: no escape thread before a fold is crossed")
-    # The notebook pins a surface only when it has content: nothing at the
-    # start, the theory card the moment a clue lands.
-    gpin = new_game()
-    gpin.notebook_ui.save = gpin.save
-    gpin.notebook_ui.game = gpin
-    check("working_theory" not in {n for n, _ in gpin.notebook_ui._entries()},
-          "notebook: a fresh run pins no theory card (just the job)")
-    gpin.save.set_arg("evidence", [{"name": "maras_receipt"}])
-    check("working_theory" in {n for n, _ in gpin.notebook_ui._entries()},
-          "notebook: the theory card appears once a clue lands")
+    gt._tick_theory_notes()
+    check(_wrote(gt) == "",
+          "notebook: a fresh run has concluded nothing (the job is the_case)")
+    check(not hasattr(gt, "_case_timeline"),
+          "notebook: the derived Timeline page is gone")
     gt.save.set_arg("evidence", [{"name": "maras_receipt"}])
-    check("resident" in _theory(gt),
-          "theory: the receipt reads her as a resident, not a drifter")
+    gt._tick_theory_notes()
+    check("resident" in _wrote(gt),
+          "notebook: the receipt is written up as a resident, not a drifter")
     gt.save.set_arg("evidence", [{"name": "maras_journal"},
                                  {"name": "maras_receipt"},
                                  {"name": "maras_record"}])
-    check("came apart" in _theory(gt),
-          "theory: record + journal read her breaking here")
-    check("Booked one night" in _timeline(gt),
-          "timeline: the booking slots into her chronology")
-    check("robes" not in _theory(gt),
-          "theory: no robes thread on clues alone, before he's met the cult")
+    gt._tick_theory_notes()
+    check("came apart" in _wrote(gt),
+          "notebook: record plus journal reads her breaking here")
+    check("resident" in _wrote(gt),
+          "notebook: the EARLIER read stays on its page, never overwritten")
+    check("robes" not in _wrote(gt),
+          "notebook: no robes read before he has met the cult")
     gt.save.set_flag("cult_talk_given", True)
-    check("robes" in _theory(gt),
-          "theory: meeting the cult (the grab) opens the robes-as-lever read")
+    gt._tick_theory_notes()
+    check("robes" in _wrote(gt),
+          "notebook: the grab opens the robes-as-lever read (the WRONG one)")
     gt.save.set_arg("evidence", [{"name": "maras_dig"}])
-    check("willing" in _theory(gt),
-          "theory: the dig pivots her to willing, not taken")
+    gt._tick_theory_notes()
+    check("willing" in _wrote(gt),
+          "notebook: the dig pivots her to willing, not taken")
+    check("robes" in _wrote(gt),
+          "notebook: the wrong read is never corrected or removed")
     gt._note_fold_portal()
+    gt._tick_theory_notes()
     check(gt.save.flag("crossed_a_fold") and "saw_the_door" in _nnames(gt),
           "fold: a visible pane latches crossed_a_fold and files the awe note")
-    check("get out" in _theory(gt),
-          "theory: crossing a fold opens the trap / escape thread")
+    check("how do I get out" in _wrote(gt),
+          "notebook: crossing a fold opens the trap thread")
     gl2 = new_game()
     gl2._note_fold_loop("cornfield_path")
     check("walked_in_circles" not in _nnames(gl2),
@@ -3161,18 +3164,38 @@ def main():
           "fold: the second silent loop is the tell")
     gt4 = new_game()
     gt4.save.set_arg("evidence", [{"name": "maras_room"}])
-    check("Sam" not in _theory(gt4), "theory: no son thread without the bear")
+    gt4._tick_theory_notes()
+    check("Sam" not in _wrote(gt4), "notebook: no son thread without the bear")
     gt4.player.inventory.add("bear", 1)
-    check("Sam" in _theory(gt4), "theory: bear + letter opens the son thread")
+    gt4._tick_theory_notes()
+    check("Sam" in _wrote(gt4), "notebook: bear plus letter opens the son")
     gt4.player.inventory.add("pallid_mask", 1)
-    check("carry it out" in _theory(gt4),
-          "theory: the Mask leans the read toward carrying it out (SPREAD)")
-    _all = _theory(gt4) + " " + _timeline(gt4)
-    check(not _dashed(_theory(gt)) and not _dashed(_timeline(gt))
-          and not _dashed(_all),
-          "theory / timeline: no dashes in any produced line")
-    check(("King" not in _all) and ("Carcosa" not in _all),
-          "theory: the cosmology stays unnamed (sensation-only)")
+    gt4._tick_theory_notes()
+    check("carry it out" in _wrote(gt4),
+          "notebook: the Mask leans the read toward carrying it out (SPREAD)")
+    check(not _dashed(_wrote(gt)) and not _dashed(_wrote(gt4)),
+          "notebook: no dashes in anything he writes")
+    check(("King" not in _wrote(gt4)) and ("Carcosa" not in _wrote(gt4)),
+          "notebook: the cosmology stays unnamed (sensation-only)")
+    # None of it may ever touch the gate.
+    check(len(gt4.save.arg("evidence", [])) == 1,
+          "notebook: writing a conclusion never inflates the evidence count")
+
+    # THE ORDER IS THE POINT: the book merges both lists and reads in the
+    # order he wrote things, so a note filed after a clue sits after it.
+    gord = new_game()
+    gord.notebook_ui.save = gord.save
+    gord.notebook_ui.game = gord
+    from scenes.dialogue import _evidence as _evo, _log_note as _lno
+    _evo(gord, "maras_receipt", ["a"], show=False)
+    _lno(gord, "the_ledger", ["b"])
+    _evo(gord, "maras_journal", ["c"], show=False)
+    _names = [n for n, _l in gord.notebook_ui._case_entries()]
+    check(_names.index("maras_receipt") < _names.index("the_ledger")
+          < _names.index("maras_journal"),
+          "notebook: one running document, in the order he wrote it")
+    check(len(gord.notebook_ui._case_pages()) >= 1,
+          "notebook: the document paginates into leaves")
 
     # --- 25. The placement pass (DESIGN.md §12): the gauntlet rooms
     # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits

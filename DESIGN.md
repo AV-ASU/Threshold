@@ -1267,6 +1267,20 @@ mandatory, while the underground three drove **no mechanic at all**
 (every evidence gate is ≤ 3 — cult wakes at 1, King arms at 3, rot caps
 at `min(3, evidence)`). Half the system was inert.
 
+**The notebook is a running document** (2026-07). Everything the PI writes
+down, evidence and note alike, lives in ONE continuous record read in the
+order he wrote it, and nothing in it is ever reordered or rewritten. Two
+consequences are load-bearing. His CONCLUSIONS are written once, at the moment
+he reaches them, and stay: the wrong read he is canonically allowed to keep
+(the robes are the ones who could stop this) sits on its page for the rest of
+the run instead of silently editing itself into something less wrong, so a
+player who reads the book start to finish watches a man's understanding change
+and is never told so. And there is NO derived chronology: the PI writes dates
+down as he finds them, and assembling this-then-this-then-this out of them is
+the player's work, not the book's. Underneath, `evidence` and `notes` remain
+two save lists because the King-gate counts one and must not count the other;
+a `seq` stamp carries the order, and the split never reaches the player.
+
 **Evidence is a biography, not a keypad.** The case reconstructs one
 woman's descent, and the trail has a shape: **felt it** (the journal) →
 **did it** (the dig) → **why** (the letter) → **the result** (Mara,
