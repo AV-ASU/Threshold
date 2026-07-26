@@ -820,12 +820,12 @@ class ThreatMixin:
             self._watcher_clone_t = WATCHER_GRACE
             self._watcher_gaze = 0.0
             return
-        if key in DIM_INTERIOR_SCENES:
-            # "no light = danger" (TODO #21): in these dark rooms the gaze
-            # opens where you stand in the DARK. A light POOL (Scene.lit_at,
-            # the same shadow-cover gate) or the flashlight is the cover -- the
-            # refuge here is the LIT room, not the building. An enclosed hide
-            # (under a desk) still counts as cover too.
+        if self._dark_is_exposure():
+            # "no light = danger" (TODO #21/#25): where the dark is genuinely
+            # dark, the gaze opens where you STAND in it. A light POOL
+            # (Scene.lit_at) or the flashlight is the cover -- the refuge is
+            # the LIT spot, not the roof over it. An enclosed hide (under a
+            # desk, in the corn) still counts as cover too.
             lit = (self._flashlight_lit()
                    or self.scene.lit_at(self.player.x, self.player.y))
             exposed = (not lit) and self.player.hidden is None
@@ -850,6 +850,32 @@ class ThreatMixin:
         self._watcher_gaze = float(len(self._watchers)) if exposed else 0.0
         # Staring one down dissolves it (the cure).
         self._tick_watcher_gaze(dt)
+
+    def _dark_is_exposure(self):
+        """True where standing UNLIT is what opens His gaze on you, so a light
+        pool / the flashlight is the refuge instead of the walls (read by
+        _tick_watchers).
+
+        Two places qualify. The dim non-refuge interiors always do (the 2026-07
+        "no light = danger" rework, TODO #21). The SURFACE does too, but only
+        once the STORM has actually put the lights out -- `scene_gloom()` is the
+        one source for that, the same reading `_draw_dark` paints and
+        `_tick_lost_edge` gates the mouth on, so what the player SEES and what
+        the gaze does can never drift apart. At rot stage 0 the surface is full
+        daylight, the gloom is 0, and the outdoors behaves exactly as it always
+        has. Watchers wake at WATCHER_WAKE_EV (1), which is also the first stage
+        with any gloom, so outdoors the rule is live from the first Watcher on.
+
+        This is the EXPOSURE half ONLY. Outdoor dark is deliberately NOT
+        concealment from the cult (maintainer ruling, 2026-07 -- see
+        Game._tick_dark_cover): out under the open sky the dark never hides you,
+        it only costs you, and light is the last refuge."""
+        if self.scene is None or self.player is None:
+            return False
+        key = self.scene.key
+        if key in DIM_INTERIOR_SCENES:
+            return True
+        return key in STORM_STAGE_SCENES and self.scene_gloom() > 0
 
     def _watcher_spawn_interval(self):
         """Seconds between Watcher spawns, shaved by evidence (the King floods

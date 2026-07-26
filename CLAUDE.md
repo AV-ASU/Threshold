@@ -645,7 +645,9 @@ section is the CODE MAP only — where each system lives:
   `CULT_TOPUP_INTERVAL`).
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config; light pools + the beam BURN them
-  (`WATCHER_LIGHT_BURN`); stealth §11.
+  (`WATCHER_LIGHT_BURN`); where being UNLIT is what exposes you (the dim
+  interiors, plus the surface once the storm has darkened it)
+  `_dark_is_exposure`; stealth §11 + §18.
 - **Killing locals / corpses** — `_kill_npc` → `_make_corpse` + the
   `dead_locals` ledger, laid back down by `_apply_dead_locals` on every
   load; enemy cultists synthesize a corpse in `_kill_enemy`. Flow
@@ -813,7 +815,12 @@ section is the CODE MAP only — where each system lives:
   DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
   (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
   become islands and the flashlight works outdoors. Understanding-driven, NOT a
-  day cycle. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
+  day cycle. **That dark cuts ONE WAY** (ruling, 2026-07): it EXPOSES you to the
+  Watchers' gaze from stage 1 (`_dark_is_exposure`, so a lamp pool is the
+  refuge) and it NEVER conceals you from the cult — `_tick_dark_cover` stays
+  keyed to `DARK_SCENES` alone, because a map-wide free hide at stage 3 relieves
+  exactly the pressure the storm exists to apply. Don't "fix" the asymmetry;
+  `tests/stealth.py` §18 guards both halves. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
   `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
   island reads as a bright island in a black sea (TODO #26).
 - `visibility` persists across scene loads (only `_reset_run_state`

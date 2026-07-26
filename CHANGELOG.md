@@ -90,6 +90,34 @@
 
 ## Stealth & threat
 
+- **2026-07 — The outdoor dark EXPOSES you, and was ruled never to hide you
+  (`TODO.md` #25 item 1, closed).** The surface darkening had been visual for
+  two slices; this gives it teeth. `ThreatMixin._dark_is_exposure` extends the
+  dim interiors' Watcher rule to any `STORM_STAGE_SCENES` scene whose
+  `scene_gloom()` is above zero, so from rot stage 1 standing unlit under the
+  open sky is what opens His gaze, and a yard light or lamp pool is the refuge
+  (the flashlight already burned them). It reads `scene_gloom()` rather than
+  minting a set of its own, joining `_draw_dark` and `_tick_lost_edge` as the
+  third consumer of the one darkness source — so what the player SEES and what
+  the gaze DOES cannot drift apart. Watchers wake at `WATCHER_WAKE_EV` (1),
+  which is also the first stage with any gloom, so the rule is live from the
+  very first outdoor Watcher; at stage 0 the gloom is 0 and the outdoors is
+  unchanged.
+  **The other half was ruled OUT rather than deferred (maintainer, 2026-07:
+  "standing in the dark SHOULDN'T hide you").** The original ticket asked for a
+  symmetric split — outdoor dark as `SUS_CONCEAL_DARK` cover as well as
+  exposure. The asymmetry is the better rule and is now a decision, not a gap:
+  indoors the dark is a room you CHOSE over the lit one, so trading concealment
+  for exposure is a real decision; outdoors at stage 3 the dark is EVERYWHERE,
+  and concealing there would hand the player a free permanent map-wide hide at
+  exactly the moment the game should be closing in. So outdoors the storm dark
+  cuts one way: it costs you and never pays. Light is the last refuge, not the
+  dark. `_tick_dark_cover` stays keyed to `DARK_SCENES`, with the reasoning
+  written at the site because the tempting "symmetry fix" is to change it.
+  Both halves guarded by `tests/stealth.py` §18 (exposure opens, a lamp pool
+  releases the hold, and outdoor dark stamps no `_in_dark` / grants no
+  concealment), and both breakages were confirmed RED before landing. Docs:
+  `DESIGN.md` §1 + §2 + §12, `TODO.md` #25/#21. Full gate green.
 - **2026-07 — Binary hidden-flag stealth replaced with graded suspicion
   (`DESIGN.md` §12, formerly its own `STEALTH_REWORK.md`).** The old system
   was an on/off `hidden` flag. Replaced with a per-enemy `suspicion` value

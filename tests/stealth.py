@@ -1348,6 +1348,55 @@ def main():
     check("brimley" in STORM_STAGE_SCENES,
           "storm stage: Brimley is a staged surface scene")
 
+    # The storm dark cuts ONE WAY (maintainer ruling, 2026-07): outdoors it
+    # EXPOSES you to His gaze and never CONCEALS you from the cult. Both
+    # halves are locked here, because the tempting "symmetry" fix is to make
+    # the dark cover too -- which would hand the player a free map-wide hide
+    # at exactly the point the game should be closing in.
+    from systems.stealth import concealment_factor
+    g = new_game()
+    g.load_scene_now("country_lane", "default")
+    tick(g, 30)
+    # Stage 0 first: full daylight, so the surface behaves as it always has.
+    check(g.scene_gloom() == 0 and not g._dark_is_exposure(),
+          "storm dark: at ev0 the surface is day, dark is not exposure")
+    # Now let the storm in.
+    g.save.set_arg("evidence", [{"name": f"w{i}"}
+                                for i in range(WATCHER_WAKE_EV)])
+    check(g.scene_gloom() > 0 and g._dark_is_exposure(),
+          "storm dark: once the gloom is up, outdoor dark IS exposure")
+    sc = g.scene
+    spots = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(sc.h) for tx in range(sc.w)
+             if not sc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    lit_x, lit_y = next(p for p in spots if sc.lit_at(*p))
+    dark_x, dark_y = next(p for p in spots if not sc.lit_at(*p))
+    # EXPOSURE: standing unlit under the open sky opens the gaze.
+    for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
+        g.player.x, g.player.y = dark_x, dark_y
+        g.player.hidden = None
+        g._tick_watchers(1 / 30.0)
+        if g._watchers:
+            break
+    check(bool(g._watchers),
+          "storm dark: standing in the outdoor dark opens a Watcher")
+    # REFUGE: a lamp pool is the cover out here, so the hold releases.
+    g.player.x, g.player.y = lit_x, lit_y
+    g.player.hidden = None
+    g._tick_watchers(1 / 30.0)
+    check(g._watcher_gaze == 0.0,
+          "storm dark: an outdoor light pool drops the gaze hold (refuge)")
+    # NOT COVER: the same dark spot, at full night, hides you from NOTHING.
+    g.save.set_arg("evidence", [{"name": f"w{i}"} for i in range(3)])
+    g.player.x, g.player.y = dark_x, dark_y
+    g.player.hidden = None
+    g.flashlight_on = False
+    g._tick_dark_cover()
+    check(getattr(g.player, "_in_dark", False) is False,
+          "storm dark: outdoor dark never stamps _in_dark (not concealment)")
+    check(concealment_factor(g.player) == 1.0,
+          "storm dark: outdoor dark gives no concealment from the cult")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")
