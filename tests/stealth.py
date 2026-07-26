@@ -1535,6 +1535,95 @@ def main():
                 break
         check(burned,
               "storm: light still BURNS a unit caught in a pool")
+    # --- THE BEAM is a real barrier. Scene.lit_at only knows scene FIXTURES, so
+    # testing against it alone left every lamp-less room (most of the mine, the
+    # lost spaces, an unpowered building) with no safety in it at all -- while
+    # the ruling is that during a storm light is the ONLY safety.
+    gb = new_game()
+    gb.load_scene_now("well_passage", "default")
+    tick(gb, 20)
+    gb.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    bsc = gb.scene
+    bdark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, bsc.h - 2) for tx in range(2, bsc.w - 2)
+             if not bsc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not bsc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    # Pick a player spot with a DARK, WALKABLE neighbour due south -- an earlier
+    # version only checked the unit's spot was unlit and dropped it inside rock,
+    # so the control ("it closes with the beam off") moved 0px and failed.
+    home = None
+    for px_, py_ in bdark:
+        cand = (px_, py_ + 90)
+        if (not bsc.is_solid_at(*cand) and not bsc.lit_at(*cand)
+                and bsc.clear_sight_line(cand[0], cand[1], px_, py_)):
+            home = ((px_, py_), cand)
+            break
+    assert home, "need a dark walkable pair for the beam check"
+    (gb.player.x, gb.player.y), start = home
+    gb.player.facing = (0, 1)
+    gb.player.inventory.add("flashlight", 1)
+    from entities.npc import NPC as _NPC3
+    bu = _NPC3(start[0], start[1], "", "amalgam", movement="storm",
+               speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+    bu.tag = "watcher"; bu.sprite_seed = 7
+    bsc.add_npc(bu); gb._watchers.append(bu)
+    # beam OFF: it closes (the spot is dark, nothing holds it)
+    gb.flashlight_on = False
+    gb._stamp_beam()
+    d0 = math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    for _ in range(120):
+        bu.update(1 / 30.0, bsc, gb.player)
+    closed = d0 - math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    check(closed > 4.0,
+          f"beam: with the light off a unit closes in the dark ({closed:.0f}px)")
+    # beam ON, aimed at it: it is held, with no fixture anywhere near
+    bu.x, bu.y = start
+    gb.flashlight_on = True
+    gb._stamp_beam()
+    assert gb._flashlight_lit(), "the beam must actually be lit for this check"
+    d1 = math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    for _ in range(120):
+        bu.update(1 / 30.0, bsc, gb.player)
+    d2 = math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    check(abs(d2 - d1) < 2.0,
+          f"beam: the flashlight alone holds a unit off ({d1:.0f}px -> {d2:.0f}px)")
+
+    # --- UNCAPPING THE POPULATION MUST NOT UNCAP THE THREAT. The gaze term and
+    # the visibility FLOOR are both per-live-unit, so a lifted cap silently made
+    # the storm the deadliest thing in the game: 22 units climbed the meter at
+    # 1.1/s and pinned the floor at VIS_FLOOR_TOTAL_CAP, just under the King,
+    # unclearably -- while the ruling is that regular units cannot touch or kill.
+    from systems.config import (STORM_PRESS_UNITS, WATCHER_GAZE, WATCHER_FLOOR,
+                                VIS_FLOOR_TOTAL_CAP)
+    gp = new_game()
+    gp.load_scene_now("well_passage", "default")
+    tick(gp, 20)
+    gp.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    psc = gp.scene
+    pdark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, psc.h - 2) for tx in range(2, psc.w - 2)
+             if not psc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not psc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    gp.player.x, gp.player.y = pdark[len(pdark) // 2]
+    for i in range(STORM_MAX):
+        pu = _NPC3(gp.player.x + 40 + i * 3, gp.player.y + 40, "", "amalgam",
+                   movement="storm", speed=STORM_UNIT_SPEED,
+                   no_prompt=True, solid=False)
+        pu.tag = "watcher"; pu.sprite_seed = 20 + i
+        psc.add_npc(pu); gp._watchers.append(pu)
+    gp.player.hidden = None
+    gp.visibility = 0.0
+    gp._tick_watchers(1 / 30.0)
+    check(gp._watcher_gaze <= STORM_PRESS_UNITS,
+          f"press: at most {STORM_PRESS_UNITS} units press the meter "
+          f"(gaze {gp._watcher_gaze:.0f} with {len(gp._watchers)} units)")
+    gp._tick_visibility(1 / 30.0)
+    check(gp._vis_floor < VIS_FLOOR_TOTAL_CAP - 0.05,
+          f"press: a full storm does not pin the floor under the King "
+          f"(floor {gp._vis_floor:.2f} vs cap {VIS_FLOOR_TOTAL_CAP})")
+
     # --- the flood must be SEEN. Storm units do not obey the sight cone: a
     # live 22-unit storm had 0 units pass it, so the whole thing was invisible.
     # Build the probe outright rather than reusing a live unit -- the earlier

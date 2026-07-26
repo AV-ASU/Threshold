@@ -722,7 +722,8 @@ class RenderMixin:
             fxv, fyv = getattr(self.player, "facing", (0, 1)) or (0, 1)
             flen = math.hypot(fxv, fyv) or 1.0
             ang = math.atan2(fyv / flen, fxv / flen)
-            reach, spread = 300, math.radians(30)
+            reach = FLASHLIGHT_REACH
+            spread = math.radians(FLASHLIGHT_SPREAD_DEG)
             pwx, pwy = self.player.x, self.player.y
 
             def _far(a):

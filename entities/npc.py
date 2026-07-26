@@ -13,6 +13,26 @@ from systems.stealth import (detection_score, update_suspicion,
                              react_hold, errand_step, errand_drop,
                              sync_pause, handoff_step)
 
+def _in_beam(player, wx, wy):
+    """Is world (wx, wy) inside the player's flashlight cone?
+
+    The beam is a real barrier to a storm unit, not just a visual: scene
+    fixtures alone would leave every lamp-less room with no safety in it at all
+    (Game._stamp_beam publishes the cone, with the same numbers _draw_dark
+    draws it with)."""
+    beam = getattr(player, "_beam", None)
+    if not beam:
+        return False
+    bx, by, reach, cos_half = beam
+    dx, dy = wx - player.x, wy - player.y
+    d = math.hypot(dx, dy)
+    if d <= 1e-6:
+        return True                     # standing on the lamp is standing in it
+    if d > reach:
+        return False
+    return (dx / d) * bx + (dy / d) * by >= cos_half
+
+
 def sprite_seed_for(x, y):
     """A stable per-actor sprite seed from the spawn position. Draw
     sites used id(self)&0xffff, but CPython ids are 16-byte aligned --
@@ -221,7 +241,8 @@ class NPC:
         # unit stand inside the pool it is meant to refuse, and the edge is
         # where the ring should form.
         probe = STORM_LIGHT_PROBE
-        if scene.lit_at(self.x + ux * probe, self.y + uy * probe):
+        tx, ty = self.x + ux * probe, self.y + uy * probe
+        if scene.lit_at(tx, ty) or _in_beam(player, tx, ty):
             return                          # the light holds it off
         self._step_toward((player.x, player.y), dt, scene)
 

@@ -387,8 +387,9 @@ second spawner.** Two populations of the same creature under different rules
 reads as a bug rather than escalation (most manifestations already wear the
 amalgam skin), so the existing wave switches instead. Maintainer rulings this
 pass: **Watchers do NOT stop at the gate** — they BECOME the storm; **amalgams
-share `WATCHER_MAX` out of storm and uncap in one** (soft `STORM_MAX` = 22 for
-frame time); **during a storm every dispel still works** (gaze, light, axe,
+share `WATCHER_MAX` out of storm and uncap in one** (soft `STORM_MAX`, MEASURED
+at 10 rather than the 20-25 asked for -- each unit costs ~2.8ms of a real frame;
+caching the per-unit layer at ~12Hz is the way to earn 20-25 back); **during a storm every dispel still works** (gaze, light, axe,
 round); **light is the only safety**; and **the amalgam is the default skin now**
 (`AMALGAM_CHANCE` 0.5 → 0.9, the shroud Watcher a rare variant).
 - `Game._storm_active()` — past `STORM_GATE_EVIDENCE` (3) and in a room the dark

@@ -90,6 +90,45 @@
 
 ## Stealth & threat
 
+- **2026-07 — Self-assessment pass on the storm: four real bugs, all of them
+  claims I had not measured.** Corrects the entry below, which stated a
+  `STORM_MAX` of 22 "for frame time".
+  - **The flashlight gave NO protection from the flood.** `npc._storm_tick`
+    tested `Scene.lit_at`, which only knows scene FIXTURES, so the beam was
+    invisible to it -- making "during a storm light is your only safety"
+    unachievable in every room without lamps: most of the mine, the lost spaces,
+    any unpowered building. `Game._stamp_beam` now publishes the cone on the
+    player and `npc._in_beam` respects it, using the same `FLASHLIGHT_REACH` /
+    `FLASHLIGHT_SPREAD_DEG` that `_draw_dark` draws it with, so what the player
+    sees and what a unit refuses cannot drift.
+  - **Lifting the population cap silently lifted the THREAT ~4x.** The gaze term
+    (`WATCHER_GAZE`) and the visibility FLOOR (`WATCHER_FLOOR`) are both
+    per-live-unit, so 22 units climbed the meter at 1.1/s -- zero to maxed in
+    under a second -- and pinned the floor at `VIS_FLOOR_TOTAL_CAP` (0.92), just
+    under the King, unclearably for the whole storm. That directly contradicts
+    the ruling that regular units cannot touch or kill. `STORM_PRESS_UNITS`
+    (= `WATCHER_MAX`) now caps how many may press the meter: a storm presses like
+    a full Watcher wave, not like 22 of one.
+  - **`STORM_MAX` 22 was not a lag-safe soft cap; it was a third of the frame
+    rate.** Measured on a real frame (well_passage, dark, storm on): 0 units
+    12.1ms, 5 units 26.2ms, 8 units 34.5ms, 22 units 53.3ms = **18.8 fps**. Each
+    unit costs ~2.8ms, nearly all inside `draw_amalgam_sprite`. Cap set to 10 (a
+    measured ~25fps worst case). Raising it needs the DRAW to get cheaper, not
+    the cap braver -- caching each unit's composed layer at ~12Hz would cut
+    per-unit cost roughly fivefold and put the requested 20-25 back in reach.
+  - **`STORM_UNIT_SPEED`'s comment was wrong by 4x** ("a walk, below player
+    sprint"; it is ~20px/s against a player walk of 84 and a cultist run of
+    51-54 -- a slow drift, which is correct for something that cannot touch you).
+  Also: `_haze` was allocating and blitting a FULL-SIZE layer per call, ~230
+  calls a frame in a storm, with `blit` profiling as the largest single cost in
+  the amalgam draw; localising it to the blob's own surface cut 30.6ms → 25.8ms
+  for 22 sprites at byte-identical output (verified by render hash). The same
+  treatment on `_cut_line` changed the pixels for a 0.4ms gain and was reverted.
+  And `_stamp_beam` sat after `_tick_watchers`'s not-watching early return, so a
+  safe scene never refreshed the cone and a stale one persisted on the player;
+  moved above it. Guards added for the beam barrier and the meter cap, both
+  proven to fail. Full gate green.
+
 - **2026-07 — THE STORM lands as a MODE of the Watcher wave (`TODO.md` #25).**
   The design question was how amalgams spawn once the storm exists, and the
   answer was that it must NOT be a second spawner: `systems/storm.py` kept its

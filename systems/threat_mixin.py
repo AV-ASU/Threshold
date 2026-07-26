@@ -713,7 +713,7 @@ class ThreatMixin:
         # understand, the higher your baseline) PLUS each live Watcher of the
         # curse. Capped just under the King so the curse presses you to the
         # edge but stays survivable -- and thus curable by clearing them.
-        watcher_floor = n_watch * WATCHER_FLOOR
+        watcher_floor = min(n_watch, STORM_PRESS_UNITS) * WATCHER_FLOOR
         self._vis_floor = min(VIS_FLOOR_TOTAL_CAP,
                               self._evidence_floor() + watcher_floor)
         self.visibility = max(self._vis_floor, min(1.0, self.visibility))
@@ -807,6 +807,12 @@ class ThreatMixin:
         anywhere in the game (systems/stealth.concealment_factor)."""
         if self.scene is None or self.player is None:
             return
+        # Publish the beam BEFORE the not-watching early-return below. Stamping
+        # it further down (inside _sync_storm_mode) meant a safe scene never
+        # refreshed it, so a stale cone from the last room persisted on the
+        # player. Nothing reads it there today, which is exactly why it would
+        # have sat unnoticed until something did.
+        self._stamp_beam()
         # Drop any swept on load/death.
         self._watchers = [w for w in self._watchers if w in self.scene.npcs]
         for w in self._watchers:
@@ -862,7 +868,10 @@ class ThreatMixin:
                 self._watcher_clone_t = self._watcher_spawn_interval()
         # Live Watchers HOLD you while you are exposed -> the active visibility
         # climb (read in _tick_visibility). Any cover drops the hold.
-        self._watcher_gaze = float(len(self._watchers)) if exposed else 0.0
+        # Only STORM_PRESS_UNITS of them can press the meter -- see the config
+        # note. Uncapping the population must not silently uncap the threat.
+        pressing = min(len(self._watchers), STORM_PRESS_UNITS)
+        self._watcher_gaze = float(pressing) if exposed else 0.0
         # Staring one down dissolves it (the cure).
         self._tick_watcher_gaze(dt)
 
@@ -907,6 +916,27 @@ class ThreatMixin:
         """
         return (STORM_SEE_RANGE
                 if getattr(npc, "movement", None) == "storm" else 0.0)
+
+    def _stamp_beam(self):
+        """Publish the flashlight cone on the player so an AI can respect it.
+
+        `Scene.lit_at` only knows scene FIXTURES. A storm unit tested against
+        that alone walked straight through the beam, which made "during a storm
+        light is your only safety" unachievable in any room with no lamps -- most
+        of the mine, the lost spaces, an unpowered building. Same numbers the
+        cone is DRAWN with (`FLASHLIGHT_*`, read by `_draw_dark`), so what the
+        player sees and what a unit refuses cannot drift.
+        """
+        p = self.player
+        if p is None:
+            return
+        if not self._flashlight_lit():
+            p._beam = None
+            return
+        fx, fy = getattr(p, "facing", (0, 1)) or (0, 1)
+        n = math.hypot(fx, fy) or 1.0
+        p._beam = (fx / n, fy / n, FLASHLIGHT_REACH,
+                   math.cos(math.radians(FLASHLIGHT_SPREAD_DEG)))
 
     def _sync_storm_mode(self, storming):
         """Flip live units between the two behaviours when the storm state

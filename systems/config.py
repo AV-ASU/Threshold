@@ -363,11 +363,37 @@ WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
 # gate, in a room the darkness has actually taken (`Game.scene_gloom() > 0`,
 # the one darkness source, so the flood literally fills the dark).
 STORM_GATE_EVIDENCE = 3       # = KING_GATE_EVIDENCE; the apex is armed
-STORM_MAX = 22                # soft cap: uncapped in fiction, bounded for frame time
+# MEASURED, not guessed. The first value here was 22 (the maintainer's "soft
+# capped at 20-25 for lag reasons") with a comment claiming it was bounded for
+# frame time -- asserted without measuring. A real frame in well_passage, dark,
+# storm on: 0 units 12.1ms, 5 units 26.2ms, 8 units 34.5ms, 12 units 44.2ms,
+# 22 units 53.3ms (18.8 fps). Each unit costs ~2.8ms, almost all of it inside
+# draw_amalgam_sprite (profiling: ~6k blits and ~50k draw.circle per 10 frames),
+# so 22 is not a lag-safe soft cap -- it is a third of the frame rate.
+# 10 holds ~25 fps worst case and degrades gracefully.
+# TO RAISE THIS, the draw has to get cheaper, not the cap braver: caching each
+# unit's composed layer and refreshing it at ~12Hz instead of every frame would
+# cut per-unit cost roughly fivefold and put the requested 20-25 back in reach.
+# That is a hot-path change and wants its own verification pass.
+STORM_MAX = 10
+# How many units may PRESS THE METER at once. Lifting the population cap without
+# this made the storm the deadliest thing in the game by accident: the gaze term
+# is per-live-unit (WATCHER_GAZE 0.05/s) and so is the floor (WATCHER_FLOOR
+# 0.07), so 22 units climbed visibility at 1.1/s -- zero to maxed in under a
+# second -- and pinned the floor at VIS_FLOOR_TOTAL_CAP (0.92), just under the
+# King, permanently and unclearably for the whole storm. That contradicts the
+# ruling that regular units cannot touch or kill: they are a SCARE, and the apex
+# is the threat. So a storm presses like a full Watcher wave, not like 22 of one.
+STORM_PRESS_UNITS = WATCHER_MAX
 STORM_SPAWN_BASE = 2.4        # s between manifestations while a storm is up
 STORM_SPAWN_MIN = 0.9         # ... shaved by evidence down to this floor
 STORM_SPAWN_STEP = 0.5
-STORM_UNIT_SPEED = 0.34       # tiles/frame-unit: a walk, below player sprint
+# 0.34 * 60 = ~20 px/s, matching systems/storm.py's original STORM_UNIT_SPEED of
+# 22 px/s. For scale: the player walks at 84 px/s and a cultist runs 51-54, so a
+# unit is a slow DRIFT, not a walk -- it cannot chase you down, which is correct
+# for something that cannot touch you. (An earlier comment here called it "a
+# walk, below player sprint"; that was wrong by a factor of four.)
+STORM_UNIT_SPEED = 0.34
 # "Regular amalgamations will walk to the player and get as close to them as
 # possible without being in the light" -- so a unit refuses any step that would
 # put it in a lit spot, and LIGHT IS THE ONLY SAFETY: stand in a pool and they
@@ -375,6 +401,14 @@ STORM_UNIT_SPEED = 0.34       # tiles/frame-unit: a walk, below player sprint
 # walking onto you is a SCARE, not damage. The apex is the exception and is not
 # part of this slice.
 STORM_LIGHT_PROBE = 12.0      # px ahead a unit tests for light before stepping
+# THE BEAM as a real barrier. Scene.lit_at only knows scene FIXTURES, so a storm
+# unit tested against it alone ignored the flashlight entirely -- which made
+# "during a storm light is your only safety" unachievable in every room with no
+# lamps in it (most of the mine, the lost spaces, any unpowered building). These
+# are the numbers `_draw_dark` already draws the cone with; they live here so the
+# beam the player SEES and the beam a unit RESPECTS cannot drift apart.
+FLASHLIGHT_REACH = 300.0      # px
+FLASHLIGHT_SPREAD_DEG = 30.0  # half-angle
 # How near a storm unit RESOLVES out of the blind-spot fog. Storm units are not
 # gated by the sight cone the way a standing Watcher is: measured on a live
 # storm, 0 of 22 units passed the cone (7 of them inside 120px), so the flood

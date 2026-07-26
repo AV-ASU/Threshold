@@ -184,9 +184,18 @@ def _eye(s, x, y, dim=False, r=1):
 
 
 def _haze(s, cx, cy, r, a):
-    g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
-    pygame.draw.circle(g, (56, 53, 68, int(a)), (int(cx), int(cy)), int(r))
-    s.blit(g, (0, 0))
+    """One soft blob of the tissue between parts.
+
+    Drawn on a LOCAL surface the size of the blob, not a full-size one. It
+    allocated and blitted a whole 150x104 layer per call, and a 22-unit storm
+    makes ~230 of these calls a frame -- profiling put `blit` at the top of the
+    draw by a wide margin. Same pixels, a fraction of the copying.
+    """
+    r = max(1, int(r))
+    d = r * 2 + 2
+    g = pygame.Surface((d, d), pygame.SRCALPHA)
+    pygame.draw.circle(g, (56, 53, 68, int(a)), (r + 1, r + 1), r)
+    s.blit(g, (int(cx) - r - 1, int(cy) - r - 1))
 
 
 def _clip_half(lay, cx, cy, ang, side):
