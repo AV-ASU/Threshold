@@ -77,6 +77,7 @@ terminal version is `python tools/index.py [word]`.
 
 ## Other
 
+- `tools/discoveries.py` — THE DISCOVERY CATALOG -- every single thing the player can find, listed.
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/preview_look_control.py` — Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
 - `tools/preview_terrain.py` — LOOK at the GROUND and what grows on it, in isolation.
