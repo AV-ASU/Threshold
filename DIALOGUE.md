@@ -1236,6 +1236,13 @@ ones landed so far:
   phone stays as silent set-dressing; the "you hear your own voice" beat is
   gone. No pointer or evidence was on it.
 
+- *(CUT 2026-07, maintainer ruling: three narrator boxes that recorded
+  nothing and said nothing. The `scarecrow` examine and its [E] cue in the
+  cornfield maze are GONE outright, a scarecrow standing in a corn row being
+  scenery rather than an event; the graveyard's worn headstone keeps its
+  two-line look but no longer files a "A weathered headstone." discovery;
+  and the backwoods stash keeps its pickup without the "A small stash."
+  box.)*
 - **the dead well** (`_brimley_interact`, first read): "[c=dim](You lean
   over the lip. The shaft drops past where any water should be. No glint,
   no bottom, just cold air climbing up out of it.)[/c]" Re-read: notice
@@ -1264,9 +1271,43 @@ ones landed so far:
   Locked.)[/c]" / "[c=dim]A lodge this size keeps a spare key close. Out of
   the rain, near a door. I'd start behind the house.[/c]" Unlocking: notice
   "The iron key turns. The hatch swings up."
-- **the never-worn robe** (`clerk_robe`, Sable's closet): "A cult robe
-  hangs in the Clerk's closet, pressed and folded. By the creases it has
-  never once been worn."
+- **the never-worn robe** (`clerk_room_interact`, Sable's closet; a case
+  NOTE, never evidence). Read in TWO STAGES, because the PI cannot know what
+  he is looking at the first time. The old single line called it "a cult
+  robe" before the player had ever seen a cult (playtest error class 5).
+  - **first look:** "[c=dim](A robe hangs alone in the Clerk's closet. Dark,
+    plain, hand-sewn, pressed and folded over the rail.)[/c]" / "[c=dim]By
+    the creases it has never once been worn.[/c]" Note: "A robe hanging
+    alone in the Clerk's closet. Dark, plain, hand-sewn, pressed and folded
+    over the rail." / "By the creases it has never once been worn. A man
+    keeps a thing like that for a reason he has not got around to yet."
+  - **after THE TALK** (`cult_talk_given`; the note is REWRITTEN in place,
+    never filed twice): "[c=dim](The robe in the Clerk's closet. Dark,
+    plain, hand-sewn.)[/c]" / "[c=dim]I have seen one of these up close now,
+    with a man inside it and his hand on my shoulder.[/c]" Note: as above,
+    with "I have seen one of these up close since. A man inside it, his hand
+    on my shoulder, telling me to run." / "By the creases, Sable's has never
+    once been worn."
+  - **re-examine after both:** notice "The robe hangs where it hung. Never
+    worn."
+- **Toby's desk** (`_school_interact`, the schoolhouse's shoved pile;
+  records NOTHING by design, the name does the work): "[c=dim](A child's
+  desk, near the bottom of the pile. The lid lifts an inch before the desk
+  above it stops.)[/c]" / "[c=dim]Inked inside, in a careful hand that ran
+  out of room: TOBY. A spelling sheet folded under it, three words
+  done.[/c]" Re-examine: notice "His desk, near the bottom of the pile."
+- **the schoolhouse chalkboard's other half** (`_BOARD_LESSON`, shown ahead
+  of the cult's drawn doors in every pre-rite look): "[c=dim](The
+  chalkboard. One corner of the lesson survives under the chalk dust: a
+  column of addition, worked down in a child's hand, the answer circled by
+  the teacher.)[/c]" then "[c=dim]Over it, the same door drawn again and
+  again, smaller and smaller, into the corner.[/c]"
+- **`gas_receipt`** (a walk-over pickup under a schoolhouse cot; a NOTE,
+  never evidence, and not Mara's). Pickup notice: "A gas receipt, under a
+  cot." Note: "Under one of the cots in the school: a pump receipt out of
+  Seymour, Wisconsin, dated the second of July. Fourteen gallons, cash." /
+  "Four hundred miles south of here. Whoever slept on that cot drove up the
+  same roads I did, and stopped for gas like anybody."
 - **the lodge-candle callback** (`lodge_candle_callback`, after the
   Cistern): "[c=dim]The same guttering candles as the dark below, kept
   burning up here too.[/c]"
@@ -1288,8 +1329,8 @@ ones landed so far:
 - **the receipt's pickup notice** (`grant_receipt`): "Her tab from the
   shop."
 
-The remaining one-line routine examines (headstones, `scarecrow`,
-`worn_stone`, the bell-tower view "From the bell tower the town is small.")
+The remaining one-line routine examines (headstones, the bell-tower view
+"From the bell tower the town is small.")
 and the HUD/system notice layer (see Coverage) stay indexed: the code is
 authoritative for their exact words, and the contract still binds (touch
 one, update the other).

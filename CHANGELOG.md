@@ -32,6 +32,57 @@
 
 ## Evidence & the case
 
+- **2026-07 — The small-detail layer, first four (the schoolhouse and the
+  robe).** The discovery catalog showed the surface holding six real finds in
+  37 rooms, three of them mandatory. The maintainer's diagnosis of why a
+  search verb would not fix that: there is nothing small to find, so searching
+  would be busy work over empty containers. Content first, mechanics later or
+  never.
+
+  A longer proposed list was cut down to four, and the rejections are the
+  useful part of the record. Cut: an attendance register (an object whose only
+  job was to announce that time stopped in January, which is the calendar
+  TODO #28 had just ordered removed, rebuilt in a school uniform); stacked
+  bowls and a folded coat (nobody's, pure atmosphere, and the coat existed
+  only to be almost-a-clue); and three red herrings on Pell, Garrick and
+  Calder (narrator boxes explaining the inner life of characters who say it
+  better themselves in dialogue, and inert by construction, since a dead end
+  that resolves into a sad fact costs the player nothing). **The rule the
+  survivors share: a find is a physical trace of a specific person doing a
+  specific thing, and it is an object rather than an explanation.**
+
+  Shipped:
+  - **Toby's desk**, in the pile the cult shoved into the schoolhouse corner.
+    His name inked in the lid, a spelling sheet with three words done. It
+    records NOTHING in the case by design: the name is the whole beat and the
+    player does the rest.
+  - **A newcomer's gas receipt** under a schoolhouse cot: Clark Oil, Seymour,
+    Wisconsin, July 2 1993, fourteen gallons, cash. A walk-over pickup that
+    files a note. It corroborates the one thing Vane could never get out of
+    them, that not one could say where they had driven in from, without a word
+    of testimony.
+  - **The chalkboard's other half.** The board always said the cult's doors
+    were drawn "under a child's faded lesson" and the lesson was never
+    legible, so the room read as a cult set rather than a school somebody
+    moved into. A surviving corner of it now reads first in every pre-rite
+    look: a column of addition worked down in a child's hand, the answer
+    circled by the teacher.
+  - **The robe in Sable's closet, in two stages.** It used to fire one caption
+    calling it "a cult robe" before the player had ever seen a cult, which is
+    knowledge the speaker cannot have (playtest error class 5, caught by the
+    maintainer). Now the first look is a garment: dark, plain, hand-sewn, and
+    the only odd thing about it is that it has never been worn. After THE TALK
+    has put a robed man's hand on the PI's shoulder, the same closet reads
+    differently and the note is REWRITTEN in place rather than filed twice
+    (the new `_rewrite_note` helper). The find is the same find; what changed
+    is the man looking at it.
+
+  Cut in the same pass, all three placeholder narration that recorded nothing:
+  `scarecrow` (the [E] cue and its box gone outright, a scarecrow standing in
+  a corn row being scenery rather than an event), `worn_stone` (the headstone
+  keeps its two-line look, drops the "A weathered headstone." discovery), and
+  `backwoods_note` (the stash keeps its pickup, drops "A small stash.").
+
 - **2026-07 — Vane's menu, cut down and un-gated (the maintainer's pass on the
   pilot).** Reviewing the gate list for Vane, the maintainer cut and reshaped:
 

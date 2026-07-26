@@ -222,8 +222,7 @@ thinking"):** on-screen PI narrator captions still fire on nearly every
 world-prop examine. Cut candidates (~30 sites, prop examines that
 editorialize a conclusion instead of stating the fact): the lodge
 register/ledger recaps, the well / news-rack monologues, headstone +
-candle re-examines, `scarecrow` / `backwoods_note` /
-`worn_stone` / `bell_tower` / `the_fall` /
+candle re-examines, `bell_tower` / `the_fall` /
 `threshing_floor` / `works_cistern_seen` / `the_doorframe` flavor
 `_evidence` calls (these write nothing to the book — caption only). Trim
 each to a terse factual line or silence, so the player draws the

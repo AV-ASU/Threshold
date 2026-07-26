@@ -1947,6 +1947,77 @@ def main():
     check("AGE: 24" in _IDF["detention_record"]["desc"],
           "case: the booking slip agrees with the intake")
 
+    # (The small-detail layer, 2026-07) The finds that are NOT evidence: a
+    # newcomer's gas receipt under a schoolhouse cot, Toby's desk in the
+    # shoved pile, and the robe in Sable's closet. None of them may touch the
+    # evidence count, and the robe may not name the cult before the player
+    # has met one.
+    from scenes.dialogue import _rewrite_note
+    gdt = new_game()
+    gdt.load_scene_now("schoolhouse")
+    ready(gdt)
+    _rc = [it for it in gdt.scene.items if it["key"] == "gas_receipt"]
+    check(len(_rc) == 1,
+          "school: the gas receipt lies under a cot as a walk-over pickup")
+    _ev_before = len(gdt.save.arg("evidence", []))
+    _rc[0]["on_pickup"](gdt)
+    check(any(isinstance(e, dict) and e.get("name") == "gas_receipt"
+              for e in gdt.save.arg("notes", [])),
+          "school: the receipt files a NOTE")
+    check(len(gdt.save.arg("evidence", [])) == _ev_before,
+          "school: the receipt never counts toward the gate")
+    gdt.load_scene_now("schoolhouse")
+    ready(gdt)
+    check(not [it for it in gdt.scene.items if it["key"] == "gas_receipt"],
+          "school: the receipt is gone for good once taken")
+
+    # Toby's desk: texture, so it records NOTHING in the case at all.
+    gtd = new_game()
+    gtd.load_scene_now("schoolhouse")
+    ready(gtd)
+    gtd.player.x, gtd.player.y = gtd.scene._toby_desk_pos
+    _n0 = len(gtd.save.arg("notes", [])) + len(gtd.save.arg("evidence", []))
+    gtd.scene.on_interact_fn(gtd)
+    check(gtd.save.flag("toby_desk_seen"), "school: Toby's desk reads once")
+    check(len(gtd.save.arg("notes", []))
+          + len(gtd.save.arg("evidence", [])) == _n0,
+          "school: his desk writes nothing (the name does the work)")
+
+    # The robe, two stages. The PI cannot call it a cult robe before a
+    # cultist has had a hand on him (playtest error class 5).
+    grb = new_game()
+    grb.load_scene_now("clerk_room")
+    ready(grb)
+    grb.player.x, grb.player.y = grb.scene._closet_pos
+    grb.scene.on_interact_fn(grb)
+    _rnote = next((n for n in grb.save.arg("notes", [])
+                   if n.get("name") == "clerk_robe"), None)
+    check(_rnote is not None, "robe: the first look files a case note")
+    check("cult" not in " ".join(_rnote["lines"]).lower(),
+          "robe: the PI never names the cult before he has met one")
+    check(not any(isinstance(e, dict) and e.get("name") == "clerk_robe"
+                  for e in grb.save.arg("evidence", [])),
+          "robe: it is a note, never evidence")
+    grb.save.set_flag("cult_talk_given", True)
+    ready(grb)
+    grb.scene.on_interact_fn(grb)
+    _rnotes = [n for n in grb.save.arg("notes", [])
+               if n.get("name") == "clerk_robe"]
+    check(len(_rnotes) == 1,
+          "robe: the second look REWRITES the note, never files a second")
+    check("hand on my shoulder" in " ".join(_rnotes[0]["lines"]),
+          "robe: after the Talk the same closet reads differently")
+
+    # The three rot boxes are gone (maintainer ruling, 2026-07): placeholder
+    # narration that recorded nothing. A scarecrow is scenery.
+    import os as _os_cut
+    with open(_os_cut.path.join(_os_cut.path.dirname(__file__), "..",
+                                "scenes", "threshold_extras.py")) as _fh:
+        _tx_src = _fh.read()
+    for _dead in ("scarecrow", "worn_stone", "backwoods_note"):
+        check('_evidence(game, "%s"' % _dead not in _tx_src,
+              "cut: no discovery beat left on %s" % _dead)
+
     # (Vane tableau, #2b) Talking to Vane opens the office close-up: the
     # conversation runs in tableau presentation mode, the close-up's POSE
     # mirrors the mood prompt's thresholds exactly (mood, never a number),

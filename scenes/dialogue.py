@@ -146,6 +146,28 @@ def _log_note(game, key, lines):
             game._flash_notebook(key)
 
 
+def _rewrite_note(game, key, lines):
+    """Replace an already-filed note's text in place, keeping its slot and its
+    title. For an object whose MEANING changes once the PI knows more (the
+    robe in Sable's closet, read again after a cultist has had a hand on him):
+    the find is the same find, so it should not file twice and clutter the
+    book with two entries about one closet. Flashes the scribble like any
+    other write, because the player did just learn something. Falls back to
+    filing fresh if the note is somehow absent."""
+    notes = game.save.arg("notes", [])
+    if not isinstance(notes, list):
+        return
+    plain = [_strip_markup(x) for x in lines]
+    for e in notes:
+        if isinstance(e, dict) and e.get("name") == key:
+            e["lines"] = plain
+            game.save.set_arg("notes", notes)
+            if hasattr(game, "_flash_notebook"):
+                game._flash_notebook(key)
+            return
+    _log_note(game, key, lines)
+
+
 # The per-discovery revisit nudges ("...I should go back and ask him") were
 # CUT (play-notes: the game should not do the player's thinking -- the
 # follow-up QUESTION still opens on the same evidence in each NPC's
