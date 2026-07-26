@@ -31,8 +31,14 @@ import random
 
 import pygame
 
-SHROUD = (24, 22, 28)
-SHROUD_LO = (12, 11, 15)
+# The flesh palette. These used to sit at 24/12/6 -- three tones within six
+# values of each other, which is no contrast at all, so a part had no INTERIOR:
+# outline it and you get a hollow cut-out rather than a body. The range is
+# widened so `_lump`'s shading arcs and every VOID crease actually read as
+# form. Still near-black against a lit room; it is the SPREAD that was missing,
+# not the darkness.
+SHROUD = (47, 44, 55)
+SHROUD_LO = (21, 19, 25)
 VOID = (6, 6, 9)
 RIM = (46, 46, 60)
 # The APERTURE rim is GOLD, so an amalgam's cuts read as the same portal
@@ -49,9 +55,29 @@ CUT_RIM_HOT = (206, 164, 62)
 AMALGAM_EDGE = (206, 202, 196)   # bone; see the colour note in the docstring
 AMALGAM_EDGE_W = 1               # px. 2 reads as cartoon line-art.
 _EMIT_FLOOR = 90                 # alpha below this is atmosphere, not flesh
-EMBER_G = (54, 46, 20)
-EMBER = (110, 88, 30)
-EMBER_DIM = (90, 74, 27)
+# THE GAZE. "Every amalgam watches" is the family's one composition rule
+# (assemble), and at the old values you could not find an eye: EMBER was
+# (110,88,30), which is dimmer than the gold on the CUTS, so the one thing that
+# should read as attention was quieter than the scenery around it. The eye is
+# now the brightest warm thing on the creature, with a dark socket under it for
+# contrast and a hot core so it reads as lit rather than painted.
+# The socket has to be a PIT, i.e. much darker than the flesh around it. At
+# (38,29,12) it sat within a few values of SHROUD, so each one read as a small
+# brown BERRY stuck on the body, and a deal with several incidental eyes looked
+# like a blackberry rather than a creature. Near-black reads as a hole.
+EMBER_G = (11, 9, 7)
+# The gaze is PALER than gold, on purpose. Gold is the APERTURE colour here
+# (CUT_RIM below, and the rift it echoes), and when the eye was gold too the
+# two were indistinguishable -- a creature covered in gold specks with no way
+# to tell which of them were looking at you. A lit-lamp cream separates the
+# GAZE from the HOLE while staying in the same warm family.
+EMBER = (238, 208, 126)
+# And `dim` has to stay genuinely dim. Most weight/mass parts drop an
+# incidental eye at dim=True; brightening those turned a 5-part deal into a
+# rash of bright dots that read as a berry cluster rather than a body that
+# happens to watch. Only the SENSE parts light up.
+EMBER_DIM = (96, 78, 34)
+EMBER_HOT = (255, 247, 216)      # the core; skipped when dim or stared at
 
 GY = 96                      # the internal floor row of the part space
 _GAZE = False                # stared-at: every ember goes dark (family rule)
@@ -134,17 +160,31 @@ def _lump(s, cx, cy, rx, ry, lo=True):
 
 
 def _eye(s, x, y, dim=False, r=1):
+    """One ember eye. `dim` is the INCIDENTAL kind and has to stay a pinprick.
+
+    Most weight and mass parts drop a dim eye somewhere on themselves, so a
+    typical 5-part deal carries five or six. Drawn as filled discs they pile
+    into a cluster of berries stuck to the body -- which is what "something's
+    missing / the shapes look weird" turned out to be, once the palette was
+    wide enough to see them at all. So the incidental ones are a socket and a
+    single lit pixel, and only a SENSE part's eye gets the full lamp.
+    """
+    if _GAZE:                                    # stared at: every ember dies
+        pygame.draw.circle(s, EMBER_G, (int(x), int(y)), r + 2)
+        pygame.draw.circle(s, VOID, (int(x), int(y)), r + 1)
+        return
+    if dim:
+        pygame.draw.circle(s, EMBER_G, (int(x), int(y)), r + 1)
+        pygame.draw.circle(s, EMBER_DIM, (int(x), int(y)), 1)
+        return
     pygame.draw.circle(s, EMBER_G, (int(x), int(y)), r + 2)
-    if _GAZE:
-        pygame.draw.circle(s, VOID, (int(x), int(y)), r)   # stared dark
-    else:
-        pygame.draw.circle(s, EMBER_DIM if dim else EMBER,
-                           (int(x), int(y)), r)
+    pygame.draw.circle(s, EMBER, (int(x), int(y)), r + 1)
+    pygame.draw.circle(s, EMBER_HOT, (int(x), int(y)), max(1, r - 1))
 
 
 def _haze(s, cx, cy, r, a):
     g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
-    pygame.draw.circle(g, (40, 38, 50, int(a)), (int(cx), int(cy)), int(r))
+    pygame.draw.circle(g, (56, 53, 68, int(a)), (int(cx), int(cy)), int(r))
     s.blit(g, (0, 0))
 
 
@@ -783,17 +823,25 @@ def assemble(seed):
     rng = random.Random(seed)
     parts = []
     nw = rng.choice((1, 2, 2, 3))
-    for x0 in rng.sample([-28, -14, 2, 16, 30], nw):
+    # The horizontal SPREAD was -28..30 with masses at +/-12 and senses at
+    # +/-22, which is up to 58px of scatter in a 150px space. Combined with the
+    # family's "nothing touches" rule that read as DEBRIS -- several unrelated
+    # objects rather than one creature -- and the per-part outline made it
+    # plainer still by drawing a separate contour around each clump. Tightened
+    # so the parts sit in each other's company. They still never touch; they
+    # are just close enough that the eye stitches them, which is the whole
+    # premise (see the module docstring).
+    for x0 in rng.sample([-20, -10, 0, 10, 20], nw):
         nm, fn = rng.choice(WEIGHT)
         parts.append((nm, fn, x0, 96 + rng.randint(-8, 2)))
     for _ in range(rng.choice((1, 1, 2))):
         nm, fn = rng.choice(MASS)
-        parts.append((nm, fn, rng.randint(-12, 12), 96 - rng.randint(6, 24)))
+        parts.append((nm, fn, rng.randint(-9, 9), 96 - rng.randint(6, 24)))
     parts = parts[:4]
     ns = rng.choice((1, 2, 2))
     for i in range(ns):
         nm, fn = (rng.choice(SENSE[:2]) if i == 0 else rng.choice(SENSE))
-        parts.append((nm, fn, rng.randint(-22, 22), 96 - rng.randint(12, 32)))
+        parts.append((nm, fn, rng.randint(-15, 15), 96 - rng.randint(12, 32)))
     return parts[:5]
 
 
@@ -1232,7 +1280,14 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
             f = k / 2.0
             hx = a0[0] + (b0[0] - a0[0]) * f + rng.uniform(-2, 2)
             hy = a0[1] + (b0[1] - a0[1]) * f + rng.uniform(-2, 2)
-            _haze(lay, hx, hy, 3 + rng.uniform(0, 2), 26)
+            # The threads are the ONLY tissue between parts (module docstring:
+            # the brain stitches "one creature" out of them), and at alpha 26
+            # they were invisible -- so a 5-part deal read as five unrelated
+            # objects, which the per-part outline then made worse by drawing a
+            # separate contour around each. Kept below _EMIT_FLOOR on purpose:
+            # tissue should NOT take an outline, or the parts start touching
+            # and the family's "nothing touches" rule dies with it.
+            _haze(lay, hx, hy, 4 + rng.uniform(0, 2.5), 74)
     for idx, (nm, fn, x0, y0) in enumerate(parts):
         if g > 0.0:
             # the peeling: last parts first, each back into its cut

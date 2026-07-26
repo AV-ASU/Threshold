@@ -249,6 +249,15 @@ its head) and pings the cult to **investigate the body**, and the body
   `FIXTURE_POOLS`, casts no pool, and is invisible to `lit_at`, so it can never
   deny a Watcher a spawn spot, burn anything, or gate the lost-space mouth. The
   creature is visible, not lit.
+  Three legibility rules landed 2026-07 after the shapes read as "weird,
+  something missing": the flesh palette carries a real VALUE SPREAD (it was
+  three tones within six values, so an outlined part was a hollow cut-out with
+  no interior); **the GAZE is paler than the aperture gold** (`EMBER` vs
+  `CUT_RIM`) and incidental `dim` eyes are pinpricks, because a gaze dimmer
+  than the scenery around it cannot be found and a deal's five or six filled
+  eye-discs cluster into berries; and the parts sit CLOSE (spread tightened
+  from 58px of scatter) with visible haze threads between them, so a deal reads
+  as one creature rather than debris. They still never touch.
   Composition rules bind every deal: at least one weight-bearing part on
   the ground, masses centre, and ALWAYS at least one eye-bearing part
   (every amalgam watches; the dim-ember tone is bright enough to survive

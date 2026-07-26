@@ -206,6 +206,37 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- Why the amalgams looked "weird": three causes, all of them the
+  maintainer's guesses.** Asked *"Is it eyes? Too dark? The shapes they
+  make?"*, and rendered at 4x on black the answer was all three.
+  - **No INTERIOR.** `SHROUD`/`SHROUD_LO`/`VOID` sat at 24/12/6 -- three tones
+    within six values -- so a part had no internal form at all. That was
+    survivable while the body was an undifferentiated smudge, but the moment it
+    got an outline it read as a hollow CUT-OUT: a contour with nothing inside.
+    Widened to 47/21/6, which is what makes `_lump`'s shading arcs and the VOID
+    creases read as mass. Still near-black; it was the SPREAD that was missing,
+    not the darkness.
+  - **The GAZE could not be found**, though "every amalgam watches" is the
+    family's one composition rule. `EMBER` was (110,88,30) -- dimmer than the
+    gold on the CUTS -- so the one thing that should read as attention was
+    quieter than the scenery. The eye is now a lit cream (238,208,126),
+    deliberately PALER than gold so a gaze is distinguishable from an aperture
+    (gold is the portal colour), over a near-black socket that reads as a pit.
+    And the incidental `dim` eyes that most weight/mass parts drop are now a
+    socket plus one lit pixel: as filled discs, a five-part deal's five or six
+    of them piled into a cluster of BERRIES stuck to the body. Two wrong
+    intermediate versions are why this is written down -- brightening every eye
+    made the rash worse, and enlarging the socket made the berries bigger.
+  - **The SHAPES were scatter.** Parts were dealt across -28..30 with masses at
+    +/-12 and senses at +/-22: up to 58px of spread in a 150px space. With
+    "nothing touches" that reads as several unrelated objects, and the per-part
+    outline made it plainer by drawing a separate contour around each clump.
+    Tightened to -20..20 / +/-9 / +/-15, chosen off a three-way sweep, and the
+    haze threads that are the only tissue between parts were raised from alpha
+    26 (invisible) to 74 -- kept below `_EMIT_FLOOR` on purpose so tissue takes
+    no outline and the parts still never touch. 392 distinct deals in 400
+    seeds; the always-eye-bearing rule holds. Full gate green.
+
 - **2026-07 -- The Mask remade as a HALF-mask; the amalgams made visible, their
   cuts made gold, and six more parts.** A maintainer look-pass on the dormant
   storm art (`TODO.md` #25) and the four things it asked for.
