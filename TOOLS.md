@@ -79,6 +79,7 @@ terminal version is `python tools/index.py [word]`.
 
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/preview_amalgam.py` — Preview the AMALGAMS (rendering/amalgam.py): the Watcher-family shadows
+- `tools/preview_apex.py` — Preview THE APEX (TODO #25) -- the Mask wearing a unit, in its various forms.
 - `tools/preview_look_control.py` — Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
 - `tools/preview_terrain.py` — LOOK at the GROUND and what grows on it, in isolation.
 - `tools/screen_to_world.py` — Turn SCREEN positions in a capture back into WORLD TILES.
