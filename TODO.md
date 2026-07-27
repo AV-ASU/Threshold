@@ -495,24 +495,38 @@ cannot. With no mouth and no nose (NARRATIVE §6a) the whole vocabulary is:
   rather than as a face pulling a face.
 Driven by STATE, never a loop (a loop is decoration; this is a tell the player
 learns to read), and EASED so it never snaps -- expression that changes on one
-frame reads as a sprite swap. The compose cache keys on the face or it freezes.
+frame reads as a sprite swap.
 Guarded: `tests/stealth.py` §20 (slack far off, narrows closing, comes apart at
 the throat, eases rather than snaps, settles at a held distance rather than
 cycling, and the skew never settles).
 
-**NEXT, approved by the maintainer:**
-- **THE ONE TELL — a roar or a screech.** A single sound that means *it has
-  decided on you*: fires once, never lies, never fires for anything else. Right
-  now everything about the apex is continuous, so there is no before-and-after,
-  and horror needs the moment the rules change. The natural trigger already
-  exists: the frame `intent` first crosses high (`_apex_face`). One-shot per
-  host, so re-hosting earns a new one.
-- **A DISTINGUISHING FEATURE beyond the crown.** The crown is currently doing the
-  entire "this one is different" job and at play size it is a sparkle ring. The
-  maintainer's steer: **reactive limbs that try to GRAB the player** -- limbs that
-  react to your position rather than idling, reaching as it closes. That also
-  gives the catch a telegraph it does not have (contact is presently instant).
-  The crown could improve alongside or be replaced by this.
+**LANDED — THE ONE TELL.** `Audio._build_apex_roar` + `APEX_ROAR_INTENT`, fired
+from `_apex_face` the frame `intent` first crosses the threshold. A SCREECH, not
+a roar: a roar is an animal with lungs and this is a carved thing wearing a body,
+so it is a 2ms attack, a detuned tritone pair that slides up and then breaks
+downward, splintering noise on the same envelope, and a sub that outlives the
+top. One-shot per host; `_apex_lose_host` re-arms it AND zeroes the face, so the
+next bearer earns its screech from zero instead of inheriting the dead one's
+lock. Below the threshold while you are hidden, so it can never announce a lock
+it does not have. Guarded: `tests/stealth.py` §20 (fires exactly once, never
+again for that host, re-arms on losing one, silent at a hidden player).
+
+**LANDED — THE REACH (the distinguishing feature over the crown).** Grabbing
+limbs that grow out of the body toward WHERE YOU ARE (`amalgam._reach_limbs`,
+fed a screen-space vector by `_apex_mask_for` so they aim true under any camera
+yaw), extended by `APEX_REACH_INTENT * intent + APEX_REACH_STRAIN * strain`. Each
+arm clutches on its own phase, with a palm and four curling fingers -- a hand
+that opens and closes reads as WANTING, and arms that clutch in unison read as a
+machine. They arc up over the body and fan wider the more the reach comes at the
+camera, because a straight-down reach lands on the legs and stops reading as arms
+(the case the tilt makes most common). Drawn into the parts layer, so the bone
+outline strokes them and they are the creature rather than an effect over it.
+This is also the catch's TELEGRAPH: full extension is reached outside
+`APEX_CATCH_DIST`, so the hands are on you before contact is. Guarded:
+`tests/stealth.py` §20 (aims at the player on all four sides, barely out at
+range, fully out at the throat, full extension before contact, and grows from
+the body rather than the feet).
+
 - Movement ideas discussed and NOT yet chosen: it uses APERTURES instead of
   pathing (sink and rise past a wall rather than walk around it -- the migration
   machinery already exists); STILLNESS instead of idling (perfectly motionless,

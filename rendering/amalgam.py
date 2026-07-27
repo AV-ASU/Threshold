@@ -220,24 +220,45 @@ def _cut_line(s, cx, cy, ang, ln, alpha=1.0, side=1):
     p0 = (cx - dx * ln / 2, cy - dy * ln / 2)
     p1 = (cx + dx * ln / 2, cy + dy * ln / 2)
     nx, ny = -dy * side, dx * side
-    g = pygame.Surface(s.get_size(), pygame.SRCALPHA)
     a = int(255 * alpha)
-    pygame.draw.line(g, VOID + (a,), (p0[0], p0[1]), (p1[0], p1[1]), 1)
+    # LOCAL surfaces, sized to the cut -- the same fix _haze needed and for the
+    # same reason. These two allocated and blitted a full copy of the TARGET
+    # surface, and the bearer's crown calls this seven times a frame straight
+    # onto the 960x640 screen: measured, the crown alone cost 4.3ms a frame
+    # (down to 0.26ms), more than the entire cached body.
+    #
+    # Diffed against the full-surface version: `_cut_line` itself is identical
+    # on 600/600 random cuts, and a composed unit on 1343/1350 (seed x time x
+    # birth/dispel). Where they differ it is a handful of gold-bleed pixels, and
+    # the LOCAL box is the more accurate of the two both times: pygame clips a
+    # line to the target rect BEFORE rasterising it, so a cut near the top of
+    # the sprite lost a pixel or two of bleed that a box containing the whole
+    # line keeps; and it rasterises a width-2 line as a polygon whose vertices
+    # are computed in floats, which at x=900 loses precision that x=30 keeps.
+    pad = 22                          # clears the widest gold bleed + width,
+                                      # with margin: a tighter box clipped a
+                                      # pixel off the odd cut (found by diff)
+    half = ln / 2 + pad
+    ox, oy = int(cx - half), int(cy - half)
+    d_ = int(half * 2) + 2
+    g = pygame.Surface((d_, d_), pygame.SRCALPHA)
+    pygame.draw.line(g, VOID + (a,), (p0[0] - ox, p0[1] - oy),
+                     (p1[0] - ox, p1[1] - oy), 1)
 
     def lp(f, off):
-        return (p0[0] + (p1[0] - p0[0]) * f + nx * off,
-                p0[1] + (p1[1] - p0[1]) * f + ny * off)
+        return (p0[0] + (p1[0] - p0[0]) * f + nx * off - ox,
+                p0[1] + (p1[1] - p0[1]) * f + ny * off - oy)
     pygame.draw.line(g, CUT_RIM + (a,), lp(0.02, 1.5), lp(0.42, 1.5), 2)
     pygame.draw.line(g, CUT_RIM + (a,), lp(0.56, 1.5), lp(0.98, 1.5), 2)
     pygame.draw.line(g, CUT_RIM_HOT + (int(a * 0.75),),
                      lp(0.22, 1.5), lp(0.34, 1.5), 1)
-    s.blit(g, (0, 0))
+    s.blit(g, (ox, oy))
     # a faint gold bleed off the lip, the rift's glow at aperture size
-    gb = pygame.Surface(s.get_size(), pygame.SRCALPHA)
+    gb = pygame.Surface((d_, d_), pygame.SRCALPHA)
     for off, ga in ((2.5, 16), (4.5, 9), (7.0, 4)):
         pygame.draw.line(gb, (*CUT_RIM, int(ga * alpha)),
                          lp(0.05, off), lp(0.95, off), 2)
-    s.blit(gb, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+    s.blit(gb, (ox, oy), special_flags=pygame.BLEND_RGBA_ADD)
     rng = random.Random(int(cx * 7 + cy * 13) & 0xffff)
     for k in range(2):
         mx = cx + nx * rng.uniform(3, 8) + rng.uniform(-2, 2)
@@ -1336,6 +1357,10 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
                           max(1, int(r * 0.045)))
 
 
+_MASK_PART_CACHE = {}            # composed Mask layers, keyed by their args
+_MASK_PART_CACHE_MAX = 32        # the bearer walks through ~12 keys a second
+
+
 def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
                           blend=0.5, seed=7, ang=1.2, side=-1, lean=8.0,
                           yaw=0.0, intent=0.0, strain=0.0, skew=0.0):
@@ -1347,20 +1372,48 @@ def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
     d = max(0.0, min(1.0, deploy))
     dx_, dy_ = math.cos(ang), math.sin(ang)
     nx, ny = -dy_ * side, dx_ * side
-    lay = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    mcx = cx + nx * r * 0.9 * d
-    mcy = cy + ny * r * 0.9 * d
-    ember = 0.25 + 0.75 * d
-    # the Mask itself -- one rotating 3D shell, rendered onto its own layer
-    draw_pallid_3d(lay, mcx, mcy, r, yaw=yaw, lean=lean, gaze=gaze,
-                   blend=blend, seed=seed, ember=ember,
-                   intent=intent, strain=strain, skew=skew)
-    # clip whatever is still INSIDE the cut (the far side of the cut line) so it
-    # reads as rising from the slit; everything there ends dead flat (the grammar)
+    # A LOCAL layer, sized to the Mask, not to the target. On the bearer this
+    # runs live every frame straight onto the 960x640 screen, and allocating +
+    # blitting a full screen copy for a 40px face was the single most expensive
+    # draw in the game. r*3.5 clears the shell, its deploy offset and its glow.
+    box = int(r * 3.5) + 8
+    ox, oy = int(cx) - box, int(cy) - box
+    # The clip polygon's local vertices go in the key rather than being
+    # re-derived from (cx, cy): int() truncates toward zero, so two positions
+    # with the same fractional part can still land a vertex a pixel apart when
+    # the un-offset value crosses zero. Keying on the vertices themselves makes
+    # that impossible to get wrong.
     p0 = (cx - dx_ * 400, cy - dy_ * 400); p1 = (cx + dx_ * 400, cy + dy_ * 400)
     p2 = (p1[0] - nx * 400, p1[1] - ny * 400); p3 = (p0[0] - nx * 400, p0[1] - ny * 400)
-    pygame.draw.polygon(lay, (0, 0, 0, 0), [(int(a), int(b)) for a, b in (p0, p1, p2, p3)])
-    surf.blit(lay, (0, 0))
+    clip = tuple((int(a) - ox, int(b) - oy) for a, b in (p0, p1, p2, p3))
+    # MEMOISED. draw_pallid_3d rasterises ~1250 polygons per call: 5.1ms of a
+    # 16ms frame, every frame, for the one bearer -- by a wide margin the most
+    # expensive draw left in the game. The layer is a pure function of the
+    # arguments once the whole-pixel position is factored out into (ox, oy), so
+    # it can simply be remembered. The apex earns the hit because the caller
+    # holds its face steady within an animation bucket (`draw_amalgam_sprite`);
+    # a tool that varies the face per call gets a fresh key per call and stays
+    # honest. Capped and evicted oldest-first, one at a time -- clearing it
+    # wholesale is what put the sawtooth back into the unit cache.
+    key = (round(cx % 1.0, 3), round(cy % 1.0, 3), r, d, gaze, blend, seed,
+           ang, side, lean, yaw, intent, strain, skew, clip)
+    lay = _MASK_PART_CACHE.get(key)
+    if lay is None:
+        lay = pygame.Surface((box * 2, box * 2), pygame.SRCALPHA)
+        mcx = cx + nx * r * 0.9 * d
+        mcy = cy + ny * r * 0.9 * d
+        ember = 0.25 + 0.75 * d
+        # the Mask itself -- one rotating 3D shell, rendered onto its own layer
+        draw_pallid_3d(lay, mcx - ox, mcy - oy, r, yaw=yaw, lean=lean,
+                       gaze=gaze, blend=blend, seed=seed, ember=ember,
+                       intent=intent, strain=strain, skew=skew)
+        # clip whatever is still INSIDE the cut (the far side of the cut line)
+        # so it reads as rising from the slit; everything there ends dead flat
+        pygame.draw.polygon(lay, (0, 0, 0, 0), list(clip))
+        if len(_MASK_PART_CACHE) >= _MASK_PART_CACHE_MAX:
+            _MASK_PART_CACHE.pop(next(iter(_MASK_PART_CACHE)))
+        _MASK_PART_CACHE[key] = lay
+    surf.blit(lay, (ox, oy))
     # the cut ends peek past the rim; shroud grips hold it on the line
     ln = r * (1.3 + 0.5 * d)
     q0 = (cx - dx_ * ln / 2, cy - dy_ * ln / 2); q1 = (cx + dx_ * ln / 2, cy + dy_ * ln / 2)
@@ -1410,6 +1463,103 @@ def _bearer_crown(surf, mcx, mcy, mr, power, seed):
             _eye(surf, cx, cy, r=1)
 
 
+# ---- THE REACH: the apex's grabbing limbs (TODO #25) ------------------------
+# The apex's second distinguishing feature, after the face, and the maintainer
+# picked it over improving the crown for a plain reason: at play size the crown
+# is a ring of sparkles you read as ornament, while a limb coming at you is
+# read instantly and by everybody.
+#
+# The two things these are for:
+#   1. REACTION. Every other part of every amalgam idles on its own clock and
+#      would do the same thing in an empty room. These do not exist unless it
+#      has you, they point where you ARE (a screen-space vector, so they aim
+#      true under any camera yaw), and they extend as it closes.
+#   2. TELEGRAPH. The catch was instant contact -- no wind-up, nothing to read.
+#      Now the hands arrive before the body does: full extension IS the last
+#      warning, and it is on screen for the seconds before APEX_CATCH_DIST.
+#
+# They still obey the family grammar. Each grows out of its OWN cut on the body,
+# nothing touches anything, and they are drawn into the same layer as the parts
+# so the bone outline strokes them too -- they are the creature, not an effect
+# laid over it.
+REACH_MAX = 46.0                 # local px of full extension
+REACH_ARMS = 3                   # odd, so one comes straight down the line
+
+
+def _reach_anchor(parts):
+    """Where the limbs grow FROM: the body's own centre in layer space. Masses
+    if the deal has any (they are the trunk), else the mean of everything."""
+    ms = [(75 + p[2], p[3] - _MASS_DY[p[0]]) for p in parts if p[0] in _MASS_DY]
+    if not ms:
+        ms = [(75 + p[2], p[3] - 46) for p in parts]
+    # Lifted off the centroid to about where shoulders would be if it had any:
+    # arms leaving from the middle of the mass come out through the legs.
+    return (sum(a for a, _ in ms) / len(ms),
+            sum(b for _, b in ms) / len(ms) - 9.0)
+
+
+def _reach_limbs(lay, ax, ay, dx, dy, amount, t, seed, n=3):
+    """Grow `n` grasping arms from (ax, ay) toward (dx, dy), extended by
+    `amount` 0..1. Each arm clutches on its own phase -- a hand that opens and
+    closes reads as WANTING, and arms that all clutch together read as one
+    machine."""
+    if amount <= 0.02:
+        return
+    W, H = lay.get_size()
+    dl = math.hypot(dx, dy) or 1.0
+    dx, dy = dx / dl, dy / dl
+    # Never claw into the floor or straight out the top of the layer: the reach
+    # is a direction the player reads, not a vector that has to be exact.
+    dy = max(-0.80, min(0.40, dy))
+    dl = math.hypot(dx, dy) or 1.0
+    dx, dy = dx / dl, dy / dl
+    nx, ny = -dy, dx                                   # across the reach
+    rng = random.Random(seed * 977 + 13)
+
+    def cl(px, py):
+        return (max(5.0, min(W - 6.0, px)), max(5.0, min(H - 6.0, py)))
+
+    # A reach that comes STRAIGHT AT the camera lands on top of the legs and
+    # stops reading as arms at all, which is the one case the tilt makes common
+    # (anything north of you reaches down-screen). Two corrections, both cheap:
+    # the arms fan wider the more downward the reach is, and every arm arcs UP
+    # over the body before it comes down -- which is also just how a thing that
+    # is reaching for you moves.
+    fan = 1.0 + 0.85 * max(0.0, dy)
+    for i in range(n):
+        spread = ((i - (n - 1) / 2.0) * 12.0 + rng.uniform(-3, 3)) * fan
+        ph = t * (1.5 + 0.35 * i) + i * 2.3 + (seed % 11) * 0.6
+        pull = 0.5 + 0.5 * math.sin(ph)
+        ext = REACH_MAX * amount * (0.60 + 0.40 * pull)
+        arc = 7.0 + 10.0 * amount
+        rx, ry = ax + nx * spread * 0.4, ay + ny * spread * 0.4
+        mx, my = cl(rx + dx * ext * 0.55 + nx * spread * 0.6,
+                    ry + dy * ext * 0.55 + ny * spread * 0.6 - arc)
+        tx, ty = cl(rx + dx * ext + nx * spread, ry + dy * ext + ny * spread)
+        _tent(lay, [(rx, ry), (mx, my), (tx, ty)], 4.2, 1.4)
+        _lump(lay, mx, my, 3.0, 2.4, lo=False)         # the elbow knot
+        # THE HAND, and it has to READ as one: a palm and four fingers that
+        # CURL. Straight spokes off the wrist looked like a broken twig at play
+        # size and the grip was the whole idea, so each finger is a two-segment
+        # path that bends inward, and `pull` closes them as the arm draws in.
+        _lump(lay, tx, ty, 3.2, 2.6, lo=False)         # the palm
+        for j in range(4):
+            fa = (j - 1.5) * (0.62 - 0.34 * pull)
+            fl = (10.0 - 3.4 * pull) * (0.5 + 0.5 * amount)
+            curl = fa + (0.85 + 0.75 * pull) * (1 if fa >= 0 else -1)
+
+            def pt(ang, ln):
+                return (dx * math.cos(ang) - dy * math.sin(ang)) * ln, \
+                       (dx * math.sin(ang) + dy * math.cos(ang)) * ln
+            k1x, k1y = pt(fa, fl * 0.6)
+            k2x, k2y = pt(curl, fl * 0.55)
+            kx_, ky_ = tx + k1x, ty + k1y
+            _tent(lay, [(tx, ty), cl(kx_, ky_),
+                        cl(kx_ + k2x, ky_ + k2y)], 2.1, 0.9)
+        _cut_line(lay, rx, ry, math.atan2(dy, dx) + math.pi / 2,
+                  16 * amount, alpha=0.5 * amount, side=1)
+
+
 # ---- the per-unit COMPOSE CACHE ------------------------------------------
 # A storm unit cost ~2.8ms of a real frame, measured, nearly all of it inside
 # this module: 22 units put a frame at 53.3ms (18.8 fps), so the maintainer's
@@ -1430,9 +1580,10 @@ _UNIT_PAD = 5                    # room for the outline + the ghost's offset
 def reset_amalgam_cache():
     """Drop the composed-unit cache (scene load, or a palette/tuning change)."""
     _UNIT_CACHE.clear()
+    _MASK_PART_CACHE.clear()
 
 
-def _compose_unit(seed, b, g, gaze, t, bearer, extra=0):
+def _compose_unit(seed, b, g, gaze, t, bearer, extra=0, reach=None):
     """Render ONE unit -- parts, tissue, outline, ghost, body -- into its own
     padded surface. Returns (surface, dx, dy) where (dx, dy) is where to blit it
     relative to the unit's feet. Pure in its arguments, which is what makes the
@@ -1476,6 +1627,14 @@ def _compose_unit(seed, b, g, gaze, t, bearer, extra=0):
             # its cut alone, dying
             _cut_line(lay, 75 + x0 + dx_, (y0 + dy_) - 44, 1.2, 10,
                       alpha=0.3, side=1)
+    # THE REACH, into the SAME layer as the parts (apex only; `reach` is None
+    # for every ordinary unit, so their compose is byte-identical). Drawn last
+    # so the arms pass in front of the body they grew out of, and inside the
+    # layer so the bone outline strokes them like any other flesh.
+    if reach is not None and b >= 1.0 and g <= 0.0:
+        rdx, rdy, ramt = reach
+        ax, ay = _reach_anchor(parts)
+        _reach_limbs(lay, ax, ay, rdx, rdy, ramt, t, seed, n=REACH_ARMS)
     _GAZE = False
     # THE BEARER is simply a BIGGER amalgam -- that size IS the power-up tell.
     sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
@@ -1525,12 +1684,32 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # THE APEX wears its host's deal plus 2-3 added parts (TODO #25). It rides in
     # the mask dict so an ordinary unit's call is untouched.
     extra = int(mask.get("extra", 0)) if bearer else 0
-    # The FACE has to be part of the cache identity or the expression freezes at
-    # whatever it was when the unit was first composed. Quantised so easing does
-    # not force a re-render every frame; there is only ever one apex, so the
-    # extra entries cost nothing.
-    face = ((round(mask.get("intent", 0.0), 2), round(mask.get("strain", 0.0), 2),
-             round(mask.get("skew", 0.0), 2)) if bearer else ())
+    # THE REACH is quantised into the cache identity, because it really is
+    # composed into the body -- leave it out and the arms freeze pointing
+    # wherever the apex was first composed, which is the one thing they exist
+    # not to do. Direction to a tenth is about six degrees, which nobody sees.
+    reach = None
+    if bearer and mask.get("reach"):
+        rd = mask["reach"]
+        reach = (round(rd[0], 1), round(rd[1], 1), round(rd[2], 2))
+    # THE FACE does not go into the body's compose at all -- the Mask is drawn
+    # live at the bottom of this function -- but it is carried in the same
+    # cached state so it can be HELD to the animation bucket, exactly like the
+    # reach. Held, `draw_pallid_mask_part` sees a stable argument tuple and hits
+    # its own memo instead of rasterising 1250 polygons; unheld it cost 5.1ms a
+    # frame, the most expensive draw left in the game.
+    #
+    # GAZE rides in the held tuple too. It is a live unit vector to the player,
+    # so leaving it out of the hold would change the memo key every frame and
+    # the memo would never hit once -- the same trap as the reach.
+    if bearer:
+        gz = mask.get("gaze", (0.0, 0.3))
+        face = (round(mask.get("intent", 0.0), 2),
+                round(mask.get("strain", 0.0), 2),
+                round(mask.get("skew", 0.0), 2),
+                round(gz[0], 2), round(gz[1], 2))
+    else:
+        face = ()
     # Quantise the animation clock and cache on it -- see the cache note above.
     #
     # STAGGERED per unit. With one shared clock every unit's bucket rolled over
@@ -1553,12 +1732,23 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # still spiked to 51.7ms. Holding a single entry per unit means the cache
     # never exceeds the unit count and nothing is ever mass-invalidated.
     ident = (seed, bearer, extra)
-    state = (round(b, 2), round(g, 2), bool(gaze), bucket, face)
     hit = _UNIT_CACHE.get(ident)
+    # THE ARMS HOLD THEIR AIM WITHIN A BUCKET, and so does the face. Both track
+    # the player and so change every frame by definition; keying on them raw
+    # would re-compose the bearer at the frame rate and undo everything the
+    # cache is for (measured on HEAD: a 22-unit storm with an apex ran at 40.8ms
+    # a frame). Sampling them on the bucket boundary pins the apex to ONE
+    # compose per bucket, exactly like every other unit, and everything moves at
+    # UNIT_ANIM_HZ -- the cadence the rest of the body already wobbles at.
+    if hit is not None and bearer and hit[0][3] == bucket:
+        if reach is not None:
+            reach = hit[0][4]
+        face = hit[0][5]
+    state = (round(b, 2), round(g, 2), bool(gaze), bucket, reach, face)
     if hit is None or hit[0] != state:
         hit = (state, _compose_unit(seed, b, g, gaze,
                                     (bucket - off) / float(UNIT_ANIM_HZ),
-                                    bearer, extra))
+                                    bearer, extra, reach))
         _UNIT_CACHE[ident] = hit
     hit = hit[1]
     body, dx, dy = hit
@@ -1571,16 +1761,20 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # body drawn above; here we add the Mask itself + His crown of cuts.
     if mask is not None:
         power = _clamp(mask.get("deploy", 1.0))
-        topy = y - base
+        # WHOLE PIXELS, like the body blit above. A walking apex has a
+        # fractional x, and a fractional position is part of the Mask memo's
+        # key -- left alone it changed every frame and the memo never hit once.
+        topy = int(y) - base
         # the Mask itself (its own cut + grips), player-scale, a 3D prop by `yaw`
         mr = mask.get("r", max(8, int(sh * 0.17)))
-        mcx = x + mask.get("dx", int(sw * 0.04))
+        mcx = int(x) + mask.get("dx", int(sw * 0.04))
         mcy = topy + mask.get("my", int(sh * 0.30))
+        # `face` is the BUCKET-HELD expression, not the raw dict values: it is
+        # what lets the memo above hit. The easing still runs at the frame rate
+        # on the Game side; what is sampled at UNIT_ANIM_HZ is only the draw.
         draw_pallid_mask_part(surf, mcx, mcy, mr,
-                              intent=mask.get("intent", 0.0),
-                              strain=mask.get("strain", 0.0),
-                              skew=mask.get("skew", 0.0),
-                              deploy=power, gaze=mask.get("gaze", (0.0, 0.3)),
+                              intent=face[0], strain=face[1], skew=face[2],
+                              deploy=power, gaze=(face[3], face[4]),
                               blend=mask.get("blend", 0.5),
                               seed=mask.get("seed", 7),
                               lean=mask.get("lean", 8.0), yaw=mask.get("yaw", 0.0))

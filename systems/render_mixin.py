@@ -1319,9 +1319,20 @@ class RenderMixin:
             gx, gy = px - npc.x, py - npc.y
             gl = math.hypot(gx, gy) or 1.0
             face = self.apex_face() or (0.0, 0.0, 0.0)
+            # THE REACH aims in SCREEN space, the way the Unfolding's limbs do
+            # (`king_to_player` below): a world vector would send the arms off
+            # at whatever angle the camera happened to be yawed to, and the one
+            # thing these limbs have to do is point at you.
+            axs, ays = self.camera.project(npc.x, npc.y)
+            pxs, pys = self.camera.project(px, py)
+            rdx, rdy = pxs - axs, pys - ays
+            rl = math.hypot(rdx, rdy) or 1.0
+            amt = min(1.0, APEX_REACH_INTENT * face[0]
+                      + APEX_REACH_STRAIN * face[1])
             return {"deploy": 1.0, "extra": getattr(npc, "_apex_extra", 2),
                     "gaze": (gx / gl, gy / gl), "seed": 7,
-                    "intent": face[0], "strain": face[1], "skew": face[2]}
+                    "intent": face[0], "strain": face[1], "skew": face[2],
+                    "reach": (rdx / rl, rdy / rl, amt)}
 
         def _vis_alpha(wx, wy, exempt=False, king=False, smear=0.0):
             """0..255 alpha to draw a world thing at (wx, wy) under the sight

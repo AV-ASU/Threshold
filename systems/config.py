@@ -491,6 +491,22 @@ APEX_MIGRATE_CD = 2.2         # s before it takes a new host after losing one
 APEX_EXTRA_LO, APEX_EXTRA_HI = 2, 3     # parts added to the host's own deal
 APEX_SPEED = KING_ROAM_SPEED
 APEX_CATCH_DIST = KING_CATCH_DIST
+# THE ONE TELL (TODO #25). Everything else the apex does is continuous -- it
+# drifts in, it takes a host, it walks -- and horror needs the moment the rules
+# changed. The screech is that moment and the ONLY one: it fires once per host,
+# as `intent` first crosses this, and for nothing else in the game. Threshold
+# sits above the 0.15 that a HIDDEN player's intent is pinned to, so it can
+# never fire at someone it has not actually found.
+APEX_ROAR_INTENT = 0.72
+# THE REACH (TODO #25) -- the grabbing limbs, the apex's second distinguishing
+# feature after the face. Ordinary units carry no limbs like these; the apex
+# grows them out of its own body toward WHERE YOU ARE, and closes them. They are
+# also the catch's telegraph, which contact otherwise does not have: at
+# APEX_CATCH_DIST the hands are already on you.
+# (how MANY arms and how they are shaped is the renderer's, `amalgam.REACH_*`;
+# what lives here is only how far they are out, which is gameplay.)
+APEX_REACH_INTENT = 0.35      # share of the extension owed to having you...
+APEX_REACH_STRAIN = 0.65      # ...and to being close enough to take you
 # Driving it off must COST something or it becomes a free pressure valve: kill
 # the host and the Mask re-hosts on the NEAREST unit it can reach, so you buy
 # APEX_MIGRATE_CD seconds of breathing room, never distance.

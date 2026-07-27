@@ -262,6 +262,18 @@ its head) and pings the cult to **investigate the body**, and the body
   acquires you, the seam gapping and the crack running as it closes to take you,
   the two disagreeing on their own wandering clock. Driven by state rather than a
   loop, so it is a tell the player can learn to read.
+  **It SCREECHES once when it decides on you** (`Audio.apex_roar`, fired from
+  `_apex_face` the frame `intent` crosses `APEX_ROAR_INTENT`): the apex is
+  otherwise entirely continuous, and horror needs the moment the rules changed.
+  One-shot per host, re-armed from ZERO when the host dies, and silent at a
+  hidden player, so it never announces a lock it does not have.
+  **And it REACHES for you** (`amalgam._reach_limbs`, aimed by the screen-space
+  vector in `_apex_mask_for`, extended by `APEX_REACH_INTENT` * intent +
+  `APEX_REACH_STRAIN` * strain): grabbing limbs that grow out of its body toward
+  where you actually are and clutch, each on its own phase. Every other part of
+  every amalgam idles on a clock and would do the same in an empty room; these
+  exist only when it has you. They are also the catch's TELEGRAPH -- they are
+  fully out before `APEX_CATCH_DIST`, so the hands arrive before the body does.
   **While a host is worn the roaming Unfolding stands down** ("the
   impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both

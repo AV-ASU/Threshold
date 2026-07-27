@@ -1936,6 +1936,145 @@ def main():
               f"face: the skew wanders, so the wrongness never settles "
               f"({len(sk_seen)} distinct)")
 
+        # ---- THE ONE TELL. A screech that fires when it DECIDES on you:
+        # exactly once per host, never on a loop, never while you are hidden.
+        # A tell that repeats is ambience and a tell that fires for nothing is
+        # a liar; both would cost the apex the one moment it has.
+        from systems.config import APEX_ROAR_INTENT
+        check("apex_roar" in gf.audio.sfx,
+              "tell: the screech exists as its own sound")
+        roars = []
+        _play = gf.audio.play
+        gf.audio.play = lambda nm, *a, **k: (roars.append(nm)
+                                             if nm == "apex_roar" else None)
+        try:
+            # Wind it all the way down and back up: one screech on the way up.
+            fhost.x = gf.player.x + APEX_FOCUS_RANGE * 2.0
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            gf._apex["roared"] = False
+            check(gf.apex_face()[0] < APEX_ROAR_INTENT,
+                  "tell: (wound down below the threshold first)")
+            check(not roars, "tell: it does not screech at a slack face")
+            fhost.x = gf.player.x + 12.0
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            check(len(roars) == 1,
+                  f"tell: it screeches ONCE when it locks on ({len(roars)})")
+            # Held there, it must not screech again. This is the check that
+            # matters: the trigger is a threshold on an eased value, and an
+            # eased value hovering at a threshold is exactly what turns a tell
+            # into a stutter.
+            for _ in range(600):
+                gf._tick_apex(1 / 30.0)
+            check(len(roars) == 1,
+                  f"tell: and never again for the same host ({len(roars)})")
+            # Kill the host: the NEXT one earns its own.
+            gf._dispel_watcher(fhost, reason="axe")
+            check(gf._apex is not None and not gf._apex.get("roared"),
+                  "tell: losing the host RE-ARMS it")
+            # HIDDEN: intent is pinned below the threshold, so it cannot
+            # announce a lock it does not have.
+            hprey = _NPC4(gf.player.x + 30, gf.player.y, "", "amalgam",
+                          movement="storm", speed=STORM_UNIT_SPEED,
+                          no_prompt=True, solid=False)
+            hprey.tag = "watcher"; hprey.sprite_seed = 515
+            fsc.add_npc(hprey); gf._watchers.append(hprey)
+            gf.player.hidden = ("crate", gf.player.x, gf.player.y)
+            roars.clear()
+            for _ in range(900):
+                gf._tick_apex(1 / 30.0)
+            check(gf.apex_host() is not None,
+                  "tell: (it re-hosts even while you are hidden)")
+            check(not roars,
+                  f"tell: it never screeches at a HIDDEN player ({len(roars)})")
+            gf.player.hidden = None
+        finally:
+            gf.audio.play = _play
+
+        # ---- THE REACH. Limbs that react to where you ARE. Two properties, and
+        # both have to hold or they are just more idle decoration: they point at
+        # the player in SCREEN space (a world vector would swing wild under the
+        # camera yaw), and they extend as it closes.
+        gf.player.hidden = None
+        rhost = gf.apex_host()
+        check(rhost is not None, "reach: (a host is worn for these checks)")
+        if rhost is not None:
+            mask_for = None
+            for _ in range(200):
+                gf._tick_apex(1 / 30.0)
+            # _apex_mask_for is a closure inside draw_world, so drive the same
+            # arithmetic the frame does rather than re-deriving it here: reach
+            # is (screen dx, screen dy, amount).
+            def reach_for(host):
+                axs, ays = gf.camera.project(host.x, host.y)
+                pxs, pys = gf.camera.project(gf.player.x, gf.player.y)
+                rdx, rdy = pxs - axs, pys - ays
+                rl = math.hypot(rdx, rdy) or 1.0
+                fi, fs, _ = gf.apex_face()
+                return (rdx / rl, rdy / rl,
+                        min(1.0, APEX_REACH_INTENT * fi + APEX_REACH_STRAIN * fs))
+            from systems.config import APEX_REACH_INTENT, APEX_REACH_STRAIN
+            # Aim: put the player on four sides and confirm the vector follows.
+            seen = []
+            for ox, oy in ((-120.0, 0.0), (120.0, 0.0),
+                           (0.0, -120.0), (0.0, 120.0)):
+                rhost.x, rhost.y = gf.player.x + ox, gf.player.y + oy
+                seen.append(reach_for(rhost)[:2])
+            check(len({(round(a, 2), round(b, 2)) for a, b in seen}) == 4,
+                  "reach: the aim differs on all four sides of the player")
+            # And it points AT them: the screen vector from host to player must
+            # agree with the reach direction.
+            for (ox, oy), (rx, ry) in zip(((-120.0, 0.0), (120.0, 0.0),
+                                           (0.0, -120.0), (0.0, 120.0)), seen):
+                rhost.x, rhost.y = gf.player.x + ox, gf.player.y + oy
+                axs, ays = gf.camera.project(rhost.x, rhost.y)
+                pxs, pys = gf.camera.project(gf.player.x, gf.player.y)
+                tl = math.hypot(pxs - axs, pys - ays) or 1.0
+                dot = rx * (pxs - axs) / tl + ry * (pys - ays) / tl
+                check(dot > 0.99,
+                      f"reach: it aims at the player on screen (dot {dot:.3f})")
+            # Extension: far is little, at the throat is full.
+            rhost.x, rhost.y = gf.player.x + APEX_FOCUS_RANGE * 2.0, gf.player.y
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            far_amt = reach_for(rhost)[2]
+            rhost.x, rhost.y = gf.player.x + 12.0, gf.player.y
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            near_amt = reach_for(rhost)[2]
+            check(far_amt < 0.1,
+                  f"reach: at range the arms are barely out ({far_amt:.2f})")
+            check(near_amt > 0.9,
+                  f"reach: at the throat they are FULLY out ({near_amt:.2f}) "
+                  f"-- the telegraph the catch never had")
+            # It must actually reach the CATCH range still extended, or it is a
+            # wind-up that finishes before the blow.
+            check(near_amt > 0.9 and APEX_CATCH_DIST < APEX_STRAIN_RANGE,
+                  "reach: full extension is reached BEFORE contact distance")
+            # And an ordinary unit grows none of them.
+            from rendering.amalgam import _reach_anchor, assemble as _asm
+            import pygame as _pg
+            a_plain = _pg.Surface((200, 200), _pg.SRCALPHA)
+            a_reach = _pg.Surface((200, 200), _pg.SRCALPHA)
+            from rendering.amalgam import (draw_amalgam_sprite as _das,
+                                           reset_amalgam_cache as _rac)
+            _rac()
+            _das(a_plain, 100, 170, seed=77,
+                 mask={"deploy": 1.0, "extra": 2, "gaze": (0.0, 0.3),
+                       "seed": 7, "intent": 1.0, "strain": 1.0, "skew": 0.0})
+            _rac()
+            _das(a_reach, 100, 170, seed=77,
+                 mask={"deploy": 1.0, "extra": 2, "gaze": (0.0, 0.3),
+                       "seed": 7, "intent": 1.0, "strain": 1.0, "skew": 0.0,
+                       "reach": (1.0, 0.0, 1.0)})
+            check(_pg.image.tostring(a_plain, "RGBA")
+                  != _pg.image.tostring(a_reach, "RGBA"),
+                  "reach: passing a reach actually changes what is drawn")
+            check(_reach_anchor(_asm(77))[1]
+                  < max(p[3] for p in _asm(77)),
+                  "reach: the arms grow from the BODY, not from the feet")
+
     # AND IT LEAVES when the player drops below the threshold.
     ga.visibility = APEX_VIS_GATE - 0.25
     ga._tick_apex(1 / 30.0)

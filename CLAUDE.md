@@ -664,11 +664,23 @@ section is the CODE MAP only — where each system lives:
   `_dispel_watcher`); its catch fires its OWN
   `_death_kind == "apex"` (a wordless PLACEHOLDER fade -- never the Unfolding's
   card; the amalgam's real catch animation is owed, TODO #25), and
-  `_tick_king_roam` stands the Unfolding down while a host is worn. **A storm draws 22 sprites, so
+  `_tick_king_roam` stands the Unfolding down while a host is worn. Its two
+  distinguishing beats: **THE SCREECH** (`Audio.apex_roar`, fired from
+  `_apex_face` when `intent` crosses `APEX_ROAR_INTENT` -- one-shot per host,
+  re-armed from zero by `_apex_lose_host`, silent at a hidden player) and **THE
+  REACH** (`amalgam._reach_limbs`, aimed by the SCREEN-space vector
+  `_apex_mask_for` puts in `mask["reach"]`, extended by `APEX_REACH_INTENT` /
+  `APEX_REACH_STRAIN`; also the catch's telegraph). stealth §20.
+  **A storm draws 22 sprites, so
   `draw_amalgam_sprite` CACHES each unit's composed surface and refreshes it at
   `UNIT_ANIM_HZ`, staggered per unit by a hashed seed offset** (a modulo offset
   clusters neighbouring seeds and the whole storm re-renders in lockstep --
-  conventions check 11). stealth §19.
+  conventions check 11). **Anything on the bearer that TRACKS the player -- the
+  reach, the face, the gaze -- is HELD to that same bucket** and the Mask's own
+  layer is memoised (`_MASK_PART_CACHE`), or the bearer re-composes every frame:
+  a 22-unit storm with an apex measured 40.8ms/frame before this and 7.3ms after.
+  A tool drawing several apexes in one frame must `reset_amalgam_cache()` between
+  them or the hold shows it the same pose every time. stealth §19.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config. Light works on THEM, never on you: it
   denies them a spawn spot (`_spawn_watcher` needs dark + line of sight) and

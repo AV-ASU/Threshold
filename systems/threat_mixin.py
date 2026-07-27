@@ -952,6 +952,15 @@ class ThreatMixin:
         ap["host"] = None
         ap["state"] = "seeking"
         ap["cd"] = APEX_MIGRATE_CD
+        # The next host earns its own screech -- and earns it from ZERO. A free
+        # Mask between bodies has no face at all, so the expression is cleared
+        # rather than left to ease down: leaving it high meant the re-arm fired
+        # instantly off the dead host's lock, announcing a decision the new one
+        # had not made yet.
+        ap["roared"] = False
+        f = ap.get("face")
+        if f:
+            f["intent"] = f["strain"] = 0.0
         self.audio.play("void_sting", 0.7)
 
     def _apex_take(self, unit):
@@ -1011,6 +1020,17 @@ class ThreatMixin:
         f["intent"] += (want_i - f["intent"]) * k
         f["strain"] += (want_s - f["strain"]) * k
         f["t"] += dt
+        # THE ONE TELL. The moment it has you, once, out loud. The trigger is
+        # the same `intent` the face is already reading, so the sound and the
+        # expression are the same event rather than two systems that can drift
+        # -- you hear it narrow. One-shot per host (`_apex_lose_host` re-arms
+        # it), so killing the bearer earns a second screech when the next one
+        # finds you, and standing in the open for a minute earns nothing. A
+        # hidden player pins intent at 0.15, well under the threshold, so it
+        # cannot announce a lock it does not have.
+        if f["intent"] >= APEX_ROAR_INTENT and not ap.get("roared"):
+            ap["roared"] = True
+            self.audio.play("apex_roar", 0.85)
         # The disagreement wanders on its own and never repeats the same way for
         # two hosts (the seed offset), so no two apexes wear the same wrongness.
         ph = f["t"] * APEX_SKEW_RATE + (ap.get("seed", 0) % 17) * 0.41

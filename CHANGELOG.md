@@ -383,6 +383,94 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- The apex gets a SCREECH and a REACH (TODO #25; maintainer: "I
+  like your one tell idea, like a roar or screech more like... another
+  distinguishing feature like limbs that are more reactive and try and grab the
+  player", then "finish the queue in its entirety").** The two beats that were
+  approved after the face landed, both aimed at the same complaint: as built,
+  the apex was entirely continuous -- it drifted in, took a host, walked at a
+  constant speed, and touched you -- with no moment at which anything changed.
+  - **THE ONE TELL.** `Audio._build_apex_roar`, fired from `_apex_face` the
+    frame `intent` crosses `APEX_ROAR_INTENT`. Built as a SCREECH rather than a
+    roar because a roar is an animal with lungs and this is a carved thing
+    wearing a body: 2ms attack (nothing else in the mix starts that fast, which
+    is what makes it land as an event and not a cue), a detuned tritone pair
+    sliding up through the first third and then breaking downward, splintering
+    noise gated by the same envelope so it reads as timber tearing, and a sub
+    that arrives late and outlives the top. Triggering off `intent` rather than
+    off a distance means the sound and the expression are the same event and
+    cannot drift apart -- you hear it narrow.
+    One-shot per host. `_apex_lose_host` re-arms it *and zeroes the face*: the
+    first version only re-armed the flag, so the new host inherited the dead
+    one's lock and screeched instantly, announcing a decision it had not made.
+    A free Mask between bodies has no face at all, so zeroing is also the more
+    honest state.
+  - **THE REACH**, chosen over improving the crown because at play size the
+    crown is a ring of gold sparkles read as ornament while a limb coming at you
+    is read instantly by everybody. `amalgam._reach_limbs` grows arms out of the
+    body toward a SCREEN-space vector (`_apex_mask_for`, the same trick the
+    Unfolding's `to_player` uses -- a world vector would send them off at
+    whatever angle the camera happened to be yawed to). Extension is
+    `APEX_REACH_INTENT * intent + APEX_REACH_STRAIN * strain`, so they are
+    barely out at range and fully out at the throat. Each arm clutches on its
+    own phase with a palm and four curling fingers: a hand that opens and closes
+    reads as WANTING, and arms clutching in unison read as a machine. Two
+    corrections came out of the look pass -- the arms fan wider the more the
+    reach comes down-screen, and every arm arcs UP over the body first, because
+    a reach straight at the camera (the case the tilt makes most common, since
+    anything north of you reaches down-screen) landed on the legs and stopped
+    reading as arms at all. Drawn into the parts layer so the bone outline
+    strokes them; they are the creature, not an effect over it. They also give
+    the catch a telegraph it never had: full extension happens outside
+    `APEX_CATCH_DIST`, so the hands arrive before the body does.
+  - **THE FRAME COST THIS EXPOSED, and it was already shipping.** Benchmarking
+    the reach found the bearer costing 11.9ms/frame *before* it -- a 22-unit
+    storm with an apex ran at 40.8ms/frame (24fps), a regression that landed
+    with the face commit and was never measured. Three causes, all the same
+    mistake in different places:
+    (a) the FACE was in the unit cache's key while not being used by the compose
+    at all (the Mask is drawn live, outside the cache), so it forced a full
+    re-compose of the biggest sprite in the game every frame for zero pixels;
+    (b) `_cut_line` allocated and blitted a copy of the whole TARGET surface,
+    twice, per call -- and the bearer's crown calls it seven times a frame
+    straight onto the 960x640 screen (the crown alone: 4.3ms -> 0.26ms). This is
+    the identical bug `_haze` was fixed for earlier, in a function nobody
+    thought to check;
+    (c) `draw_pallid_mask_part` did the same, and `draw_pallid_3d` rasterises
+    ~1250 polygons per call (5.1ms), live, every frame.
+    Fixes: local bounded surfaces instead of target-sized ones, a memo on the
+    Mask's composed layer, and everything on the bearer that TRACKS the player
+    (reach, face, gaze) HELD to the animation bucket the body already refreshes
+    on -- plus whole-pixel Mask positioning, since a walking apex's fractional x
+    was in the memo key and stopped it hitting even once. Result: 40.8ms -> 7.3ms
+    average for the same storm, with the reach added on top.
+    Diffed against the old code to keep it honest: `_cut_line` is pixel-identical
+    on 600/600 random cuts, `draw_pallid_mask_part` on 200/200, and a composed
+    ordinary unit on 1343/1350 (seed x time x birth/dispel). Where they differ it
+    is a handful of gold-bleed pixels, and the local box is the more accurate one
+    both times -- pygame clips a line to the target rect BEFORE rasterising, so a
+    cut near the sprite's top edge used to lose a pixel of bleed, and it draws a
+    width-2 line as a polygon whose float vertices lose precision at x=900 that
+    they keep at x=30. (The first pass at this measurement compared two
+    `draw_amalgam_sprite` calls back to back and reported 3 in 120 units
+    "changed"; that was the wall clock advancing an animation bucket between the
+    two calls, not the code. Freeze the clock: compare `_compose_unit`, which
+    takes `t` explicitly.)
+    The hold has one visible consequence worth knowing: several apexes drawn in
+    ONE frame with the same host seed all show the first one's pose, which made
+    `tools/preview_apex.py`'s reach row show six identical cells. The tool now
+    calls `reset_amalgam_cache()` between cells. In play there is only ever one
+    bearer, so nothing else is affected.
+  - Guards (`tests/stealth.py` §20, each proven to fail by introducing the
+    violation): the screech fires exactly once, never again for that host,
+    re-arms on losing one, and is silent at a hidden player; the reach aims at
+    the player on all four sides, is barely out at range, fully out at the
+    throat, reaches full extension before contact distance, grows from the body
+    rather than the feet, and actually changes what is drawn.
+    `tools/capture_facings.py` gained `--spawn`, with a special kind `apex` that
+    drops the bearer with its face and limbs live -- without it the tool for
+    judging a creature in a real dark room drew the apex as a plain amalgam.
+
 - **2026-07 -- The legs find the body, and every part can MIRROR (maintainer:
   "those legs need a way to detect the body and attach, and the ability to flip
   parts so we double our parts for free").**

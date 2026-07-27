@@ -275,6 +275,7 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["cult_lock"]      = self._build_cult_lock()
         self.sfx["cult_lose"]      = self._build_cult_lose()
         self.sfx["watcher_spawn"]  = self._build_watcher_spawn()
+        self.sfx["apex_roar"]      = self._build_apex_roar()
         self.sfx["watcher_dispel"] = self._build_watcher_dispel()
         self.sfx["hide_enter"]     = self._build_hide_enter()
         self.sfx["hide_exit"]      = self._build_hide_exit()
@@ -344,6 +345,9 @@ class Audio:                        #Starting screen needs music, something simp
             # Void / Carcosa set-pieces.
             "carcosa_boom": dict(reverb="void"),
             "void_sting":   dict(reverb="void"),
+            # THE TELL. It belongs to the void set: it is Him deciding on you,
+            # not a thing in the room.
+            "apex_roar":    dict(reverb="void"),
             # Opening drive -- the radio dissolving into static.
             "static":       dict(highpass=500),
             # The bell always rings over open ground (heard from the
@@ -1008,6 +1012,76 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 1] = buf[i * 2 + 1]
             stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_apex_roar(self, duration_ms=1150, vol=0.62):
+        """THE ONE TELL (TODO #25) -- the apex has DECIDED on you.
+
+        Everything else about the apex is continuous: it drifts in, it takes a
+        host, it walks. There is no before-and-after, and horror needs the moment
+        the rules change. This is that moment, and it is the only thing that
+        makes it: fires once per host, never for anything else, never a bluff.
+
+        A SCREECH rather than a roar, because a roar is an animal with lungs and
+        this is a carved thing wearing a body. Three layers, none of them a
+        throat:
+          - a hard inharmonic PAIR (two detuned partials a tritone apart) that
+            slides UP and then breaks downward -- the interval does the work; it
+            is the one that will not resolve
+          - splintering NOISE gated by the same envelope, so it reads as timber
+            tearing rather than a voice
+          - a sub that arrives late and outlives the top, so the room keeps it
+            after the screech has stopped
+        Attack is near-instant (2ms). Nothing else in the mix starts that fast,
+        which is what makes it land as an event and not a cue.
+        """
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        ph_a = ph_b = ph_sub = 0.0
+        smooth = 0.0
+        crackle = 0.0
+        for i in range(n):
+            t = i / sr
+            f = i / n
+            # envelope: 2 ms attack, a held shriek, then a ragged fall
+            if t < 0.002:
+                env = t / 0.002
+            elif f < 0.42:
+                env = 1.0
+            else:
+                env = max(0.0, 1.0 - (f - 0.42) / 0.58) ** 1.35
+            # the pair: up through the first third, then BREAKS down
+            if f < 0.34:
+                base = 430.0 + 520.0 * (f / 0.34) ** 1.6
+            else:
+                base = 950.0 * (1.0 - 0.62 * ((f - 0.34) / 0.66) ** 0.8)
+            ph_a += 2 * math.pi * base / sr
+            ph_b += 2 * math.pi * (base * 1.414) / sr     # a tritone: no rest
+            pair = (math.sin(ph_a) * 0.62 + math.sin(ph_b) * 0.48)
+            # square it up as it peaks so it tears instead of sings
+            bite = 0.35 + 0.65 * env
+            pair = max(-1.0, min(1.0, pair * (1.0 + 1.9 * bite)))
+            # splintering: noise that crackles harder at the break
+            smooth = 0.72 * smooth + 0.28 * random.uniform(-1, 1)
+            if random.random() < 0.06 + 0.22 * env:
+                crackle = random.uniform(-1, 1)
+            crackle *= 0.86
+            grain = (smooth * 0.5 + crackle * 0.5) * (0.30 + 0.55 * env)
+            # the sub arrives late and hangs on past the top
+            sub_env = max(0.0, min(1.0, (f - 0.16) / 0.24)) * \
+                max(0.0, 1.0 - max(0.0, f - 0.55) / 0.45)
+            ph_sub += 2 * math.pi * (58.0 - 14.0 * f) / sr
+            sub = math.sin(ph_sub) * sub_env * 0.7
+            v = (pair * 0.52 + grain * 0.42) * env + sub * 0.5
+            sample = max(-32768, min(32767,
+                                     int(max(-1.0, min(1.0, v)) * vol * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4] = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
     def _build_watcher_dispel(self, duration_ms=480, vol=0.36):

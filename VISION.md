@@ -158,12 +158,17 @@ reveal each wall face, not just dead-on.
 
   ```bash
   python tools/capture_facings.py <scene_key> [--px X --py Y] [--bright]
+                                  [--ev N] [--spawn KIND[:SEED][@TX,TY]]
   ```
 
   It writes the four PNGs plus a labelled contact sheet, and it **asserts the
   facings actually differ**, exiting nonzero if they don't. `--bright` drops
   the sight cone + film grade for clean geometry reading; without it you get
-  the real player view.
+  the real player view. `--spawn` drops a creature into the room first, so a
+  black creature is judged on a real dark floor instead of on a preview card
+  with a chosen backdrop — which is exactly how one shipped invisible. The kind
+  **apex** drops the Mask-bearer with its face and its grabbing limbs live,
+  rather than a plain amalgam wearing neither.
 
   **Why the tool exists, and why hand-rolling this keeps failing:**
   `_update_camera` sets the camera POSITION only, **never its yaw**. The yaw is

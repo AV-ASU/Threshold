@@ -6,10 +6,12 @@ it needs its own look surface rather than being judged off the amalgam sheet (it
 is a different thing: a host's deal PLUS 2-3 parts, PLUS the Mask, at a size and
 a role no ordinary unit has).
 
-Three rows, because these answer different questions:
+Four rows, because these answer different questions:
   1. THE DEALS   -- the same apex across host seeds. How much does it vary?
   2. THE FACE    -- the Mask alone, turned. What expression range exists?
-  3. THE SCALE   -- apex beside an ordinary unit beside the player. Does it
+  3. THE REACH   -- the grabbing limbs, aimed around the compass and extended
+                    from nothing to full. Do they read as ARMS COMING FOR YOU?
+  4. THE SCALE   -- apex beside an ordinary unit beside the player. Does it
                     read as the apex at play size, or just as another unit?
 
     python tools/preview_apex.py [--seeds 3 11 23 ...] [--bg dark|mid]
@@ -28,7 +30,7 @@ import pygame                                                    # noqa: E402
 pygame.init()
 
 from rendering.amalgam import (draw_amalgam_sprite, draw_pallid_3d,   # noqa: E402
-                               assemble)
+                               assemble, reset_amalgam_cache)
 from rendering.sprites import draw_player_sprite                 # noqa: E402
 from systems.config import APEX_EXTRA_LO, APEX_EXTRA_HI          # noqa: E402
 
@@ -49,7 +51,7 @@ def main():
 
     cw, ch = 200, 210
     W = cw * max(len(a.seeds), 6) + 30
-    out = pygame.Surface((W, ch * 3 + 60))
+    out = pygame.Surface((W, ch * 4 + 60))
     out.fill(BACKDROPS[a.bg])
 
     # --- 1. the same apex across host seeds -----------------------------
@@ -82,11 +84,38 @@ def main():
         draw_pallid_3d(out, cx, gy2, 54, yaw=0.0, lean=6.0,
                        gaze=(0.0, 0.2), blend=0.5, seed=7, ember=1.0,
                        intent=it, strain=st, skew=sk)
-        _label(out, nm, cx - 34, gy2 + 70, 12, (146, 144, 154))
+        _label(out, nm, cx - 34, gy2 + 56, 12, (146, 144, 154))
 
-    # --- 3. scale: apex vs unit vs player --------------------------------
+    # --- 3. THE REACH -----------------------------------------------------
     y3 = 40 + ch * 2
-    _label(out, "3.  THE SCALE  --  apex, ordinary unit, player. At play size, "
+    _label(out, "3.  THE REACH  --  the grabbing limbs. First three: extending "
+                "as it closes. Last three: aimed where you actually are.",
+           16, y3 + 8, 15)
+    gy3 = y3 + ch - 30
+    reaches = [("far, no hold", (0.0, 1.0), 0.0),
+               ("it has you", (0.0, 1.0), 0.45),
+               ("on you", (0.0, 1.0), 1.0),
+               ("you: left", (-1.0, 0.15), 1.0),
+               ("you: right", (1.0, 0.15), 1.0),
+               ("you: behind", (0.2, -1.0), 1.0)]
+    for i, (nm, dirn, amt) in enumerate(reaches):
+        cx = 110 + i * cw
+        # A whole sheet renders inside one animation bucket, and the unit cache
+        # HOLDS the aim and the face for the length of a bucket (that hold is
+        # what keeps the bearer affordable). Six cells with the same host seed
+        # would therefore all show cell one, which is a sheet that lies about
+        # the very thing it is here to show.
+        reset_amalgam_cache()
+        draw_amalgam_sprite(out, cx, gy3, seed=a.seeds[0],
+                            mask={"deploy": 1.0, "extra": APEX_EXTRA_HI,
+                                  "gaze": (0.0, 0.25), "seed": 7,
+                                  "intent": 1.0, "strain": amt,
+                                  "reach": (dirn[0], dirn[1], amt)})
+        _label(out, nm, cx - 34, gy3 + 12, 12, (146, 144, 154))
+
+    # --- 4. scale: apex vs unit vs player --------------------------------
+    y3 = 40 + ch * 3
+    _label(out, "4.  THE SCALE  --  apex, ordinary unit, player. At play size, "
                 "is the apex readable as the apex?", 16, y3 + 8, 15)
     gy3 = y3 + ch - 30
     draw_amalgam_sprite(out, 120, gy3, seed=a.seeds[0],
