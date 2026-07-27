@@ -1293,6 +1293,25 @@ class ThreatMixin:
             self._watcher_clone_t = WATCHER_GRACE   # the breather before the next
             # No narrator box on the last eye closing (play-notes) -- the
             # watcher_dispel sound carries it.
+        # THE ONE ENTRY (maintainer ruling, 2026-07). He writes up the first
+        # one he sees off and then never mentions them again for the whole
+        # run, while they keep coming. The SILENCE is the tell: an arc where
+        # he notices he has stopped being frightened would be the game saying
+        # he changed, and a notebook that simply stops recording them is the
+        # player noticing it instead. Fired on the DISPEL because seeing one
+        # and staring it out is a single event, not two.
+        if not self.save.flag("wrote_the_first_one"):
+            self.save.set_flag("wrote_the_first_one", True)
+            self._log_note("the_first_one", [
+                "Something stood at the edge of the light and did not move "
+                "while I looked at it.",
+                "I did not look away. Could not tell you why that was the "
+                "thing I decided to do.",
+                "Whatever was lit behind the eyes went out, and the rest of "
+                "it went after them.",
+                "I have been awake a long time and this town does not agree "
+                "with me.",
+            ])
 
     def _dispel_watcher_in_line(self, p, fx, fy):
         """A round (or the axe arc) puts a Watcher down instantly. The gun
@@ -1466,14 +1485,14 @@ class ThreatMixin:
             self._log_note("the_talk", [
                 "One of them put hands on me today. Told me to go back to "
                 "my room. Told me to run.",
-                "Well shit, this town really doesn't have a midwestern "
+                "Well shit, this town really doesn't have a Midwestern "
                 "welcome at all.",
             ])
             # The reaction lands a beat later, as the world resumes: a
             # frameless caption, not another box.
             self.dialog.show([
                 "[c=dim]Well shit, this town really doesn't have a "
-                "midwestern welcome at all.[/c]",
+                "Midwestern welcome at all.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
         # THE TALK is a close-up TABLEAU (#2b, the tone inversion of the
         # principal seats): the carved mask fills the frame, his hand is on

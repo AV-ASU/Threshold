@@ -3140,6 +3140,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self._tick_wake_muffle(dt)
             self._tick_ashfall(dt)        # atmosphere: drifts behind modals too
             self._tick_flashback(dt)
+            # Anything he has just concluded gets written into the notebook
+            # here, once, and stays on its page (NarrativeMixin).
+            self._tick_theory_notes()
             self._tick_tableau(dt)
             self._tick_ending(dt)
         elif self.state == "transition":

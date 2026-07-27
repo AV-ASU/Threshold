@@ -166,24 +166,35 @@ def ink_wrap(surf, font, text, x, y, w, color=INK, line_h=None):
     return wrap(surf, font, text, x, y, w, color=color, line_h=line_h)
 
 
-def wrap(surf, font, text, x, y, w, color=TEXT, line_h=None):
-    """Word-wrap `text` into width `w`, honouring explicit newlines (a
-    blank line for "\\n\\n"). Returns the y past the last line."""
-    line_h = line_h or font.get_linesize()
-    cy = y
+def wrap_lines(font, text, w):
+    """Word-wrap `text` into width `w` and return the LINES, drawing nothing.
+    Split out so a caller that has to paginate (the Casebook's running
+    notebook) measures with exactly the same rules that `wrap` draws with,
+    rather than keeping a second wrapper that can disagree with it."""
+    out = []
     for raw in text.split("\n"):
         if raw == "":
-            cy += line_h
+            out.append("")
             continue
         cur = ""
         for word in raw.split(" "):
             test = (cur + " " + word).strip()
             if cur and font.size(test)[0] > w:
-                surf.blit(font.render(cur, True, color), (x, cy))
-                cy += line_h
+                out.append(cur)
                 cur = word
             else:
                 cur = test
-        surf.blit(font.render(cur, True, color), (x, cy))
+        out.append(cur)
+    return out
+
+
+def wrap(surf, font, text, x, y, w, color=TEXT, line_h=None):
+    """Word-wrap `text` into width `w`, honouring explicit newlines (a
+    blank line for "\\n\\n"). Returns the y past the last line."""
+    line_h = line_h or font.get_linesize()
+    cy = y
+    for line in wrap_lines(font, text, w):
+        if line:
+            surf.blit(font.render(line, True, color), (x, cy))
         cy += line_h
     return cy

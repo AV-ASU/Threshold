@@ -32,6 +32,325 @@
 
 ## Evidence & the case
 
+- **2026-07 — Hettie's memory, the son read, and the "son" tic.** The last
+  three off the audit list.
+
+  **Hettie's memory of the girl** lost its preamble ("I'll tell you the one
+  thing I know that's worth the telling", a character announcing she is about
+  to be important) and its portrait ("Sad around the eyes, and polite with
+  it"), which contradicted her own answer to the photograph four lines
+  earlier: *"Faces come through this shop. I stopped keeping them."* She
+  either retains faces or she does not. What is left is a shopkeeper talking
+  about her till: a regular, then not, and the rest of them going quiet at the
+  same time as a fact about TRADE rather than a survey of the town, since Vane,
+  Toby and Crane already deliver that observation and a fourth flattens all
+  four. **The tab now comes out of the BIN under the till** rather than off a
+  spike (maintainer's idea): she is not keeping a shrine to the girl, it is
+  refuse she has not taken out because nothing leaves this town, refuse
+  included, and the evidence stops being presented and starts being found.
+
+  **`theory_son` is cut** with the other case reads. It wrote out the
+  connection between the bear's tag and the letter, and "his name breaks her"
+  had the PI predicting a scene he has not reached. The bear still detonates;
+  that always lived in the ITEM's own text (`effective_desc`), not the book.
+  **Nothing in the notebook now solves Mara.** What he writes is the fold, the
+  wrong robes read, and the Mask.
+
+  **"son" is Garrick's alone.** It had spread to eight uses across three
+  speakers (Vane 3 including the hollow turn, Pell 3, Garrick 4) and was a
+  large part of why those three read as interchangeable. Everyone else drops
+  it. **Guarded by a new `tests/conventions.py` check** that attributes every
+  chosen mode of address to its speaker and fails when one is shared, because
+  this drift is invisible one line at a time: each author only ever adds one.
+  The check exempts "mister" deliberately, since nobody in Brimley learns the
+  PI's name, so it is the correct default in every mouth. Writing it turned up
+  the sharing immediately, and it was proven red before commit.
+
+- **2026-07 — The queue: six rulings from the story-audit workshop.**
+
+  **The tab was wrong by a factor of three.** It read "run down most of a
+  year"; Mara drove north in the FALL of 1993 and the present is April 1994,
+  so her account runs three or four months. Corrected to "autumn through the
+  new year" in both the item text and the notebook entry, and the proof moved
+  off duration and onto the KIND of purchase (bread, kerosene, lamp oil).
+
+  **"She lived here" is CUT, and it took three more with it.** The maintainer's
+  ruling: that is the player's connection to make. Applied consistently it also
+  kills `theory_resident`, `theory_came_apart` and `theory_willing`, each of
+  which was the conclusion its own evidence had been built to earn, written out
+  for the reader. **He never solves Mara on the page now.** What survives in
+  his hand is the town: the son, the fold, the wrong robes read, the Mask. Which
+  is what the notebook was asked to become at the top of this thread, reached by
+  cutting rather than adding.
+
+  **Mara does not walk out of the shop smiling.** The exit smile and Hettie's
+  "It was the smiling I minded" are gone. A smile the shopkeeper finds
+  disturbing is a visible mark of claiming, and NARRATIVE §2 says there is
+  none; it also put the wrongness back on the PEOPLE. And Mara is grieving a
+  dead son, not elated. She stopped coming in, the basket sat there, nobody
+  clocked anything.
+
+  **"Before the cold" is deleted from the timeline** (`NARRATIVE.md` §3). It
+  put the procession underground in the fall, which contradicted Hettie seeing
+  Mara in the shop past the new year. The maintainer identified it as detail an
+  earlier session invented and wrote into the story bible, where it then got
+  cited back at them as canon. Worth recording as a class of problem, not one
+  clause: **the canon docs are partly model-authored, so "NARRATIVE.md says" is
+  not the same as "the maintainer decided."**
+
+  **THE ONE WATCHER ENTRY.** The Watchers are the whole below-3 threat, they
+  open whenever the player is exposed, and the PI's notebook did not contain a
+  single word about them. He now writes up the first one he stares out, and
+  **never mentions them again for the rest of the run** while they keep coming.
+  The silence is the design: an arc where he notices he has stopped being
+  frightened is the game announcing that he changed, and a notebook that simply
+  stops recording them lets the player notice it instead. He stays confused and
+  tired and ordinary; he does not harden. Seeing one and staring it out is ONE
+  event, so it fires on the dispel. Five guards, including the silence.
+
+  **"midwestern" is capitalised**, in the Talk's punchline, which is one of
+  the most memorable lines in the game.
+
+- **2026-07 — The recruiter: no miracle, no euphoria (maintainer ruling).**
+  Vane's one fragment of the *how* was a conversation with a blind congregant
+  who had been promised his sight back by the dream, walked into the office
+  without a stick, sat down square in the chair, and left smiling. Three
+  things wrong with it, and the first is the one that matters:
+
+  **The want was a miracle.** `DESIGN.md` §8 says the machine runs on ORDINARY
+  wants, nothing cosmic: a full house, a harvest, a guest at supper, a road
+  home. Sight restored was the only physical repair anyone in the fiction was
+  ever promised, and it made the door read as a faith healer rather than a
+  thing that whispers a bearing to someone in pain. **It was also a visible
+  mark** (a blind man navigating perfectly), against the §2 invariant that
+  being claimed leaves none, and it used a disability as a spook prop.
+
+  He is now a man whose wife is alive in a county home and does not know his
+  face. He used to drive down every Sunday. He stopped, because there is no
+  sense in it until the work is finished and he wants her to know him the
+  first time she sees him. The want is ordinary, unfixable, and not a repeat
+  of Mara's dead child (absence versus presence without recognition). He is
+  **wrecked and certain at the same time** rather than radiant: he cried the
+  whole way through it and it never got near the part of him that was sure.
+
+  The same pass cut the EUPHORIA TELL wherever it was doing work: he no longer
+  leaves smiling, and the congregation are no longer "glad of it." The
+  smiling-cultist motif had become the game's shorthand for possession, which
+  is the visible mark canon forbids and puts the wrongness back on the PEOPLE
+  after the world rot was deliberately relocated onto the PI. Vane calling the
+  newcomers "friendly and smiling" and Sable smiling over the photograph both
+  stay: one is a lawman describing pleasant strangers, the other is a host
+  doing his job.
+
+  Guarded four ways in `tests/flow.py` (the want is his wife and a county
+  home, no blindness, no euphoria, wrecked-and-sure), and the euphoria and
+  wrecked guards were proven to fail red before commit. Canon updated at
+  `NARRATIVE.md` §4 with the reason attached, so the next session cannot
+  restore a miracle want by accident.
+
+- **2026-07 — The Casebook becomes the PI's running notebook (maintainer:
+  "I hate how it's just a bunch of paper that just gets put randomly in the
+  tab").** The Case tab was not a record, it was a filing system. Entries
+  rendered sorted by CATEGORY (evidence first, then notes), so the order the
+  player saw them in was the order the code declared them rather than the order
+  they lived them, and the two pinned surfaces, the Working Theory and the
+  Timeline, were recomputed live on every open. The book had no memory:
+  whatever the PI used to think was silently replaced by whatever he thought
+  now.
+
+  That last part was the real loss, and it was specific to this game.
+  `NARRATIVE.md` holds that his written theory is allowed to reason WRONG and
+  the game never corrects him (the robes are the ones who could stop this).
+  That wrongness was invisible, because the theory edited itself into
+  something less wrong before the player could catch it out.
+
+  **Now it is one running document.** Everything he writes down goes in in the
+  order he wrote it and stays exactly as written. His CONCLUSIONS are journaled
+  once each, at the moment he reaches them (`_THEORY_THOUGHTS`,
+  `_tick_theory_notes`), and they render with no heading, because a conclusion
+  he jots is a line in the flow rather than a titled find. The wrong robes read
+  now sits on its page for the rest of the run, next to the later reads that
+  supersede it, and nothing ever says so. Reading the book start to finish is
+  watching a man's understanding change.
+
+  **The Timeline is CUT** (maintainer ruling): it re-sorted his finds into
+  Mara's chronology, which is exactly the connection the player is supposed to
+  make. He writes the dates down as he finds them instead, and the arithmetic
+  is theirs. The booking slip's entry gained the date it had always been
+  missing ("Dated the eleventh of December") since without it the chronology
+  was unreconstructable from the book at all.
+
+  **How it is stored.** `evidence` and `notes` stay two save lists, because
+  the King-gate counts one and must not count the other; each entry gets a
+  `seq` stamp from the new `Save.next_seq`, and the book merges and orders by
+  it. A single merged list would have been the tidier data model and would have
+  meant rewriting roughly 130 call sites, nearly all of them test fixtures, for
+  no player-visible difference. The split is bookkeeping and never reaches the
+  player.
+
+  Consequences worth recording: `_rewrite_note`, added days earlier so the robe
+  could revise its own entry after the Talk, is GONE. Under a running document
+  the second look is a LATER entry (`clerk_robe_placed`) and the first stays as
+  written; the pair, one describing a garment and one recognising it, is the
+  record of him learning, and collapsing it into one tidy paragraph erased the
+  man who did not know yet. `mc.wrap_lines` was split out of `mc.wrap` so the
+  pagination measures with exactly the rules the renderer draws with. The leaf
+  was repositioned clear of the tab ribbon, its ruling pitched to the body font
+  so his lines sit ON the rules, and the body moved from the case-file mono to
+  the same serif ink as Mara's journal, so the two books read as two hands
+  rather than a document and a typewriter.
+
+- **2026-07 — The small-detail layer, first four (the schoolhouse and the
+  robe).** The discovery catalog showed the surface holding six real finds in
+  37 rooms, three of them mandatory. The maintainer's diagnosis of why a
+  search verb would not fix that: there is nothing small to find, so searching
+  would be busy work over empty containers. Content first, mechanics later or
+  never.
+
+  A longer proposed list was cut down to four, and the rejections are the
+  useful part of the record. Cut: an attendance register (an object whose only
+  job was to announce that time stopped in January, which is the calendar
+  TODO #28 had just ordered removed, rebuilt in a school uniform); stacked
+  bowls and a folded coat (nobody's, pure atmosphere, and the coat existed
+  only to be almost-a-clue); and three red herrings on Pell, Garrick and
+  Calder (narrator boxes explaining the inner life of characters who say it
+  better themselves in dialogue, and inert by construction, since a dead end
+  that resolves into a sad fact costs the player nothing). **The rule the
+  survivors share: a find is a physical trace of a specific person doing a
+  specific thing, and it is an object rather than an explanation.**
+
+  Shipped:
+  - **Toby's desk**, in the pile the cult shoved into the schoolhouse corner.
+    His name inked in the lid, a spelling sheet with three words done. It
+    records NOTHING in the case by design: the name is the whole beat and the
+    player does the rest.
+  - **A newcomer's gas receipt** under a schoolhouse cot: Clark Oil, Seymour,
+    Wisconsin, July 2 1993, fourteen gallons, cash. A walk-over pickup that
+    files a note. It corroborates the one thing Vane could never get out of
+    them, that not one could say where they had driven in from, without a word
+    of testimony.
+  - **The chalkboard's other half.** The board always said the cult's doors
+    were drawn "under a child's faded lesson" and the lesson was never
+    legible, so the room read as a cult set rather than a school somebody
+    moved into. A surviving corner of it now reads first in every pre-rite
+    look: a column of addition worked down in a child's hand, the answer
+    circled by the teacher.
+  - **The robe in Sable's closet, in two stages.** It used to fire one caption
+    calling it "a cult robe" before the player had ever seen a cult, which is
+    knowledge the speaker cannot have (playtest error class 5, caught by the
+    maintainer). Now the first look is a garment: dark, plain, hand-sewn, and
+    the only odd thing about it is that it has never been worn. After THE TALK
+    has put a robed man's hand on the PI's shoulder, the same closet reads
+    differently and the note is REWRITTEN in place rather than filed twice
+    (the new `_rewrite_note` helper). The find is the same find; what changed
+    is the man looking at it.
+
+  Cut in the same pass, all three placeholder narration that recorded nothing:
+  `scarecrow` (the [E] cue and its box gone outright, a scarecrow standing in
+  a corn row being scenery rather than an event), `worn_stone` (the headstone
+  keeps its two-line look, drops the "A weathered headstone." discovery), and
+  `backwoods_note` (the stash keeps its pickup, drops "A small stash.").
+
+- **2026-07 — Vane's menu, cut down and un-gated (the maintainer's pass on the
+  pilot).** Reviewing the gate list for Vane, the maintainer cut and reshaped:
+
+  - **The `car` question is CUT.** "We really dgaf about the car." Its fold
+    material (nothing with an engine leaves, "It's the town.") moved into the
+    town question, where it belongs: the dead engines are a symptom of what is
+    happening to Brimley, not an errand about the PI's own vehicle. The fold
+    note files from there now, and `_vane_car_told` is retired.
+  - **The town question went PRESENT TENSE** — "What's happening to this
+    town?" It was "What happened", which framed the seal as finished history
+    rather than the thing still happening to the man being asked.
+  - **The Ledger share is CUT.** The registers are Sable's thread and pay off
+    at that desk (`checkouts`); Vane's trust should turn on Mara's trail, the
+    case he is actually being asked to believe in. `share_journal` is now the
+    single share, so trust has one clear price.
+  - **The recruitment question became "Where are the cultists gathered?"**,
+    gated on THE TALK rather than the intro: the PI asks after a hand has
+    landed on his shoulder, so he is asking about them as people who are
+    *here*, not as history. Vane answers the WHERE honestly (the school, the
+    barn, the lodge, and then nothing, because he does not know) and the HOW
+    is what he withholds.
+
+  **And the rule the whole menu now follows: trust gates the ANSWER, never
+  the QUESTION.** The two trust-gated rows used to vanish from the menu until
+  earned. They are askable from the moment their situation exists, and an
+  untrusted Vane refuses them in his own voice, saying what would change his
+  mind ("Bring me something I can hold"; "Work the case. Come back and show me
+  you did"). He is written as a mistrusting man, so the mistrust should be
+  something the player *meets*, not an absence they never see. A hidden option
+  teaches nothing; a refusal is characterisation, a stated price, and a reason
+  to come back. Both rows stay askable until he has actually answered, so a
+  refusal is never a lockout, and the grant rides a `("do", ...)` at the end of
+  the trusted branch so a refusal can never arm it.
+
+  Left deliberately un-gated: the booking-slip handover on the photograph. The
+  maintainer raised whether an untrusting Vane should hand it over at all and
+  flagged the soft-lock risk in the same breath; gating it on a share would
+  have forced journal-before-slip and broken the "findable in ANY order"
+  property `DESIGN.md` §9 holds for the surface trail. The reluctance lives in
+  how he gives it instead.
+
+- **2026-07 — The story audit, and the detention night (the investigation-loop
+  pilot; `TODO.md` #1).** A story audit aimed at "make investigating feel much
+  better" measured the loop instead of describing it, and what it found was
+  that there was no loop. Of 31 authored questions across the whole cast,
+  **three** opened on something the PI had found, and two of those three were
+  the Ledger, which is not case evidence. Every `evidence_maras_*` flag was
+  read by nothing but its own re-fire guard and the derived theory/timeline.
+  Two of the three surface pieces needed no investigation at all: the journal
+  a walk-over in the barn, the record an `[E]` on a filing cabinet. So finding
+  and asking were parallel activities that never touched — the case
+  accumulated rather than compounding, and once each principal's rows were
+  spent the town went inert with nothing left to bring anyone.
+
+  The sharpest instance was the record, which had also quietly stopped
+  implementing its own design: `DESIGN.md` §9 specifies the NPC as the **warm
+  delivery** (show the photograph, they react and hand it over) with the paper
+  world-persistent as the no-soft-lock fallback. The receipt did exactly that
+  through Hettie. The record did not — and worse, **Vane's answer to Mara's
+  photograph did not mention that he had arrested her.** He takes her picture
+  to the window, works it corner to corner, and places her only as "one of the
+  new folk," about a woman he personally booked, held overnight and signed a
+  slip for four months earlier. That is `DIALOGUE.md` voice rule 5 (knowledge
+  the speaker can have) and it threw away the best investigative beat on the
+  surface.
+
+  **What shipped (the pilot, scoped to Vane on the maintainer's direction).**
+  The photograph is now a recognition: he knows the face, names the December
+  night, and goes to the files, handing the slip over mid-exchange through a
+  `("do", grant_record)` beat. `grant_record` is the single funnel both ways
+  in share, mirroring `grant_receipt`. The office records drawer is demoted to
+  the **fallback**, opening only once he is no longer the man behind the desk —
+  dead **or hollow**. The hollow case is a real hazard rather than a
+  hypothetical: the newspaper (+2) and the preacher's murder (+1) latch the
+  turn at `VANE_HOLLOW_AT`, which a player can reach before ever showing him
+  the photograph, so without the fallback that ordering would have soft-locked
+  the descent. Both are guarded.
+
+  Holding the slip then opens **`the_night`**, his account of the arrest: the
+  paper says what he wrote down, this is what he saw, and it files as a
+  **statement** note (`the_disturbance`), never counted. Its last beat leaves a
+  second witness as a plain stated fact — the man who fetched him sits the
+  square all day — and **the lead is never pointed at.** He does not say
+  Garrick, and no PI line closes the gap; connecting it is the player's, which
+  is the whole difference between investigating and collecting, and the
+  opposite move from the revisit-nudges #13b is cutting.
+
+  Also from the audit: **Mara was two different ages.** The case-file intake
+  said 26 in both its surfaces while the booking slip said `AGE: 24` on a date
+  four months before the present — in the one class of text the game asks the
+  player to read as self-evident, and the two are read side by side in the
+  Casebook. The maintainer ruled 24; the fact now has one home in
+  `NARRATIVE.md` §4 and a guard holds the intake and the slip together.
+
+  **Ruled, not built:** Sable's misdirection (he points at the cold old
+  families, Hettie says the warm ones went soonest) stays unresolved in text.
+  The audit flagged it as a gap and the maintainer ruled it deliberate and for
+  the player to notice, so it is now a standing fence in `TODO.md` against a
+  later session "fixing" it.
+
 - **2026-07 — Evidence reworked into Mara's trail (`TODO.md` #22, `DESIGN.md`
   §9, `NARRATIVE.md` §6).** The original model was a "pool of six, any 3"
   evidence set. Run against a rubric (must be Mara's, must be a pickup item,

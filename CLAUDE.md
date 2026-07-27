@@ -593,7 +593,9 @@ it renders the procedural sprites to a labelled PNG strip.
 - `ui/` — dialog, the Casebook, fonts, text input. **The Casebook is ONE
   book now (2026-07 merge):** the old split Inventory (I) + Case Notebook
   (N) were fused into `ui/journal_ui.py` (`JournalUI`), a single tabbed book
-  — **Case** (the working theory + timeline + clues + interior notes),
+  — **Case** (the PI's RUNNING NOTEBOOK: everything he has written down, in
+  the order he wrote it, paged; no index, no cards, nothing reordered or
+  overwritten, so an early wrong read stays legible next to the later one),
   **Tools** (axe, gun, keys, flashlight), **Papers** (Mara's journal +
   letter, the records, the cult testimony, the Mask). Both `I` and `N` open
   the SAME book (N lands on Case, I on Tools; pressing the ribbon you're on

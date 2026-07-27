@@ -25,7 +25,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene, chest_interact
-from .dialogue import (clerk_dialogue, _evidence,
+from .dialogue import (clerk_dialogue, _evidence, _log_note,
                        sable_on_death)
 
 
@@ -918,20 +918,62 @@ def build_clerk_room():
 
 
 def clerk_room_interact(game):
-    """The Clerk's room. CLOSET (E): the cult robe -- the PI reads it as
-    membership; the truth (NARRATIVE §4, the lucky host) is that it came
-    with the Invitation, the congregation's offer to bring him below, and
-    he never once put it on. The never-worn detail is the quiet fact a
-    player can re-read later. A one-shot flavor clue, NOT counted evidence
-    ('clerk_robe' is not in CANONICAL_EVIDENCE, so it narrates but never
-    moves the King-gate)."""
+    """The Clerk's room. CLOSET (E): the robe that came with the Invitation
+    (NARRATIVE §4, the lucky host: the congregation's offer to bring him
+    below, and he never once put it on).
+
+    It reads in TWO STAGES, because the PI cannot know what he is looking at
+    the first time. Before he has had one of them in his face, a robe is just
+    a garment: plain, dark, hand-sewn, hanging in a man's closet, and the only
+    odd thing about it is that it has never been worn. Only once the Talk has
+    happened, and he has seen what these people wear, does the same object in
+    the same closet mean something -- and the note in his book is rewritten to
+    say so. (The old single line called it "a cult robe" outright, before the
+    player had ever seen a cult: playtest error class 5, knowledge the speaker
+    cannot have.)
+
+    A case NOTE either way, never evidence: it is not Mara's, so it does not
+    touch the King-gate (NARRATIVE §6)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     cx, cy = sc._closet_pos
     if abs(px - cx) <= 40 and abs(py - cy) <= 40:
-        _evidence(game, "clerk_robe",
-                  "A cult robe hangs in the Clerk's closet, pressed and "
-                  "folded. By the creases it has never once been worn.")
+        seen_them = game.save.flag("cult_talk_given")
+        if not game.save.flag("clerk_robe_seen"):
+            game.save.set_flag("clerk_robe_seen", True)
+            game.dialog.show([
+                "[c=dim](A robe hangs alone in the Clerk's closet. Dark, "
+                "plain, hand-sewn, pressed and folded over the rail.)[/c]",
+                "[c=dim]By the creases it has never once been worn.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            _log_note(game, "clerk_robe", [
+                "A robe hanging alone in the Clerk's closet. Dark, plain, "
+                "hand-sewn, pressed and folded over the rail.",
+                "By the creases it has never once been worn. A man keeps a "
+                "thing like that for a reason he has not got around to yet.",
+            ])
+            return
+        if seen_them and not game.save.flag("clerk_robe_placed"):
+            # The second look, once he has seen one of them close enough to
+            # feel the grip. Same object, same closet; the man looking at it
+            # has changed. Rewrites the note rather than filing a second one.
+            game.save.set_flag("clerk_robe_placed", True)
+            game.dialog.show([
+                "[c=dim](The robe in the Clerk's closet. Dark, plain, "
+                "hand-sewn.)[/c]",
+                "[c=dim]I have seen one of these up close now, with a man "
+                "inside it and his hand on my shoulder.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            _log_note(game, "clerk_robe_placed", [
+                "The robe in the Clerk's closet again. I have seen one of "
+                "these up close since: a man inside it, his hand on my "
+                "shoulder, telling me to run.",
+                "Sable has had one hanging in his room the whole time I have "
+                "been under his roof. By the creases it has never once been "
+                "worn.",
+            ])
+            return
+        game.show_notice("The robe hangs where it hung. Never worn.")
         return
 
 

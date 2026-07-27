@@ -36,9 +36,16 @@ NOTE_TITLES = {
     "maras_dig":               "The Sign, in Her Hand",
     "maras_room":              "Mara's Letter",
     # Real finds that are not Mara (notes, never evidence).
+    "the_disturbance":         "The Night on the Road",
+    "the_first_one":           "The First One",
     "the_ledger":              "The Old Registers",
     "the_preacher":            "The Preacher on the Bank",
     "the_congregation":        "The Ones Who Knelt",
+    # What he concluded, written down once each as he reached it. They stay
+    # on their pages for the rest of the run, wrong ones included.
+    "theory_fold":             "The Town Won't Let Go",
+    "theory_robes":            "The Robes Run This",
+    "theory_mask":             "What the Mask Buys",
     # Revisit nudges (kept minimal now -- one pointed thought each).
     "revisit_sable_checkouts": "Back to the Desk",
     "revisit_sable_smile":     "Ask the Clerk About Her",
@@ -59,16 +66,24 @@ NOTE_TITLES = {
     "calder_table":            "Mrs. Calder's Table",
     "crane_provoked":          "The Preacher, Provoked",
     "clerk_robe":              "The Pressed Robe",
-    "worn_stone":              "The Worn Stone",
+    "clerk_robe_placed":       "The Robe, Placed",
     "bell_tower_view":         "From the Bell Tower",
-    "backwoods_note":          "The Backwoods Stash",
-    "barrow_tools":            "The Barrow",
     "lodge_candle_callback":   "Candles at the Lodge",
-    "scarecrow":               "The Scarecrow",
     "the_old_stores_shelves":  "The Old Stores",
     "threshing_floor":         "The Threshing Floor",
     "works_cistern_seen":      "The Water Below",
 }
+
+
+# Entries that render in the notebook with NO heading: the PI's own thinking,
+# as opposed to a thing he found. A conclusion he jots down is just a line in
+# the flow of the page, and giving it a title made the book say everything
+# twice ("A Resident, Not a Drifter" over "A resident, not a drifter..."). The
+# titles above still exist for these, because the corner scribble toast needs
+# a name to show when one is written.
+HEADLESS_IN_BOOK = frozenset({
+    "theory_fold", "theory_robes", "theory_mask",
+})
 
 
 def humanise(slug):

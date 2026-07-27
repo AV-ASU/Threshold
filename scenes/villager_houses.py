@@ -7,7 +7,7 @@ from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import (
-    preacher_dialogue, sheriff_dialogue, _evidence,
+    preacher_dialogue, sheriff_dialogue, grant_record,
 )
 
 
@@ -365,20 +365,22 @@ def build_sheriff_office():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
     def _office_interact(game):
+        # The records drawer is the world-persistent FALLBACK for Mara's
+        # booking slip, not the way in (NARRATIVE §6, DESIGN.md §9: the NPC
+        # is the warm delivery). While Vane is still the man behind that
+        # desk you get the slip from HIM -- show him her photograph, and the
+        # lawman who booked her goes to the files. The drawer opens only
+        # once he is gone: shot, or turned hollow. So neither killing him
+        # nor breaking him can soft-lock the descent, and an unspoken-to
+        # Sheriff never has his own case beat lifted out from under him.
+        if game.save.flag("evidence_maras_record"):
+            return
+        if not (game._local_is_dead("Sheriff") or game._vane_is_hollow()):
+            return
         rx, ry = sc._record_pos
         if abs(game.player.x - rx) > 40 or abs(game.player.y - ry) > 40:
             return
-        if game.save.flag("evidence_maras_record"):
-            return
-        game.player.inventory.add("detention_record", 1)
-        game.audio.play("pickup_rare", 0.7)
-        _evidence(game, "maras_record", [
-            "A booking slip in the Sheriff's records. Blaine, Mara.",
-            "Held a night for a disturbance on the main road, shouting at "
-            "the sky. Released at dawn, no charge filed.",
-        ], show=False)
-        if hasattr(game, "show_notice"):
-            game.show_notice("Her booking slip.")
+        grant_record(game)
     sc.on_interact_fn = _office_interact
     sc.hide_spots = []
 

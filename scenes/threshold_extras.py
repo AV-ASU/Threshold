@@ -12,9 +12,21 @@ from .dialogue import _evidence
 
 
 def _backwoods_note_pickup(game):
+    # (The "A small stash." narrator box is CUT, 2026-07: placeholder text
+    # that recorded nothing. The pickup itself is unchanged.)
     game.save.set_flag("backwoods_note_taken", True)
-    _evidence(game, "backwoods_note",
-        "A small stash.")
+
+
+# THE CHALKBOARD'S OTHER HALF. The board always said the cult's doors were
+# drawn "under a child's faded lesson"; the lesson itself was never legible,
+# so the room read as a cult set rather than as a school somebody moved into.
+# This is the surviving corner of it: a worked sum in a child's hand, and the
+# fact that they got it right. States it and stops.
+_BOARD_LESSON = (
+    "[c=dim](The chalkboard. One corner of the lesson survives under the "
+    "chalk dust: a column of addition, worked down in a child's hand, the "
+    "answer circled by the teacher.)[/c]"
+)
 
 
 def build_schoolhouse():
@@ -178,8 +190,27 @@ def build_schoolhouse():
     sc._chalk_pos = (2 * TILE + 16, 1 * TILE + 16)     # the teacher's desk
     sc._incense_pos = (12 * TILE + 16, 5 * TILE + 16)  # beside an east cot
     sc._fire_pos = (9 * TILE + 16, 4 * TILE + 16)      # the indoor campfire
+    # TOBY'S DESK, in the jumbled pile shoved into the SE corner. The one
+    # named thing in the room: a boy the player has probably already talked
+    # to owned this, and the cult stacked it out of the way to fit their
+    # cots in. An examine, no casebook write -- the name in the lid is the
+    # whole beat, and the player does the rest.
+    sc._toby_desk_pos = (11 * TILE + 16, 10 * TILE + 16)
+    sc.add_interactable(sc._toby_desk_pos[0], sc._toby_desk_pos[1], 36)
+    # A NEWCOMER'S GAS RECEIPT under a west-bank cot. A walk-over pickup (an
+    # item is a pickup, never an [E] prompt -- error class 1).
+    _rc_x, _rc_y = 3 * TILE + 16, 7 * TILE + 24
     sc.add_interactable(sc._board_pos[0], sc._board_pos[1], 44)
     sc.add_interactable(sc._fire_pos[0], sc._fire_pos[1], 36)
+
+    def _take_gas_receipt(game):
+        """A newcomer's ordinary paper. It writes NOTHING to the case
+        (maintainer, 2026-07): the receipt IS the record, and its own
+        description in Papers carries the whole of it. A note here would be
+        the PI reading the thing back to the player who just picked it
+        up."""
+        game.save.set_flag("gas_receipt_taken", True)
+        game.show_notice("A gas receipt, under a cot.")
 
     def _school_on_enter(game, scene):
         # Glimmer-mark the rite components still on offer (the woodshed
@@ -193,6 +224,12 @@ def build_schoolhouse():
         if game.save.flag("school_incense_lit"):
             scene.add_decoration(Decoration(scene._fire_pos[0],
                                             scene._fire_pos[1] - 8, "smoke"))
+        # The receipt under the cot: glimmer-marked like the rite pieces, and
+        # gone for good once taken.
+        if not game.save.flag("gas_receipt_taken"):
+            scene.add_item(_rc_x, _rc_y, "gas_receipt", 1,
+                           on_pickup=_take_gas_receipt)
+            scene.add_decoration(Decoration(_rc_x, _rc_y, "item_drop"))
         if game.save.flag("schoolhouse_seen"):
             return
         game.save.set_flag("schoolhouse_seen", True)
@@ -201,6 +238,25 @@ def build_schoolhouse():
         px, py = game.player.x, game.player.y
         save = game.save
         inv = game.player.inventory
+        # TOBY'S DESK in the shoved pile. States what is inked in the lid and
+        # stops; the PI draws no conclusion and the casebook records nothing.
+        # If the player has met the boy, the name does all of the work, and if
+        # they have not, it waits for them.
+        tx_, ty_ = sc._toby_desk_pos
+        if abs(px - tx_) < 36 and abs(py - ty_) < 36:
+            if not save.flag("toby_desk_seen"):
+                save.set_flag("toby_desk_seen", True)
+                game.dialog.show([
+                    "[c=dim](A child's desk, near the bottom of the pile. "
+                    "The lid lifts an inch before the desk above it "
+                    "stops.)[/c]",
+                    "[c=dim]Inked inside, in a careful hand that ran out of "
+                    "room: TOBY. A spelling sheet folded under it, three "
+                    "words done.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+            else:
+                game.show_notice("His desk, near the bottom of the pile.")
+            return
         # Chalk on the teacher's desk.
         cx, cy = sc._chalk_pos
         if abs(px - cx) < 36 and abs(py - cy) < 36:
@@ -286,18 +342,18 @@ def build_schoolhouse():
                 return
             if inv.has("rite_envelope"):
                 game.dialog.show([
-                    "[c=dim](The chalkboard. Under a child's faded lesson, "
-                    "the same door is drawn over and over, smaller and "
-                    "smaller, to the corner.)[/c]",
+                    _BOARD_LESSON,
+                    "[c=dim]Over it, the same door drawn again and again, "
+                    "smaller and smaller, into the corner.[/c]",
                     "[c=dim]The sequence stops one door short. The "
                     "smallest one was never drawn. The sheet in your "
                     "pocket says the air comes first.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
             game.dialog.show([
-                "[c=dim](The chalkboard. Under a child's faded lesson, the "
-                "same door is drawn over and over, smaller and smaller, to "
-                "the corner.)[/c]",
+                _BOARD_LESSON,
+                "[c=dim]Over it, the same door drawn again and again, "
+                "smaller and smaller, into the corner.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
 
@@ -423,9 +479,6 @@ def build_graveyard():
                     "[c=dim](A weather-worn headstone.)[/c]",
                     "[c=dim]The name has worn away.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
-                _evidence(game, "worn_stone",
-                    "A weathered headstone."
-                )
             else:
                 game.dialog.show([
                     "[c=dim]A worn headstone.[/c]",
@@ -1016,17 +1069,10 @@ def build_cornfield_maze():
             scene._rustle_t = random.uniform(2.5, 6.0)
             game.audio.play("breath", 0.18)
     sc.on_update_fn = _cornfield_maze_on_update
-    sc.add_interactable(sc._scarecrow_pos[0], sc._scarecrow_pos[1], 40)  # [E] cue
-
-    def _cornfield_maze_interact(game):
-        sx, sy = sc._scarecrow_pos
-        if (abs(game.player.x - sx) < 40
-                and abs(game.player.y - sy) < 40):
-            _evidence(game, "scarecrow",
-                "A scarecrow."
-            )
-            return
-    sc.on_interact_fn = _cornfield_maze_interact
+    # (The scarecrow's [E] cue and its narrator box are CUT, 2026-07: a
+    # scarecrow standing in a cornfield is scenery. Nothing happened at it,
+    # so there is nothing for the PI to say about it, and "A scarecrow." was
+    # the game clearing its throat. It stands as a prop.)
 
     # Litter in the lanes (2026-07 sound overhaul): tins dumped in lane
     # 2, and a crow posted in lane 4 that flushes screaming -- the maze

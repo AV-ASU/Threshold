@@ -428,11 +428,24 @@ What rises with the stage:
   framing line, the beats, and (2026-07) his **pose in the office
   tableau** (`_vane_tableau_state` mirrors `_vane_prompt`'s thresholds:
   despair turns him to the window, hope leans him in) — never a number). **Hope has one
-  currency:** the PI **sharing a real discovery** with him (the
-  `share_*` exchanges in `VANE_CONVO`, `_vane_share`) — the same act is
-  the **trust** that opens his investigation thread (the blind-cultist
-  *how* waits on a share, not on evidence found), so tending him and
-  earning his help are one gesture. **Despair** comes from the beats
+  currency:** the PI **sharing a real discovery** with him
+  (`share_journal` in `VANE_CONVO`, `_vane_share` — Mara's journal, the
+  case he is being asked to believe in; the Ledger share was cut 2026-07,
+  the registers being Sable's thread), so tending him and earning his help
+  are one gesture.
+
+  **Trust gates the ANSWER, never the QUESTION** (maintainer ruling,
+  2026-07). His withheld exchanges — the cult question (the blind-cultist
+  *how*) and the gun cabinet — are **askable from the moment their
+  situation exists**, and a Vane who has been given nothing simply refuses
+  them, in his own voice, saying what would change his mind. He is a
+  mistrusting man, so let him be seen mistrusting: an option greyed out of
+  the menu teaches the player nothing, while a refusal is characterisation,
+  a stated price, and a reason to come back. Both rows stay askable until
+  he has actually answered (`vane_how_told` / `vane_gave_cache` retire
+  them), so a refusal is never a lockout, and the refusal branch must never
+  fire the grant — the `("do", ...)` beat sits at the END of the trusted
+  branch only. **Despair** comes from the beats
   that read, to a man who wants it all to *end*, as permission: the
   preacher's murder (`+VANE_DESPAIR_ACT`) and the newspaper's front page
   (`+VANE_PAPER_DESPAIR` — the break lever, TODO #2; the give-beat
@@ -1357,6 +1370,20 @@ mandatory, while the underground three drove **no mechanic at all**
 (every evidence gate is ≤ 3 — cult wakes at 1, King arms at 3, rot caps
 at `min(3, evidence)`). Half the system was inert.
 
+**The notebook is a running document** (2026-07). Everything the PI writes
+down, evidence and note alike, lives in ONE continuous record read in the
+order he wrote it, and nothing in it is ever reordered or rewritten. Two
+consequences are load-bearing. His CONCLUSIONS are written once, at the moment
+he reaches them, and stay: the wrong read he is canonically allowed to keep
+(the robes are the ones who could stop this) sits on its page for the rest of
+the run instead of silently editing itself into something less wrong, so a
+player who reads the book start to finish watches a man's understanding change
+and is never told so. And there is NO derived chronology: the PI writes dates
+down as he finds them, and assembling this-then-this-then-this out of them is
+the player's work, not the book's. Underneath, `evidence` and `notes` remain
+two save lists because the King-gate counts one and must not count the other;
+a `seq` stamp carries the order, and the split never reaches the player.
+
 **Evidence is a biography, not a keypad.** The case reconstructs one
 woman's descent, and the trail has a shape: **felt it** (the journal) →
 **did it** (the dig) → **why** (the letter) → **the result** (Mara,
@@ -1383,10 +1410,31 @@ temperature though the player walks them in any order:
 The NPC is the **warm delivery** (show the photograph, they react and
 hand it over); the paper is **world-persistent**, so it outlives them
 (the Sable-drop precedent: the receipt is still on the shop spike, the
-record still in the office files, if the local is dead) — **no
-soft-lock, no looting a corpse required.** This makes Hettie, Vane, and
-Toby the load-bearing locals, and deepens three who were already
-central rather than inventing new ones.
+record still in the office files) — **no soft-lock, no looting a corpse
+required.** This makes Hettie, Vane, and Toby the load-bearing locals,
+and deepens three who were already central rather than inventing new
+ones.
+
+**The fallback is a fallback, not a second front door.** The paper opens
+only once the person can no longer hand it over — Hettie dead, Vane dead
+or **hollow** (his despair latch is reachable before the photograph ever
+comes out, so it counts). While they still stand there, the drawer and
+the spike refuse. Leave both paths live at once and the warm delivery
+becomes optional set-dressing on a pickup, which is how the record shipped
+for months: an `[E]` on a filing cabinet, liftable from a Sheriff who had
+never been spoken to and whose answer to her photograph did not mention
+the night he arrested her.
+
+**A find should open a question.** The trail is walked, and each piece of
+it is worth carrying back to the person it came from: the paper says what
+was written down, and the person says what they saw. Vane is the worked
+model at both ends — the photograph earns the booking slip, and the slip
+opens `the_night`, his account of the arrest, which is a **statement**
+(a note, never counted) and which leaves a second witness as a plain
+stated fact. **The lead is never pointed at.** He says the man who
+fetched him sits the square all day; he does not say Garrick, and no PI
+line closes the gap. Connecting it is the player's, and that act is the
+whole difference between investigating and collecting.
 
 **The secret fourth — the bear.** The private Mara, against the three
 public records. The PI is numb everywhere but soft with children, and

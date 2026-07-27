@@ -337,7 +337,7 @@ class RotMixin:
         if not getattr(self, "_sheriff_announced", False):
             self._sheriff_announced = True
             self.show_notice("Sheriff Vane stands. \"I'm supposed to tell you "
-                             "to leave, son. I can't...\"",
+                             "to leave. I can't...\"",
                              duration=3.2)
             self.audio.play("sheriff_hunt", 0.85)
 

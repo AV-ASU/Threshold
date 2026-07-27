@@ -64,6 +64,24 @@ class Save:
     def set_arg(self, key, value):
         self.data["arg"][key] = value
 
+    def next_seq(self):
+        """The next write-order number for the PI's notebook.
+
+        The Casebook is ONE RUNNING DOCUMENT (maintainer, 2026-07): things go
+        in the order he wrote them down, and nothing is ever reordered or
+        overwritten. The entries themselves still live in two lists, because
+        `evidence` is what the King-gate counts and `notes` is what it must
+        not; the ORDER is carried by this stamp instead, so the book can merge
+        the two and read as one hand writing down one case without a save
+        migration through a hundred call sites.
+
+        Entries with no stamp (a hand-built save in a harness) sort ahead of
+        the stamped ones, in their own order, which keeps every existing
+        fixture readable."""
+        n = int(self.arg("book_seq", 0)) + 1
+        self.set_arg("book_seq", n)
+        return n
+
     def visit_scene(self, scene_key):
         v = self.data["stats"]["scene_visits"].get(scene_key, 0)
         self.data["stats"]["scene_visits"][scene_key] = v + 1

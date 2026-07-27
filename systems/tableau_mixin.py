@@ -475,7 +475,7 @@ class TableauMixin:
             self._tableau["reading"] = [
                 "CLIENT: Walter Blaine. Wants his daughter found and "
                 "brought home.",
-                "MARA BLAINE, 26. Cut ties, drove north, quit calling "
+                "MARA BLAINE, 24. Cut ties, drove north, quit calling "
                 "home. The trail runs cold at Brimley.",
                 "The job: ask my questions, find the girl, drive home by "
                 "morning.",

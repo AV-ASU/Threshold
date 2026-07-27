@@ -77,6 +77,7 @@ terminal version is `python tools/index.py [word]`.
 
 ## Other
 
+- `tools/discoveries.py` — THE DISCOVERY CATALOG -- every single thing the player can find, listed.
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/preview_amalgam.py` — Preview the AMALGAMS (rendering/amalgam.py): the Watcher-family shadows
 - `tools/preview_apex.py` — Preview THE APEX (TODO #25) -- the Mask wearing a unit, in its various forms.
