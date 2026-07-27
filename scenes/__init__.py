@@ -24,11 +24,18 @@ from .interiors import (build_shop, build_toby_house, build_barn,
                         build_clearing)
 from .villager_houses import (build_church, build_sheriff_office,
                               build_abandoned_farmhouse)
-from .brimley import build_brimley
 from .hidden_folds import build_effigy_grove
 from .safe_path import (build_country_lane, build_river_road,
                         build_river_bend,
-                        build_gravel_road_north)
+                        build_gravel_road_north, build_store_row,
+                        build_chapel_row, build_south_row, build_bank_row,
+                        build_lane_end)
+from .yards import (build_shop_yard, build_school_yard, build_church_yard,
+                    build_barn_yard, build_sheriff_yard, build_farm_yard,
+                    build_toby_yard, build_calder_yard, build_royce_yard,
+                    build_garrick_yard, build_calder_house,
+                    build_royce_house, build_garrick_house,
+                    build_pell_yard, build_pell_house)
 from .lost_space import (build_lost_space, build_lost_corn,
                          build_lost_forest, build_lost_road)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
@@ -51,7 +58,6 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   lodge_cellar       -> the Arcadia cellar (the Ledger #3; the workbench)
 #   lodge_yard         -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
 #   toby_house         -> Toby's house (drawings on walls)
-#   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
 #   church             -> church (with belfry; Preacher)
 #   sheriff_office     -> the Sheriff's office (his wooden box; reused fisherman_cottage geometry)
@@ -107,8 +113,10 @@ SCENE_BUILDERS = {
     "threshold":          build_threshold,
     # Cult sites
     "abandoned_farmhouse": build_abandoned_farmhouse,  # the abandoned farmhouse
-    # The town
-    "brimley":            build_brimley,            # the unified town map
+    # The town: a STRING OF HOUSE ISLANDS on the street network. The one
+    # 60x60 square that used to be Brimley was retired in 2026-07
+    # (DESIGN.md §15) -- every household is its own yard scene off its own
+    # street, and there is no town map any more.
     # New scenes
     "schoolhouse":        build_schoolhouse,
     "graveyard":          build_graveyard,
@@ -116,6 +124,31 @@ SCENE_BUILDERS = {
     "river_road":         build_river_road,        # the I run along the water
     "river_bend":         build_river_bend,        # the L, over the bridge
     "gravel_road_north":  build_gravel_road_north,
+    # THE TOWN'S OWN STREETS: the string the house islands hang on.
+    "store_row":          build_store_row,
+    "chapel_row":         build_chapel_row,
+    "south_row":          build_south_row,
+    "bank_row":           build_bank_row,
+    "lane_end":           build_lane_end,
+    # THE YARDS (DESIGN.md §15): safe path -> yard -> house, one building
+    # each, never shared.
+    "shop_yard":          build_shop_yard,
+    "school_yard":        build_school_yard,
+    "church_yard":        build_church_yard,
+    "barn_yard":          build_barn_yard,
+    "sheriff_yard":       build_sheriff_yard,
+    "farm_yard":          build_farm_yard,
+    "toby_yard":          build_toby_yard,
+    # the three households that had no building at all
+    "calder_yard":        build_calder_yard,
+    "royce_yard":         build_royce_yard,
+    "garrick_yard":       build_garrick_yard,
+    # ...and the insides of the three, so those three have somewhere to LIVE
+    "calder_house":       build_calder_house,
+    "royce_house":        build_royce_house,
+    "garrick_house":      build_garrick_house,
+    "pell_yard":          build_pell_yard,
+    "pell_house":         build_pell_house,
     "backwoods_cabin":    build_backwoods_cabin,
     "backwoods_cabin_interior": build_backwoods_cabin_interior,
     "bell_tower":         build_bell_tower,

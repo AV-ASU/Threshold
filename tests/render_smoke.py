@@ -31,8 +31,8 @@ import pygame
 from systems.game import Game
 
 # One scene per overlay category: outdoor vignette, safe interior,
-# dim-safe/dark cellar, brimley haze/eye, cult-dark dread, creepy well.
-SCENES = ["bedroom", "lodge_cellar", "brimley",
+# dim-safe/dark cellar, the street + a yard, cult-dark dread, creepy well.
+SCENES = ["bedroom", "lodge_cellar", "store_row", "shop_yard",
           "depths_hall", "well_bottom"]
 
 

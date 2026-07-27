@@ -21,7 +21,7 @@ pygame.init()
 from systems.game import Game, TILT_PITCH_DEG, TILT_ZOOM
 from systems.look_control import LookController
 
-SCENE = "brimley"
+SCENE = "store_row"
 HEADINGS = [-90, -90 + 70, 0, 90, 150]   # up, up-right, right, down, down-left
 LABELS = ["look UP", "look UP-RIGHT", "look RIGHT", "look DOWN", "look DOWN-LEFT"]
 
@@ -31,7 +31,7 @@ def _neutralize_grade(g):
     still (the film grade / vignette / haze bury the world in twilight)."""
     import scenes.base as sb
     sb.apply_grade = lambda *a, **k: None
-    for name in ("_draw_brimley_haze", "_draw_outdoor_vignette", "_draw_dark",
+    for name in ("_draw_mask_haze", "_draw_outdoor_vignette", "_draw_dark",
                  "_draw_apex_overlay", "_draw_hidden_overlay"):
         setattr(g, name, lambda *a, **k: None)
 

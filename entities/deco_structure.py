@@ -384,7 +384,7 @@ class DecoStructureMixin:
     def _draw_news_rack(self, surf, x, y):
         """A coin-op newspaper vending box outside the shop, flat view.
         The window still shows the last issue it was ever fed; the
-        examine in brimley.py carries the January 15 date."""
+        examine on Old Pell's own siding carries the January 15 date."""
         pygame.draw.line(surf, (40, 40, 44), (x - 5, y + 6), (x - 5, y + 10), 2)
         pygame.draw.line(surf, (40, 40, 44), (x + 5, y + 6), (x + 5, y + 10), 2)
         pygame.draw.rect(surf, (102, 43, 37), (x - 7, y - 12, 14, 18))

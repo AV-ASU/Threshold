@@ -506,8 +506,10 @@ intro:" / "Opener photo:").
 
 ## The Brimley chorus — Old Pell, Mrs. Calder, Royce, Garrick
 - **Code:** `scenes/dialogue.py` `PELL_CONVO` / `CALDER_CONVO` /
-  `ROYCE_CONVO` / `GARRICK_CONVO`, `chorus_dialogue`; reactive stoop beats in
-  `scenes/brimley.py`. Locals describe **failure, never pattern** about the
+  `ROYCE_CONVO` / `GARRICK_CONVO`, `chorus_dialogue`; each is AT HOME in
+  their own house (`scenes/yards.py` `build_pell_house` / `build_calder_house`
+  / `build_royce_house` / `build_garrick_house`) and carries their reactive
+  beat there. Locals describe **failure, never pattern** about the
   roads (§4). Each carries the shared opener pair + one or two signature
   questions; the reactive stoop beats fire ahead of the menu, once each.
 
@@ -549,7 +551,7 @@ intro:" / "Opener photo:").
 - **Exchange `roads`** (files the fold note) — "Any safe way around this town?" / "Is there a safe way to move around this town? You watch it all day.": (npc) "Stay on the roads. People who go off the roads come out wrong-side of where they went in. I've watched it happen to better walkers than you." / (npc) "And don't put your faith in a road going where it went last week. Make for the county line and you'll be back at this well by supper." / (npc) "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]"
 - **Stoop beat `beat_garrick_quiet`** (after the preacher's body is found): "The reverend's gone quiet. Any other week you'd hear him clear from here, worked up over something or other." / "Nothing out of him for days now. Man spends his life raising his voice, then nothing at all." / "You go by and look in on him, son. Somebody ought to."
 
-### Hettie's stoop (the homebody at the shop step, `scenes/brimley.py`)
+### Hettie's stoop (the homebody at the shop step, `scenes/yards.py` `build_shop_yard`, via `dialogue.doorstep_voice`)
 - "Still open. Always open. The shelves don't empty anymore. Have you noticed." / "No deliveries. In a while now. But we manage. We always." / "I keep the lights on. So they know. Someone's keeping them on."
 
 ## Mara — the confrontation
@@ -1284,7 +1286,7 @@ ones landed so far:
   mud.[/c]" (the atmospheric "lectern stands empty / stove is cold" line was
   cut, play-notes; the river-mud pointer stays, it is the only in-church
   signal toward the riverbank body).
-- **the payphone** (`_brimley`): examine **CUT** (play-notes). The dead
+- **the payphone** (on the square): examine **CUT** (play-notes). The dead
   phone stays as silent set-dressing; the "you hear your own voice" beat is
   gone. No pointer or evidence was on it.
 
@@ -1295,17 +1297,21 @@ ones landed so far:
   two-line look but no longer files a "A weathered headstone." discovery;
   and the backwoods stash keeps its pickup without the "A small stash."
   box.)*
-- **the dead well** (`_brimley_interact`, first read): "[c=dim](You lean
+- **the barrow** (on the square): examine **CUT** (maintainer ruling, with
+  the three above). It is a prop, not a find; its "the edges are still
+  bright" contradiction went with it.
+- **the dead well** (`safe_path._town_square`, first read): "[c=dim](You lean
   over the lip. The shaft drops past where any water should be. No glint,
   no bottom, just cold air climbing up out of it.)[/c]" Re-read: notice
   "Cold air climbs out of the dark. No way down for you here."
-- **the news rack** (`_brimley_interact`): "A coin rack of newspapers,
+- **the news rack** (`safe_path._town_square`): "A coin rack of newspapers,
   bleached behind the scratched plastic. The county weekly." /
   "[c=dim]Dated January 15. Every copy in the stack. Nobody ever fed it
   another.[/c]"
-- **the truck radio** (the placed noisemaker, `scenes/brimley.py`): on "The
-  truck radio catches. A dead station rolls out over the street."; off "You
-  kill the radio."; silenced by the cult "The music stops dead." (The
+- **the truck radio** (the placed noisemaker on the dead pickup behind the
+  barn, `scenes/yards.py` `build_barn_yard`): on "The truck radio catches. A
+  dead station rolls out over the yard."; off "You kill the radio."; silenced
+  by the cult "The music stops dead." (The
   Cistern's pump-arm lure, `scenes/well.py`: "You knock the pump arm loose.
   The hose line begins to clank and hiss." / "You wedge the pump arm
   still." / "A hand wedges the pump arm still. The hiss dies in the line.")

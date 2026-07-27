@@ -65,14 +65,28 @@ YAWS = (0.65, 1.44, 2.36, 3.93)
 
 
 def _parse(spec):
-    """'kind' or 'kind:seed=3,ang=1.57,span=64' -> (kind, kwargs)."""
+    """'kind' or 'kind:seed=3,ang=1.57,axe=True' -> (kind, kwargs).
+
+    BOOLEANS matter here: most of the yard vocabulary is variant factories
+    switched by a flag (a mailbox that is `full`, a fence bay whose wire is
+    down, a genset that is not `running`), and the whole point of previewing
+    a kind before placing it is to see the variant the scene will actually
+    ask for. Reading `running=False` as an int used to crash the tool, which
+    meant the only variant anybody ever looked at was the default."""
     if ":" not in spec:
         return spec, {}
     kind, _, args = spec.partition(":")
     kw = {}
     for part in args.split(","):
         k, _, v = part.partition("=")
-        kw[k.strip()] = float(v) if "." in v else int(v)
+        v = v.strip()
+        if v.lower() in ("true", "false"):
+            kw[k.strip()] = (v.lower() == "true")
+            continue
+        try:
+            kw[k.strip()] = float(v) if "." in v else int(v)
+        except ValueError:
+            kw[k.strip()] = v
     return kind, kw
 
 

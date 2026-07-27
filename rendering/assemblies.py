@@ -185,6 +185,58 @@ def _woodpile(rows=5, seed=7, axe=False):
 
 # ------------------------------------------------------------- yard fence
 # Reference: split cedar posts, two or three SAGGING wire strands. One bay.
+# ------------------------------------------------------------- yard gate
+# A GATE IS NOT A GAP. The `gap` bay below is the MOUTH -- snapped wire and a
+# shoved-over post, a boundary you push THROUGH -- and it belongs where the
+# world lets go of you (DESIGN.md §13). Using it as a household's front
+# entrance says the opposite of what a kept yard is saying with everything
+# else it has: you do not walk into somebody's lot through their broken
+# fence. So the way in that a household USES is a hung leaf, and the two are
+# different objects with different meanings.
+#
+# The DIAGONAL BRACE is the tell. It runs UP from the hinge corner, which is
+# the direction that carries the leaf's weight; drawn the other way (or left
+# off) the leaf reads as a ladder lying against the posts.
+def _yard_gate(bay=33.0, seed=5, swing=0.0):
+    real = (120.0, 3.5, 44.0)
+    LEAF = bay * 0.86
+    k = LEAF / real[0]
+    THICK, TALL = real[1] * k, real[2] * k
+    HANG = bay * 0.5
+    # ONLY the hanging post belongs to the gate. The post on the other side
+    # of the opening is the next FENCE bay's, which is both what a gate
+    # actually is and what stops the catch post from floating in the model
+    # the moment the leaf swings clear of it.
+    parts = [Part(prim.prism(6, 1.25, 15.5), at=(-HANG, 0, 0), mat="cedar",
+                  name="hang_post")]
+    c, sn = math.cos(swing), math.sin(swing)
+
+    def leaf(lx, w_, h_, z0, name):
+        """A member of the leaf, placed in the LEAF's own frame and swung
+        with it, so the frame stays square however far the gate stands open."""
+        parts.append(Part(prim.box(w_, THICK, h_, z0=z0),
+                          at=(-HANG + lx * c, lx * sn, 0),
+                          yaw=swing, mat="plank", name=name))
+
+    # SAGGING OFF SQUARE: an old gate rides low at the latch end, and that
+    # droop is most of what says this one has been swung a few thousand times.
+    for i, zf in enumerate((0.12, 0.48, 0.90)):
+        leaf(LEAF * 0.5, LEAF, TALL * 0.08, TALL * zf - i * 0.18,
+             f"leaf_rail{i}")
+    for i, lx in enumerate((THICK * 0.9, LEAF - THICK * 0.9)):
+        leaf(lx, THICK * 1.8, TALL - i * 0.5, 0.0, f"leaf_stile{i}")
+    # THE DIAGONAL BRACE, and it is the tell: it runs UP from the hinge
+    # corner, the direction that carries the leaf's weight. Parts yaw about
+    # z only, so it is STEPPED -- three short boards climbing hinge-foot to
+    # latch-head, which reads as the diagonal at play size and stays a real
+    # volume instead of a painted line.
+    for i in range(4):
+        f = (i + 0.5) / 4.0
+        leaf(LEAF * f, LEAF / 4.0 * 0.82, TALL * 0.10,
+             TALL * (0.10 + f * 0.74), f"leaf_brace{i}")
+    return Assembly(*parts)
+
+
 def _yard_fence(bay=33.0, seed=3, gap=False):
     # A wire fence is WAIST HIGH. Built at 20 units its posts stood as tall
     # as the player, which reads as a stockade and made the boundary look
@@ -375,6 +427,282 @@ def _pickup_truck():
     )
 
 
+# -------------------------------------------------------------- generator
+# Reference: a period portable open-frame genset. THE CAGE IS THE SILHOUETTE
+# -- the hand-written version this replaces was a closed steel box with a
+# tank and a bulb on it, which reads as a toolbox somebody left a lamp on.
+# An open frame you can see the engine through is what says machine.
+#
+# `running` is the whole point of the prop in the yard layer (DESIGN.md §14):
+# the genset's state IS the household's, readable from the road. Lit bulb =
+# somebody is still keeping the place. The scene pairs `running=False` with
+# `broken=True`, which is what both light tables already read to stop a
+# fixture emitting, so the dark bulb and the dark ground agree.
+def _generator(running=True):
+    real = (27.0, 21.0, 22.0)
+    k = _k(real, 16.0)                 # 16 world units long
+    L, W, H = real[0] * k, real[1] * k, real[2] * k
+    TUBE = 0.8                         # the roll cage's tube
+    hx, hy = L / 2 - TUBE / 2, W / 2 - TUBE / 2
+    parts = []
+    # The engine and tank have to FILL the cage. Built lean inside a fat
+    # frame the whole prop read as an empty crate at play size -- the bars
+    # were the only thing with a lit face on them and there was nothing
+    # behind them to be bars in front of.
+    # THE CAGE. Named `frame_*` because the reference measures the frame:
+    # its outer envelope IS the 27 x 21 x 22 the catalogue quotes, and the
+    # engine and tank sit inside it.
+    for i, (sx, sy) in enumerate(((1, 1), (1, -1), (-1, 1), (-1, -1))):
+        parts.append(Part(prim.box(TUBE, TUBE, H),
+                          at=(sx * hx, sy * hy, 0), mat="steel",
+                          name=f"frame_post{i}"))
+    for z0, tag in ((0.0, "lo"), (H - TUBE, "hi")):
+        for sy in (1, -1):
+            parts.append(Part(prim.box(L, TUBE, TUBE, z0=z0),
+                              at=(0, sy * hy, 0), mat="steel",
+                              name=f"frame_rail{tag}{sy}"))
+        for sx in (1, -1):
+            parts.append(Part(prim.box(TUBE, W, TUBE, z0=z0),
+                              at=(sx * hx, 0, 0), mat="steel",
+                              name=f"frame_end{tag}{sx}"))
+    # THE ENGINE, slung inside the cage where you can see it through the bars.
+    # `rust` and not `iron`: a warm dark mass behind cold steel bars is what
+    # makes the bars read as bars.
+    parts.append(Part(prim.box(L * 0.62, W * 0.74, H * 0.46, z0=TUBE),
+                      at=(-L * 0.06, 0, 0), mat="rust", name="engine"))
+    # the air cleaner + the recoil starter, the two lumps that break the block
+    parts.append(Part(prim.cyl(r=W * 0.19, length=W * 0.26, axis="x", segs=10),
+                      at=(-L * 0.30, W * 0.16, TUBE + H * 0.36),
+                      yaw=math.pi / 2, mat="iron", name="air_cleaner"))
+    parts.append(Part(prim.cyl(r=H * 0.17, length=1.6, axis="x", segs=10),
+                      at=(L * 0.22, 0, TUBE + H * 0.26),
+                      mat="steel", name="recoil"))
+    # THE FUEL TANK, across the cage's top rails -- where a genset carries it.
+    # Red enamel, the same as the can standing beside it: in a yard where
+    # everything else is weathered wood, the fuel is the one coloured thing.
+    parts.append(Part(prim.box(L * 0.76, W * 0.72, H * 0.26,
+                               z0=H - TUBE - H * 0.26),
+                      at=(0, 0, 0), mat="enamel_red", name="tank"))
+    parts.append(Part(prim.cyl(r=0.85, length=1.0, axis="z",
+                               z0=H - TUBE - 0.1),
+                      at=(-L * 0.24, 0, 0), mat="steel", name="fuel_cap"))
+    # THE CONTROL PANEL on the +x end, with its outlets
+    parts.append(Part(prim.plate(0.7, W * 0.52, H * 0.30, z0=TUBE + H * 0.16),
+                      at=(hx - 0.5, 0, 0), mat="steel", name="panel"))
+    for i, sy in enumerate((-1, 1)):
+        parts.append(Part(prim.box(0.6, 1.5, 1.5,
+                                   z0=TUBE + H * 0.22),
+                          at=(hx - 0.1, sy * W * 0.13, 0),
+                          mat="iron", name=f"outlet{i}"))
+    # the stub muffler out the -x end
+    parts.append(Part(prim.cyl(r=1.05, length=L * 0.26, axis="x", segs=10),
+                      at=(-hx - L * 0.06, W * 0.16, TUBE + H * 0.30),
+                      mat="iron", name="muffler"))
+    # WHEELS on one end, feet on the other: somebody wheeled this out here
+    for i, sy in enumerate((1, -1)):
+        parts.append(Part(prim.cyl(r=1.6, length=0.9, axis="x", segs=10),
+                          at=(-hx, sy * (W / 2 + 0.3), 1.6),
+                          yaw=math.pi / 2, mat="iron", name=f"wheel{i}"))
+    # THE WORK LIGHT clamped to the cage, and the household's whole state in
+    # one part: lit glass, or dark glass on a genset nobody has fuelled.
+    # It is the piece the player actually reads from the road, so it is built
+    # to be seen: a stalk clear of the cage, a wide conical shade, and the
+    # bulb hanging out of its mouth where the shade cannot hide it.
+    stalk_x, stalk_y = hx - 0.4, -hy
+    parts.append(Part(prim.box(0.6, 0.6, 3.0, z0=H - 0.4),
+                      at=(stalk_x, stalk_y, 0), mat="steel", name="lamp_stalk"))
+    parts.append(Part(prim.box(2.6, 0.6, 0.6, z0=H + 2.0),
+                      at=(stalk_x - 1.3, stalk_y, 0), mat="steel",
+                      name="lamp_arm"))
+    # A CONE SHADE HID THE BULB. Under a 55-degree camera you look down INTO
+    # a lampshade, so the one part that carries the household's state was
+    # occluded by its own reflector from every facing. It is a droplight
+    # instead: a small cap with the bulb hanging BELOW and WIDER than it, so
+    # the bulb's silhouette clears the cap whichever way the view turns.
+    parts.append(Part(prim.frustum(10, 1.45, 0.55, 0.7, z0=H + 1.7),
+                      at=(stalk_x - 2.4, stalk_y, 0), mat="tin",
+                      name="lamp_cap"))
+    parts.append(Part(prim.frustum(9, 0.85, 1.5, 0.7, z0=H + 1.0),
+                      at=(stalk_x - 2.4, stalk_y, 0),
+                      mat="flame_glass" if running else "glass",
+                      name="lamp_bulb"))
+    parts.append(Part(prim.frustum(9, 1.5, 0.5, 1.0, z0=H),
+                      at=(stalk_x - 2.4, stalk_y, 0),
+                      mat="flame_glass" if running else "glass",
+                      name="lamp_glass"))
+    return Assembly(*parts)
+
+
+# --------------------------------------------------------------- fuel can
+# Reference: a NATO-pattern steel jerry can. It is a SLAB -- twice as wide
+# as it is deep -- with the tri-handle across the top, and that pair of facts
+# is the whole silhouette; a square canister at this size reads as an oil
+# drum sitting next to the machine it is supposed to feed.
+#
+# `tipped` is the yard layer's other half of the genset read: standing means
+# somebody still fuels the place, on its side and empty means nobody does.
+# Every piece is a cuboid on purpose, so lying it down is a coordinate
+# mapping rather than a second model that can drift from the first.
+def _fuel_can(tipped=False):
+    real = (13.6, 6.6, 18.5)
+    k = 8.0 / real[2]                  # 8 world units tall standing
+    L, D, H = real[0] * k, real[1] * k, real[2] * k
+    parts = []
+
+    def add(w, d, h, cx, cy, cz, mat, name):
+        """Place a cuboid by its CENTRE, upright or rolled onto its face.
+
+        Tipped is a +90 degree roll about +x: (y, z) -> (-z, y), then lifted
+        so the can rests on its wide face and centred back over its own
+        footprint. Doing it here means the ribs, the handles and the spout
+        all lie down together and none of them can be forgotten."""
+        if tipped:
+            w, d, h = w, h, d
+            cx, cy, cz = cx, -cz + H * 0.5, cy + D * 0.5
+        parts.append(Part(prim.box(w, d, h, z0=-h / 2.0),
+                          at=(cx, cy, cz), mat=mat, name=name))
+
+    body_h = H * 0.86
+    add(L, D, body_h, 0, 0, body_h / 2.0, "enamel_red", "body")
+    # the three ribs pressed down each wide face
+    for i, ox in enumerate((-L * 0.28, 0.0, L * 0.28)):
+        for j, sy in enumerate((1, -1)):
+            add(L * 0.10, 0.34, body_h * 0.78,
+                ox, sy * (D / 2.0 + 0.12), body_h / 2.0,
+                "enamel_red", f"rib{i}{j}")
+    # the raised top pressing the handles stand on
+    add(L * 0.86, D * 0.80, H * 0.05, 0, 0, body_h + H * 0.025,
+        "enamel_red", "deck")
+    # THE TRI-HANDLE: three grips in a row across the top, running across the
+    # can's depth. It is the identifying part -- a bare slab with a cap on it
+    # is a fuel TANK, not a can somebody carries.
+    for i, ox in enumerate((-L * 0.28, 0.0, L * 0.28)):
+        add(L * 0.16, D * 0.92, H * 0.07,
+            ox, 0, body_h + H * 0.09, "steel", f"handle{i}")
+    # the spout at the shoulder, capped
+    add(L * 0.17, D * 0.42, H * 0.10, L * 0.36, 0, body_h + H * 0.06,
+        "steel", "spout")
+    add(L * 0.20, D * 0.48, H * 0.05, L * 0.36, 0, body_h + H * 0.13,
+        "enamel_red", "cap")
+    return Assembly(*parts)
+
+
+# ------------------------------------------------------------- clothesline
+# Reference: a domestic T-post line. The CROSSARM is what makes it a
+# clothesline rather than two fence posts, and the washing has to hang STIFF:
+# it has been out since January and it is April (NARRATIVE §1). Frozen cloth
+# does not drape -- it stands out off the line like board, which is exactly
+# what a flat-sided box does well and what a soft draped shape would have
+# needed a primitive nobody has.
+def _clothesline(laundry=4, seed=3, small=False):
+    real = (240.0, 36.0, 84.0)
+    k = 24.0 / real[2]                 # posts 24 world units, over head height
+    SPAN, ARM, POST = real[0] * k, real[1] * k, real[2] * k
+    parts = []
+    for i, sx in enumerate((-1, 1)):
+        lean = ((seed + i) % 5 - 2) * 0.05
+        parts.append(Part(prim.box(1.6, 1.6, POST),
+                          at=(sx * SPAN / 2.0, 0, 0), yaw=lean,
+                          mat="cedar", name=f"post{i}"))
+        parts.append(Part(prim.box(1.4, ARM, 1.3, z0=POST - 2.2),
+                          at=(sx * SPAN / 2.0, 0, 0),
+                          mat="cedar", name=f"arm{i}"))
+    # THE LINES SAG, and deeper in the middle than at the ends.
+    line_y = (-ARM * 0.37, 0.0, ARM * 0.37)
+    line_z = []
+    for i, ly in enumerate(line_y):
+        z = POST - 1.6 - (1.5 if i == 1 else 1.0)
+        line_z.append(z)
+        parts.append(Part(prim.box(SPAN, 0.24, 0.24),
+                          at=(0, ly, z), mat="wire", name=f"line{i}"))
+    # WHAT IS PEGGED OUT. Rigid, slightly askew, and hung on the lines rather
+    # than floating between them -- the top of each piece sits ON its line.
+    for n in range(laundry):
+        h = (seed * 7 + n * 41)
+        li = n % len(line_y)
+        wid = (4.2 if small else 6.6) + (h % 4) * 0.9
+        drop = (6.0 if small else 10.0) + ((h >> 2) % 5) * 0.9
+        px = (n + 0.5) / laundry * SPAN - SPAN / 2.0 + ((h >> 4) % 3 - 1) * 1.2
+        parts.append(Part(
+            prim.box(wid, 0.45, drop, z0=line_z[li] - drop),
+            at=(px, line_y[li], 0), yaw=((h >> 5) % 5 - 2) * 0.06,
+            mat="wool" if n % 3 == 2 else "linen", name=f"washing{n}"))
+    return Assembly(*parts)
+
+
+# -------------------------------------------------------------- crate stack
+# Reference: rough wirebound produce crates. It is separate CRATES: the
+# courses have to step and misalign, or the stack reads as one painted box --
+# the same failure the woodpile had before its logs became logs.
+#
+# The reference measures ONE crate, so exactly one part is named `crate` and
+# the rest carry their grid position. Naming them all `crate_N` would make
+# the check measure the whole stack, which is not a thing anybody has
+# dimensions for.
+def _crate_stack(courses=3, seed=5, tarp=False, opened=False):
+    real = (20.0, 13.0, 12.0)
+    k = 14.0 / (real[2] * 3.0)         # three courses stand 14 units
+    CL, CD, CH = real[0] * k, real[1] * k, real[2] * k
+    parts = []
+    top_z = 0.0
+    for row in range(courses):
+        # the top course of an unopened stack is a single crate, so the
+        # silhouette steps in as it rises instead of running up square
+        ncol = 1 if row == courses - 1 else 2
+        for c in range(ncol):
+            h = (seed + row * 29 + c * 13)
+            x = (c - (ncol - 1) / 2.0) * (CL + 0.5) + ((h % 5) - 2) * 0.45
+            y = ((h >> 3) % 5 - 2) * 0.4
+            z = row * CH
+            yaw = ((h >> 5) % 7 - 3) * 0.045
+            name = "crate" if (row == 0 and c == 0) else f"box_r{row}c{c}"
+            if opened and row == courses - 1:
+                # THE ONE THAT GOT PULLED DOWN AND OPENED. Built in place at
+                # the top of the stack, an open crate reads as a shut one: you
+                # look down into it, its inner faces cull away, and what shows
+                # through the mouth is the crate underneath. So it comes OFF
+                # the stack -- on the ground beside it, walls low, lid leaning
+                # where somebody dropped it. That silhouette cannot be
+                # mistaken for another course.
+                gx, gy = x + CL * 0.80, y - CD * 0.55
+                for s, (bw, bd, bx, by) in enumerate((
+                        (CL, 0.7, 0.0, CD / 2 - 0.35),
+                        (CL, 0.7, 0.0, -CD / 2 + 0.35),
+                        (0.7, CD, CL / 2 - 0.35, 0.0),
+                        (0.7, CD, -CL / 2 + 0.35, 0.0))):
+                    parts.append(Part(prim.box(bw, bd, CH * 0.62, z0=0),
+                                      at=(gx + bx, gy + by, 0), yaw=yaw + 0.22,
+                                      mat="crate_pine", name=f"open_wall{s}"))
+                parts.append(Part(prim.plate(CL * 0.94, CD * 0.9, 0.7,
+                                             z0=CH * 0.62),
+                                  at=(gx - CL * 0.20, gy + CD * 0.30, 0),
+                                  yaw=yaw + 0.55, mat="crate_pine",
+                                  name="lid"))
+                continue
+            parts.append(Part(prim.box(CL, CD, CH, z0=z),
+                              at=(x, y, 0), yaw=yaw,
+                              mat="crate_pine", name=name))
+            # two slat boards proud of the long faces: the gaps between the
+            # slats are the surface, and at this size two are enough to read
+            for s, sy in enumerate((1, -1)):
+                parts.append(Part(
+                    prim.box(CL * 0.98, 0.35, CH * 0.22,
+                             z0=z + CH * (0.20 if s == 0 else 0.62)),
+                    at=(x, y + sy * (CD / 2 + 0.15), 0), yaw=yaw,
+                    mat="crate_pine", name=f"slat{row}{c}{s}"))
+        top_z = (row + 1) * CH
+    if tarp:
+        # ROPED DOWN over the top course, not draped: a taut sheet with the
+        # rope crossing it. A tarp that hangs would need cloth nobody has.
+        parts.append(Part(prim.plate(CL * 1.5, CD * 1.5, 0.5, z0=top_z),
+                          at=(0, 0, 0), yaw=0.08, mat="canvas", name="tarp"))
+        for i, sx in enumerate((-0.32, 0.34)):
+            parts.append(Part(prim.box(0.4, CD * 1.6, 0.4, z0=top_z + 0.4),
+                              at=(sx * CL, 0, 0), mat="wire",
+                              name=f"tarp_rope{i}"))
+    return Assembly(*parts)
+
+
 # A VALUE here is a finished assembly; a FUNCTION is a variant factory that
 # the draw path calls with whichever of the decoration's kwargs it declares
 # (`variant()` below). Both are equally declarative -- the factory just lets a
@@ -384,8 +712,14 @@ ASSEMBLIES = {
     "stoop": _stoop,
     "woodpile": _woodpile,
     "yard_fence": _yard_fence,
+    "yard_gate": _yard_gate,
     "lantern": _lantern(),
     "pickup_truck": _pickup_truck(),
+    # the yard layer's vocabulary (DESIGN.md §14)
+    "generator": _generator,
+    "fuel_can": _fuel_can,
+    "clothesline": _clothesline,
+    "crate_stack": _crate_stack,
 }
 
 # Built variants, keyed by (kind, the kwargs that mattered). An assembly is

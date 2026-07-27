@@ -170,6 +170,54 @@ def _light_tables():
         return "\n".join(rows)
 
 
+# ------------------------------------------------- 3b. windows tell the truth
+# THE RULE: a LIT window pane asserts that somebody is home. The fiction has
+# buildings that are empty on purpose (NARRATIVE §3 -- the school and the barn
+# the congregation walked out of, the farmhouse abandoned in its own name), and
+# warm glass on one of those quietly unsays the beat the player walks in to
+# find. In town the household's genset is already the statement of whether the
+# lights are on, so the panes are DERIVED from it (`Yard.genset`) and this
+# check is what keeps the derivation honest -- including for any yard that
+# skips the genset and would silently fall back to the outdoor "lit" default.
+# WHY THIS CHECK: the glazing used to be inferred from seamless-world
+# membership as a proxy for "is this an interior", which held right up until
+# the yards left that set; three canon-empty buildings then shipped with lit
+# panes and a silhouette passing behind the glass.
+
+
+@check("no canon-empty building ships lit windows")
+def _window_truth():
+    from scenes import SCENE_BUILDERS, load_scene
+    from scenes.terrain import _window_glass, _WINDOW_CHARS
+    rows = []
+    for key in sorted(SCENE_BUILDERS):
+        try:
+            sc = load_scene(key)
+        except Exception:
+            continue
+        if getattr(sc, "procedural", False):
+            continue
+        if not any(c in _WINDOW_CHARS for r in sc.objects for c in r):
+            continue
+        if not getattr(sc, "is_yard", False):
+            continue
+        gens = [d for d in sc.decorations
+                if getattr(d, "kind", "") == "generator"]
+        running = any((getattr(d, "kwargs", None) or {}).get("running")
+                      for d in gens)
+        want = "lit" if running else "dark"
+        got = _window_glass(sc)
+        if got != want:
+            rows.append(
+                f"    {key}: genset "
+                f"{'running' if running else 'cold (or absent)'} but the "
+                f"panes read {got!r} -- expected {want!r}")
+    if rows:
+        return ("  a yard's windows are derived from its genset "
+                "(scenes/yards.py Yard.genset), so these two disagree:\n"
+                + "\n".join(rows))
+
+
 # ------------------------------------------------------- 4. scene gate keys
 # THE RULE: the scene-gating sets in systems/config.py drive King safety,
 # darkness, storm stage, etc. A typo'd key silently gates NOTHING -- there is
@@ -534,7 +582,7 @@ def _storm_mask_not_item():
 def _address_tics():
     import re as _re
     src = {}
-    for rel in ("scenes/dialogue.py", "scenes/brimley.py", "scenes/well.py",
+    for rel in ("scenes/dialogue.py", "scenes/yards.py", "scenes/well.py",
                 "systems/rot_mixin.py", "systems/threat_mixin.py"):
         try:
             src[rel] = open(os.path.join(_ROOT, rel)).read()

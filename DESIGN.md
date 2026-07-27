@@ -177,9 +177,10 @@ its head) and pings the cult to **investigate the body**, and the body
   from_pool=True)`. On the first awake tick after a load the scene is
   PREFILLED straight to target (`_cult_prefilled`, reset per load) so it reads
   populated the moment you enter; killed cultists then respawn one at a time on
-  the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
-  **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
-  evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
+  the `CULT_TOPUP_INTERVAL` breather. The town's **streets and yards** are all
+  `CULTIST_SCENES` (§15), so the patrol walks the whole string; a scene with
+  no hand-placed anchor pool takes the default target and enters from the map
+  corners. All of it is evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
   attention finds YOU — a one-time telegraph note lands
   (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
   but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
@@ -343,8 +344,9 @@ its head) and pings the cult to **investigate the body**, and the body
   **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via
   `Scene.emit_noise` kind `"splash"`) that searchers converge on, so
   standing water is a routing risk, not just dressing. No new AI (rides
-  the existing `stealth.hear_noise` ear); the Brimley river is **excluded**
-  (not a WADE scene, keeps its own in/out rules). Water is authored per
+  the existing `stealth.hear_noise` ear); the SURFACE river is **excluded**
+  (not a WADE scene -- the safe path carries a see-over solid on every water
+  tile, so it is a barrier you cannot get into rather than water you wade). Water is authored per
   scene with the `_flood` helper (`scenes/depths.py`); guarded by
   `tests/stealth.py` §10.
 
@@ -389,8 +391,8 @@ What rises with the stage:
   settling on you, not snow, not weather. Light at stage 1, a steady
   yellow drift by stage 3.
 - **The daylight drains — the surface darkens with the stage (the storm's
-  STAGE; TODO #25, LIVE).** The outdoor world (`STORM_STAGE_SCENES`: Brimley +
-  `OUTDOOR_SCENES`) dims monotonically with the rot stage, routed through the
+  STAGE; TODO #25, LIVE).** The outdoor world (`STORM_STAGE_SCENES`, which is
+  `OUTDOOR_SCENES` -- every road, street and yard) dims monotonically with the rot stage, routed through the
   same `_draw_dark` lightmap the dim interiors use at a gloom that ramps 0 → 138
   (`STORM_DARK_GLOOM`): stage 0 is full day (early-out, byte-identical), stage 3
   is night. The civic yard-lights threading the roads (§6) become ISLANDS, and
@@ -497,12 +499,11 @@ Only display names and fiction change.
   map corners if none is defined. The scene is PREFILLED to target on the
   first awake tick after each load (`_cult_prefilled`) so it reads populated
   on entry, then refills one at a time on the `CULT_TOPUP_INTERVAL` breather.
-  All of it stays behind the `CULT_WAKE_EV` gate. **Brimley** uses
-  `cult_target = 10` over 14 anchors (9 spread + a 5-strong SE **cult camp**
-  crew, `_camp_pos`); the crew fills from the pool when the cult wakes. At ev 0
-  the camp spot is just a stand of corn (only its trees are pre-cleared so the
-  anchors + tend station stay reachable). The camp itself is raised in
-  `_raise_cult_camp` (`scenes/brimley.py` on_enter) only at 1+ evidence
+  All of it stays behind the `CULT_WAKE_EV` gate. The **cult camp**
+  (`_camp_pos`) stands in the **farm yard**, the one lot in town the newcomers
+  already hold; its crew fills from the pool when the cult wakes. The camp is
+  raised in `_cult_camp` (`scenes/yards.py`, the scene's on_enter) only at 1+
+  evidence
   (nothing at ev 0 -- the town reads normal): the **worn packed ground** is
   beaten in (corn -> dirt) and a lit `camp_fire` (a new SOLID light volume,
   distinct from the dead indoor `campfire` scorch decal) is ringed by
@@ -550,7 +551,7 @@ Only display names and fiction change.
   "Shelves are bare. Till's been empty since the new year"), and the world
   art largely landed: the shop's `bare_shelf` runs (dust-ghosts where the
   stock stood, one tin left), Hettie's storeroom preserves, garden patches
-  on some Brimley lots and not others. Still open: the domestic-horror beat
+  on some town lots and not others. Still open: the domestic-horror beat
   of a cultist eating an ordinary meal at a counter (NARRATIVE §4). Wallpaper, not a
   mechanic.
 
@@ -623,10 +624,10 @@ finds you — run it on cover, timing, and breaking their line of sight).
   Rule of thumb when touching these: every long room keeps a rooted
   enclosed hide in each half, and patrol phases are spread so no half is
   permanently clear.
-- The well sprite was redesigned and repositioned in `brimley` (the
-  eastern lodge/well square just inside the lodge-road entry — a
-  landmark just off the road; `scene._well_pos`, col 52 row 17 since the
-  60x60 redesign, TODO #18).
+- The well sprite was redesigned and now stands on **the square**, the
+  crossing outside the store on `store_row` (a landmark just off the road;
+  `scene._well_pos`, laid by `_town_square` relative to the junction rather
+  than by a tile number).
 
 **Re-audit (2026-06):** the 7-room gauntlet above matches the build
 exactly. Not tabled here but registered and reachable: three **dead-end
@@ -764,10 +765,35 @@ Built into the procedural draw layer (`scenes/base.py`,
   it, in the wall's material tint -- without it they extruded as full-tile
   near-black monoliths jutting from the thin wall line. Under tilt a slab
   scene also skips the flat full-tile window art (the 3D band + set-in pane
-  carry the read). **Window glazing reads by scene:** an interior scene's
-  panes hold flat overcast DAYLIGHT (a dim room looking out at the grey
-  sky); an exterior facade keeps the warm lit-from-within amber (the town
-  keeping its lights on, §6 lighting).
+  carry the read).
+
+  **A WINDOW PANE IS AN ASSERTION** (`Scene.window_glass`,
+  `terrain._window_glass`), and there are three of them:
+
+  | glass | what it says |
+  |---|---|
+  | `"lit"` | warm amber lit from within: **somebody is home** |
+  | `"dark"` | a dead pane, the room's dark behind it and a thin cold sheen at the top of the glass so it still reads as glass: **nobody is** |
+  | `"daylight"` | flat overcast: you are INSIDE, looking out |
+
+  A scene STATES it rather than having it inferred, because "lit" is a claim
+  about who is home and the fiction has buildings that are empty on purpose
+  (NARRATIVE §3 -- the school and the barn the congregation walked out of,
+  the farmhouse abandoned in its own name). Warm panes on one of those, with
+  a silhouette drifting behind the glass, quietly unsay the beat the player
+  walks in to find. Unstated, the fallback is the honest one: outdoors you
+  are looking at a facade, so `"lit"`; anywhere else you are inside one, so
+  `"daylight"`.
+
+  **In town it is DERIVED, not authored twice.** The household's genset is
+  already the statement of whether the lights are on -- this town runs on
+  gasoline (§15) -- so `Yard.genset` sets the panes from it: running means
+  lit, cold means dark. One source, no way for the two to disagree, the same
+  trick `running=False` already plays by also passing `broken` so the bulb
+  and the ground cannot disagree. It falls out exactly right without anybody
+  authoring it: the school, the barn, the farmhouse and Garrick's house all
+  have cold gensets, and all four now have black windows. Guarded by
+  `tests/conventions.py`.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.
@@ -994,15 +1020,14 @@ bush hides you immediately.
 
 ### Per-scene torus
 
-`brimley`, `cornfield_maze`, `cornfield_path`, and the Lodge yard
-(`lodge_yard`) all wrap on the relevant axes:
+`cornfield_maze`, `cornfield_path`, and the Lodge yard (`lodge_yard`) all
+wrap on the relevant axes. The town itself no longer wraps at all: it is a
+string of house islands on the street network (§15), and a street is a
+`SafePath` whose arms end at exits, which is the opposite of a torus. The
+wrap belongs to the CORN, which is where it always meant something.
 
-- **brimley.wrap_x** -- the cross-town fold road at row 25 loops
-  east-west. Walking off either side carries you back in on the
-  other.
-- **brimley.wrap_y** -- the perimeter forest loops north-south.
 - **cornfield_maze.wrap_x = wrap_y = True** -- corn never ends in
-  any direction. The exit tiles (^ to brimley, ! to cornfield_path)
+  any direction. The exit tiles (^ to the country lane, ! to cornfield_path)
   are the only escape, and finding them is the whole point.
 - **cornfield_path.wrap_x = wrap_y = True** -- the woods spit you out
   where you walked in.
@@ -1011,15 +1036,19 @@ bush hides you immediately.
 
 ### Cross-scene macro-loop
 
-Three direct south-chain exits close the outdoor world into one
-closed system:
+The corn belt closes the outdoor world into one closed system, and it hangs
+off the road network at ONE junction -- the country lane's south arm, which is
+the one arm the standing corn already grew up to:
 
-- **brimley** south edge ('M' tile, col 20 row 59) → cornfield_maze
-- **cornfield_maze** south ('!' tile) → cornfield_path
-- **cornfield_path** south ('S' tile) → brimley north
+- **country_lane** south arm ('4' tile) → cornfield_maze
+- **cornfield_maze** north ('^' tile) → country_lane, south ('!') →
+  cornfield_path
+- **cornfield_path** south ('S' tile) → country_lane
 
-Walking south through any of the three eventually returns the player
-to brimley north. No direction escapes.
+Walking south through the corn returns you to the lane, and the lane returns
+you to the corn. No direction escapes. The loop closes the long way round
+too: lodge yard → cornfield_path → the maze → the lane → the arrival road →
+the lodge yard.
 
 ### Seamless outdoor crossings
 
@@ -1177,8 +1206,9 @@ neighbours to resolve which way it opens. It counts windows (`i`) as part of the
 wall line and treats a building's roof (`r`) as the INTERIOR side, so a door
 flanked by lit windows on an east/west/north face still resolves correctly (not
 just the old south default). This is what lets an overworld building FRONT the
-street it sits on -- Brimley's houses face east/west/north onto the central
-spine and their access road rather than all facing south (TODO #18 follow-up).
+street it sits on -- a yard's house faces whichever way its own door is in
+(§15: which way it fronts is one of the things a yard says) rather than all
+facing south.
 
 ### Interior doors -- dividing a building into subrooms (2026-07)
 
@@ -1931,7 +1961,8 @@ against it (`tests/stealth.py` §13 guards the contract):
   props (TODO #5 lists them and what is still open).
 - **River stones are the distraction verb** (`STONE_*` config; landed
   with the pass): finite walk-over pickups scattered where the water
-  runs (both Brimley banks, the Cistern shores, the Sump ledge).
+  runs (both banks of the river run and the bend, the Cistern shores, the
+  Sump ledge).
   Right-click lobs one along the aim; the landing is a placed NOISE
   EVENT and nothing else -- no damage, no stagger, riding the existing
   ear untouched. Its loudness sits between the scout threshold and the
@@ -1946,7 +1977,7 @@ against it (`tests/stealth.py` §13 guards the contract):
     laid back down on every load). The break changes draw only:
     collision and sight are untouched, and it is never an entrance
     (the window-vault idea stays parked).
-  - **A stone down the DEAD WELL** (`WELL_ECHO_*`, `_brimley_interact`):
+  - **A stone down the DEAD WELL** (`WELL_ECHO_*`, `safe_path._town_square`):
     E at the well with a stone in pocket drops it; the knocks fall
     away, the shaft's rattle carries across the square (scout-tier,
     never a search-breaker), and **no bottom ever sounds** -- wordless
@@ -1954,8 +1985,8 @@ against it (`tests/stealth.py` §13 guards the contract):
     bottomless dread it is (NARRATIVE §5).
 - **The under-bridge hide** (`Game._tick_bridge_knocks`,
   `scene._bridge_hide_px` / `_bridge_deck_px`): a rooted enclosed hide
-  on the mud shelf at the Brimley bridge's foot, the town's exact
-  centre that everything crosses. While you are tucked under it,
+  on the mud shelf under the downstream lip of the river bend's deck, the
+  one crossing on the whole network. While you are tucked under it,
   anything walking the deck overhead KNOCKS on the planks (a
   `wood_creak` pulse + a faint screen-space dust-fall,
   `_draw_bridge_dust`). Pure DRESSING: the crossers neither know you are
@@ -2220,10 +2251,10 @@ the two roads that were already there:
 
 | scene | shape | arms | what it is |
 |---|---|---|---|
-| `country_lane` | **T** | W / E / N | the junction east of town: Brimley west, the arrival road east, the river run north. Dead corn to the shoulder on its one flank. |
-| `river_road` | **I** | S / N | a straight run north with the water off the east shoulder the whole way. Pine going black to the west. |
-| `river_bend` | **L** | S / E | the road turns east and crosses the river on the planks. |
-| `gravel_road_north` | **T** | S / N / W | Brimley south, the backwoods north, the bend west. Gravel-shouldered, pines to the kerb; keeps its boarded chop-target alcove. |
+| `country_lane` | **X** | W / E / N / S | the junction east of town: the gravel road west, the arrival road east, the river run north, and the standing corn south (the maze hangs off that arm). |
+| `river_road` | **I** | S / N | a straight run north with the water off the east shoulder the whole way. Pine going black to the west, with the hidden trunk through to the burn clearing in it, and the Preacher's remains on the bank once he is doomed. |
+| `river_bend` | **L** | S / E | the road turns east and crosses the river on the planks, with the mud shelf under the deck's downstream lip -- the network's one rooted hide, and the deck knocks overhead while you wait under it. |
+| `gravel_road_north` | **X** | S / N / W / E | the country lane south, the backwoods north, the bend west, and the town's own streets east. Gravel-shouldered, pines to the kerb; keeps its boarded chop-target alcove. |
 
 `arrival_road` is the one road that is NOT a `SafePath`, and deliberately so:
 its endless-north illusion is built from a `_render_band` + a `_treadmill` +
@@ -2235,3 +2266,198 @@ boards moved out onto the verge. (One flow guard had to change with it: the
 band-is-landmark-free check tested for "no `d` in the row", which was a valid
 proxy only while dirt appeared solely on the E-W crossing; it now tests the
 two real landmarks, a full-width dirt row and the car footprint.)
+
+---
+
+## 15. The yards -- a household without a word (TODO #26)
+
+The innermost of the three layers: **safe path -> YARD -> house**
+(`scenes/yards.py`). A yard is one household's own ground, and its whole job
+is to tell you who lives there and what they stopped doing, before you knock
+and without anybody speaking. The seal was January 15 and it is April, so
+whatever is standing in a back garden has been standing there three months.
+
+**A YARD IS A SCENE.** One building in it, a road exit on one edge and that
+building's door on the other side of the ground you cross. Not a dressed
+patch of a bigger map: the walk from the road to somebody's door is the
+layer, and it only exists if it is a place you travel to.
+`lodge_yard` and `backwoods_cabin` were already this shape;
+`yards.build_yard_scene` is that shape made general, and it hands back the
+scene together with a `Yard` bound to the building so the caller dresses it
+with the vocabulary below instead of counting tiles.
+
+**Each building gets its OWN yard. They are never shared** -- a yard is a
+household's ground, and sharing one flattens the thing the layer exists to
+say.
+
+**A yard is a PLACE, not a doorstep with a road attached.** The lot is large
+enough that the walk from the gate to the door is a walk. It is still
+deliberately SMALLER than the camera window: the black beyond the verge is
+wanted, and it is what makes a yard read as a lit clearing with nothing
+around it rather than as a room.
+
+**The grass thickens where nobody walks.** Nothing has been mown in three
+months and a lot's far corners go over first, so growth is seeded against
+distance from the house and the worn track. What stays short is exactly the
+ground the household actually crosses, which fills a big lot without unsaying
+"kept": the read is a yard somebody keeps the middle of, not a lawn.
+
+**A YARD IS NOT A SEAMLESS SCENE, and that is the shape of the layer.** A
+scene in `SEAMLESS_WORLD_SCENES` draws its neighbour's floor into the void
+past its own bounds (`terrain._draw_neighbor_strips`) and takes the overcast
+skybox. A yard left in that set paints the adjoining street's asphalt straight
+across its black rim, and an island whose edges show you the mainland is not
+an island. So `YARD_SCENES` is subtracted from the seamless set: a yard is
+outdoor (the storm darkens it, which is what lets its mouths open) but it gets
+the VOID skybox, no neighbour bleed, and a real transition on the way in and
+out. The streets stay seamless with each other, because a road does continue.
+
+**And the OUTER RING carries growth too.** The scene ends before the camera
+does and its edge dissolves into black -- which is wanted, and only works if
+there is something out there to dissolve. An edge of bare grass stopping dead
+reads as the end of a level; growth thinning into the dark reads as the world
+going on without you. Every side gets it, so the four facings agree.
+
+**EVERY EDGE THAT IS NOT THE ROAD IS A MOUTH.** A yard is the last lit ground
+before the world stops caring: the way you came is the only way that stays
+true, and walking off the back of somebody's lot in the dark drops you into
+the in-between (§13). Which field you land in is derived from the VERGE you
+pushed through -- `_VERGE_LOST`, the same rule the safe path's flanks use --
+so it is never corn on this side and pine on the other. The mouth is still
+light-gated, so at ev0 a yard's edge is the wall it has always been and it
+only lets go once the storm has darkened the surface.
+
+The chain is wired with ordinary parts, no new engine: the street is a
+`SafePath` like any other and the yard hangs off one of its ARMS, and the
+interior gets a door in a spare wall pointing at its yard. While the town map
+still stood, that was a SECOND door and the old route kept working beside the
+new one; when the map retired, the old street doors were bricked back into
+the wall (`Scene.wall_up`) and the yard door is the only way in.
+
+**The rule that makes it work is that yards DIFFER.** A vocabulary applied
+evenly says the same thing about every house in town, which is exactly what
+the layer exists not to do. So the module is thin and the authoring is per
+household: a `Yard` knows the building's footprint, which face the door is
+in, and the walkable tile just outside it, and offers the vocabulary against
+that geometry. What any one yard actually says is written out in the scene.
+
+### The vocabulary
+
+A yard PICKS from this; it never gets all of it.
+
+| piece | what it says | code |
+|---|---|---|
+| **the genset** | the fastest sentence in town, one per yard. Running: a warm work-bulb and a fuel can standing. Dead: a cold bulb and the can on its side. `running=False` also passes `broken`, which both light tables read to stop a fixture emitting, so the dark bulb and the dark ground can never disagree. | `Yard.genset` |
+| **one interrupted task, and only one** | firewood half split with the axe still in the round; washing frozen on the line since winter; the delivery crates nobody came back for; a bed turned over in autumn and never planted. | `woodpile` / `washing` / `crates` / `bed` |
+| **the mail** | deliveries stopped with the fold. Still stuffed with January's last one, or hanging open ever since. It sits on the seam where the yard meets the safe path. | `Yard.mailbox` |
+| **an occupancy tell from the ROAD** | before you commit to the path: the track worn through the dead grass or grown over, a lit window, the genset's pool at night. | the scene's `_carve_track` + the `i` window tiles |
+| **the car that will not start** | everyone drove in and nothing leaves (NARRATIVE §1). How it is PARKED is the characterisation: squared away by somebody who gave up early, or slewed at the road with the driver's door still open by somebody who tried and walked back (`door_open` on the `rust_*` kinds). | `base.dead_cars` |
+| **a boundary that is not a wall** | wire on leaning posts, or an overgrown hedge line. It reads as an edge rather than a wall, and it ENCLOSES: a run laid across the front and nowhere else is a line, not a lot, so the boundary returns up the sides. | `Yard.fence` / `Yard.hedge` |
+| **a GATE, and it is not a GAP** | the way in a household USES is a hung timber leaf (`Yard.fence(gate=...)`). The bay whose wire is DOWN (`gap=`) is a different object saying the opposite thing: a boundary pushed THROUGH, which is what a §13 mouth sits behind. Walking onto somebody's lot through their broken fence unsays everything a kept yard is saying with the rest of its pieces. | `yard_gate` / `yard_fence(gap=)` |
+| **a step** | something between the ground and the door, so going in reads as arriving. | `Yard.step` |
+| **the WRONG yard** | for a lot a newcomer took: the same vocabulary, subtly off. Crates squared away too neatly, a husk thing by the step, the door-motif chalked on the siding where the weather has nearly taken it. | `Yard.siding` + the cult dressing already on that lot |
+
+**The minimum for any yard:** a boundary, a step, one interrupted task, and
+one occupancy tell.
+
+### The placement assert
+
+Every piece goes through `Yard.put`, which refuses three tiles: the building
+itself, the door, and the door's one approach. That is playtest error class
+#8 (a prop across the way in) turned into a build-time failure instead of
+something you find by rendering four facings and noticing. `Yard.siding` is
+the one exception and has its own rule: a `_WALL_DECO` goes on the OPEN tile
+the wall faces, never on the wall tile, because a wall decoration is drawn at
+its own position and depth-sorted against the walls -- one placed on the wall
+tile sits inside the wall's own volume and is painted over by it.
+
+`terrain._wall_normal` reads which side the wall is on from the same
+neighbours. It used to answer "the nearest scene EDGE", which is right for an
+interior (a room IS the scene) and wrong for a building standing in an
+outdoor map. Local geometry wins now, ranked by the same nearest-edge key, so
+interiors resolve identically.
+
+### The town's own streets
+
+The path network grew to carry the yards. `gravel_road_north` was the only
+shipped path with a side that had no road on it, so it went from a T to an X
+and its east arm is the town turning; `store_row` is the first of the town's
+streets, an L that runs off it to the store's gate. A street GROWS as
+households land on it (an L becomes a T becomes an X), so one street ends up
+serving several doors while every yard behind it stays its own.
+
+### What each household says
+
+These read against each other; the table is the whole town.
+
+| yard | state | what it carries |
+|---|---|---|
+| church | kept, then stopped mid-sentence | genset running for a congregation that is under the ground; the axe still in the round; a hedge line into the burying ground |
+| barn | **canon-empty** (NARRATIVE §3) | the congregation's washing still frozen on the line, the genset cold with the can over, the fence trodden through where the feet went |
+| shop | occupied, lit | Hettie's genset running; the delivery crates broken open and never collected; a box she still walks out to that is always empty |
+| schoolhouse | **canon-empty** | the spring bed turned over and never planted, the fence slack, the genset cold, the calendar by the door stopped on the same day |
+| sheriff's office | occupied, failing | the ONE yard where the machine runs and the can beside it is already empty; his car slewed at the spine with the door still open |
+| farmhouse | **the wrong yard** | crates squared too neatly, a husk thing by the step, the door-motif chalked on the siding, the genset cold because whoever is here does not need light |
+| Toby's house | lived in, a child in it | the wood half split with the axe still in the block, because whose job that was went below; the one tended bed left in town |
+| Royce's house | still fighting | genset running, can already empty, the car nosed out of town and shut, ready to be tried again |
+| Mrs. Calder's house | kept, waiting | the supper table laid out in the open where the road can see it, two settings, a candle burned down, a chair over; her gate stands open |
+| Garrick's house | given up on lights | genset cold, can over; the wood he was splitting when he stopped; a hedge line older than wire |
+| Old Pell's | HELD, not interrupted | the one yard that did not stop mid-motion: it is kept exactly where he chose to stop it. Genset running, can full, and the calendar nailed on HIS siding at last. Seed crates roped and never opened, for a planting he is not going to do. The corn band is deeper here than anywhere on the string and comes right up to the lot, because he has not cut it and will not |
+
+**BRIMLEY THE SCENE IS RETIRED.** The 60x60 town map is gone: the town is
+this string of islands and nothing else. It was kept untouched, working, and
+undeleted the whole time the yards were built beside it, and then retired in
+one piece rather than eroded a building at a time -- so there was never a
+half-town. What it carried went with it, each thing to the place that owns it:
+
+| what Brimley held | where it lives now |
+|---|---|
+| the well, the barrow, the news rack, the dead payphone | **`store_row`** -- the crossing outside the store is THE SQUARE (`_town_square`), the one place in a town this size that everybody passes |
+| the planked bridge, the under-deck hide, the river stones | **`river_bend`** (`_bridge_hide`) and **`river_road`** (`_river_stones`) |
+| the Preacher's remains on the bank | **`river_road`** (`_preacher_bank`) -- he walked out of his church down the water after his flock, and this is the length of bank the road runs beside |
+| the hidden trunk through to the burn clearing | **`river_road`** (`_clearing_doorway`), in the pine flank |
+| the church door the bell calls hunters to | **`church_yard`** (`_bell_door`) |
+| the cult's camp and its tend station | **`farm_yard`** (`_cult_camp`) -- the wrong yard, whose ground the newcomers already hold |
+| the dead pickup and the gap under its bed | **`barn_yard`** -- one truck stayed where a crowd left in one direction |
+| the roaming cult, the Watchers, the storm stage | every street and yard, by set membership (`CULTIST_SCENES`, `WATCHER_OPEN_SCENES`, `STORM_STAGE_SCENES`) |
+| the four chorus locals and their reactive beats | their own houses (below) |
+| the toroidal wrap and the cross-town fold road | **nothing** -- a street's arms end at exits, which is the opposite of a torus, and the wrap now belongs to the corn where it always meant something |
+
+The buildings kept their yard doors and had their old street doors bricked
+back into the wall (`Scene.wall_up`): a leaf onto a scene nobody can reach is
+a door that does nothing, which reads as a broken building rather than a
+changed world.
+
+**PEOPLE LIVE IN HOUSES; YARDS ARE EMPTY OF THEM.** That is not an
+oversight, it is the layer's whole premise: a yard tells you about a household
+*without anybody there to say it*, and a resident standing in their own yard
+does that job for it and makes the props redundant. So every resident is
+inside their own building -- Hettie in the shop, Crane in the church, Vane in
+his office, Toby in his house, Sable at the Arcadia desk, and Mrs. Calder,
+Royce and Garrick in the three small houses below. The barn, the schoolhouse
+and the farmhouse are empty inside AND out, which is the one case where the
+yard and the interior say the same thing on purpose.
+
+**Old Pell had nothing at all.** He loitered at the schoolhouse step and it
+was never his, so the retirement left him nowhere to stand or live. He gets
+the last arm of `lane_end`, and the dead end is the right address for the man
+who stopped marking the days: past his gate the string has nothing left on
+it. His calendar came with him off the schoolhouse wall.
+
+**The one person in a yard is Hettie, and she is on her way back inside.**
+`homebody` is somebody who is INSIDE and briefly out -- she steps onto the
+shop step to sweep a step that does not get dirty, drops solid and stops
+being drawn while she is behind the door, and the shop interior holds a
+Hettie, so walking in finds her there. A store that is still open is a store
+with its keeper visible at the door, and she is the only household in town
+still performing that. It is the exception that proves the rule rather than a
+hole in it: every other yard is empty of people, on purpose.
+
+**The three small houses.** Mrs. Calder, Royce and Garrick stood on open
+ground with no building at all. The three EMPTY buildings are the wrong three
+to move them into: the schoolhouse and the barn are where the congregation
+bedded down before they went below and the farmhouse is abandoned in its own
+name (NARRATIVE §3/§4), and walking into that emptiness is a beat. So they
+got new 5x4 houses with the FACADE door `l` -- solid, closed, no interior
+modelled. The yard is what tells you about the household; the door only has
+to be a door somebody comes out of.

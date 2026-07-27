@@ -272,6 +272,35 @@ it renders the procedural sprites to a labelled PNG strip.
     channel keeps `RIVER_BANK` tiles of bank clear so the water is SEEN, and a
     crossing gets a paved deck plus a `bridge_rail` parapet down both lips.
     Ships `country_lane` (T) / `river_road` (I) / `river_bend` (L).
+  - `scenes/yards.py` — **the YARDS** (the SYSTEM is `DESIGN.md` §15):
+    **SAFE PATH → YARD → HOUSE.** A yard is the innermost of the three layers
+    and it is a **SCENE** — one building in it, a road exit on one edge and
+    that building's door on the other side of the ground you cross; never a
+    dressed patch of a bigger map. **Each building gets its own; they are
+    never shared.** Every edge that is not the road is a §13 mouth.
+    `build_yard_scene` makes the scene (footprint, door, road exit, the worn
+    track routed AROUND the house, the verge band and the lot inside it);
+    `Yard` is the vocabulary you dress that lot with, deliberately THIN and
+    authored PER HOUSEHOLD: `Yard` knows only the building's footprint, which face the door
+    is in, and the walkable tile outside it, and offers the vocabulary against
+    that geometry (`step` / `genset` / `mailbox` / `fence` / `hedge` /
+    `woodpile` / `washing` / `crates` / `bed` / `siding` / `put`). WHAT a yard
+    says is written out in the scene, because a vocabulary applied evenly says
+    the same thing about every house in town, which is the one thing the layer
+    exists not to do. **Every piece goes through `put`**, which refuses the
+    building, the door and the door's one approach, so error class #8 (a prop
+    across the way in) is a build-time failure. `siding` is the exception and
+    has the opposite rule: a `_WALL_DECO` goes on the OPEN tile the wall faces,
+    never on the wall tile, or the wall's own volume paints over it. The genset
+    is the layer's keystone (`running=False` also passes `broken`, which both
+    light tables read, so a dark bulb and dark ground can never disagree).
+    Ships ELEVEN yards on five town streets, one per household, each with
+    its resident INSIDE the building (a yard is empty of people on purpose:
+    it has to speak when nobody is there to). `shop_yard` off `store_row` is the worked chain. **Brimley is kept
+    exactly as it is** until the whole town has moved into yard scenes, then
+    retired in one piece; its ten in-scene yard dressings and three new small
+    houses are the INTERIM and go when it does. An interior served by a yard
+    gets a SECOND door pointing at it, so both routes stay live meanwhile.
   - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
     the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
@@ -884,6 +913,15 @@ section is the CODE MAP only — where each system lives:
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+  **`tools/kind.py` answers "which set is it in" for any kind** (including the
+  `ASSEMBLIES` table), so ask it rather than grepping the tables by hand.
+  **A `_WALL_DECO` goes on the OPEN tile the wall FACES, never on the wall
+  tile.** It is drawn at its own position and depth-sorted against the walls,
+  so one placed on the wall tile sits inside that wall's volume and is painted
+  over by it: correct-looking code, nothing on screen. `terrain._wall_normal`
+  reads which side the wall is on from the same neighbours (local geometry
+  first, the nearest-scene-edge rule only as a fallback, so an outdoor building
+  and an interior both resolve).
   **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
   `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius
   `Scene.lit_at` reads — the Watcher spawn/burn gate and the lost-edge gate;
@@ -1138,14 +1176,17 @@ section is the CODE MAP only — where each system lives:
   boots a game, drives scene hooks, asserts story beats. It also carries
   **canon-guards** (e.g. the dream note must say "a year" and contain no
   recurrence language). Keep it green; add a guard when you lock a canon fact.
-- **Watch for stale refs from the village→brimley merge.** Scene keys, the
-  well position (`scene._well_pos`, col 52 row 17 since the 60x60 redesign,
-  TODO #18), and NPC names changed — the Kid is **Toby** (sprite/portrait/
-  dialogue kind `toby`), not "Village Kid". **Brimley is 60x60 now** (a full
-  reshape at the same content density; the square + torus wrap + fog rim all
-  stay). Nothing in the town sits where the old 100x100 code put it, so a
-  hard-coded brimley tile coordinate in another file is a red flag: read the
-  scene, don't trust a remembered spot.
+- **THERE IS NO TOWN MAP.** The one 60x60 `brimley` scene was retired in
+  2026-07 (`DESIGN.md` §15): the town is a **string of house islands** on the
+  street network — each household its own yard scene off its own street, each
+  resident inside their own building. So there is no scene to hold a
+  cross-town coordinate, and a remembered "brimley tile" is a red flag twice
+  over. The public fixtures live where the layer put them: the well, the
+  barrow, the news rack and the payphone on **the square**
+  (`safe_path._town_square`, on `store_row`); the bridge hide on `river_bend`;
+  the Preacher's remains and the clearing's hidden trunk on `river_road`; the
+  bell door on `church_yard`; the cult camp on `farm_yard`. NPC names: the Kid
+  is **Toby** (sprite/portrait/dialogue kind `toby`), not "Village Kid".
 - **Previewing visuals headlessly:** render to PNG/GIF with
   `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` + Pillow (installable) and
   send with the file tool. For whole-screen cutscenes, step

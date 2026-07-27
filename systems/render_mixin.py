@@ -282,12 +282,17 @@ class RenderMixin:
                        (int(p["x"]), int(p["y"]), sz, sz))
         self.screen.blit(layer, (0, 0))
 
-    def _draw_brimley_haze(self):
-        """Atmospheric overlay. Brimley and alter_room always run the
-        outdoor haze + vignette. EVERY OTHER SCENE also runs the
-        outdoor haze + vignette while the player is carrying the Pallid
-        Mask -- His face is the hostile object now (DESIGN.md §4: the Mask
-        is the temptation and it draws Him), so the world dims around it."""
+    def _draw_mask_haze(self):
+        """THE MASK'S OWN WEATHER. Any scene the player carries the Pallid
+        Mask through runs the haze + vignette: His face is the hostile object
+        (DESIGN.md §4, the Mask is the temptation and it draws Him), so the
+        world dims around it wherever it is carried.
+
+        It used to double as the one town scene's permanent daytime haze;
+        that scene is retired (DESIGN.md §15) and the town's streets and
+        yards take their atmosphere from the storm stage and the outdoor
+        vignette like every other outdoor scene, so the Mask is now the only
+        thing that raises this."""
         if self.scene is None:
             return
         key = self.scene.key
@@ -298,17 +303,7 @@ class RenderMixin:
             return
         holds_mask = (self.player is not None
                      and self.player.inventory.has("pallid_mask"))
-        if key == "brimley":
-            # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
-            # The "too dark" read was a flat black tint stacked on the
-            # blind-spot fog, the film grade, AND the grade's own vignette.
-            # Now that the sight fog is shadow-cast (off-cone reads as a shaped
-            # shadow, not a flat gray wash), the flat tint can come almost all
-            # the way down so the LIT cone reads as full day. Keep the drifting
-            # fog patches + the encroaching vignette for mood.
-            self._draw_haze(26, (40, 40, 50, 70), 14, 24, 0.3, 30)
-            self._draw_vignette()
-        elif holds_mask:
+        if holds_mask:
             # The Mask's presence is HOSTILE -- His face draws Him, the world
             # dims hard around it. This heavier dim is intentional.
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
@@ -368,7 +363,7 @@ class RenderMixin:
 
     def _draw_outdoor_vignette(self):
         """Soft, always-on player-centred vignette for OUTDOOR_SCENES.
-        Wider clear hole and lower peak alpha than the brimley
+        Wider clear hole and lower peak alpha than the Mask haze's
         vignette -- doesn't oppress, just keeps the corners of the
         screen unsafe. Pursuer proximity tightens the hole over time:
         the world literally narrows as the threshold closes."""
@@ -905,7 +900,7 @@ class RenderMixin:
                    sway_y_amt):
         """Reusable haze helper: a flat black tint at `base_alpha` plus
         `fog_n` drifting translucent SQUARE patches tinted `fog_rgba`.
-        Used by the brimley overlay with different parameters."""
+        Used by the Mask haze overlay."""
         cache = self._haze_cache
         if base_alpha:
             dim = cache.get(("dim", self.screen.get_size()))
@@ -2071,7 +2066,7 @@ class RenderMixin:
         # MAX_FULLSCREEN_DARK. The player's feet stay readable even
         # when hide + apex stack.
         self._overlay_dark_used = 0
-        self._draw_brimley_haze()
+        self._draw_mask_haze()
         self._draw_dark()
         self._draw_emissive_signs()
         self._draw_sight_fog()

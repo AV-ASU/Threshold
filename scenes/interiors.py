@@ -10,7 +10,7 @@ from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import toby_dialogue, hettie_dialogue, _evidence, grant_receipt
 def build_clearing():
-    """THRESHOLD: the clearing. A small open glade off the brimley river
+    """THRESHOLD: the clearing. A small open glade off the river
     bank: a cold fire pit at its centre, cordwood, hung robes, effigy dolls
     on the charred edge, crows in the tree line. The scene is kept because
     `is_clearing` is load-bearing for the flashback and patrol systems.
@@ -71,11 +71,13 @@ def build_clearing():
     # a tended ritual site, not a one-prop display.
     sc.add_furniture("firewood", [(2, 6)], w=44, h=24)
     sc.add_furniture("firewood", [(15, 6)], w=44, h=24)
-    # The clearing's south threshold leads back to the brimley river
+    # The clearing's south threshold leads back to the river road's
     # bank (where the entrance is).
-    sc.add_exit("j", "brimley", "from_clearing")
-    sc.set_spawn("default",        9, 11)
-    sc.set_spawn("from_brimley", 9, 11)
+    # The way back out is the pine flank of the river road, where the
+    # hidden doorway in the treeline came through (DESIGN.md §15).
+    sc.add_exit("j", "river_road", "from_clearing")
+    sc.set_spawn("default",          9, 11)
+    sc.set_spawn("from_river_road",  9, 11)
 
     # The dead fire pit at centre -- scaled up so it reads as a gathering
     # fire rather than a campsite. Scrap around it.
@@ -150,7 +152,7 @@ def build_shop():
         "W....W.........W",   # 2  office door (col 10, a SIDE wall)
         "WW.WWW....W....W",   # 3  pantry<->stockroom door (col 2)
         "W....W....WWWWWW",   # 4  stockroom | shop | office SW corner (col 10)
-        "W..............W",   # 5  stockroom door (col 5, a SIDE wall)
+        "W..............F",   # 5  stockroom door (col 5); F = out to the yard
         "W....W.........W",   # 6  stockroom | shop
         "W....W.........W",   # 7
         "WWWWWW.........W",   # 8  stockroom S wall closes its SE corner (col 5)
@@ -169,9 +171,19 @@ def build_shop():
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
-    sc.add_exit("D", "brimley", "from_shop")
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("D") == 1
+    # THE YARD DOOR (DESIGN.md §15). The store's own ground is a scene now,
+    # off the store row, and it needs its own way in: a second door in the
+    # east wall, opening onto the yard. The south `D` still goes to Brimley
+    # and stays until Brimley is retired, so both routes are live and each
+    # returns you where you came from.
+    sc.add_exit("F", "shop_yard", "from_shop")
     sc.set_spawn("default", 8, 10)
-    sc.set_spawn("from_brimley", 8, 11)      # one tile north of the D door
+    sc.set_spawn("from_shop_yard", 14, 5)    # one tile west of the F door
 
     # The three interior doors (2026-07), a nested chain + one nook, deliberately
     # NOT all in the same wall: the stockroom and office doors sit in SIDE (N-S)
@@ -359,7 +371,7 @@ def build_shop():
     sc.hide_spots = []
     return sc
 def build_barn():
-    """Small barn on the brimley east bank, divided (#4c) into a front working
+    """The barn, off the chapel row (its yard is barn_yard), divided (#4c) into a front working
     bay, an open sleeping-floor dormitory, and an enclosed back workroom, split
     by two plank inner doors. Holds Mara's journal
     (a surface trail beat) behind the workbench, and a boarded-over hatch where a
@@ -380,15 +392,23 @@ def build_barn():
         "W..............W",   # 8
         "W..............W",   # 9
         "W..............W",   # 10
-        "WWWWWWWWWWWWWWWW",   # 11
+        "WWWWWWWWFWWWWWWW",   # 11
     ]
     sc = Scene("barn", floor, objects, music="home")
-    # Barn now sits deep south-east on the brimley east bank.
-    sc.add_exit("n", "brimley", "from_barn")
+    # The barn's outdoors is its own yard scene (DESIGN.md §15).
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("n") == 1
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "barn_yard", "from_barn")
     # The workbench (Mara's journal) and the boarded hatch both sit in the
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
-    sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
+    sc.set_spawn("from_barn_yard", 8, 10)
 
     # #4c -- the barn reads as a divided working building now, not one open
     # box + a back stall. A row-5 partition splits the upper floor into a
@@ -573,17 +593,25 @@ def build_toby_house():
         "W....W.......W",   # 2
         "W............W",   # 3  curtain doorway in the partition (col 5)
         "W....W.......W",   # 4
-        "WWWWWW.......W",   # 5  closet sealed off below
+        "WWWWWW.......F",   # 5  closet sealed off below
         "W........K...W",   # 6  K = Toby
         "W............W",   # 7
         "W............W",   # 8
         "WWWWJWWWWWWWWW",   # 9  J = exit door back to the field
     ]
     sc = Scene("toby_house", floor, objects, music="home")
-    # Kid's house now sits middle-south on the brimley east bank.
-    sc.add_exit("J", "brimley", "from_toby_house")
+    # Toby's house fronts the bank row; its outdoors is toby_yard.
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("J") == 1
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "toby_yard", "from_toby_house")
     sc.set_spawn("default", 8, 7)
-    sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
+    sc.set_spawn("from_toby_yard", 12, 5)
     # The closet doorway (#4c): a maroon CURTAIN across the col-5 partition gap
     # (row 3), the gentlest leaf in the set -- this is the refuge (a SAFE_SCENE),
     # and a drape over a child's closet nook fits a kid's room where a plank door

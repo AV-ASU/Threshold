@@ -138,12 +138,12 @@ def main():
     # set-dressing. The descent is the physical mine SHAFT now (2026-07),
     # gated UPSTREAM (the Invitation + the school rite), never a rift
     # re-gated at the grove -- so the grove carries no 'O' descent fold.
-    g.load_scene_now("brimley")
+    g.load_scene_now("store_row")
     ready(g)
     wx, wy = g.scene._well_pos
     g.player.x, g.player.y = wx, wy
     g.scene.on_interact_fn(g)
-    check(g.save.flag("well_examined") and g.scene.key == "brimley",
+    check(g.save.flag("well_examined") and g.scene.key == "store_row",
           "well: demoted to dread set-dressing (no descent)")
     ready(g)
     clerk_dialogue(g, None)
@@ -724,12 +724,30 @@ def main():
                  "liquor_crate", "polaroid"):
         check(dead not in ITEM_DEFS and dead not in _DISPATCH,
               f"cleanup: '{dead}' has no item def or icon")
-    # --- 13. The Brimley escape gates on the Sign alone (no car keys) ---
+    # --- 13. BRIMLEY THE SCENE IS RETIRED (DESIGN.md §15) ---------------
+    # The town is a STRING OF HOUSE ISLANDS on the street network now: every
+    # household is its own yard scene off its own street, and there is no
+    # one town map. The guard is that it cannot come back by accident --
+    # neither the module nor the registry key.
     import inspect
-    from scenes import brimley as _ml
-    src = inspect.getsource(_ml.build_brimley)
-    check("car_keys" not in src,
-          "escape: the car no longer checks for car_keys")
+    import importlib
+    from scenes import SCENE_BUILDERS as _SB13, load_scene as _ld13m
+    check("brimley" not in _SB13,
+          "geo: no brimley scene key is registered")
+    try:
+        importlib.import_module("scenes.brimley")
+        _brimley_module = True
+    except ImportError:
+        _brimley_module = False
+    check(not _brimley_module, "geo: the brimley module is gone")
+    _dangling = sorted(
+        "%s -> %s" % (_k, _t)
+        for _k in _SB13
+        for _t in {_v[0] for _v in _ld13m(_k).exits.values()}
+        if _t not in _SB13)
+    check(not _dangling,
+          "geo: no exit anywhere points at an unregistered scene"
+          + (" -- " + "; ".join(_dangling[:4]) if _dangling else ""))
 
     # --- 13b. The SPREAD car lives on the ARRIVAL ROAD west of the lodge ---
     # The dead car (and the escape) moved off brimley onto the looping arrival
@@ -771,8 +789,6 @@ def main():
     check(_road.h >= 30,
           "geo: the road is taller than a screen so the south landmarks stay "
           "off-frame from the looping band (you never see two cars at once)")
-    check("_car_pos" not in inspect.getsource(_ml.build_brimley),
-          "geo: the car is gone from brimley (consolidated at the lodge)")
     gr = new_game()
     gr.load_scene_now("arrival_road")
     ready(gr)
@@ -792,8 +808,6 @@ def main():
           "geo: the lodge yard has the woodshed door (west of the lodge)")
     check(_shed.exits.get("h", (None,))[0] == "lodge_yard",
           "geo: the woodshed exits back into the lodge yard")
-    check("_shed_door_pos" not in inspect.getsource(_ml.build_brimley),
-          "geo: brimley no longer hosts the woodshed door (consolidated)")
     gw = new_game()
     gw.load_scene_now("lodge_yard")
     ready(gw)
@@ -1021,7 +1035,7 @@ def main():
     # The fire path itself: the round is friendly, NOT cult-only (so it can
     # reach a local), and its stun_only flag tracks the evidence gate live.
     gg = new_game()
-    gg.load_scene_now("brimley")
+    gg.load_scene_now("store_row")
     ready(gg)
     gg.player.inventory.add("pistol", 1)
     gg.player.inventory.add("pistol_ammo", 9)
@@ -1180,13 +1194,16 @@ def main():
     # lives in the ask verb (TODO #1 chorus): Royce's roads exchange (and
     # Garrick's warning) file the PI's note ONCE, named to the teller,
     # and only when actually ASKED -- earned, not ambient.
+    # Each of them is at home in their own house now (DESIGN.md §15), so
+    # the two halves of this run in the two houses rather than in one town.
     gf2 = new_game()
-    gf2.load_scene_now("brimley", "default")
+    gf2.load_scene_now("royce_house", "default")
     ready(gf2)
     _royce = next((n for n in gf2.scene.npcs if n.name == "Royce"), None)
-    _garrick = next((n for n in gf2.scene.npcs if n.name == "Garrick"), None)
+    _garrick = next((n for n in _ld13m("garrick_house").npcs
+                     if n.name == "Garrick"), None)
     check(_royce is not None and _garrick is not None,
-          "fold: the fold-mentioning locals are present")
+          "fold: the fold-mentioning locals are each at home")
     _evp = gf2._evidence_count()
     # Drive the REAL path: greet floats, the menu opens, the PI picks
     # "What do the roads do?", and the exchange files the note.
@@ -2214,38 +2231,52 @@ def main():
     check(len(_rask[2]) == 2,
           "chorus: Royce's counter-question is a real two-way ask")
 
-    # The LIVE wiring: the brimley scene's four chorus locals all open a
-    # conversation, and a reactive beat (Garrick clocking the pulpit
-    # going quiet) still volunteers ahead of the menu, once. The unnamed
+    # The LIVE wiring: the four chorus locals all open a conversation, and a
+    # reactive beat (Garrick clocking the pulpit going quiet) still
+    # volunteers ahead of the menu, once. EACH IS AT HOME IN THEIR OWN HOUSE
+    # (DESIGN.md §15) -- people live in houses, and a yard is what tells you
+    # about a household when nobody is there to say it. The unnamed
     # "newcomer woman" NPC is CUT from the project (maintainer call,
-    # 2026-07); nobody unnamed stands in Brimley.
+    # 2026-07); nobody unnamed stands anywhere in town.
+    _CHORUS_HOMES = (("Old Pell", "pell_house"),
+                     ("Mrs. Calder", "calder_house"),
+                     ("Royce", "royce_house"),
+                     ("Garrick", "garrick_house"))
     gch = new_game()
-    gch.load_scene_now("brimley")
-    for _nm in ("Old Pell", "Mrs. Calder", "Royce", "Garrick"):
-        _lp = next(n for n in gch.scene.npcs
-                   if getattr(n, "name", "") == _nm)
+    for _nm, _home in _CHORUS_HOMES:
+        gch.load_scene_now(_home)
+        _lp = next((n for n in gch.scene.npcs
+                    if getattr(n, "name", "") == _nm), None)
+        check(_lp is not None, f"chorus: {_nm} is at home in {_home}")
+        if _lp is None:
+            continue
         gch.player.x, gch.player.y = _lp.x + 20, _lp.y
         ready(gch)
         gch._convo = None
         _lp.dialogue_fn(gch, _lp)
         check(getattr(gch, "_convo", None) is not None and gch._convo.active,
-              f"chorus: {_nm} opens the organic conversation in brimley")
+              f"chorus: {_nm} opens the organic conversation at home")
         gch._convo.active = False
         gch._convo = None
         gch.float_speech.active = False
-    check(not any(getattr(n, "name", "") == "A woman"
-                  for n in gch.scene.npcs),
-          "chorus: the cut newcomer woman never spawns in brimley")
-    # Homebody vanish only where the door doesn't lie: Old Pell keeps his
-    # step (the schoolhouse behind him is enterable + empty), Hettie still
-    # ducks into her shop (whose interior holds a Hettie). Guards the
+    _unnamed = sorted({_k for _k in _SB13
+                       for _n in _ld13m(_k).npcs
+                       if getattr(_n, "name", "") == "A woman"})
+    check(not _unnamed,
+          "chorus: the cut newcomer woman never spawns anywhere")
+    # The homebody vanish, and the one door it is honest behind: Hettie
+    # steps out of her shop to sweep and ducks back in, and the shop
+    # interior holds a Hettie, so walking in finds her there. Guards the
     # "walked into a building, nobody there" consistency fix.
-    _pell = next(n for n in gch.scene.npcs if n.name == "Old Pell")
-    check(getattr(_pell, "_hb_vanish", True) is False,
-          "homebody: Old Pell never vanishes (empty schoolhouse behind him)")
-    _het = next((n for n in gch.scene.npcs if n.name == "Hettie"), None)
-    check(_het is not None and getattr(_het, "_hb_vanish", None) is True,
-          "homebody: Hettie still ducks into her shop (interior holds a Hettie)")
+    _het = next((n for n in _ld13m("shop_yard").npcs
+                 if getattr(n, "name", "") == "Hettie"), None)
+    check(_het is not None and _het.movement == "homebody"
+          and getattr(_het, "_hb_vanish", True) is True,
+          "homebody: Hettie ducks into her shop (interior holds a Hettie)")
+    check(any(getattr(n, "name", "") == "Hettie"
+              for n in _ld13m("shop").npcs),
+          "homebody: and the shop she ducks into really does hold one")
+    gch.load_scene_now("garrick_house")
     gch.save.set_flag("preacher_doomed", True)
     gch.save.set_flag("preacher_body_seen", True)   # C10: Garrick's beat gates on the body found
     _gar = next(n for n in gch.scene.npcs if n.name == "Garrick")
@@ -2440,10 +2471,10 @@ def main():
     # Pell's ripple: the stoop line flips from the stopped calendar to
     # the marked one (he would contradict himself otherwise).
     g9 = new_game()
-    g9.load_scene_now("brimley")
+    g9.load_scene_now("pell_house")
     ready(g9)
     _pell9 = next((n for n in g9.scene.npcs if n.name == "Old Pell"), None)
-    check(_pell9 is not None, "paper: Old Pell stands in Brimley")
+    check(_pell9 is not None, "paper: Old Pell is at home at the end of the lane")
     if _pell9 is not None:
         g9.save.set_arg("evidence", [{"name": "p9", "content": "x"}])
         g9.save.set_arg("paper_given", "pell")
@@ -2669,11 +2700,12 @@ def main():
         ga.load_scene_now(scene)
         return ga._ashfall_target()
 
-    check(_ash("brimley", 0) == 0,
+    check(_ash("store_row", 0) == 0,
           "ashfall: stage 0 air is clean (no evidence, no ash)")
-    check(_ash("brimley", 1) > 0 and _ash("brimley", 3) > _ash("brimley", 1),
+    check(_ash("store_row", 1) > 0
+          and _ash("store_row", 3) > _ash("store_row", 1),
           "ashfall: density climbs with the evidence stage")
-    check(_ash("works_scriptorium", 3) > _ash("brimley", 3),
+    check(_ash("works_scriptorium", 3) > _ash("store_row", 3),
           "ashfall: thicker underground (nearer the source)")
     check(_ash("threshold", 3) == 0,
           "ashfall: never on the Threshold (the still eye of it)")
@@ -2786,16 +2818,19 @@ def main():
     # Both place settings stand for the whole run: Mrs. Calder never joins
     # and never stops waiting, before AND at the old descent-line peak.
     g0 = new_game()
-    g0.load_scene_now("brimley")
+    g0.load_scene_now("calder_yard")
     check(sum(1 for d in g0.scene.decorations
               if getattr(d, "kind", "") == "place_setting") == 2,
           "calder: both settings stand at 0 evidence")
     gc = new_game()
     gc.save.set_arg("evidence", ["e0", "e1", "e2"])   # stage 3 (the old peak)
-    gc.load_scene_now("brimley")
+    gc.load_scene_now("calder_yard")
     check(sum(1 for d in gc.scene.decorations
               if getattr(d, "kind", "") == "place_setting") == 2,
           "calder: both settings STILL stand at stage 3 (she keeps waiting)")
+    # She is INSIDE, at her own table; the settings are the thing the yard
+    # says about her while she is not out in it (DESIGN.md §15).
+    gc.load_scene_now("calder_house")
     _cal = next((nn for nn in gc.scene.npcs
                  if getattr(nn, "name", "") == "Mrs. Calder"), None)
     check(_cal is not None and getattr(_cal, "sprite_kind", "") != "cultist"
@@ -2856,7 +2891,7 @@ def main():
     # it may ever inflate the evidence count (the five canonical beats are
     # locked), and all of it holds the no-dash + no-cosmology rules.
     gb = new_game()
-    gb.load_scene_now("brimley")
+    gb.load_scene_now("garrick_house")
     ready(gb)
     shown = []
     _orig_show = gb.dialog.show
@@ -2866,7 +2901,16 @@ def main():
         return _orig_show(pages, *a, **k)
     gb.dialog.show = _spy
 
+    # Each local is at home in their own house now (DESIGN.md §15), so the
+    # walk through the four beats is a walk through the four houses.
+    _HOMES = {"Garrick": "garrick_house", "Old Pell": "pell_house",
+              "Mrs. Calder": "calder_house", "Royce": "royce_house"}
+
     def _local(nm):
+        if gb.scene.key != _HOMES[nm]:
+            gb.load_scene_now(_HOMES[nm])
+            ready(gb)
+            gb.dialog.show = _spy
         return next((nn for nn in gb.scene.npcs
                      if getattr(nn, "name", "") == nm), None)
 
@@ -2890,14 +2934,14 @@ def main():
         gb.float_speech.active = False
         ready(gb)
     else:
-        check(False, "react: Garrick present in brimley")
+        check(False, "react: Garrick is at home")
     gb.save.set_arg("evidence", [{"key": "a", "weight": 0.05},
                                  {"key": "b", "weight": 0.05}])
     for nm, tell in (("Old Pell", "coal dust"), ("Mrs. Calder", "unlatched"),
                      ("Royce", "throat")):
         _n = _local(nm)
         if _n is None:
-            check(False, f"react: {nm} present in brimley")
+            check(False, f"react: {nm} is at home")
             continue
         _n.dialogue_fn(gb, _n)
         check(any(tell in p for p in shown),
@@ -3263,7 +3307,8 @@ def main():
     from scenes import load_scene as _ld2, SCENE_BUILDERS as _SB2
     for _key in ("well_passage", "works_cistern", "works_sorting",
                  "works_scriptorium", "works_sign", "depths_antechamber",
-                 "depths_procession", "depths_hall", "brimley"):
+                 "depths_procession", "depths_hall", "river_bend",
+                 "barn_yard", "calder_yard"):
         check(len(_ld2(_key).hide_spots) >= 1,
               f"hides: {_key} has an enclosed hide")
     _bad_spots = []
@@ -3288,7 +3333,7 @@ def main():
     # reactive stoop beat gates on 2+ evidence, so a fresh game goes
     # straight to the conversation.)
     gfs = new_game()
-    gfs.load_scene_now("brimley", "default")
+    gfs.load_scene_now("royce_house", "default")
     for _ in range(20):
         gfs.state = "playing"
         gfs.step(1 / 30.0)
@@ -3426,7 +3471,7 @@ def main():
 
     # --- 28. THE TALK: the first cult grab is a warning, not a capture ---
     gt2 = new_game()
-    gt2.load_scene_now("brimley")
+    gt2.load_scene_now("store_row")
     ready(gt2)
     _tshown = []
     _torig = gt2.dialog.show
@@ -3662,12 +3707,12 @@ def main():
 
     # --- 29. NPC jobs: a worker walks his stations (the JOBS layer) ---
     gj = new_game()
-    gj.load_scene_now("brimley")
+    gj.load_scene_now("shop")
     ready(gj)
-    _gar = next((n for n in gj.scene.npcs if n.name == "Garrick"), None)
+    _gar = next((n for n in gj.scene.npcs if n.name == "Hettie"), None)
     check(_gar is not None and _gar.movement == "worker"
           and len(getattr(_gar, "stations", [])) >= 2,
-          "jobs: Garrick carries a personal station route")
+          "jobs: Hettie carries a personal station route")
     _visited = set()
     for _ in range(1500):                    # ~2.5 sim minutes
         _gar.update(0.1, gj.scene, gj.player)
@@ -3711,11 +3756,11 @@ def main():
     check(gpr.save.flag("church_empty_seen")
           and not gpr.save.flag("preacher_body_seen"),
           "river: the emptied church never counts as finding him")
-    gpr.load_scene_now("brimley")
+    gpr.load_scene_now("river_road")
     ready(gpr)
     _pb = next((n for n in gpr.scene.npcs
                 if getattr(n, "tag", "") == "preacher_body"), None)
-    check(_pb is not None, "river: the remains lie on the brimley bank")
+    check(_pb is not None, "river: the remains lie on the river road's bank")
     _bx, _by = gpr.scene._preacher_bank_pos
     gpr.player.x, gpr.player.y = _bx + 60, _by
     gpr.scene.update(1 / 30.0, gpr)
@@ -3729,7 +3774,7 @@ def main():
                       for e in gpr.save.arg("notes", [])),
               "river: the cross lands + the death files a NOTE, never evidence")
     _gnb = new_game()
-    _gnb.load_scene_now("brimley")
+    _gnb.load_scene_now("river_road")
     check(not any(getattr(n, "tag", "") == "preacher_body"
                   for n in _gnb.scene.npcs),
           "river: no remains before the doom")
@@ -3790,11 +3835,11 @@ def main():
     # A killed local is ledgered (save arg dead_locals) and the body is
     # laid back down where it fell on every re-entry; New Game clears it.
     gdl = new_game()
-    gdl.load_scene_now("brimley")
+    gdl.load_scene_now("pell_house")
     ready(gdl)
     pell = next((n for n in gdl.scene.npcs
                  if getattr(n, "name", "") == "Old Pell"), None)
-    check(pell is not None, "dead-locals: Old Pell stands in brimley")
+    check(pell is not None, "dead-locals: Old Pell stands in his own house")
     if pell is not None:
         rx, ry = pell.x, pell.y
         pell.alive = False
@@ -3803,7 +3848,7 @@ def main():
         check(bool(gdl.save.arg("dead_locals")),
               "dead-locals: the kill is written to the ledger")
         gdl.load_scene_now("shop")
-        gdl.load_scene_now("brimley")
+        gdl.load_scene_now("pell_house")
         ready(gdl)
         back = [n for n in gdl.scene.npcs
                 if getattr(n, "name", "") == "Old Pell"]
@@ -3826,7 +3871,7 @@ def main():
         gdl.save.set_arg("evidence",
                          [{"name": f"dl_t{i}", "content": "x"}
                           for i in range(3)])
-        gdl.load_scene_now("brimley")
+        gdl.load_scene_now("store_row")
         gdl.load_scene_now("sheriff_office")
         ready(gdl)
         check(not any(getattr(n, "tag", "") == "sheriff_hunt"
@@ -3958,9 +4003,39 @@ def main():
             continue
         if getattr(_s, "lost_edges", None):
             _opted.append(_k)
-    check(_opted == ["country_lane", "gravel_road_north", "lodge_yard",
-                     "river_bend", "river_road"],
-          "mouth: only the yard and the safe paths open (" + ", ".join(_opted) + ")")
+    # THE RULE, not a snapshot of it: an edge is a mouth only on ground the
+    # layers own -- a safe path's flank, or a yard's non-road edge (DESIGN.md
+    # §13/§15). Frozen as a literal list this failed on every new street and
+    # every new yard rather than on the thing it guards, which is that no
+    # ordinary scene quietly grows a way out of the world.
+    from scenes.safe_path import SafePath as _SP
+    _stray = [k for k in _opted
+              if not (isinstance(_ls_m(k), _SP)
+                      or getattr(_ls_m(k), "is_yard", False)
+                      or k == "lodge_yard")]
+    check(not _stray and "lodge_yard" in _opted,
+          "mouth: only yards and safe paths open (" + ", ".join(_opted)
+          + (" -- STRAY: " + ", ".join(_stray) if _stray else "") + ")")
+    # AND THE POSITIVE HALF, which generalising the guard above dropped on the
+    # floor: "no stray scene opens" is only half the rule. A yard whose edges
+    # silently stopped opening would have sailed through, and that is the more
+    # likely regression of the two -- it is a missing call, not an added one.
+    _shut = []
+    for _k in sorted(_SB_M):
+        try:
+            _s = _ls_m(_k)
+        except Exception:
+            continue
+        if not getattr(_s, "is_yard", False):
+            continue
+        _road = [c for c, v in _s.exits.items() if not v[0].startswith("lost_")
+                 and _s.key not in v[0]]
+        _want = set("nesw") - set((_s.lost_edges or {}).keys())
+        if len(_want) != 1 or len(_s.lost_edges or {}) != 3:
+            _shut.append("%s opens %s" % (_k, sorted((_s.lost_edges or {}))))
+    check(not _shut,
+          "mouth: every yard opens its three non-road edges"
+          + (" -- " + "; ".join(_shut) if _shut else ""))
 
     # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
     # The layer's promise is mechanical, so every part of it is checked
@@ -3976,13 +4051,39 @@ def main():
             continue
         if isinstance(_s, SafePath):
             paths[_k] = _s
-    check(sorted(paths) == ["country_lane", "gravel_road_north", "river_bend",
-                            "river_road"],
-          "path: the network is " + ", ".join(sorted(paths)))
-    # The shape VOCABULARY is actually used -- not four straights.
+    # WELL-FORMED, not a fixed roster. Frozen as a list of scene keys this
+    # needed editing every time a street landed, which made it a chore rather
+    # than a guard. What actually matters is that every ARM of every path goes
+    # somewhere real: an arm with no exit dead-ends at the map edge, and an
+    # exit pointing at an unregistered scene drops the player into the bedroom
+    # fallback. Both are silent.
+    #
+    # AT LEAST one exit per arm, not exactly one: a path may also carry a
+    # hidden doorway that is not an arm at all (the passable trunk in the
+    # river road's pine flank, which is how you find the burn clearing).
+    _illformed = []
+    for _k, _s in sorted(paths.items()):
+        _targets = {v[0] for v in _s.exits.values()}
+        if len(_s.exits) < len(_s.arms):
+            _illformed.append("%s has %d arms but only %d exits"
+                              % (_k, len(_s.arms), len(_s.exits)))
+        for _t in sorted(_targets):
+            if _t not in _SB_M:
+                _illformed.append("%s exits to unregistered %r" % (_k, _t))
+    check(not _illformed and len(paths) >= 5,
+          "path: every arm of every path goes somewhere real ("
+          + ", ".join(sorted(paths)) + ")"
+          + (" -- " + "; ".join(_illformed) if _illformed else ""))
+    # The shape VOCABULARY is actually used -- not a network of straights.
+    # A RANGE, not a fixed roster: the network GROWS as the town's own streets
+    # land (DESIGN.md §15) and its shapes change with it (every junction that
+    # picked up a fourth household went T -> X), so pinning an exact shape or
+    # multiset fails on the map moving rather than on the thing being guarded,
+    # which is that the vocabulary is real and more than one shape ships.
     shapes = sorted(shape_of(p.arms) for p in paths.values())
-    check(set(shapes) == {"I", "L", "T"},
-          f"path: the network ships an I, an L and a T (got {shapes})")
+    check(set(shapes) <= {"I", "L", "T", "X"} and len(set(shapes)) >= 3,
+          f"path: the network ships at least three of the shapes "
+          f"(got {shapes})")
 
     # NOT TOO THIN (maintainer). A carriageway plus both shoulders.
     check(2 * ROAD_HALF + 1 >= 5 and SHOULDER >= 2,

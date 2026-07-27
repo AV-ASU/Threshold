@@ -47,7 +47,7 @@ def build_schoolhouse():
         "W..............W",    # 3
         "W..............W",    # 4
         "W..............W",    # 5
-        "W..............W",    # 6
+        "W..............F",    # 6
         "W..............W",    # 7
         "W..............W",    # 8
         "W..............W",    # 9
@@ -61,10 +61,18 @@ def build_schoolhouse():
     # it, and from then on it simply stands. Walked NORTH into.
     objects[4] = objects[4][:9] + "O" + objects[4][10:]
     sc = Scene("schoolhouse", floor, objects, music="home")
-    sc.add_exit("H", "brimley", "from_school")
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("H") == 1
+    # THE YARD DOOR (DESIGN.md §15): this building has its own yard
+    # scene now, and needs its own way in. The Brimley door above
+    # stays live until Brimley is retired.
+    sc.add_exit("F", "school_yard", "from_schoolhouse")
     sc.add_exit("O", "effigy_grove", "from_school", direction="north")
     sc.set_spawn("default", 7, 9)
-    sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
+    sc.set_spawn("from_school_yard", 14, 6)
     # Back through the pane from the grove: one tile south of it, carried
     # southward so arrival never re-fires the north-walked crossing.
     sc.set_spawn("from_grove", 9, 5)
@@ -752,7 +760,7 @@ def build_cornfield_maze():
     sky is the only thing you can see over the stalks. A scarecrow
     at the centre that isn't quite where it was a moment ago.
     Two exits: south `!` back to cornfield_path; north `^` continues
-    into the brimley -- the maze led you somewhere wrong.
+    onto the country lane -- the maze led you somewhere wrong.
     Lanes are dotted with `:` corn patches: walk into one and
     you're hidden, but only as long as you stay in the patch."""
     # Larger maze (was 20x18) -- more room for the new dead-end pocket
@@ -770,7 +778,7 @@ def build_cornfield_maze():
     # South exit (back to cornfield_path) in lane 3 (cols 11-12).
     objects_l[H - 1][11] = "!"
     objects_l[H - 1][12] = "!"
-    # North exit (into brimley) in lane 3 (cols 11-12).
+    # North exit (onto the country lane) in lane 3 (cols 11-12).
     objects_l[0][11] = "^"
     objects_l[0][12] = "^"
     # Internal corn walls at cols 4, 9, 14, 19 running N-S. Lanes
@@ -897,7 +905,7 @@ def build_cornfield_maze():
     # The maze identity is endless corn -- but the OUTER wall was a
     # hard ring of solid C. Soften it with the shared scatter helper
     # using corn chars ('C' solid + 'A' passable) so the wrap is
-    # camouflaged the same way brimley / cornfield_path are. Interior
+    # camouflaged the same way cornfield_path is. Interior
     # corn-wall cols (3, 7, 11, 15) stay untouched -- that's the maze
     # design and must not be perforated. The existing :-corn-cover
     # patches are also preserved.
@@ -905,7 +913,7 @@ def build_cornfield_maze():
         # Interior corn-wall columns -- the maze structure itself.
         if tx in WALL_COLS:
             return True
-        # North brimley exit (cols 11, 12 at row 0).
+        # North road exit (cols 11, 12 at row 0).
         if tx in (11, 12) and ty == 0:
             return True
         # South cornfield_path exit (cols 11, 12 at row H-1).
@@ -1008,7 +1016,7 @@ def build_cornfield_maze():
     sc.wrap_x = True
     sc.wrap_y = True
     sc.add_exit("!", "cornfield_path", "from_cornfield_maze")
-    sc.add_exit("^", "brimley",   "from_cornfield_maze")
+    sc.add_exit("^", "country_lane", "from_cornfield_maze")
     # In-maze relocations: same-scene direction-gated folds (the 'I'/'Q'
     # tiles placed above). The target is the maze itself; Game.cross_fold
     # relocates with no load and the camera carried. Silent by canon --
@@ -1019,8 +1027,7 @@ def build_cornfield_maze():
     sc.set_spawn("reloc_Q", 3, 19)
     sc.set_spawn("default", 11, H - 2)
     sc.set_spawn("from_cornfield_path", 11, H - 2)
-    sc.set_spawn("from_brimley", 11, 1)
-    sc.set_spawn("from_brimley_south", 11, 1)
+    sc.set_spawn("from_country_lane", 11, 1)
     # Return from effigy_grove -- one east of the Z tile so the player
     # doesn't immediately re-trigger walking west.
     # Return from the additional hidden-scene folds. One tile inland

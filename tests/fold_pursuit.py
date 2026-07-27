@@ -110,14 +110,15 @@ def test_passage_does_not_carry_pursuer():
     # scene and across a direction-gated rift fold, never across a scene
     # boundary (play-notes narrowing of DESIGN.md §7).
     g = _boot()
-    g.load_scene_now("brimley", "default")    # an outdoor town, full of passages
+    # a street on the town's own network: seamless to the roads either side
+    g.load_scene_now("store_row", "default")
     target, spawn, ch = None, None, None
     for c, (tgt, sp) in g.scene.exits.items():
         from systems.game import SEAMLESS_WORLD_SCENES
         if tgt in SEAMLESS_WORLD_SCENES and c not in g.scene.exit_directions:
             target, spawn, ch = tgt, sp, c
             break
-    assert ch is not None, "brimley should have a seamless passage exit"
+    assert ch is not None, "the street should have a seamless passage exit"
     pos = g.scene.find_marker(ch)
     _stand_on(g, pos[0], pos[1])
     _add_hot_cultist(g)
@@ -130,14 +131,16 @@ def test_interior_door_loses_pursuer():
     # A fade transition into an INTERIOR (door / ladder / rope) shakes the
     # chase -- ordinary architecture is the player-only escape.
     g = _boot()
-    g.load_scene_now("brimley", "default")
+    # a YARD: not seamless (an island, DESIGN.md §15), and its house door is
+    # the fade transition this is about.
+    g.load_scene_now("shop_yard", "default")
     from systems.game import SEAMLESS_WORLD_SCENES
     target, spawn, ch = None, None, None
     for c, (tgt, sp) in g.scene.exits.items():
         if tgt not in SEAMLESS_WORLD_SCENES and c not in g.scene.exit_directions:
-            target, spawn, ch = tgt, sp, c       # e.g. brimley -> shop (a door)
+            target, spawn, ch = tgt, sp, c       # e.g. shop_yard -> shop
             break
-    assert ch is not None, "brimley should have an interior-door exit"
+    assert ch is not None, "the yard should have an interior-door exit"
     pos = g.scene.find_marker(ch)
     _stand_on(g, pos[0], pos[1])
     _add_hot_cultist(g)

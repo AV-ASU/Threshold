@@ -396,7 +396,7 @@ class Audio:                        #Starting screen needs music, something simp
                 (49,3.0),(0,2.0),(55,2.0),(0,3.0),
                 (52,2.0),(0,4.0),
             ], beat_ms=700, vol=0.20, wave="triangle", mid_partial=4),
-            # wind: 'music' for the brimley -- a long stereo wind bed
+            # wind: 'music' for the town -- a long stereo wind bed
             # with gust modulation and a leaf-rustle layer (above the
             # base noise drone). Stops entirely once the player takes
             # the first cult testimony in the Works; the silence is

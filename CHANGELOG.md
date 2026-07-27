@@ -1216,6 +1216,100 @@
   the module docstring, all of which had stated lamp coverage as the
   mechanism.
 
+- **2026-07 -- A YARD IS A SCENE (`TODO.md` #26, `DESIGN.md` §15).** The
+  correction, from the maintainer: *"It's safe path -> yard -> house. Each
+  building gets its own yard scene. They do not share."* The first pass had
+  generalised `lodge_yard`'s DRESSING and missed that `lodge_yard` is a
+  SCENE -- and `backwoods_cabin` is the same shape stripped to essentials, so
+  the repo had answered the question twice already. What shipped was the yard
+  vocabulary with no yard layer under it: ten dressed patches of ground inside
+  the one Brimley scene.
+  `yards.build_yard_scene` is that shape made general. The chain is wired
+  from parts that already existed rather than new engine: the street is an
+  ordinary `SafePath` and the yard hangs off one of its ARMS, and the interior
+  gets a SECOND door in a spare wall pointing at its yard, so the old route
+  keeps working while the new one lands. Two earlier proposals were dropped as
+  over-engineering on the maintainer's call -- a "return where you came from"
+  exit sentinel (just add a door) and a driveway spur off a path flank (just
+  make more paths).
+  **Brimley is kept exactly as it is** until the whole town has moved, then
+  retired in one piece; nothing is deleted from it on the way.
+  **What the look pass caught, in the template, before it became nine copies.**
+  The lot edge was a one-tile ring of the verge char, which reads as a fence
+  made of corn and lies about the geometry besides (a treeline in this game is
+  something you thread) -- it is the same scattered permeable band the town
+  and the lodge yard use. The scatter then grew standing corn in the middle of
+  a household's mown yard, so the LOT is a protected rect and the band stops
+  at its line. And the worn track walked a straight L from door to gate, which
+  paints a dirt path across the roof whenever the door is in a side wall.
+  **A GATE IS NOT A GAP** (maintainer: *"we enter through a broken fence
+  instead of a fence gate"*). The `gap` bay -- snapped wire, a shoved-over
+  post -- was built for the §13 MOUTH, a boundary you push THROUGH, and using
+  it as a household's front entrance says the opposite of what a kept yard is
+  saying with everything else it has. `yard_gate` is a hung timber leaf on a
+  stouter post, with the diagonal brace running UP from the hinge. Its
+  reference caught two things at once: the catch post floated (it belongs to
+  the FENCE, not the gate, which is also what a gate physically is), and the
+  leaf's proportion could not be measured while it was modelled already swung
+  open, so the default is a shut gate and the scene asks for the swing.
+
+- **2026-07 -- THE YARDS: ten households, ten yards (`TODO.md` #26 step 1,
+  `DESIGN.md` §15, `scenes/yards.py`).** The innermost of the three layers,
+  and the last one missing. `lodge_yard` had been dressed by hand as the
+  worked example; this is what it generalises to, plus the three people in
+  Brimley who had no building at all.
+  **The design finding is that the module had to stay thin.** A yard's job is
+  to tell you about a household without anybody speaking, and a vocabulary
+  applied evenly says the same thing about every house in town -- which is
+  the one thing the layer exists not to do. So `Yard` knows only the
+  building's geometry (footprint, which face the door is in, the walkable
+  tile outside it) and offers the vocabulary against it; WHAT any one yard
+  says is authored per household in `brimley.py`. The genset carries most of
+  it: running at five yards, running beside an already-empty can at Sheriff
+  Vane's alone, cold at four more for four different reasons, none of them
+  stated in words.
+  **Three new small houses** for Mrs. Calder, Royce and Garrick, rather than
+  moving them into the three empty buildings -- the schoolhouse and barn are
+  where the congregation bedded down before they went below and the farmhouse
+  is abandoned in its own name (NARRATIVE §3/§4), and walking into that
+  emptiness is a beat. They use the FACADE door `l` (solid, closed, no
+  interior modelled). Mrs. Calder's laid supper table moved onto her own lot
+  with her; it had been standing in open ground three lots away, which read
+  as nobody's.
+  `Yard.put` refuses the building, the door and the door's one approach, so
+  playtest error class #8 (a prop across the way in) is a build-time failure
+  instead of something you find by rendering four facings.
+  **What the looking turned up, each fixed rather than noted.** A boundary of
+  picked field STONES was the first version and it shipped as a parade of
+  pale grey tents: `boulder` is a fresh-broken rock at (92, 92, 100), and
+  nine in a row were the palest thing in a Darkwood-dark yard, pulling the
+  eye to the least important object on the lot. It is a hedge now. The
+  generator's first work-light was a cone shade, which under a 55-degree
+  camera you look down INTO -- so the one part carrying the household's state
+  was occluded from every facing; it is a droplight whose bulb hangs wider
+  than its cap. The barn's clothesline was first strung behind the barn,
+  geometrically fine and somewhere no player would ever stand. A `door_open`
+  car door painted as two flat quads projects to a sliver, so it is built as
+  a real slab. And `terrain._wall_normal` answered "the nearest scene EDGE",
+  which is right for an interior and wrong for a building in an outdoor map:
+  a mark chalked on the farmhouse's siding in a 60x60 town was mounted
+  against a map edge and drew into nothing. Local geometry wins now, ranked
+  by the same key, so every interior renders byte-identical.
+  **Four props joined the vocabulary.** `generator` moved onto the prop
+  pipeline with a real reference and a `running` variant (the hand-written
+  draw deleted, not left to disagree with what ships); `fuel_can` (NATO jerry
+  can, `tipped` when empty); `clothesline` (washing out since January hangs
+  STIFF, which is what flat-sided parts are good at); `crate_stack` (the
+  deliveries that stopped, and its `opened` crate comes OFF the stack,
+  because an open crate built in place reads as a shut one under a downward
+  camera).
+  **Two tools were lying and got fixed in passing.** `tools/kind.py` did not
+  know the `ASSEMBLIES` table, so it reported every parts-built prop as
+  "NONE -- draws as a FLAT STAIN", which is the single question it exists to
+  answer. `tools/preview_props_sheet.py` crashed on a boolean kwarg, which
+  meant the only variant anybody ever previewed was the default -- on a
+  vocabulary that is almost entirely boolean variants.
+
 - **2026-07 -- THE SAFE PATH: the lit spine (`TODO.md` #26 step 1,
   `DESIGN.md` §14).** The middle of the three layers, and the last one
   missing after the mouth closed the loop. The maintainer asked for "safe
@@ -2611,6 +2705,93 @@
   in-memory only, so there was no persistence concern in cutting them.
 
 ## Brimley geography
+
+- **2026-07 -- a window pane is an assertion.** Every `i` tile in the game
+  drew as warm glass lit from within, with a dark silhouette drifting behind
+  it on a per-tile clock -- lovely, and a claim that somebody is home. Three
+  of the buildings it was making that claim about are empty on purpose
+  (NARRATIVE §3: the school and the barn the congregation walked out of, the
+  farmhouse abandoned in its own name), so the glass was quietly unsaying the
+  beat the player walks in to find. The retirement had just multiplied it,
+  too, since every yard house had gained windows.
+
+  The old switch was `daylight = key not in SEAMLESS_WORLD_SCENES`, which was
+  a proxy for "is this an interior" -- true right up until the yards left that
+  set, at which point every house facade in town started reading as a room
+  looking out at the sky. Replaced with `Scene.window_glass`, three STATED
+  values (`lit` / `dark` / `daylight`) resolved by `terrain._window_glass`,
+  fallback "lit outdoors, daylight elsewhere".
+
+  In town it is DERIVED rather than authored a second time: the household's
+  genset already says whether the lights are on, so `Yard.genset` sets the
+  panes from it -- the same trick `running=False` plays by also passing
+  `broken` so the bulb and the ground cannot disagree. It falls out right with
+  nobody choosing per-yard: the school, the barn, the farmhouse and Garrick's
+  house all have cold gensets, and all four went black. `tests/conventions.py`
+  check 3b holds the derivation (proved failing before it was kept).
+
+- **2026-07 -- BRIMLEY THE SCENE IS RETIRED; the town is a string of house
+  islands.** The maintainer's shape for it, in their words: *"We are remaking
+  Brimley as a string of house islands in a sea of spatial manipulation. Fuck
+  Brimley the scene."* The 60x60 town map is gone from the registry and the
+  module is deleted. What replaced it is the three-layer chain built over the
+  preceding commits -- SAFE PATH -> YARD -> HOUSE (`DESIGN.md` §15) -- eleven
+  yards on five streets, one household each, each resident inside their own
+  building.
+
+  It was done in ONE piece at the end, deliberately, after the whole town had
+  moved: Brimley kept working, untouched and undeleted, the entire time the
+  yards were built beside it (the maintainer's standing instruction, *"We are
+  keeping Brimley until all changes are done. Don't delete anything in
+  Brimley."*), so there was never a half-town in the repo.
+
+  **The retirement was mostly a re-homing problem, not a deletion.** The one
+  scene had accreted a decade of load-bearing fixtures, and every one of them
+  had to land somewhere that OWNS it rather than somewhere convenient: the
+  well, the barrow, the news rack and the payphone became **the square** at
+  the store row crossing (`safe_path._town_square`, the one place everybody in
+  a town this size passes); the planked bridge and its under-deck hide went to
+  `river_bend` and the river stones to `river_road`; the Preacher's remains
+  went to the length of bank the road actually runs beside; the hidden trunk
+  through to the burn clearing went into the river road's pine flank; the bell
+  door went to the church's own yard; the cult camp went to the farm yard, the
+  one lot the newcomers already hold; the dead pickup, its cab radio and the
+  gap under its bed went behind the barn, where a crowd left in one direction
+  and one truck stayed. The four chorus locals' reactive beats went into their
+  own houses with them.
+
+  **What was NOT re-homed, and why.** The toroidal wrap and the cross-town
+  fold road: a street is a `SafePath` whose arms end at exits, which is the
+  opposite of a torus, and the wrap now belongs to the corn where it always
+  meant something. The corn belt therefore hangs off the network at one
+  junction -- the country lane's south arm, the one arm the standing corn had
+  already grown up to -- which turned the lane and the gravel road from Ts
+  into Xs and cost the network its last T shape.
+
+  **Two things the retirement nearly took by accident.** The `homebody`
+  movement mode had exactly two users, both in Brimley, so deleting the scene
+  made it a dead label (smoke [8/11] caught it, which is the check doing its
+  job). Rather than delete a working behaviour over a layout change, Hettie
+  went back on her shop step: a `homebody` is somebody who is INSIDE and
+  briefly out, the shop interior holds a Hettie, and a store that is still
+  open is a store with its keeper visible at the door. She is the one person
+  in a yard and the exception proves the rule. The second was the truck
+  radio -- the surface's only toggleable lure -- which was easy to lose with
+  the pickup it was bolted to; it went to the barn yard with the truck.
+
+  **The tests moved off the one scene and got better for it.** `stealth.py`'s
+  `open_field` was a hand-picked glade tile in Brimley, which meant every
+  probe in the file silently depended on one scene's layout; it now SCANS for
+  the most open ground in whatever scene is loaded. The wall-occlusion probe
+  derived its two stations from hand-picked tiles; it now derives them from
+  the yard's building and asserts the sight line really is blocked before
+  measuring. `flow.py`'s network guard stopped requiring exactly one exit per
+  arm (a path may also carry a hidden doorway) and stopped pinning the exact
+  shape multiset (the map moves; the vocabulary being real is the thing worth
+  guarding). The `car_keys` / `_car_pos` / `_shed_door_pos` guards, which read
+  Brimley's source text, were replaced by one that asserts the scene cannot
+  come back by accident -- neither module nor registry key -- plus a sweep
+  that no exit anywhere points at an unregistered scene.
 
 - **2026-07 -- #4 outdoor-dread composition, first scene.** The outdoor zone
   is the game's weakest dread (long open sightlines read as a field). Per the

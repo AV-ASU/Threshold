@@ -111,7 +111,7 @@ FLOOR_DEFS = {
     ".": {"color": (30, 28, 38),   "step": "step_stone"},
     "@": {"color": (8, 6, 14),     "step": "step_void"},
     # Round-13: river floor is no longer universally solid. The
-    # brimley river enforces directional access via Game's
+    # a wadeable river enforces directional access via Game's
     # `_river_blocks` check (player.in_river state + designated entry
     # tile). Other scenes can still use `~` as decorative water; nothing
     # else currently does.
@@ -151,7 +151,7 @@ FLOOR_DEFS = {
     ":": {"color": (38, 52, 40),   "step": "step_grass"},
     # Marsh mud -- wet churned low ground, walkable. Stamped in organic
     # patches across the Brimley fields so the plain reads as a sodden
-    # brimley marsh, not a flat lawn.
+    # marsh, not a flat lawn.
     # THE BLACK PATCHES. At (40, 37, 30) this was a brown near-black, and
     # scenes sprinkle it as ISOLATED SINGLE TILES through grass at (45, 55,
     # 42) -- so each one read as a square black hole in the lawn rather than
@@ -220,7 +220,7 @@ OBJECT_DEFS = {
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
-    # '4' is the village <-> brimley corridor.
+    # '4' is a road-to-road corridor between two path scenes.
     "4": {"solid": False, "kind": "outdoor_passage"},
     # Fake wall: looks like a wood wall, passable. Used inside the
     # abandoned_farmhouse red herring -- the player walks through it once to
@@ -260,9 +260,9 @@ OBJECT_DEFS = {
     # from "!".
     "^": {"solid": False, "kind": "outdoor_passage"},
     # Round-12: breakable debris pile blocking the village's west exit
-    # to the brimley. Solid until the player presses E adjacent with the
+    # through. Solid until the player presses E adjacent with the
     # lumber_axe, at which point Game._chop_tile swaps this tile to "4"
-    # at the west edge (so the gap becomes a passage to brimley), else ".".
+    # at the west edge (so the gap becomes a passage through), else ".".
     "*": {"solid": True,  "kind": "debris"},
     # Boarded panel -- a passage covered with cross-nailed wooden
     # boards. Visually distinct from a regular wood wall (X-cross
@@ -275,7 +275,7 @@ OBJECT_DEFS = {
     # and 'K' is now solely the kid-spawn marker below. The crate draw
     # kind in _draw_object is left in place but unreferenced.)
     # Round-12: planked footbridge tile -- non-solid, drawn over a
-    # river. Used in the brimley to gap the N-S river at the bridge
+    # river. Used to gap a N-S river at the bridge
     # rows.
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
@@ -1217,7 +1217,6 @@ DISPLAY_NAMES = {
     "threshold":            "the Threshold",
     "effigy_grove":         "the Effigy Grove",
     "abandoned_farmhouse":        "the Abandoned Farmhouse",
-    "brimley":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
     "country_lane":         "the Country Lane",
@@ -3065,7 +3064,7 @@ def _build_water_bank_edges(scene):
     """Precompute every water-land boundary segment AND bucket them into a
     spatial chunk index. Each edge is (cx_world, cy_world, ndx, ndy, seed).
     The emit walker iterates only buckets the camera window overlaps, so a
-    full-marsh scan (212 edges in brimley) drops to ~30 per frame."""
+    full-marsh scan (212 edges on a big map) drops to ~30 per frame."""
     edges = getattr(scene, "_water_bank_edges", None)
     if edges is not None:
         return edges
@@ -4500,14 +4499,37 @@ def _draw_water_channel_tilt(surf, camera, deco, woff=(0.0, 0.0)):
 
 
 def _wall_normal(scene, wx, wy):
-    """The inward normal of the wall a decoration hangs on -- the way it FACES,
-    forward off the wall into the room. Rooms are scene-sized, so a wall is the
-    nearest perimeter; face inward from the closest scene edge."""
+    """The outward normal of the wall a decoration hangs on -- the way it
+    FACES, off the wall into open air.
+
+    THE LOCAL WALL WINS. The original rule was "a room is the whole scene, so
+    the wall is the nearest scene EDGE", which is exactly right for an
+    interior and completely wrong for a building standing in an outdoor map:
+    a mark chalked on a farmhouse's west siding in a 60x60 town was mounted
+    against whichever map edge happened to be closest and drew edge-on into
+    nothing. So look at the tile's own neighbours first, and only fall back
+    to the scene edge when there is no wall next to it at all.
+
+    Candidates are ranked by the SAME nearest-edge key the fallback uses, so
+    an interior -- where the nearest edge IS the wall -- resolves identically
+    and every existing wall decoration is unchanged.
+    """
     tx, ty = int(wx // TILE), int(wy // TILE)
     W, H = scene.w, scene.h
     opts = [(ty, (0, 1)), (H - 1 - ty, (0, -1)),
             (tx, (1, 0)), (W - 1 - tx, (-1, 0))]
     opts.sort(key=lambda o: o[0])
+
+    def _blocks(x, y):
+        if not (0 <= x < W and 0 <= y < H):
+            return True                  # off-map reads as the room's shell
+        d = OBJECT_DEFS.get(scene.objects[y][x]) or {}
+        return d.get("kind") in ("wood_wall", "stone_wall", "window", "roof")
+
+    for _d, (nx, ny) in opts:
+        # the wall sits BEHIND (against -n) and open air lies ahead
+        if _blocks(tx - nx, ty - ny) and not _blocks(tx + nx, ty + ny):
+            return (nx, ny)
     return opts[0][1]
 
 
@@ -4573,16 +4595,27 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
 
 
 def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False,
-                      face_off=None, daylight=False):
+                      face_off=None, glass="lit"):
     """A glazed pane set into one wall face: wood frame, glass, a lighter
     core and a muntin cross. `(ndx, ndy)` is the exposed face direction.
     `face_off` is the distance from the tile centre to that face's true
     plane (a thin-slab wall's face is NOT the tile edge); None keeps the
-    full-tile face. `daylight` swaps the warm lit-from-within amber for flat
-    overcast daylight (interior scenes look OUT at the grey sky; the warm
-    glass belongs on the town's facades, DESIGN.md §6). `broken` (a thrown
-    stone, TODO #5) swaps the glass for a dark hole with shard teeth left in
-    the frame -- the light is out for the run."""
+    full-tile face.
+
+    `glass` is what the pane SAYS, and it is a fact about the building, not
+    a lighting preference (DESIGN.md §6):
+
+      "lit"       warm amber lit from within -- somebody is home. This is an
+                  ASSERTION, so a building the fiction says is empty must
+                  never carry it (NARRATIVE §3: the school, the barn and the
+                  farmhouse are empty on purpose, and lit glass on them
+                  quietly unsays the beat you walk in to find).
+      "dark"      a dead pane with the room's dark behind it, faint sky on
+                  the glass and nothing moving. Nobody is in there.
+      "daylight"  flat overcast -- you are INSIDE, looking out at the sky.
+
+    `broken` (a thrown stone, TODO #5) swaps the glass for a dark hole with
+    shard teeth left in the frame -- the light is out for the run."""
     hw = TILE / 2
     pv = (-ndy, ndx)                 # along-wall axis on this face
     ph = hw * 0.60                   # half pane width
@@ -4593,30 +4626,62 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False,
         return camera.project(wx + ndx * off + pv[0] * u,
                               wy + ndy * off + pv[1] * u, z)
     frame = [Q(-ph - 2, z0 - 2), Q(ph + 2, z0 - 2), Q(ph + 2, z1 + 2), Q(-ph - 2, z1 + 2)]
-    glass = [Q(-ph, z0), Q(ph, z0), Q(ph, z1), Q(-ph, z1)]
+    pane = [Q(-ph, z0), Q(ph, z0), Q(ph, z1), Q(-ph, z1)]
     pygame.draw.polygon(surf, (96, 70, 50), frame)
     pygame.draw.polygon(surf, (60, 40, 25), frame, 1)
     if broken:
-        pygame.draw.polygon(surf, (14, 12, 17), glass)             # the dark hole
+        pygame.draw.polygon(surf, (14, 12, 17), pane)              # the dark hole
         for u0, u1, zt in ((-ph, -ph * 0.4, z1 - 4), (ph * 0.2, ph, z1 - 5),
                            (-ph * 0.5, ph * 0.1, z0 + 4)):
             pygame.draw.polygon(surf, (108, 96, 62),               # shard teeth
                                 [Q(u0, z1 if zt > (z0 + z1) / 2 else z0),
                                  Q(u1, z1 if zt > (z0 + z1) / 2 else z0),
                                  Q((u0 + u1) / 2, zt)])
-        pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
+        pygame.draw.polygon(surf, (60, 40, 25), pane, 1)
         return
     core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
             Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
-    if daylight:
-        pygame.draw.polygon(surf, (96, 100, 94), glass)
+    if glass == "daylight":
+        pygame.draw.polygon(surf, (96, 100, 94), pane)
         pygame.draw.polygon(surf, (124, 128, 120), core)
+    elif glass == "dark":
+        # A dead pane. Near-black, with only a thin cold sheen up at the top
+        # of the glass where the overcast catches it -- so it still reads as
+        # GLASS rather than as a hole, and reads it from every facing.
+        pygame.draw.polygon(surf, (20, 21, 26), pane)
+        pygame.draw.polygon(surf, (34, 37, 44),
+                            [Q(-ph, z1 - 4), Q(ph, z1 - 4), Q(ph, z1),
+                             Q(-ph, z1)])
     else:
-        pygame.draw.polygon(surf, (138, 104, 50), glass)
+        pygame.draw.polygon(surf, (138, 104, 50), pane)
         pygame.draw.polygon(surf, (170, 138, 78), core)
     pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
     pygame.draw.line(surf, (74, 54, 34), Q(-ph, (z0 + z1) / 2), Q(ph, (z0 + z1) / 2), 1)
-    pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
+    pygame.draw.polygon(surf, (60, 40, 25), pane, 1)
+
+
+def _window_glass(scene):
+    """What a scene's window panes SAY -- "lit" / "dark" / "daylight".
+
+    A scene STATES it (`Scene.window_glass`) rather than having it inferred,
+    because lit glass is an assertion about who is home and the fiction has
+    buildings that are empty on purpose (NARRATIVE §3). It used to be
+    inferred from seamless-world membership as a proxy for "is this an
+    interior", which was true right up until the yards left that set and
+    every house facade in town started reading as a room looking out.
+
+    The fallback is the honest one for a scene that has not said: OUTDOORS
+    you are looking at a facade, so warm glass; anywhere else you are inside
+    one, so daylight.
+    """
+    stated = getattr(scene, "window_glass", None)
+    if stated:
+        return stated
+    try:
+        from systems.config import OUTDOOR_SCENES as _OUT
+    except Exception:
+        return "daylight"
+    return "lit" if getattr(scene, "key", None) in _OUT else "daylight"
 
 
 def _tilt_window_box(surf, camera, scene, tx, ty):
@@ -4624,10 +4689,7 @@ def _tilt_window_box(surf, camera, scene, tx, ty):
     wall's slab footprint in a slab scene (_gap_slab), full-tile elsewhere. A
     pane is then set into each camera-facing exposed face ON that face's true
     plane (dark + shard-toothed once a thrown stone has broken it --
-    scene._broken_windows). Glazing reads by scene: an INTERIOR scene's
-    windows hold flat overcast DAYLIGHT (the dim room looks out at the grey
-    sky); an exterior facade keeps the warm lit-from-within glass (the town
-    keeping its lights on, DESIGN.md §6)."""
+    scene._broken_windows). Glazing reads by scene, via `_window_glass`."""
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
     wtx = tx % scene.w if scene.wrap_x else tx
@@ -4646,11 +4708,7 @@ def _tilt_window_box(surf, camera, scene, tx, ty):
     else:
         _tilt_wall_box(surf, camera, scene, tx, ty)
     broken = (wtx, wty) in getattr(scene, "_broken_windows", ())
-    try:
-        from systems.config import SEAMLESS_WORLD_SCENES as _SWS
-        daylight = getattr(scene, "key", None) not in _SWS
-    except Exception:
-        daylight = False
+    glass = _window_glass(scene)
     cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
     for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
         if _is_wall(scene, tx + ndx, ty + ndy):
@@ -4669,7 +4727,7 @@ def _tilt_window_box(surf, camera, scene, tx, ty):
             else:
                 face_off = (hw - b[0]) + 0.5
         _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=broken,
-                          face_off=face_off, daylight=daylight)
+                          face_off=face_off, glass=glass)
 
 
 _WALL_BOX_CACHE = {}

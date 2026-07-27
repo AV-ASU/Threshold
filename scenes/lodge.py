@@ -438,7 +438,7 @@ def build_lodge():
     # WALL OF THE VANISHED clustered tight on the north wall above the reception
     # desk -- the same guests the cellar Ledger records (a surface town-dread
     # read, the community searching for people the fold won't give back; the
-    # same missing_flyer dressing kept in brimley + the lodge yard -- distinct
+    # same missing_flyer dressing kept on the square + the lodge yard -- distinct
     # from the underground Sorting-Hall version that was cut as a killer-cult
     # tracking read). 2026-07 redecoration-audit fix: the three were interleaved
     # among the trophy mounts; grouped now so they read as one wall, the buck /

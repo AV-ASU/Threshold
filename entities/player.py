@@ -25,7 +25,7 @@ class Player:
         self.max_hp = 100
         self.invuln = 0.0
         # Round-13: tracks whether the player is currently standing in
-        # the brimley river. Toggled in Game.update_player based on
+        # a wadeable river. Toggled in Game.update_player based on
         # the floor under their feet. Walking out (onto bridge or land)
         # flips this to False; re-entering requires stepping onto the
         # designated river entry tile.

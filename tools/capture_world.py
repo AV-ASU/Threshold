@@ -32,7 +32,8 @@ import pygame
 
 # A representative spread: an interior, outdoor village, a safe room, an
 # underground works scene, and a wrap-around scene if one exists.
-SCENES = ["bedroom", "brimley", "sheriff_office", "works_cistern", "depths_hall"]
+SCENES = ["bedroom", "store_row", "sheriff_office", "works_cistern",
+          "depths_hall"]
 FROZEN_TICKS = 12345           # fixed clock so time-based anim is reproducible
 SEED = 7
 

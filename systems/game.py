@@ -140,7 +140,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Title-screen ambient: the wind drone, no melody. The title
         # is meant to feel cold and unresolved -- if the player hesitates
         # on the menu, all they hear is the same wind that lives in the
-        # brimley. Scene music takes over the moment they continue.
+        # town. Scene music takes over the moment they continue.
         self.audio.play_music("threshold_drone")
         self.transition_t = 0.0
         self.transition_target = None
@@ -206,13 +206,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Counter used to space the void/basement delayed-step trick;
         # every Nth eligible step plays late.
         self._creepy_step_count = 0
-        # Cached vignette surface for the brimley / alter scenes.
+        # Cached vignette surface for the Mask haze / alter scenes.
         # Built once on first need; blitted at the player's screen
         # position each frame so it "closes around" them.
         self._vignette_surf = None
         # Soft outdoor vignette. Always-on radial darkness centred on
         # the player whenever they're in an OUTDOOR_SCENES key. Less
-        # intense than the brimley vignette but never goes away --
+        # intense than the Mask haze's vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
         # Ashfall motes (DESIGN.md §2): live screen-space particle field,
@@ -982,11 +982,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             else:
                 self.audio.stop_music()
         # Scene-aware footstep reverb. UNDERGROUND_SCENES route through
-        # the cellar profile (stone tail); OUTDOOR_SCENES + brimley use
+        # the cellar profile (stone tail); OUTDOOR_SCENES use
         # outdoor (subtle slap-back); everything else stays dry.
         if key in UNDERGROUND_SCENES:
             self.audio.set_scene_reverb("cellar")
-        elif key in OUTDOOR_SCENES or key == "brimley":
+        elif key in OUTDOOR_SCENES:
             self.audio.set_scene_reverb("outdoor")
         else:
             self.audio.set_scene_reverb(None)
@@ -1036,13 +1036,20 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._apply_rot()
 
     def _river_blocks(self, target_x, target_y):
-        """Custom passability for the brimley river. The `~` floor is
-        non-solid by default, so this is the gate: in any other scene
-        it's a no-op, and in the brimley a `~` tile is walkable only
-        if (a) the player is already in the river, OR (b) the target
-        tile is the designated entry tile. Falling-back-into-the-river
-        from land or bridge is blocked everywhere else."""
-        if self.scene is None or self.scene.key != "brimley":
+        """Custom passability for a WADEABLE river: a `~` floor tile is
+        non-solid by default, so this is the gate that stops the player
+        stepping off a bank or a bridge deck straight into the water. Once
+        they are in it they can move freely between water tiles; getting in
+        at all takes the scene's designated entry tile.
+
+        No scene declares one today. The one river you could wade was the
+        retired town map's (DESIGN.md §15); the safe path's river carries a
+        see-over solid on every water tile instead, so the water there is a
+        barrier the AI and the sight cone both agree about. A scene opts in
+        by setting `_river_entry_tile`, and everywhere else this is a no-op.
+        """
+        entry = getattr(self.scene, "_river_entry_tile", None)
+        if self.scene is None or entry is None:
             return False
         if self.scene.char_floor_at(target_x, target_y) != "~":
             return False
@@ -1050,7 +1057,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return False
         ttx = int(target_x // Scene.TILE)
         tty = int(target_y // Scene.TILE)
-        return (ttx, tty) != RIVER_ENTRY_TILE
+        return (ttx, tty) != entry
 
     def _wading(self):
         """True when the player stands in deep water: a `~` floor tile in a

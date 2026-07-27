@@ -73,10 +73,11 @@ terminal version is `python tools/index.py [word]`.
 - `tools/audit_transitions.py` — Step 1 of the geometry overhaul: enumerate every world transition the game
 - `tools/audit_traversal.py` — Traversal-jank audit -- a headless sweep for the *signatured* feel-bugs that
 - `tools/check_canon_keys.py` — Canon-key drift tripwire.
-- `tools/profile_brimley.py` — Headless render profiler for the wrapped Brimley town (FPS work).
+- `tools/profile_render.py` — Headless render profiler for the world draw (FPS work).
 
 ## Other
 
+- `tools/band_gaps.py` — How PERMEABLE is a treeline? Measure it instead of arguing about it.
 - `tools/discoveries.py` — THE DISCOVERY CATALOG -- every single thing the player can find, listed.
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/preview_amalgam.py` — Preview the AMALGAMS (rendering/amalgam.py): the Watcher-family shadows

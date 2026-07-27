@@ -90,7 +90,7 @@ def build_lodge_yard():
     sc.add_exit("e", "cornfield_path", "from_lodge_yard")
     yard_obj = [list(r) for r in sc.objects]
     # The WOODSHED in the SW of the yard -- west of the Lodge, where it
-    # belongs (it used to sit clear across town in brimley). A small solid
+    # belongs (it used to sit clear across town). A small solid
     # structure with a facade door 'l' on its north face; locked until you
     # find the woodshed key in the Lodge cellar. Clear of the dirt path
     # (cols 4-6).
@@ -100,7 +100,7 @@ def build_lodge_yard():
     yard_obj[12][2] = "l"          # locked facade door, north face
     sc._shed_door_pos = (2 * TILE + 16, 12 * TILE + 16)
     # ---- Permeable forest band ----
-    # Replaces the old hard corn-wall perimeter. Same helper as brimley
+    # Replaces the old hard corn-wall perimeter. The same helper the yards
     # so the visual treatment of the wrap is consistent. Lodge structure
     # + door passages stay protected.
     floor_ll_yd = [list(r) for r in sc.floor]
@@ -183,7 +183,12 @@ def build_lodge_yard():
     # keeps the desk of an empty hotel lit and ready (NARRATIVE §4). The
     # grid died with the seal, so a warm work-bulb burning out here is the
     # tell that somebody is still keeping the place.
-    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "generator"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "generator",
+                                 running=True))
+    # and the can standing beside it, which is the other half of the same
+    # sentence: somebody is still walking out here to fuel this thing
+    # (DESIGN.md §15). A dead yard's can lies on its side and empty.
+    sc.add_decoration(Decoration(11 * TILE + 12, 4 * TILE + 16, "fuel_can"))
     # THE MAILBOX out at the road, exactly on the seam where the yard meets
     # the safe path. Deliveries stopped with the fold in January, so it is
     # still FULL: nobody has emptied it because nothing has come to replace

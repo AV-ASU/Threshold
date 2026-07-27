@@ -103,7 +103,7 @@ _REVERB_PROFILES = {
     "cellar": dict(combs=[(53, 0.78), (61, 0.74), (67, 0.70), (71, 0.66)],
                    allpasses=[(23, 0.55), (11, 0.55)], wet=0.35,
                    tail_s=0.9, hp_after=120),
-    # Open outdoor (cornfield, brimley). No reflective surfaces;
+    # Open outdoor (cornfield, the roads). No reflective surfaces;
     # almost no reverb, but a very subtle slap-back so wide spaces
     # don't sound the same as inside a closet.
     "outdoor": dict(combs=[(89, 0.30), (97, 0.25)], allpasses=[(19, 0.4)],

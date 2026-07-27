@@ -34,10 +34,18 @@ sys.path.insert(0, _ROOT)
 
 def _tables():
     from rendering.props import SOLID_PROPS, _STANDEE_KINDS
+    from rendering.assemblies import ASSEMBLIES
     from rendering.furniture import FURNITURE
     from scenes.terrain import (_FLOOR_DECAL_KINDS, _SURFACE_DECAL_KINDS,
                                 _WALL_DECO_KINDS, _TABLETOP_PROP_KINDS)
     return {
+        # ASSEMBLIES FIRST, and it has to be here at all: a kind converted to
+        # the prop pipeline LEAVES SOLID_PROPS (that is the rule), so a tool
+        # that only knew the old tables reported every parts-built prop as
+        # "NONE -- draws as a FLAT STAIN". This is the reflex tool for exactly
+        # that question, so it was answering the one thing it exists for
+        # backwards.
+        "ASSEMBLY (parts, drawn by the prop pipeline)": ASSEMBLIES,
         "SOLID_PROPS (a projected 3D volume)": SOLID_PROPS,
         "STANDEE (a flat card stood up)": _STANDEE_KINDS,
         "FURNITURE (a box volume)": FURNITURE,
@@ -96,7 +104,14 @@ def report(kind, tables, places):
         print("  light      : not an emitter")
 
     print(f"  flat art   : {'yes' if hasattr(Decoration, f'_draw_{kind}') else 'NO _draw_ method'}")
-    print(f"  solid art  : {'yes' if kind in SOLID_PROPS else 'no (not a SOLID_PROPS volume)'}")
+    from rendering.assemblies import ASSEMBLIES as _ASM
+    if kind in _ASM:
+        from rendering import references as _R
+        _ref = _R.REFERENCES.get(kind)
+        print("  solid art  : ASSEMBLY (rendering/assemblies.py)"
+              + ("" if _ref else "  !! NO REFERENCE ON RECORD"))
+    else:
+        print(f"  solid art  : {'yes' if kind in SOLID_PROPS else 'no (not a SOLID_PROPS volume)'}")
 
     where = places.get(kind)
     if where:
