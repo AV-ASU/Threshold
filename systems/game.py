@@ -18,6 +18,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                view_from_facing, KING_UNFOLD,
                                KING_UNFOLD_SCALE)
 from rendering.king_unfold import draw_unfold_catch, reset_king_unfold_fx
+from rendering.amalgam import reset_amalgam_cache
 from rendering.spread_drive import SPREAD_BEAT_DURS
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
@@ -463,6 +464,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Genset blackout timers (the power link, TODO #21): scene key ->
         # seconds of blackout left. Cleared per run; _tick_power drains it.
         self._genset_down = {}
+        self._apex = None      # the Mask (TODO #25) is per-RUN game state
         # Where a lost space puts you back (TODO #26): (scene_key, x, y),
         # written by _tick_lost_edge when the world lets go and spent by the
         # hunted exit light. None = the field was entered some other way (a
@@ -870,6 +872,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._king = None
         reset_king_fx()        # his trail/particles don't follow across scenes
         reset_king_unfold_fx() # nor the UNFOLDING's mask-bond state
+        # The composed-amalgam cache is keyed by unit seed, and the wave is
+        # cleared on every load, so its entries would otherwise be surfaces for
+        # units that no longer exist. Correctness does not depend on this (the
+        # key carries every input) -- it is just not holding dead sprites.
+        reset_amalgam_cache()
         self._king_anchor = (self.player.x, self.player.y)
         # A torn portal belongs to the room it opened in: leaving the scene
         # (through the rift or any other exit) collapses it. The roaming King's
@@ -1669,24 +1676,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return True
         return False
 
-    # ---- Darkness as concealment (DESIGN.md §12) ----
-    def _tick_dark_cover(self):
-        """Stamp player._in_dark once per frame: True in a DARK scene
-        with the flashlight unlit and the player outside every light
-        pool (Scene.lit_at). systems/stealth.concealment_factor reads
-        the stamp, so the gloom scales every cult eye's score (and the
-        gaze pressure) by SUS_CONCEAL_DARK -- leaky cover, like corn.
-        Apex pursuers ignore all cover as ever. A one-shot teach cue
-        fires the first time the dark takes you with the cult near."""
-        p = self.player
-        if p is None or self.scene is None:
-            return
-        in_dark = (self.scene.key in DARK_SCENES
-                   and not self._flashlight_lit()
-                   and not self.scene.lit_at(p.x, p.y))
-        # Entering shadow cover is WORDLESS (2026-07 playtest ruling: no
-        # narrator box on stealth entry; the old one-shot teach is cut).
-        p._in_dark = in_dark
+    # ---- Darkness is NOT cover (maintainer ruling, 2026-07) ----
+    # There is no _tick_dark_cover anymore, and no player._in_dark stamp. The
+    # dark used to scale every cult eye's score by SUS_CONCEAL_DARK; that whole
+    # mechanic was cut on the ruling "darkness shouldn't hide you AT ALL."
+    # Cover is what you put BETWEEN yourself and an eye (corn, a hide, a wall);
+    # an unlit spot is not that. The dark belongs to Him -- it is the condition
+    # His things need in order to open at all -- so hiding in it was hiding
+    # inside the threat. See systems/stealth.concealment_factor (no darkness
+    # term) and tests/stealth.py §11, which fails if one comes back.
 
     # ---- Animated doors + the one-hop noise bleed ----
     def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
@@ -3025,11 +3023,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
-                # Stamp darkness-concealment BEFORE the cult ticks run
-                # (NPC updates inside scene.update + the enemy loop
-                # below both read player._in_dark through the shared
-                # concealment_factor).
-                self._tick_dark_cover()
                 self.scene.update(dt, self)
             self.text_input.update(dt)
             for e in list(self.scene.enemies):
@@ -3139,6 +3132,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
                 self._tick_watchers(dt)
+                self._tick_apex(dt)
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)
                 self._tick_cult_ambient(dt)

@@ -350,11 +350,81 @@ WATCHER_GAZE = 0.05           # visibility CLIMB per live Watcher per second
                               # while exposed -- the teeth of the mechanic
 WATCHER_FLOOR = 0.07          # residual visibility floor per live Watcher
 WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
+# ---- THE STORM: the flood as a MODE of the Watcher wave (TODO #25) ----
+# The storm is NOT a second spawner. Two populations of the same creature with
+# different rules read as a bug, not as escalation (half of all manifestations
+# already wear the amalgam skin), so the existing wave simply changes MODE: the
+# cap lifts, the cadence tightens, and every unit switches from standing in the
+# dark to walking at you. Every dispel still works -- gaze, light, axe, round --
+# which is the maintainer's ruling: "during a storm amlgs can be dispelled by
+# any means watchers can be."
+#
+# A storm is up where His attention has already flooded: past the King's own
+# gate, in a room the darkness has actually taken (`Game.scene_gloom() > 0`,
+# the one darkness source, so the flood literally fills the dark).
+STORM_GATE_EVIDENCE = 3       # = KING_GATE_EVIDENCE; the apex is armed
+# MEASURED, not guessed, twice over. The first value was 22 with a comment
+# claiming it was frame-time-bounded, asserted without measuring; measuring said
+# 22 units cost 53.3ms a frame (18.8 fps), so it was cut to a defensible 10.
+# Then the DRAW was made cheap enough to earn the maintainer's number back --
+# each unit's composed sprite is cached and refreshed at UNIT_ANIM_HZ instead of
+# every frame (rendering/amalgam.py), with per-unit staggering so the refreshes
+# do not land on the same frame. Re-measured, same scene, realistic seeds:
+#   units:   0     5    10    16    22    25
+#   avg ms:  8.5  13.8  18.5  24.4  27.2  31.4
+#   worst:   9.8  19.1  21.1  28.0  31.0  34.8
+# 22 holds ~32 fps with a FLAT frame time (no sawtooth); 25 starts to graze 30.
+STORM_MAX = 22
+# How many units may PRESS THE METER at once. Lifting the population cap without
+# this made the storm the deadliest thing in the game by accident: the gaze term
+# is per-live-unit (WATCHER_GAZE 0.05/s) and so is the floor (WATCHER_FLOOR
+# 0.07), so 22 units climbed visibility at 1.1/s -- zero to maxed in under a
+# second -- and pinned the floor at VIS_FLOOR_TOTAL_CAP (0.92), just under the
+# King, permanently and unclearably for the whole storm. That contradicts the
+# ruling that regular units cannot touch or kill: they are a SCARE, and the apex
+# is the threat. So a storm presses like a full Watcher wave, not like 22 of one.
+STORM_PRESS_UNITS = WATCHER_MAX
+STORM_SPAWN_BASE = 2.4        # s between manifestations while a storm is up
+STORM_SPAWN_MIN = 0.9         # ... shaved by evidence down to this floor
+STORM_SPAWN_STEP = 0.5
+# 0.34 * 60 = ~20 px/s, matching systems/storm.py's original STORM_UNIT_SPEED of
+# 22 px/s. For scale: the player walks at 84 px/s and a cultist runs 51-54, so a
+# unit is a slow DRIFT, not a walk -- it cannot chase you down, which is correct
+# for something that cannot touch you. (An earlier comment here called it "a
+# walk, below player sprint"; that was wrong by a factor of four.)
+STORM_UNIT_SPEED = 0.34
+# "Regular amalgamations will walk to the player and get as close to them as
+# possible without being in the light" -- so a unit refuses any step that would
+# put it in a lit spot, and LIGHT IS THE ONLY SAFETY: stand in a pool and they
+# ring its edge. They cannot touch or kill (`solid=False`, no grab path); a unit
+# walking onto you is a SCARE, not damage. The apex is the exception and is not
+# part of this slice.
+STORM_LIGHT_PROBE = 12.0      # px ahead a unit tests for light before stepping
+# THE BEAM as a real barrier. Scene.lit_at only knows scene FIXTURES, so a storm
+# unit tested against it alone ignored the flashlight entirely -- which made
+# "during a storm light is your only safety" unachievable in every room with no
+# lamps in it (most of the mine, the lost spaces, any unpowered building). These
+# are the numbers `_draw_dark` already draws the cone with; they live here so the
+# beam the player SEES and the beam a unit RESPECTS cannot drift apart.
+FLASHLIGHT_REACH = 300.0      # px
+FLASHLIGHT_SPREAD_DEG = 30.0  # half-angle
+# How near a storm unit RESOLVES out of the blind-spot fog. Storm units are not
+# gated by the sight cone the way a standing Watcher is: measured on a live
+# storm, 0 of 22 units passed the cone (7 of them inside 120px), so the flood
+# was completely invisible and "they ring the light" was unreadable. They take
+# the King's curve instead -- a dim smear at range, resolving as they press in.
+# Shorter than KING_SEE_RANGE (360): the apex must be trackable across a room,
+# a unit only has to be sensed as it arrives.
+STORM_SEE_RANGE = 240.0
+STORM_SPAWN_NEAR = 150.0      # px: closest a storm unit opens
+STORM_SPAWN_FAR = 420.0       # px: furthest (wider than a Watcher's 200 -- the
+                              # flood comes from the whole room, not just ahead)
+
 WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
-AMALGAM_CHANCE = 0.5          # fraction of Watcher manifestations that arrive
+AMALGAM_CHANCE = 0.9          # fraction of Watcher manifestations that arrive
                               # as an AMALGAM (a seeded parts assembly,
                               # rendering/amalgam.py) instead of the OG shroud;
                               # behavior is identical either way
@@ -387,6 +457,60 @@ KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
 KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
 KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
+
+# ---- THE APEX: the Mask that wears a unit (TODO #25) ----------------------
+# The storm's one real threat. Regular units cannot touch you; this can.
+# Maintainer's spec: the Mask spawns in and FLOATS to an amalgam, deletes it and
+# BECOMES it -- reusing that amalgam's exact parts and adding 2-3 more -- it
+# PIERCES the protection of light and is IMMUNE to light (the flashlight is not
+# enough for it), the axe and the gun destroy the HOST but not the Mask, and the
+# Mask then seeks another amalgam and continues its assault until the player
+# drops below the visibility threshold.
+#
+# Speed is KING_ROAM_SPEED verbatim, because it IS Him: 1.95 (~117 px/s) against
+# a player walk of 84 and a sprint of 105. Above sprint on purpose (error class
+# 9, the locked ratio): the apex cannot be outrun. Light does not stop it and
+# hiding is not where it should be yet, so the answer is the axe or a round --
+# which is the loop the maintainer asked for ("it makes the loop more fun if the
+# player can do something to survive").
+APEX_VIS_GATE = 0.55          # visibility at/above which the Mask comes for you
+# THE FACE (TODO #25). A carved object must never EMOTE -- a mask that smiles is
+# a cartoon -- so what it does is WORK: the timber moving in ways timber cannot.
+# There is no mouth and no nose (NARRATIVE 6a), so the vocabulary is the sockets,
+# the embers, the seam and the crack. Driven by STATE, never a loop: on a loop it
+# is decoration, tied to what the thing is DOING it becomes a threat display the
+# player learns to read.
+APEX_FOCUS_RANGE = 340.0      # px: inside this it has you, and the sockets narrow
+APEX_STRAIN_RANGE = 150.0     # px: inside this the face starts coming apart
+APEX_FACE_EASE = 2.6          # per second: how fast expression travels (fluid,
+                              # never a snap -- a face that changes on one frame
+                              # reads as a sprite swap)
+APEX_SKEW_RATE = 0.37         # rad/s of the slow disagreement between sockets
+APEX_SEEK_SPEED = 46.0        # px/s the free-floating Mask drifts to its host
+APEX_MIGRATE_CD = 2.2         # s before it takes a new host after losing one
+APEX_EXTRA_LO, APEX_EXTRA_HI = 2, 3     # parts added to the host's own deal
+APEX_SPEED = KING_ROAM_SPEED
+APEX_CATCH_DIST = KING_CATCH_DIST
+# THE ONE TELL (TODO #25). Everything else the apex does is continuous -- it
+# drifts in, it takes a host, it walks -- and horror needs the moment the rules
+# changed. The screech is that moment and the ONLY one: it fires once per host,
+# as `intent` first crosses this, and for nothing else in the game. Threshold
+# sits above the 0.15 that a HIDDEN player's intent is pinned to, so it can
+# never fire at someone it has not actually found.
+APEX_ROAR_INTENT = 0.72
+# THE REACH (TODO #25) -- the grabbing limbs, the apex's second distinguishing
+# feature after the face. Ordinary units carry no limbs like these; the apex
+# grows them out of its own body toward WHERE YOU ARE, and closes them. They are
+# also the catch's telegraph, which contact otherwise does not have: at
+# APEX_CATCH_DIST the hands are already on you.
+# (how MANY arms and how they are shaped is the renderer's, `amalgam.REACH_*`;
+# what lives here is only how far they are out, which is gameplay.)
+APEX_REACH_INTENT = 0.35      # share of the extension owed to having you...
+APEX_REACH_STRAIN = 0.65      # ...and to being close enough to take you
+# Driving it off must COST something or it becomes a free pressure valve: kill
+# the host and the Mask re-hosts on the NEAREST unit it can reach, so you buy
+# APEX_MIGRATE_CD seconds of breathing room, never distance.
+
                              # ~117 px/s, just above the player's ~105 px/s
                              # sprint so a locked King always closes the gap
                              # (play-notes rebalance)
@@ -512,13 +636,12 @@ SUS_NEAR = 44.0               # px: inside this, facing no longer matters
 SUS_CONE_HALF = 1.40          # rad (~80 deg) enemy sight-cone half-angle
 SUS_CONE_FEATHER = 0.35       # rad soft edge on the cone lip
 SUS_CONCEAL_CORN = 0.30       # concealment factor in corn (leaky, not zero)
-# Darkness is CONCEALMENT too (DESIGN.md §12 "corn, shadow"):
-# in a DARK scene, with the flashlight unlit and outside every light
-# pool (Scene.lit_at), the player reads as half-swallowed by the gloom.
-# Weaker than corn (a shape in the dark is still a shape), and it never
-# stacks with other cover (the better factor wins). Apex pursuers and
-# respects_hide=False eyes ignore it like all cover.
-SUS_CONCEAL_DARK = 0.45
+# DARKNESS IS NOT COVER (maintainer ruling, 2026-07: "darkness shouldn't hide
+# you AT ALL"). There is deliberately no SUS_CONCEAL_DARK here. The dark is
+# where He is, not somewhere to get away from Him -- it is the CONDITION the
+# threats need, never the player's tool. Cover is a thing you put between you
+# and an eye: the corn, a hide, a wall. Standing in an unlit spot is not.
+# Do not re-add it; tests/stealth.py §11 fails if darkness ever conceals again.
 # Leaving an enclosed hide takes a BEAT (the deferred exit-takes-a-beat
 # window): you are out, visible, and unable to move while you unfold.
 HIDE_EXIT_BEAT = 0.35

@@ -46,8 +46,57 @@ FACINGS = (("N", -math.pi / 2, (0, -1)), ("E", 0.0, (1, 0)),
 SEED = 7
 
 
+def _place_creature(g, spec):
+    """Drop a creature into the loaded scene so it can be LOOKED at in a real
+    room, at all four facings, in the light the player actually meets.
+
+    This gap is why "black creature on a black floor" shipped: every creature
+    was judged on a preview card with a chosen backdrop, and nothing put one in
+    an actual dark scene. `spec` is "kind[:seed][@TX,TY]", e.g. "amalgam:3" or
+    "amalgam:3@12,9"; default position is a couple of tiles in front of the
+    player so it lands inside the sight cone.
+
+    The special kind **apex** drops the Mask-bearer (TODO #25) rather than an
+    ordinary unit: the host flags plus the `Game._apex` state its face and its
+    grabbing limbs are read from, wound to full intent. Without it the bearer
+    draws as a plain amalgam and the two features the apex exists for are
+    invisible in the one tool meant to check them."""
+    import math as _m
+    from entities.npc import NPC
+    from constants import TILE as _T
+    kind, _, rest = spec.partition(":")
+    seed, _, at = rest.partition("@")
+    if at:
+        atx, _, aty = at.partition(",")
+        cx, cy = (int(atx) + 0.5) * _T, (int(aty) + 0.5) * _T
+    else:
+        fx, fy = getattr(g.player, "facing", (0, 1))
+        n = _m.hypot(fx, fy) or 1.0
+        cx = g.player.x + fx / n * _T * 2.6
+        cy = g.player.y + fy / n * _T * 2.6
+    apex = (kind == "apex")
+    w = NPC(cx, cy, "", "amalgam" if apex else (kind or "amalgam"),
+            voice="blip_low",
+            portrait="watcher", movement="watch", speed=0.0,
+            no_prompt=True, solid=False)
+    w.tag = "watcher"
+    w.dialogue_fn = None
+    w.sprite_seed = int(seed) if seed.strip().isdigit() else 3
+    w._birth = 1.0
+    if apex:
+        from systems.config import APEX_EXTRA_HI
+        w._apex = True
+        w._apex_extra = APEX_EXTRA_HI
+        g._apex = {"state": "borne", "cd": 0.0, "host": w, "seed": w.sprite_seed,
+                   "roared": True,
+                   "face": {"intent": 1.0, "strain": 0.85, "t": 3.0}}
+        g._watchers.append(w)
+    g.scene.add_npc(w)
+    return w
+
+
 def capture(g, key, heading, facing_vec, px=None, py=None, bright=False,
-            ticks=0, ev=0):
+            ticks=0, ev=0, spawn=None):
     random.seed(SEED)
     try:
         import numpy as np
@@ -84,6 +133,8 @@ def capture(g, key, heading, facing_vec, px=None, py=None, bright=False,
         fn = getattr(g.scene, "on_update_fn", None)
         if fn:
             fn(g, g.scene, 0.1)
+    if spawn:
+        _place_creature(g, spawn)
     g._update_camera(snap=True)
     g.camera.yaw = g.look.cam_yaw          # re-assert (snap may re-run lerps)
     if bright:
@@ -131,6 +182,11 @@ def main():
     ap.add_argument("--ev", type=int, default=0,
                     help="evidence count -> rot stage -> storm darkness "
                          "(a STORM_STAGE_SCENES look pass at ev0 is daylight)")
+    ap.add_argument("--spawn", metavar="KIND[:SEED][@TX,TY]", default=None,
+                    help="drop a creature in the room first, so it is judged "
+                         "in a real scene rather than on a preview card. "
+                         "KIND 'apex' drops the Mask-bearer with its face and "
+                         "its reach live.")
     ap.add_argument("--tag", default="look")
     args = ap.parse_args()
 
@@ -141,7 +197,7 @@ def main():
     for name, heading, fv in FACINGS:
         shots[name] = capture(g, args.scene, heading, fv,
                               args.px, args.py, args.bright, args.tick,
-                              args.ev)
+                              args.ev, args.spawn)
         pygame.image.save(shots[name], f"{out}/{args.scene}_{name}.png")
         print(f"  wrote {out}/{args.scene}_{name}.png")
 

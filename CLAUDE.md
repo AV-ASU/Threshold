@@ -460,9 +460,18 @@ it renders the procedural sprites to a labelled PNG strip.
     `tools/preview_king_unfold.py`.
   - `amalgam.py` — **the AMALGAMS**, the Watcher-family shadows assembled
     from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel,mask)`):
-    a seeded 3-5 part deal from a 17-part library, each part emerging
-    from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
-    this skin, behavior unchanged (DESIGN.md §1). The **Pallid Mask part**
+    a seeded 3-5 part deal from a 22-part library (44 with the per-part
+    mirror flag), each part emerging
+    from its own free-form cut; `AMALGAM_CHANCE` (0.9) of Watcher spawns wear
+    this skin, so it is the ORDINARY shadow and the shroud Watcher is the rare
+    one; behavior unchanged (DESIGN.md §1). Cuts wear the rift's GOLD
+    (`CUT_RIM`), and each part is stroked with a
+    one-pixel bone **outline** (`AMALGAM_EDGE`) so a black creature stays
+    legible in a black room (a blurred glow was tried and cut -- it read as a
+    ghost; gold was rejected because gold is the PORTAL colour). The outline is
+    DRAW ONLY, never a light source -- keep it out of `Scene._LIGHT_KINDS` /
+    `FIXTURE_POOLS` or it starts gating Watcher spawns and the lost-space
+    mouth. The **Pallid Mask part**
     (`draw_pallid_3d` — the one 3D shell — driven through
     `draw_pallid_mask_part`; the storm-King redesign, `TODO.md` #25) is an 18th
     part NEVER dealt by `assemble()`, driven ONLY by the `mask=` kwarg
@@ -643,9 +652,43 @@ section is the CODE MAP only — where each system lives:
   `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
+- **The STORM** (TODO #25) — a MODE of the Watcher wave, never a second
+  spawner: `_storm_active()` (past `STORM_GATE_EVIDENCE` in a room with
+  `scene_gloom() > 0`), `_sync_storm_mode`, `npc._storm_tick` (walk at the
+  player, refuse any step into light, cannot touch), `actor_smear_range` (units
+  ignore the sight cone or the flood is invisible), `STORM_*` config. Cap lifts
+  to `STORM_MAX`; every dispel still works. **THE APEX** (the Mask that wears a
+  unit) is `Game._apex` + `_tick_apex`/`_apex_take`/`_apex_lose_host`
+  (threat_mixin) + `npc._apex_tick`; `APEX_*` config. **Its Mask is NOT the
+  `pallid_mask` keystone** -- there is one Mask object and it is on the altar;
+  this is a SLICE of Him (NARRATIVE §6a, conventions check 12). It ignores light entirely,
+  runs at `KING_ROAM_SPEED`, wears an EXPRESSIVE Mask (`intent`/`strain`/`skew`
+  eased by `_apex_face`; a carved thing WORKS, it never emotes), and the axe/gun kill its HOST not the Mask (hooked in
+  `_dispel_watcher`); its catch fires its OWN
+  `_death_kind == "apex"` (a wordless PLACEHOLDER fade -- never the Unfolding's
+  card; the amalgam's real catch animation is owed, TODO #25), and
+  `_tick_king_roam` stands the Unfolding down while a host is worn. Its two
+  distinguishing beats: **THE SCREECH** (`Audio.apex_roar`, fired from
+  `_apex_face` when `intent` crosses `APEX_ROAR_INTENT` -- one-shot per host,
+  re-armed from zero by `_apex_lose_host`, silent at a hidden player) and **THE
+  REACH** (`amalgam._reach_limbs`, aimed by the SCREEN-space vector
+  `_apex_mask_for` puts in `mask["reach"]`, extended by `APEX_REACH_INTENT` /
+  `APEX_REACH_STRAIN`; also the catch's telegraph). stealth §20.
+  **A storm draws 22 sprites, so
+  `draw_amalgam_sprite` CACHES each unit's composed surface and refreshes it at
+  `UNIT_ANIM_HZ`, staggered per unit by a hashed seed offset** (a modulo offset
+  clusters neighbouring seeds and the whole storm re-renders in lockstep --
+  conventions check 11). **Anything on the bearer that TRACKS the player -- the
+  reach, the face, the gaze -- is HELD to that same bucket** and the Mask's own
+  layer is memoised (`_MASK_PART_CACHE`), or the bearer re-composes every frame:
+  a 22-unit storm with an apex measured 40.8ms/frame before this and 7.3ms after.
+  A tool drawing several apexes in one frame must `reset_amalgam_cache()` between
+  them or the hold shows it the same pose every time. stealth §19.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
-  (threat_mixin); `WATCHER_*` config; light pools + the beam BURN them
-  (`WATCHER_LIGHT_BURN`); stealth §11.
+  (threat_mixin); `WATCHER_*` config. Light works on THEM, never on you: it
+  denies them a spawn spot (`_spawn_watcher` needs dark + line of sight) and
+  BURNS one caught in a pool/beam (`WATCHER_LIGHT_BURN`), but standing in light
+  is NOT cover — exposed means not-in-cover, full stop. stealth §11 + §18.
 - **Killing locals / corpses** — `_kill_npc` → `_make_corpse` + the
   `dead_locals` ledger, laid back down by `_apply_dead_locals` on every
   load; enemy cultists synthesize a corpse in `_kill_enemy`. Flow
@@ -813,7 +856,12 @@ section is the CODE MAP only — where each system lives:
   DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
   (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
   become islands and the flashlight works outdoors. Understanding-driven, NOT a
-  day cycle. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
+  day cycle. **The dark is never the player's tool** (ruling, 2026-07:
+  "darkness shouldn't hide you AT ALL"): it does not conceal you from the cult
+  anywhere in the game (there is no `SUS_CONCEAL_DARK`), and standing in a lamp
+  pool is not cover from a Watcher's gaze either. The dark is the CONDITION His
+  things need to open, so hiding in it would be hiding inside the threat.
+  `tests/stealth.py` §11 + §18 fail if either comes back. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
   `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
   island reads as a bright island in a black sea (TODO #26).
 - `visibility` persists across scene loads (only `_reset_run_state`
@@ -835,8 +883,9 @@ section is the CODE MAP only — where each system lives:
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
   **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
-  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius the
-  stealth `lit_at`/shadow-cover gate reads) AND `FIXTURE_POOLS`
+  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius
+  `Scene.lit_at` reads — the Watcher spawn/burn gate and the lost-edge gate;
+  NOT a concealment gate, darkness never hides you) AND `FIXTURE_POOLS`
   (`systems/render_mixin.py`, the VISIBLE light `_draw_dark` casts in a dark
   scene: `radius, color, peak, src_z, arm, flicker_amp, flicker_speed`).
   `_draw_dark` iterates EVERY emitter through `FIXTURE_POOLS` (not just

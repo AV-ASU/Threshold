@@ -21,6 +21,15 @@ on a spot you name and zoomed until you can actually see it -- from all four
 facings, because a prop that hides on one heading is the whole failure mode
 (VISION.md).
 
+`--spawn KIND[:SEED][@TX,TY]` drops a CREATURE in the room first, because
+judging a sprite on a preview card with a chosen backdrop is not the same as
+seeing it in a real scene: that gap is exactly how an amalgam that is invisible
+on a black floor got signed off. Note the darkness multiply lands AFTER the
+actor pass (`draw_world`: actors, then `_draw_dark`), so a sprite tuned on a
+bright card loses roughly half its value in the shot that matters -- and
+whether a creature appears at a given facing is the SIGHT CONE's business, not
+the sprite's, so an empty panel usually means out-of-cone, not broken art.
+
 `--at TX,TY` centres on a tile; the camera zooms by `--zoom` (default 3x).
 `--dark` keeps the darkness/fog/grade the player actually meets, which is the
 last step of the dressing process: detail that only survives the debug view
@@ -61,6 +70,10 @@ def main():
     ap.add_argument("--ev", type=int, default=0)
     ap.add_argument("--tick", type=int, default=0)
     ap.add_argument("--tag", default="look")
+    ap.add_argument("--spawn", metavar="KIND[:SEED][@TX,TY]",
+                    help="drop a creature in the room first, e.g. "
+                         "amalgam:3 -- so a sprite can be judged in a real "
+                         "scene at every facing instead of on a preview card")
     args = ap.parse_args()
 
     tx, _, ty = args.at.partition(",")
@@ -86,7 +99,7 @@ def main():
     for name, heading, fv in FACINGS:
         shots[name] = capture(g, args.scene, heading, fv, px, py,
                               bright=not args.dark, ticks=args.tick,
-                              ev=args.ev)
+                              ev=args.ev, spawn=args.spawn)
     if abs(g.camera.scale - _sg.TILT_ZOOM) > 1e-6:
         sys.exit(f"FAIL: camera.scale is {g.camera.scale}, expected "
                  f"{_sg.TILT_ZOOM} -- the zoom did not take, so this sheet "

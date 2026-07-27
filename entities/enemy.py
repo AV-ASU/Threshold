@@ -6,7 +6,7 @@ import random
 import pygame
 from rendering.sprites import draw_npc_sprite
 from rendering.transform import draw_vessel_bloom
-from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
+from systems.config import SUS_NOTICE, SUS_SCORE_HOLD, CULT_CHASE_MULT
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
                              react_hold, errand_step, errand_drop,

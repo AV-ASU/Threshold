@@ -713,7 +713,7 @@ class ThreatMixin:
         # understand, the higher your baseline) PLUS each live Watcher of the
         # curse. Capped just under the King so the curse presses you to the
         # edge but stays survivable -- and thus curable by clearing them.
-        watcher_floor = n_watch * WATCHER_FLOOR
+        watcher_floor = min(n_watch, STORM_PRESS_UNITS) * WATCHER_FLOOR
         self._vis_floor = min(VIS_FLOOR_TOTAL_CAP,
                               self._evidence_floor() + watcher_floor)
         self.visibility = max(self._vis_floor, min(1.0, self.visibility))
@@ -792,12 +792,27 @@ class ThreatMixin:
         up in _tick_visibility (`_watcher_gaze`), so ignoring them SNOWBALLS.
         Cover pauses the timer and drops the hold; safe rooms suppress them;
         clearing them all (gaze / axe / shot, _dispel_watcher) sets the grace.
-        And the gaze only opens under the open sky or in the deep
-        (WATCHER_OPEN_SCENES, 2026-07 ruling): no Watcher ever manifests
-        inside a surface building -- step through a door and the wave clears,
-        step back out and the grace runs before it re-forms."""
+        Where the gaze can open at all is WATCHER_OPEN_SCENES: under the open
+        sky, in the deep, and in the dark non-refuge interiors, but never in a
+        true refuge -- step into one and the wave clears, step back out and the
+        grace runs before it re-forms.
+
+        LIGHT is not cover from them (2026-07 ruling). Every way light works
+        against a Watcher is about the light on IT, not the light on you: a
+        fully lit room has nowhere for one to open (_spawn_watcher requires a
+        dark spot with line of sight), and one caught in a pool or the beam
+        BURNS out (WATCHER_LIGHT_BURN). Standing in a lamp pool does nothing to
+        the wave or the hold -- it can see you fine, and being seen when you
+        cannot hide is the point of them. Darkness is likewise no cover
+        anywhere in the game (systems/stealth.concealment_factor)."""
         if self.scene is None or self.player is None:
             return
+        # Publish the beam BEFORE the not-watching early-return below. Stamping
+        # it further down (inside _sync_storm_mode) meant a safe scene never
+        # refreshed it, so a stale cone from the last room persisted on the
+        # player. Nothing reads it there today, which is exactly why it would
+        # have sat unnoticed until something did.
+        self._stamp_beam()
         # Drop any swept on load/death.
         self._watchers = [w for w in self._watchers if w in self.scene.npcs]
         for w in self._watchers:
@@ -820,24 +835,30 @@ class ThreatMixin:
             self._watcher_clone_t = WATCHER_GRACE
             self._watcher_gaze = 0.0
             return
-        if key in DIM_INTERIOR_SCENES:
-            # "no light = danger" (TODO #21): in these dark rooms the gaze
-            # opens where you stand in the DARK. A light POOL (Scene.lit_at,
-            # the same shadow-cover gate) or the flashlight is the cover -- the
-            # refuge here is the LIT room, not the building. An enclosed hide
-            # (under a desk) still counts as cover too.
-            lit = (self._flashlight_lit()
-                   or self.scene.lit_at(self.player.x, self.player.y))
-            exposed = (not lit) and self.player.hidden is None
-        else:
-            exposed = self.player.hidden is None
+        # EXPOSED means not in cover. Nothing else. Standing in a light pool is
+        # NOT cover from the gaze (maintainer ruling, 2026-07): a Watcher can
+        # hold you perfectly well in the light -- being seen when you cannot
+        # hide is the whole point of them. The 2026-07 "no light = danger" pass
+        # had made a lit spot suppress the wave and drop the hold in the dim
+        # interiors, which quietly turned every lamp into a safe square and
+        # gave the player a way to opt out of the one threat that is supposed
+        # to be unopt-out-able. Light still does real work against them, but
+        # all of it is about the light on THEM, never the light on you: it
+        # denies them anywhere to open (_spawn_watcher needs a dark spot) and
+        # it BURNS one caught in a pool or the beam (_tick_watcher_gaze,
+        # WATCHER_LIGHT_BURN). You clear them with light; you never hide in it.
+        exposed = self.player.hidden is None
+        # STORM MODE: the cap lifts and the wave starts walking (TODO #25).
+        storming = self._storm_active()
+        self._sync_storm_mode(storming)
+        cap = STORM_MAX if storming else WATCHER_MAX
         # A wave carried in from a fold (or across a scene) re-forms its seed.
         if self._cursed and not self._watchers:
             self._spawn_watcher()
             self._watcher_clone_t = self._watcher_spawn_interval()
         # Exposure-gated cadence: the grace before the first of a wave, the
         # evidence-scaled interval between the rest. Cover pauses the timer.
-        if exposed and len(self._watchers) < WATCHER_MAX:
+        if exposed and len(self._watchers) < cap:
             self._watcher_clone_t -= dt
             if self._watcher_clone_t <= 0.0:
                 if not self._cursed:
@@ -847,14 +868,299 @@ class ThreatMixin:
                 self._watcher_clone_t = self._watcher_spawn_interval()
         # Live Watchers HOLD you while you are exposed -> the active visibility
         # climb (read in _tick_visibility). Any cover drops the hold.
-        self._watcher_gaze = float(len(self._watchers)) if exposed else 0.0
+        # Only STORM_PRESS_UNITS of them can press the meter -- see the config
+        # note. Uncapping the population must not silently uncap the threat.
+        pressing = min(len(self._watchers), STORM_PRESS_UNITS)
+        self._watcher_gaze = float(pressing) if exposed else 0.0
         # Staring one down dissolves it (the cure).
         self._tick_watcher_gaze(dt)
 
+    def _storm_active(self):
+        """Is a STORM up in this room right now? (TODO #25)
+
+        The storm is not a second spawner -- it is a MODE of the Watcher wave.
+        Two populations of the same creature under different rules reads as a
+        bug rather than escalation (most manifestations already wear the amalgam
+        skin), so instead the wave lifts its cap, tightens its cadence, and
+        every unit switches from standing in the dark to walking at the player.
+        Every dispel keeps working, per the maintainer: "during a storm amlgs
+        can be dispelled by any means watchers can be."
+
+        Up where His attention has already flooded: past the apex's own gate,
+        and in a room the darkness has actually taken. `scene_gloom()` is the
+        one darkness source (the same reading `_draw_dark` paints and the
+        lost-space mouth is gated on), so the flood literally fills the dark and
+        cannot disagree with what the player sees. Note Watchers do NOT stop at
+        the gate (maintainer ruling) -- they become the storm.
+        """
+        if self.scene is None or self.player is None:
+            return False
+        if self._evidence_count() < STORM_GATE_EVIDENCE:
+            return False
+        return self.scene_gloom() > 0
+
+    # ======================= THE APEX (TODO #25) ==========================
+    # The Mask that wears a unit. Regular storm units cannot touch you; this can.
+    # It is GAME state, not scene state -- one bearer storm-wide is a locked
+    # fence, and `scene.npcs` is cleared on every load, so the Mask lives on the
+    # Game (like `_king`) and PROJECTS a host into whatever room you are in.
+    #
+    # Two states:
+    #   "seeking" -- a free-floating Mask drifting toward a chosen amalgam
+    #   "borne"   -- it IS that amalgam: the host is deleted and the Mask becomes
+    #                it, wearing its exact deal plus APEX_EXTRA parts.
+
+    def _apex_wanted(self):
+        """Does the Mask want you right now? A storm, and visibility at or above
+        `APEX_VIS_GATE` -- the maintainer's "until you get below the vis
+        threshold" is the same line read from the other side."""
+        return self._storm_active() and self.visibility >= APEX_VIS_GATE
+
+    def apex_host(self):
+        """The NPC the Mask is currently wearing, or None."""
+        ap = getattr(self, "_apex", None)
+        return ap.get("host") if ap and ap.get("state") == "borne" else None
+
+    def _apex_end(self, reason="left"):
+        """The Mask withdraws entirely (below the vis gate, or the storm ended)."""
+        ap = getattr(self, "_apex", None)
+        if not ap:
+            return
+        host = ap.get("host")
+        if host is not None and self.scene is not None:
+            if host in self.scene.npcs:
+                self.scene.npcs.remove(host)
+            if host in self._watchers:
+                self._watchers.remove(host)
+        self._apex = None
+
+    def _apex_lose_host(self):
+        """The axe or a round destroyed the HOST -- never the Mask (maintainer).
+        It drops back to seeking and re-hosts after APEX_MIGRATE_CD.
+
+        The cooldown IS the reward for fighting it, and the only one: it re-hosts
+        on the NEAREST unit it can reach, so you buy seconds of breathing room,
+        never distance. Without that, staring down or axing the bearer would be a
+        free pressure valve and the apex would become the safest thing in the
+        room."""
+        ap = getattr(self, "_apex", None)
+        if not ap:
+            return
+        host = ap.get("host")
+        if host is not None:
+            ap["x"], ap["y"] = host.x, host.y
+        ap["host"] = None
+        ap["state"] = "seeking"
+        ap["cd"] = APEX_MIGRATE_CD
+        # The next host earns its own screech -- and earns it from ZERO. A free
+        # Mask between bodies has no face at all, so the expression is cleared
+        # rather than left to ease down: leaving it high meant the re-arm fired
+        # instantly off the dead host's lock, announcing a decision the new one
+        # had not made yet.
+        ap["roared"] = False
+        f = ap.get("face")
+        if f:
+            f["intent"] = f["strain"] = 0.0
+        self.audio.play("void_sting", 0.7)
+
+    def _apex_take(self, unit):
+        """The Mask reaches a unit and BECOMES it: the amalgam is deleted and the
+        Mask wears its exact parts plus 2-3 more (maintainer's spec). Replacing
+        the host rather than stacking on it keeps the two from z-fighting in the
+        depth sort and keeps one body where the fiction has one."""
+        ap = self._apex
+        seed = getattr(unit, "sprite_seed", 1)
+        if unit in self.scene.npcs:
+            self.scene.npcs.remove(unit)
+        if unit in self._watchers:
+            self._watchers.remove(unit)
+        host = NPC(unit.x, unit.y, "", "amalgam",
+                   voice="blip_low", portrait="watcher",
+                   movement="apex", speed=APEX_SPEED,
+                   no_prompt=True, solid=False)
+        host.tag = "watcher"          # shares every dispel path the family has
+        host.dialogue_fn = None
+        host.sprite_seed = seed       # the host's OWN deal, reused verbatim
+        host._birth = 1.0
+        host._apex = True
+        host._apex_extra = random.randint(APEX_EXTRA_LO, APEX_EXTRA_HI)
+        self.scene.add_npc(host)
+        self._watchers.append(host)
+        ap["host"] = host
+        ap["state"] = "borne"
+        ap["seed"] = seed
+
+    def _apex_face(self, dt):
+        """Ease the Mask's expression toward what the apex is currently DOING.
+
+        Three channels, all 0..1 (`rendering.amalgam.draw_pallid_3d`):
+          intent  it has you -- sockets narrow, embers steady and brighten
+          strain  it is close enough to take you -- the seam gaps, the crack runs
+          skew    the two sockets stop agreeing
+
+        Eased rather than set, because fluid is the whole point: expression that
+        snaps between values reads as a sprite swap, not as a face. And driven by
+        STATE rather than a clock, so the player can learn to read it -- a face on
+        a loop is decoration; a face that narrows when it acquires you is a tell.
+        """
+        ap = getattr(self, "_apex", None)
+        if not ap:
+            return (0.0, 0.0, 0.0)
+        f = ap.setdefault("face", {"intent": 0.0, "strain": 0.0, "t": 0.0})
+        host = ap.get("host")
+        if host is None:
+            want_i = want_s = 0.0        # driven off; the face slackens
+        else:
+            d = math.hypot(host.x - self.player.x, host.y - self.player.y)
+            seen = self.player.hidden is None
+            want_i = (max(0.0, min(1.0, 1.0 - d / APEX_FOCUS_RANGE))
+                      if seen else 0.15)
+            want_s = max(0.0, min(1.0, 1.0 - d / APEX_STRAIN_RANGE))
+        k = min(1.0, dt * APEX_FACE_EASE)
+        f["intent"] += (want_i - f["intent"]) * k
+        f["strain"] += (want_s - f["strain"]) * k
+        f["t"] += dt
+        # THE ONE TELL. The moment it has you, once, out loud. The trigger is
+        # the same `intent` the face is already reading, so the sound and the
+        # expression are the same event rather than two systems that can drift
+        # -- you hear it narrow. One-shot per host (`_apex_lose_host` re-arms
+        # it), so killing the bearer earns a second screech when the next one
+        # finds you, and standing in the open for a minute earns nothing. A
+        # hidden player pins intent at 0.15, well under the threshold, so it
+        # cannot announce a lock it does not have.
+        if f["intent"] >= APEX_ROAR_INTENT and not ap.get("roared"):
+            ap["roared"] = True
+            self.audio.play("apex_roar", 0.85)
+        # The disagreement wanders on its own and never repeats the same way for
+        # two hosts (the seed offset), so no two apexes wear the same wrongness.
+        ph = f["t"] * APEX_SKEW_RATE + (ap.get("seed", 0) % 17) * 0.41
+        skew = (math.sin(ph) * 0.55 + math.sin(ph * 0.37) * 0.45) * 0.5
+        return (f["intent"], f["strain"], skew)
+
+    def apex_face(self):
+        """The current (intent, strain, skew) for the draw, or None."""
+        ap = getattr(self, "_apex", None)
+        if not ap or "face" not in ap:
+            return None
+        f = ap["face"]
+        ph = f["t"] * APEX_SKEW_RATE + (ap.get("seed", 0) % 17) * 0.41
+        skew = (math.sin(ph) * 0.55 + math.sin(ph * 0.37) * 0.45) * 0.5
+        return (f["intent"], f["strain"], skew)
+
+    def _tick_apex(self, dt):
+        """Drive the Mask: arrive, seek a host, wear it, and catch."""
+        if self.scene is None or self.player is None:
+            return
+        ap = getattr(self, "_apex", None)
+        if not self._apex_wanted():
+            if ap:
+                self._apex_end()
+            return
+        if ap is None:
+            # It ARRIVES: a free-floating Mask, out in the dark, coming in.
+            ang = random.uniform(0, math.tau)
+            r = random.uniform(STORM_SPAWN_NEAR, STORM_SPAWN_FAR)
+            self._apex = ap = {"state": "seeking", "cd": 0.0,
+                               "x": self.player.x + math.cos(ang) * r,
+                               "y": self.player.y + math.sin(ang) * r,
+                               "host": None, "seed": 0}
+        self._apex_face(dt)
+        if ap["state"] == "borne":
+            host = ap.get("host")
+            if host is None or host not in self.scene.npcs:
+                self._apex_lose_host()       # swept some other way
+                return
+            # THE CATCH. Light does not stop it and it cannot be outrun, so
+            # contact is the run ending -- the King's own death, because it is
+            # the King (the art rewire is TODO #25's retire slice).
+            d = math.hypot(host.x - self.player.x, host.y - self.player.y)
+            if (self.player.hidden is None and self.player.invuln <= 0
+                    and d < APEX_CATCH_DIST):
+                # Its OWN death kind. It used to borrow "king", which meant the
+                # apex catch played THE UNFOLDING's throat-swallow -- the art of
+                # the body this is replacing. Maintainer: do not use the existing
+                # death card. "apex" draws a wordless placeholder until the
+                # amalgam's own catch animation is made (TODO #25).
+                self._trigger_death("apex")
+            return
+        # SEEKING: drift toward the nearest unit it can wear, or toward the
+        # player when the flood has not opened one yet.
+        ap["cd"] = max(0.0, ap["cd"] - dt)
+        cands = [w for w in self._watchers
+                 if getattr(w, "_apex", False) is False
+                 and getattr(w, "alive", True)]
+        target = None
+        if cands and ap["cd"] <= 0.0:
+            target = min(cands, key=lambda w: (w.x - ap["x"]) ** 2
+                         + (w.y - ap["y"]) ** 2)
+        tx = target.x if target is not None else self.player.x
+        ty = target.y if target is not None else self.player.y
+        dx, dy = tx - ap["x"], ty - ap["y"]
+        d = math.hypot(dx, dy) or 1.0
+        step = APEX_SEEK_SPEED * dt
+        if target is not None and d <= max(step, 10.0):
+            self._apex_take(target)
+            return
+        ap["x"] += dx / d * step
+        ap["y"] += dy / d * step
+
+    def actor_smear_range(self, npc):
+        """How far out this actor stays SENSED in the blind-spot fog, or 0.0 to
+        obey the sight cone outright (read by draw_world's `_vis_alpha`).
+
+        Storm units do not obey the cone. Measured on a live 22-unit storm, ZERO
+        passed it -- 7 of them inside 120px -- so the entire flood was invisible
+        and "they ring the light" was a rule the player could never see. A blanket
+        exemption would kill the dread the other way, so they take the apex's
+        curve: a dim smear at range, resolving as they press in
+        (`STORM_SEE_RANGE`, shorter than the King's).
+
+        Extracted from the draw path on purpose: as a closure this was only
+        checkable by counting pixels, and "the flood went invisible again" is
+        precisely the regression that would slip through a green gate.
+        """
+        return (STORM_SEE_RANGE
+                if getattr(npc, "movement", None) == "storm" else 0.0)
+
+    def _stamp_beam(self):
+        """Publish the flashlight cone on the player so an AI can respect it.
+
+        `Scene.lit_at` only knows scene FIXTURES. A storm unit tested against
+        that alone walked straight through the beam, which made "during a storm
+        light is your only safety" unachievable in any room with no lamps -- most
+        of the mine, the lost spaces, an unpowered building. Same numbers the
+        cone is DRAWN with (`FLASHLIGHT_*`, read by `_draw_dark`), so what the
+        player sees and what a unit refuses cannot drift.
+        """
+        p = self.player
+        if p is None:
+            return
+        if not self._flashlight_lit():
+            p._beam = None
+            return
+        fx, fy = getattr(p, "facing", (0, 1)) or (0, 1)
+        n = math.hypot(fx, fy) or 1.0
+        p._beam = (fx / n, fy / n, FLASHLIGHT_REACH,
+                   math.cos(math.radians(FLASHLIGHT_SPREAD_DEG)))
+
+    def _sync_storm_mode(self, storming):
+        """Flip live units between the two behaviours when the storm state
+        changes under them -- walking into a lit room, or out of one, must not
+        leave a tide still advancing (or a stopped unit that should be)."""
+        want = "storm" if storming else "watch"
+        for w in self._watchers:
+            if getattr(w, "movement", None) != want:
+                w.movement = want
+                w.speed = STORM_UNIT_SPEED if storming else 0.0
+
     def _watcher_spawn_interval(self):
-        """Seconds between Watcher spawns, shaved by evidence (the King floods
-        them deep) down to WATCHER_SPAWN_MIN."""
+        """Seconds between manifestations, shaved by evidence (He floods them
+        deep). A STORM runs on its own, much tighter cadence -- the flood has to
+        arrive as a flood, not at one every few seconds."""
         ev = self._evidence_count()
+        if self._storm_active():
+            return max(STORM_SPAWN_MIN,
+                       STORM_SPAWN_BASE - ev * STORM_SPAWN_STEP)
         return max(WATCHER_SPAWN_MIN,
                    WATCHER_SPAWN_BASE - ev * WATCHER_SPAWN_STEP)
 
@@ -873,20 +1179,31 @@ class ThreatMixin:
         spot in view of you cannot open ANYTHING -- a fully lit room is
         secured, and a blackout un-secures it."""
         scene = self.scene
+        storming = self._storm_active()
         spot = None
+        # A STORM opens across the whole room and does NOT require line of
+        # sight. The LOS rule exists so a lone Watcher can always be answered
+        # with your gaze -- no unanswerable accumulation. A storm unit answers
+        # that differently: it WALKS AT YOU, so it delivers itself into your
+        # cone whether it opened there or not. Out of storm the rule stands
+        # exactly as ruled in 2026-07.
+        near, far = ((STORM_SPAWN_NEAR, STORM_SPAWN_FAR) if storming
+                     else (110, 200))   # closer in (play-notes: hard to see far)
         for _ in range(20):
             ang = random.uniform(0, math.tau)
-            r = random.uniform(110, 200)   # closer in (play-notes: hard to see far)
+            r = random.uniform(near, far)
             wx = self.player.x + math.cos(ang) * r
             wy = self.player.y + math.sin(ang) * r
-            if (0 < wx < scene.w * Scene.TILE
-                    and 0 < wy < scene.h * Scene.TILE
-                    and not scene.is_solid_at(wx, wy)
-                    and not scene.lit_at(wx, wy)
-                    and scene.clear_sight_line(wx, wy,
-                                               self.player.x, self.player.y)):
-                spot = (wx, wy)
-                break
+            if not (0 < wx < scene.w * Scene.TILE
+                    and 0 < wy < scene.h * Scene.TILE):
+                continue
+            if scene.is_solid_at(wx, wy) or scene.lit_at(wx, wy):
+                continue
+            if not storming and not scene.clear_sight_line(
+                    wx, wy, self.player.x, self.player.y):
+                continue
+            spot = (wx, wy)
+            break
         if spot is None:
             return
         # The shadow FAMILY: some of His gaze manifests as the OG Watcher,
@@ -896,7 +1213,8 @@ class ThreatMixin:
         kind = "amalgam" if random.random() < AMALGAM_CHANCE else "watcher"
         w = NPC(spot[0], spot[1], "", kind,
                 voice="blip_low", portrait="watcher",
-                movement="watch", speed=0.0,
+                movement="storm" if storming else "watch",
+                speed=STORM_UNIT_SPEED if storming else 0.0,
                 no_prompt=True, solid=False)
         w.tag = "watcher"
         w.dialogue_fn = None
@@ -952,7 +1270,15 @@ class ThreatMixin:
 
     def _dispel_watcher(self, w, reason="gaze"):
         """Dissolve one Watcher. If it was the last one and we're not merely
-        being suppressed by a safe room, the curse lifts (you're cured)."""
+        being suppressed by a safe room, the curse lifts (you're cured).
+
+        If it was the APEX's host, the HOST dies and the Mask does not: it drops
+        to seeking and takes another (maintainer). Every dispel the family has
+        works on the host -- gaze, light, axe, round -- which is the whole point:
+        light will not hold the apex off, so the player needs something that
+        does."""
+        if getattr(w, "_apex", False):
+            self._apex_lose_host()
         if w in self._watchers:
             self._watchers.remove(w)
         if self.scene is not None and w in self.scene.npcs:
@@ -1030,7 +1356,7 @@ class ThreatMixin:
         self._death_t = 0.0
         self._closure_locked = True
         self.audio.force_silence()
-        if kind == "king":
+        if kind in ("king", "apex"):
             self.audio.play("void_sting", 0.9)
             self.audio.play("low_pulse", 0.8)
         elif kind == "sheriff":
@@ -1172,10 +1498,13 @@ class ThreatMixin:
                 self.audio.music_muted = False
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
-        else:  # king
+        else:  # king / apex -- His deaths, same length
             if self._death_t >= 3.8:
+                was = self._death_kind
                 self._death_kind = None
                 self._closure_locked = False
+                if was == "apex":
+                    self._apex_end()          # the Mask + its host go with it
                 self._despawn_king()          # full teardown: NPC + FX + tone,
                                               # not just nulling the ref
                 self.visibility = 0.40        # not zero; never zero
