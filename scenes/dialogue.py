@@ -716,7 +716,8 @@ def grant_receipt(game):
     # a year" was flatly wrong: Mara drove north in the FALL of 1993 and the
     # present is April 1994, so her tab runs three or four months, not twelve.
     _evidence(game, "maras_receipt", [
-        "A store tab off Hettie's spike, headed 'M. Blaine' in her hand.",
+        "A store tab out of the bin under Hettie's till, headed 'M. Blaine' "
+        "in her hand.",
         "Matches, canned milk, bread, kerosene, lamp oil. The same short "
         "list, week on week, autumn through the new year.",
     ], show=False)
@@ -868,24 +869,33 @@ def hettie_dialogue(game, npc):
             and not save.flag("hettie_mara_memory")
             and save.flag("hettie_saw_photo")):
         save.set_flag("hettie_mara_memory", True)
+        # 2026-07 rewrite. What came out: the "one thing worth the telling"
+        # preamble (a character announcing she is about to say something
+        # important), and the "sad around the eyes, and polite with it"
+        # portrait, which contradicted her own answer to the photograph four
+        # lines earlier ("Faces come through this shop. I stopped keeping
+        # them"). She either retains faces or she does not. What is left is a
+        # shopkeeper talking about her till: a regular, then not, and the
+        # others going quiet at the same time as a fact about trade rather
+        # than a survey of the town (Vane, Toby and Crane already deliver
+        # that observation; a fourth flattens all four).
         _lines = [
-            "Your girl. I'll tell you the one thing I know that's "
-            "worth the telling.",
-            "She used to come in here. Matches, canned milk. Counted her "
-            "change twice, every time, like it mattered. Sad around the "
-            "eyes, and polite with it.",
-            "Then one day past the new year she set her basket down half "
-            "filled and walked out. Left it sitting there. I never saw her "
-            "again.",
+            "Your girl. She was a regular. Up till a few months back.",
+            "Then she wasn't. Whole lot of them stopped coming in around "
+            "the same time, her with them.",
+            "Last of it, past the new year, she set her basket down half "
+            "filled and walked out. Left it sitting there. Never came back "
+            "for it.",
         ]
         # Her warm handover of the store tab (surface evidence), only if
         # the PI has not already lifted it off the spike himself. The tab
         # is world-persistent either way (grant_receipt is flag-gated).
         if not save.flag("evidence_maras_receipt"):
             _lines.append(
-                "[c=dim]She works a curled slip off the spike by the till "
-                "and sets it on the counter, turned toward you. Her tab for "
-                "the girl. Matches, canned milk, week on week.[/c]")
+                "[c=dim]She goes into the bin under the till, digs a while, "
+                "and comes up with a curled slip. Flattens it on the "
+                "counter and turns it toward you. Her tab for the "
+                "girl.[/c]")
         game.dialog.show(_lines, speaker="Hettie", voice="blip_high",
                          portrait="hettie")
         grant_receipt(game)
@@ -1109,7 +1119,7 @@ def _vane_where_beats(game):
             ("npc", "(He looks at you a while.) No. It isn't."),
             ("npc", "You have been walking my town asking after one girl, "
                     "and you have not put one thing in my hand. The ones "
-                    "who came before you were friendly too, son."),
+                    "who came before you were friendly too."),
             ("npc", "Bring me something I can hold. Then we will see what "
                     "I have got."),
         ]
@@ -1433,7 +1443,7 @@ VANE_CONVO = {
                 ("npc", "So it isn't just here. That's what a front page "
                         "is for, I guess. Telling you the weather's the "
                         "same all over."),
-                ("npc", "Thank you for the paper, son. Go on home now. "
+                ("npc", "Thank you for the paper. Go on home now. "
                         "(He doesn't look up from the page again.)"),
                 ("pi", "[c=dim]I meant it as a kindness. Walking out, I "
                        "couldn't remember why I thought it would land as "
@@ -1950,7 +1960,7 @@ PELL_CONVO = {
     "exchanges": _opener_exchanges(
         intro_beats=[
             ("npc", "A detective. On my step."),
-            ("npc", "There's a foulness set over this whole town, son. You "
+            ("npc", "There's a foulness set over this whole town. You "
                     "feel it more than smell it. Folk are tired under it, "
                     "all of them, and sleep doesn't mend it."),
             ("npc", "[c=dim]You're breathing it now too. Same as the rest "
@@ -1970,7 +1980,7 @@ PELL_CONVO = {
                  "in April. Nobody brought it in?",
             "label": "Nobody brought the corn in?",
             "beats": [
-                ("npc", "That's Pell corn, son. Northernmost corn in the "
+                ("npc", "That's Pell corn. Northernmost corn in the "
                         "world, grown on this ground since 1894. My father "
                         "took ribbons on it. So did I."),
                 ("npc", "Nobody cut it last fall. First harvest this town "
@@ -1996,7 +2006,7 @@ PELL_CONVO = {
                         "where it sits in your hand, slow, like a man "
                         "reading a headstone.)"),
                 ("npc", "April 14. Out there it got to April 14."),
-                ("npc", "I quit marking days, son. Nothing was coming "
+                ("npc", "I quit marking days. Nothing was coming "
                         "that a marked day would bring any closer."),
                 ("npc", "(He takes it, folds it once, and tucks it under "
                         "his arm the way you carry tools.)"),

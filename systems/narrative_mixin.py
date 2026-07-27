@@ -317,12 +317,13 @@ class NarrativeMixin:
         # week on week says resident without the book saying it. What he
         # writes down now is the town, not the case: he never solves Mara on
         # the page, and the reader does.)
-        ("theory_son",
-         lambda g: (g._ev_has("maras_room")
-                    and bool(getattr(g.player, "inventory", None))
-                    and g.player.inventory.has("bear")),
-         ["A boy, Sam. She gave his bear to the one live kid here. His name "
-          "breaks her."]),
+        # (theory_son is CUT with the other case reads, 2026-07. It said "A
+        # boy, Sam. She gave his bear to the one live kid here. His name
+        # breaks her." -- the same conclusion-for-the-player as the three
+        # before it, and worse, because "his name breaks her" is the PI
+        # predicting a scene he has not reached yet. The bear still
+        # DETONATES: that lives in the item's own text, which rewrites once
+        # the letter is read, systems/items.py effective_desc.)
         ("theory_fold",
          lambda g: g.save.flag("crossed_a_fold"),
          ["And the town won't let go. I've felt the ground fold back under "

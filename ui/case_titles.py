@@ -43,7 +43,6 @@ NOTE_TITLES = {
     "the_congregation":        "The Ones Who Knelt",
     # What he concluded, written down once each as he reached it. They stay
     # on their pages for the rest of the run, wrong ones included.
-    "theory_son":              "The Boy",
     "theory_fold":             "The Town Won't Let Go",
     "theory_robes":            "The Robes Run This",
     "theory_mask":             "What the Mask Buys",
@@ -83,7 +82,7 @@ NOTE_TITLES = {
 # titles above still exist for these, because the corner scribble toast needs
 # a name to show when one is written.
 HEADLESS_IN_BOOK = frozenset({
-    "theory_son", "theory_fold", "theory_robes", "theory_mask",
+    "theory_fold", "theory_robes", "theory_mask",
 })
 
 

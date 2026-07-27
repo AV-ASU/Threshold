@@ -111,7 +111,17 @@ Consolidated from the canon. A new or edited line must pass all of these.
    Used on every reflection it becomes its own wallpaper (a play-note
    grievance). Vary the deadpan sign-off: a hard stop, a different beat, or
    nothing at all. At most a couple across the whole game.
-9. **Markup never leaks.** `[c=...]`, `[/c]`, and every style token is
+9. **A mode of address belongs to ONE speaker.** "son" had spread across
+   Vane, Old Pell and Garrick (eight uses, three speakers) and was a large
+   part of why those three read as interchangeable. It is **Garrick's**: he
+   sits the square, he counts who is left, he talks to the PI like a younger
+   man. Nobody else uses it, including the hollow Sheriff. The same holds for
+   "friend", which is Sable's. **"mister" is exempt and stays shared** on
+   purpose: nobody in Brimley ever learns the PI's name, so it is the correct
+   default in every mouth and says nothing about the speaker. Enforced by
+   `tests/conventions.py` check 10, because the drift is invisible one line
+   at a time.
+10. **Markup never leaks.** `[c=...]`, `[/c]`, and every style token is
    stripped on every render path (notebook, scribble toast, caption). Never
    printed literally.
 
@@ -375,15 +385,15 @@ intro:" / "Opener photo:").
   - (npc) "If you find the way out. The real one. You don't owe this town a goodbye. Just go."
 - **One-shot: the preacher** (avail: body found + met her):
   - "Heard about the preacher. I won't be saying his prayers in here. Don't ask me to."
-- **One-shot: the Mara memory** (avail: shown the photo; hands over the tab, `grant_receipt`):
-  - "Your girl. I'll tell you the one thing I know that's worth the telling."
-  - "She used to come in here. Matches, canned milk. Counted her change twice, every time, like it mattered. Sad around the eyes, and polite with it."
-  - "Then one day past the new year she set her basket down half filled and walked out. Left it sitting there. I never saw her again."
+- **One-shot: the Mara memory** (avail: shown the photo; hands over the tab, `grant_receipt`). **Rewritten 2026-07:** the "one thing worth the telling" preamble is gone (a character announcing she is about to say something important), and so is the "sad around the eyes, and polite with it" portrait, which contradicted her own answer to the photograph four lines earlier: *"Faces come through this shop. I stopped keeping them."* She either retains faces or she does not. What is left is a shopkeeper talking about her till.
+  - "Your girl. She was a regular. Up till a few months back."
+  - "Then she wasn't. Whole lot of them stopped coming in around the same time, her with them."
+  - "Last of it, past the new year, she set her basket down half filled and walked out. Left it sitting there. Never came back for it."
   - *(The smiling exit and "It was the smiling I minded" were CUT, 2026-07: a
     smile the shopkeeper finds disturbing is a visible mark of claiming, and
     NARRATIVE §2 says there is none. Mara is grieving, not elated. She simply
     stopped coming in, and nobody clocked anything.)*
-  - (if tab not yet lifted) "[c=dim]She works a curled slip off the spike by the till and sets it on the counter, turned toward you. Her tab for the girl. Matches, canned milk, week on week.[/c]"
+  - (if tab not yet lifted) "[c=dim]She goes into the bin under the till, digs a while, and comes up with a curled slip. Flattens it on the counter and turns it toward you. Her tab for the girl.[/c]" *(the BIN, not the spike, 2026-07: she is not keeping a shrine to the girl, it is refuse she has not taken out because nothing leaves this town, refuse included)*
 - **One-shot: the newspaper OFFER** (avail: met her, carries newspaper;
   TODO #2 rework: she notices and offers, but the trade is the PLAYER'S
   call now -- one copy, six doors):
@@ -659,8 +669,8 @@ Scriptorium), `maras_room` (the unsent letter, her cell). Notes (never
 counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 `the_how`, `the_talk`, `the_bear`, the cult testimony (`cult_calling` /
 `cult_bargain` / `cult_digging`).
-- **`maras_receipt`** (`grant_receipt`): "A store tab off Hettie's spike,
-  headed 'M. Blaine' in her hand." / "Matches, canned milk, bread, kerosene,
+- **`maras_receipt`** (`grant_receipt`): "A store tab out of the bin under
+  Hettie's till, headed 'M. Blaine' in her hand." / "Matches, canned milk, bread, kerosene,
   lamp oil. The same short list, week on week, autumn through the new year."
   The list is the whole entry. **"She lived here" was CUT** (maintainer
   ruling, 2026-07): that is the player's connection to make, and a tab of
@@ -869,13 +879,16 @@ is ever reordered, merged or overwritten. Up and down turn the leaf.
 page for the rest of the run. They render with no heading, because a
 conclusion he jots is a line in the flow rather than a titled find.
 > **The three CASE reads are CUT** (maintainer ruling, 2026-07): "A resident,
-> not a drifter", "She lived here and came apart here", and "She wasn't taken,
-> she walked to it willing". Each was the conclusion its own evidence had been
-> built to earn, handed over instead of left. **He never solves Mara on the
-> page.** What he writes down is the town.
+> not a drifter", "She lived here and came apart here", "She wasn't taken, she
+> walked to it willing", and the SON read ("A boy, Sam. She gave his bear to
+> the one live kid here. His name breaks her"). Each was the conclusion its own
+> evidence had been built to earn, handed over instead of left; the son one was
+> worse, because "his name breaks her" had the PI predicting a scene he has not
+> reached. **He never solves Mara on the page.** What he writes down is the
+> town. The bear still DETONATES, in the item's own text once the letter is
+> read (`systems/items.py` `effective_desc`), which is where that beat always
+> lived.
 
-- **`theory_son`** (the letter, carrying the bear): "A boy, Sam. She gave his
-  bear to the one live kid here. His name breaks her."
 - **`theory_fold`** (`crossed_a_fold`): "And the town won't let go. I've felt
   the ground fold back under my own feet. Her or not, how do I get out?"
 - **`theory_robes`** (has actually met them): "The robes run this. If anyone

@@ -32,6 +32,40 @@
 
 ## Evidence & the case
 
+- **2026-07 — Hettie's memory, the son read, and the "son" tic.** The last
+  three off the audit list.
+
+  **Hettie's memory of the girl** lost its preamble ("I'll tell you the one
+  thing I know that's worth the telling", a character announcing she is about
+  to be important) and its portrait ("Sad around the eyes, and polite with
+  it"), which contradicted her own answer to the photograph four lines
+  earlier: *"Faces come through this shop. I stopped keeping them."* She
+  either retains faces or she does not. What is left is a shopkeeper talking
+  about her till: a regular, then not, and the rest of them going quiet at the
+  same time as a fact about TRADE rather than a survey of the town, since Vane,
+  Toby and Crane already deliver that observation and a fourth flattens all
+  four. **The tab now comes out of the BIN under the till** rather than off a
+  spike (maintainer's idea): she is not keeping a shrine to the girl, it is
+  refuse she has not taken out because nothing leaves this town, refuse
+  included, and the evidence stops being presented and starts being found.
+
+  **`theory_son` is cut** with the other case reads. It wrote out the
+  connection between the bear's tag and the letter, and "his name breaks her"
+  had the PI predicting a scene he has not reached. The bear still detonates;
+  that always lived in the ITEM's own text (`effective_desc`), not the book.
+  **Nothing in the notebook now solves Mara.** What he writes is the fold, the
+  wrong robes read, and the Mask.
+
+  **"son" is Garrick's alone.** It had spread to eight uses across three
+  speakers (Vane 3 including the hollow turn, Pell 3, Garrick 4) and was a
+  large part of why those three read as interchangeable. Everyone else drops
+  it. **Guarded by a new `tests/conventions.py` check** that attributes every
+  chosen mode of address to its speaker and fails when one is shared, because
+  this drift is invisible one line at a time: each author only ever adds one.
+  The check exempts "mister" deliberately, since nobody in Brimley learns the
+  PI's name, so it is the correct default in every mouth. Writing it turned up
+  the sharing immediately, and it was proven red before commit.
+
 - **2026-07 — The queue: six rulings from the story-audit workshop.**
 
   **The tab was wrong by a factor of three.** It read "run down most of a

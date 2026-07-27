@@ -3080,8 +3080,15 @@ def main():
     class _HStub:
         pass
     _hd(gh, _HStub())
-    check(any("never saw her again" in p for p in _hshown),
+    check(any("she was a regular" in p.lower() for p in _hshown),
           "hettie: the memory of the girl fires once shown Mara's photo")
+    # She either retains faces or she does not. Her answer to the photograph
+    # is "Faces come through this shop. I stopped keeping them", so the memory
+    # cannot then hand over a portrait of the girl.
+    check(not any("sad around the eyes" in p for p in _hshown),
+          "hettie: no portrait after she said she stops keeping faces")
+    check(not any("worth the telling" in p for p in _hshown),
+          "hettie: she does not announce that she is about to say something")
     # No euphoria tell: Mara is grieving, not elated, and being claimed leaves
     # no visible mark (NARRATIVE §2). She just stopped coming in.
     check(not any("smiling" in p for p in _hshown),
@@ -3174,13 +3181,20 @@ def main():
     gl2._note_fold_loop("cornfield_path")
     check("walked_in_circles" in _nnames(gl2),
           "fold: the second silent loop is the tell")
+    # The SON read is cut with the other case reads: it wrote out the
+    # connection between the tag and the letter, and "his name breaks her" had
+    # the PI predicting a scene he has not reached. The bear still detonates,
+    # in the ITEM's own text (systems/items.py effective_desc), not the book.
     gt4 = new_game()
     gt4.save.set_arg("evidence", [{"name": "maras_room"}])
-    gt4._tick_theory_notes()
-    check("Sam" not in _wrote(gt4), "notebook: no son thread without the bear")
+    gt4.save.set_flag("evidence_maras_room", True)
     gt4.player.inventory.add("bear", 1)
     gt4._tick_theory_notes()
-    check("Sam" in _wrote(gt4), "notebook: bear plus letter opens the son")
+    check("Sam" not in _wrote(gt4),
+          "notebook: he never writes the boy's name out for the player")
+    from systems.items import effective_desc as _edesc
+    check("SAM" in _edesc("bear", gt4.save),
+          "bear: the detonation lives in the item, and still fires")
     gt4.player.inventory.add("pallid_mask", 1)
     gt4._tick_theory_notes()
     check("carry it out" in _wrote(gt4),

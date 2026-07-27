@@ -412,6 +412,62 @@ def _tools_md():
                 "    Regenerate: python tools/index.py --md")
 
 
+# ------------------------------------------- 10. one voice, one verbal tic
+# THE RULE: a mode of address is a CHARACTER's, not the game's. "son" had
+# spread across Vane, Old Pell and Garrick (eight uses, three speakers) and
+# was a large part of why those three read as interchangeable -- the 2026-07
+# story audit's finding. It is Garrick's now: he sits the square, he counts
+# who is left, and he talks to the PI like a younger man. This check exists
+# because the drift is invisible one line at a time; each author only ever
+# adds ONE.
+@check("a mode of address belongs to one speaker")
+def _address_tics():
+    import re as _re
+    src = {}
+    for rel in ("scenes/dialogue.py", "scenes/brimley.py", "scenes/well.py",
+                "systems/rot_mixin.py", "systems/threat_mixin.py"):
+        try:
+            src[rel] = open(os.path.join(_ROOT, rel)).read()
+        except FileNotFoundError:
+            continue
+    # Which speaker each hit belongs to: the nearest *_CONVO above it, or in
+    # the scene files the nearest `beat_<who>_` stoop beat, so a character's
+    # lines count as HIS wherever they are authored.
+    def _owner(text, at):
+        head = text[:at]
+        convos = _re.findall(r'\n(\w+)_CONVO = \{', head)
+        beats = _re.findall(r'"(?:beat)_(\w+?)_\w+"', head)
+        if convos and (not beats or head.rfind("_CONVO = {") > head.rfind('"beat_')):
+            return convos[-1].lower()
+        if beats:
+            return beats[-1].lower()
+        return convos[-1].lower() if convos else "narration"
+
+    # ONLY the CHOSEN forms. "mister" is deliberately not here: nobody in
+    # Brimley learns the PI's name, so it is the correct default in every
+    # mouth and shared use of it says nothing about the speaker. "son" and
+    # "friend" are choices -- an age claimed, a warmth performed -- and those
+    # belong to one person each.
+    rows = []
+    for tic in ("son", "friend"):
+        pat = _re.compile(r'"[^"]*[,.!?]\s*%s[,.!?][^"]*"' % tic)
+        owners = {}
+        for rel, text in src.items():
+            for m in pat.finditer(text):
+                who = _owner(text, m.start())
+                owners.setdefault(who, 0)
+                owners[who] += 1
+        if len(owners) > 1:
+            rows.append("    %-8s used by %d speakers: %s"
+                        % (repr(tic), len(owners),
+                           ", ".join("%s x%d" % (k, v)
+                                     for k, v in sorted(owners.items()))))
+    if rows:
+        return ("    A mode of address is shared, which flattens every\n"
+                "    speaker that shares it (story audit, 2026-07):\n"
+                + "\n".join(rows))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,
