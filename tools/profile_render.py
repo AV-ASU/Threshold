@@ -1,4 +1,4 @@
-"""Headless render profiler for the wrapped Brimley town (FPS work).
+"""Headless render profiler for the world draw (FPS work).
 
 Boots a real Game headless, loads a scene under the live OBLIQUE camera (the
 actual in-game view, not the flat pitch-0 capture), and times draw_world() over
@@ -10,10 +10,10 @@ costs:
   * panning  -- camera nudged each frame (player walking). The floor is rebuilt
                 every frame; this is the worst case.
 
-    python tools/profile_brimley.py                 # time brimley, both regimes
-    python tools/profile_brimley.py --scene bedroom # a different scene
-    python tools/profile_brimley.py --frames 400
-    python tools/profile_brimley.py --cprofile      # cProfile hot-function dump
+    python tools/profile_render.py                 # time a street, both regimes
+    python tools/profile_render.py --scene bedroom # a different scene
+    python tools/profile_render.py --frames 400
+    python tools/profile_render.py --cprofile      # cProfile hot-function dump
 
 Reports ms/frame + the implied FPS for each regime. Run it before and after a
 change to read the win.
@@ -64,7 +64,7 @@ def _time_regime(g, frames, pan):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scene", default="brimley")
+    ap.add_argument("--scene", default="store_row")
     ap.add_argument("--frames", type=int, default=300)
     ap.add_argument("--cprofile", action="store_true")
     args = ap.parse_args()

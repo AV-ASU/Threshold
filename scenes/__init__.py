@@ -24,7 +24,6 @@ from .interiors import (build_shop, build_toby_house, build_barn,
                         build_clearing)
 from .villager_houses import (build_church, build_sheriff_office,
                               build_abandoned_farmhouse)
-from .brimley import build_brimley
 from .hidden_folds import build_effigy_grove
 from .safe_path import (build_country_lane, build_river_road,
                         build_river_bend,
@@ -59,7 +58,6 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   lodge_cellar       -> the Arcadia cellar (the Ledger #3; the workbench)
 #   lodge_yard         -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
 #   toby_house         -> Toby's house (drawings on walls)
-#   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
 #   church             -> church (with belfry; Preacher)
 #   sheriff_office     -> the Sheriff's office (his wooden box; reused fisherman_cottage geometry)
@@ -115,8 +113,10 @@ SCENE_BUILDERS = {
     "threshold":          build_threshold,
     # Cult sites
     "abandoned_farmhouse": build_abandoned_farmhouse,  # the abandoned farmhouse
-    # The town
-    "brimley":            build_brimley,            # the unified town map
+    # The town: a STRING OF HOUSE ISLANDS on the street network. The one
+    # 60x60 square that used to be Brimley was retired in 2026-07
+    # (DESIGN.md §15) -- every household is its own yard scene off its own
+    # street, and there is no town map any more.
     # New scenes
     "schoolhouse":        build_schoolhouse,
     "graveyard":          build_graveyard,

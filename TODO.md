@@ -142,10 +142,10 @@ This is a canon change, not just a prop deletion, so it needs a decision on
 the replacement before it is built:
 
 - **The prop.** The `calendar` decoration (`entities/deco_horror.py
-  _draw_calendar`, placed in `scenes/brimley.py` and read in the Vane
-  tableau's dressing). Removing it also clears that file's 3 `FONT_BUDGET`
+  _draw_calendar`, placed in `scenes/yards.py` on Old Pell's own siding and
+  read in the Vane tableau's dressing). Removing it also clears that file's 3 `FONT_BUDGET`
   entries (the month/day label), so the guard tightens for free.
-- **Pell's whole thread rides it** (`scenes/dialogue.py`, `scenes/brimley.py`):
+- **Pell's whole thread rides it** (`scenes/dialogue.py`, `scenes/yards.py`):
   the `beat_pell_coal` stoop line ("I've got the calendar where I want it.
   Stopped."), the `beat_pell_marked` ripple after the newspaper, and the
   `paper_pell` note ("He said he'd pencil today into his calendar"). His WANT
@@ -513,11 +513,11 @@ player holding north holds north). Where it stands today, pushing 8 tiles in:
 
 | scene | n | e | s | w |
 |---|---|---|---|---|
-| brimley | 25% | 31% | 24% | **14%** |
+| store_row | 25% | 31% | 24% | **14%** |
 | lodge_yard | **14%** | 52% | 25% | 27% |
 | cornfield_path | 24% | 27% | 29% | 35% |
 
-Brimley's WEST band and the lodge yard's NORTH band are the two tightest real
+The street's WEST band and the lodge yard's NORTH band are the two tightest real
 outdoor bands in the game, and the lodge yard's north is also the §13 MOUTH,
 where tight may well be the point. Nothing here is broken; the question is
 whether ~14% reads as a wood you thread or a wood you fight, and only a person
@@ -666,7 +666,7 @@ compression pass (#4b).
   cause-and-effect downstream of it.
 - **No dashes in player-facing text** (HARD RULE; flow-guarded).
 - **L5 — complexity hotspots (awareness only, not a ticket).** The largest
-  function bodies (`tests/flow.py main`, `scenes/brimley.build_brimley`,
+  function bodies (`tests/flow.py main`, `scenes/yards.build_yard_scene`,
   `systems/render_mixin.draw_world`, `rendering/sprites_npc.draw_npc_sprite`,
   `rendering/king_unfold.draw_king_unfold`) match the project's deliberate
   "one cohesive beat per function" style and sit behind the test gate.

@@ -181,7 +181,7 @@ def render(scene, yaw_deg, px, py, facing, fold=None, cell=(440, 380)):
 
 
 def main():
-    scene = load_scene("brimley")
+    scene = load_scene("store_row")
     font = pygame.font.SysFont("monospace", 12)
     cell = (440, 380)
     # Put the player ON the wrap seam (x near 0) so the window straddles it.

@@ -1877,6 +1877,69 @@
 
 ## Brimley geography
 
+- **2026-07 -- BRIMLEY THE SCENE IS RETIRED; the town is a string of house
+  islands.** The maintainer's shape for it, in their words: *"We are remaking
+  Brimley as a string of house islands in a sea of spatial manipulation. Fuck
+  Brimley the scene."* The 60x60 town map is gone from the registry and the
+  module is deleted. What replaced it is the three-layer chain built over the
+  preceding commits -- SAFE PATH -> YARD -> HOUSE (`DESIGN.md` §15) -- eleven
+  yards on five streets, one household each, each resident inside their own
+  building.
+
+  It was done in ONE piece at the end, deliberately, after the whole town had
+  moved: Brimley kept working, untouched and undeleted, the entire time the
+  yards were built beside it (the maintainer's standing instruction, *"We are
+  keeping Brimley until all changes are done. Don't delete anything in
+  Brimley."*), so there was never a half-town in the repo.
+
+  **The retirement was mostly a re-homing problem, not a deletion.** The one
+  scene had accreted a decade of load-bearing fixtures, and every one of them
+  had to land somewhere that OWNS it rather than somewhere convenient: the
+  well, the barrow, the news rack and the payphone became **the square** at
+  the store row crossing (`safe_path._town_square`, the one place everybody in
+  a town this size passes); the planked bridge and its under-deck hide went to
+  `river_bend` and the river stones to `river_road`; the Preacher's remains
+  went to the length of bank the road actually runs beside; the hidden trunk
+  through to the burn clearing went into the river road's pine flank; the bell
+  door went to the church's own yard; the cult camp went to the farm yard, the
+  one lot the newcomers already hold; the dead pickup, its cab radio and the
+  gap under its bed went behind the barn, where a crowd left in one direction
+  and one truck stayed. The four chorus locals' reactive beats went into their
+  own houses with them.
+
+  **What was NOT re-homed, and why.** The toroidal wrap and the cross-town
+  fold road: a street is a `SafePath` whose arms end at exits, which is the
+  opposite of a torus, and the wrap now belongs to the corn where it always
+  meant something. The corn belt therefore hangs off the network at one
+  junction -- the country lane's south arm, the one arm the standing corn had
+  already grown up to -- which turned the lane and the gravel road from Ts
+  into Xs and cost the network its last T shape.
+
+  **Two things the retirement nearly took by accident.** The `homebody`
+  movement mode had exactly two users, both in Brimley, so deleting the scene
+  made it a dead label (smoke [8/11] caught it, which is the check doing its
+  job). Rather than delete a working behaviour over a layout change, Hettie
+  went back on her shop step: a `homebody` is somebody who is INSIDE and
+  briefly out, the shop interior holds a Hettie, and a store that is still
+  open is a store with its keeper visible at the door. She is the one person
+  in a yard and the exception proves the rule. The second was the truck
+  radio -- the surface's only toggleable lure -- which was easy to lose with
+  the pickup it was bolted to; it went to the barn yard with the truck.
+
+  **The tests moved off the one scene and got better for it.** `stealth.py`'s
+  `open_field` was a hand-picked glade tile in Brimley, which meant every
+  probe in the file silently depended on one scene's layout; it now SCANS for
+  the most open ground in whatever scene is loaded. The wall-occlusion probe
+  derived its two stations from hand-picked tiles; it now derives them from
+  the yard's building and asserts the sight line really is blocked before
+  measuring. `flow.py`'s network guard stopped requiring exactly one exit per
+  arm (a path may also carry a hidden doorway) and stopped pinning the exact
+  shape multiset (the map moves; the vocabulary being real is the thing worth
+  guarding). The `car_keys` / `_car_pos` / `_shed_door_pos` guards, which read
+  Brimley's source text, were replaced by one that asserts the scene cannot
+  come back by accident -- neither module nor registry key -- plus a sweep
+  that no exit anywhere points at an unregistered scene.
+
 - **2026-07 -- #4 outdoor-dread composition, first scene.** The outdoor zone
   is the game's weakest dread (long open sightlines read as a field). Per the
   ticket's "name ONE scene and ONE composition" rule, cornfield_path (the

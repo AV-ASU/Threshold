@@ -49,14 +49,17 @@ def build_schoolhouse():
     # it, and from then on it simply stands. Walked NORTH into.
     objects[4] = objects[4][:9] + "O" + objects[4][10:]
     sc = Scene("schoolhouse", floor, objects, music="home")
-    sc.add_exit("H", "brimley", "from_school")
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("H") == 1
     # THE YARD DOOR (DESIGN.md §15): this building has its own yard
     # scene now, and needs its own way in. The Brimley door above
     # stays live until Brimley is retired.
     sc.add_exit("F", "school_yard", "from_schoolhouse")
     sc.add_exit("O", "effigy_grove", "from_school", direction="north")
     sc.set_spawn("default", 7, 9)
-    sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
     sc.set_spawn("from_school_yard", 14, 6)
     # Back through the pane from the grove: one tile south of it, carried
     # southward so arrival never re-fires the north-walked crossing.
@@ -960,7 +963,7 @@ def build_cornfield_maze():
     sc.wrap_x = True
     sc.wrap_y = True
     sc.add_exit("!", "cornfield_path", "from_cornfield_maze")
-    sc.add_exit("^", "brimley",   "from_cornfield_maze")
+    sc.add_exit("^", "country_lane", "from_cornfield_maze")
     # In-maze relocations: same-scene direction-gated folds (the 'I'/'Q'
     # tiles placed above). The target is the maze itself; Game.cross_fold
     # relocates with no load and the camera carried. Silent by canon --
@@ -971,8 +974,7 @@ def build_cornfield_maze():
     sc.set_spawn("reloc_Q", 3, 19)
     sc.set_spawn("default", 11, H - 2)
     sc.set_spawn("from_cornfield_path", 11, H - 2)
-    sc.set_spawn("from_brimley", 11, 1)
-    sc.set_spawn("from_brimley_south", 11, 1)
+    sc.set_spawn("from_country_lane", 11, 1)
     # Return from effigy_grove -- one east of the Z tile so the player
     # doesn't immediately re-trigger walking west.
     # Return from the additional hidden-scene folds. One tile inland

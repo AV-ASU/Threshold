@@ -34,8 +34,8 @@ def fill_and_draw(g, frames=600, out="ash.png"):
 
 
 CASES = [
-    (1, "brimley", "ashfall_surface_stage1.png"),
-    (3, "brimley", "ashfall_surface_stage3.png"),
+    (1, "store_row", "ashfall_surface_stage1.png"),
+    (3, "store_row", "ashfall_surface_stage3.png"),
     (3, "works_scriptorium", "ashfall_underground_stage3.png"),
     (3, "threshold", "ashfall_threshold_stage3.png"),
 ]

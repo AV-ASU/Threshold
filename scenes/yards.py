@@ -406,6 +406,34 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
     dx, dy = _OUT[door_face]
     out = (dtx + dx, dty + dy)
 
+    # WINDOWS, in every face that has room for them. A house without windows
+    # is a bunker, and the layer's whole promise is that you read a household
+    # from OUTSIDE -- which you cannot do through a blank wall. They are also
+    # mechanical: a pane is what a thrown stone SMASHES (the loud tier,
+    # DESIGN.md §12), and glass on the town's own buildings is what keeps that
+    # verb alive now that the one square is gone.
+    #
+    # Placed a third and two thirds along each run, skipping the corners (a
+    # window in a corner tile has two outward faces and reads as a hole) and
+    # never the door tile or the tiles either side of it -- a pane beside a
+    # doorframe is a sidelight, and this is not that kind of house.
+    for _side in "nsew":
+        _run = (range(bl + 1, br), range(bl + 1, br),
+                range(bt + 1, bb), range(bt + 1, bb))["nsew".index(_side)]
+        _run = list(_run)
+        if len(_run) < 3:
+            continue
+        for _f in (0.32, 0.68):
+            _i = _run[min(len(_run) - 1, int(len(_run) * _f))]
+            if _side in ("n", "s"):
+                _wx, _wy = _i, (bt if _side == "n" else bb)
+            else:
+                _wx, _wy = (bl if _side == "w" else br), _i
+            if abs(_wx - dtx) + abs(_wy - dty) <= 1:
+                continue
+            if objects[_wy][_wx] == "W":
+                objects[_wy][_wx] = "i"
+
     # THE ROAD EXIT, three tiles wide across the middle of its edge
     ex, ey = ((w // 2, 0 if path_side == "n" else h - 1)
               if path_side in ("n", "s")
@@ -618,6 +646,22 @@ def build_shop_yard():
     sc.add_decoration(Decoration((y.left - 1) * TILE + 16,
                                  (y.bot + 3) * TILE + 16,
                                  "burn_barrel", seed=62))
+    # AND HETTIE IS ON HER STEP. The one exception to "a yard is empty of
+    # people", and it is an exception the layer's own rule asks for: the
+    # `homebody` mode is somebody who is INSIDE and briefly out, sweeping a
+    # step that does not get dirty before ducking back in for a spell (she
+    # drops solid and stops being drawn while she is behind the door, and the
+    # shop interior holds a Hettie, so walking in finds her there). A store
+    # that is still open is a store with its keeper visible at the door, and
+    # she is the only household in town still performing that.
+    _resident(sc, y.out[0], y.out[1], "Hettie", "hettie", None,
+              movement="homebody", radius=34, pages=[
+                  "Still open. Always open. The shelves don't empty "
+                  "anymore. Have you noticed.",
+                  "No deliveries. In a while now. But we manage. We always.",
+                  "I keep the lights on. So they know. Someone's keeping "
+                  "them on.",
+              ])
     return sc
 
 
@@ -672,6 +716,11 @@ def build_church_yard():
     for i, tx in enumerate((y.left + 1, y.left + 4, y.right - 3, y.right)):
         y.put("headstone", tx, y.bot + 3, seed=91 + i * 7)
         y.put("headstone", tx, y.bot + 5, seed=131 + i * 7)
+    # THE DOOR THE BELL CALLS THEM TO. Pulling the rope in the tower rings a
+    # peal that pulls every cult hunter on the map toward this spot, and the
+    # first to reach it stills the rope (`Game._tick_bell`). It is the church
+    # door because that is where the rope comes down.
+    sc._bell_door = (y.out[0] * TILE + 16, y.out[1] * TILE + 16)
     return sc
 
 
@@ -698,6 +747,33 @@ def build_barn_yard():
     y.washing(y.left + 3, y.bot + 3, laundry=5, yaw=0.0, seed=29)
     y.fence("w", at=y.lot[0], span=(y.lot[2] + 2, y.lot[3] - 2),
             gap=y.out[1] + 3)
+    # ONE TRUCK STAYED. A crowd came here and left in one direction, and the
+    # thing nobody drove home sits dead in the weeds behind the barn with its
+    # driver's door hanging. The gap under its bed is a rooted hide
+    # (DESIGN.md §12): the surface's cover is corn and treeline, and this is
+    # one of the two places on the string you can put a roof over yourself.
+    _px, _py = y.right + 3, y.bot + 1
+    y.put("pickup_truck", _px, _py, door_open=True)
+    _objs = [list(r) for r in sc.objects]
+    for _c in range(_px - 1, _px + 2):
+        if 0 <= _c < sc.w:
+            _objs[_py][_c] = "X"
+    sc.objects = _objs
+    sc.hide_spots = [(_px * TILE + 16, (_py + 1) * TILE + 8, "under")]
+    # AND ITS CAB RADIO, which still has power: the one toggleable LURE on
+    # the surface (DESIGN.md §12). Turn it on and walk away, and whatever is
+    # hunting goes to the music instead of to you -- until the cult reaches
+    # it and kills the station.
+    # The source sits at the CAB WINDOW, on the walkable tile beside the
+    # truck rather than on the truck's own footprint: you reach in to it.
+    sc.add_noise_source(
+        _px * TILE + 16, (_py - 1) * TILE + 16, "radio", sfx="radio_snatch",
+        on_notice="The truck radio catches. A dead station rolls out "
+                  "over the yard.",
+        off_notice="You kill the radio.",
+        silenced_notice="The music stops dead.")
+    sc.add_noise_trap((_px - 2) * TILE + 16, (_py + 1) * TILE + 24,
+                      "glass", seed=7)
     return sc
 
 
@@ -755,7 +831,50 @@ def build_farm_yard():
         y.put("candle", y.out[0] + dx, y.out[1] + dy)
     y.put("yellow_sign", y.out[0] - 1, y.out[1] + 4)
     y.fence("n", at=y.lot[2], span=(y.lot[0], y.lot[1]), gap=False)
+    _cult_camp(sc, y.lot[0] + 3, y.lot[3] - 3)
     return sc
+
+
+def _cult_camp(sc, ctx, cty):
+    """THE CAMP the newcomers rest and gather at, raised on entry once the
+    cult is awake.
+
+    NOTHING at 0 evidence: the town reads normal (NARRATIVE §2), and a ring
+    of bedrolls around a lit fire is not normal. At 1 evidence -- the cult
+    awake -- the whole camp is standing: a ground fire, bedrolls, felled-log
+    seats, a hung lantern, and the ground under it beaten to dirt, because
+    the worn earth is THEIR doing and was not here before them. Rebuilt every
+    load. The crew that fills it comes off the scene's cult spawn pool
+    (systems/threat_mixin), so it is manned or empty by the same ladder as
+    everything else.
+    """
+    sc._camp_pos = (ctx * TILE + 16, cty * TILE + 16)
+    sc.add_cult_station(ctx * TILE + 16, (cty + 1) * TILE + 16,
+                        face=(0, -1), dwell=(8.0, 14.0))
+
+    def _raise(game, scene):
+        if game._evidence_count() < 1:
+            return
+        cx, cy = scene._camp_pos
+        tx, ty = int(cx // TILE), int(cy // TILE)
+        rows = [list(r) for r in scene.floor]
+        for qy in range(ty - 2, ty + 2):
+            for qx in range(tx - 2, tx + 3):
+                if (0 <= qy < scene.h and 0 <= qx < scene.w
+                        and rows[qy][qx] in (":", ";", "g")):
+                    rows[qy][qx] = "d"
+        scene.floor = ["".join(r) for r in rows]
+        scene.add_decoration(Decoration(cx, cy, "camp_fire", seed=71))
+        for (dx, dy, kind, sd) in ((-42, -4, "bedroll", 1),
+                                   (36, -12, "bedroll", 2),
+                                   (-8, 40, "bedroll", 3),
+                                   (44, 18, "log_seat", 4),
+                                   (-44, 22, "log_seat", 5),
+                                   (10, -40, "log_seat", 6)):
+            scene.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=sd))
+        scene.add_decoration(Decoration(cx + 48, cy - 34, "lantern"))
+
+    sc.on_enter_fn = _raise
 
 
 def build_toby_yard():
@@ -815,6 +934,12 @@ def build_calder_yard():
     y.put("candle", tx, ty, ox=16, oy=2)
     y.put("overturned_chair", tx + 1, ty + 1)
     sc.hide_spots = [(tx * TILE + 16, (ty + 1) * TILE + 16, "under")]
+    # THE CULT'S ERRAND HERE is to stand over the table she keeps laying
+    # (`Scene.add_cult_station`, the JOBS layer): a hooded figure looking at
+    # two settings laid for nobody, which says what it is doing here without
+    # a word of it.
+    sc.add_cult_station(tx * TILE + 16, (ty + 1) * TILE + 16,
+                        face=(0, -1), dwell=(5.0, 9.0))
     return sc
 
 
@@ -890,15 +1015,27 @@ def build_garrick_yard():
 # they are. They are not the principals' rooms and they should not try to be.
 
 
-def _resident(sc, tx, ty, name, kind, convo, movement="idle"):
+def _resident(sc, tx, ty, name, kind, convo, movement="idle", pages=None,
+              radius=40, beats=()):
     """The household, AT HOME. A person belongs in their house -- the yard is
     what tells you about them when nobody is there to say it, and a resident
-    standing out in their own yard does that job for it."""
+    standing out in their own yard does that job for it.
+
+    `pages` instead of `convo` gives the speaker a fixed page list rather than
+    the ask verb: the doorstep cameo, not a conversation.
+
+    `beats` is the town REACTING to state (DESIGN.md §2): a list of
+    (flag, predicate, pages). On each talk the first beat whose predicate
+    holds and whose one-shot flag is unset fires INSTEAD of the conversation
+    and sets its flag; afterwards the local falls back to the ask verb.
+    """
     from entities.npc import NPC
-    from .dialogue import chorus_dialogue
-    sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                   dialogue_fn=chorus_dialogue(convo), movement=movement,
-                   radius=40))
+    from .dialogue import chorus_dialogue, doorstep_voice
+    npc = NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
+              dialogue_fn=(doorstep_voice(pages) if pages is not None
+                           else chorus_dialogue(convo, beats)),
+              movement=movement, radius=radius)
+    sc.add_npc(npc)
 
 
 def _small_house(key, yard_key, rows, music="home"):
@@ -931,7 +1068,14 @@ def build_calder_house():
     sc.add_furniture("stove", [(1, 1)], w=30, h=40)
     sc.add_furniture("table", [(5, 3)], w=30, h=26)
     sc.add_furniture("cot", [(9, 2)], w=30, h=16)
-    _resident(sc, 8, 4, "Mrs. Calder", "townswoman", CALDER_CONVO)
+    _resident(sc, 8, 4, "Mrs. Calder", "townswoman", CALDER_CONVO, beats=[
+        ("beat_calder_unlatched",
+         lambda g: g._evidence_count() >= 1, [
+             "Closer now. Whoever the place is set for. An old woman can "
+             "feel a knock coming before it lands.",
+             "I've started leaving the door unlatched at night. It "
+             "seemed... polite.",
+         ])])
     sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 6, "candle"))
     # the second setting, laid indoors as well: she does not know which
     # table he will come to
@@ -968,7 +1112,16 @@ def build_royce_house():
     sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "fuel_can"))
     sc.add_decoration(Decoration(3 * TILE + 16, 5 * TILE + 16, "fuel_can",
                                  tipped=True))
-    _resident(sc, 4, 3, "Royce", "royce", ROYCE_CONVO, movement="watch")
+    _resident(sc, 4, 3, "Royce", "royce", ROYCE_CONVO, movement="watch",
+              beats=[("beat_royce_throat",
+                      lambda g: g._evidence_count() >= 2, [
+                          "You're still here. Course you're still here.",
+                          "I keep turning it over. Every road out of Brimley "
+                          "hands you back. Except the one that carried you "
+                          "in. If a door only opens the one way, mister, it "
+                          "isn't a door.",
+                          "[c=dim]It's a throat.[/c]",
+                      ])])
     return sc
 
 
@@ -999,7 +1152,17 @@ def build_garrick_house():
     # his chair is at the window that looks at the road he tells everybody to
     # stay on, and so is he
     _resident(sc, 5, 2, "Garrick", "old_townsman", GARRICK_CONVO,
-              movement="watch")
+              movement="watch",
+              beats=[("beat_garrick_quiet",
+                      lambda g: g.save.flag("preacher_body_seen"), [
+                          "The reverend's gone quiet. Any other week you'd "
+                          "hear him clear from here, worked up over "
+                          "something or other.",
+                          "Nothing out of him for days now. Man spends his "
+                          "life raising his voice, then nothing at all.",
+                          "You go by and look in on him, son. Somebody "
+                          "ought to.",
+                      ])])
     return sc
 
 
@@ -1068,5 +1231,26 @@ def build_pell_house():
     sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 16,
                                  "overturned_chair"))
     _resident(sc, 3, 4, "Old Pell", "old_townsman", PELL_CONVO,
-              movement="idle")
+              movement="idle", beats=[
+        # The newspaper's ripple (TODO #2): once the PI has spent the one
+        # copy on him, the stopped-calendar line would be a lie -- he picked
+        # the pencil back up. The marked beat fires first and the coal beat
+        # stands down for good.
+        ("beat_pell_marked",
+         lambda g: g.save.arg("paper_given") == "pell", [
+             "Wrote the date in this morning. April 15, plain as "
+             "you like. First one since the winter.",
+             "[c=dim]Can't say it did anything. Can't say it "
+             "didn't. I'll write tomorrow in tomorrow.[/c]",
+         ]),
+        ("beat_pell_coal",
+         lambda g: (g._evidence_count() >= 1
+                    and g.save.arg("paper_given") != "pell"), [
+             "You've been digging at it. I can tell. It's on you like "
+             "coal dust.",
+             "Whatever you're finding out there, don't bring it up my "
+             "step. I've got the calendar where I want it. Stopped. Some "
+             "of us need it stopped.",
+         ]),
+    ])
     return sc

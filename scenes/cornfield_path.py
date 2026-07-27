@@ -126,7 +126,7 @@ def build_cornfield_path():
     # South exit to brimley -- closes the macro-loop. Walking south long
     # enough through brimley -> cornfield_maze -> cornfield_path -> here
     # brings you back to brimley north.
-    sc.add_exit("S", "brimley", "from_cornfield_path")
+    sc.add_exit("S", "country_lane", "from_cornfield_path")
 
     sc.set_spawn("default", 1, PATH_ROW)
     sc.set_spawn("from_lodge_yard", 1, PATH_ROW)

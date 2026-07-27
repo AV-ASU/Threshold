@@ -1125,14 +1125,17 @@ section is the CODE MAP only — where each system lives:
   boots a game, drives scene hooks, asserts story beats. It also carries
   **canon-guards** (e.g. the dream note must say "a year" and contain no
   recurrence language). Keep it green; add a guard when you lock a canon fact.
-- **Watch for stale refs from the village→brimley merge.** Scene keys, the
-  well position (`scene._well_pos`, col 52 row 17 since the 60x60 redesign,
-  TODO #18), and NPC names changed — the Kid is **Toby** (sprite/portrait/
-  dialogue kind `toby`), not "Village Kid". **Brimley is 60x60 now** (a full
-  reshape at the same content density; the square + torus wrap + fog rim all
-  stay). Nothing in the town sits where the old 100x100 code put it, so a
-  hard-coded brimley tile coordinate in another file is a red flag: read the
-  scene, don't trust a remembered spot.
+- **THERE IS NO TOWN MAP.** The one 60x60 `brimley` scene was retired in
+  2026-07 (`DESIGN.md` §15): the town is a **string of house islands** on the
+  street network — each household its own yard scene off its own street, each
+  resident inside their own building. So there is no scene to hold a
+  cross-town coordinate, and a remembered "brimley tile" is a red flag twice
+  over. The public fixtures live where the layer put them: the well, the
+  barrow, the news rack and the payphone on **the square**
+  (`safe_path._town_square`, on `store_row`); the bridge hide on `river_bend`;
+  the Preacher's remains and the clearing's hidden trunk on `river_road`; the
+  bell door on `church_yard`; the cult camp on `farm_yard`. NPC names: the Kid
+  is **Toby** (sprite/portrait/dialogue kind `toby`), not "Village Kid".
 - **Previewing visuals headlessly:** render to PNG/GIF with
   `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` + Pillow (installable) and
   send with the file tool. For whole-screen cutscenes, step

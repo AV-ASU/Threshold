@@ -73,9 +73,11 @@ def build_clearing():
     sc.add_furniture("firewood", [(15, 6)], w=44, h=24)
     # The clearing's south threshold leads back to the brimley river
     # bank (where the entrance is).
-    sc.add_exit("j", "brimley", "from_clearing")
-    sc.set_spawn("default",        9, 11)
-    sc.set_spawn("from_brimley", 9, 11)
+    # The way back out is the pine flank of the river road, where the
+    # hidden doorway in the treeline came through (DESIGN.md §15).
+    sc.add_exit("j", "river_road", "from_clearing")
+    sc.set_spawn("default",          9, 11)
+    sc.set_spawn("from_river_road",  9, 11)
 
     # The dead fire pit at centre -- scaled up so it reads as the
     # communal burn, not a campsite. Around it, what wouldn't burn:
@@ -180,7 +182,11 @@ def build_shop():
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
-    sc.add_exit("D", "brimley", "from_shop")
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("D") == 1
     # THE YARD DOOR (DESIGN.md §15). The store's own ground is a scene now,
     # off the store row, and it needs its own way in: a second door in the
     # east wall, opening onto the yard. The south `D` still goes to Brimley
@@ -188,7 +194,6 @@ def build_shop():
     # returns you where you came from.
     sc.add_exit("F", "shop_yard", "from_shop")
     sc.set_spawn("default", 8, 10)
-    sc.set_spawn("from_brimley", 8, 11)      # one tile north of the D door
     sc.set_spawn("from_shop_yard", 14, 5)    # one tile west of the F door
 
     # The three interior doors (2026-07), a nested chain + one nook, deliberately
@@ -402,7 +407,11 @@ def build_barn():
     ]
     sc = Scene("barn", floor, objects, music="home")
     # Barn now sits deep south-east on the brimley east bank.
-    sc.add_exit("n", "brimley", "from_barn")
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("n") == 1
     # THE YARD DOOR (DESIGN.md §15): this building has its own yard
     # scene now, and needs its own way in. The Brimley door above
     # stays live until Brimley is retired.
@@ -410,7 +419,6 @@ def build_barn():
     # The workbench (Mara's journal) and the boarded hatch both sit in the
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
-    sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
     sc.set_spawn("from_barn_yard", 8, 10)
 
     # #4c -- the barn reads as a divided working building now, not one open
@@ -604,13 +612,16 @@ def build_toby_house():
     ]
     sc = Scene("toby_house", floor, objects, music="home")
     # Kid's house now sits middle-south on the brimley east bank.
-    sc.add_exit("J", "brimley", "from_toby_house")
+    # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
+    # (DESIGN.md §15): this building's outdoors is its own YARD now, and
+    # a leaf onto a town that no longer exists is a door that does
+    # nothing -- which reads as a broken building, not a changed world.
+    assert sc.wall_up("J") == 1
     # THE YARD DOOR (DESIGN.md §15): this building has its own yard
     # scene now, and needs its own way in. The Brimley door above
     # stays live until Brimley is retired.
     sc.add_exit("F", "toby_yard", "from_toby_house")
     sc.set_spawn("default", 8, 7)
-    sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
     sc.set_spawn("from_toby_yard", 12, 5)
     # The closet doorway (#4c): a maroon CURTAIN across the col-5 partition gap
     # (row 3), the gentlest leaf in the set -- this is the refuge (a SAFE_SCENE),

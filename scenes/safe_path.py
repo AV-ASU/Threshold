@@ -521,8 +521,14 @@ def build_river_road():
     that makes the safe path legible as a place rather than a corridor: you
     always know which way is downstream, so you always know which way is town.
     The west flank is pine going black, and that flank is the mouth.
+
+    IT IS ALSO WHERE THE PREACHER ENDS UP. The doom takes Reverend Crane out
+    of his church and down the water after his flock, and this is the length
+    of bank the road runs beside, so this is where the PI finds him. The bank
+    also gives STONES (the distraction verb), and a hidden doorway in the
+    pines on the west flank goes through to the burn clearing.
     """
-    return build_path(
+    sc = build_path(
         "river_road", "ns", 30, 46,
         river=("v", 22, 3),
         verge_char=("T", "p"),
@@ -530,6 +536,97 @@ def build_river_road():
                ("n", "e", "river_bend", "from_river_road")),
         spawns=(("from_country_lane", "s"), ("from_river_bend", "n")),
         seed=1471)
+    _river_stones(sc)
+    _preacher_bank(sc)
+    _clearing_doorway(sc)
+    return sc
+
+
+def _clearing_doorway(sc):
+    """THE HIDDEN WAY THROUGH, in the pines on the west flank.
+
+    The burn site is a glade off this stretch of bank and there is no road to
+    it: what there is is a tree you can walk through (`j`, the passable-tree
+    doorway char), somewhere down the dark side of the run. It draws as an
+    ordinary trunk, which is the entire reason it stays hidden -- the flank
+    is a wall of them.
+
+    Chosen by scan rather than by tile number so it survives a reseed: the
+    first solid verge trunk with open ground behind it, a third of the way up
+    the run, well away from either arm's exit.
+    """
+    row = int(sc.h * 0.42)
+    for col in range(1, 7):
+        if sc.objects[row][col] != "T":
+            continue
+        if sc.objects[row][col - 1] in (".", "p") or col == 1:
+            objs = [list(r) for r in sc.objects]
+            objs[row][col] = "j"
+            sc.objects = objs
+            sc.add_exit("j", "clearing", "from_river_road")
+            sc.set_spawn("from_clearing", col + 1, row)
+            return
+
+
+def _river_stones(sc, rows=(6, 14, 22, 30, 38)):
+    """The river gives stones. One per listed row, alternating banks, never on
+    the deck. Scanned rather than hand-placed because the channel meanders."""
+    for i, row in enumerate(rows):
+        if not (0 <= row < sc.h):
+            continue
+        wet = sorted(c for c in range(sc.w) if (c, row) in sc._river_tiles)
+        if not wet:
+            continue
+        c = (min(wet) - 1) if i % 2 == 0 else (max(wet) + 1)
+        if not (0 <= c < sc.w):
+            continue
+        x, y = c * TILE + 16, row * TILE + 16
+        if sc.floor[row][c] not in ("~", "@") and not sc.is_solid_at(x, y):
+            sc.add_item(x, y, "stone")
+
+
+def _preacher_bank(sc):
+    """THE PREACHER'S END, laid on the bank every entry once he is doomed.
+
+    He leaves his own church to talk his flock home and is found down here,
+    never on his own floor (NARRATIVE §5). Walking up on the remains sets
+    `preacher_body_seen`, the flag Sheriff Vane's and Garrick's beats read.
+    """
+    from .dialogue import preacher_body_examine
+    from entities.npc import NPC
+    # the west bank, a third of the way up: off the shoulder, on the mud,
+    # where the road can see him but only if it looks that way.
+    row = int(sc.h * 0.62)
+    wet = sorted(c for c in range(sc.w) if (c, row) in sc._river_tiles)
+    col = (min(wet) - 1) if wet else sc.w - 4
+    sc._preacher_bank_pos = (col * TILE + 16, row * TILE + 16)
+
+    def _on_enter(game, scene):
+        if not game.save.flag("preacher_doomed"):
+            return
+        bx, by = scene._preacher_bank_pos
+        scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
+        scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
+        scene.add_decoration(Decoration(bx, by, "body"))
+        scene.add_npc(NPC(bx, by, "The Preacher", "_invisible",
+                          voice="blip_soft", portrait="narrator",
+                          dialogue_fn=preacher_body_examine,
+                          movement="idle", solid=True, tag="preacher_body"))
+
+    def _on_update(game, scene, dt):
+        """Finding the body counts on SIGHT, not only on the E-press: walking
+        up on the remains sets `preacher_body_seen`, the flag Sheriff Vane's
+        and Hettie's murder one-shots key on (they can never announce a
+        killing the player hasn't found)."""
+        if (game.save.flag("preacher_doomed")
+                and not game.save.flag("preacher_body_seen")):
+            bx, by = scene._preacher_bank_pos
+            if (abs(game.player.x - bx) < 110
+                    and abs(game.player.y - by) < 110):
+                game.save.set_flag("preacher_body_seen", True)
+
+    sc.on_enter_fn = _on_enter
+    sc.on_update_fn = _on_update
 
 
 def build_river_bend():
@@ -539,8 +636,15 @@ def build_river_bend():
     to the north road. Standing at the turn you can see both: the run you
     came up, and the bridge you are about to take. Both flanks are mouths --
     north into the dead corn, west into the pines.
+
+    And UNDER the planks is the one rooted hide on the whole network. The
+    town crosses this bridge sooner or later, and while you are tucked
+    beneath it whatever crosses knocks on the deck over your head
+    (`Game._tick_bridge_knocks`). Dressing, not threat: the searchers up top
+    neither know you are down there nor come looking. The dread is hearing
+    the place walk over you while you wait it out.
     """
-    return build_path(
+    sc = build_path(
         "river_bend", "se", 36, 32,
         river=("v", 25, 3),
         verge_char=("T", "p"),
@@ -548,33 +652,83 @@ def build_river_bend():
                ("e", "e", "gravel_road_north", "from_river_bend")),
         spawns=(("from_river_road", "s"), ("from_gravel_road_north", "e")),
         seed=1483)
+    sc.add_decoration(Decoration(sc.junction[0] * TILE + 16,
+                                 (sc.junction[1] - LAMP_OFF - 2) * TILE + 16,
+                                 "creepy_tree"))
+    _river_stones(sc, rows=(4, 10, 26, 30))
+    _bridge_hide(sc)
+    return sc
+
+
+def _bridge_hide(sc):
+    """Cut the mud shelf under the deck's downstream lip and register it.
+
+    Derived from the deck the builder actually laid, so it works whichever
+    way the river runs and whichever arm crosses it. The shelf is carved on
+    the FAR side of the channel only -- carve the full width and the shelf
+    becomes a ford, and the river is meant to be a barrier.
+    """
+    deck = sorted(getattr(sc, "_bridge_tiles", ()) or ())
+    if not deck:
+        return
+    cols = sorted({t[0] for t in deck})
+    rows = sorted({t[1] for t in deck})
+    # The deck's LIP is the long side: a road crossing a north-south river
+    # spans few columns over many rows, so the lip runs east-west.
+    lip_row = rows[-1] + 1
+    if not (0 <= lip_row < sc.h):
+        return
+    wet = sorted(c for c in range(sc.w) if (c, lip_row) in sc._river_tiles)
+    if len(wet) < 2:
+        return
+    shelf = wet[1:]                       # leave the near column as water
+    _fl = [list(r) for r in sc.floor]
+    _ob = [list(r) for r in sc.objects]
+    for c in shelf:
+        _fl[lip_row][c] = ";"
+        _ob[lip_row][c] = "."
+    sc.floor = ["".join(r) for r in _fl]
+    sc.objects = ["".join(r) for r in _ob]
+    hx, hy = shelf[-1] * TILE + 16, lip_row * TILE + 16
+    sc.hide_spots = list(getattr(sc, "hide_spots", []) or [])
+    sc.hide_spots.append((hx, hy, "under"))
+    sc._bridge_hide_px = (hx, hy)
+    sc._bridge_deck_px = (cols[0] * TILE, (cols[-1] + 1) * TILE,
+                          rows[0] * TILE, (rows[-1] + 1) * TILE)
 
 
 def build_country_lane():
-    """The **T**: the junction east of town, and the busiest piece of road
+    """The **X**: the junction east of town, and the busiest piece of road
     in the game.
 
-    West is Brimley, east is the arrival road and the Lodge beyond it, north
-    is the river run. It is the first safe path most players walk and the one
-    that teaches the layer: a real paved road with a centre line, lamps that
-    keep the whole width lit, and dead corn standing right up to the shoulder
-    on the one side that has no road at all.
+    West is the gravel road and the town's streets beyond it, east is the
+    arrival road and the Lodge, north is the river run, and SOUTH is the
+    corn. It is the first safe path most players walk and the one that
+    teaches the layer: a real paved road with a centre line, and last year's
+    uncut stand (NARRATIVE §3) standing right up to the shoulder.
 
-    The corn on the flanks is last year's uncut stand (NARRATIVE §3), which is
-    also why the south flank opens on the lost corn rather than the pines.
+    The south arm is the way into the maze, and the way out of it: the corn
+    belt hangs off the network HERE, at the one junction the corn already
+    grew up to. It came off Brimley when Brimley was retired (DESIGN.md §15),
+    and it belongs here better than it belonged there -- the road running out
+    into a standing field is a legible thing to be handed, and the field
+    handing you back to the same road is the whole joke of the maze.
+
     Carried over from the old lane: the bootprints of the locals who walked
     east to flag down help and simply stopped, the missing flyer, and the two
     noise traps out on the verge.
     """
     W, H = 42, 34
     sc = build_path(
-        "country_lane", "wen", W, H,
+        "country_lane", "wens", W, H,
         verge_char=("C", "A"),
-        exits=(("w", "a", "brimley", "from_country_lane"),
+        exits=(("w", "a", "gravel_road_north", "from_country_lane"),
                ("e", "e", "arrival_road", "from_country_lane"),
-               ("n", "^", "river_road", "from_country_lane")),
-        spawns=(("from_brimley", "w"), ("from_arrival_road", "e"),
-                ("from_lodge_yard", "e"), ("from_river_road", "n")),
+               ("n", "^", "river_road", "from_country_lane"),
+               ("s", "4", "cornfield_maze", "from_country_lane")),
+        spawns=(("from_gravel_road_north", "w"), ("from_arrival_road", "e"),
+                ("from_lodge_yard", "e"), ("from_river_road", "n"),
+                ("from_cornfield_maze", "s"), ("from_cornfield_path", "s")),
         # ART-DIRECTED (maintainer marked these on a capture; read back with
         # tools/screen_to_world.py). Masts sit on the OUTER shoulder edge and
         # STAGGER between the two sides rather than pairing off across the
@@ -582,9 +736,16 @@ def build_country_lane():
         # time and not as an avenue. Nothing at the junction itself -- two
         # flank it instead, which points at the crossing without standing in
         # it.
+        #
+        # The south-shoulder middle mast MOVED when the south arm landed: it
+        # stood on (21,21), which is the centre column, so the new arm put a
+        # lamp post in the middle of the carriageway (`build_path` refuses
+        # it, loudly). It is now the pair of corners flanking the new arm's
+        # mouth, which is what the pattern does everywhere else.
         lamps=((10, 13), (17, 13), (24, 13), (33, 13),     # north shoulder
-               (10, 21), (21, 21), (33, 21),               # south shoulder
-               (25, 3)),                                   # up the north arm
+               (10, 21), (33, 21),                         # south shoulder
+               (17, 21), (25, 21),                         # the south mouth
+               (25, 3), (17, 30)),                         # up each long arm
         seed=2028)
     cx, cy = sc.junction
 
@@ -718,8 +879,12 @@ def build_store_row():
     It grows. Each further household on this side of town takes another arm
     (an L becomes a T becomes an X), so the street ends up serving several
     doors while every yard behind it stays its own.
+
+    And it is THE SQUARE: the crossing outside the store is where the town
+    kept its public things, so the well, the barrow, the news rack and the
+    dead payphone stand here (`_town_square`).
     """
-    return build_path(
+    sc = build_path(
         "store_row", "wnes", 36, 36,
         verge_char=("C", "A"),
         exits=(("w", "4", "gravel_road_north", "from_store_row"),
@@ -729,11 +894,151 @@ def build_store_row():
         spawns=(("from_gravel_road_north", "w"), ("from_shop_yard", "n"),
                 ("from_school_yard", "e"), ("from_chapel_row", "s")),
         seed=2039)
+    _town_square(sc)
+    return sc
+
+
+def _town_square(sc):
+    """THE SQUARE: the town's public things, at the crossing outside the store.
+
+    A town keeps its well, its noticeboard and its telephone where everybody
+    passes, which in a place this size is one crossroads. They stand in the
+    QUADRANTS between the arms -- open kept grass inside the verge line, clear
+    of the carriageway and clear of the shoulder, so the square is a place you
+    step aside into rather than something laid across the road.
+
+    Three of the four carry a beat (`on_interact_fn`): the well is dread that
+    goes nowhere and a stone over its lip is the loud distraction verb, the
+    barrow's cleaned tools are the contradiction that files a note, and the
+    news rack holds the seal-day issue. The payphone is silent set-dressing.
+    """
+    from .dialogue import _evidence
+    cx, cy = sc.junction
+    off = LAMP_OFF + 1                  # clear of the shoulder and its masts
+
+    # WORN GROUND FIRST. Dropped straight onto the kept grass these read as
+    # four objects standing on a lawn -- which is what the first cut of this
+    # shipped. A square is ground people have STOOD on: the apron under each
+    # cluster is beaten to dirt, and it is what makes the well a place rather
+    # than a prop.
+    _rows = [list(r) for r in sc.floor]
+
+    def _apron(tx0, tx1, ty0, ty1):
+        for ty in range(ty0, ty1 + 1):
+            for tx in range(tx0, tx1 + 1):
+                if (0 <= tx < sc.w and 0 <= ty < sc.h
+                        and _rows[ty][tx] == "g"
+                        and sc.objects[ty][tx] == "."):
+                    _rows[ty][tx] = "d"
+
+    _apron(cx - off - 4, cx - off, cy - off - 3, cy - off)
+    _apron(cx + off, cx + off + 3, cy - off - 3, cy - off)
+    sc.floor = ["".join(r) for r in _rows]
+
+    # THE WELL -- dread set-dressing, fully SEVERED from the descent: nobody
+    # went down HERE. The congregation went down the cult's dug mine out at
+    # the grove, reached now only by the rite. This is a dead, dry town well
+    # gone wrong: ominous, going nowhere. It stands at the crossing's inner
+    # corner, where anyone coming through the junction passes within reach.
+    wx, wy = (cx - off - 1) * TILE + 16, (cy - off - 1) * TILE + 16
+    sc.add_decoration(Decoration(wx, wy, "well"))
+    sc._well_pos = (wx, wy)
+    # THE BARROW of "rusted" tools, tipped up against the well's lip where
+    # the square's shed used to stand. The tools are still bright at the
+    # edges: somebody is keeping them, and nobody in town admits to digging.
+    bx, by = (cx - off - 3) * TILE + 16, (cy - off - 1) * TILE + 8
+    sc.add_decoration(Decoration(bx, by, "wheelbarrow"))
+    sc._barrow_pos = (bx, by)
+    sc.add_decoration(Decoration((cx - off - 4) * TILE + 20,
+                                 (cy - off - 3) * TILE + 18,
+                                 "crate_stack", courses=2, seed=17))
+    sc.add_decoration(Decoration((cx - off) * TILE + 24,
+                                 (cy - off) * TILE + 10, "leaves"))
+    # THE NEWS RACK, on the store's side of the crossing (the north arm is
+    # the way up to Hettie's gate), still holding the issue it was last fed,
+    # with the dead payphone beside it and the town's own sign over the pair.
+    nx, ny = (cx + off + 1) * TILE + 16, (cy - off - 1) * TILE + 16
+    sc.add_decoration(Decoration(nx, ny, "news_rack"))
+    sc._news_rack_pos = (nx, ny)
+    px, py = (cx + off + 2) * TILE + 20, (cy - off - 1) * TILE + 12
+    sc.add_decoration(Decoration(px, py, "payphone"))
+    sc._payphone_pos = (px, py)
+    sc.add_decoration(Decoration((cx + off + 3) * TILE + 16,
+                                 (cy - off - 3) * TILE + 16,
+                                 "town_sign", text="BRIMLEY"))
+    sc.add_decoration(Decoration((cx + off) * TILE + 12,
+                                 (cy - off) * TILE + 20, "missing_flyer"))
+    sc.add_decoration(Decoration((cx + off + 2) * TILE + 8,
+                                 (cy + off) * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration((cx - off - 2) * TILE + 16,
+                                 (cy + off + 1) * TILE + 16, "creepy_tree"))
+
+    def _square_interact(game):
+        px_, py_ = game.player.x, game.player.y
+        if abs(px_ - wx) < 36 and abs(py_ - wy) < 36:
+            if (game.save.flag("well_examined")
+                    and game.player.inventory.count("stone") > 0):
+                # A stone over the lip: the knocks fall away, the shaft's
+                # rattle carries across the square -- and no bottom ever
+                # sounds. WORDLESS by design (the missing landing IS the
+                # beat; the well stays the bottomless dread it is).
+                game.player.inventory.remove("stone", 1)
+                game.audio.play("bump", 0.5)
+                game._echoes.extend([
+                    {"t": 0.35, "x": wx, "y": wy, "vol": 0.34},
+                    {"t": 0.80, "x": wx, "y": wy, "vol": 0.22, "emit": True},
+                    {"t": 1.45, "x": wx, "y": wy, "vol": 0.12},
+                ])
+                return
+            if not game.save.flag("well_examined"):
+                game.save.set_flag("well_examined", True)
+                game.audio.play("low_pulse", 0.4)
+                game.dialog.show([
+                    "[c=dim](You lean over the lip. The shaft drops "
+                    "past where any water should be. No glint, no "
+                    "bottom, just cold air climbing up out of it.)[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            game.audio.play("low_pulse", 0.4)
+            game.show_notice("Cold air climbs out of the dark. No way "
+                             "down for you here.")
+            return
+        if abs(px_ - bx) < 36 and abs(py_ - by) < 36:
+            if not game.save.flag("barrow_inspected"):
+                game.save.set_flag("barrow_inspected", True)
+                _evidence(game, "barrow_tools",
+                          "Digging tools left in the barrow, rusted over. "
+                          "The edges are still bright.")
+            return
+        if abs(px_ - nx) < 36 and abs(py_ - ny) < 36:
+            game.audio.play("blip_low", 0.4)
+            game.dialog.show([
+                "A coin rack of newspapers, bleached behind the scratched "
+                "plastic. The county weekly.",
+                "[c=dim]Dated January 15. Every copy in the stack. Nobody "
+                "ever fed it another.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+
+    sc.add_interactable(wx, wy, 36)
+    sc.add_interactable(bx, by, 36)
+    sc.add_interactable(nx, ny, 36)
+    sc.on_interact_fn = _square_interact
+    # THE CULT'S ERRAND at the square is to look in on the well (the JOBS
+    # layer, `Scene.add_cult_station`). It is the same errand they ran when
+    # this was the middle of the town map, and it is still the reason a
+    # hooded figure is standing at a dry shaft.
+    sc.add_cult_station(wx + TILE, wy, face=(-1, 0), dwell=(4.0, 7.0))
+    # And the ground around it is not quiet ground: a spilled crate of
+    # bottles at the barrow and a strung line of cans in the far verge.
+    sc.add_noise_trap(bx - TILE, by + 8, "glass", seed=8)
+    sc.add_noise_trap((cx + off + 2) * TILE + 16,
+                      (cy + off + 2) * TILE + 16, "cans", seed=9)
 
 
 def build_gravel_road_north():
-    """The **T** north of town: Brimley south, the backwoods north, the river
-    bend west.
+    """The **X** north of town: the country lane south, the backwoods north,
+    the river bend west and the town's own streets east.
 
     The last of the old three-tile dirt roads to get the path treatment. It
     keeps its gravel identity -- the shoulders read wider and looser here than
@@ -749,7 +1054,7 @@ def build_gravel_road_north():
     sc = build_path(
         "gravel_road_north", "nsew", W, H,
         verge_char=("T", "p"),
-        exits=(("s", "a", "brimley", "from_gravel_road"),
+        exits=(("s", "a", "country_lane", "from_gravel_road_north"),
                ("n", "e", "backwoods_cabin", "from_road"),
                ("w", "^", "river_bend", "from_gravel_road_north"),
                # THE TOWN TURNING. The T became an X when the town's own
@@ -757,7 +1062,7 @@ def build_gravel_road_north():
                # its east flank was the only side of any shipped path with
                # no road already on it.
                ("e", "4", "store_row", "from_gravel_road_north")),
-        spawns=(("from_brimley", "s"), ("from_backwoods_cabin", "n"),
+        spawns=(("from_country_lane", "s"), ("from_backwoods_cabin", "n"),
                 ("from_river_bend", "w"), ("from_store_row", "e")),
         seed=2031)
     cx, cy = sc.junction

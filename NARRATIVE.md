@@ -242,7 +242,7 @@ never predation.
 |---|---|---|
 | **Mr. Sable**, Lodge Clerk | **Local — the most attuned of them, and the lucky one** | He dreamed the door longest and loudest of anyone born here, and what it baited him with was the only thing he ever wanted: a **full house**. The dream's one mark on him was a host's readiness — subconsciously keeping the desk and the guests ready for arrivals he couldn't name. Then the want was fed by accident: the same broadcast that lured the attuned north filled the Arcadia with real guests. The door provided nothing — the migration did (§2) — but for a season the lodge was full, and it was fun; he was fulfilled, the best year of his life. A fed want takes no bait, so the bearing lost its hold on him, and he alone among the attuned never followed it down. **The Invitation is the congregation's offer to bring him with them:** their envelope reached his desk shortly after the seal, the way down left so he could follow when ready — but the descent was never his want; the house was. It has sat under the register since the winter. So he keeps the desk of an empty lodge: genteel, with a funereal undertow that is **grief for a full house, never conspiracy** — the door never spoke through him, and his certainties are a host's pattern-sense, not a channel. He deflects Mara's name, folds her in with "the new folk," and points suspicion at the unfriendly old families — the exact trap the game punishes, because the warm ones are the cult, and the cult were his guests. **He checked the PI in the night before the game opens** — the first arrival since the seal, one guest against a winter of empty rooms — so every exchange after that is a host resuming a conversation, never an introduction. At 3 evidence he judges the guest ready to go where he himself never wanted to, and hands the envelope over like a room key. Somebody has to keep the desk. |
 | **Sheriff Hollis Vane** | **Local — the last holdout; claimed but never attuned** | Alone among the named cast he never dreamed the door. Not a believer: the town's one real investigator, chasing the *how* — how a pack of outsiders talked his town into walking off and shut it. His single window into it is one post-seal conversation with a nameless blind cultist, radiant with unaccountable conviction, promised his sight restored by the dream, and in truth sent to convert him. Vane refused; from that one exchange he holds the only piece of the how — the door answers your deepest want. He knows the outsiders filled the school, barn, and lodge, then walked out one night in a line; the King, the Threshold, and where the line went are beyond him. What he wants most is for all of it to end. Toward the PI he is hopeful but mistrusting — one more outsider who drove in is the exact profile of every cultist — and trust is earned only as the PI shares real discoveries. His fall is player-driven (`DESIGN.md` §2). |
-| **Rev. Asa Crane**, Preacher | **Local — innocent dissenter** | Names the cult from his own pulpit, oblivious to what they truly are but loud that they're no church. His doom is a chosen beat: the PI either presses him (his culpability filed as a note) or holds him back, which only banks the fire — when the case stalls at two surface threads, the PI's own interior voice points him back at the pulpit. He cannot be saved, only un-pointed: the cult cannot be talked out of anything, and Crane dies for believing he can. The doom sends him OUT — down to the river after his flock, believing they can be talked home. The church stands empty on the next entry, and his body is found on the Brimley riverbank, gutted, his cross in the viscera (a case NOTE — the cult's hostility is already proven, so his death no longer counts as evidence; §6). All he ever knew was the rumor Toby told him. The town murders the ones who name it. |
+| **Rev. Asa Crane**, Preacher | **Local — innocent dissenter** | Names the cult from his own pulpit, oblivious to what they truly are but loud that they're no church. His doom is a chosen beat: the PI either presses him (his culpability filed as a note) or holds him back, which only banks the fire — when the case stalls at two surface threads, the PI's own interior voice points him back at the pulpit. He cannot be saved, only un-pointed: the cult cannot be talked out of anything, and Crane dies for believing he can. The doom sends him OUT — down to the river after his flock, believing they can be talked home. The church stands empty on the next entry, and his body is found on the riverbank north of town, on the run the road follows, gutted, his cross in the viscera (a case NOTE — the cult's hostility is already proven, so his death no longer counts as evidence; §6). All he ever knew was the rumor Toby told him. The town murders the ones who name it. |
 | **Hettie**, Store-Owner | **Local — quiet resister** | One person: the counter-keeper and the quiet resister merged. The shop is gutted — shelves bare, till empty since the new year, deliveries dead with the fold. Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright, and a one-shot reaction to the Preacher's death. She trades a load of cartridges for the PI's one-day-old newspaper; that is how starved for word the town is. |
 | **Toby**, the Kid | **Local — innocent witness** | Followed the night procession down the river to the cult's dug-open ground and saw them go below, before the rite — the sole witness of where they went. His account is **earned, never volunteered** (2026-07 rework): a kid has no way to know the case on sight, so the witness beat rides the PI holding out Mara's photograph. Before that, the commune lived in his school. His witness does two jobs: it poses the descent question (the only honest account in town points at ground you can never walk to — the grove is fold-hidden) and it seeds the school, the room the Invitation names. **He also holds Mara's bear** — she gave the sad lodge lady's only-toy-in-town to him, a stuffed bear whose tag reads *Sam*; he does not part with it easily, and only the PI's patience with a scared child earns it (the PI is numb but soft with kids). He **lends** it for a reunion that cannot happen: "if you find her, give it back." It is the case's secret fourth evidence (§6) and, carried below, the trigger for the confrontation's cruelest beat (§4 Mara). What he tells you is the truth; what he lends you is the wound. Children notice what adults pretend not to. |
 | **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, Toby) | **Locals** | The town still tries to live. Mrs. Calder sets a place at supper for a guest she can't name — a certainty she can't explain that someone is coming. Old Pell grew the town's pride, the northernmost corn in the world (§1 note 2), and won't look long at the fields that died standing when the fall harvest went uncut; he also stopped marking the calendar (a rot-layer detail, not talk). Royce tried to drive out like everyone in town did — the corn handed every driver back — and gave it up with the rest; he clings to the one impossible fact he can't square: you got IN. They all know the fold is real; none of them understand it. The named principals — Vane, Crane, Hettie, Toby, Sable — surface as dialogue speakers (locked in `tests/flow.py`). |
@@ -254,15 +254,24 @@ never predation.
 
 ## 5. Place
 
-- **Brimley (surface).** One connected sprawl, one continuous town: the
-  well at the centre, the church, the store, the sheriff's office, the
+- **Brimley (surface).** Not one sprawl: a **string of house islands**.
+  The town is its lit streets and the lots that hang off them — you walk
+  a road, you turn in at somebody's gate, you cross their ground, you
+  knock. Between the streets there is no town at all, only the dark the
+  fold left, so Brimley is a place you traverse rather than a place you
+  stand in the middle of. What is public sits at one crossing: **the
+  square** outside the store, with the well, the barrow, the news rack
+  and the dead payphone on it. The well is a dead town shaft — dread
+  set-dressing, and the descent runs elsewhere. Off the streets are the
+  church and its burying ground, the store, the sheriff's office, the
   school, the barn, the kid's house, the small houses the rest of the
-  named locals keep, and the car at the edge. The well is a dead town
-  shaft — dread set-dressing, and the descent runs elsewhere. The **grid
-  died with the seal** (the power lines run to the outside the fold no
-  longer reaches, §1), so the town keeps its lights on with **gasoline
-  generators** now — the same severed-supply logic as the stopped trucks
-  and dead phones; nobody sabotaged it, the fold did.
+  named locals keep, and the abandoned farmhouse; the river runs north of
+  town with the planked bridge on the bend, and the car sits out on the
+  arrival road. The **grid died with the seal** (the power lines run to
+  the outside the fold no longer reaches, §1), so the town keeps its
+  lights on with **gasoline generators** now — the same severed-supply
+  logic as the stopped trucks and dead phones; nobody sabotaged it, the
+  fold did.
 - **Everybody in Brimley has a doorstep, and the ground in front of it
   says what the household is.** The seal was January 15 and it is April,
   so every yard in town is holding three months of a stopped errand: wood
@@ -273,6 +282,13 @@ never predation.
   anyone. The three empty buildings (the school and the barn, where the
   congregation bedded down; the farmhouse, abandoned in its own name)
   have yards that read empty too.
+- **And the people are INSIDE.** A yard says what a household is when
+  there is nobody in it to say it, so everyone is behind their own door:
+  Hettie in the store, Crane in the church, Vane in his office, Toby in
+  his house, Old Pell, Mrs. Calder, Royce and Garrick each in theirs,
+  Sable at the Arcadia desk. The one figure you see outdoors is Hettie
+  stepping onto her shop step to sweep it, because the store being open
+  is the last thing in Brimley still being performed.
 - **The Arcadia Lodge.** The two-storey hotel the PI is staying at: the
   common room (Sable's reception desk keeps the clean sign-in book and the
   lead pointing down), a guest wing of mostly-locked rooms kept empty and

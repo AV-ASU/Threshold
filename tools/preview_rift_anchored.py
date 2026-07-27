@@ -101,9 +101,9 @@ def main():
     _shot(g, "3. circled -- the base edge foreshortens like a wall", font,
           shots, (fx, fy))
 
-    # 4 + 5. The King's rift, forming then formed, in brimley.
+    # 4 + 5. The King's rift, forming then formed, on the town's street.
     from scenes import load_scene
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     px, py = g.player.x, g.player.y
     spot = (px + 3.0 * TILE, py - 1.5 * TILE)
     tgt = load_scene("cornfield_path")

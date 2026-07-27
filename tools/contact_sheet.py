@@ -11,7 +11,7 @@ Usage (from the repo root):
     python tools/contact_sheet.py --cols 6        # grid width
     python tools/contact_sheet.py --cell 360x260  # per-scene cell size
     python tools/contact_sheet.py --out /tmp/x.png
-    python tools/contact_sheet.py well brimley     # only these keys
+    python tools/contact_sheet.py well store_row   # only these keys
 
 Each cell fits the scene thumbnail (aspect-preserved, centred) on a dark
 backing; the scene's own baked label (key - name - WxH) rides along.

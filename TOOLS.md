@@ -73,7 +73,7 @@ terminal version is `python tools/index.py [word]`.
 - `tools/audit_transitions.py` — Step 1 of the geometry overhaul: enumerate every world transition the game
 - `tools/audit_traversal.py` — Traversal-jank audit -- a headless sweep for the *signatured* feel-bugs that
 - `tools/check_canon_keys.py` — Canon-key drift tripwire.
-- `tools/profile_brimley.py` — Headless render profiler for the wrapped Brimley town (FPS work).
+- `tools/profile_render.py` — Headless render profiler for the world draw (FPS work).
 
 ## Other
 

@@ -81,10 +81,37 @@ def clear_cult(g):
 
 
 def open_field(g):
-    """A verified-open patch of brimley grass (the west-central glade,
-    kept clear of corn/marsh/trees in the 60x60 redesign) so the
-    measurements aren't at the mercy of spawn-side tree clutter."""
-    g.player.x, g.player.y = 14 * TILE + 16, 34 * TILE + 16
+    """Stand the player on the most OPEN ground in the scene, so the
+    measurements aren't at the mercy of spawn-side tree clutter.
+
+    DERIVED, not a tile number. It used to be one hand-picked glade in the
+    retired town map, which meant every probe in this file silently depended
+    on one scene's layout: when that scene went (DESIGN.md §15) the constant
+    pointed into a treeline. The scan picks the tile with the largest clear
+    radius around it, which is the thing the probes actually want.
+    """
+    sc = g.scene
+    best, best_r = None, -1
+    for ty in range(2, sc.h - 2, 2):
+        for tx in range(2, sc.w - 2, 2):
+            x, y = tx * TILE + 16, ty * TILE + 16
+            if sc.is_solid_at(x, y):
+                continue
+            r = 0
+            while r < 6 and not any(
+                    sc.is_solid_at(x + dx * TILE * (r + 1),
+                                   y + dy * TILE * (r + 1))
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                                   (1, 1), (-1, -1), (1, -1), (-1, 1))):
+                r += 1
+            if r > best_r:
+                best, best_r = (x, y), r
+            if best_r >= 6:
+                break
+        if best_r >= 6:
+            break
+    assert best is not None, "open_field: %s has no open ground" % sc.key
+    g.player.x, g.player.y = best
     g.player.hidden = None
     g.player.hide_origin = None
 
@@ -123,7 +150,7 @@ def main():
 
     # --- 1. open ground: climb -> NOTICE -> LOCK ------------------------
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 30)                     # past on-enter dialogs (world freezes)
     clear_cult(g)
     open_field(g)
@@ -147,7 +174,7 @@ def main():
 
     # --- 2. corn: leaky at range, fatal point-blank ---------------------
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 30)
     clear_cult(g)
     open_field(g)
@@ -163,7 +190,7 @@ def main():
     check(n._cult_state != "chase" and peak < 1.0,
           f"corn: concealment holds at range (peak sus {peak:.2f})")
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 30)
     clear_cult(g)
     open_field(g)
@@ -184,7 +211,7 @@ def main():
     # --- 3+4. enclosed hide -> SEARCH -> CHECK -> the struggle ----------
     def hide_and_get_checked():
         g = new_game()
-        g.load_scene_now("brimley", "default")
+        g.load_scene_now("store_row", "default")
         tick(g, 30)
         clear_cult(g)
         open_field(g)
@@ -237,7 +264,7 @@ def main():
     # if it could pin the bar at 1.0, the machine would flip chase/search
     # every frame at the fringe and spam the lock/lose stings.
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 30)
     clear_cult(g)
     open_field(g)
@@ -329,8 +356,8 @@ def main():
     # --- 4d. the church bell (the town's dominant noise source) ---------
     # Rung from the tower pull (E, scenes/threshold_extras.py); Game.
     # _ring_bell/_tick_bell drive the peal across scene loads. While it
-    # peals: the surface is MASKED (small noises drown), Brimley hears a
-    # map-wide pull at the church door, and the first cult hunter to
+    # peals: the surface is MASKED (small noises drown), the church yard
+    # hears a map-wide pull at the church door, and the first cult hunter to
     # reach the door stills the rope and sweeps the churchyard.
     g = new_game()
     g.load_scene_now("bell_tower", "default")
@@ -339,18 +366,21 @@ def main():
     press_e(g)
     check(g._bell_t > 19.0 and g.save.flag("bell_rung"),
           "bell: E at the pull arms the peal")
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("church_yard", "default")
     tick(g, 10)
     clear_cult(g)
-    g.player.x, g.player.y = 48 * TILE + 16, 42 * TILE + 16   # by the kid's house
+    open_field(g)
     g.player.hidden = None
-    n = g._spawn_cultist("cult_regular", "cultist",
-                         at=(46 * TILE + 16, 42 * TILE + 16))
-    n.x, n.y = 46 * TILE + 16, 42 * TILE + 16
+    bx, by = g.scene._bell_door
+    # Start him at the far corner of the lot from the door, so the pull is
+    # a real trip and not a step.
+    _fx = TILE + 16 if bx > g.scene.w * TILE / 2 else (g.scene.w - 2) * TILE + 16
+    _fy = TILE + 16 if by > g.scene.h * TILE / 2 else (g.scene.h - 2) * TILE + 16
+    n = g._spawn_cultist("cult_regular", "cultist", at=(_fx, _fy))
+    n.x, n.y = _fx, _fy
     n._cult_state = "scout"
     n._suspicion = 0.0
     n.facing = (0.0, -1.0)
-    bx, by = g.scene._bell_door
     d0 = g.scene.world_dist(n.x, n.y, bx, by)
     heard = False
     for _ in range(120):
@@ -359,7 +389,7 @@ def main():
             heard = True
             break
     check(heard and getattr(n, "_last_seen_pos", None) == (bx, by),
-          f"bell: the peal pulls a cultist {d0:.0f}px out, far past "
+          f"bell: the peal pulls a cultist {d0:.0f}px out, past "
           f"his 180px ear, onto the church door")
     check(getattr(n, "_cult_state_t", 0) > 15.0,
           "bell: the walk budget scales to the trip")
@@ -552,7 +582,7 @@ def main():
     tick(g, 3)
     check(g._bleed is None, "bleed: a sub-LOUD noise does not carry")
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 10)
     g.player.hidden = "under"
     g.scene.emit_noise(g.player.x, g.player.y, 1.0, kind="shot")
@@ -574,20 +604,35 @@ def main():
           "doors: the leaf seats shut and the state cleans up")
 
     # --- 5. walls occlude absolutely ------------------------------------
+    # A yard has exactly one building in it (DESIGN.md §15), so the two
+    # stations are DERIVED: stand on either side of it, on the same column,
+    # with the whole house between. Hand-picked tiles for this used to live
+    # in the retired town map and would have gone on "passing" from two spots
+    # with nothing at all between them.
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("shop_yard", "default")
     tick(g, 30)
     clear_cult(g)
     n = plant(g, 90)
     n._suspicion = 0.6
-    g.player.x, g.player.y = 8 * TILE + 16, 24 * TILE + 16   # south of the shop wall
-    n.x, n.y = 8 * TILE + 16, 15 * TILE + 16                 # north, wall between
+    _rrows = [ty for ty in range(g.scene.h) if "r" in g.scene.objects[ty]]
+    _rcols = [tx for tx in range(g.scene.w)
+              if g.scene.objects[_rrows[0]][tx] == "r"]
+    _sy = (_rrows[-1] + 3) * TILE + 16              # south of the house
+    _ny = (_rrows[0] - 3) * TILE + 16               # north of it
+    _wcol = next((c for c in _rcols
+                  if not g.scene.clear_sight_line(c * TILE + 16, _ny,
+                                                  c * TILE + 16, _sy)), None)
+    check(_wcol is not None,
+          "walls: the two stations really do have a building between them")
+    g.player.x = n.x = (_wcol if _wcol is not None else _rcols[0]) * TILE + 16
+    g.player.y, n.y = _sy, _ny
     tick(g, 30)
     check(n._suspicion < 0.6, "walls: suspicion decays behind one")
 
     # --- 6. apex bypass ---------------------------------------------------
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 30)
     clear_cult(g)
     open_field(g)
@@ -630,7 +675,7 @@ def main():
     check(_cf(p) == 0.0, "dark: an enclosed hide still zeroes the score")
     p.hidden = None
     g2 = new_game()
-    g2.load_scene_now("brimley", "default")
+    g2.load_scene_now("store_row", "default")
     tick(g2, 10)
     check(not getattr(g2.player, "_in_dark", False),
           "dark: the daylit surface never grants it")
@@ -669,7 +714,7 @@ def main():
     # Below the first find the surface spawns NO patrol: the town is
     # only wrong, not yet hostile. The first evidence raises the hoods.
     g = new_game()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     tick(g, 10)
     check(not any(str(getattr(n, "tag", "")).startswith("cult_")
                   for n in g.scene.npcs),
@@ -712,14 +757,19 @@ def main():
     g.player.x, g.player.y = 6 * TILE + 16, 5 * TILE + 16   # dry crossing
     check(not g._wading(), "wade: the dry central crossing is not wading")
 
-    # the Brimley river is EXCLUDED (its own set-piece, not a WADE scene)
+    # the surface river is EXCLUDED (a barrier, not a WADE scene): the safe
+    # path carries a see-over solid on every water tile, so you cannot get
+    # into it at all, let alone wade it.
     g = new_game()
-    g.load_scene_now("brimley", "default")
-    check("brimley" not in WADE_SCENES, "wade: Brimley is not a WADE scene")
+    g.load_scene_now("river_road", "default")
+    check("river_road" not in WADE_SCENES and "river_bend" not in WADE_SCENES,
+          "wade: the surface river is not a WADE scene")
     river = _find_water(g)
     if river:
         g.player.x, g.player.y = river[0] * TILE + 16, river[1] * TILE + 16
-        check(not g._wading(), "wade: the Brimley river never reads as wading")
+        check(not g._wading(), "wade: the surface river never reads as wading")
+        check(g.scene.is_solid_at(g.player.x, g.player.y),
+              "wade: and the body cannot get into it in the first place")
 
     # the real step path throws a SPLASH: drive movement across the flood
     g = new_game()
@@ -762,7 +812,7 @@ def main():
     check("bedroom" not in WATCHER_OPEN_SCENES
           and "toby_house" not in WATCHER_OPEN_SCENES,
           "watchers: the true refuges (SAFE_SCENES) stay outside the gaze")
-    check("brimley" in WATCHER_OPEN_SCENES
+    check("store_row" in WATCHER_OPEN_SCENES
           and "effigy_grove" in WATCHER_OPEN_SCENES
           and "works_sign" in WATCHER_OPEN_SCENES,
           "watchers: the open sky and the deep stay in it")
@@ -838,12 +888,18 @@ def main():
           "watchers: the true refuge never manifests one")
     # Same clock in the open: the wave DOES open (the mechanic still works).
     g2 = new_game()
-    g2.load_scene_now("brimley", "default")
+    g2.load_scene_now("store_row", "default")
     tick(g2, 30)
     clear_cult(g2)
+    # OFF the lit crossing. Light is cover (WATCHER_LIGHT_BURN), and the
+    # street's junction is lit at its corners by design, so standing where
+    # the scene drops you would be testing the cover, not the wave.
+    open_field(g2)
+    check(not g2.scene.lit_at(g2.player.x, g2.player.y),
+          "watchers: the exposure station is genuinely unlit")
     g2.save.set_arg("evidence", [{"name": f"w{i}"}
                                  for i in range(WATCHER_WAKE_EV)])
-    assert "brimley" not in KING_FREE_SCENES
+    assert "store_row" not in KING_FREE_SCENES
     for _ in range(int((WATCHER_GRACE + 2) * 30)):
         g2.player.hidden = None
         g2._tick_watchers(1 / 30.0)
@@ -862,7 +918,7 @@ def main():
                                 CULT_HANDOFF_RANGE, CULT_HANDOFF_HOLD)
     from entities.npc import NPC
     gl = new_game()
-    gl.load_scene_now("brimley", "default")
+    gl.load_scene_now("store_row", "default")
     clear_cult(gl)
     scn = gl.scene
     real_ticks = pygame.time.get_ticks
@@ -937,7 +993,7 @@ def main():
                                 SUS_SPRINT_MULT, PLAYER_SPRINT_MULT)
     from systems.stealth import detection_score
     ge = new_game()
-    ge.load_scene_now("brimley", "default")
+    ge.load_scene_now("store_row", "default")
     tick(ge, 10)
     clear_cult(ge)
     open_field(ge)
@@ -987,7 +1043,7 @@ def main():
     print("[14] river stones: the clatter routes a scout, never a search")
     from systems.config import NOISE_SEARCH_PULL
     gs = new_game()
-    gs.load_scene_now("brimley", "default")
+    gs.load_scene_now("store_row", "default")
     tick(gs, 10)
     clear_cult(gs)
     open_field(gs)
@@ -1037,7 +1093,7 @@ def main():
     # (1) the throw smashes the pane -> the run ledger + the broken set.
     from scenes.base import _WINDOW_CHARS
     gg = new_game()
-    gg.load_scene_now("brimley", "default")
+    gg.load_scene_now("shop_yard", "default")
     tick(gg, 10)
     # Clear ALL npcs, not just the cult: a wandering homebody local is a
     # solid body that can step into the throw's path and stop the stone
@@ -1056,7 +1112,8 @@ def main():
                 break
         if win:
             break
-    check(win is not None, "glass: brimley offers a window with a clear approach")
+    check(win is not None,
+          "glass: a yard's house offers a window with a clear approach")
     wx_, wy_, bx_, by_ = win
     gg.player.x, gg.player.y = bx_, by_
     gg.player.hidden = None
@@ -1070,7 +1127,7 @@ def main():
     check((wx_, wy_) in getattr(gg.scene, "_broken_windows", set()),
           "glass: the pane breaks and joins the scene's broken set")
     led = gg.save.arg("broken_windows", {}) or {}
-    check([wx_, wy_] in led.get("brimley", []),
+    check([wx_, wy_] in led.get("shop_yard", []),
           "glass: the break is written to the run ledger")
     # (2) the loudness claim, tested straight on the noise bus (no throw,
     # so no chase/grab in play): a GLASS_LOUD event over the searcher
@@ -1080,7 +1137,7 @@ def main():
     check(STONE_LOUD <= NOISE_SEARCH_PULL < GLASS_LOUD,
           "glass: only the glass tier clears the searcher-pull bar")
     gg2 = new_game()
-    gg2.load_scene_now("brimley", "default")
+    gg2.load_scene_now("store_row", "default")
     tick(gg2, 10)
     clear_cult(gg2)
     open_field(gg2)
@@ -1109,7 +1166,7 @@ def main():
     # The dead well: a stone over the lip spends one and the shaft's
     # rattle turns a scout across the square. No landing ever sounds.
     gw = new_game()
-    gw.load_scene_now("brimley", "default")
+    gw.load_scene_now("store_row", "default")
     tick(gw, 10)
     clear_cult(gw)
     gw.save.set_flag("well_examined", True)
@@ -1137,7 +1194,7 @@ def main():
     # the deck overhead knocks (dressing only -- it must NEVER route the
     # searcher to the player below).
     gb = new_game()
-    gb.load_scene_now("brimley", "default")
+    gb.load_scene_now("river_bend", "default")
     tick(gb, 10)
     clear_cult(gb)
     check(getattr(gb.scene, "_bridge_hide_px", None) is not None
@@ -1345,8 +1402,9 @@ def main():
           "storm stage: gloom monotonic non-decreasing with the stage")
     check(len(STORM_DARK_GLOOM) == 4 and STORM_DARK_GLOOM[3] > 0,
           "storm stage: four stages, night by stage 3")
-    check("brimley" in STORM_STAGE_SCENES,
-          "storm stage: Brimley is a staged surface scene")
+    check("store_row" in STORM_STAGE_SCENES
+          and "shop_yard" in STORM_STAGE_SCENES,
+          "storm stage: the town's streets and yards are staged surface")
 
     print()
     if FAILS:

@@ -10,8 +10,8 @@ the PI's own spoken lines, everyone leads with the two guaranteed openers
 NPC's story-critical one-shots (the witness account, the memory of the
 girl, the murder he can't report, the paper trade, the town-reaction
 beats) still VOLUNTEER themselves ahead of the menu. Other state
-reactivity comes from per-NPC flag gates; scenes/brimley.py
-_brimley_voice survives only for the doorstep Hettie cameo.
+reactivity comes from per-NPC flag gates; `doorstep_voice` (below) is
+the one fixed page-list left, for Hettie's cameo on her shop step.
 `escalate` still exists but now has NO call sites -- kept only in case
 visibility-tiered copy is ever authored. Evidence beats are surfaced
 through `_evidence`; only the five in `CANONICAL_EVIDENCE` count toward
@@ -1761,8 +1761,8 @@ def clerk_dialogue(game, npc):
 
 # ---- The Brimley chorus ----
 # The last of the ask-verb expansion (TODO #1): Old Pell, Mrs. Calder,
-# Royce, and Garrick come off the _brimley_voice page-lists and onto the
-# organic conversation. Every one leads with the shared opener pair
+# Royce, and Garrick came off fixed page-lists and onto the organic
+# conversation. Every one leads with the shared opener pair
 # (introduce-as-PI + the photograph) with short answers of their own,
 # plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the case,
 # TODO #10) keep firing ahead of the menu, exactly as the principals'
@@ -1775,12 +1775,28 @@ def clerk_dialogue(game, npc):
 # everything else in the verb.
 
 
+def doorstep_voice(pages, voice="blip_mid"):
+    """A dialogue_fn from a FIXED page list, spoken as whoever the NPC is
+    (name and portrait are read off them at call time).
+
+    The whole chorus moved onto the ask verb and its `*_CONVO` data; this is
+    what is left of the older shape, and it has exactly one speaker. Hettie
+    steps out of her shop to sweep a step that does not get dirty, says one
+    of these, and ducks back in -- a cameo, not a conversation. Her real
+    conversation is inside, at her counter.
+    """
+    def _fn(game, npc):
+        portrait = getattr(npc, "portrait", None) or npc.sprite_kind
+        game.dialog.show(pages, speaker=npc.name, voice=voice,
+                         portrait=portrait)
+    return _fn
+
+
 def chorus_dialogue(convo, beats=()):
     """Build a dialogue_fn for a Brimley chorus local. Reactive one-shot
-    `beats` keep the _brimley_voice contract: on each talk the first
-    beat whose predicate holds and whose one-shot flag is unset fires
-    INSTEAD of the conversation (and sets its flag); otherwise the
-    organic conversation opens."""
+    `beats`: on each talk the first beat whose predicate holds and whose
+    one-shot flag is unset fires INSTEAD of the conversation (and sets its
+    flag); otherwise the organic conversation opens."""
     def _fn(game, npc):
         portrait = (getattr(npc, "portrait", None)
                     or getattr(npc, "sprite_kind", None))

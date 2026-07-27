@@ -102,7 +102,7 @@ def main():
     g.save.new()
     g.audio.music_muted = True
     g._start_play()
-    g.load_scene_now("brimley", "default")
+    g.load_scene_now("store_row", "default")
     # Isolate the demo: clear the town's own residents so the swell + the two
     # demo figures read clean (this is a spike, not the live scene).
     g.scene.npcs = []

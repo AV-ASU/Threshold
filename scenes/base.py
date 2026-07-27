@@ -958,6 +958,30 @@ class Scene:
         if direction:
             self.exit_directions[char] = direction
 
+    def wall_up(self, char, wall="W"):
+        """Brick a door char back into the wall it was punched through.
+
+        Used when a door's destination stops existing. A building that keeps
+        a leaf onto a scene nobody can reach ships a door that does nothing,
+        which reads to the player as a bug in the building rather than a
+        change in the world -- so the wall goes back. Returns how many tiles
+        were closed, so a caller can assert it found what it meant to.
+        """
+        # A scene may hold its rows as strings OR as lists of chars depending
+        # on where in its build it is; keep whichever it had, or a later
+        # `consume_marker`/row edit blows up on the type it didn't expect.
+        rows, closed = [], 0
+        for r in self.objects:
+            was_list = isinstance(r, list)
+            row = "".join(r)
+            closed += row.count(char)
+            row = row.replace(char, wall)
+            rows.append(list(row) if was_list else row)
+        self.objects = rows
+        self.exits.pop(char, None)
+        self.exit_directions.pop(char, None)
+        return closed
+
     def set_lost_edge(self, sides, lost_scene):
         """Opt this scene's map edge(s) in as a MOUTH into a lost space.
 

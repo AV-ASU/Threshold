@@ -221,8 +221,7 @@ class RotMixin:
             sc.add_ambient("child_hum", 0.30, 50.0, 95.0, pan_spread=0.8)
         if key in UNDERGROUND_SCENES:
             return
-        outdoor = key in OUTDOOR_SCENES or key in ("brimley",
-                                                   "effigy_grove")
+        outdoor = key in OUTDOOR_SCENES or key == "effigy_grove"
         interior = sc.music == "home"
         rot = stage if (key not in SAFE_SCENES or stage >= 3) else 0
         if interior:
@@ -246,7 +245,7 @@ class RotMixin:
         key = self.scene.key
         # The effigy grove counts as surface here: it hosts the descent
         # fold, so the rot and the way down escalate on the same dial.
-        surface = key in OUTDOOR_SCENES or key in ("brimley", "effigy_grove")
+        surface = key in OUTDOOR_SCENES or key == "effigy_grove"
         safe = key in SAFE_SCENES
         if not underground and not surface and not (safe and stage >= 3):
             return

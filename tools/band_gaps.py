@@ -14,7 +14,7 @@ player pushing north holds north -- a lane that needs three sidesteps is a
 lane that feels blocked even though the flood fill counts it.
 
     python tools/band_gaps.py                     # every outdoor scene
-    python tools/band_gaps.py brimley lodge_yard  # named scenes
+    python tools/band_gaps.py store_row lodge_yard  # named scenes
     python tools/band_gaps.py --depth 10          # how far in to push
 
 Read the number, not the verdict: an interior or a walled glade reports near
@@ -35,7 +35,7 @@ from scenes import SCENE_BUILDERS, load_scene                # noqa: E402
 
 # The default outdoor set: scenes whose edge is a scattered stand rather than
 # a wall. Anything else can still be named on the command line.
-OUTDOOR = ("brimley", "lodge_yard", "cornfield_path", "clearing",
+OUTDOOR = ("store_row", "lodge_yard", "cornfield_path", "clearing",
            "effigy_grove", "cornfield_maze", "arrival_road")
 LANE = 4.0        # sub-tile lane spacing, in world units
 STEP = 2.0        # how finely a lane is walked

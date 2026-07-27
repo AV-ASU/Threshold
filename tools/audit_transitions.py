@@ -68,7 +68,7 @@ def _all_hook_teleports():
     """One pass across scenes/*.py: every begin_transition / load_scene_now
     call, with the enclosing build_*() scene key and the local hook function
     it sits in. We can't match hook function names to scene keys 1:1 (some are
-    `_school_interact`, others `_brimley_interact`), so we walk top-down from
+    `_school_interact`, others `_square_interact`), so we walk top-down from
     `def build_<key>(` blocks and report any teleport call inside.
 
     Returns [(scene_key, target_key, hook_name, source_file)]."""

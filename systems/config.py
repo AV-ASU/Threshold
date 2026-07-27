@@ -18,7 +18,7 @@ VOID_SCENES = {"clearing"}
 # floors get the rare delayed-footstep trick.
 CREEPY_SCENES = {"lodge_cellar", "clearing",
                  "abandoned_farmhouse", "well_bottom", "well_passage",
-                 "brimley"}
+                 "farm_yard"}
 
 
 # Outdoor decay tier. Each scene gets a small list of "this is
@@ -30,13 +30,14 @@ CREEPY_SCENES = {"lodge_cellar", "clearing",
 # player coming back through after the line has tightened sees a
 # changed world even though no NPC mentioned it.
 #
-# The brimley is intentionally absent: it's already heavily
-# dressed, and a rework is in flight.
+# The YARDS are intentionally absent: each one is already dressed to say
+# exactly one thing about its household (DESIGN.md §15), and a generic decay
+# prop dropped into that says something else on top of it.
 OUTDOOR_DECAY = {
-    ("brimley", "mid"):       [(12, 10, "bloody_handprint")],
-    ("brimley", "high"):      [(12, 10, "bloody_handprint"),
-                                (19, 10, "dead_crow"),
-                                (10, 23, "claw_marks")],
+    ("store_row", "mid"):     [(12, 24, "bloody_handprint")],
+    ("store_row", "high"):    [(12, 24, "bloody_handprint"),
+                               (24, 24, "dead_crow"),
+                               (11, 12, "claw_marks")],
     ("lodge_yard", "mid"):  [(5, 11, "claw_marks")],
     ("lodge_yard", "high"): [(5, 11, "claw_marks"),
                                   (15, 6, "phantom_mark"),
@@ -56,14 +57,12 @@ OUTDOOR_DECAY = {
 # Outdoor scenes -- everywhere the player is walking under sky.
 # A soft always-on player-centred vignette darkens the world edges
 # in these scenes so the world never feels safe between buildings.
-# Brimley runs its own (heavier) vignette via _draw_brimley_haze
-# and is intentionally NOT in this set so the two don't stack.
 # THE YARDS (DESIGN.md §15). Named as their own set because they are outdoor
 # but NOT seamless: a yard is an ISLAND, and the black past its verge is the
 # point of it. See SEAMLESS_WORLD_SCENES below.
 YARD_SCENES = {"shop_yard", "school_yard", "church_yard", "barn_yard",
                "sheriff_yard", "farm_yard", "toby_yard", "calder_yard",
-               "royce_yard", "garrick_yard"}
+               "royce_yard", "garrick_yard", "pell_yard"}
 
 OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "clearing", "graveyard",
@@ -84,20 +83,17 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
 # is carried as a relative offset on the matching edge so they appear
 # at the same lateral fraction of the destination's entry edge. The
 # scenes are different sizes (intentionally -- they have different
-# design jobs), but the EDGE BETWEEN them is continuous. Brimley is
-# in this set even though it isn't in OUTDOOR_SCENES (it has its own
-# vignette and doesn't want the outdoor one stacked on top).
+# design jobs), but the EDGE BETWEEN them is continuous.
 # THE YARDS ARE NOT IN IT, and that is the whole shape of the layer. A
 # seamless scene draws its neighbour's floor into the void past its own bounds
 # (`terrain._draw_neighbor_strips`) and takes the "overcast" skybox, so a yard
 # left in this set painted the adjoining street's asphalt right across the
 # black rim -- which is the one thing the maintainer asked to keep ("I like how
-# it is a transition of blackness on the edges"). Brimley is being replaced by
-# a STRING OF HOUSE ISLANDS in a sea of spatial manipulation, and an island
-# whose edges show you the mainland is not an island. So a yard gets the void
+# it is a transition of blackness on the edges"). The town IS a string of house
+# islands in a sea of spatial manipulation now, and an island whose edges show
+# you the mainland is not an island. So a yard gets the void
 # skybox, no neighbour bleed, and a real transition on the way in and out.
 SEAMLESS_WORLD_SCENES = (OUTDOOR_SCENES - YARD_SCENES) | {
-    "brimley",
     # The rite-hidden grove -- reached only through the school rite's
     # pane; the crossing shouldn't feel a transition.
     "effigy_grove",
@@ -300,7 +296,7 @@ DIM_SAFE_SCENES = {"lodge_cellar"}
 # the ISLANDS of safety while the flashlight earns its place outdoors. This is
 # the STAGE the storm (the amalgam-cut flood) will later fill: no light =
 # danger, taken outdoors.
-STORM_STAGE_SCENES = {"brimley"} | OUTDOOR_SCENES
+STORM_STAGE_SCENES = set(OUTDOOR_SCENES)
 STORM_DARK_GLOOM = (0, 44, 92, 138)     # darkness amount by rot stage 0..3
 
 # ---- THE MOUTH: falling out of the world (TODO #26) ----
@@ -324,9 +320,17 @@ CULT_WAKE_EV = 1
 
 CULTIST_SCENES = {
     "cornfield_path", "lodge_yard", "graveyard",
-    "brimley", "country_lane",
+    "country_lane",
     "gravel_road_north", "backwoods_cabin",
     "cornfield_maze",
+    # THE TOWN'S OWN GROUND (DESIGN.md §15). The string of streets and yards
+    # is where the town lives now, so it is where the cult walks: a patrol
+    # that stopped at the last dirt road would make the whole town a refuge
+    # by accident. The streets carry the roaming crew and the yards carry a
+    # pair each -- a household's lot is small, and two hooded figures
+    # standing in one is already a scene you back out of.
+    "store_row", "chapel_row", "south_row", "bank_row", "lane_end",
+    "river_road", "river_bend",
     # The LOST SPACES (TODO #26). They must be cult scenes or _tick_cultists
     # SWEEPS every cult-tagged NPC out of them every frame. Their population
     # is NOT the town's evidence ramp, though: each field sets
@@ -336,7 +340,7 @@ CULTIST_SCENES = {
     # here). Everything else -- gaze, suspicion, the Talk, the two-touch
     # grab -- is the ordinary cult behaviour, unchanged.
     "lost_space", "lost_corn", "lost_forest", "lost_road",
-}
+} | YARD_SCENES
 # (The old GAZE_BIND high-visibility trigger was retired in the play-notes
 # Watcher rework: Watchers now open on EXPOSURE from WATCHER_WAKE_EV evidence,
 # not on a visibility threshold. See the WATCHER_* block below and
@@ -732,15 +736,9 @@ NOTEBOOK_TOAST_DUR = 2.8
 # alpha through _claim_dark, which decrements this budget per frame so
 # the screen never goes fully opaque when both fire together. The
 # player-centred radial vignettes, the scene gloom (_draw_dark) and the
-# brimley haze draw directly and don't participate -- their clear
+# Mask haze draw directly and don't participate -- their clear
 # centre already protects the player's feet.
 MAX_FULLSCREEN_DARK = 204
-
-# Brimley river entry tile (col 34 = east edge of the river, row 60).
-# Walking from land onto this tile is the only way to enter the river.
-# Once in the river, the player can move freely between river tiles
-# until they step onto land or bridge, which flips in_river False.
-RIVER_ENTRY_TILE = (34, 60)
 
 # ---- World rot (NARRATIVE §world rot) -----------------------------
 # As the case is understood the surface rots (the DECALS + the ambient air,
@@ -802,7 +800,7 @@ UNDERGROUND_SCENES = {
 # _roll_fold_watcher.
 WATCHER_OPEN_SCENES = (OUTDOOR_SCENES | UNDERGROUND_SCENES
                        | DIM_INTERIOR_SCENES
-                       | {"brimley", "effigy_grove"})
+                       | {"effigy_grove"})
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure
 # of the vessel made visible -- His attention settling on you, not snow, not
