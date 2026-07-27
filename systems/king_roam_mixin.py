@@ -181,6 +181,15 @@ class KingRoamMixin:
     def _tick_king_roam(self, dt):
         """Drive the roaming King. Called every world-sim frame from
         Game.step (the sole King tick)."""
+        # ONE IMPOSSIBLE THING AT A TIME (TODO #25 fence, "the impossible count
+        # stays at one"). While the storm's APEX is worn, HE is that -- so the
+        # roaming Unfolding does not also walk the room. Gated on a host actually
+        # being borne, not merely on a storm being up, so nothing changes for the
+        # King anywhere an apex has not taken a body.
+        if self.apex_host() is not None:
+            if self._king is not None:
+                self._king_leave_scene()
+            return
         if self.scene is None or self.player is None:
             return
         self._tick_idle_king()

@@ -158,12 +158,17 @@ reveal each wall face, not just dead-on.
 
   ```bash
   python tools/capture_facings.py <scene_key> [--px X --py Y] [--bright]
+                                  [--ev N] [--spawn KIND[:SEED][@TX,TY]]
   ```
 
   It writes the four PNGs plus a labelled contact sheet, and it **asserts the
   facings actually differ**, exiting nonzero if they don't. `--bright` drops
   the sight cone + film grade for clean geometry reading; without it you get
-  the real player view.
+  the real player view. `--spawn` drops a creature into the room first, so a
+  black creature is judged on a real dark floor instead of on a preview card
+  with a chosen backdrop — which is exactly how one shipped invisible. The kind
+  **apex** drops the Mask-bearer with its face and its grabbing limbs live,
+  rather than a plain amalgam wearing neither.
 
   **Why the tool exists, and why hand-rolling this keeps failing:**
   `_update_camera` sets the camera POSITION only, **never its yaw**. The yaw is
@@ -184,7 +189,17 @@ reveal each wall face, not just dead-on.
 
   ```bash
   python tools/inspect_spot.py <scene_key> --at TX,TY [--zoom 4] [--dark] [--ev N]
+  python tools/inspect_spot.py <scene_key> --at TX,TY --dark --spawn amalgam:3
   ```
+
+  `--spawn KIND[:SEED][@TX,TY]` puts a CREATURE in the room first. A sprite
+  judged on a preview card against a chosen backdrop is not a sprite judged in
+  a scene -- that gap is how an amalgam that is invisible on a black floor got
+  signed off. Two things to hold in mind reading the result: the darkness
+  multiply runs AFTER the actor pass, so a sprite tuned on a bright card keeps
+  only about half its value in the real view; and whether a creature shows at a
+  given facing is the SIGHT CONE's call, so an empty panel is usually
+  out-of-cone rather than broken art.
 
   Four facings centred on a tile you name, zoomed until you can actually see
   what is there. The dressing process asks for three altitudes and then the

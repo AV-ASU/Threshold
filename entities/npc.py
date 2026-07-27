@@ -7,11 +7,31 @@ from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD, CULT_CHASE_MULT,
                             KING_LUNGE_RANGE, KING_LUNGE_TELE,
                             KING_LUNGE_DUR, KING_LUNGE_MULT,
                             KING_LUNGE_GATHER, KING_LUNGE_CD_LO,
-                            KING_LUNGE_CD_HI)
+                            KING_LUNGE_CD_HI, STORM_LIGHT_PROBE)
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
                              react_hold, errand_step, errand_drop,
                              sync_pause, handoff_step)
+
+def _in_beam(player, wx, wy):
+    """Is world (wx, wy) inside the player's flashlight cone?
+
+    The beam is a real barrier to a storm unit, not just a visual: scene
+    fixtures alone would leave every lamp-less room with no safety in it at all
+    (Game._stamp_beam publishes the cone, with the same numbers _draw_dark
+    draws it with)."""
+    beam = getattr(player, "_beam", None)
+    if not beam:
+        return False
+    bx, by, reach, cos_half = beam
+    dx, dy = wx - player.x, wy - player.y
+    d = math.hypot(dx, dy)
+    if d <= 1e-6:
+        return True                     # standing on the lamp is standing in it
+    if d > reach:
+        return False
+    return (dx / d) * bx + (dy / d) * by >= cos_half
+
 
 def sprite_seed_for(x, y):
     """A stable per-actor sprite seed from the spawn position. Draw
@@ -190,6 +210,65 @@ class NPC:
                 self.movement = "wander"
         elif self.movement == "chaser":
             self._cult_tick(dt, scene, player)
+        elif self.movement == "storm":
+            self._storm_tick(dt, scene, player)
+        elif self.movement == "apex":
+            self._apex_tick(dt, scene, player)
+
+    def _apex_tick(self, dt, scene, player):
+        """THE APEX -- the Mask wearing a unit (TODO #25). It walks at you and
+        NOTHING in the room stops it.
+
+        The maintainer's rule: it "pierces the protection of the light" and is
+        "immune to light, so our flashlight isn't enough for it". So unlike
+        `_storm_tick` there is no light probe here at all -- neither a fixture
+        pool nor the beam turns it aside. Light is the only safety from the
+        flood; there is no safety from this.
+
+        The answer is the axe or a round, which destroys the HOST and not the
+        Mask (Game._tick_apex re-hosts it). Its speed is the King's, above player
+        sprint, so it cannot be outrun either -- the fight is the loop.
+        """
+        dx = scene.world_dx(self.x, player.x)
+        dy = scene.world_dy(self.y, player.y)
+        d = math.hypot(dx, dy) or 1.0
+        self.facing = (dx / d, dy / d)
+        if d < 2.0:
+            return
+        self._step_toward((player.x, player.y), dt, scene)
+
+    def _storm_tick(self, dt, scene, player):
+        """A storm unit (TODO #25): it WALKS AT YOU and stops at the light.
+
+        The maintainer's rule: "regular amalgamations will walk to the player
+        and get as close to them as possible without being in the light."
+        So the only thing that ever stops one is a lit spot -- LIGHT IS THE
+        ONLY SAFETY during a storm. Stand in a pool and they gather at its
+        edge; step out and they close.
+
+        It cannot touch or kill. `solid=False` and there is no grab path for
+        this tag, so a unit walking ONTO the player is a scare and nothing
+        more -- which is the point of letting them reach you at all.
+
+        Distinct from the non-storm `watch` mode, where a unit stands where it
+        opened and only turns its head. Out of storm they are a presence; in
+        storm they are a tide.
+        """
+        dx = scene.world_dx(self.x, player.x)
+        dy = scene.world_dy(self.y, player.y)
+        d = math.hypot(dx, dy) or 1.0
+        self.facing = (dx / d, dy / d)
+        if d < 2.0:
+            return                          # already on them; nothing to press
+        ux, uy = dx / d, dy / d
+        # Probe AHEAD, not underfoot: stopping only once already lit would let a
+        # unit stand inside the pool it is meant to refuse, and the edge is
+        # where the ring should form.
+        probe = STORM_LIGHT_PROBE
+        tx, ty = self.x + ux * probe, self.y + uy * probe
+        if scene.lit_at(tx, ty) or _in_beam(player, tx, ty):
+            return                          # the light holds it off
+        self._step_toward((player.x, player.y), dt, scene)
 
     def _homebody_tick(self, dt, scene):
         """A stay-at-home local. Loiters near their own doorstep (the

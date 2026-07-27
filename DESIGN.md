@@ -207,25 +207,123 @@ its head) and pings the cult to **investigate the body**, and the body
   `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
   `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
   in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
-  #21; `WATCHER_OPEN_SCENES` now folds in `DIM_INTERIOR_SCENES`):** in those
-  dim rooms exposure is being in the DARK, a light POOL (`Scene.lit_at`) or
-  the flashlight is the cover, and a Watcher caught in a pool / the beam
-  **BURNS** out (`WATCHER_LIGHT_BURN`). **A Watcher can only OPEN at a spot
+  #21; `WATCHER_OPEN_SCENES` folds in `DIM_INTERIOR_SCENES`).** **EXPOSED means
+  NOT IN COVER, and nothing else** (maintainer ruling, 2026-07: "Watchers should
+  be able to gaze at you while you're standing in the light, that's the whole
+  point of them"). **Light is NOT cover from the gaze.** A Watcher holds you
+  perfectly well in a lamp pool; the wave keeps building while you stand in one.
+  Being seen when you cannot hide is what they ARE, so a lamp can never be a
+  safe square -- that would let the player opt out of the one threat that must
+  not be opt-out-able. Every way light does work against them is about the light
+  on **THEM**, never the light on you: it denies them anywhere to open (the
+  spawn rule below) and it **BURNS** one caught in a pool or the beam
+  (`WATCHER_LIGHT_BURN`). **You clear them with light; you never hide in it.**
+  Guarded, `tests/stealth.py` §11 + §18. **A Watcher can only OPEN at a spot
   that is DARK and holds LINE OF SIGHT to the player (2026-07 spawn rule,
   `_spawn_watcher`):** it manifests where you could answer it with your
   gaze, never in a sealed room or an out-of-bounds pocket, so there is no
   unanswerable accumulation -- and the corollary is the light-security
   promise: a room with no dark spot in view of you cannot open anything.
   **A fully lit room is SECURED; a blackout un-secures it** (guarded,
-  `tests/stealth.py` §11). The **true refuges stay gaze-free**
+  `tests/stealth.py` §11).
+  **THE STORM is this same wave in a second MODE** (TODO #25, 2026-07), not a
+  separate spawner: `Game._storm_active()` is true past `STORM_GATE_EVIDENCE`
+  (3) in a room the dark has taken (`scene_gloom() > 0`). While it is up the cap
+  lifts (`WATCHER_MAX` 5 → `STORM_MAX` 22, a MEASURED bound -- see the config
+  note; the per-unit sprite cache below is what makes 22 affordable), the cadence tightens, spawns drop the line-of-sight requirement and
+  open across the whole room, and every unit switches from standing still to
+  **walking at the player** (`npc._storm_tick`), refusing any step into light --
+  so **light is the only safety** and standing in a pool makes them ring its
+  edge. A unit **cannot touch or kill**: walking onto you is a scare, nothing
+  more. **Every dispel still works** in a storm -- gaze, light, axe, round.
+  Watchers do NOT stop at the gate; they become the storm. Units also stop
+  obeying the sight cone and take the apex's fog curve instead
+  (`Game.actor_smear_range`, `STORM_SEE_RANGE`): a live 22-unit storm had ZERO
+  units pass the plain cone, so the flood was invisible and "they ring the light"
+  was unreadable. Guarded, `tests/stealth.py` §19.
+  **THE APEX is the storm's one real threat** (TODO #25, 2026-07): the Mask that
+  WEARS a unit. **Not the keystone** -- the one Mask OBJECT is on the cult's
+  altar until the PI lifts it, and the face riding a shadow here is a SLICE of
+  Him (NARRATIVE §6a; guarded, `tests/conventions.py` check 12, which fails if
+  this path ever touches the `pallid_mask` item).
+  It is Game state, not scene state (`Game._apex`, like `_king`) --
+  one bearer storm-wide is a fence and the wave is cleared on every load, so the
+  Mask projects a host into whatever room you are in. It arrives at
+  `APEX_VIS_GATE` visibility and withdraws below it, FLOATS to the nearest unit,
+  then DELETES that amalgam and becomes it, wearing the unit's own deal verbatim
+  plus 2-3 added parts. **It pierces and is immune to light** -- neither a lamp
+  pool nor the flashlight turns it aside, where both hold a regular unit off --
+  and it moves at `KING_ROAM_SPEED`, above player sprint, so it cannot be outrun
+  either. **The answer is the axe or a round**, which destroys the HOST and not
+  the Mask: the Mask drops to seeking and re-hosts on the nearest unit after
+  `APEX_MIGRATE_CD`, so fighting it buys seconds and never distance. Contact ends the run on its
+  OWN death card (`_death_kind == "apex"`) -- deliberately NOT the Unfolding's
+  throat-swallow, which is the art of the body the storm replaces; it is a
+  wordless placeholder fade until the amalgam's own catch animation is made
+  (TODO #25). **Its FACE expresses** (`intent` / `strain` / `skew` on
+  `draw_pallid_3d`, eased from apex state by `_apex_face`): a carved object must
+  never EMOTE, so the Mask WORKS instead -- sockets narrowing to a slot as it
+  acquires you, the seam gapping and the crack running as it closes to take you,
+  the two disagreeing on their own wandering clock. Driven by state rather than a
+  loop, so it is a tell the player can learn to read.
+  **It SCREECHES once when it decides on you** (`Audio.apex_roar`, fired from
+  `_apex_face` the frame `intent` crosses `APEX_ROAR_INTENT`): the apex is
+  otherwise entirely continuous, and horror needs the moment the rules changed.
+  One-shot per host, re-armed from ZERO when the host dies, and silent at a
+  hidden player, so it never announces a lock it does not have.
+  **And it REACHES for you** (`amalgam._reach_limbs`, aimed by the screen-space
+  vector in `_apex_mask_for`, extended by `APEX_REACH_INTENT` * intent +
+  `APEX_REACH_STRAIN` * strain): grabbing limbs that grow out of its body toward
+  where you actually are and clutch, each on its own phase. Every other part of
+  every amalgam idles on a clock and would do the same in an empty room; these
+  exist only when it has you. They are also the catch's TELEGRAPH -- they are
+  fully out before `APEX_CATCH_DIST`, so the hands arrive before the body does.
+  **While a host is worn the roaming Unfolding stands down** ("the
+  impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
   high-visibility trigger is retired.) **The gaze wears two skins (the
-  shadow family):** a manifestation arrives as the OG shroud Watcher or,
-  with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
-  seeded assembly of 3-5 parts from a 17-part library, each part emerging
+  shadow family), and the AMALGAM is now the ordinary one:** `AMALGAM_CHANCE`
+  is 0.9, so the OG shroud Watcher is the rare spawn the maintainer asked to
+  keep rather than the default. A manifestation is an
+  **AMALGAM** (`rendering/amalgam.py`) -- a
+  seeded assembly of 3-5 parts from a 22-part library (44 with MIRRORING --
+  every part carries a flip flag, so a limb on the left is not the same
+  silhouette as the same limb on the right), each part emerging
   from its own free-form CUT (flesh clipped dead flat against the line,
   rim lip on the absent side, haze the only tissue; nothing touches).
+  **Its CUTS wear the rift's GOLD** (`CUT_RIM`, 2026-07): an aperture He opens
+  reads as the same portal family as the fold / King rift (§7), not a separate
+  cold-blue phenomenon. **And each part is OUTLINED** (`AMALGAM_EDGE`, one bone
+  pixel around its silhouette) so a shadow in a black room can be seen and
+  located while staying as black as it ever was. A blurred glow was tried first
+  and cut: a bloom has to be BRIGHT to register, and brightness spread over a
+  near-black body reads as a glowing spirit rather than a shadow. An outline
+  states the EDGE and spends nothing on VALUE. Bone and not gold on purpose --
+  **gold is the portal language** here (the rift, the folds, and an amalgam's
+  own cuts all wear it), so a gold outline would blur the distinction the
+  family is built on: the holes are gold, the flesh coming through them is not.
+  It is **presentation only** and must stay so: it is not in `Scene._LIGHT_KINDS` or
+  `FIXTURE_POOLS`, casts no pool, and is invisible to `lit_at`, so it can never
+  deny a Watcher a spawn spot, burn anything, or gate the lost-space mouth. The
+  creature is visible, not lit.
+  Three legibility rules landed 2026-07 after the shapes read as "weird,
+  something missing": the flesh palette carries a real VALUE SPREAD (it was
+  three tones within six values, so an outlined part was a hollow cut-out with
+  no interior); **the GAZE is paler than the aperture gold** (`EMBER` vs
+  `CUT_RIM`) and incidental `dim` eyes are pinpricks, because a gaze dimmer
+  than the scenery around it cannot be found and a deal's five or six filled
+  eye-discs cluster into berries; and the parts sit CLOSE (spread tightened
+  from 58px of scatter) with visible haze threads between them, so a deal reads
+  as one creature rather than debris. They still never touch.
+  **The BODY is dealt first and the legs find it** (2026-07): weight parts
+  distribute under the mass centroid as a stance, so a thing stands on its legs
+  instead of standing beside them, and `_MASS_DY` normalises each mass part's
+  own vertical offset (they range 40..62) so a body lands where the legs reach.
+  **Some FLOATING is correct and stays** -- a part arrives through its own
+  aperture, so a mass hanging clear of anything holding it is the portal
+  carrying it; about a quarter of deals ride high on purpose. What was fixed is
+  that floating used to happen by ACCIDENT, to nearly every deal.
   Composition rules bind every deal: at least one weight-bearing part on
   the ground, masses centre, and ALWAYS at least one eye-bearing part
   (every amalgam watches; the dim-ember tone is bright enough to survive
@@ -302,8 +400,13 @@ What rises with the stage:
   part of the night rather than a bright gray wash floating over a dark town.
   It is the ashfall's LIGHT twin — the veil thinning as His attention gathers,
   never a day/night cycle (no `day_phase`/`day_count`; the daytime invariant
-  holds, NARRATIVE §canon). VISUAL + flashlight so far; it is the STAGE the
-  amalgam-cut storm (TODO #25) will fill (no light = danger, taken outdoors).
+  holds, NARRATIVE §canon). It carries one real mechanic today: the lost-space
+  MOUTH (§13) only lets go at `LOST_EDGE_GLOOM` (stage 2), so falling out of the
+  world is a consequence of this darkening. What the dark pointedly does NOT do
+  is help the player -- it is never concealment (§12) and a lamp pool is never
+  cover from the gaze (§1). The dark is the CONDITION His things need, not a
+  tool you get to use; what is still missing is the flood it exists to hold: the
+  amalgam-cut storm (TODO #25).
 - **The people do NOT change — the man hearing them does (TODO #22c,
   2026-07).** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the
@@ -1722,13 +1825,20 @@ This adds the classic "have they spotted me yet?" window.
 
 ### Pillar 2 -- two cover classes with opposite trade-offs
 
-**A. Concealment cover (mobile, leaky)** -- corn, shadow, behind low props.
+**A. Concealment cover (mobile, leaky)** -- corn, behind low props.
 You can keep moving through it; it weakens LOS at range, but a close enemy
 with LOS still builds suspicion (you cannot camp it next to a searcher);
 moving fast rustles → a noise event. Corn scales score + gaze by
-`SUS_CONCEAL_CORN`. **Shadow cover:** `SUS_CONCEAL_DARK` for an unlit
-player in a DARK scene outside every light pool (`Scene.lit_at` /
-`Game._tick_dark_cover`).
+`SUS_CONCEAL_CORN`.
+
+**DARKNESS IS NOT COVER** (maintainer ruling, 2026-07: "darkness shouldn't hide
+you AT ALL"). There is no shadow-cover class and no `SUS_CONCEAL_DARK` in
+config. Cover is something you put BETWEEN yourself and an eye -- corn, a hide,
+a wall. An unlit spot is not that. **The dark belongs to Him:** it is the
+condition His things need in order to open at all (§1), so hiding in it was
+hiding inside the threat, and it read as a reward for turning the flashlight
+off in exactly the rooms that should be worst. It cuts against the player only,
+everywhere, indoors and out. Guarded, `tests/stealth.py` §11 + §18.
 
 **B. Enclosed hide (rooted, strong, a trap)** -- under bed, closet, locker,
 "in". A hard LOS break vs enemies that do not come check it (strong at

@@ -249,6 +249,7 @@ never predation.
 | **Mara Blaine** | **Newcomer — the quarry, already turned** | **She is 24** (the age the intake and the booking slip both state, and they are read side by side in the Casebook, so they agree; guarded). Her tragedy predates the door: she was pregnant, meant to end it, and changed her mind at the last moment because she wanted him — and the boy was born dead. An ordinary loss, no fault and no cosmic hand in it (the impossible count stays at one, §2); the guilt she carries for the hesitation is grief's own lie, hers alone, never the story's verdict. The dreams found that hole and gave it a bearing (§2): he is on the other side, nearer every night. She drove north in the fall, went down with the procession, and kneels now among the congregation — hands and knees bleeding from the dig, long past hunger, a cell in the battery worth what her hands have left. At the calling-out (§6; Mara is proof, not a counted beat) she cannot be argued home: asked to come away, no one leaves; asked the way out, there is none. The PI can invoke her father — the player's own ask, never automatic — and her certainty breaks: the boy's image fades off the door and she sees what is actually in front of her, the ruined hands, the hunger, a man from the world that still has fathers in it. She asks herself what she is doing; then comes the stall — what does she have without this — and she answers it lucid: for her there is no out, only deeper, and she turns back to the dig with her eyes open. The lucidity is the darkest beat proven to the floor: un-deceived, she still goes; there was never anyone to save. She never speaks of the boy directly — every *he* in her mouth stays undivided between her son and her god. **The boy's name is Sam** (Samuel); it lives in the world but never in her mouth (the invariants). She carried a bear north for the nursery that never came, and gave it to Toby, the one living child she met — the tag still reads Sam's name (§4 Toby; §6 the secret fourth). If the PI carries that bear into the confrontation he can say the name, and it is the one word she cannot survive: it splits the fused *he*, and she comes apart — seizing him, the rite's stillness cracking — and in the break reveals the bottom of her, that she has always known Sam is not down there and digs on anyway, because stopping means he is nowhere at all. It changes nothing (she buries him and turns back to the dig); it only shatters her further and wounds the player for the reach. Her story has exactly two ends, the dig or the PI's round, and the round saves nothing. Reading her journal to the end drops the player into the flashback of the burning doorframe, the game's clearest look at the lure; the unsent letter in her cell carries the admission her father never got (§6, the letter beat). |
 | **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | A Minneapolis voice on a phone that no longer connects. His grief is real; the case itself is the King's hook (§1). No one in Brimley has ever met him — he exists only through the PI's case notebook. He gets no resolution; the call never connects again, and that silence is the point. He never knew Mara was pregnant — the letter that admits it is unsent and addressed to him (§6, the letter beat) — so by the case's end the PI is the only living soul holding the whole of it, with no line back to Minneapolis to put it down. |
 | **The cult, the Watchers, the King** | **Newcomers + their god** | The congregation are the attuned newcomers. The Watchers are His gaze made local — the higher-dimensional eye reaching into the flat plane wherever His attention falls (`DESIGN.md` §1). The King is the thing above the door. |
+| **His gaze — the shadows** | **Him, in the flat world** | What a Watcher IS, made specific. His attention has to enter a three-dimensional world through a plane it does not fit, so it arrives in pieces: a shroud, or an **amalgam** — a handful of limbs and masses that each came through their own cut and were stitched into one creature by something that has never seen a body. Nothing on an amalgam touches anything else; the gaps are the giveaway, and they are why it reads as assembled rather than born. **The dark is not their hiding place, it is their door**, which is the whole reason standing in it never hid you (§2's model: the way through is perpendicular to your plane, and light is the one thing that holds a cut shut). As the PI understands more, the veil thins and His attention stops trickling: enough of Mara's trail and the shadows come in a **flood** — a storm of them, walking at you and standing at the edge of the light because that is as near as they can get. **They cannot touch you.** They are attention, not hands, and the horror is that they do not need to be anything else. |
 
 ---
 
@@ -433,6 +434,21 @@ below); it is simply not *evidence*.
 > down to the door, carrying it breaks the fold (a shard of Him), and
 > possessing it draws Him. It is the run's key **item**, not a piece of
 > the case.
+>
+> **There is exactly ONE Mask OBJECT, and it is on the cult's altar
+> until the PI lifts it.** §2 locks the reason: the completed rite buys
+> Him one solid thing crossing into the flat world and no more. So the
+> face that rides a shadow in the storm is **not** the keystone and
+> never can be — it is a **slice**, the same cross-section of Him the
+> drifting masks in fire are (§2), His attention showing through edge-on
+> rather than an object He sent. It wears His face because it *is* His
+> face; it is simply not a thing you could pick up. That one distinction
+> is what keeps the impossible count at one, and everything the storm's
+> bearer does falls out of it without a new rule: it is one at a time
+> because His attention has one focus; light does nothing to it because
+> light closes a *cut* and a cross-section is not one; killing the body
+> only takes away what it was using, and it withdraws when the PI stops
+> being worth looking at.
 
 Evidence is a **log, not inventory**: only Mara's trail counts toward
 the gate, and every other discovery — the Ledger, the Preacher, the
@@ -496,6 +512,15 @@ one choice.
 |---|---|
 | A cultist reaches you | **CAPTURED** — taken alive for the hive. The FIRST grab of a run is the Talk instead: a courteous warning, the room stands down, and the PI's wry reaction files as a note (wording flow-guarded). |
 | The King reaches you | The **mask-furnace** cutscene — a look *into* Him: fire, and the drifting mask-slices of Himself (§2, §5). Not an arrival in Carcosa; nobody is ever carried there (§5). |
+
+**One pursuit, two shapes.** The second row is a single fiction — He takes
+you — that arrives in either of the two ways He is in the world at all: as
+the thing that walks, or as the storm's bearer, His face riding a shadow
+(§4). It is the same ending and the same taking; only what closes the
+distance differs. Their cards are separate (`DESIGN.md` §1), and the
+bearer's is unmade at the time of writing: a wordless placeholder stands in
+until its own art is drawn (`TODO.md` #25). Whichever reaches you, the
+fiction is unchanged and nobody goes to Carcosa (§5).
 
 **The fork.** Both chosen endings branch from one object, the **Pallid
 Mask**, lifted in the Sign Chamber. There is only one, and from the
@@ -596,6 +621,20 @@ purpose, and keep each one guarded where a guard exists.
   one of them, at home below. → §2, §4
 - **The Sign is the Pallid Mask itself** — the King's pale half-mask
   made an object; drawn sigils are its 2D brand. → §6
+- **There is exactly ONE Mask object, and the storm's face is not it.**
+  The rite buys Him one solid thing and no more (§2), so the keystone
+  sits on the cult's altar until the PI lifts it. The face a shadow wears
+  in the storm is a **slice** of Him — the same cross-section as the
+  drifting masks in fire — never a second object and never takeable. Any
+  code, comment, or line that calls the storm's mask "the object" is rot.
+  → §2, §6a
+- **The shadows cannot touch you; only the bearer can.** An ordinary
+  amalgam is attention with no hands: it walks at you, stops where the
+  light stops, and does nothing. → §4, `DESIGN.md` §1
+- **Darkness is His door, never your cover.** It hides you from nothing,
+  anywhere in the game; what it does is let His things open. Hiding in
+  the dark would be hiding inside the threat (guarded:
+  `tests/stealth.py` §11 + §18). → §2, §4
 - **Enough of Mara's trail arms the King** and is the point of no
   return; only case-evidence (Mara's trail, §6) counts toward the gate,
   never statements or notes. The surface trail must be reachable above

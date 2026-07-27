@@ -722,7 +722,8 @@ class RenderMixin:
             fxv, fyv = getattr(self.player, "facing", (0, 1)) or (0, 1)
             flen = math.hypot(fxv, fyv) or 1.0
             ang = math.atan2(fyv / flen, fxv / flen)
-            reach, spread = 300, math.radians(30)
+            reach = FLASHLIGHT_REACH
+            spread = math.radians(FLASHLIGHT_SPREAD_DEG)
             pwx, pwy = self.player.x, self.player.y
 
             def _far(a):
@@ -1059,8 +1060,28 @@ class RenderMixin:
 
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
-        furnace of masks (sprites.draw_king_death), wordless;
-        cultist = a stark CAPTURED card over a near-black wash."""
+        furnace of masks (sprites.draw_king_death), wordless; APEX = a wordless
+        placeholder fade, deliberately NOT the King's card (TODO #25 owes it a
+        real animation); cultist = a stark CAPTURED card over a near-black
+        wash."""
+        if self._death_kind == "apex":
+            # THE APEX'S CATCH -- deliberately NOT the Unfolding's throat-swallow
+            # (maintainer: "do not use the existing death card"). That art belongs
+            # to the body the storm is replacing, so borrowing it would ship the
+            # thing being retired as the new apex's signature.
+            #
+            # PLACEHOLDER, and honest about it: a wordless fade to near-black at
+            # the same 3.8s the King's death runs, so the pacing is already right
+            # when the real animation drops in. WORDLESS by design -- His deaths
+            # carry no label (the cult's CAPTURED card is a different register),
+            # so there is no player-facing text here and none to write.
+            # The amalgam's own catch animation is on TODO #25.
+            w, h = self.screen.get_size()
+            wash = pygame.Surface((w, h))
+            wash.fill((5, 4, 6))
+            wash.set_alpha(min(255, int(self._death_t / 1.1 * 255)))
+            self.screen.blit(wash, (0, 0))
+            return
         if self._death_kind == "king":
             if KING_UNFOLD:
                 # the Unfolding takes you DOWN THE THROAT (mouth iris -> tunnel
@@ -1289,7 +1310,31 @@ class RenderMixin:
         self.scene._door_actor_sight = _sight
         from rendering.solids import draw_with_alpha
 
-        def _vis_alpha(wx, wy, exempt=False, king=False):
+        def _apex_mask_for(npc):
+            """The Mask dict for the APEX's host, else None (TODO #25). An
+            ordinary unit passes None and draws exactly as before."""
+            if not getattr(npc, "_apex", False):
+                return None
+            px, py = self.player.x, self.player.y
+            gx, gy = px - npc.x, py - npc.y
+            gl = math.hypot(gx, gy) or 1.0
+            face = self.apex_face() or (0.0, 0.0, 0.0)
+            # THE REACH aims in SCREEN space, the way the Unfolding's limbs do
+            # (`king_to_player` below): a world vector would send the arms off
+            # at whatever angle the camera happened to be yawed to, and the one
+            # thing these limbs have to do is point at you.
+            axs, ays = self.camera.project(npc.x, npc.y)
+            pxs, pys = self.camera.project(px, py)
+            rdx, rdy = pxs - axs, pys - ays
+            rl = math.hypot(rdx, rdy) or 1.0
+            amt = min(1.0, APEX_REACH_INTENT * face[0]
+                      + APEX_REACH_STRAIN * face[1])
+            return {"deploy": 1.0, "extra": getattr(npc, "_apex_extra", 2),
+                    "gaze": (gx / gl, gy / gl), "seed": 7,
+                    "intent": face[0], "strain": face[1], "skew": face[2],
+                    "reach": (rdx / rl, rdy / rl, amt)}
+
+        def _vis_alpha(wx, wy, exempt=False, king=False, smear=0.0):
             """0..255 alpha to draw a world thing at (wx, wy) under the sight
             gate, or None to skip it (fully in the blind spot). 255 when the
             gate is off (pitch 0) or the thing is exempt (pickups). The KING
@@ -1300,12 +1345,20 @@ class RenderMixin:
             (the near term), so trackability holds."""
             if _sight is None:
                 return 255
-            if king:
+            if king or smear:
+                # A STORM UNIT reads the way the apex does in the fog, and for
+                # the same reason (TODO #25). Measured on a live storm, 0 of 22
+                # units passed the plain cone -- 7 of them within 120px -- so
+                # the whole flood was invisible and "they ring the light" was a
+                # rule the player could never see. Fully exempting them would
+                # kill the dread instead, so they get the King's curve: never
+                # quite hidden, a dim smear at range, resolving as they close.
+                rng = KING_SEE_RANGE if king else smear
                 f = _sight(wx, wy)
                 if f >= 0.99:
                     return 255
                 d = math.hypot(wx - self.player.x, wy - self.player.y)
-                near = max(0.0, 1.0 - d / KING_SEE_RANGE)
+                near = max(0.0, 1.0 - d / rng)
                 floor = int(55 + 175 * near * near)
                 return max(floor, int(255 * f))
             if exempt:
@@ -1513,6 +1566,11 @@ class RenderMixin:
             # branch), resolving solid as you look at him or as he closes.
             # Everyone else obeys the blind spot outright.
             exempt = npc.sprite_kind == "yellow_king"
+            # Storm units keep their wrap clones (they are not singular the way
+            # the King is) but borrow his alpha curve -- see _vis_alpha and
+            # Game.actor_smear_range (extracted so it is testable; a closure in
+            # here could only be checked by counting pixels).
+            unit_smear = self.actor_smear_range(npc)
             # One image for the singular King; the wrap-clone set for everyone
             # else (so a townsperson near the seam still reads on both sides).
             actor_offsets = [king_offset] if exempt else _offsets
@@ -1520,7 +1578,8 @@ class RenderMixin:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
-                a = _vis_alpha(npc.x + ox, npc.y + oy, king=exempt)
+                a = _vis_alpha(npc.x + ox, npc.y + oy, king=exempt,
+                               smear=unit_smear)
                 if a is None:
                     continue
                 # A visible standing actor is a "focus": occluding walls fade for
@@ -1571,7 +1630,8 @@ class RenderMixin:
                                         to_player=king_to_player,
                                         lean=king_lean, scale_mul=king_scale_mul,
                                         pose=getattr(npc, "pose", None),
-                                        gape=getattr(npc, "_gape", 0.0))
+                                        gape=getattr(npc, "_gape", 0.0),
+                                        apex_mask=_apex_mask_for(npc))
                     # The rising "?" tell (DESIGN.md §12 Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.
