@@ -711,11 +711,14 @@ def grant_receipt(game):
     game.audio.play("pickup_rare", 0.7)
     # Files silently and reads from the item (its desc carries the tab); the
     # log excerpt is the case entry.
+    # The list is the whole of it. "She lived here" was the game making the
+    # player's connection for them (maintainer ruling, 2026-07), and "most of
+    # a year" was flatly wrong: Mara drove north in the FALL of 1993 and the
+    # present is April 1994, so her tab runs three or four months, not twelve.
     _evidence(game, "maras_receipt", [
         "A store tab off Hettie's spike, headed 'M. Blaine' in her hand.",
-        "Matches, canned milk, the same short list run down most of a "
-        "year. The staples a resident buys, week on week.",
-        "She lived here.",
+        "Matches, canned milk, bread, kerosene, lamp oil. The same short "
+        "list, week on week, autumn through the new year.",
     ], show=False)
     if hasattr(game, "show_notice"):
         game.show_notice("Her tab from the shop.")
@@ -871,10 +874,9 @@ def hettie_dialogue(game, npc):
             "She used to come in here. Matches, canned milk. Counted her "
             "change twice, every time, like it mattered. Sad around the "
             "eyes, and polite with it.",
-            "Then one day past the new year she set her basket "
-            "down half filled and walked out smiling. Left the basket "
-            "on the counter. I never saw her again.",
-            "[c=dim]It was the smiling I minded.[/c]",
+            "Then one day past the new year she set her basket down half "
+            "filled and walked out. Left it sitting there. I never saw her "
+            "again.",
         ]
         # Her warm handover of the store tab (surface evidence), only if
         # the PI has not already lifted it off the spike himself. The tab

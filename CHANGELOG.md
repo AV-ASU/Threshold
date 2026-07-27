@@ -32,6 +32,51 @@
 
 ## Evidence & the case
 
+- **2026-07 — The queue: six rulings from the story-audit workshop.**
+
+  **The tab was wrong by a factor of three.** It read "run down most of a
+  year"; Mara drove north in the FALL of 1993 and the present is April 1994,
+  so her account runs three or four months. Corrected to "autumn through the
+  new year" in both the item text and the notebook entry, and the proof moved
+  off duration and onto the KIND of purchase (bread, kerosene, lamp oil).
+
+  **"She lived here" is CUT, and it took three more with it.** The maintainer's
+  ruling: that is the player's connection to make. Applied consistently it also
+  kills `theory_resident`, `theory_came_apart` and `theory_willing`, each of
+  which was the conclusion its own evidence had been built to earn, written out
+  for the reader. **He never solves Mara on the page now.** What survives in
+  his hand is the town: the son, the fold, the wrong robes read, the Mask. Which
+  is what the notebook was asked to become at the top of this thread, reached by
+  cutting rather than adding.
+
+  **Mara does not walk out of the shop smiling.** The exit smile and Hettie's
+  "It was the smiling I minded" are gone. A smile the shopkeeper finds
+  disturbing is a visible mark of claiming, and NARRATIVE §2 says there is
+  none; it also put the wrongness back on the PEOPLE. And Mara is grieving a
+  dead son, not elated. She stopped coming in, the basket sat there, nobody
+  clocked anything.
+
+  **"Before the cold" is deleted from the timeline** (`NARRATIVE.md` §3). It
+  put the procession underground in the fall, which contradicted Hettie seeing
+  Mara in the shop past the new year. The maintainer identified it as detail an
+  earlier session invented and wrote into the story bible, where it then got
+  cited back at them as canon. Worth recording as a class of problem, not one
+  clause: **the canon docs are partly model-authored, so "NARRATIVE.md says" is
+  not the same as "the maintainer decided."**
+
+  **THE ONE WATCHER ENTRY.** The Watchers are the whole below-3 threat, they
+  open whenever the player is exposed, and the PI's notebook did not contain a
+  single word about them. He now writes up the first one he stares out, and
+  **never mentions them again for the rest of the run** while they keep coming.
+  The silence is the design: an arc where he notices he has stopped being
+  frightened is the game announcing that he changed, and a notebook that simply
+  stops recording them lets the player notice it instead. He stays confused and
+  tired and ordinary; he does not harden. Seeing one and staring it out is ONE
+  event, so it fires on the dispel. Five guards, including the silence.
+
+  **"midwestern" is capitalised**, in the Talk's punchline, which is one of
+  the most memorable lines in the game.
+
 - **2026-07 — The recruiter: no miracle, no euphoria (maintainer ruling).**
   Vane's one fragment of the *how* was a conversation with a blind congregant
   who had been promised his sight back by the dream, walked into the office

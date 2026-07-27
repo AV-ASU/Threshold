@@ -3080,8 +3080,12 @@ def main():
     class _HStub:
         pass
     _hd(gh, _HStub())
-    check(any("smiling I minded" in p for p in _hshown),
+    check(any("never saw her again" in p for p in _hshown),
           "hettie: the memory of the girl fires once shown Mara's photo")
+    # No euphoria tell: Mara is grieving, not elated, and being claimed leaves
+    # no visible mark (NARRATIVE §2). She just stopped coming in.
+    check(not any("smiling" in p for p in _hshown),
+          "hettie: Mara does not walk out of the shop smiling")
     check(gh.player.inventory.has("receipt")
           and has_evidence(gh, "maras_receipt"),
           "hettie: the memory beat hands over the store tab (warm handover)")
@@ -3137,18 +3141,16 @@ def main():
           "notebook: a fresh run has concluded nothing (the job is the_case)")
     check(not hasattr(gt, "_case_timeline"),
           "notebook: the derived Timeline page is gone")
-    gt.save.set_arg("evidence", [{"name": "maras_receipt"}])
-    gt._tick_theory_notes()
-    check("resident" in _wrote(gt),
-          "notebook: the receipt is written up as a resident, not a drifter")
-    gt.save.set_arg("evidence", [{"name": "maras_journal"},
-                                 {"name": "maras_receipt"},
+    # The three CASE reads are CUT: he never solves Mara on the page, because
+    # every one of those was the conclusion its evidence was built to earn.
+    gt.save.set_arg("evidence", [{"name": "maras_receipt"},
+                                 {"name": "maras_journal"},
                                  {"name": "maras_record"}])
     gt._tick_theory_notes()
-    check("came apart" in _wrote(gt),
-          "notebook: record plus journal reads her breaking here")
-    check("resident" in _wrote(gt),
-          "notebook: the EARLIER read stays on its page, never overwritten")
+    for _gone in ("resident", "came apart", "walked to it willing"):
+        check(_gone not in _wrote(gt),
+              "notebook: the case read %r is not written for the player"
+              % _gone)
     check("robes" not in _wrote(gt),
           "notebook: no robes read before he has met the cult")
     gt.save.set_flag("cult_talk_given", True)
@@ -3157,8 +3159,6 @@ def main():
           "notebook: the grab opens the robes-as-lever read (the WRONG one)")
     gt.save.set_arg("evidence", [{"name": "maras_dig"}])
     gt._tick_theory_notes()
-    check("willing" in _wrote(gt),
-          "notebook: the dig pivots her to willing, not taken")
     check("robes" in _wrote(gt),
           "notebook: the wrong read is never corrected or removed")
     gt._note_fold_portal()
@@ -3192,6 +3192,39 @@ def main():
     # None of it may ever touch the gate.
     check(len(gt4.save.arg("evidence", [])) == 1,
           "notebook: writing a conclusion never inflates the evidence count")
+
+    # THE ONE WATCHER ENTRY, and then silence for the rest of the run. He
+    # writes up the first one he stares out and never mentions them again
+    # while they keep coming; the SILENCE is the tell, not an arc where he
+    # notices he has stopped being frightened (maintainer ruling, 2026-07).
+    # Seeing one and staring it out is a single event, so it fires on the
+    # DISPEL rather than the spawn.
+    gwa = new_game()
+    check(not any(isinstance(e, dict) and e.get("name") == "the_first_one"
+                  for e in gwa.save.arg("notes", [])),
+          "watchers: nothing written before he has met one")
+
+    class _WStub:
+        x = 0.0
+        y = 0.0
+    _w1, _w2 = _WStub(), _WStub()
+    gwa._watchers = [_w1]
+    gwa._cursed = True
+    gwa._dispel_watcher(_w1)
+    _wn = [e for e in gwa.save.arg("notes", [])
+           if isinstance(e, dict) and e.get("name") == "the_first_one"]
+    check(len(_wn) == 1, "watchers: the first one he sees off is written down")
+    _wtxt = " ".join(_wn[0]["lines"])
+    check("did not look away" in _wtxt and "went out" in _wtxt,
+          "watchers: the entry is the whole event, seeing it and ending it")
+    check("cult" not in _wtxt.lower() and "king" not in _wtxt.lower(),
+          "watchers: he names nothing he could not know")
+    gwa._watchers = [_w2]
+    gwa._cursed = True
+    gwa._dispel_watcher(_w2)
+    check(len([e for e in gwa.save.arg("notes", [])
+               if isinstance(e, dict) and e.get("name") == "the_first_one"]) == 1,
+          "watchers: he never writes about them again (the silence is the tell)")
 
     # THE ORDER IS THE POINT: the book merges both lists and reads in the
     # order he wrote things, so a note filed after a clue sits after it.

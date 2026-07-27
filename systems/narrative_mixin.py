@@ -309,18 +309,14 @@ class NarrativeMixin:
     # (key, condition, lines). Order here is only the order they are CHECKED;
     # the order in the book is the order the player earned them.
     _THEORY_THOUGHTS = (
-        ("theory_resident",
-         lambda g: g._ev_has("maras_receipt"),
-         ["A resident, not a drifter. She didn't wander off. Something kept "
-          "her here."]),
-        ("theory_came_apart",
-         lambda g: g._ev_has("maras_record", "maras_journal"),
-         ["She didn't pass through. She lived here and came apart here. This "
-          "town took her apart."]),
-        ("theory_willing",
-         lambda g: g._ev_has("maras_dig", "maras_room"),
-         ["She wasn't taken. She walked to it willing. I'm too late to be "
-          "solving a kidnapping."]),
+        # (The three CASE reads are CUT, 2026-07 maintainer ruling. They were
+        # "A resident, not a drifter", "She lived here and came apart here",
+        # and "She wasn't taken, she walked to it willing" -- each one the
+        # conclusion its evidence was built to earn, handed to the player
+        # instead of left for them. A tab listing lamp oil and canned milk
+        # week on week says resident without the book saying it. What he
+        # writes down now is the town, not the case: he never solves Mara on
+        # the page, and the reader does.)
         ("theory_son",
          lambda g: (g._ev_has("maras_room")
                     and bool(getattr(g.player, "inventory", None))

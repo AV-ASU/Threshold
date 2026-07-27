@@ -124,10 +124,8 @@ ITEM_DEFS = {
                                "Matches, two boxes.\n"
                                "Canned milk, a case.\n"
                                "Bread. Kerosene. Lamp oil.\n"
-                               "A few dollars, cash, week on week, run "
-                               "down most of a year.\n\n"
-                               "Staples a resident lays in, not a "
-                               "traveler's kit. She lived here."},
+                               "A few dollars, cash, week on week, autumn "
+                               "through the new year."},
     "detention_record": {"name": "A Booking Slip",
                        "kind": "lore",
                        "desc": "A booking slip out of the Sheriff's files, "

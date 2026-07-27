@@ -378,8 +378,11 @@ intro:" / "Opener photo:").
 - **One-shot: the Mara memory** (avail: shown the photo; hands over the tab, `grant_receipt`):
   - "Your girl. I'll tell you the one thing I know that's worth the telling."
   - "She used to come in here. Matches, canned milk. Counted her change twice, every time, like it mattered. Sad around the eyes, and polite with it."
-  - "Then one day past the new year she set her basket down half filled and walked out smiling. Left the basket on the counter. I never saw her again."
-  - "[c=dim]It was the smiling I minded.[/c]"
+  - "Then one day past the new year she set her basket down half filled and walked out. Left it sitting there. I never saw her again."
+  - *(The smiling exit and "It was the smiling I minded" were CUT, 2026-07: a
+    smile the shopkeeper finds disturbing is a visible mark of claiming, and
+    NARRATIVE §2 says there is none. Mara is grieving, not elated. She simply
+    stopped coming in, and nobody clocked anything.)*
   - (if tab not yet lifted) "[c=dim]She works a curled slip off the spike by the till and sets it on the counter, turned toward you. Her tab for the girl. Matches, canned milk, week on week.[/c]"
 - **One-shot: the newspaper OFFER** (avail: met her, carries newspaper;
   TODO #2 rework: she notices and offers, but the trade is the PLAYER'S
@@ -630,11 +633,11 @@ intro:" / "Opener photo:").
   - (npc) "\"Run.\""
   - Then the release (the room stands down, the grace window, the filed
     note `the_talk`) and the PI's reaction as the world resumes:
-    "[c=dim]Well shit, this town really doesn't have a midwestern welcome
+    "[c=dim]Well shit, this town really doesn't have a Midwestern welcome
     at all.[/c]"
   - The **`the_talk` case note**: "One of them put hands on me today. Told
     me to go back to my room. Told me to run." / "Well shit, this town
-    really doesn't have a midwestern welcome at all."
+    really doesn't have a Midwestern welcome at all."
 - **Hollow Vane** (`systems/rot_mixin.py` `_spawn_hunting_sheriff`, once per
   run): notice + "Sheriff Vane stands. \"I'm supposed to tell you to leave,
   son. I can't...\"" (the line he can no longer finish).
@@ -657,15 +660,33 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 `the_how`, `the_talk`, `the_bear`, the cult testimony (`cult_calling` /
 `cult_bargain` / `cult_digging`).
 - **`maras_receipt`** (`grant_receipt`): "A store tab off Hettie's spike,
-  headed 'M. Blaine' in her hand." / "Matches, canned milk, the same short
-  list run down most of a year. The staples a resident buys, week on week." /
-  "She lived here."
+  headed 'M. Blaine' in her hand." / "Matches, canned milk, bread, kerosene,
+  lamp oil. The same short list, week on week, autumn through the new year."
+  The list is the whole entry. **"She lived here" was CUT** (maintainer
+  ruling, 2026-07): that is the player's connection to make, and a tab of
+  lamp oil and canned milk week on week makes it without the book saying so.
+  "Most of a year" was also flatly wrong, since Mara drove north in the fall
+  of 1993 and the present is April 1994.
 - **`maras_record`** (`grant_record`, `scenes/dialogue.py`; the WARM handover
   is Vane's photo opener in Part A, the office records drawer only the
   fallback once he is dead or hollow): "A booking slip in the Sheriff's
   records. Blaine, Mara." / "Held a night for a disturbance on the main road,
   shouting at the sky. Released at dawn, no charge filed." Pickup notice:
   "Her booking slip."
+- **`the_first_one`** (`_dispel_watcher`, `systems/threat_mixin.py`; note,
+  fired the FIRST time he sees a Watcher off and **never again**): "Something
+  stood at the edge of the light and did not move while I looked at it." / "I
+  did not look away. Could not tell you why that was the thing I decided to
+  do." / "Whatever was lit behind the eyes went out, and the rest of it went
+  after them." / "I have been awake a long time and this town does not agree
+  with me."
+  > **The silence after it is the design.** They keep opening for the whole
+  > run and he never writes about them again. An arc where he notices he has
+  > stopped being frightened would be the game announcing that he changed; a
+  > notebook that simply stops recording them lets the player notice it. He is
+  > confused and tired and ordinary throughout, not hardening. Seeing one and
+  > staring it out is ONE event, so the entry lands on the dispel, not the
+  > spawn. Guarded in `tests/flow.py`.
 - **`the_disturbance`** (`_vane_night_told`, note; his account of the
   detention night, a STATEMENT so it never counts): "Vane booked her the
   eleventh of December. Middle of the main road at night, head back, shouting
@@ -847,12 +868,12 @@ is ever reordered, merged or overwritten. Up and down turn the leaf.
 `_tick_theory_notes`). Each lands the moment he reaches it and stays on its
 page for the rest of the run. They render with no heading, because a
 conclusion he jots is a line in the flow rather than a titled find.
-- **`theory_resident`** (holds the receipt): "A resident, not a drifter. She
-  didn't wander off. Something kept her here."
-- **`theory_came_apart`** (the record or the journal): "She didn't pass
-  through. She lived here and came apart here. This town took her apart."
-- **`theory_willing`** (the dig or the letter): "She wasn't taken. She walked
-  to it willing. I'm too late to be solving a kidnapping."
+> **The three CASE reads are CUT** (maintainer ruling, 2026-07): "A resident,
+> not a drifter", "She lived here and came apart here", and "She wasn't taken,
+> she walked to it willing". Each was the conclusion its own evidence had been
+> built to earn, handed over instead of left. **He never solves Mara on the
+> page.** What he writes down is the town.
+
 - **`theory_son`** (the letter, carrying the bear): "A boy, Sam. She gave his
   bear to the one live kid here. His name breaks her."
 - **`theory_fold`** (`crossed_a_fold`): "And the town won't let go. I've felt

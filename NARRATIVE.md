@@ -204,7 +204,7 @@ above it is why.
 | **est. 1894** | Brimley is founded on the ground above the door, the world's northernmost corn town. |
 | **~April 1993** | The river reaches the door's frame. The door wakes. Far away, the PI dreams it once, and never reaches it. |
 | **Summer 1993** | The attuned begin arriving by ordinary means, dream-lured, filling the school, the barn, and the Lodge. The dig begins, following the water down. |
-| **Fall 1993** | Mara drives north, the last one in, the loss that attuned her (§4) months behind her. The harvest is tithed down and the fields are never cut. Before the cold, the congregation processes below in one night line; Toby follows and is the only one who sees where they went. |
+| **Fall 1993** | Mara drives north, the last one in, the loss that attuned her (§4) months behind her. The harvest is tithed down and the fields are never cut. The congregation processes below in one night line; Toby follows and is the only one who sees where they went. |
 | **Jan 15, 1994** | The closing rite in the mine chamber. The Mask manifests on the altar, the seal snaps shut, and every soul inside the town line is claimed at once. Deliveries stop; Mara stops calling home; every calendar in town stops on this date. Three months of sealed winter follow. |
 | **April 14, 1994, night** | The PI drives in as the ice goes out, carrying that day's paper. The fold kills the car. He takes the spare room at the Arcadia Lodge; Sable checks him in. |
 | **April 15, 1994** | **The present.** The game opens in the spare room the next morning. The paper he carried in is now yesterday's, the April 14 issue — a one-day-old date against a town that hasn't seen a paper since the trucks stopped. |

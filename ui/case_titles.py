@@ -37,14 +37,12 @@ NOTE_TITLES = {
     "maras_room":              "Mara's Letter",
     # Real finds that are not Mara (notes, never evidence).
     "the_disturbance":         "The Night on the Road",
+    "the_first_one":           "The First One",
     "the_ledger":              "The Old Registers",
     "the_preacher":            "The Preacher on the Bank",
     "the_congregation":        "The Ones Who Knelt",
     # What he concluded, written down once each as he reached it. They stay
     # on their pages for the rest of the run, wrong ones included.
-    "theory_resident":         "A Resident, Not a Drifter",
-    "theory_came_apart":       "She Came Apart Here",
-    "theory_willing":          "She Walked To It",
     "theory_son":              "The Boy",
     "theory_fold":             "The Town Won't Let Go",
     "theory_robes":            "The Robes Run This",
@@ -85,8 +83,7 @@ NOTE_TITLES = {
 # titles above still exist for these, because the corner scribble toast needs
 # a name to show when one is written.
 HEADLESS_IN_BOOK = frozenset({
-    "theory_resident", "theory_came_apart", "theory_willing", "theory_son",
-    "theory_fold", "theory_robes", "theory_mask",
+    "theory_son", "theory_fold", "theory_robes", "theory_mask",
 })
 
 
