@@ -967,7 +967,7 @@ def hettie_dialogue(game, npc):
 # the VANE_* config block) that the player never sees as a number, only
 # as his mood. Sharing a real discovery with him is the one hope act,
 # and it is ALSO the trust that opens his investigation thread (the
-# blind-cultist how) -- the same act builds the rapport that makes his
+# recruiter's account) -- the same act builds the rapport that makes his
 # fall hurt, and holds him back from it. The newspaper (TODO #2) is its
 # exact inverse: his break lever, +VANE_PAPER_DESPAIR. The hollow turn
 # latches at VANE_HOLLOW_AT net despair (or by the NEGLECT override in
@@ -1069,17 +1069,22 @@ def _vane_prompt(game):
 
 
 def _vane_how_told(game):
-    """Vane's blind-cultist account is the case's one honest piece of the
+    """Vane's account of the recruiter is the case's one honest piece of the
     HOW (NARRATIVE §4). File it as a NOTE, never evidence. Latches
     `vane_how_told` so the question retires only once he has actually TOLD
     it -- a refusal must leave the row askable again."""
     game.save.set_flag("vane_how_told", True)
     _log_note(game, "the_how", [
-        "[c=dim]The sheriff spent his one card. A blind man, no name, lit "
-        "up with certainty, promised his own eyes by the dream once the "
-        "work is finished. Sent to fetch the last holdout, and thanked "
-        "him for refusing.",
-        "Nobody was argued north. Each of them was promised the one thing they were starving for, and every one came gladly.[/c]",
+        "[c=dim]The sheriff spent his one card. One of them came back up "
+        "the road to his office after the rooms emptied and sat down. No "
+        "name. Hadn't slept.",
+        "Wife in a county home three years. Doesn't know him. He quit "
+        "driving down to see her. Said she will know him when the work is "
+        "finished, and he wanted her to know him the first time.",
+        "Then he put the same offer to Vane. Name the thing you want most, "
+        "come along, it will be waiting.",
+        "Nobody was argued into this. Every one of them was promised the "
+        "one thing they were starving for.[/c]",
     ])
 
 
@@ -1114,21 +1119,27 @@ def _vane_where_beats(game):
         ("npc", "I asked that question every night for a year. What I've "
                 "got is one conversation. I'll spend it on you."),
         ("npc", "After the rooms emptied, one of them came back up the road "
-                "to this office. Blind. Born blind, he said. Walked in "
-                "without a stick and sat down square in that chair."),
-        ("npc", "No name. I asked twice. He sat there lit up like a man "
-                "warming his hands at a stove. Said the dream had promised "
-                "him his eyes. Said when the work is finished he'll open "
-                "them, and they'll work."),
+                "to this office and sat down in that chair. No name. I "
+                "asked twice."),
+        ("npc", "Man had not slept in a week by the look of him. Hands "
+                "going the whole time. He told me about his wife."),
+        ("npc", "She is in a county home down in Aitkin. Three years now. "
+                "Doesn't know his face, doesn't know her own. He used to "
+                "drive down every Sunday."),
+        ("pi", "Used to."),
+        ("npc", "He quit going. Said there was no sense in it yet. Said "
+                "when the work is finished she will know him, and he wanted "
+                "her to know him the first time she saw him."),
+        ("npc", "He cried the whole way through it. Never once got near "
+                "the part of him that was certain."),
         ("pi", "He wasn't there to confess anything. He was there to fetch "
                "you."),
         ("npc", "He made the offer. Told me to name the thing I want most "
                 "in this world, and come with him, and it would be waiting. "
-                "I put him out. He thanked me for my time and he left "
-                "smiling."),
+                "I put him out. He thanked me for my time."),
         ("npc", "You don't talk a hundred strangers onto one road. They "
                 "weren't tricked. Every one of them was going toward "
-                "something, and glad of it."),
+                "something."),
         ("npc", "What it was, who was holding it out, I never got closer "
                 "than that chair. That's the piece that keeps my lights on "
                 "at night."),
@@ -1427,10 +1438,11 @@ VANE_CONVO = {
                        "one.[/c]"),
             ],
         },
-        # The blind cultist: his one window into the HOW (NARRATIVE §4:
-        # one post-seal conversation with a nameless blind cultist,
-        # radiant with unaccountable conviction, promised his own sight
-        # restored by the dream, in truth sent to convert him; Vane
+        # The recruiter: his one window into the HOW (NARRATIVE §4: one
+        # post-seal conversation with a nameless congregant, wrecked and
+        # certain at once, promised by the dream that his wife will know
+        # him again when the work is done, and in truth sent to convert
+        # him; Vane
         # refused). TRUST-gated (DESIGN.md §2): he spends his one card only
         # on a fellow investigator -- the PI has announced himself AND
         # shared at least one real discovery (another outsider who only

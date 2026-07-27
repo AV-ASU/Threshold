@@ -87,8 +87,8 @@ Consolidated from the canon. A new or edited line must pass all of these.
    delivered as clean exposition, not "what do you want most", not the King
    feeding on attention, not the lure chain (King → Mara → Walter → PI). A
    cultist may express BELIEF in its own voice; it may not confirm the
-   mechanism. Vane holds exactly ONE fragment of the *how* (the blind
-   cultist's offer) and it stays a hard-won, half-understood piece he
+   mechanism. Vane holds exactly ONE fragment of the *how* (the
+   recruiter's offer) and it stays a hard-won, half-understood piece he
    witnessed, never a lecture.
 4. **No mechanics in the fiction.** No line names a game rule, a verb, an
    input, or an evidence threshold ("press again", "kill them quiet", "3
@@ -309,11 +309,15 @@ intro:" / "Opener photo:").
     - (npc) "Gathered where? The school, the barn, the lodge. Then one night those rooms were empty, and I have not found the room they went to since. So I cannot give you where."
     - (npc) "I can give you how. I have given it to nobody."
     - (npc) "I asked that question every night for a year. What I've got is one conversation. I'll spend it on you."
-    - (npc) "After the rooms emptied, one of them came back up the road to this office. Blind. Born blind, he said. Walked in without a stick and sat down square in that chair."
-    - (npc) "No name. I asked twice. He sat there lit up like a man warming his hands at a stove. Said the dream had promised him his eyes. Said when the work is finished he'll open them, and they'll work."
+    - (npc) "After the rooms emptied, one of them came back up the road to this office and sat down in that chair. No name. I asked twice."
+    - (npc) "Man had not slept in a week by the look of him. Hands going the whole time. He told me about his wife."
+    - (npc) "She is in a county home down in Aitkin. Three years now. Doesn't know his face, doesn't know her own. He used to drive down every Sunday."
+    - (pi) "Used to."
+    - (npc) "He quit going. Said there was no sense in it yet. Said when the work is finished she will know him, and he wanted her to know him the first time she saw him."
+    - (npc) "He cried the whole way through it. Never once got near the part of him that was certain."
     - (pi) "He wasn't there to confess anything. He was there to fetch you."
-    - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time and he left smiling."
-    - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it."
+    - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time."
+    - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something."
     - (npc) "What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
 - **Exchange `cache`** (avail: intro asked, cabinet not yet given;
   re-askable) — "Am I on my own out there?" / "If this goes the way it's been
@@ -738,11 +742,13 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   pages stop being sentences. Just the word door, over and over, pressed hard
   enough to tear the paper."
 - **`the_how`** (`_vane_how_told`, note): "[c=dim]The sheriff spent his one
-  card. A blind man, no name, lit up with certainty, promised his own eyes by
-  the dream once the work is finished. Sent to fetch the last holdout, and
-  thanked him for refusing." / "Nobody was argued north. Each of them was
-  promised the one thing they were starving for, and every one came
-  gladly.[/c]"
+  card. One of them came back up the road to his office after the rooms
+  emptied and sat down. No name. Hadn't slept." / "Wife in a county home
+  three years. Doesn't know him. He quit driving down to see her. Said she
+  will know him when the work is finished, and he wanted her to know him the
+  first time." / "Then he put the same offer to Vane. Name the thing you want
+  most, come along, it will be waiting." / "Nobody was argued into this. Every
+  one of them was promised the one thing they were starving for.[/c]"
 - **`the_congregation`** (`_mara_voice`, note): "Mara, kneeling with the congregation. Turned. There was never anyone to bring back."
 - **`the_dream`** (`_log_dream_entry`, note; canon-guarded "a year", no
   recurrence): "Her journal put me back inside the one odd dream. A year

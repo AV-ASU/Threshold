@@ -32,6 +32,43 @@
 
 ## Evidence & the case
 
+- **2026-07 — The recruiter: no miracle, no euphoria (maintainer ruling).**
+  Vane's one fragment of the *how* was a conversation with a blind congregant
+  who had been promised his sight back by the dream, walked into the office
+  without a stick, sat down square in the chair, and left smiling. Three
+  things wrong with it, and the first is the one that matters:
+
+  **The want was a miracle.** `DESIGN.md` §8 says the machine runs on ORDINARY
+  wants, nothing cosmic: a full house, a harvest, a guest at supper, a road
+  home. Sight restored was the only physical repair anyone in the fiction was
+  ever promised, and it made the door read as a faith healer rather than a
+  thing that whispers a bearing to someone in pain. **It was also a visible
+  mark** (a blind man navigating perfectly), against the §2 invariant that
+  being claimed leaves none, and it used a disability as a spook prop.
+
+  He is now a man whose wife is alive in a county home and does not know his
+  face. He used to drive down every Sunday. He stopped, because there is no
+  sense in it until the work is finished and he wants her to know him the
+  first time she sees him. The want is ordinary, unfixable, and not a repeat
+  of Mara's dead child (absence versus presence without recognition). He is
+  **wrecked and certain at the same time** rather than radiant: he cried the
+  whole way through it and it never got near the part of him that was sure.
+
+  The same pass cut the EUPHORIA TELL wherever it was doing work: he no longer
+  leaves smiling, and the congregation are no longer "glad of it." The
+  smiling-cultist motif had become the game's shorthand for possession, which
+  is the visible mark canon forbids and puts the wrongness back on the PEOPLE
+  after the world rot was deliberately relocated onto the PI. Vane calling the
+  newcomers "friendly and smiling" and Sable smiling over the photograph both
+  stay: one is a lawman describing pleasant strangers, the other is a host
+  doing his job.
+
+  Guarded four ways in `tests/flow.py` (the want is his wife and a county
+  home, no blindness, no euphoria, wrecked-and-sure), and the euphoria and
+  wrecked guards were proven to fail red before commit. Canon updated at
+  `NARRATIVE.md` §4 with the reason attached, so the next session cannot
+  restore a miracle want by accident.
+
 - **2026-07 — The Casebook becomes the PI's running notebook (maintainer:
   "I hate how it's just a bunch of paper that just gets put randomly in the
   tab").** The Case tab was not a record, it was a filing system. Entries

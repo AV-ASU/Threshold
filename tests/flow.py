@@ -1796,12 +1796,12 @@ def main():
     gvf.float_speech.active = False
     gvf.float_speech.on_complete = None
 
-    # Vane's blind-cultist thread (NARRATIVE §4: his one window into the
+    # Vane's RECRUITER thread (NARRATIVE §4: his one window into the
     # HOW). TRUST-gated (DESIGN.md §2): it waits on the intro AND a real
     # discovery SHARED with him (found alone is not enough -- trust is
     # earned, not ambient); asking files the PI's NOTE (never evidence);
-    # and the account keeps his knowledge boundary (the blind man, the
-    # dream's offer, no destination and no cosmology).
+    # and the account keeps his knowledge boundary (the man, the dream's
+    # offer, no destination and no cosmology).
     from scenes.dialogue import _vane_how_told
     gvh = new_game()
     _qhow = next(ex for ex in _VC["exchanges"] if ex["key"] == "how")
@@ -1819,7 +1819,7 @@ def main():
           "gate: the Talk opens the cult question with no trust at all")
     _refused = " ".join(b[1].lower() for b in _qhow["beats"](gvh)
                         if b[0] in ("npc", "pi"))
-    check("blind" not in _refused,
+    check("wife" not in _refused,
           "vane: untrusted, he refuses to spend his one card")
     check("school" in _refused and "barn" in _refused,
           "vane: he still answers the where, which costs him nothing")
@@ -1845,8 +1845,20 @@ def main():
           "vane: the how never inflates the evidence count")
     _how_txt = " ".join(b[1].lower() for b in _qhow["beats"](gvh)
                         if b[0] in ("npc", "pi"))
-    check("blind" in _how_txt and "dream" in _how_txt,
-          "canon: the account is the blind cultist promised by the dream")
+    # The recruiter's want is ORDINARY and unfixable (NARRATIVE §2 /
+    # DESIGN.md §8: the machine runs on ordinary wants, nothing cosmic). The
+    # old version promised a blind man his sight, which is the one MIRACLE in
+    # the cast and made the door read as a faith healer; it also gave him an
+    # uncanny tell, against the invariant that being claimed leaves no
+    # visible mark.
+    check("wife" in _how_txt and "county home" in _how_txt,
+          "canon: the recruiter's want is his wife, ordinary and unfixable")
+    check("blind" not in _how_txt,
+          "canon: no miracle wants (the sight promise is cut)")
+    check("smiling" not in _how_txt and "glad of it" not in _how_txt,
+          "canon: no euphoria tell (being claimed leaves no visible mark)")
+    check("crie" in _how_txt and "certain" in _how_txt,
+          "vane: the recruiter is wrecked and sure at the same time")
     check(not any(w in _how_txt for w in ("below", "down there", "under the",
                                           "king", "door")),
           "canon: Vane keeps his knowledge boundary (no destination)")
