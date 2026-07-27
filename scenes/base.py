@@ -233,6 +233,16 @@ class Scene:
         # dark). A scene builder may pin "overcast"/"void" explicitly to
         # override the heuristic. Unused at pitch 0 (no skybox).
         self.skybox_kind = None
+        # What this scene's window panes SAY (`terrain._window_glass`):
+        # "lit" (warm, lit from within -- somebody is home), "dark" (a dead
+        # pane, nobody is), or "daylight" (you are inside, looking out at the
+        # overcast). None lets the heuristic pick, which is "lit" outdoors and
+        # "daylight" anywhere else. STATE it wherever the answer is a fact
+        # about the fiction rather than about the camera: lit glass on a
+        # building NARRATIVE says is empty unsays the beat you walk in to
+        # find. A yard derives it from the household's genset, so the two can
+        # never disagree (`Yard.genset`).
+        self.window_glass = None
         self.exits = {}
         # Direction-sensitive exit chars: char -> "north"/"south"/etc.
         # If a char is in this dict, find_exit_at only fires the exit

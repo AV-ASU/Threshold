@@ -649,10 +649,35 @@ Built into the procedural draw layer (`scenes/base.py`,
   it, in the wall's material tint -- without it they extruded as full-tile
   near-black monoliths jutting from the thin wall line. Under tilt a slab
   scene also skips the flat full-tile window art (the 3D band + set-in pane
-  carry the read). **Window glazing reads by scene:** an interior scene's
-  panes hold flat overcast DAYLIGHT (a dim room looking out at the grey
-  sky); an exterior facade keeps the warm lit-from-within amber (the town
-  keeping its lights on, §6 lighting).
+  carry the read).
+
+  **A WINDOW PANE IS AN ASSERTION** (`Scene.window_glass`,
+  `terrain._window_glass`), and there are three of them:
+
+  | glass | what it says |
+  |---|---|
+  | `"lit"` | warm amber lit from within: **somebody is home** |
+  | `"dark"` | a dead pane, the room's dark behind it and a thin cold sheen at the top of the glass so it still reads as glass: **nobody is** |
+  | `"daylight"` | flat overcast: you are INSIDE, looking out |
+
+  A scene STATES it rather than having it inferred, because "lit" is a claim
+  about who is home and the fiction has buildings that are empty on purpose
+  (NARRATIVE §3 -- the school and the barn the congregation walked out of,
+  the farmhouse abandoned in its own name). Warm panes on one of those, with
+  a silhouette drifting behind the glass, quietly unsay the beat the player
+  walks in to find. Unstated, the fallback is the honest one: outdoors you
+  are looking at a facade, so `"lit"`; anywhere else you are inside one, so
+  `"daylight"`.
+
+  **In town it is DERIVED, not authored twice.** The household's genset is
+  already the statement of whether the lights are on -- this town runs on
+  gasoline (§15) -- so `Yard.genset` sets the panes from it: running means
+  lit, cold means dark. One source, no way for the two to disagree, the same
+  trick `running=False` already plays by also passing `broken` so the bulb
+  and the ground cannot disagree. It falls out exactly right without anybody
+  authoring it: the school, the barn, the farmhouse and Garrick's house all
+  have cold gensets, and all four now have black windows. Guarded by
+  `tests/conventions.py`.
 - **Frame film grade.** `apply_grade` runs over the whole world layer
   each frame (game.py `draw_world`, before the HUD): partial
   desaturation, a cool tint, a radial vignette, and animated film grain.

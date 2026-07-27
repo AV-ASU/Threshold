@@ -197,12 +197,24 @@ class Yard(object):
         apart where the two disagree: a machine still running beside a can
         already empty is a household about to go dark, and that is a different
         sentence from either half of it.
+
+        **AND THE WINDOWS READ IT.** Lit glass is an assertion that somebody
+        is home, and the fiction has buildings that are empty on purpose
+        (NARRATIVE §3: the school and the barn the congregation walked out
+        of, the farmhouse abandoned in its own name) -- warm panes on those
+        quietly unsay the beat you walk in to find. The genset is already the
+        household's state, and this town runs on gasoline, so the panes are
+        DERIVED from it rather than authored a second time: a machine that is
+        running has its lights on, a cold one does not. One source, no way for
+        the two to disagree, exactly as `broken` does for the bulb and the
+        ground. Guarded by `tests/conventions.py`.
         """
         if side is None:
             side = {"n": "e", "s": "e", "e": "s", "w": "s"}[self.face]
         if can_tipped is None:
             can_tipped = not running
         tx, ty = self.wall(side, along=along)
+        self.sc.window_glass = "lit" if running else "dark"
         g = self.put("generator", tx, ty, running=running,
                      broken=not running)
         if can:

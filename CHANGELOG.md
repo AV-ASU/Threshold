@@ -1877,6 +1877,30 @@
 
 ## Brimley geography
 
+- **2026-07 -- a window pane is an assertion.** Every `i` tile in the game
+  drew as warm glass lit from within, with a dark silhouette drifting behind
+  it on a per-tile clock -- lovely, and a claim that somebody is home. Three
+  of the buildings it was making that claim about are empty on purpose
+  (NARRATIVE §3: the school and the barn the congregation walked out of, the
+  farmhouse abandoned in its own name), so the glass was quietly unsaying the
+  beat the player walks in to find. The retirement had just multiplied it,
+  too, since every yard house had gained windows.
+
+  The old switch was `daylight = key not in SEAMLESS_WORLD_SCENES`, which was
+  a proxy for "is this an interior" -- true right up until the yards left that
+  set, at which point every house facade in town started reading as a room
+  looking out at the sky. Replaced with `Scene.window_glass`, three STATED
+  values (`lit` / `dark` / `daylight`) resolved by `terrain._window_glass`,
+  fallback "lit outdoors, daylight elsewhere".
+
+  In town it is DERIVED rather than authored a second time: the household's
+  genset already says whether the lights are on, so `Yard.genset` sets the
+  panes from it -- the same trick `running=False` plays by also passing
+  `broken` so the bulb and the ground cannot disagree. It falls out right with
+  nobody choosing per-yard: the school, the barn, the farmhouse and Garrick's
+  house all have cold gensets, and all four went black. `tests/conventions.py`
+  check 3b holds the derivation (proved failing before it was kept).
+
 - **2026-07 -- BRIMLEY THE SCENE IS RETIRED; the town is a string of house
   islands.** The maintainer's shape for it, in their words: *"We are remaking
   Brimley as a string of house islands in a sea of spatial manipulation. Fuck
