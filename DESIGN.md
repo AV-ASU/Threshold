@@ -2222,6 +2222,16 @@ in one piece at the end, not eroded a building at a time. Nothing is deleted
 from it on the way. The per-household dressing inside Brimley is the interim
 reading of the table above, and it goes when Brimley does.
 
+**PEOPLE LIVE IN HOUSES; YARDS ARE EMPTY OF THEM.** That is not an
+oversight, it is the layer's whole premise: a yard tells you about a household
+*without anybody there to say it*, and a resident standing in their own yard
+does that job for it and makes the props redundant. So every resident is
+inside their own building -- Hettie in the shop, Crane in the church, Vane in
+his office, Toby in his house, Sable at the Arcadia desk, and Mrs. Calder,
+Royce and Garrick in the three small houses below. The barn, the schoolhouse
+and the farmhouse are empty inside AND out, which is the one case where the
+yard and the interior say the same thing on purpose.
+
 **The three small houses.** Mrs. Calder, Royce and Garrick stood on open
 ground with no building at all. The three EMPTY buildings are the wrong three
 to move them into: the schoolhouse and the barn are where the congregation

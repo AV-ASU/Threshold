@@ -47,6 +47,7 @@ import random
 
 from constants import TILE
 from entities.decoration import Decoration
+from .dialogue import CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO
 
 # Which way you CLIMB, given the wall the door is in. A stoop's local +x is
 # the direction of the climb (rendering/references.py), so this is the stoop's
@@ -794,8 +795,9 @@ def build_calder_yard():
     """
     sc, y = build_yard_scene(
         "calder_yard",
-        door_face="w", door_char="l",
-        interior=None, interior_spawn=None,
+        door_face="w", door_char="D",
+        interior="calder_house",
+        interior_spawn="from_calder_yard",
         path_side="w", path_char="e",
         path_target="bank_row", path_spawn="from_calder_yard",
         verge=("T", "p"), building=(8, 6), seed=127)
@@ -826,8 +828,9 @@ def build_royce_yard():
     """
     sc, y = build_yard_scene(
         "royce_yard",
-        door_face="e", door_char="l",
-        interior=None, interior_spawn=None,
+        door_face="e", door_char="D",
+        interior="royce_house",
+        interior_spawn="from_royce_yard",
         path_side="e", path_char="e",
         path_target="lane_end", path_spawn="from_royce_yard",
         verge=("C", "A"), building=(8, 6), seed=107)
@@ -857,8 +860,9 @@ def build_garrick_yard():
     """
     sc, y = build_yard_scene(
         "garrick_yard",
-        door_face="w", door_char="l",
-        interior=None, interior_spawn=None,
+        door_face="w", door_char="D",
+        interior="garrick_house",
+        interior_spawn="from_garrick_yard",
         path_side="w", path_char="e",
         path_target="lane_end", path_spawn="from_garrick_yard",
         verge=("T", "p"), building=(8, 6), seed=149)
@@ -869,4 +873,130 @@ def build_garrick_yard():
     sc.add_decoration(Decoration((y.out[0] - 2) * TILE + 16,
                                  (y.out[1] + 2) * TILE + 16,
                                  "burn_barrel", seed=61))
+    return sc
+
+
+# =====================================================================
+# THE THREE HOUSES THAT HAD NO INSIDE
+# =====================================================================
+# Mrs. Calder, Royce and Garrick stood on open ground with no building at
+# all, then got yards with FACADE doors -- which left them still standing
+# outdoors while their own houses sat sealed. People live in HOUSES. The yard
+# is what tells you about a household when nobody is home to say it; it is
+# not where the household stands.
+#
+# So these are small: one room, one resident, one thing in it that says who
+# they are. They are not the principals' rooms and they should not try to be.
+
+
+def _resident(sc, tx, ty, name, kind, convo, movement="idle"):
+    """The household, AT HOME. A person belongs in their house -- the yard is
+    what tells you about them when nobody is there to say it, and a resident
+    standing out in their own yard does that job for it."""
+    from entities.npc import NPC
+    from .dialogue import chorus_dialogue
+    sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
+                   dialogue_fn=chorus_dialogue(convo), movement=movement,
+                   radius=40))
+
+
+def _small_house(key, yard_key, rows, music="home"):
+    """The shared shell: a one-room house whose door goes back to its yard."""
+    from .base import Scene
+    floor = ["=" * len(rows[0]) for _ in rows]
+    sc = Scene(key, floor, rows, music=music)
+    sc.add_exit("D", yard_key, "from_" + key)
+    return sc
+
+
+def build_calder_house():
+    """MRS. CALDER'S, inside. She sets a place at supper for a guest she
+    cannot name (NARRATIVE §3), and the table she lays it on is out in the
+    yard where the road can see it -- so what is left in here is the WAITING:
+    the second chair pulled out ready, the stove kept in, and a door she
+    leaves unlatched because it seemed polite."""
+    sc = _small_house("calder_house", "calder_yard", [
+        "WWWWWWWWWWWW",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W....D.....W",
+        "WWWWWWWWWWWW",
+    ])
+    sc.set_spawn("default", 5, 5)
+    sc.set_spawn("from_calder_yard", 5, 5)
+    sc.add_furniture("stove", [(1, 1)], w=30, h=40)
+    sc.add_furniture("table", [(5, 3)], w=30, h=26)
+    sc.add_furniture("cot", [(9, 2)], w=30, h=16)
+    _resident(sc, 8, 4, "Mrs. Calder", "townswoman", CALDER_CONVO)
+    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 6, "candle"))
+    # the second setting, laid indoors as well: she does not know which
+    # table he will come to
+    sc.add_decoration(Decoration(5 * TILE + 10, 3 * TILE + 12,
+                                 "place_setting"))
+    sc.add_decoration(Decoration(5 * TILE + 24, 3 * TILE + 12,
+                                 "place_setting"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16,
+                                 "overturned_chair"))
+    return sc
+
+
+def build_royce_house():
+    """ROYCE'S, inside. Every road out hands you back and he has not stopped
+    trying (NARRATIVE §3), so his house is a staging post rather than a home:
+    the bed made and not slept in, the lamp left burning by the door, and the
+    can he keeps filling standing where he can pick it up on the way out."""
+    sc = _small_house("royce_house", "royce_yard", [
+        "WWWWWWWWWWWW",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W.....D....W",
+        "WWWWWWWWWWWW",
+    ])
+    sc.set_spawn("default", 6, 5)
+    sc.set_spawn("from_royce_yard", 6, 5)
+    sc.add_furniture("cot", [(1, 1)], w=30, h=16)
+    sc.add_furniture("table", [(8, 2)], w=30, h=26)
+    sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 6,
+                                 "kerosene_lamp"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "fuel_can"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 5 * TILE + 16, "fuel_can",
+                                 tipped=True))
+    _resident(sc, 4, 3, "Royce", "royce", ROYCE_CONVO, movement="watch")
+    return sc
+
+
+def build_garrick_house():
+    """GARRICK'S, inside. He gave the lights up and sits out at the burn
+    barrel instead, so the room behind him is cold and dark: the stove out,
+    the lamp unlit, and a chair pulled to the window that looks at the road
+    he tells everybody to stay on (NARRATIVE §4)."""
+    sc = _small_house("garrick_house", "garrick_yard", [
+        "WWWWWiWWWWWW",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W...D......W",
+        "WWWWWWWWWWWW",
+    ])
+    sc.set_spawn("default", 4, 5)
+    sc.set_spawn("from_garrick_yard", 4, 5)
+    sc.add_furniture("stove", [(10, 1)], w=30, h=40)
+    sc.add_furniture("cot", [(1, 4)], w=30, h=16)
+    sc.add_furniture("table", [(3, 2)], w=30, h=26)
+    sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6,
+                                 "kerosene_lamp", broken=True))
+    sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 20,
+                                 "overturned_chair"))
+    # his chair is at the window that looks at the road he tells everybody to
+    # stay on, and so is he
+    _resident(sc, 5, 2, "Garrick", "old_townsman", GARRICK_CONVO,
+              movement="watch")
     return sc
