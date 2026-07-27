@@ -294,7 +294,9 @@ it renders the procedural sprites to a labelled PNG strip.
     never on the wall tile, or the wall's own volume paints over it. The genset
     is the layer's keystone (`running=False` also passes `broken`, which both
     light tables read, so a dark bulb and dark ground can never disagree).
-    Ships `shop_yard` off `store_row` as the worked chain. **Brimley is kept
+    Ships ELEVEN yards on five town streets, one per household, each with
+    its resident INSIDE the building (a yard is empty of people on purpose:
+    it has to speak when nobody is there to). `shop_yard` off `store_row` is the worked chain. **Brimley is kept
     exactly as it is** until the whole town has moved into yard scenes, then
     retired in one piece; its ten in-scene yard dressings and three new small
     houses are the INTERIM and go when it does. An interior served by a yard

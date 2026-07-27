@@ -35,7 +35,8 @@ from .yards import (build_shop_yard, build_school_yard, build_church_yard,
                     build_barn_yard, build_sheriff_yard, build_farm_yard,
                     build_toby_yard, build_calder_yard, build_royce_yard,
                     build_garrick_yard, build_calder_house,
-                    build_royce_house, build_garrick_house)
+                    build_royce_house, build_garrick_house,
+                    build_pell_yard, build_pell_house)
 from .lost_space import (build_lost_space, build_lost_corn,
                          build_lost_forest, build_lost_road)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
@@ -146,6 +147,8 @@ SCENE_BUILDERS = {
     "calder_house":       build_calder_house,
     "royce_house":        build_royce_house,
     "garrick_house":      build_garrick_house,
+    "pell_yard":          build_pell_yard,
+    "pell_house":         build_pell_house,
     "backwoods_cabin":    build_backwoods_cabin,
     "backwoods_cabin_interior": build_backwoods_cabin_interior,
     "bell_tower":         build_bell_tower,

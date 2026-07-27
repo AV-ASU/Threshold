@@ -2214,6 +2214,7 @@ what the interim dressing inside the Brimley scene already carries.
 | Royce's house | still fighting | genset running, can already empty, the car nosed out of town and shut, ready to be tried again |
 | Mrs. Calder's house | kept, waiting | the supper table laid out in the open where the road can see it, two settings, a candle burned down, a chair over; her gate stands open |
 | Garrick's house | given up on lights | genset cold, can over; the wood he was splitting when he stopped; a hedge line older than wire |
+| Old Pell's | HELD, not interrupted | the one yard that did not stop mid-motion: it is kept exactly where he chose to stop it. Genset running, can full, and the calendar nailed on HIS siding at last. Seed crates roped and never opened, for a planting he is not going to do. The corn band is deeper here than anywhere on the string and comes right up to the lot, because he has not cut it and will not |
 
 **Brimley is kept, untouched, until the whole town has moved.** Every
 building, exit, NPC and prop in the 60x60 scene stays exactly as it is and
@@ -2231,6 +2232,14 @@ his office, Toby in his house, Sable at the Arcadia desk, and Mrs. Calder,
 Royce and Garrick in the three small houses below. The barn, the schoolhouse
 and the farmhouse are empty inside AND out, which is the one case where the
 yard and the interior say the same thing on purpose.
+
+**Old Pell had nothing at all.** He loitered at the schoolhouse step and
+it was never his -- he is the `vanish=False` homebody precisely BECAUSE
+that room is empty -- so when Brimley retires he had nowhere to stand or
+live. He gets the last arm of `lane_end`, and the dead end is the right
+address for the man who stopped marking the days: past his gate the
+string has nothing left on it. His calendar came with him off the
+schoolhouse wall.
 
 **The three small houses.** Mrs. Calder, Royce and Garrick stood on open
 ground with no building at all. The three EMPTY buildings are the wrong three

@@ -687,16 +687,21 @@ def build_bank_row():
 
 
 def build_lane_end():
-    """The **T** where the town stops: two lots and no road onward. The last
-    lit thing on the string before the dark takes over."""
+    """The **X** where the town stops: three lots and no road onward.
+
+    The south arm ends at Old Pell's, and it ends there in every sense -- past
+    his gate the string has nothing left on it. The last lit thing before the
+    dark takes over is the yard of the man who stopped marking the days.
+    """
     return build_path(
-        "lane_end", "nwe", 36, 34,
+        "lane_end", "nwes", 36, 36,
         verge_char=("C", "A"),
         exits=(("n", "4", "bank_row", "from_lane_end"),
                ("w", "e", "royce_yard", "from_lane_end"),
-               ("e", "a", "garrick_yard", "from_lane_end")),
+               ("e", "a", "garrick_yard", "from_lane_end"),
+               ("s", "^", "pell_yard", "from_lane_end")),
         spawns=(("from_bank_row", "n"), ("from_royce_yard", "w"),
-                ("from_garrick_yard", "e")),
+                ("from_garrick_yard", "e"), ("from_pell_yard", "s")),
         seed=2059)
 
 

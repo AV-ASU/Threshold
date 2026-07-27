@@ -47,7 +47,8 @@ import random
 
 from constants import TILE
 from entities.decoration import Decoration
-from .dialogue import CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO
+from .dialogue import (CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO,
+                       PELL_CONVO)
 
 # Which way you CLIMB, given the wall the door is in. A stoop's local +x is
 # the direction of the climb (rendering/references.py), so this is the stoop's
@@ -363,7 +364,7 @@ _EDGE_IN = {"n": (0, 1), "s": (0, -1), "e": (-1, 0), "w": (1, 0)}
 def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
                      path_side, path_char, path_target, path_spawn,
                      w=_YARD_W, h=_YARD_H, building=(8, 6), verge=("T", "p"),
-                     music="village", seed=7):
+                     music="village", seed=7, band=_BAND):
     """One household's ground: a walled clearing, one building, two ways out.
 
     Returns `(scene, yard)` -- the scene registered like any other, and a
@@ -452,7 +453,7 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
     # THE LOT is kept ground and the band stops at its line. Left to grow
     # where it liked, the scatter put standing corn in the middle of a
     # household's mown yard, which unsays everything a kept yard is for.
-    lot = (_BAND, w - 1 - _BAND, _BAND, h - 1 - _BAND)
+    lot = (band, w - 1 - band, band, h - 1 - band)
 
     # THE EDGE OF THE LOT: a scattered, permeable band, not a one-tile ring
     # of the verge char. Built as a ring it reads as a FENCE made of corn --
@@ -470,7 +471,7 @@ def build_yard_scene(key, *, door_face, door_char, interior, interior_spawn,
         return abs(ty - ey) <= 2
 
     _bushes = []
-    scatter_forest_band(floor, objects, w, h, depth=_BAND, seed=seed * 31 + 5,
+    scatter_forest_band(floor, objects, w, h, depth=band, seed=seed * 31 + 5,
                         tree_density=0.55, passable_ratio=0.6,
                         bush_density=0.16,
                         solid_char=verge[0], passable_char=verge[1],
@@ -999,4 +1000,73 @@ def build_garrick_house():
     # stay on, and so is he
     _resident(sc, 5, 2, "Garrick", "old_townsman", GARRICK_CONVO,
               movement="watch")
+    return sc
+
+
+def build_pell_yard():
+    """OLD PELL'S, at the dead end of the lane.
+
+    He grew the town's pride, the northernmost corn in the world, and he will
+    not look long at the fields that died standing when the fall harvest went
+    uncut (NARRATIVE §3). So the corn is the whole yard: the band is deeper
+    here than anywhere else on the string and it comes right up to the lot,
+    because he has not cut it and will not.
+
+    His yard is the one that is not INTERRUPTED. Everybody else's stopped
+    mid-motion in January; his is HELD, deliberately, by a man who says so out
+    loud: the genset runs, the can beside it is full, and the calendar is
+    nailed up on his own siding with the date he chose to stop on. Nothing
+    here is waiting to be finished. That is the point of it.
+
+    The seed crates are the tell that separates held from finished: stacked,
+    roped, and never opened, for a planting he is not going to do.
+    """
+    sc, y = build_yard_scene(
+        "pell_yard",
+        door_face="n", door_char="D",
+        interior="pell_house", interior_spawn="from_pell_yard",
+        path_side="n", path_char="e",
+        path_target="lane_end", path_spawn="from_pell_yard",
+        verge=("C", "A"), building=(8, 6), seed=163, band=5)
+    y.step()
+    y.genset(running=True, side="e", along=0.5)
+    y.crates(y.left - 2, y.bot + 2, courses=3, tarp=True)
+    y.crates(y.left - 2, y.bot + 4, courses=2, seed=167)
+    # THE CALENDAR, on HIS wall. It has been nailed to the schoolhouse all
+    # this time, which was never his building -- he only loiters there.
+    y.siding("calendar", y.right + 1, y.top + 2)
+    y.mailbox(y.out[0] + 3, y.lot[2], toward="n", full=True)
+    y.fence("n", at=y.lot[2], span=(y.lot[0], y.lot[1]), gate=y.out[0])
+    return sc
+
+
+def build_pell_house():
+    """OLD PELL'S, inside. One room, and the whole of it is arranged against
+    the window: his chair faces the wall, because the fields are out there and
+    he will not look at them. The almanac he stopped writing in is on the
+    table with the pencil still beside it."""
+    sc = _small_house("pell_house", "pell_yard", [
+        "WWWWWWWWWWWW",
+        "W..........i",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W..........W",
+        "W....D.....W",
+        "WWWWWWWWWWWW",
+    ])
+    sc.set_spawn("default", 5, 5)
+    sc.set_spawn("from_pell_yard", 5, 5)
+    sc.add_furniture("stove", [(1, 1)], w=30, h=40)
+    sc.add_furniture("table", [(4, 2)], w=30, h=26)
+    sc.add_furniture("cot", [(9, 4)], w=30, h=16)
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 6, "papers"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 18,
+                                 "kerosene_lamp"))
+    # THE CHAIR TURNED AWAY. The window is east, onto his own dead fields;
+    # the chair sits between him and it with its back to the glass.
+    sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 16,
+                                 "overturned_chair"))
+    _resident(sc, 3, 4, "Old Pell", "old_townsman", PELL_CONVO,
+              movement="idle")
     return sc
