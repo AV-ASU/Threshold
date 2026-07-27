@@ -1843,33 +1843,98 @@ def main():
     check(not calls,
           f"apex: its death card never draws the Unfolding catch "
           f"({len(calls)} call(s))")
-    # ...and it DOES draw its own. Asserting only the absence would have passed
-    # for a blank screen, which is what the placeholder was.
-    import rendering.amalgam as _am2
-    drew = []
-    _real_c = _am2.draw_amalgam_catch
-    _rm_c = getattr(_rm, "draw_amalgam_catch", None)
-    _am2.draw_amalgam_catch = lambda *a, **k: drew.append(1)
-    if _rm_c is not None:
-        _rm.draw_amalgam_catch = lambda *a, **k: drew.append(1)
-    try:
-        gd._death_t = 1.2
-        gd._draw_death_screen()
-    finally:
-        _am2.draw_amalgam_catch = _real_c
-        if _rm_c is not None:
-            _rm.draw_amalgam_catch = _rm_c
-    check(len(drew) == 1,
-          f"apex: its death card draws the AMALGAM catch ({len(drew)} call(s))")
-    # and it must actually put something on screen at mid-animation, not just
-    # run: a card that draws nothing is the placeholder wearing a new name.
-    import pygame as _pg
-    probe = _pg.Surface((320, 240))
-    probe.fill((40, 38, 34))
-    _real_c(probe, 0.55)
-    px_ = _pg.surfarray.array3d(probe)
-    check(px_.max() > 90 and px_.min() < 20,
-          "apex: the catch renders real contrast at mid-animation")
+
+    # ---- THE FACE. The Mask must EXPRESS, and by STATE rather than on a clock:
+    # a face on a loop is decoration, a face that narrows when it acquires you is
+    # a tell the player can learn to read.
+    from systems.config import (APEX_FOCUS_RANGE, APEX_STRAIN_RANGE,
+                                APEX_FACE_EASE)
+    gf = new_game()
+    gf.load_scene_now("well_passage", "default")
+    tick(gf, 20)
+    gf.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    fsc = gf.scene
+    fspots = [(tx * TILE + 16, ty * TILE + 16)
+              for ty in range(3, fsc.h - 3) for tx in range(3, fsc.w - 3)
+              if not fsc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    gf.player.x, gf.player.y = fspots[len(fspots) // 2]
+    gf.player.hidden = None
+    gf.visibility = min(0.95, APEX_VIS_GATE + 0.2)
+    fprey = _NPC4(gf.player.x + 50, gf.player.y, "", "amalgam",
+                  movement="storm", speed=STORM_UNIT_SPEED,
+                  no_prompt=True, solid=False)
+    fprey.tag = "watcher"; fprey.sprite_seed = 606
+    fsc.add_npc(fprey); gf._watchers.append(fprey)
+    for _ in range(900):
+        gf._tick_apex(1 / 30.0)
+        if gf.apex_host() is not None:
+            break
+    fhost = gf.apex_host()
+    check(fhost is not None, "face: (a host is worn for these checks)")
+    if fhost is not None:
+        # FAR: the face slackens.
+        fhost.x = gf.player.x + APEX_FOCUS_RANGE * 2.0
+        for _ in range(180):
+            gf._tick_apex(1 / 30.0)
+        far_i, far_s, _sk = gf.apex_face()
+        check(far_i < 0.2 and far_s < 0.05,
+              f"face: far away it is SLACK (intent {far_i:.2f}, "
+              f"strain {far_s:.2f})")
+        # CLOSING: intent climbs while strain is still asleep. The distance has
+        # to sit INSIDE the focus range but OUTSIDE the strain range -- the first
+        # version used 0.25 * focus (85px), which is well within the 150px strain
+        # range, so it asserted strain was low where the design says it is high.
+        mid = (APEX_STRAIN_RANGE + APEX_FOCUS_RANGE) * 0.5
+        assert APEX_STRAIN_RANGE < mid < APEX_FOCUS_RANGE
+        fhost.x = gf.player.x + mid
+        for _ in range(180):
+            gf._tick_apex(1 / 30.0)
+        near_i, near_s, _sk = gf.apex_face()
+        check(near_i > far_i + 0.2,
+              f"face: closing NARROWS it (intent {far_i:.2f} -> {near_i:.2f})")
+        check(near_s < 0.05,
+              f"face: but the face only comes apart INSIDE the strain range "
+              f"(strain {near_s:.2f} at {mid:.0f}px)")
+        # AT THE THROAT: strain takes over.
+        fhost.x = gf.player.x + APEX_STRAIN_RANGE * 0.2
+        for _ in range(180):
+            gf._tick_apex(1 / 30.0)
+        take_i, take_s, _sk = gf.apex_face()
+        check(take_s > 0.6,
+              f"face: at the throat the face comes apart (strain {take_s:.2f})")
+        # EASED, NOT SNAPPED: one tick must not jump the whole way.
+        fhost.x = gf.player.x + APEX_FOCUS_RANGE * 2.0
+        for _ in range(400):
+            gf._tick_apex(1 / 30.0)
+        gf.apex_face()
+        fhost.x = gf.player.x + 10.0
+        before_i = gf.apex_face()[0]
+        gf._tick_apex(1 / 30.0)
+        after_i = gf.apex_face()[0]
+        check(after_i > before_i and (after_i - before_i) < 0.35,
+              f"face: expression EASES, never snaps "
+              f"({before_i:.2f} -> {after_i:.2f} in one tick)")
+        # NOT A LOOP: held at one distance, intent settles instead of cycling.
+        fhost.x = gf.player.x + APEX_FOCUS_RANGE * 0.5
+        for _ in range(240):
+            gf._tick_apex(1 / 30.0)
+        a1 = gf.apex_face()[0]
+        for _ in range(120):
+            gf._tick_apex(1 / 30.0)
+        a2 = gf.apex_face()[0]
+        check(abs(a2 - a1) < 0.05,
+              f"face: at a held distance it SETTLES, it does not cycle "
+              f"({a1:.2f} -> {a2:.2f})")
+        # ...but the skew never settles: the two sockets keep disagreeing.
+        sk_seen = set()
+        for _ in range(10):
+            for _ in range(12):
+                gf._tick_apex(1 / 30.0)
+            sk_seen.add(round(gf.apex_face()[2], 2))
+        check(len(sk_seen) > 4,
+              f"face: the skew wanders, so the wrongness never settles "
+              f"({len(sk_seen)} distinct)")
 
     # AND IT LEAVES when the player drops below the threshold.
     ga.visibility = APEX_VIS_GATE - 0.25

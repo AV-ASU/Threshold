@@ -65,17 +65,24 @@ def main():
         _label(out, f"host {sd}  ({len(assemble(sd))}+{APEX_EXTRA_HI} parts)",
                cx - 60, gy + 14, 12, (146, 144, 154))
 
-    # --- 2. the Mask alone, turned ---------------------------------------
+    # --- 2. THE EXPRESSION RANGE -----------------------------------------
     y2 = 40 + ch
-    _label(out, "2.  THE FACE  --  the Mask turned through 360. Every apex in "
-                "the game wears exactly this, in exactly this state.",
-           16, y2 + 8, 15)
+    _label(out, "2.  THE FACE  --  intent narrows the sockets and steadies the "
+                "embers; strain gaps the seam and runs the crack; skew makes "
+                "them disagree.", 16, y2 + 8, 15)
     gy2 = y2 + ch - 60
-    for i, yaw in enumerate((0.0, 0.9, 1.6, 2.4, 3.14, 4.4)):
+    faces = [("slack", 0.0, 0.0, 0.0),
+             ("intent .5", 0.5, 0.0, 0.0),
+             ("intent 1", 1.0, 0.0, 0.0),
+             ("+skew", 1.0, 0.0, 0.55),
+             ("+strain .6", 1.0, 0.6, 0.25),
+             ("taking you", 1.0, 1.0, 0.4)]
+    for i, (nm, it, st, sk) in enumerate(faces):
         cx = 110 + i * cw
-        draw_pallid_3d(out, cx, gy2, 54, yaw=yaw, lean=6.0,
-                       gaze=(0.0, 0.2), blend=0.5, seed=7, ember=1.0)
-        _label(out, f"yaw {yaw:.2f}", cx - 26, gy2 + 70, 12, (146, 144, 154))
+        draw_pallid_3d(out, cx, gy2, 54, yaw=0.0, lean=6.0,
+                       gaze=(0.0, 0.2), blend=0.5, seed=7, ember=1.0,
+                       intent=it, strain=st, skew=sk)
+        _label(out, nm, cx - 34, gy2 + 70, 12, (146, 144, 154))
 
     # --- 3. scale: apex vs unit vs player --------------------------------
     y3 = 40 + ch * 2

@@ -90,38 +90,37 @@
 
 ## Stealth & threat
 
-- **2026-07 — The apex gets its own catch animation (`draw_amalgam_catch`).**
-  The placeholder fade is gone. Built entirely from the amalgam family's
-  vocabulary and nothing the Unfolding used: cuts wearing the rift's gold rim,
-  near-black flesh edged in bone, ember eyes, the pallid half-mask. Three beats
-  over the King's same 3.8s (completing at 3.4, holding black): the room is TAKEN
-  as cuts open in a ring, LIMBS come through them reaching in, then His face
-  presses in until it OVERFLOWS the frame and one socket dilates until it is
-  everything. Wordless, like every death of His.
-  **Four look-passes, and each one fixed something the code read as fine:**
-  1. `_cut_line` is tuned for a 16-30px part cut, so stretched to 90px+ its
-     fixed 2px gold lip read as a gold LADDER. `_catch_cut` sizes the lip
-     proportionally, so a long slit keeps a hairline of rim light.
-  2. The limbs were small with a full bone outline. On a black card the outline
-     is all you see, so they read as pale PAPER CONES. Made large and black with
-     the edge as a highlight on the leading side only.
-  3. The Mask sat complete and centred, which reads as a mask on a poster --
-     symmetrical, comic, two eyes looking at you. It now grows PAST the frame, so
-     you are seeing part of something too close, and the socket ends up where the
-     swallow needs it. A woodier blend was tried to darken it and made the
-     full-frame result a brown barrel; it stays pale (canon) and gets pushed back
-     with a flat wash instead. The radial wash tried first darkened the MIDDLE
-     between the sockets and left the bright cheeks and brow untouched.
-  4. **The cartoon-eyeball failure, for the third time in this program.**
-     `draw_pallid_3d` sizes its gold bloom as a fraction of r, so at r~500 it
-     stacked into a solid yellow disc. Fixed by passing `ember=0` and drawing the
-     embers at card scale -- then getting THAT wrong too at 0.035*mr before
-     settling at 0.012, a pinpoint in a socket ~0.34*mr across.
-  Guarded three ways (`tests/stealth.py` §20): the kind is `"apex"`, the card
-  never calls `draw_unfold_catch`, and it DOES call the amalgam catch *and*
-  renders real contrast at mid-animation -- because absence-only checks would
-  have passed for a blank screen, which is exactly what the placeholder was.
-  Proven by stubbing the card to return early. Full gate green.
+- **2026-07 — The apex gets a FACE, and the catch animation is reverted.** The
+  maintainer had asked for that animation to go on the list for later; it was
+  built off a misread "continue" and is reverted here (`git revert`), placeholder
+  and TODO item restored. What they asked for instead: the face, first.
+  A look pass (new `tools/preview_apex.py`) framed the problem. Across six host
+  seeds the BODY varies and the FACE is identical in all of them -- the one part
+  that should feel like a specific thing looking at you is the part that never
+  changes -- the Mask had no expression vocabulary at all, and at play size the
+  only thing separating an apex from its own host is the crown, which reads as a
+  ring of gold sparkles.
+  `draw_pallid_3d` now takes `intent` / `strain` / `skew`. The rule the design
+  hangs on: **a carved object must never EMOTE.** A mask that smiles is a
+  cartoon; what this one does is WORK, the timber moving in ways timber cannot.
+  With no mouth and no nose (NARRATIVE §6a) the vocabulary is the sockets, the
+  embers, the seam and the crack -- sockets narrow to a slot and the embers
+  steady as it acquires you, the seam gaps and the crack RUNS as it closes to
+  take you, and the two sockets disagree on a wandering clock with a per-host
+  offset so no two apexes wear the same wrongness (a carving is symmetrical by
+  construction, so asymmetry reads as the object being wrong rather than as a
+  face emoting).
+  Driven by STATE and never a loop -- on a loop it is decoration, tied to what
+  the thing is doing it becomes a tell the player learns to read -- and eased
+  (`APEX_FACE_EASE`) because expression that changes on one frame reads as a
+  sprite swap. The compose cache had to key on the face or the expression froze
+  at whatever it was when the unit was first composed.
+  Guarded by `tests/stealth.py` §20: slack far off, narrows closing, comes apart
+  only inside the strain range, eases rather than snaps, SETTLES at a held
+  distance rather than cycling (the loop check), and the skew never settles.
+  Proven by pinning intent to a constant. One of those checks was wrong on the
+  first pass while the code was right -- it asserted low strain at 85px, which is
+  well inside the 150px strain range. Full gate green.
 
 - **2026-07 — THE APEX lands: the Mask that wears a unit (`TODO.md` #25).** The
   storm had a flood but no threat -- regular units cannot touch you by ruling --

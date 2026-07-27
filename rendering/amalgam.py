@@ -1038,7 +1038,8 @@ def carved_pallid_surface(r, gaze=(0.0, 0.25), blend=0.5, seed=7, ember=1.0):
 
 
 def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
-                   blend=0.5, seed=7, ember=1.0):
+                   blend=0.5, seed=7, ember=1.0,
+                   intent=0.0, strain=0.0, skew=0.0):
     """The Pallid Mask as ONE real 3D object: a single curved SHEET -- the FRONT
     CAP of an ellipsoid (semi-axes Rx < Ry, a REAL depth Rz), a bent oval of
     "paper", NOT a closed egg. `yaw` rotates the whole mesh about the vertical
@@ -1050,7 +1051,27 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
     (pale plate, brow, deep jagged sockets with a gold pinprick, centre seam, a
     hairline crack) is drawn as 3D-anchored overlays on the FRONT face ONLY and
     culls as it turns -- NO eyes from behind. `lean` is a small in-plane roll;
-    `gaze` aims the gold; `ember` its life."""
+    `gaze` aims the gold; `ember` its life.
+
+    EXPRESSION (`intent`, `strain`, `skew`, all 0..1) -- the apex's face, TODO
+    #25. The Mask is a CARVED OBJECT, so it must never emote: a mask that smiles
+    is a cartoon. What it does instead is WORK -- the timber itself moving in
+    ways timber cannot. There is no mouth and no nose to act with (NARRATIVE
+    §6a), so the whole vocabulary is the sockets, the embers, the centre seam and
+    the crack:
+
+      intent  it has you. Sockets NARROW to a focused slot, the embers steady
+              and brighten. This is the difference between being near a thing
+              and being looked at by one.
+      strain  it is close, and the face is coming apart to take you: the seam
+              gaps open and the crack spreads and lengthens.
+      skew    wrongness. The two sockets stop agreeing -- one narrows ahead of
+              the other. Cheap, and deeply unpleasant, because a carved face is
+              symmetrical by construction and this one is not.
+
+    The caller EASES these (Game._tick_apex), so the face moves continuously
+    rather than snapping between states -- fluid is the point; a face that
+    changes on a frame reads as a sprite swap."""
     r = max(4, int(r))
     P = _pmask_pal(blend)
 
@@ -1165,7 +1186,18 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
         if f_ > 0.14:
             seam.append((int(px), int(py)))
     if len(seam) >= 2:
-        pygame.draw.lines(surf, P["grain"], False, seam, 2)
+        if strain > 0.02:
+            # STRAIN opens the seam into a GAP -- the face starting to come
+            # apart. Drawn as two lines walking away from the centre line, with
+            # true black between, so it reads as a split and not a thicker line.
+            off = max(1, int(r * 0.055 * strain))
+            for sgn in (-1, 1):
+                pygame.draw.lines(surf, P["grain"], False,
+                                  [(x + sgn * off, y) for x, y in seam], 2)
+            pygame.draw.lines(surf, (2, 2, 2), False, seam,
+                              max(1, int(r * 0.045 * strain)))
+        else:
+            pygame.draw.lines(surf, P["grain"], False, seam, 2)
 
     brow = []                                                # the brow ridge
     for k in range(-6, 7):
@@ -1188,10 +1220,16 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
         px, py, fac = shell_pt(sgn * exl, eyl)
         if fac <= 0.16:                                      # gone past the edge
             continue
+        # EXPRESSION: this socket's own narrowing. `skew` splits the two so they
+        # disagree -- the left leads, the right lags -- which is the whole trick:
+        # a carving is symmetrical by construction, so asymmetry reads as the
+        # object being wrong rather than as a face pulling a face.
+        squeeze = _clamp(intent + skew * (0.55 if sgn < 0 else -0.55))
+        lid = 1.0 - 0.46 * squeeze
         # ~1.8x the old socket: it now occupies the face the way an eye socket
         # in a carved mask does, instead of sitting on it like a drilled pin.
         srx = max(1.5, r * 0.34 * (0.35 + 0.65 * fac))       # compresses toward profile
-        sry = max(1.5, r * 0.36)
+        sry = max(1.5, r * 0.36 * lid)
         # the orbit RIM first -- a pale raised lip catching light on the
         # outside, which is what tells the eye the middle is sunk below it
         _pmask_jag(surf, px, py - sry * 0.06, srx * 1.16, sry * 1.14,
@@ -1222,8 +1260,14 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
             gs = int(r * 0.9) + 2
             gl = pygame.Surface((gs, gs), pygame.SRCALPHA)
             gr = gs // 2
+            # intent STEADIES and lifts the ember. A wavering light reads as a
+            # dying thing; a pinprick that does not waver while it closes on you
+            # reads as attention.
+            lift = 1.0 + 0.85 * intent
             for (rr, aa) in ((0.09, 26), (0.055, 44), (0.03, 66)):
-                pygame.draw.circle(gl, (*_PMASK_GOLD, int(aa * ember * fac)),
+                pygame.draw.circle(gl,
+                                   (*_PMASK_GOLD,
+                                    min(255, int(aa * lift * ember * fac))),
                                    (gr, gr), max(1, int(r * rr)))
             surf.blit(gl, (int(ppx) - gr, int(ppy) - gr), special_flags=pygame.BLEND_RGBA_ADD)
             if ember > 0.4:
@@ -1250,7 +1294,21 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
         if f_ > 0.14:
             crack.append((int(px), int(py)))
     if len(crack) >= 2:
-        pygame.draw.lines(surf, P["edge"], False, crack, 1)
+        pygame.draw.lines(surf, P["edge"], False, crack,
+                          max(1, int(1 + r * 0.03 * strain)))
+        if strain > 0.35:
+            # ...and it RUNS. A crack that only thickens reads as a drawn line
+            # getting bolder; one that travels reads as damage happening now.
+            run = []
+            for k in range(5):
+                f = k / 4.0
+                lx = Rx * (0.30 + 0.34 * f) * (1.0 + 0.5 * strain)
+                ly = Ry * (0.26 + 0.30 * f * strain)
+                px2, py2, f_ = shell_pt(lx, ly)
+                if f_ > 0.14:
+                    run.append((int(px2), int(py2)))
+            if len(run) >= 2:
+                pygame.draw.lines(surf, P["edge"], False, run, 1)
 
     # ---- the cut EDGE of the sheet. It is a bent plate of finite thickness,
     # not a soft blob: tracing its silhouette in the dark edge tone reads as
@@ -1280,7 +1338,7 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
 
 def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
                           blend=0.5, seed=7, ang=1.2, side=-1, lean=8.0,
-                          yaw=0.0):
+                          yaw=0.0, intent=0.0, strain=0.0, skew=0.0):
     """The Mask as a PART: it rides out of its own cut (`deploy` 0..1) along
     the cut normal, held at the rim by shroud grips. `gaze` (gx, gy in -1..1)
     aims the gold pupils. `yaw` turns it as ONE 3D object (`draw_pallid_3d`) --
@@ -1295,7 +1353,8 @@ def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
     ember = 0.25 + 0.75 * d
     # the Mask itself -- one rotating 3D shell, rendered onto its own layer
     draw_pallid_3d(lay, mcx, mcy, r, yaw=yaw, lean=lean, gaze=gaze,
-                   blend=blend, seed=seed, ember=ember)
+                   blend=blend, seed=seed, ember=ember,
+                   intent=intent, strain=strain, skew=skew)
     # clip whatever is still INSIDE the cut (the far side of the cut line) so it
     # reads as rising from the slit; everything there ends dead flat (the grammar)
     p0 = (cx - dx_ * 400, cy - dy_ * 400); p1 = (cx + dx_ * 400, cy + dy_ * 400)
@@ -1453,203 +1512,6 @@ def _compose_unit(seed, b, g, gaze, t, bearer, extra=0):
     return out, -(sw // 2) - pad, -base - pad
 
 
-def dk_edge(f):
-    """The bone edge, dimmed. On a black card a full-strength outline around a
-    whole limb is all you see, so the catch uses it as a highlight."""
-    return tuple(max(0, min(255, int(c * f))) for c in AMALGAM_EDGE)
-
-
-def _catch_cut(surf, cx, cy, ang, ln, alpha):
-    """One aperture at CARD scale.
-
-    `_cut_line` is tuned for a 16-30px part cut: its gold lip is two fixed 2px
-    segments, so stretched to 90px+ it reads as a gold LADDER or a ruler rather
-    than a hole. Here the lip is proportional to the cut, so it stays a hairline
-    of rim light down a long slit however big the slit is.
-    """
-    if alpha <= 0.02 or ln < 3:
-        return
-    dx, dy = math.cos(ang), math.sin(ang)
-    nx, ny = -dy, dx
-    hx, hy = dx * ln * 0.5, dy * ln * 0.5
-    off = max(1.0, ln * 0.022)
-    a = int(230 * alpha)
-    lay = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    # the void core: the slit itself, widening a touch as it opens
-    core = max(1, int(ln * 0.035))
-    pygame.draw.line(lay, (0, 0, 0, 255), (cx - hx, cy - hy),
-                     (cx + hx, cy + hy), core)
-    # the gold LIP on the absent side, broken the way a part's cut is
-    for f0, f1 in ((0.02, 0.44), (0.56, 0.98)):
-        pygame.draw.line(lay, CUT_RIM + (a,),
-                         (cx - hx + dx * ln * f0 + nx * off,
-                          cy - hy + dy * ln * f0 + ny * off),
-                         (cx - hx + dx * ln * f1 + nx * off,
-                          cy - hy + dy * ln * f1 + ny * off),
-                         max(1, int(ln * 0.018)))
-    pygame.draw.line(lay, CUT_RIM_HOT + (int(a * 0.8),),
-                     (cx - hx + dx * ln * 0.46 + nx * off,
-                      cy - hy + dy * ln * 0.46 + ny * off),
-                     (cx - hx + dx * ln * 0.54 + nx * off,
-                      cy - hy + dy * ln * 0.54 + ny * off),
-                     max(1, int(ln * 0.012)))
-    surf.blit(lay, (0, 0))
-    glow = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    for k, ga in ((2.2, 26), (4.0, 13)):
-        pygame.draw.line(glow, (*CUT_RIM, int(ga * alpha)),
-                         (cx - hx + nx * off * k, cy - hy + ny * off * k),
-                         (cx + hx + nx * off * k, cy + hy + ny * off * k),
-                         max(1, int(ln * 0.02)))
-    surf.blit(glow, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
-
-
-def draw_amalgam_catch(surf, t):
-    """THE APEX'S CATCH -- what you see when the Mask reaches you. `t` is 0..1.
-
-    Built from the AMALGAM's own vocabulary and nothing else: free-form CUTS with
-    the rift's gold rim, near-black flesh stroked in bone, ember eyes, and the
-    Pallid half-mask. It deliberately shares nothing with THE UNFOLDING's
-    throat-swallow (maintainer: "do not use the existing death card") -- that art
-    belongs to the body the storm replaces, so borrowing it would have shipped the
-    thing being retired as the new apex's signature.
-
-    Wordless, like every death of His. Three beats:
-      1. the room is TAKEN -- cuts open in a ring around the frame
-      2. limbs come THROUGH them, reaching in
-      3. His face presses in until it OVERFLOWS the frame, and one socket dilates
-         until it is all there is
-
-    On beat 3: the Mask deliberately grows PAST the edges rather than sitting
-    complete in the middle. A whole face centred in frame reads as a mask on a
-    poster -- symmetrical, comic, two eyes looking at you. Overflowing it means you
-    are seeing part of something too close, which is the register a catch wants,
-    and it puts the socket where the swallow can happen.
-    """
-    W, H = surf.get_size()
-    cx, cy = W // 2, H // 2
-    m = min(W, H)
-    t = _clamp(t)
-
-    def ease(a, b):
-        if t <= a:
-            return 0.0
-        if t >= b:
-            return 1.0
-        return _ease((t - a) / (b - a))
-
-    wash = pygame.Surface((W, H))
-    wash.fill((4, 4, 6))
-    wash.set_alpha(int(240 * ease(0.0, 0.20)))
-    surf.blit(wash, (0, 0))
-
-    ring = ease(0.03, 0.40)
-    n = 11
-    rad = m * 0.46
-    spots = []
-    for i in range(n):
-        a = i / float(n) * math.tau + 0.21
-        spots.append((cx + math.cos(a) * rad, cy + math.sin(a) * rad * 0.86, a))
-    for i, (px, py, a) in enumerate(spots):
-        _catch_cut(surf, px, py, a + math.pi / 2,
-                   m * 0.34 * ring * (0.74 + 0.26 * math.sin(i * 2.1)),
-                   0.3 + 0.7 * ring)
-
-    # ---- the LIMBS. Big and BLACK: the first pass drew them small with a full
-    # bone outline, so against a black card all you saw was the outline and they
-    # read as pale paper cones. The mass has to carry them at this size, with the
-    # edge only catching where it turns.
-    reach = ease(0.12, 0.60)
-    for i, (px, py, a) in enumerate(spots):
-        if i % 2:
-            continue
-        tipx = px + (cx - px) * (0.34 + 0.58 * reach)
-        tipy = py + (cy - py) * (0.34 + 0.58 * reach)
-        midx = (px + tipx) * 0.5 - math.sin(a) * m * 0.07 * reach
-        midy = (py + tipy) * 0.5 + math.cos(a) * m * 0.07 * reach
-        w0 = m * 0.085 * (0.45 + 0.55 * reach)
-        left, right = [], []
-        for k in range(15):
-            f = k / 14.0
-            bx = (1 - f) ** 2 * px + 2 * (1 - f) * f * midx + f * f * tipx
-            by = (1 - f) ** 2 * py + 2 * (1 - f) * f * midy + f * f * tipy
-            wid = w0 * (1.0 - 0.80 * f)
-            nx, ny = -math.sin(a), math.cos(a)
-            left.append((bx + nx * wid, by + ny * wid))
-            right.append((bx - nx * wid, by - ny * wid))
-        poly = [(int(u), int(v)) for u, v in left + right[::-1]]
-        pygame.draw.polygon(surf, SHROUD_LO, poly)
-        pygame.draw.polygon(surf, (0, 0, 0), poly, max(1, int(m * 0.004)))
-        # the bone edge only on the leading side, thin -- a highlight, not a
-        # cartoon stroke around the whole shape
-        pygame.draw.lines(surf, dk_edge(0.55), False,
-                          [(int(u), int(v)) for u, v in left], 1)
-        if reach > 0.5:
-            _eye(surf, tipx, tipy, r=max(2, int(m * 0.008)))
-
-    # ---- HIS FACE, pressing in until it overflows.
-    rise = ease(0.26, 0.88)
-    mr = int(m * (0.11 + 1.05 * rise))
-    # drift so the LEFT socket walks toward frame centre as it grows: at full
-    # size the socket sits where the swallow needs it.
-    mx = cx + int(mr * 0.42 * rise)
-    my = cy + int((1.0 - rise) * H * 0.18) + int(mr * 0.10 * rise)
-    if rise > 0.01:
-        # blend stays PALE (canon: the pallid mask). A woodier blend was tried at
-        # card scale and the full-frame result read as a brown barrel, not a face.
-        # `ember=0` because draw_pallid_3d sizes its gold bloom as a FRACTION OF
-        # r, which at r~500 stacks into a solid yellow disc -- the cartoon-eyeball
-        # failure again, just bigger. The embers are drawn below at card scale.
-        draw_pallid_3d(surf, mx, my, mr, yaw=0.0,
-                       lean=5.0 * (1.0 - rise), gaze=(-0.25, 0.05),
-                       blend=0.34, seed=7, ember=0.0)
-        # Sit it back in the dark. A pale shell filling the frame is the
-        # brightest thing on screen and reads as daylight; the card wants it lit
-        # by the cuts, so the middle is pushed down and the rim keeps its light.
-        # A flat wash over the whole card, not a radial one centred on the mask:
-        # the radial version darkened the MIDDLE (between the sockets) and left
-        # the cheeks and brow -- the actually-bright parts -- untouched, so the
-        # face still read as lit by daylight.
-        shade = pygame.Surface((W, H))
-        shade.fill((3, 3, 5))
-        shade.set_alpha(int(120 * rise))
-        surf.blit(shade, (0, 0))
-        # THE EMBERS, at card scale: a pinpoint deep in each socket, not a lamp.
-        # Socket centres track draw_pallid_3d's own (Rx*0.46, -Ry*0.16).
-        for sgn in (-1, 1):
-            ex = mx + sgn * int(mr * 0.36)
-            ey = my - int(mr * 0.17)
-            # A PINPOINT. At 0.035*mr the bloom was a 34px radius and the
-            # additive layers stacked into a solid gold disc filling half the
-            # socket -- the cartoon-eyeball failure a third time. The socket is
-            # ~0.34*mr across; the ember has to be a fraction of THAT.
-            gr = max(2, int(mr * 0.012))
-            gl = pygame.Surface((gr * 8, gr * 8), pygame.SRCALPHA)
-            for rr, aa in ((3.0, 12), (1.9, 24), (1.0, 46)):
-                pygame.draw.circle(gl, (*_PMASK_GOLD, aa),
-                                   (gr * 4, gr * 4), max(1, int(gr * rr)))
-            surf.blit(gl, (ex - gr * 4, ey - gr * 4),
-                      special_flags=pygame.BLEND_RGB_ADD)
-            pygame.draw.circle(surf, _PMASK_HOT, (ex, ey), max(1, gr // 2))
-
-    # ---- THE SOCKET takes the frame. Out of his socket, not a screen fade: the
-    # black that ends the run is a place, not an absence.
-    # Later than before (0.80, not 0.72): the first cut spent a quarter of the
-    # card on an already-black screen.
-    swallow = ease(0.80, 1.0)
-    if swallow > 0.0:
-        sx = mx - int(mr * 0.36)
-        sy = my - int(mr * 0.17)
-        rr = int(mr * 0.34 + (max(W, H) * 1.35) * (swallow ** 2.0))
-        pit = pygame.Surface((W, H), pygame.SRCALPHA)
-        # JAGGED, not a compass circle: it is the carved socket opening, and a
-        # perfect ellipse read as a hole punched in the card.
-        _pmask_jag(pit, sx, sy, rr, rr * 0.95, (0, 0, 0), 3, n=22, jit=0.06)
-        surf.blit(pit, (0, 0))
-        # No gold cut under the pit: at this length its proportional lip became
-        # an 11px band and read as a gold ruler laid across the card. The socket
-        # rim the mask already draws is the gold that belongs here.
-
-
 def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
                         dispel=None, mask=None):
     """Feet at (x, y). `birth` 0..1 is the manifest ramp (parts build out
@@ -1663,6 +1525,12 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # THE APEX wears its host's deal plus 2-3 added parts (TODO #25). It rides in
     # the mask dict so an ordinary unit's call is untouched.
     extra = int(mask.get("extra", 0)) if bearer else 0
+    # The FACE has to be part of the cache identity or the expression freezes at
+    # whatever it was when the unit was first composed. Quantised so easing does
+    # not force a re-render every frame; there is only ever one apex, so the
+    # extra entries cost nothing.
+    face = ((round(mask.get("intent", 0.0), 2), round(mask.get("strain", 0.0), 2),
+             round(mask.get("skew", 0.0), 2)) if bearer else ())
     # Quantise the animation clock and cache on it -- see the cache note above.
     #
     # STAGGERED per unit. With one shared clock every unit's bucket rolled over
@@ -1685,7 +1553,7 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     # still spiked to 51.7ms. Holding a single entry per unit means the cache
     # never exceeds the unit count and nothing is ever mass-invalidated.
     ident = (seed, bearer, extra)
-    state = (round(b, 2), round(g, 2), bool(gaze), bucket)
+    state = (round(b, 2), round(g, 2), bool(gaze), bucket, face)
     hit = _UNIT_CACHE.get(ident)
     if hit is None or hit[0] != state:
         hit = (state, _compose_unit(seed, b, g, gaze,
@@ -1709,6 +1577,9 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
         mcx = x + mask.get("dx", int(sw * 0.04))
         mcy = topy + mask.get("my", int(sh * 0.30))
         draw_pallid_mask_part(surf, mcx, mcy, mr,
+                              intent=mask.get("intent", 0.0),
+                              strain=mask.get("strain", 0.0),
+                              skew=mask.get("skew", 0.0),
                               deploy=power, gaze=mask.get("gaze", (0.0, 0.3)),
                               blend=mask.get("blend", 0.5),
                               seed=mask.get("seed", 7),

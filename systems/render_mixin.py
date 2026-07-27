@@ -22,7 +22,6 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_revolver_held, draw_gun_fire,
                                draw_king_death, view_from_facing, KING_UNFOLD)
 from rendering.king_unfold import draw_unfold_catch
-from rendering.amalgam import draw_amalgam_catch
 from rendering.transform import draw_vessel_bloom
 from rendering.furniture import FURNITURE as _FURN_SPECS
 from systems.config import *        # noqa: F401,F403
@@ -1060,28 +1059,28 @@ class RenderMixin:
         self.screen.blit(card, (sx - R, sy - R))
 
     def _draw_death_screen(self):
-        """Render the active death card over everything. King = the furnace of
-        masks (sprites.draw_king_death), wordless; APEX = the amalgam family's own
-        catch (amalgam.draw_amalgam_catch: ringed gold cuts, limbs through them,
-        the half-mask overflowing the frame, a socket swallowing it), wordless and
-        deliberately NOT the King's card; cultist = a stark CAPTURED card over a
-        near-black wash."""
+        """Render the active death card over everything. King = the
+        furnace of masks (sprites.draw_king_death), wordless; APEX = a wordless
+        placeholder fade, deliberately NOT the King's card (TODO #25 owes it a
+        real animation); cultist = a stark CAPTURED card over a near-black
+        wash."""
         if self._death_kind == "apex":
             # THE APEX'S CATCH -- deliberately NOT the Unfolding's throat-swallow
             # (maintainer: "do not use the existing death card"). That art belongs
             # to the body the storm is replacing, so borrowing it would ship the
             # thing being retired as the new apex's signature.
             #
-            # Its OWN animation now, in the amalgam's vocabulary (cuts with the
-            # rift's gold rim, near-black flesh, the pallid half-mask): the room
-            # is taken, limbs come through, His face presses in, a socket
-            # dilates until it is everything. WORDLESS by design -- His deaths
+            # PLACEHOLDER, and honest about it: a wordless fade to near-black at
+            # the same 3.8s the King's death runs, so the pacing is already right
+            # when the real animation drops in. WORDLESS by design -- His deaths
             # carry no label (the cult's CAPTURED card is a different register),
-            # so there is no player-facing text here.
-            #
-            # _death_t runs 0..3.8 (threat_mixin._tick_death); the animation
-            # completes at 3.4 and holds black for the last beat.
-            draw_amalgam_catch(self.screen, min(1.0, self._death_t / 3.4))
+            # so there is no player-facing text here and none to write.
+            # The amalgam's own catch animation is on TODO #25.
+            w, h = self.screen.get_size()
+            wash = pygame.Surface((w, h))
+            wash.fill((5, 4, 6))
+            wash.set_alpha(min(255, int(self._death_t / 1.1 * 255)))
+            self.screen.blit(wash, (0, 0))
             return
         if self._death_kind == "king":
             if KING_UNFOLD:
@@ -1319,8 +1318,10 @@ class RenderMixin:
             px, py = self.player.x, self.player.y
             gx, gy = px - npc.x, py - npc.y
             gl = math.hypot(gx, gy) or 1.0
+            face = self.apex_face() or (0.0, 0.0, 0.0)
             return {"deploy": 1.0, "extra": getattr(npc, "_apex_extra", 2),
-                    "gaze": (gx / gl, gy / gl), "seed": 7}
+                    "gaze": (gx / gl, gy / gl), "seed": 7,
+                    "intent": face[0], "strain": face[1], "skew": face[2]}
 
         def _vis_alpha(wx, wy, exempt=False, king=False, smear=0.0):
             """0..255 alpha to draw a world thing at (wx, wy) under the sight

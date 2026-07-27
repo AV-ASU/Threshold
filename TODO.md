@@ -447,24 +447,18 @@ the hop is EARNED, not on a dwell.
   above sprint, so it cannot be outrun, which is the locked ratio (error class 9).
   Light will not stop it and hiding is not where it should be, so the answer is
   the axe or a round.
-- **The catch has its OWN death kind AND its own animation** (maintainer,
-  2026-07: "do not use the existing death card"). It briefly fired
+- **The catch has its OWN death kind, `"apex"` — NOT the King's card**
+  (maintainer, 2026-07: "do not use the existing death card"). It briefly fired
   `_trigger_death("king")`, which played THE UNFOLDING's throat-swallow: the art
   of the very body the storm exists to replace, shipped as the new apex's
-  signature. `_death_kind == "apex"` now draws
-  **`amalgam.draw_amalgam_catch`**, built from the family's own vocabulary and
-  nothing the Unfolding used — cuts wearing the rift's gold rim, near-black flesh
-  edged in bone, ember eyes, the pallid half-mask. Three beats over the King's
-  same 3.8s (the animation completes at 3.4 and holds black): the room is TAKEN
-  as cuts open in a ring, LIMBS come through them reaching in, then His face
-  presses in until it OVERFLOWS the frame and one socket dilates until it is
-  everything. Teardown clears the Mask + host (`_apex_end`) rather than the King;
-  sound stays His (`void_sting` + `low_pulse`). Wordless by design: His deaths
-  carry no label, so there is no player-facing text and none owed to
-  `DIALOGUE.md`. Guarded three ways in `tests/stealth.py` §20 — the kind is
-  `"apex"`, the card never calls `draw_unfold_catch`, and it DOES call the
-  amalgam catch *and* render real contrast (absence-only checks would have passed
-  for a blank screen, which is what the placeholder was).
+  signature. `"apex"` now draws a **wordless placeholder fade** at the King's
+  same 3.8s, so the pacing is already right when the real animation lands, and
+  its teardown clears the Mask + host (`_apex_end`) rather than the King. Sound
+  is still His (`void_sting` + `low_pulse`). Wordless is deliberate: His deaths
+  carry no label, so there is no player-facing text here and none owed to
+  `DIALOGUE.md`. Guarded — `tests/stealth.py` §20 asserts the kind is `"apex"`
+  AND that drawing that card never calls `draw_unfold_catch` (proven: borrowing
+  the King's kind again produces 4 calls).
 - **ONE IMPOSSIBLE THING AT A TIME:** while a host is worn, `_tick_king_roam`
   stands the roaming Unfolding down and clears him from the room. Gated on a host
   actually being borne, not on a storm merely being up, so nothing changes for the
@@ -476,11 +470,66 @@ the hop is EARNED, not on a dwell.
   `APEX_CATCH_DIST`; and the King stand-down check asserted `_king is None` after
   a bare tick, which was true anyway, and now puts a King in the room first.
 
-**OPEN, in build order:** (1) **retire THE UNFOLDING** and rewire the roaming
-King's own card / the Carcosa cutscene (flow-guarded); the apex no longer touches
-that art at all and now has a catch animation of its own, so what remains is the
-King path itself — and `draw_amalgam_catch` is the reference for what replaces
-it. (2) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each
+**THE APEX IS THE ENTITY THAT GETS SPECIAL TREATMENT (maintainer, 2026-07).**
+"As the main threat this entity is going to get special treatment and care. It
+needs to be scary." A look pass (`tools/preview_apex.py`) found three things: the
+BODY varies across host seeds while the FACE is identical in every one, so the
+part that should feel like a specific thing looking at you is the part that never
+changes; the Mask had no expression vocabulary at all; and at play size the only
+thing separating an apex from its own host is the crown, which reads as a ring of
+gold sparkles. Also, as built it had ONE behaviour -- walk straight at a constant
+speed -- with no moment of noticing you.
+
+**LANDED — THE FACE.** `draw_pallid_3d` takes `intent` / `strain` / `skew`
+(0..1), driven from apex state by `_apex_face` and eased at `APEX_FACE_EASE`.
+The rule it is built on: **a carved object must never EMOTE** -- a mask that
+smiles is a cartoon -- so what it does is WORK, the timber moving in ways timber
+cannot. With no mouth and no nose (NARRATIVE §6a) the whole vocabulary is:
+- `intent` -- it HAS you. Sockets narrow to a slot, embers steady and brighten.
+  Climbs inside `APEX_FOCUS_RANGE`; drops to a floor while you are hidden.
+- `strain` -- it is close enough to take you. The centre seam gaps open and the
+  crack widens and RUNS. Only inside `APEX_STRAIN_RANGE`.
+- `skew` -- the two sockets stop agreeing, wandering on its own clock with a
+  per-host offset so no two apexes wear the same wrongness. A carving is
+  symmetrical by construction, so asymmetry reads as the object being wrong
+  rather than as a face pulling a face.
+Driven by STATE, never a loop (a loop is decoration; this is a tell the player
+learns to read), and EASED so it never snaps -- expression that changes on one
+frame reads as a sprite swap. The compose cache keys on the face or it freezes.
+Guarded: `tests/stealth.py` §20 (slack far off, narrows closing, comes apart at
+the throat, eases rather than snaps, settles at a held distance rather than
+cycling, and the skew never settles).
+
+**NEXT, approved by the maintainer:**
+- **THE ONE TELL — a roar or a screech.** A single sound that means *it has
+  decided on you*: fires once, never lies, never fires for anything else. Right
+  now everything about the apex is continuous, so there is no before-and-after,
+  and horror needs the moment the rules change. The natural trigger already
+  exists: the frame `intent` first crosses high (`_apex_face`). One-shot per
+  host, so re-hosting earns a new one.
+- **A DISTINGUISHING FEATURE beyond the crown.** The crown is currently doing the
+  entire "this one is different" job and at play size it is a sparkle ring. The
+  maintainer's steer: **reactive limbs that try to GRAB the player** -- limbs that
+  react to your position rather than idling, reaching as it closes. That also
+  gives the catch a telegraph it does not have (contact is presently instant).
+  The crown could improve alongside or be replaced by this.
+- Movement ideas discussed and NOT yet chosen: it uses APERTURES instead of
+  pathing (sink and rise past a wall rather than walk around it -- the migration
+  machinery already exists); STILLNESS instead of idling (perfectly motionless,
+  facing you, at the edge of the light); speed tied to whether you are LOOKING at
+  it (inverts the family's own gaze rule, so the player's trained instinct
+  becomes a cost); and arriving ALREADY THERE rather than walking in.
+
+**OPEN, in build order:** (1) **THE AMALGAM'S CATCH ANIMATION** — the apex's
+death card is a placeholder wordless fade right now, on purpose. It needs its own
+art, built from the amalgam grammar rather than the Unfolding's: the parts, the
+gold cuts, the Mask coming in. Hooked up and timed already (`_death_kind ==
+"apex"`, 3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing.
+Land it through a VISION look-pass, and note the King's death is wordless — no
+label, no text to write. (2) **retire THE UNFOLDING** and rewire the roaming
+King's own card / the Carcosa cutscene (flow-guarded) onto the storm; the apex no
+longer touches that art at all, so what remains is the King path itself;
+(3) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each
 piece lands — the docs still describe THE UNFOLDING because that is what SHIPS
 until (1). Land each visual beat through a VISION look-pass.
 

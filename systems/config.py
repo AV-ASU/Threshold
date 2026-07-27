@@ -474,6 +474,18 @@ KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
 # which is the loop the maintainer asked for ("it makes the loop more fun if the
 # player can do something to survive").
 APEX_VIS_GATE = 0.55          # visibility at/above which the Mask comes for you
+# THE FACE (TODO #25). A carved object must never EMOTE -- a mask that smiles is
+# a cartoon -- so what it does is WORK: the timber moving in ways timber cannot.
+# There is no mouth and no nose (NARRATIVE 6a), so the vocabulary is the sockets,
+# the embers, the seam and the crack. Driven by STATE, never a loop: on a loop it
+# is decoration, tied to what the thing is DOING it becomes a threat display the
+# player learns to read.
+APEX_FOCUS_RANGE = 340.0      # px: inside this it has you, and the sockets narrow
+APEX_STRAIN_RANGE = 150.0     # px: inside this the face starts coming apart
+APEX_FACE_EASE = 2.6          # per second: how fast expression travels (fluid,
+                              # never a snap -- a face that changes on one frame
+                              # reads as a sprite swap)
+APEX_SKEW_RATE = 0.37         # rad/s of the slow disagreement between sockets
 APEX_SEEK_SPEED = 46.0        # px/s the free-floating Mask drifts to its host
 APEX_MIGRATE_CD = 2.2         # s before it takes a new host after losing one
 APEX_EXTRA_LO, APEX_EXTRA_HI = 2, 3     # parts added to the host's own deal

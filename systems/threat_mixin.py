@@ -981,6 +981,52 @@ class ThreatMixin:
         ap["state"] = "borne"
         ap["seed"] = seed
 
+    def _apex_face(self, dt):
+        """Ease the Mask's expression toward what the apex is currently DOING.
+
+        Three channels, all 0..1 (`rendering.amalgam.draw_pallid_3d`):
+          intent  it has you -- sockets narrow, embers steady and brighten
+          strain  it is close enough to take you -- the seam gaps, the crack runs
+          skew    the two sockets stop agreeing
+
+        Eased rather than set, because fluid is the whole point: expression that
+        snaps between values reads as a sprite swap, not as a face. And driven by
+        STATE rather than a clock, so the player can learn to read it -- a face on
+        a loop is decoration; a face that narrows when it acquires you is a tell.
+        """
+        ap = getattr(self, "_apex", None)
+        if not ap:
+            return (0.0, 0.0, 0.0)
+        f = ap.setdefault("face", {"intent": 0.0, "strain": 0.0, "t": 0.0})
+        host = ap.get("host")
+        if host is None:
+            want_i = want_s = 0.0        # driven off; the face slackens
+        else:
+            d = math.hypot(host.x - self.player.x, host.y - self.player.y)
+            seen = self.player.hidden is None
+            want_i = (max(0.0, min(1.0, 1.0 - d / APEX_FOCUS_RANGE))
+                      if seen else 0.15)
+            want_s = max(0.0, min(1.0, 1.0 - d / APEX_STRAIN_RANGE))
+        k = min(1.0, dt * APEX_FACE_EASE)
+        f["intent"] += (want_i - f["intent"]) * k
+        f["strain"] += (want_s - f["strain"]) * k
+        f["t"] += dt
+        # The disagreement wanders on its own and never repeats the same way for
+        # two hosts (the seed offset), so no two apexes wear the same wrongness.
+        ph = f["t"] * APEX_SKEW_RATE + (ap.get("seed", 0) % 17) * 0.41
+        skew = (math.sin(ph) * 0.55 + math.sin(ph * 0.37) * 0.45) * 0.5
+        return (f["intent"], f["strain"], skew)
+
+    def apex_face(self):
+        """The current (intent, strain, skew) for the draw, or None."""
+        ap = getattr(self, "_apex", None)
+        if not ap or "face" not in ap:
+            return None
+        f = ap["face"]
+        ph = f["t"] * APEX_SKEW_RATE + (ap.get("seed", 0) % 17) * 0.41
+        skew = (math.sin(ph) * 0.55 + math.sin(ph * 0.37) * 0.45) * 0.5
+        return (f["intent"], f["strain"], skew)
+
     def _tick_apex(self, dt):
         """Drive the Mask: arrive, seek a host, wear it, and catch."""
         if self.scene is None or self.player is None:
@@ -998,6 +1044,7 @@ class ThreatMixin:
                                "x": self.player.x + math.cos(ang) * r,
                                "y": self.player.y + math.sin(ang) * r,
                                "host": None, "seed": 0}
+        self._apex_face(dt)
         if ap["state"] == "borne":
             host = ap.get("host")
             if host is None or host not in self.scene.npcs:
