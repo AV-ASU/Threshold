@@ -383,6 +383,39 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- Canon reconciled for the storm, and one real conflict found in
+  the doing.** The storm and the apex had been built as systems and documented
+  only in `DESIGN.md`/`TODO.md`; `NARRATIVE.md` still described His gaze as the
+  original Watchers and nothing else. Reconciling it turned up a contradiction
+  rather than a gap: §2 locks "the completed rite is the one thing that lets Him
+  extend a single solid object, the Mask, no more", and §6a puts that one object
+  on the cult's altar until the PI lifts it in the Sign Chamber -- so an apex
+  floating a Mask in on the surface at 3 evidence was a SECOND solid object, in
+  a fiction whose stated discipline is keeping the impossible count at one.
+  Resolved with machinery §2 already had rather than a new rule: the storm's
+  face is a **SLICE** of Him, the same cross-section as "the drifting masks in
+  fire are a slice of Him" and the King-catch furnace -- His face without being
+  a thing anyone could pick up. It is strictly tighter than what was there,
+  because every apex mechanic then falls out of existing canon instead of
+  needing its own: one bearer at a time because His attention has one focus;
+  light does nothing to it because light closes a *cut* and a cross-section is
+  not one; the axe takes away the body it was using, never the face; and it
+  withdraws when the PI stops being worth looking at.
+  A comment in `rendering/amalgam.py` had already made the mistake outright
+  ("His face made an OBJECT (NARRATIVE 6a)") and is corrected.
+  Also added to NARRATIVE: a §4 cast row for the shadows as FICTION (the two
+  skins, the gaps that make an amalgam read as assembled rather than born, the
+  dark as His door and never your cover, the flood at enough understanding, and
+  that ordinary units cannot touch you -- they are attention, not hands); a §8
+  note that the King's catch is ONE pursuit arriving in two shapes, with the
+  bearer's card flagged as the unmade placeholder it is; and four invariants.
+  Guarded by `tests/conventions.py` check 12, which fails if the storm/apex path
+  ever references the `pallid_mask` ITEM key -- the mechanical tell that the
+  slice and the keystone have been merged back into one thing. Prose could not
+  hold this distinction (both are drawn by the same renderer and both get called
+  "the Mask" in conversation), which is exactly the case the make-the-check rule
+  exists for.
+
 - **2026-07 -- The apex gets a SCREECH and a REACH (TODO #25; maintainer: "I
   like your one tell idea, like a roar or screech more like... another
   distinguishing feature like limbs that are more reactive and try and grab the

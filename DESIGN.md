@@ -242,7 +242,11 @@ its head) and pings the cult to **investigate the body**, and the body
   units pass the plain cone, so the flood was invisible and "they ring the light"
   was unreadable. Guarded, `tests/stealth.py` §19.
   **THE APEX is the storm's one real threat** (TODO #25, 2026-07): the Mask that
-  WEARS a unit. It is Game state, not scene state (`Game._apex`, like `_king`) --
+  WEARS a unit. **Not the keystone** -- the one Mask OBJECT is on the cult's
+  altar until the PI lifts it, and the face riding a shadow here is a SLICE of
+  Him (NARRATIVE §6a; guarded, `tests/conventions.py` check 12, which fails if
+  this path ever touches the `pallid_mask` item).
+  It is Game state, not scene state (`Game._apex`, like `_king`) --
   one bearer storm-wide is a fence and the wave is cleared on every load, so the
   Mask projects a host into whatever room you are in. It arrives at
   `APEX_VIS_GATE` visibility and withdraws below it, FLOATS to the nearest unit,
@@ -279,8 +283,10 @@ its head) and pings the cult to **investigate the body**, and the body
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
   high-visibility trigger is retired.) **The gaze wears two skins (the
-  shadow family):** a manifestation arrives as the OG shroud Watcher or,
-  with `AMALGAM_CHANCE`, as an **AMALGAM** (`rendering/amalgam.py`) -- a
+  shadow family), and the AMALGAM is now the ordinary one:** `AMALGAM_CHANCE`
+  is 0.9, so the OG shroud Watcher is the rare spawn the maintainer asked to
+  keep rather than the default. A manifestation is an
+  **AMALGAM** (`rendering/amalgam.py`) -- a
   seeded assembly of 3-5 parts from a 22-part library (44 with MIRRORING --
   every part carries a flip flag, so a limb on the left is not the same
   silhouette as the same limb on the right), each part emerging

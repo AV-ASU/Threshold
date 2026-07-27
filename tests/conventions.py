@@ -488,6 +488,40 @@ def _amalgam_stagger():
         return "  UNIT_ANIM_HZ of %s is not a sane refresh rate" % (UNIT_ANIM_HZ,)
 
 
+# ------------------------------- 12. the storm's Mask is not the keystone item
+# THE RULE (NARRATIVE §2, §6a): there is exactly ONE Pallid Mask OBJECT and it
+# sits on the cult's altar until the PI lifts it, because the completed rite
+# buys Him one solid thing crossing into the flat world and no more. The face
+# that rides a shadow in the storm is a SLICE of Him -- His face without being a
+# thing anyone could pick up -- and that distinction is the only reason the apex
+# does not add a second impossible thing to a fiction whose whole discipline is
+# keeping the count at one.
+#
+# It is also exactly the kind of fact that rots quietly: both are drawn by the
+# same renderer and called "the Mask" in conversation, and a code comment
+# already claimed the storm's one was "His face made an OBJECT (NARRATIVE 6a)".
+# Prose cannot hold this. What CAN be checked is the tell that the two have been
+# confused in code: the storm/apex path reaching for the `pallid_mask` ITEM key.
+# The moment the apex grants it, consumes it, or gates on it, they are one thing
+# again and the canon is broken.
+@check("the storm/apex path never touches the pallid_mask item")
+def _storm_mask_not_item():
+    offenders = []
+    for rel in ("rendering/amalgam.py", "systems/threat_mixin.py",
+                "entities/npc.py"):
+        path = os.path.join(_ROOT, rel)
+        for n, line in enumerate(open(path, encoding="utf-8"), 1):
+            if '"pallid_mask"' in line or "'pallid_mask'" in line:
+                offenders.append("    %s:%d  %s" % (rel, n, line.strip()[:72]))
+    if offenders:
+        return ("  the storm/apex code reaches for the pallid_mask ITEM key:\n"
+                + "\n".join(offenders) + "\n"
+                "  The keystone is ONE object on the cult's altar; the face a\n"
+                "  shadow wears is a SLICE of Him, not a thing to be held.\n"
+                "  See NARRATIVE.md §6a. If the apex now legitimately needs\n"
+                "  the item, that is a CANON change -- make it there first.")
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

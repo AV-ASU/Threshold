@@ -543,9 +543,31 @@ Land it through a VISION look-pass, and note the King's death is wordless — no
 label, no text to write. (2) **retire THE UNFOLDING** and rewire the roaming
 King's own card / the Carcosa cutscene (flow-guarded) onto the storm; the apex no
 longer touches that art at all, so what remains is the King path itself;
-(3) reconcile canon (NARRATIVE §4/§8 the King, DESIGN §1 the apex) ONLY as each
-piece lands — the docs still describe THE UNFOLDING because that is what SHIPS
-until (1). Land each visual beat through a VISION look-pass.
+(3) the LAST of the canon reconciliation, which is now only the Unfolding's own
+half: NARRATIVE still describes the walking King as the thing that reaches you
+because that is what SHIPS until (2), so §8's "one pursuit, two shapes" collapses
+back to one shape when the Unfolding retires. Land each visual beat through a
+VISION look-pass.
+
+**Canon reconciled for the storm's half (2026-07).** NARRATIVE now carries the
+shadows as fiction rather than as a system: §4 gains a cast row for His gaze (the
+two skins, the gaps that make an amalgam read as assembled, the dark as His door
+and not your cover, the flood at enough understanding, and that ordinary units
+cannot touch you); §8 states the King's catch as ONE pursuit arriving in two
+shapes, with the bearer's card flagged as an unmade placeholder. **The conflict
+that had to be resolved rather than papered over:** §2 locks "the rite lets Him
+extend a single solid object, the Mask, no more" and §6a puts that one object on
+the cult's altar until the PI lifts it — so an apex wearing a Mask on the surface
+at ev3 was a SECOND one, which breaks the impossible-count discipline the whole
+fiction rests on. Resolution, using machinery §2 already had: the storm's face is
+a **SLICE** of Him, the same cross-section as the drifting masks in fire, not an
+object. It costs no new rule and every apex mechanic falls out of it (one at a
+time = one focus; light does nothing = light closes a cut, not a cross-section;
+the axe takes the body, not the face; it leaves when you stop being worth
+looking at). Guarded: `tests/conventions.py` check 12 fails if the storm/apex
+path ever reaches for the `pallid_mask` item, which is the tell that the two have
+been merged again. A code comment in `rendering/amalgam.py` had already made
+exactly that mistake and is corrected.
 
 **The storm CUTS wear the rift's gold rim (approved 2026-07, option (a)+gold).**
 The amalgam apertures should read as the same portal family as the fold/King

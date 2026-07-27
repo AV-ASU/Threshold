@@ -462,8 +462,9 @@ it renders the procedural sprites to a labelled PNG strip.
     from parts (`draw_amalgam_sprite(surf,x,y,seed,gaze,birth,dispel,mask)`):
     a seeded 3-5 part deal from a 22-part library (44 with the per-part
     mirror flag), each part emerging
-    from its own free-form cut; `AMALGAM_CHANCE` of Watcher spawns wear
-    this skin, behavior unchanged (DESIGN.md §1). Cuts wear the rift's GOLD
+    from its own free-form cut; `AMALGAM_CHANCE` (0.9) of Watcher spawns wear
+    this skin, so it is the ORDINARY shadow and the shroud Watcher is the rare
+    one; behavior unchanged (DESIGN.md §1). Cuts wear the rift's GOLD
     (`CUT_RIM`), and each part is stroked with a
     one-pixel bone **outline** (`AMALGAM_EDGE`) so a black creature stays
     legible in a black room (a blurred glow was tried and cut -- it read as a
@@ -658,7 +659,9 @@ section is the CODE MAP only — where each system lives:
   ignore the sight cone or the flood is invisible), `STORM_*` config. Cap lifts
   to `STORM_MAX`; every dispel still works. **THE APEX** (the Mask that wears a
   unit) is `Game._apex` + `_tick_apex`/`_apex_take`/`_apex_lose_host`
-  (threat_mixin) + `npc._apex_tick`; `APEX_*` config. It ignores light entirely,
+  (threat_mixin) + `npc._apex_tick`; `APEX_*` config. **Its Mask is NOT the
+  `pallid_mask` keystone** -- there is one Mask object and it is on the altar;
+  this is a SLICE of Him (NARRATIVE §6a, conventions check 12). It ignores light entirely,
   runs at `KING_ROAM_SPEED`, wears an EXPRESSIVE Mask (`intent`/`strain`/`skew`
   eased by `_apex_face`; a carved thing WORKS, it never emotes), and the axe/gun kill its HOST not the Mask (hooked in
   `_dispel_watcher`); its catch fires its OWN

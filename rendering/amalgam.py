@@ -961,8 +961,16 @@ def assemble(seed, extra=0):
 
 
 # ===================== THE PALLID MASK -- the 18th part ======================
-# His face made an OBJECT (NARRATIVE 6a), carried in the storm as a part like
-# any other: it surfaces from its own free-form CUT, is HELD by the flesh at
+# His FACE, and NOT the keystone object. Canon: there is exactly one Mask object
+# and it is on the cult's altar until the PI lifts it, because the rite buys Him
+# one solid thing crossing over and no more (NARRATIVE §2, §6a). What rides a
+# shadow here is a SLICE -- the same cross-section of Him as the drifting masks
+# in fire -- so it is His face without being a thing anyone could pick up. Same
+# carving, same renderer as the keystone's reference art; different kind of
+# thing. Do not describe this one as the object.
+#
+# It is carried in the storm as a part like any other: it surfaces from its own
+# free-form CUT, is HELD by the flesh at
 # the rim, and only ONE exists storm-wide at a time (the migrating bearer,
 # driven by the storm state -- NEVER dealt by assemble(), so every ordinary
 # amalgam is untouched). It is a REAL 3D OBJECT: `yaw` turns it a full 360, His
