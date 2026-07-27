@@ -397,11 +397,10 @@ impossible count stays at one.
 **Maintainer idea (2026-07); the design conversation settled the MODEL, but it
 is NOT yet a committed canon decision.** Dissolve one-square Brimley into
 per-building scenes connected by a dark liminal IN-BETWEEN, so the fold is FELT
-moment to moment (you get lost) rather than told. This OVERTURNS the current
-preserve (NARRATIVE §5 / #4: "Brimley stays ONE square scene") and unparks the
-reshape (#8) in a new, engine-aligned form (a **scene graph + a generator**, not
-the parked heightfield / organic reshape). Reconcile NARRATIVE §5 + DESIGN §7
-ONLY if/when the restructure is committed and wired.
+moment to moment (you get lost) rather than told. The restructure IS committed
+and wired: the old "Brimley stays ONE square scene" preserve is gone, the town
+is the yard/street string (§15), and NARRATIVE §5 + DESIGN §7 are reconciled to
+it.
 
 **The model (locked in conversation):**
 - Three layers: **interior -> yard -> safe path <-> lost spaces**. Buildings hang
@@ -429,40 +428,20 @@ slice, not the restructure.
 **The SAFE PATH layer landed** (`DESIGN.md` §14, `scenes/safe_path.py`): the
 I / L / T shape vocabulary, a five-lane road in a nine-tile corridor, the
 maintainer's own lamp pattern, and the river both seen and crossed. **Every
-road in the game is now on it** -- `country_lane` (T), `river_road` (I),
-`river_bend` (L) and `gravel_road_north` (T) are path scenes, and
+road in the game is on it**, and the town's own streets are path scenes too;
 `arrival_road` keeps its treadmill/render-band machinery but took the same
 cross-section and lamps.
 
-**THE YARD LAYER IS IN PROGRESS** (`DESIGN.md` §15, `scenes/yards.py`).
-**Maintainer, settling the shape:** *"It's safe path -> yard -> house. Each
-building gets its own yard scene. They do not share."* A yard is a SCENE with
-one building in it, not dressed ground inside a bigger map -- `lodge_yard` and
-`backwoods_cabin` were already that shape.
+**THE YARD LAYER LANDED, AND BRIMLEY THE SCENE IS RETIRED** (`DESIGN.md`
+§15, `scenes/yards.py`; the story is in `CHANGELOG.md`). The town is the
+maintainer's *"string of house islands in a sea of spatial manipulation"*:
+eleven yards on five streets, one household each, every resident inside their
+own building, and no town map at all. The one 60x60 scene is gone from the
+registry and the tree, and a `flow.py` guard asserts it cannot come back.
 
-**Brimley is kept exactly as it is until the whole town has moved**, then
-retired in one piece. Nothing is deleted from it on the way; the yard scenes
-are built beside it and both routes stay live (an interior gets a SECOND door
-pointing at its yard).
-
-**Done:** the vocabulary and its props; `build_yard_scene`; the network grown
-to carry yards (`gravel_road_north` T -> X, and `store_row`, the first of the
-town's streets); and **`shop_yard`** end to end as the pattern -- 
-`store_row -> shop_yard -> shop`.
-
-**Open:** the remaining nine yards (church, barn, schoolhouse, sheriff's
-office, farmhouse, Toby's, and one each for Mrs. Calder, Royce and Garrick),
-each with its own street arm; a street grows L -> T -> X as households land on
-it. Then, once every building has moved: retire Brimley, and reconcile
-NARRATIVE §5 / DESIGN §7, which still describe the one-square town.
-
-A yard's non-road edges ARE §13 mouths now, biome derived from the verge, so
-walking off the back of a lot in the dark drops you into the in-between.
-
-Smaller, still open: the three new households have no INTERIORS (deliberate,
-but the obvious next ask); and the schoolhouse's lit windows with a figure
-behind the glass predate the layer and read oddly beside a yard that says
-nobody is home.
+**Still open here:** the three new households (Mrs. Calder, Royce, Garrick)
+have small one-room interiors, but no other yard building gained interior
+work. Nothing needs it, and it is the obvious next ask.
 
 **OPEN, in build order:** (1) the
 rest of the **dark manipulation layer**: the observer-dependent reshuffle
@@ -472,10 +451,7 @@ not; (2) **per-chunk** landmark/exit generation + a silent **re-origin** for
 a truly endless walk (today: a large finite bound + spawn-at-centre); (3) the
 **ev-warp** variants (the field swaps for a longer / warped / more-hostile
 version with evidence) + richer linear field features (fences, ruined
-buildings you can't enter); (4) IF the maintainer commits: the full Brimley **re-home** (the
-fences: the car, the well, the refuges, the descent chain) + the canon
-rewrite. **THE DECISION to restructure Brimley is NOT yet made** -- the
-mouth is opt-in per scene precisely so judging the feel costs no canon.
+buildings you can't enter).
 
 **Fences:** the safe path is never tricked; the lost space is always escapable
 (the exit light stays in the 6-20 band); a THREAT never blinks out via the
