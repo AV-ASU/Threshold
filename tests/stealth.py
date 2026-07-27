@@ -644,14 +644,19 @@ def main():
     check(n._cult_state == "chase",
           "apex: _force_chase bypasses suspicion and cover entirely")
 
-    # --- 8. darkness is concealment + the hide-exit beat -----------------
-    # Pillar 2A's "shadow" cover: in a DARK scene an unlit player
-    # (flashlight off, outside every light pool) reads at
-    # SUS_CONCEAL_DARK -- leaky like corn, never stacking, ignored by
-    # apex eyes. And leaving an enclosed hide takes HIDE_EXIT_BEAT of
+    # --- 8. darkness is NOT concealment + the hide-exit beat --------------
+    # Maintainer ruling, 2026-07: "darkness shouldn't hide you AT ALL." The
+    # dark belongs to Him -- it is the condition His things need to open, so
+    # hiding in it was hiding inside the threat. Cover is what you put BETWEEN
+    # yourself and an eye: corn, a hide, a wall. The old SUS_CONCEAL_DARK
+    # shadow-cover pass is CUT, and this locks it staying cut in the darkest
+    # room in the game. Leaving an enclosed hide still takes HIDE_EXIT_BEAT of
     # rooted vulnerability (the deferred exit-takes-a-beat window).
     from systems.stealth import concealment_factor as _cf
-    from systems.config import SUS_CONCEAL_DARK, HIDE_EXIT_BEAT
+    from systems.config import HIDE_EXIT_BEAT, SUS_CONCEAL_CORN
+    import systems.config as _cfg
+    check(not hasattr(_cfg, "SUS_CONCEAL_DARK"),
+          "dark: SUS_CONCEAL_DARK is gone from config (no shadow cover)")
     g = new_game()
     g.load_scene_now("the_cells", "default")
     tick(g, 10)
@@ -662,23 +667,18 @@ def main():
     if g.scene.lit_at(p.x, p.y):
         p.x, p.y = 4 * TILE + 16, 2 * TILE + 16
     tick(g, 2)
-    check(getattr(p, "_in_dark", False)
-          and abs(_cf(p) - SUS_CONCEAL_DARK) < 1e-9,
-          "dark: the unlit gloom conceals at SUS_CONCEAL_DARK")
-    p.inventory.add("flashlight", 1)
-    g.flashlight_on = True
-    tick(g, 2)
-    check(not getattr(p, "_in_dark", False) and _cf(p) == 1.0,
-          "dark: a lit flashlight burns the cover away")
-    g.flashlight_on = False
+    assert not g.scene.lit_at(p.x, p.y) and not g._flashlight_lit()
+    check(_cf(p) == 1.0,
+          "dark: standing unlit in the deepest dark conceals NOTHING")
+    # ...and no stray _in_dark stamp survives to be read by a future eye.
+    check(not getattr(p, "_in_dark", False),
+          "dark: nothing stamps player._in_dark anymore")
+    p.hidden = "corn"
+    check(abs(_cf(p) - SUS_CONCEAL_CORN) < 1e-9,
+          "dark: real cover still works in the dark (corn is unaffected)")
     p.hidden = "under"
     check(_cf(p) == 0.0, "dark: an enclosed hide still zeroes the score")
     p.hidden = None
-    g2 = new_game()
-    g2.load_scene_now("store_row", "default")
-    tick(g2, 10)
-    check(not getattr(g2.player, "_in_dark", False),
-          "dark: the daylit surface never grants it")
 
     g = new_game()
     g.load_scene_now("works_cistern", "default")
@@ -816,8 +816,9 @@ def main():
           and "effigy_grove" in WATCHER_OPEN_SCENES
           and "works_sign" in WATCHER_OPEN_SCENES,
           "watchers: the open sky and the deep stay in it")
-    # Inside the shop, standing in the DARK (unlit, flashlight off): the gaze
-    # opens now.
+    # Inside the shop, out of cover: the gaze opens. (The player stands at a
+    # dark spot because the SPAWN rule needs one in view -- not because being
+    # unlit is what exposes you. Being out of cover is.)
     g = new_game()
     g.load_scene_now("shop", "default")
     tick(g, 30)
@@ -851,15 +852,29 @@ def main():
     check(len(g._watchers) == n0,
           "watchers: no dark spot with sight of you = nothing opens "
           "(the sealed pantry)")
-    # Step into a light POOL: exposure drops, so the wave stops driving
-    # visibility (the hold releases).
+    # Step into a light POOL: it changes NOTHING about the hold (maintainer
+    # ruling, 2026-07 -- "Watchers should be able to gaze at you while you're
+    # standing in the light, that's the whole point of them"). A lamp is not a
+    # safe square; the gaze holds you in it. This is the check that fails if
+    # anyone re-adds light-as-cover.
     lit_x, lit_y = 12 * TILE + 16, 9 * TILE + 16   # inside the hooded fan
     assert g.scene.lit_at(lit_x, lit_y)
     g.player.x, g.player.y = lit_x, lit_y
     g.player.hidden = None
     g._tick_watchers(1 / 30.0)
+    check(g._watcher_gaze == float(len(g._watchers)) and g._watcher_gaze > 0.0,
+          "watchers: a light pool does NOT drop the gaze hold (it sees you)")
+    # And the wave keeps BUILDING while you stand in the light: the timer runs.
+    t_before = g._watcher_clone_t
+    g._tick_watchers(1 / 30.0)
+    check(g._watcher_clone_t < t_before,
+          "watchers: the spawn timer keeps running while you stand in light")
+    # Real cover is the only thing that stops it.
+    g.player.hidden = "under"
+    g._tick_watchers(1 / 30.0)
     check(g._watcher_gaze == 0.0,
-          "watchers: standing in a light pool drops the gaze hold (cover)")
+          "watchers: an enclosed hide (real cover) drops the hold")
+    g.player.hidden = None
     # Light BURNS a Watcher: one caught IN a pool dissolves fast.
     g._cursed = True
     g._spawn_watcher()
@@ -1405,6 +1420,726 @@ def main():
     check("store_row" in STORM_STAGE_SCENES
           and "shop_yard" in STORM_STAGE_SCENES,
           "storm stage: the town's streets and yards are staged surface")
+
+    # The storm dark is not a mechanic the PLAYER gets to use (maintainer
+    # ruling, 2026-07: "darkness shouldn't hide you AT ALL"). It sets the
+    # stage the storm will fill; it never conceals, and standing in a lamp
+    # pool out here does not buy safety from the gaze either.
+    from systems.stealth import concealment_factor
+    g = new_game()
+    g.load_scene_now("country_lane", "default")
+    tick(g, 30)
+    g.save.set_arg("evidence", [{"name": f"w{i}"} for i in range(3)])
+    check(g.scene_gloom() > 0,
+          "storm dark: by stage 3 the lane is genuinely dark")
+    sc = g.scene
+    spots = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(sc.h) for tx in range(sc.w)
+             if not sc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    lit_x, lit_y = next(p for p in spots if sc.lit_at(*p))
+    dark_x, dark_y = next(p for p in spots if not sc.lit_at(*p))
+    # NOT COVER: full night, unlit, flashlight off -- conceals nothing.
+    g.player.x, g.player.y = dark_x, dark_y
+    g.player.hidden = None
+    g.flashlight_on = False
+    tick(g, 2)
+    check(concealment_factor(g.player) == 1.0,
+          "storm dark: the outdoor night conceals nothing from the cult")
+    # NOT A REFUGE EITHER: a yard-light pool does not stop the gaze.
+    for _ in range(int((WATCHER_GRACE + WATCHER_SPAWN_BASE + 4) * 30)):
+        g.player.x, g.player.y = lit_x, lit_y
+        g.player.hidden = None
+        g._tick_watchers(1 / 30.0)
+        if g._watchers:
+            break
+    check(bool(g._watchers),
+          "storm dark: Watchers open on you while you stand in a lamp pool")
+    check(g._watcher_gaze > 0.0,
+          "storm dark: and they HOLD you there (light is not cover)")
+
+    # ---- §19: THE STORM as a MODE of the Watcher wave (TODO #25) ----------
+    # Locks the maintainer's spec: Watchers do NOT stop at the gate, they BECOME
+    # the storm; the cap lifts; units WALK at the player; light is the only
+    # thing that stops them; they cannot touch or kill; and every dispel still
+    # works. Out of storm, nothing changes.
+    from systems.config import (STORM_MAX, STORM_GATE_EVIDENCE, STORM_UNIT_SPEED,
+                                AMALGAM_CHANCE, WATCHER_MAX)
+    print("[19] storm: one wave, two modes -- cap, approach, light, dispel")
+    check(AMALGAM_CHANCE >= 0.85,
+          "storm: the amalgam is the default skin now, the shroud is rare")
+    g = new_game()
+    g.load_scene_now("well_passage", "default")
+    tick(g, 20)
+    # Below the gate: the ordinary wave, capped, standing still.
+    g.save.set_arg("evidence", [{"name": f"w{i}"}
+                                for i in range(STORM_GATE_EVIDENCE - 1)])
+    check(not g._storm_active(),
+          "storm: below the gate there is no storm")
+    # At the gate, in a dark room: the storm is up.
+    g.save.set_arg("evidence", [{"name": f"w{i}"}
+                               for i in range(STORM_GATE_EVIDENCE)])
+    check(g._storm_active() and g.scene_gloom() > 0,
+          "storm: at the gate, in the dark, a storm is up")
+    check(STORM_MAX > WATCHER_MAX,
+          "storm: the cap lifts above the Watcher max")
+    # ...and the wave ACTUALLY uses it. The constant comparison above cannot
+    # fail on a regression -- pinning `cap = WATCHER_MAX` in _tick_watchers left
+    # it green -- so drive the real wave past the old ceiling.
+    gc = new_game()
+    gc.load_scene_now("well_passage", "default")
+    tick(gc, 20)
+    gc.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    csc = gc.scene
+    cdark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, csc.h - 2) for tx in range(2, csc.w - 2)
+             if not csc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not csc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    gc.player.x, gc.player.y = cdark[len(cdark) // 2]
+    for _ in range(int(90 * 30)):
+        gc.player.hidden = None
+        gc._tick_watchers(1 / 30.0)
+        if len(gc._watchers) > WATCHER_MAX:
+            break
+    check(len(gc._watchers) > WATCHER_MAX,
+          f"storm: the live wave passes the Watcher cap "
+          f"({len(gc._watchers)} units > {WATCHER_MAX})")
+    # A safe room has no storm even at the gate (the refuge is load-bearing).
+    g2 = new_game()
+    g2.load_scene_now("bedroom", "default")
+    tick(g2, 10)
+    g2.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    check(not g2._storm_active(),
+          "storm: a lit refuge never storms (gloom 0)")
+    # --- the APPROACH. A unit walks at the player...
+    sc = g.scene
+    spots = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, sc.h - 2) for tx in range(2, sc.w - 2)
+             if not sc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    dark = [p for p in spots if not sc.lit_at(*p)]
+    g.player.x, g.player.y = dark[0]
+    g.player.hidden = None
+    u = g._spawn_watcher() or (g._watchers[-1] if g._watchers else None)
+    if u is None:                       # spawn geometry can miss; force one
+        from entities.npc import NPC
+        u = NPC(dark[-1][0], dark[-1][1], "", "amalgam", movement="storm",
+                speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+        u.tag = "watcher"
+        u.sprite_seed = 3
+        sc.add_npc(u)
+        g._watchers.append(u)
+    g._sync_storm_mode(True)
+    check(u.movement == "storm" and u.speed > 0,
+          "storm: a live unit switches to the walking mode")
+    # place it a way off, in the dark, and let it walk
+    far = max(dark, key=lambda p: (p[0] - g.player.x) ** 2
+              + (p[1] - g.player.y) ** 2)
+    u.x, u.y = far
+    d0 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+    for _ in range(240):
+        u.update(1 / 30.0, sc, g.player)
+    d1 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+    check(d1 < d0 - 8,
+          f"storm: the unit closes on the player ({d0:.0f}px -> {d1:.0f}px)")
+    # ...and STOPS at the light. Standing in a pool is the only safety.
+    lit = [p for p in spots if sc.lit_at(*p)]
+    if lit:
+        g.player.x, g.player.y = lit[0]
+        # put the unit just outside the pool, aimed in
+        import math as _m
+        for ang in range(0, 360, 15):
+            ux = g.player.x + _m.cos(_m.radians(ang)) * 70
+            uy = g.player.y + _m.sin(_m.radians(ang)) * 70
+            if (not sc.is_solid_at(ux, uy) and not sc.lit_at(ux, uy)):
+                u.x, u.y = ux, uy
+                break
+        held0 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+        for _ in range(240):
+            u.update(1 / 30.0, sc, g.player)
+        held1 = math.hypot(u.x - g.player.x, u.y - g.player.y)
+        check(not sc.lit_at(u.x, u.y),
+              "storm: the unit never steps into the light")
+        check(held1 > 8.0,
+              f"storm: light holds it off the player ({held1:.0f}px away)")
+    # --- it cannot TOUCH you. Sit it on top of the player and tick the world.
+    g.player.x, g.player.y = dark[0]
+    u.x, u.y = g.player.x, g.player.y
+    hp0 = g.player.hp
+    dead0 = g.death_kind if hasattr(g, "death_kind") else None
+    tick(g, 60)
+    check(g.player.hp >= hp0 and g.state == "playing",
+          "storm: a unit standing ON the player deals nothing (a scare)")
+    # --- every DISPEL still works in a storm: light burns one caught in a pool.
+    if lit:
+        # a FRESH unit: the world ticks above may have swept or dispelled the
+        # earlier one, and reusing it made this check depend on that.
+        from entities.npc import NPC as _NPC
+        w2 = _NPC(lit[0][0], lit[0][1], "", "amalgam", movement="storm",
+                  speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+        w2.tag = "watcher"
+        w2.sprite_seed = 5
+        sc.add_npc(w2)
+        g._watchers.append(w2)
+        g._cursed = True
+        w2.x, w2.y = lit[0]
+        burned = False
+        for _ in range(int((WATCHER_GAZE_DISPEL / (1 + WATCHER_LIGHT_BURN)
+                            + 1.0) * 30)):
+            w2.x, w2.y = lit[0]
+            g._tick_watcher_gaze(1 / 30.0)
+            if w2 not in g._watchers:
+                burned = True
+                break
+        check(burned,
+              "storm: light still BURNS a unit caught in a pool")
+    # --- THE BEAM is a real barrier. Scene.lit_at only knows scene FIXTURES, so
+    # testing against it alone left every lamp-less room (most of the mine, the
+    # lost spaces, an unpowered building) with no safety in it at all -- while
+    # the ruling is that during a storm light is the ONLY safety.
+    gb = new_game()
+    gb.load_scene_now("well_passage", "default")
+    tick(gb, 20)
+    gb.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    bsc = gb.scene
+    bdark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, bsc.h - 2) for tx in range(2, bsc.w - 2)
+             if not bsc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not bsc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    # Pick a player spot with a DARK, WALKABLE neighbour due south -- an earlier
+    # version only checked the unit's spot was unlit and dropped it inside rock,
+    # so the control ("it closes with the beam off") moved 0px and failed.
+    home = None
+    for px_, py_ in bdark:
+        cand = (px_, py_ + 90)
+        if (not bsc.is_solid_at(*cand) and not bsc.lit_at(*cand)
+                and bsc.clear_sight_line(cand[0], cand[1], px_, py_)):
+            home = ((px_, py_), cand)
+            break
+    assert home, "need a dark walkable pair for the beam check"
+    (gb.player.x, gb.player.y), start = home
+    gb.player.facing = (0, 1)
+    gb.player.inventory.add("flashlight", 1)
+    from entities.npc import NPC as _NPC3
+    bu = _NPC3(start[0], start[1], "", "amalgam", movement="storm",
+               speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+    bu.tag = "watcher"; bu.sprite_seed = 7
+    bsc.add_npc(bu); gb._watchers.append(bu)
+    # beam OFF: it closes (the spot is dark, nothing holds it)
+    gb.flashlight_on = False
+    gb._stamp_beam()
+    d0 = math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    for _ in range(120):
+        bu.update(1 / 30.0, bsc, gb.player)
+    closed = d0 - math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    check(closed > 4.0,
+          f"beam: with the light off a unit closes in the dark ({closed:.0f}px)")
+    # beam ON, aimed at it: it is held, with no fixture anywhere near
+    bu.x, bu.y = start
+    gb.flashlight_on = True
+    gb._stamp_beam()
+    assert gb._flashlight_lit(), "the beam must actually be lit for this check"
+    d1 = math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    for _ in range(120):
+        bu.update(1 / 30.0, bsc, gb.player)
+    d2 = math.hypot(bu.x - gb.player.x, bu.y - gb.player.y)
+    check(abs(d2 - d1) < 2.0,
+          f"beam: the flashlight alone holds a unit off ({d1:.0f}px -> {d2:.0f}px)")
+
+    # --- UNCAPPING THE POPULATION MUST NOT UNCAP THE THREAT. The gaze term and
+    # the visibility FLOOR are both per-live-unit, so a lifted cap silently made
+    # the storm the deadliest thing in the game: 22 units climbed the meter at
+    # 1.1/s and pinned the floor at VIS_FLOOR_TOTAL_CAP, just under the King,
+    # unclearably -- while the ruling is that regular units cannot touch or kill.
+    from systems.config import (STORM_PRESS_UNITS, WATCHER_GAZE, WATCHER_FLOOR,
+                                VIS_FLOOR_TOTAL_CAP)
+    gp = new_game()
+    gp.load_scene_now("well_passage", "default")
+    tick(gp, 20)
+    gp.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    psc = gp.scene
+    pdark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, psc.h - 2) for tx in range(2, psc.w - 2)
+             if not psc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not psc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    gp.player.x, gp.player.y = pdark[len(pdark) // 2]
+    for i in range(STORM_MAX):
+        pu = _NPC3(gp.player.x + 40 + i * 3, gp.player.y + 40, "", "amalgam",
+                   movement="storm", speed=STORM_UNIT_SPEED,
+                   no_prompt=True, solid=False)
+        pu.tag = "watcher"; pu.sprite_seed = 20 + i
+        psc.add_npc(pu); gp._watchers.append(pu)
+    gp.player.hidden = None
+    gp.visibility = 0.0
+    gp._tick_watchers(1 / 30.0)
+    check(gp._watcher_gaze <= STORM_PRESS_UNITS,
+          f"press: at most {STORM_PRESS_UNITS} units press the meter "
+          f"(gaze {gp._watcher_gaze:.0f} with {len(gp._watchers)} units)")
+    gp._tick_visibility(1 / 30.0)
+    check(gp._vis_floor < VIS_FLOOR_TOTAL_CAP - 0.05,
+          f"press: a full storm does not pin the floor under the King "
+          f"(floor {gp._vis_floor:.2f} vs cap {VIS_FLOOR_TOTAL_CAP})")
+
+    # --- the flood must be SEEN. Storm units do not obey the sight cone: a
+    # live 22-unit storm had 0 units pass it, so the whole thing was invisible.
+    # Build the probe outright rather than reusing a live unit -- the earlier
+    # version read g._watchers[-1] and SILENTLY SKIPPED both checks whenever the
+    # wave happened to be empty, which is the one thing a guard must never do.
+    from systems.config import STORM_SEE_RANGE
+    from entities.npc import NPC as _NPC2
+    su = _NPC2(0, 0, "", "amalgam", movement="storm", speed=STORM_UNIT_SPEED,
+               no_prompt=True, solid=False)
+    check(g.actor_smear_range(su) == STORM_SEE_RANGE,
+          "storm: a storm unit stays sensed outside the sight cone")
+    su.movement = "watch"
+    check(g.actor_smear_range(su) == 0.0,
+          "storm: a standing Watcher still obeys the cone outright")
+
+    # --- and out of storm the wave is exactly as it was.
+    g.save.set_arg("evidence", [{"name": "w0"}])
+    check(not g._storm_active(), "storm: dropping below the gate ends it")
+    g._sync_storm_mode(False)
+    check(all(w.movement == "watch" and w.speed == 0.0 for w in g._watchers),
+          "storm: units revert to standing still when it ends")
+
+    # ---- §20: THE APEX -- the Mask that wears a unit (TODO #25) -----------
+    # The maintainer's spec, end to end: it floats in, BECOMES an amalgam
+    # (reusing its exact parts plus 2-3), pierces and ignores light, the axe/gun
+    # destroy the HOST but not the Mask, it re-hosts and continues, and it leaves
+    # when the player drops below the visibility threshold.
+    from systems.config import (APEX_VIS_GATE, APEX_SPEED, APEX_CATCH_DIST,
+                                APEX_EXTRA_LO, APEX_EXTRA_HI, APEX_MIGRATE_CD,
+                                KING_ROAM_SPEED, PLAYER_SPRINT_MULT)
+    from rendering.amalgam import assemble
+    print("[20] apex: floats in, wears a host, survives the axe, leaves on vis")
+    # It IS the King, so it moves at his speed -- above player sprint, the locked
+    # ratio (error class 9): the apex cannot be outrun.
+    check(APEX_SPEED == KING_ROAM_SPEED,
+          "apex: moves at the King's own speed (it is Him)")
+    check(APEX_SPEED * 60 > 84 * PLAYER_SPRINT_MULT,
+          f"apex: faster than player sprint ({APEX_SPEED*60:.0f} vs "
+          f"{84*PLAYER_SPRINT_MULT:.0f} px/s) -- cannot be outrun")
+    # the host's deal is reused VERBATIM with parts appended
+    base = assemble(4321)
+    for ex in (APEX_EXTRA_LO, APEX_EXTRA_HI):
+        grown = assemble(4321, extra=ex)
+        check(grown[:len(base)] == base and len(grown) == len(base) + ex,
+              f"apex: wears the host's exact deal plus {ex} more parts")
+    ga = new_game()
+    ga.load_scene_now("well_passage", "default")
+    tick(ga, 20)
+    ga.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    asc = ga.scene
+    adark = [(tx * TILE + 16, ty * TILE + 16)
+             for ty in range(2, asc.h - 2) for tx in range(2, asc.w - 2)
+             if not asc.is_solid_at(tx * TILE + 16, ty * TILE + 16)
+             and not asc.lit_at(tx * TILE + 16, ty * TILE + 16)]
+    ga.player.x, ga.player.y = adark[len(adark) // 2]
+    ga.player.hidden = None
+    # BELOW the gate it does not come.
+    ga.visibility = APEX_VIS_GATE - 0.2
+    ga._tick_apex(1 / 30.0)
+    check(getattr(ga, "_apex", None) is None,
+          "apex: below the visibility gate the Mask does not come")
+    # AT the gate it arrives, seeking.
+    ga.visibility = min(0.95, APEX_VIS_GATE + 0.2)
+    ga._tick_apex(1 / 30.0)
+    check(ga._apex is not None and ga._apex["state"] == "seeking",
+          "apex: at the gate it arrives, floating and seeking")
+    # give it a unit to wear, and let it reach it
+    from entities.npc import NPC as _NPC4
+    prey = _NPC4(ga.player.x + 60, ga.player.y, "", "amalgam",
+                 movement="storm", speed=STORM_UNIT_SPEED,
+                 no_prompt=True, solid=False)
+    prey.tag = "watcher"; prey.sprite_seed = 8181
+    asc.add_npc(prey); ga._watchers.append(prey)
+    for _ in range(600):
+        ga._tick_apex(1 / 30.0)
+        if ga._apex and ga._apex["state"] == "borne":
+            break
+    check(ga._apex is not None and ga._apex["state"] == "borne",
+          "apex: it reaches a unit and BECOMES it")
+    host = ga.apex_host()
+    check(host is not None and getattr(host, "_apex", False),
+          "apex: a host exists and is flagged as the bearer")
+    check(prey not in asc.npcs,
+          "apex: the amalgam it took is DELETED, not stacked on")
+    check(host.sprite_seed == 8181,
+          "apex: the host keeps the taken unit's own seed (its exact parts)")
+    check(APEX_EXTRA_LO <= getattr(host, "_apex_extra", 0) <= APEX_EXTRA_HI,
+          "apex: it adds 2-3 parts of its own")
+    # LIGHT DOES NOT STOP IT. Sit it in a lit pool, aim the beam at it, and it
+    # still closes -- unlike a regular unit, which both of those hold off.
+    alit = [(tx * TILE + 16, ty * TILE + 16)
+            for ty in range(2, asc.h - 2) for tx in range(2, asc.w - 2)
+            if asc.lit_at(tx * TILE + 16, ty * TILE + 16)
+            and not asc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    # Needs a LIT player spot with a CLEAR walkable line to stand the apex on --
+    # dropping it 100px south blind put it against rock and it slid 20px of a
+    # possible 350, which reads as "the light held it" and is not the same thing.
+    apair = None
+    for lx, ly in alit:
+        for off in (100.0, 84.0, 120.0):
+            cand = (lx, ly + off)
+            if (not asc.is_solid_at(*cand)
+                    and asc.clear_sight_line(cand[0], cand[1], lx, ly)):
+                apair = ((lx, ly), cand, off)
+                break
+        if apair:
+            break
+    if apair:
+        (ga.player.x, ga.player.y), astart, d0 = apair
+        ga.player.facing = (0, 1)
+        ga.player.inventory.add("flashlight", 1)
+        ga.flashlight_on = True
+        ga._stamp_beam()
+        assert ga._flashlight_lit(), "beam must be lit for this check"
+        assert asc.lit_at(ga.player.x, ga.player.y), "player must stand in light"
+        host.x, host.y = astart
+        for _ in range(90):
+            host.update(1 / 30.0, asc, ga.player)
+        d1 = math.hypot(host.x - ga.player.x, host.y - ga.player.y)
+        # Must reach CONTACT range, not merely "closer": a d0-40 threshold
+        # passed even with a light probe bolted on, because the apex simply
+        # stopped at the pool's edge, which is well inside that margin.
+        check(d1 <= APEX_CATCH_DIST,
+              f"apex: light and the beam do NOT hold it off -- reaches contact "
+              f"({d0:.0f} -> {d1:.0f}px, catch at {APEX_CATCH_DIST:.0f})")
+        # the contrast that gives it meaning: a REGULAR unit is held by the same
+        # light the apex walks through.
+        reg = _NPC4(astart[0], astart[1], "", "amalgam", movement="storm",
+                    speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+        for _ in range(90):
+            reg.update(1 / 30.0, asc, ga.player)
+        dreg = math.hypot(reg.x - ga.player.x, reg.y - ga.player.y)
+        check(dreg > d1 + 20,
+              f"apex: a regular unit IS held by that same light "
+              f"(unit {dreg:.0f}px vs apex {d1:.0f}px)")
+    # THE AXE KILLS THE HOST, NOT THE MASK.
+    ga._dispel_watcher(host, reason="axe")
+    check(ga._apex is not None and ga._apex["state"] == "seeking",
+          "apex: killing the host does not kill the Mask -- it seeks again")
+    check(host not in asc.npcs, "apex: the host body is gone")
+    check(ga._apex["cd"] > 0.0,
+          "apex: re-hosting is on a cooldown (driving it off must cost it time)")
+    # it CONTINUES: give it another unit and it takes that one too
+    prey2 = _NPC4(ga.player.x + 70, ga.player.y, "", "amalgam",
+                  movement="storm", speed=STORM_UNIT_SPEED,
+                  no_prompt=True, solid=False)
+    prey2.tag = "watcher"; prey2.sprite_seed = 9292
+    asc.add_npc(prey2); ga._watchers.append(prey2)
+    for _ in range(900):
+        ga._tick_apex(1 / 30.0)
+        if ga._apex and ga._apex["state"] == "borne":
+            break
+    check(ga._apex is not None and ga._apex["state"] == "borne",
+          "apex: it re-hosts on another amalgam and continues the assault")
+    # ONE IMPOSSIBLE THING AT A TIME: the roaming King does not also walk.
+    # Put a King in the room FIRST -- asserting `_king is None` after a bare
+    # tick was vacuous, since he does not spawn in a single tick anyway.
+    kdummy = _NPC4(ga.player.x + 200, ga.player.y, "", "yellow_king",
+                   movement="chaser", speed=KING_ROAM_SPEED,
+                   no_prompt=True, solid=False)
+    kdummy._birth = 1.0
+    asc.add_npc(kdummy)
+    ga._king = kdummy
+    check(ga.apex_host() is not None, "apex: (a host is worn for this check)")
+    ga._tick_king_roam(1 / 30.0)
+    check(ga._king is None and kdummy not in asc.npcs,
+          "apex: the roaming King stands down while the Mask is worn")
+    # THE CATCH IS ITS OWN, NOT THE KING'S CARD. The apex used to fire
+    # _trigger_death("king"), which played THE UNFOLDING's throat-swallow -- the
+    # art of the very body the storm replaces. Maintainer: do not use the
+    # existing death card. This asserts the apex death never reaches it.
+    import rendering.king_unfold as _ku
+    gd = new_game()
+    gd.load_scene_now("well_passage", "default")
+    tick(gd, 20)
+    gd.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    dsc = gd.scene
+    dspots = [(tx * TILE + 16, ty * TILE + 16)
+              for ty in range(3, dsc.h - 3) for tx in range(3, dsc.w - 3)
+              if not dsc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    gd.player.x, gd.player.y = dspots[len(dspots) // 2]
+    gd.player.hidden = None
+    gd.visibility = min(0.95, APEX_VIS_GATE + 0.2)
+    dprey = _NPC4(gd.player.x + 40, gd.player.y, "", "amalgam",
+                  movement="storm", speed=STORM_UNIT_SPEED,
+                  no_prompt=True, solid=False)
+    dprey.tag = "watcher"; dprey.sprite_seed = 4242
+    dsc.add_npc(dprey); gd._watchers.append(dprey)
+    for _ in range(3000):
+        gd._tick_apex(1 / 30.0)
+        dh = gd.apex_host()
+        if dh is not None:
+            dh.update(1 / 30.0, dsc, gd.player)
+        if gd._death_kind is not None:
+            break
+    check(gd._death_kind == "apex",
+          f"apex: the catch fires its OWN death kind, not the King's "
+          f"(got {gd._death_kind!r})")
+    # ...and drawing that card must not touch the Unfolding art at all.
+    calls = []
+    _real = _ku.draw_unfold_catch
+    _ku.draw_unfold_catch = lambda *a, **k: calls.append(1)
+    import systems.render_mixin as _rm
+    _real_rm = getattr(_rm, "draw_unfold_catch", None)
+    if _real_rm is not None:
+        _rm.draw_unfold_catch = lambda *a, **k: calls.append(1)
+    try:
+        for tstep in (0.1, 0.6, 1.4, 2.9):
+            gd._death_t = tstep
+            gd._draw_death_screen()
+    finally:
+        _ku.draw_unfold_catch = _real
+        if _real_rm is not None:
+            _rm.draw_unfold_catch = _real_rm
+    check(not calls,
+          f"apex: its death card never draws the Unfolding catch "
+          f"({len(calls)} call(s))")
+
+    # ---- THE FACE. The Mask must EXPRESS, and by STATE rather than on a clock:
+    # a face on a loop is decoration, a face that narrows when it acquires you is
+    # a tell the player can learn to read.
+    from systems.config import (APEX_FOCUS_RANGE, APEX_STRAIN_RANGE,
+                                APEX_FACE_EASE)
+    gf = new_game()
+    gf.load_scene_now("well_passage", "default")
+    tick(gf, 20)
+    gf.save.set_arg("evidence", [{"name": f"w{i}"}
+                                 for i in range(STORM_GATE_EVIDENCE)])
+    fsc = gf.scene
+    fspots = [(tx * TILE + 16, ty * TILE + 16)
+              for ty in range(3, fsc.h - 3) for tx in range(3, fsc.w - 3)
+              if not fsc.is_solid_at(tx * TILE + 16, ty * TILE + 16)]
+    gf.player.x, gf.player.y = fspots[len(fspots) // 2]
+    gf.player.hidden = None
+    gf.visibility = min(0.95, APEX_VIS_GATE + 0.2)
+    fprey = _NPC4(gf.player.x + 50, gf.player.y, "", "amalgam",
+                  movement="storm", speed=STORM_UNIT_SPEED,
+                  no_prompt=True, solid=False)
+    fprey.tag = "watcher"; fprey.sprite_seed = 606
+    fsc.add_npc(fprey); gf._watchers.append(fprey)
+    for _ in range(900):
+        gf._tick_apex(1 / 30.0)
+        if gf.apex_host() is not None:
+            break
+    fhost = gf.apex_host()
+    check(fhost is not None, "face: (a host is worn for these checks)")
+    if fhost is not None:
+        # FAR: the face slackens.
+        fhost.x = gf.player.x + APEX_FOCUS_RANGE * 2.0
+        for _ in range(180):
+            gf._tick_apex(1 / 30.0)
+        far_i, far_s, _sk = gf.apex_face()
+        check(far_i < 0.2 and far_s < 0.05,
+              f"face: far away it is SLACK (intent {far_i:.2f}, "
+              f"strain {far_s:.2f})")
+        # CLOSING: intent climbs while strain is still asleep. The distance has
+        # to sit INSIDE the focus range but OUTSIDE the strain range -- the first
+        # version used 0.25 * focus (85px), which is well within the 150px strain
+        # range, so it asserted strain was low where the design says it is high.
+        mid = (APEX_STRAIN_RANGE + APEX_FOCUS_RANGE) * 0.5
+        assert APEX_STRAIN_RANGE < mid < APEX_FOCUS_RANGE
+        fhost.x = gf.player.x + mid
+        for _ in range(180):
+            gf._tick_apex(1 / 30.0)
+        near_i, near_s, _sk = gf.apex_face()
+        check(near_i > far_i + 0.2,
+              f"face: closing NARROWS it (intent {far_i:.2f} -> {near_i:.2f})")
+        check(near_s < 0.05,
+              f"face: but the face only comes apart INSIDE the strain range "
+              f"(strain {near_s:.2f} at {mid:.0f}px)")
+        # AT THE THROAT: strain takes over.
+        fhost.x = gf.player.x + APEX_STRAIN_RANGE * 0.2
+        for _ in range(180):
+            gf._tick_apex(1 / 30.0)
+        take_i, take_s, _sk = gf.apex_face()
+        check(take_s > 0.6,
+              f"face: at the throat the face comes apart (strain {take_s:.2f})")
+        # EASED, NOT SNAPPED: one tick must not jump the whole way.
+        fhost.x = gf.player.x + APEX_FOCUS_RANGE * 2.0
+        for _ in range(400):
+            gf._tick_apex(1 / 30.0)
+        gf.apex_face()
+        fhost.x = gf.player.x + 10.0
+        before_i = gf.apex_face()[0]
+        gf._tick_apex(1 / 30.0)
+        after_i = gf.apex_face()[0]
+        check(after_i > before_i and (after_i - before_i) < 0.35,
+              f"face: expression EASES, never snaps "
+              f"({before_i:.2f} -> {after_i:.2f} in one tick)")
+        # NOT A LOOP: held at one distance, intent settles instead of cycling.
+        fhost.x = gf.player.x + APEX_FOCUS_RANGE * 0.5
+        for _ in range(240):
+            gf._tick_apex(1 / 30.0)
+        a1 = gf.apex_face()[0]
+        for _ in range(120):
+            gf._tick_apex(1 / 30.0)
+        a2 = gf.apex_face()[0]
+        check(abs(a2 - a1) < 0.05,
+              f"face: at a held distance it SETTLES, it does not cycle "
+              f"({a1:.2f} -> {a2:.2f})")
+        # ...but the skew never settles: the two sockets keep disagreeing.
+        sk_seen = set()
+        for _ in range(10):
+            for _ in range(12):
+                gf._tick_apex(1 / 30.0)
+            sk_seen.add(round(gf.apex_face()[2], 2))
+        check(len(sk_seen) > 4,
+              f"face: the skew wanders, so the wrongness never settles "
+              f"({len(sk_seen)} distinct)")
+
+        # ---- THE ONE TELL. A screech that fires when it DECIDES on you:
+        # exactly once per host, never on a loop, never while you are hidden.
+        # A tell that repeats is ambience and a tell that fires for nothing is
+        # a liar; both would cost the apex the one moment it has.
+        from systems.config import APEX_ROAR_INTENT
+        check("apex_roar" in gf.audio.sfx,
+              "tell: the screech exists as its own sound")
+        roars = []
+        _play = gf.audio.play
+        gf.audio.play = lambda nm, *a, **k: (roars.append(nm)
+                                             if nm == "apex_roar" else None)
+        try:
+            # Wind it all the way down and back up: one screech on the way up.
+            fhost.x = gf.player.x + APEX_FOCUS_RANGE * 2.0
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            gf._apex["roared"] = False
+            check(gf.apex_face()[0] < APEX_ROAR_INTENT,
+                  "tell: (wound down below the threshold first)")
+            check(not roars, "tell: it does not screech at a slack face")
+            fhost.x = gf.player.x + 12.0
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            check(len(roars) == 1,
+                  f"tell: it screeches ONCE when it locks on ({len(roars)})")
+            # Held there, it must not screech again. This is the check that
+            # matters: the trigger is a threshold on an eased value, and an
+            # eased value hovering at a threshold is exactly what turns a tell
+            # into a stutter.
+            for _ in range(600):
+                gf._tick_apex(1 / 30.0)
+            check(len(roars) == 1,
+                  f"tell: and never again for the same host ({len(roars)})")
+            # Kill the host: the NEXT one earns its own.
+            gf._dispel_watcher(fhost, reason="axe")
+            check(gf._apex is not None and not gf._apex.get("roared"),
+                  "tell: losing the host RE-ARMS it")
+            # HIDDEN: intent is pinned below the threshold, so it cannot
+            # announce a lock it does not have.
+            hprey = _NPC4(gf.player.x + 30, gf.player.y, "", "amalgam",
+                          movement="storm", speed=STORM_UNIT_SPEED,
+                          no_prompt=True, solid=False)
+            hprey.tag = "watcher"; hprey.sprite_seed = 515
+            fsc.add_npc(hprey); gf._watchers.append(hprey)
+            gf.player.hidden = ("crate", gf.player.x, gf.player.y)
+            roars.clear()
+            for _ in range(900):
+                gf._tick_apex(1 / 30.0)
+            check(gf.apex_host() is not None,
+                  "tell: (it re-hosts even while you are hidden)")
+            check(not roars,
+                  f"tell: it never screeches at a HIDDEN player ({len(roars)})")
+            gf.player.hidden = None
+        finally:
+            gf.audio.play = _play
+
+        # ---- THE REACH. Limbs that react to where you ARE. Two properties, and
+        # both have to hold or they are just more idle decoration: they point at
+        # the player in SCREEN space (a world vector would swing wild under the
+        # camera yaw), and they extend as it closes.
+        gf.player.hidden = None
+        rhost = gf.apex_host()
+        check(rhost is not None, "reach: (a host is worn for these checks)")
+        if rhost is not None:
+            mask_for = None
+            for _ in range(200):
+                gf._tick_apex(1 / 30.0)
+            # _apex_mask_for is a closure inside draw_world, so drive the same
+            # arithmetic the frame does rather than re-deriving it here: reach
+            # is (screen dx, screen dy, amount).
+            def reach_for(host):
+                axs, ays = gf.camera.project(host.x, host.y)
+                pxs, pys = gf.camera.project(gf.player.x, gf.player.y)
+                rdx, rdy = pxs - axs, pys - ays
+                rl = math.hypot(rdx, rdy) or 1.0
+                fi, fs, _ = gf.apex_face()
+                return (rdx / rl, rdy / rl,
+                        min(1.0, APEX_REACH_INTENT * fi + APEX_REACH_STRAIN * fs))
+            from systems.config import APEX_REACH_INTENT, APEX_REACH_STRAIN
+            # Aim: put the player on four sides and confirm the vector follows.
+            seen = []
+            for ox, oy in ((-120.0, 0.0), (120.0, 0.0),
+                           (0.0, -120.0), (0.0, 120.0)):
+                rhost.x, rhost.y = gf.player.x + ox, gf.player.y + oy
+                seen.append(reach_for(rhost)[:2])
+            check(len({(round(a, 2), round(b, 2)) for a, b in seen}) == 4,
+                  "reach: the aim differs on all four sides of the player")
+            # And it points AT them: the screen vector from host to player must
+            # agree with the reach direction.
+            for (ox, oy), (rx, ry) in zip(((-120.0, 0.0), (120.0, 0.0),
+                                           (0.0, -120.0), (0.0, 120.0)), seen):
+                rhost.x, rhost.y = gf.player.x + ox, gf.player.y + oy
+                axs, ays = gf.camera.project(rhost.x, rhost.y)
+                pxs, pys = gf.camera.project(gf.player.x, gf.player.y)
+                tl = math.hypot(pxs - axs, pys - ays) or 1.0
+                dot = rx * (pxs - axs) / tl + ry * (pys - ays) / tl
+                check(dot > 0.99,
+                      f"reach: it aims at the player on screen (dot {dot:.3f})")
+            # Extension: far is little, at the throat is full.
+            rhost.x, rhost.y = gf.player.x + APEX_FOCUS_RANGE * 2.0, gf.player.y
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            far_amt = reach_for(rhost)[2]
+            rhost.x, rhost.y = gf.player.x + 12.0, gf.player.y
+            for _ in range(400):
+                gf._tick_apex(1 / 30.0)
+            near_amt = reach_for(rhost)[2]
+            check(far_amt < 0.1,
+                  f"reach: at range the arms are barely out ({far_amt:.2f})")
+            check(near_amt > 0.9,
+                  f"reach: at the throat they are FULLY out ({near_amt:.2f}) "
+                  f"-- the telegraph the catch never had")
+            # It must actually reach the CATCH range still extended, or it is a
+            # wind-up that finishes before the blow.
+            check(near_amt > 0.9 and APEX_CATCH_DIST < APEX_STRAIN_RANGE,
+                  "reach: full extension is reached BEFORE contact distance")
+            # And an ordinary unit grows none of them.
+            from rendering.amalgam import _reach_anchor, assemble as _asm
+            import pygame as _pg
+            a_plain = _pg.Surface((200, 200), _pg.SRCALPHA)
+            a_reach = _pg.Surface((200, 200), _pg.SRCALPHA)
+            from rendering.amalgam import (draw_amalgam_sprite as _das,
+                                           reset_amalgam_cache as _rac)
+            _rac()
+            _das(a_plain, 100, 170, seed=77,
+                 mask={"deploy": 1.0, "extra": 2, "gaze": (0.0, 0.3),
+                       "seed": 7, "intent": 1.0, "strain": 1.0, "skew": 0.0})
+            _rac()
+            _das(a_reach, 100, 170, seed=77,
+                 mask={"deploy": 1.0, "extra": 2, "gaze": (0.0, 0.3),
+                       "seed": 7, "intent": 1.0, "strain": 1.0, "skew": 0.0,
+                       "reach": (1.0, 0.0, 1.0)})
+            check(_pg.image.tostring(a_plain, "RGBA")
+                  != _pg.image.tostring(a_reach, "RGBA"),
+                  "reach: passing a reach actually changes what is drawn")
+            check(_reach_anchor(_asm(77))[1]
+                  < max(p[3] for p in _asm(77)),
+                  "reach: the arms grow from the BODY, not from the feet")
+
+    # AND IT LEAVES when the player drops below the threshold.
+    ga.visibility = APEX_VIS_GATE - 0.25
+    ga._tick_apex(1 / 30.0)
+    check(getattr(ga, "_apex", None) is None,
+          "apex: below the vis threshold it withdraws entirely")
+    check(not any(getattr(n, "_apex", False) for n in asc.npcs),
+          "apex: and takes its host body with it")
 
     print()
     if FAILS:

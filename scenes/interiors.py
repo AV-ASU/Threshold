@@ -10,13 +10,14 @@ from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import toby_dialogue, hettie_dialogue, _evidence, grant_receipt
 def build_clearing():
-    """THRESHOLD: the clearing -- the BURN SITE. A small open glade off
-    the brimley river bank where the claimed burned their worldly
-    effects before they went below (the surface twin of the Sorting
-    Hall's shed lives, NARRATIVE §4 / DESIGN.md §1): a fire pit big enough to stand
-    a family around, cold now, ringed by what wouldn't burn. No pot, no
-    offerings -- the claiming cult eats no one (the eat-cult imagery
-    scrub); what fed this fire was luggage.
+    """THRESHOLD: the clearing. A small open glade off the river
+    bank: a cold fire pit at its centre, cordwood, hung robes, effigy dolls
+    on the charred edge, crows in the tree line. The scene is kept because
+    `is_clearing` is load-bearing for the flashback and patrol systems.
+
+    It ASSERTS NOTHING about the fiction as of 2026-07 (the burn-site
+    conceit was ruled rot and cut with its beat). The props are dressing
+    until the glade is given a purpose or removed outright.
 
     Visual layout (18 wide x 14 tall):
       - Tree-wall border on every edge.
@@ -28,8 +29,7 @@ def build_clearing():
         threshold so the player can look around without immediately
         re-firing the exit.
       - Charred patch in cols 5-12, rows 5-8 (centre).
-      - The dead fire pit at centre (9, 7), the unburnable slag
-        around it.
+      - The dead fire pit at centre (9, 7), scrap around it.
       - Hanging figures in the canopy NW + NE -- visible above the
         tree wall on either side of the entrance approach.
       - Cordwood stacks at (2, 6) and (15, 6). Solid t tiles; their
@@ -64,14 +64,14 @@ def build_clearing():
     objects_l[13][9] = "j"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("clearing", floor, objects, music="wrong")
-    # Cordwood stacks flanking the burn (fuel for the communal fire). Real
+    # Cordwood stacks flanking the fire pit. Real
     # firewood volumes (2026-07 audit fix: they were raw 't' object tiles,
     # which no tilt set draws -- invisible collision blocks, and the hide
     # spots crouched beside nothing). Two stacks so the clearing reads as
     # a tended ritual site, not a one-prop display.
     sc.add_furniture("firewood", [(2, 6)], w=44, h=24)
     sc.add_furniture("firewood", [(15, 6)], w=44, h=24)
-    # The clearing's south threshold leads back to the brimley river
+    # The clearing's south threshold leads back to the river road's
     # bank (where the entrance is).
     # The way back out is the pine flank of the river road, where the
     # hidden doorway in the treeline came through (DESIGN.md §15).
@@ -79,9 +79,8 @@ def build_clearing():
     sc.set_spawn("default",          9, 11)
     sc.set_spawn("from_river_road",  9, 11)
 
-    # The dead fire pit at centre -- scaled up so it reads as the
-    # communal burn, not a campsite. Around it, what wouldn't burn:
-    # bowls and effects, left where the fire spat them.
+    # The dead fire pit at centre -- scaled up so it reads as a gathering
+    # fire rather than a campsite. Scrap around it.
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16,
                                  "campfire", scale=3.0))
     sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "bowl"))
@@ -109,8 +108,6 @@ def build_clearing():
                                  "claw_marks"))
     sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 22,
                                  "claw_marks"))
-    # (Blood dressing removed with the eat-cult scrub -- the burn
-    # site renders no one; the dread is the luggage in the ash.)
     # Path-side candles framing the entrance threshold.
     sc.add_decoration(Decoration(8 * TILE + 4, 12 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(10 * TILE + 28, 12 * TILE + 22, "candle"))
@@ -130,19 +127,11 @@ def build_clearing():
     # Tag the scene as the clearing for the flashback / patrol systems.
     sc.is_clearing = True
 
-    pyre_x, pyre_y = 9 * TILE + 16, 7 * TILE + 16
-    sc.add_interactable(pyre_x, pyre_y, 40)   # [E] cue for the fire pit
-    def _void_boss_interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - pyre_x) > 40 or abs(py - pyre_y) > 40:
-            return
-        # Flavor narration only -- NOT one of the five canonical beats, so
-        # it never touches the evidence count or the King-gate.
-        _evidence(game, "the_burning",
-            "A cold fire pit. In the ash, what would not burn: buckles, "
-            "bowl rims, boot eyelets, a watch case, slagged together."
-        )
-    sc.on_interact_fn = _void_boss_interact
+    # (THE BURNING is CUT, 2026-07 -- maintainer ruling: the "cult burned
+    # their worldly effects here before they went below" conceit was rot, so
+    # the beat, its [E] cue, and the burn-site framing are gone. The glade
+    # keeps its props as plain dressing; it asserts nothing now. Its stated
+    # PURPOSE is an open question -- see TODO #1.)
     return sc
 def build_shop():
     """The General Store, rebuilt as a NESTED warren of subrooms (2026-07, the
@@ -382,7 +371,7 @@ def build_shop():
     sc.hide_spots = []
     return sc
 def build_barn():
-    """Small barn on the brimley east bank, divided (#4c) into a front working
+    """The barn, off the chapel row (its yard is barn_yard), divided (#4c) into a front working
     bay, an open sleeping-floor dormitory, and an enclosed back workroom, split
     by two plank inner doors. Holds Mara's journal
     (a surface trail beat) behind the workbench, and a boarded-over hatch where a
@@ -406,7 +395,7 @@ def build_barn():
         "WWWWWWWWFWWWWWWW",   # 11
     ]
     sc = Scene("barn", floor, objects, music="home")
-    # Barn now sits deep south-east on the brimley east bank.
+    # The barn's outdoors is its own yard scene (DESIGN.md §15).
     # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
     # (DESIGN.md §15): this building's outdoors is its own YARD now, and
     # a leaf onto a town that no longer exists is a door that does
@@ -611,7 +600,7 @@ def build_toby_house():
         "WWWWJWWWWWWWWW",   # 9  J = exit door back to the field
     ]
     sc = Scene("toby_house", floor, objects, music="home")
-    # Kid's house now sits middle-south on the brimley east bank.
+    # Toby's house fronts the bank row; its outdoors is toby_yard.
     # THE OLD STREET DOOR IS WALLED UP. Brimley the scene is retired
     # (DESIGN.md §15): this building's outdoors is its own YARD now, and
     # a leaf onto a town that no longer exists is a door that does

@@ -25,7 +25,7 @@ import pygame
 from constants import SCREEN_W, SCREEN_H
 from systems.items import ITEM_DEFS, effective_desc, journal_page
 from ui.item_icons import draw_item_icon
-from ui.case_titles import humanise as _humanise
+from ui.case_titles import humanise as _humanise, HEADLESS_IN_BOOK
 from ui import menu_chrome as mc
 
 
@@ -104,42 +104,90 @@ class JournalUI:
         return out
 
     def _case_entries(self):
-        """Notebook entries: the derived pins (working theory, timeline)
-        first, then the clues (canonical evidence), then the interior notes.
-        Derived pins read live run state each open, so the book always lands
-        on the freshest theory."""
+        """The PI's notebook, as ONE RUNNING DOCUMENT (maintainer, 2026-07).
+
+        Everything he has written down, merged out of the two save lists and
+        ordered by when he wrote it (`seq`, stamped by `Save.next_seq`).
+        Nothing is grouped by category, nothing is sorted by importance, and
+        nothing is ever rewritten: a page he filled early stays exactly as he
+        filled it, including the parts he later turns out to be wrong about.
+
+        The lists stay separate underneath because `evidence` is what the
+        King-gate counts and `notes` is what it must not. That split is
+        bookkeeping; the player never sees it. Unstamped entries (hand-built
+        harness saves) sort ahead, in their own order.
+
+        The old derived pins are GONE. The Working Theory recomputed itself
+        on every open, so the book had no memory of what he used to think,
+        and the Timeline re-sorted his finds into Mara's chronology, which is
+        the connection the player is supposed to make (maintainer ruling: the
+        PI writes the dates down as he finds them and the arithmetic is the
+        player's)."""
         if self.save is None:
             return []
-        out = []
-        g = self.game
-        if g is not None:
-            if hasattr(g, "_working_theory"):
-                wt = g._working_theory()
-                if wt:
-                    out.append(("working_theory", wt))
-            if hasattr(g, "_case_timeline"):
-                tl = g._case_timeline()
-                if tl:
-                    out.append(("case_timeline", tl))
-        log = self.save.arg("evidence", [])
-        notes = self.save.arg("notes", [])
-        for src in (log, notes):
+        rows = []
+        for src in (self.save.arg("evidence", []), self.save.arg("notes", [])):
             if not isinstance(src, list):
                 continue
             for e in src:
                 if isinstance(e, dict):
-                    out.append((e.get("name", "?"), e.get("lines", [])))
+                    rows.append((e.get("seq", 0), e.get("name", "?"),
+                                 e.get("lines", [])))
                 else:
-                    out.append((str(e), []))
-        return out
+                    rows.append((0, str(e), []))
+        rows.sort(key=lambda r: r[0])
+        return [(name, lines) for _seq, name, lines in rows]
+
+    # ---- the running document, paged ----
+
+    def _case_pages(self):
+        """The notebook broken into pages of wrapped lines. One continuous
+        document: each entry is a small underlined heading and its paragraphs,
+        and entries simply follow one another down the page and over the leaf,
+        the way a filled notebook does."""
+        entries = self._case_entries()
+        if not entries:
+            return []
+        body = []                      # (kind, text): "head" | "line" | "gap"
+        for name, lines in entries:
+            if body:
+                body.append(("gap", ""))
+            # A find gets a heading; a conclusion he reached does not (it is
+            # just the next thing in his hand on the page).
+            if name not in HEADLESS_IN_BOOK:
+                body.append(("head", _humanise(name)))
+            for ln in lines:
+                if not ln:
+                    continue
+                for w in mc.wrap_lines(self.fonts["serif_sm"], ln,
+                                       self._PAGE_W):
+                    body.append(("line", w))
+        pages, cur = [], []
+        for row in body:
+            if len(cur) >= self._PAGE_ROWS:
+                pages.append(cur)
+                cur = []
+            # never leave a heading orphaned at the foot of a leaf
+            if (row[0] == "head" and len(cur) >= self._PAGE_ROWS - 2):
+                pages.append(cur)
+                cur = []
+            if row[0] == "gap" and not cur:
+                continue
+            cur.append(row)
+        if cur:
+            pages.append(cur)
+        return pages
 
     # Back-compat name for the notebook test harness (flow.py).
     def _entries(self):
         return self._case_entries()
 
     def _row_count(self):
+        # On the CASE tab the cursor is the PAGE you are on, not a row in an
+        # index: the notebook is one running document and up/down turns the
+        # leaf.
         if self.tab == CASE_TAB:
-            return len(self._case_entries())
+            return len(self._case_pages())
         return len(self._filtered_items(self._inv()))
 
     def change_tab(self, dy, inventory=None):
@@ -202,7 +250,7 @@ class JournalUI:
         # Heading + a one-line subtitle, set like a chapter head. The Tools
         # subtitle reports what's in hand; the others frame the tab.
         if self.tab == CASE_TAB:
-            head_txt, sub = "Case notes", "What you have pieced together."
+            head_txt, sub = "My notebook", "In the order I wrote it down."
         elif TABS[self.tab][0] == "Tools":
             head_txt = "What you carry"
             eq = player.inventory.equipped if player else {"weapon": None}
@@ -242,46 +290,71 @@ class JournalUI:
                                  (tab_x + t.get_width(), tab_y + t.get_height() + 1))
             tab_x += t.get_width() + 30
 
-    # -- CASE tab --
+    # -- CASE tab: the running notebook --
 
-    _CARD_CENTER = (SCREEN_W - 250, SCREEN_H // 2 + 18)
+    # The leaf sits clear of the tab ribbon above it and the key hint below,
+    # and the ruling is pitched to the BODY font so his lines sit ON the rules
+    # instead of across them (serif_sm: height 17, so the rule falls 19px under
+    # each row's top).
+    _LEAF_W, _LEAF_H = 560, 430
+    _LEAF_CENTER = (SCREEN_W // 2 + 8, SCREEN_H // 2 + 46)
+    _PAD = 34
+    _TOP = 40
+    _LINE_H = 21
+    _RULE_DROP = 19
+    _PAGE_W = _LEAF_W - _PAD * 2
+    _PAGE_ROWS = (_LEAF_H - _TOP - 44) // _LINE_H
 
     def _draw_case_tab(self, surf):
+        """The notebook, open. One leaf of the running document at a time:
+        headings and paragraphs flowing down the page and over onto the next,
+        with no index and no cards, because it is a working notebook rather
+        than a filing system. Up/down turns the leaf."""
         FAINT = (132, 126, 116)
-        entries = self._case_entries()
-        lx, ly = 84, 166
-        if not entries:
-            surf.blit(self.fonts["serif_it"].render(
-                "The page is still blank.", True, FAINT), (lx, ly))
+        pages = self._case_pages()
+        if not pages:
+            leaf = mc.paper(self._LEAF_W, self._LEAF_H, seed=5,
+                            base=mc.PAPER_CREAM, ruled=True,
+                            line_h=self._LINE_H,
+                            top_pad=self._TOP + self._RULE_DROP)
+            leaf.blit(self.fonts["serif_it"].render(
+                "Nothing written down yet.", True, mc.INK_FADE),
+                (self._PAD, self._TOP))
+            mc.lay_page(surf, leaf, self._LEAF_CENTER, tilt=-0.8)
             return
-        if self.cursor >= len(entries):
-            self.cursor = max(0, len(entries) - 1)
-        rf = self.fonts["serif"]
-        for i, (name, _lines) in enumerate(entries):
-            selected = (i == self.cursor)
-            row_y = ly + i * 30
-            if selected:
-                mc.accent_bar(surf, lx - 18, row_y, rf.get_linesize())
-            col = (214, 198, 150) if selected else (158, 152, 142)
-            surf.blit(rf.render(_humanise(name), True, col), (lx, row_y))
-        name, lines = entries[self.cursor]
-        self._draw_case_card(surf, name, lines)
-
-    def _draw_case_card(self, surf, name, lines):
-        W, H = 420, 470
-        card = mc.paper(W, H, seed=sum(ord(c) for c in name) + 3,
-                        base=mc.CARD_MANILA)
-        title = self.fonts["mono"].render(
-            _humanise(name).upper(), True, mc.CARD_INK)
-        card.blit(title, (26, 30))
-        pygame.draw.line(card, mc.CARD_RULE, (26, 58), (W - 26, 58), 1)
-        if lines:
-            mc.wrap(card, self.fonts["mono"], "\n".join(lines),
-                    26, 76, W - 52, color=mc.CARD_INK, line_h=22)
-        else:
-            card.blit(self.fonts["mono"].render(
-                "(nothing more set down)", True, mc.INK_FADE), (26, 76))
-        mc.lay_page(surf, card, self._CARD_CENTER, tilt=-1.0)
+        if self.cursor >= len(pages):
+            self.cursor = len(pages) - 1
+        rows = pages[self.cursor]
+        leaf = mc.paper(self._LEAF_W, self._LEAF_H, seed=5 + self.cursor,
+                        base=mc.PAPER_CREAM, ruled=True,
+                        line_h=self._LINE_H,
+                        top_pad=self._TOP + self._RULE_DROP)
+        cy = self._TOP
+        hf = self.fonts["serif_it"]
+        bf = self.fonts["serif_sm"]
+        for kind, text in rows:
+            if kind == "gap":
+                cy += self._LINE_H // 2
+                continue
+            if kind == "head":
+                t = hf.render(text, True, mc.INK)
+                leaf.blit(t, (self._PAD, cy))
+                pygame.draw.line(leaf, mc.RULE,
+                                 (self._PAD, cy + t.get_height()),
+                                 (self._PAD + t.get_width(), cy + t.get_height()), 1)
+            else:
+                leaf.blit(bf.render(text, True, mc.INK), (self._PAD, cy))
+            cy += self._LINE_H
+        # The page number, and the leaf-turn cue, in his own hand.
+        foot = self.fonts["serif_sm"]
+        leaf.blit(foot.render("page %d of %d" % (self.cursor + 1, len(pages)),
+                              True, mc.INK_FADE),
+                  (self._PAD, self._LEAF_H - 32))
+        if self.cursor < len(pages) - 1:
+            t = foot.render("more overleaf", True, mc.INK_FADE)
+            leaf.blit(t, (self._LEAF_W - t.get_width() - self._PAD,
+                          self._LEAF_H - 32))
+        mc.lay_page(surf, leaf, self._LEAF_CENTER, tilt=-0.8)
 
     # -- carried tabs (TOOLS / PAPERS) --
 
@@ -368,7 +441,9 @@ class JournalUI:
                 cx - 150, cy + 16, 300, color=(150, 144, 134))
 
     def _draw_hint(self, surf):
+        act = ("up down to turn the leaf" if self.tab == CASE_TAB
+               else "up down to look")
         mc.hint(surf, self.fonts["serif_sm"],
-                "up down to look . left right to turn to the next tab . "
+                act + " . left right to turn to the next tab . "
                 "enter to read or take in hand . esc to close the book",
                 64, SCREEN_H - 34)

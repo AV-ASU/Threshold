@@ -90,7 +90,7 @@ def build_lodge_yard():
     sc.add_exit("e", "cornfield_path", "from_lodge_yard")
     yard_obj = [list(r) for r in sc.objects]
     # The WOODSHED in the SW of the yard -- west of the Lodge, where it
-    # belongs (it used to sit clear across town in brimley). A small solid
+    # belongs (it used to sit clear across town). A small solid
     # structure with a facade door 'l' on its north face; locked until you
     # find the woodshed key in the Lodge cellar. Clear of the dirt path
     # (cols 4-6).
@@ -100,7 +100,7 @@ def build_lodge_yard():
     yard_obj[12][2] = "l"          # locked facade door, north face
     sc._shed_door_pos = (2 * TILE + 16, 12 * TILE + 16)
     # ---- Permeable forest band ----
-    # Replaces the old hard corn-wall perimeter. Same helper as brimley
+    # Replaces the old hard corn-wall perimeter. The same helper the yards
     # so the visual treatment of the wrap is consistent. Lodge structure
     # + door passages stay protected.
     floor_ll_yd = [list(r) for r in sc.floor]

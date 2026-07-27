@@ -41,14 +41,15 @@ def build_cornfield_path():
         if 2 <= ry < H - 2 and ry != PATH_ROW:
             objects_l[ry][rx] = "R"
 
-    # South-edge exit to brimley (macro-loop closer). 'S' on the last
-    # row at col 30; players walking south off the path reach it.
+    # South-edge exit onto the country lane (macro-loop closer). 'S' on the
+    # last row at col 30; players walking south off the path reach it.
     SOUTH_EXIT_COL = 30
     objects_l[H - 1][SOUTH_EXIT_COL] = "S"
 
     # ---- Permeable forest band ----
-    # Replaces the old hard corn-wall north/south perimeter. Same helper
-    # as brimley so the visual treatment of the wrap is consistent.
+    # Replaces the old hard corn-wall north/south perimeter. The same
+    # helper the yards and the safe path use, so every outdoor edge in the
+    # game is the same kind of thing.
     floor_ll_fp = [list(r) for r in floor]
     def _fp_protected(tx, ty):
         # West passage corridor (3 rows by 5 cols).
@@ -60,7 +61,7 @@ def build_cornfield_path():
         # North maze exit corridor (col 30-31, rows 0-2).
         if tx in (29, 30, 31) and ty <= 2:
             return True
-        # South brimley exit corridor (col 30, rows H-3..H-1).
+        # South road exit corridor (col 30, rows H-3..H-1).
         if tx in (29, 30, 31) and ty >= H - 3:
             return True
         # The path row itself is always clear.
@@ -91,7 +92,7 @@ def build_cornfield_path():
     # #4 outdoor-dread composition (2026-07): a corn THROAT pinches the
     # 60-tile dead-straight road so the long shot breaks. Standing corn
     # juts from both shoulders at cols 22-24, hiding the far half of the
-    # road (and the maze/brimley branch at col 30) until you walk through
+    # road (and the maze/lane branch at col 30) until you walk through
     # the gap. Draw + placement only: row PATH_ROW (the walking lane) stays
     # open, so collision, nav, and reachability are unchanged; the corn is
     # solid cover on the shoulders. The pinch itself is the landmark: because
@@ -123,9 +124,10 @@ def build_cornfield_path():
     # corn rather than a door. Two adjacent tiles so the player walks
     # straight through without having to centre on a single door.
     sc.add_exit("!", "cornfield_maze", "from_cornfield_path")
-    # South exit to brimley -- closes the macro-loop. Walking south long
-    # enough through brimley -> cornfield_maze -> cornfield_path -> here
-    # brings you back to brimley north.
+    # South exit onto the country lane -- closes the macro-loop. The corn
+    # belt hangs off the network at that one junction (DESIGN.md §15), so
+    # walking south long enough through the corn puts you back on the road,
+    # and the road puts you back in the corn.
     sc.add_exit("S", "country_lane", "from_cornfield_path")
 
     sc.set_spawn("default", 1, PATH_ROW)
@@ -176,7 +178,7 @@ def build_cornfield_path():
     sc.add_noise_trap(40 * TILE + 16, 10 * TILE + 16, "glass", seed=22)
 
     # (The secret-clearing branch dressing was removed when the
-    # clearing entrance moved to the brimley river bank.)
+    # clearing entrance is the hidden trunk in the river road's pines.)
 
     # Enclosed hides (the 2026-07 stealth pass, TODO #5: the surface was
     # a hide desert): the gaps under the two dead vehicles already

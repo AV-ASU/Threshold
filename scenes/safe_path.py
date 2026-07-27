@@ -502,11 +502,11 @@ def _fence_flank(sc, w, h, cx, cy, side, seed):
 # Three segments east and north of town, one of each shape, forming a loop
 # with the two roads that were already there:
 #
-#     brimley --W-- [country_lane  I ] --E-- arrival_road -- lodge_yard
-#                          |  (no arm: both flanks are mouths)
-#     brimley --S-- [gravel_road_north] --W-- [river_bend L] --S--
-#                                                   |
-#                                            [river_road  I ]
+#     cornfield_maze --S-- [country_lane X] --E-- arrival_road -- lodge_yard
+#                                |W
+#     backwoods_cabin --N-- [gravel_road_north X] --E-- store_row -> the town
+#                                |W
+#                          [river_bend L] --S-- [river_road I] --S-- the lane
 #
 # `river_road` runs NORTH with the river off its east shoulder the whole way
 # (the maintainer's "we need the river seen in the safe paths"), and
@@ -907,12 +907,12 @@ def _town_square(sc):
     of the carriageway and clear of the shoulder, so the square is a place you
     step aside into rather than something laid across the road.
 
-    Three of the four carry a beat (`on_interact_fn`): the well is dread that
-    goes nowhere and a stone over its lip is the loud distraction verb, the
-    barrow's cleaned tools are the contradiction that files a note, and the
-    news rack holds the seal-day issue. The payphone is silent set-dressing.
+    Two of the four carry a beat (`on_interact_fn`): the well is dread that
+    goes nowhere and a stone over its lip is the loud distraction verb, and
+    the news rack holds the seal-day issue. The barrow and the payphone are
+    silent set-dressing -- both had examines and both were cut for saying
+    nothing the prop does not already say.
     """
-    from .dialogue import _evidence
     cx, cy = sc.junction
     off = LAMP_OFF + 1                  # clear of the shoulder and its masts
 
@@ -943,9 +943,10 @@ def _town_square(sc):
     wx, wy = (cx - off - 1) * TILE + 16, (cy - off - 1) * TILE + 16
     sc.add_decoration(Decoration(wx, wy, "well"))
     sc._well_pos = (wx, wy)
-    # THE BARROW of "rusted" tools, tipped up against the well's lip where
-    # the square's shed used to stand. The tools are still bright at the
-    # edges: somebody is keeping them, and nobody in town admits to digging.
+    # THE BARROW, tipped up against the well's lip where the square's shed
+    # used to stand. DECORATION ONLY (maintainer ruling, 2026-07: it is a
+    # prop, not a find -- the old `barrow_tools` examine, its [E] cue and its
+    # "the edges are still bright" contradiction are all cut).
     bx, by = (cx - off - 3) * TILE + 16, (cy - off - 1) * TILE + 8
     sc.add_decoration(Decoration(bx, by, "wheelbarrow"))
     sc._barrow_pos = (bx, by)
@@ -1003,13 +1004,6 @@ def _town_square(sc):
             game.show_notice("Cold air climbs out of the dark. No way "
                              "down for you here.")
             return
-        if abs(px_ - bx) < 36 and abs(py_ - by) < 36:
-            if not game.save.flag("barrow_inspected"):
-                game.save.set_flag("barrow_inspected", True)
-                _evidence(game, "barrow_tools",
-                          "Digging tools left in the barrow, rusted over. "
-                          "The edges are still bright.")
-            return
         if abs(px_ - nx) < 36 and abs(py_ - ny) < 36:
             game.audio.play("blip_low", 0.4)
             game.dialog.show([
@@ -1021,7 +1015,6 @@ def _town_square(sc):
             return
 
     sc.add_interactable(wx, wy, 36)
-    sc.add_interactable(bx, by, 36)
     sc.add_interactable(nx, ny, 36)
     sc.on_interact_fn = _square_interact
     # THE CULT'S ERRAND at the square is to look in on the well (the JOBS

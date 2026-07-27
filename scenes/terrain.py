@@ -111,7 +111,7 @@ FLOOR_DEFS = {
     ".": {"color": (30, 28, 38),   "step": "step_stone"},
     "@": {"color": (8, 6, 14),     "step": "step_void"},
     # Round-13: river floor is no longer universally solid. The
-    # brimley river enforces directional access via Game's
+    # a wadeable river enforces directional access via Game's
     # `_river_blocks` check (player.in_river state + designated entry
     # tile). Other scenes can still use `~` as decorative water; nothing
     # else currently does.
@@ -151,7 +151,7 @@ FLOOR_DEFS = {
     ":": {"color": (38, 52, 40),   "step": "step_grass"},
     # Marsh mud -- wet churned low ground, walkable. Stamped in organic
     # patches across the Brimley fields so the plain reads as a sodden
-    # brimley marsh, not a flat lawn.
+    # marsh, not a flat lawn.
     # THE BLACK PATCHES. At (40, 37, 30) this was a brown near-black, and
     # scenes sprinkle it as ISOLATED SINGLE TILES through grass at (45, 55,
     # 42) -- so each one read as a square black hole in the lawn rather than
@@ -220,7 +220,7 @@ OBJECT_DEFS = {
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
-    # '4' is the village <-> brimley corridor.
+    # '4' is a road-to-road corridor between two path scenes.
     "4": {"solid": False, "kind": "outdoor_passage"},
     # Fake wall: looks like a wood wall, passable. Used inside the
     # abandoned_farmhouse red herring -- the player walks through it once to
@@ -260,9 +260,9 @@ OBJECT_DEFS = {
     # from "!".
     "^": {"solid": False, "kind": "outdoor_passage"},
     # Round-12: breakable debris pile blocking the village's west exit
-    # to the brimley. Solid until the player presses E adjacent with the
+    # through. Solid until the player presses E adjacent with the
     # lumber_axe, at which point Game._chop_tile swaps this tile to "4"
-    # at the west edge (so the gap becomes a passage to brimley), else ".".
+    # at the west edge (so the gap becomes a passage through), else ".".
     "*": {"solid": True,  "kind": "debris"},
     # Boarded panel -- a passage covered with cross-nailed wooden
     # boards. Visually distinct from a regular wood wall (X-cross
@@ -275,7 +275,7 @@ OBJECT_DEFS = {
     # and 'K' is now solely the kid-spawn marker below. The crate draw
     # kind in _draw_object is left in place but unreferenced.)
     # Round-12: planked footbridge tile -- non-solid, drawn over a
-    # river. Used in the brimley to gap the N-S river at the bridge
+    # river. Used to gap a N-S river at the bridge
     # rows.
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
@@ -1217,7 +1217,6 @@ DISPLAY_NAMES = {
     "threshold":            "the Threshold",
     "effigy_grove":         "the Effigy Grove",
     "abandoned_farmhouse":        "the Abandoned Farmhouse",
-    "brimley":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
     "country_lane":         "the Country Lane",
@@ -3065,7 +3064,7 @@ def _build_water_bank_edges(scene):
     """Precompute every water-land boundary segment AND bucket them into a
     spatial chunk index. Each edge is (cx_world, cy_world, ndx, ndy, seed).
     The emit walker iterates only buckets the camera window overlaps, so a
-    full-marsh scan (212 edges in brimley) drops to ~30 per frame."""
+    full-marsh scan (212 edges on a big map) drops to ~30 per frame."""
     edges = getattr(scene, "_water_bank_edges", None)
     if edges is not None:
         return edges

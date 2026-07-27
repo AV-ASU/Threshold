@@ -460,6 +460,171 @@ def _tools_md():
                 "    Regenerate: python tools/index.py --md")
 
 
+# ------------------------------------------- 10. amalgam _MASS_DY in sync
+# THE RULE: rendering/amalgam.py's `_MASS_DY` records how far ABOVE its `y`
+# each MASS part draws itself, so `assemble` can aim at a body HEIGHT rather
+# than a raw offset. Those numbers are a copy of each function's own
+# `cy = y - N`, and a copy rots: change a part's cy and the table silently
+# lies, which puts a body back to floating clear of the legs holding it up --
+# exactly the defect the table was added to fix, and one no test would notice
+# because nothing crashes. So the copy is verified against the source.
+@check("amalgam _MASS_DY matches each mass part's own cy offset")
+def _mass_dy():
+    import re
+    src = open(os.path.join(_ROOT, "rendering", "amalgam.py")).read()
+    sys.path.insert(0, _ROOT)
+    from rendering.amalgam import MASS, _MASS_DY
+    rows = []
+    for name, fn in MASS:
+        body = src[src.index("def %s(" % fn.__name__):]
+        nxt = body.find("\ndef ")
+        body = body[:nxt] if nxt > 0 else body      # THIS function only
+        # The assignment is a TUPLE -- `cx, cy = x + 2, y - 58` -- so a naive
+        # r"cy\s*=\s*y\s*-\s*(\d+)" never matches it. It silently "passed"
+        # three parts by running past the end of their bodies and matching a
+        # LATER function's line, which is the failure mode a check must not
+        # have: green for the wrong reason.
+        m = re.search(r"\bcy\s*=[^\n]*?\by\s*-\s*(\d+)", body)
+        if not m:
+            rows.append("    %-8s %s has no 'cy = y - N' to check against"
+                        % (name, fn.__name__))
+            continue
+        real = int(m.group(1))
+        if _MASS_DY.get(name) != real:
+            rows.append("    %-8s table says %s, %s draws at y - %d"
+                        % (name, _MASS_DY.get(name), fn.__name__, real))
+    missing = [n for n, _ in MASS if n not in _MASS_DY]
+    if missing:
+        rows.append("    not in _MASS_DY at all: " + ", ".join(missing))
+    if rows:
+        return ("  _MASS_DY is out of sync with the mass parts it describes;\n"
+                "  assemble() will place these bodies at the wrong height.\n"
+                + "\n".join(rows))
+
+
+# ------------------------------------ 11. the amalgam cache staggers properly
+# THE RULE: rendering/amalgam.py caches each unit's composed sprite and refreshes
+# it at UNIT_ANIM_HZ, staggered per unit so the refreshes do not all land on the
+# same frame. That stagger is the whole reason 22 units are affordable, and it is
+# EASY to break invisibly: the first version used `seed % 251`, which maps nearby
+# seeds to nearly identical offsets, so a batch of units with clustered seeds all
+# rolled over together and the frame time went back to a sawtooth (measured: 22ms
+# most frames, 51ms every fifth) while the AVERAGE still looked fine. Nothing
+# fails, the game just hitches. So the spread is asserted directly.
+@check("amalgam refresh offsets spread across the bucket")
+def _amalgam_stagger():
+    sys.path.insert(0, _ROOT)
+    import os as _os
+    _os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+    _os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
+    import pygame
+    pygame.init()
+    from rendering.amalgam import _UNIT_CACHE, UNIT_ANIM_HZ
+    import rendering.amalgam as _am
+    # The realistic clustering worst case AND the pathological one.
+    for label, seeds in (("sequential", list(range(1, 23))),
+                         ("clustered", list(range(5000, 5022)))):
+        offs = [(((sd * 2654435761) & 0xffffffff) % 4096) / 4096.0
+                for sd in seeds]
+        buckets = {int(o * 5) for o in offs}     # 5 frames per bucket at 60fps
+        if len(buckets) < 4:
+            return ("  %s seeds put %d of 22 units in only %d of 5 refresh\n"
+                    "  slots -- the storm will re-render in lockstep and hitch.\n"
+                    "  Offsets must be HASHED, not modulo'd." % (
+                        label, len(seeds), len(buckets)))
+    if UNIT_ANIM_HZ <= 0 or UNIT_ANIM_HZ > 30:
+        return "  UNIT_ANIM_HZ of %s is not a sane refresh rate" % (UNIT_ANIM_HZ,)
+
+
+# ------------------------------- 12. the storm's Mask is not the keystone item
+# THE RULE (NARRATIVE §2, §6a): there is exactly ONE Pallid Mask OBJECT and it
+# sits on the cult's altar until the PI lifts it, because the completed rite
+# buys Him one solid thing crossing into the flat world and no more. The face
+# that rides a shadow in the storm is a SLICE of Him -- His face without being a
+# thing anyone could pick up -- and that distinction is the only reason the apex
+# does not add a second impossible thing to a fiction whose whole discipline is
+# keeping the count at one.
+#
+# It is also exactly the kind of fact that rots quietly: both are drawn by the
+# same renderer and called "the Mask" in conversation, and a code comment
+# already claimed the storm's one was "His face made an OBJECT (NARRATIVE 6a)".
+# Prose cannot hold this. What CAN be checked is the tell that the two have been
+# confused in code: the storm/apex path reaching for the `pallid_mask` ITEM key.
+# The moment the apex grants it, consumes it, or gates on it, they are one thing
+# again and the canon is broken.
+@check("the storm/apex path never touches the pallid_mask item")
+def _storm_mask_not_item():
+    offenders = []
+    for rel in ("rendering/amalgam.py", "systems/threat_mixin.py",
+                "entities/npc.py"):
+        path = os.path.join(_ROOT, rel)
+        for n, line in enumerate(open(path, encoding="utf-8"), 1):
+            if '"pallid_mask"' in line or "'pallid_mask'" in line:
+                offenders.append("    %s:%d  %s" % (rel, n, line.strip()[:72]))
+    if offenders:
+        return ("  the storm/apex code reaches for the pallid_mask ITEM key:\n"
+                + "\n".join(offenders) + "\n"
+                "  The keystone is ONE object on the cult's altar; the face a\n"
+                "  shadow wears is a SLICE of Him, not a thing to be held.\n"
+                "  See NARRATIVE.md §6a. If the apex now legitimately needs\n"
+                "  the item, that is a CANON change -- make it there first.")
+
+
+# ------------------------------------------ 13. one voice, one verbal tic
+# THE RULE: a mode of address is a CHARACTER's, not the game's. "son" had
+# spread across Vane, Old Pell and Garrick (eight uses, three speakers) and
+# was a large part of why those three read as interchangeable -- the 2026-07
+# story audit's finding. It is Garrick's now: he sits the square, he counts
+# who is left, and he talks to the PI like a younger man. This check exists
+# because the drift is invisible one line at a time; each author only ever
+# adds ONE.
+@check("a mode of address belongs to one speaker")
+def _address_tics():
+    import re as _re
+    src = {}
+    for rel in ("scenes/dialogue.py", "scenes/yards.py", "scenes/well.py",
+                "systems/rot_mixin.py", "systems/threat_mixin.py"):
+        try:
+            src[rel] = open(os.path.join(_ROOT, rel)).read()
+        except FileNotFoundError:
+            continue
+    # Which speaker each hit belongs to: the nearest *_CONVO above it, or in
+    # the scene files the nearest `beat_<who>_` stoop beat, so a character's
+    # lines count as HIS wherever they are authored.
+    def _owner(text, at):
+        head = text[:at]
+        convos = _re.findall(r'\n(\w+)_CONVO = \{', head)
+        beats = _re.findall(r'"(?:beat)_(\w+?)_\w+"', head)
+        if convos and (not beats or head.rfind("_CONVO = {") > head.rfind('"beat_')):
+            return convos[-1].lower()
+        if beats:
+            return beats[-1].lower()
+        return convos[-1].lower() if convos else "narration"
+
+    # ONLY the CHOSEN forms. "mister" is deliberately not here: nobody in
+    # Brimley learns the PI's name, so it is the correct default in every
+    # mouth and shared use of it says nothing about the speaker. "son" and
+    # "friend" are choices -- an age claimed, a warmth performed -- and those
+    # belong to one person each.
+    rows = []
+    for tic in ("son", "friend"):
+        pat = _re.compile(r'"[^"]*[,.!?]\s*%s[,.!?][^"]*"' % tic)
+        owners = {}
+        for rel, text in src.items():
+            for m in pat.finditer(text):
+                who = _owner(text, m.start())
+                owners.setdefault(who, 0)
+                owners[who] += 1
+        if len(owners) > 1:
+            rows.append("    %-8s used by %d speakers: %s"
+                        % (repr(tic), len(owners),
+                           ", ".join("%s x%d" % (k, v)
+                                     for k, v in sorted(owners.items()))))
+    if rows:
+        return ("    A mode of address is shared, which flattens every\n"
+                "    speaker that shares it (story audit, 2026-07):\n"
+                + "\n".join(rows))
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

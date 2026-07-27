@@ -124,10 +124,8 @@ ITEM_DEFS = {
                                "Matches, two boxes.\n"
                                "Canned milk, a case.\n"
                                "Bread. Kerosene. Lamp oil.\n"
-                               "A few dollars, cash, week on week, run "
-                               "down most of a year.\n\n"
-                               "Staples a resident lays in, not a "
-                               "traveler's kit. She lived here."},
+                               "A few dollars, cash, week on week, autumn "
+                               "through the new year."},
     "detention_record": {"name": "A Booking Slip",
                        "kind": "lore",
                        "desc": "A booking slip out of the Sheriff's files, "
@@ -142,6 +140,22 @@ ITEM_DEFS = {
                                "Released at first light. No charge.\n\n"
                                "She was coming apart in the open, and the "
                                "law wrote it down and let her go."},
+    # A newcomer's gas receipt, left under a schoolhouse cot. NOT evidence
+    # and not Mara's: an ordinary paper trace of an ordinary drive, which is
+    # exactly what makes it worth carrying. It corroborates the one thing
+    # Vane could never get out of them (NARRATIVE §4: not one could tell him
+    # where they had driven in from) without a word of testimony.
+    "gas_receipt":   {"name": "A Gas Receipt",
+                       "kind": "lore",
+                       "desc": "A pump receipt, soft from a pocket, left "
+                               "under a cot in the schoolhouse.\n\n"
+                               "CLARK OIL / SEYMOUR, WIS.\n"
+                               "JULY 2 1993\n"
+                               "14.2 GAL      REG      $16.75\n"
+                               "CASH\n\n"
+                               "Four hundred miles south of here, and paid "
+                               "for in cash. Whoever slept on that cot "
+                               "drove up the same roads I did."},
     "maras_scrawl":  {"name": "The Sign, in Her Hand",
                        "kind": "lore",
                        "desc": "A single leaf off the copying desks in the "

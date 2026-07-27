@@ -26,13 +26,56 @@
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — remaining revisit-nudges
+### 1. **[Fable]** Make evidence ASKABLE — the investigation loop
 
-The ask-questions conversation engine shipped for all five principals plus
-the chorus (`CHANGELOG.md`, "Close-up tableaux & the dialogue verb").
-**Still open:** `_REVISIT_NUDGES` entries for Hettie, Toby, and Crane as
-their case hooks land — a discovery should nudge the PI back to ask them
-about it, the way `the_preacher` already points back to Vane.
+**Reframed by the 2026-07 story audit** (which superseded this ticket's old
+"remaining revisit-nudges" scope: nudges tell the player to go ask, and #13b
+is cutting them; a question that is simply THERE when he arrives is the same
+beat without the hand-holding).
+
+**What the audit measured.** Of 31 authored questions across the whole cast,
+three opened on something the PI had found, and two of those three were the
+Ledger, which is not case evidence. Not one of the five canonical pieces
+except the journal opened a question anywhere. You could lift Mara's booking
+slip out of the Sheriff's own cabinet and never mention it to the Sheriff.
+Finding and asking were parallel activities that never touched, so the case
+accumulated instead of compounding, and the town went inert once every
+principal's rows were spent.
+
+**The shape.** A find should open a question with the person it came from,
+or the person it points at. No new systems: the engine already does it with
+`avail` + `beats`, and every piece of the pattern is worked in Vane.
+
+**LANDED: the detention night, the pilot** (`CHANGELOG.md`). The photograph
+now earns the booking slip off Vane himself (he booked her, so he recognizes
+her); the office drawer demoted to the dead/hollow fallback; the slip opens
+`the_night`, his account of the arrest, filed as a statement note; and his
+answer leaves a second witness as plain stated fact, unpointed.
+
+**Open, in build order:**
+- **Garrick's witness** — canon since NARRATIVE §6 and DESIGN §9 and still
+  unbuilt: he saw her curse at the sky, and Vane's `the_night` now points at
+  him without naming him. He has exactly one question today. This closes the
+  detention night at both ends and is the payoff for the pilot's unpointed
+  lead, so it goes first.
+- **The receipt** → Hettie (a year of her own handwriting), Vane (paper with
+  dates, his stated appetite).
+- **The journal** → Crane (she sat his pews twice, so he can date when she
+  stopped), Toby (the barn he named).
+- **Not the deep two.** The dig leaf and the letter reach nobody by design;
+  there is no one down there to tell, and that isolation is doing work.
+
+**Fences:** a statement is a note, never evidence (NARRATIVE §6); the lead is
+stated, never pointed at (no "I should go ask him" append, #13b); every new
+line lands in `DIALOGUE.md` in the same commit.
+
+**And the pattern the rest of the cast follows** (from the maintainer's pass
+on Vane, `CHANGELOG.md`): **a POSSESSION gate hides the row** (you cannot ask
+about a thing you are not holding), but a **TRUST or disposition gate does
+NOT** — the question is askable and the character refuses it in their own
+voice, naming what would change their mind. Hidden options teach nothing;
+refusals are characterisation and a reason to come back. The refusal branch
+must never fire the grant.
 
 ### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
 
@@ -171,16 +214,15 @@ light scavenge, never evidence). Reconcile with his worker job-loop.
 
 ### 13b. **[Fable]** Interior voice — quiet the routine reactions
 
-The Casebook structure landed (Case/Tools/Papers tabs, the Working Theory
-pinned first, the named scribble toast — `CHANGELOG.md`), and a first trim
+The Casebook structure landed (Case/Tools/Papers tabs, the Case tab now the
+PI's running notebook, the named scribble toast — `CHANGELOG.md`), and a first trim
 cut the three worst offenders. **Still open — the maintainer's actual
 grievance ("every interaction does something and never leaves the player
 thinking"):** on-screen PI narrator captions still fire on nearly every
 world-prop examine. Cut candidates (~30 sites, prop examines that
 editorialize a conclusion instead of stating the fact): the lodge
 register/ledger recaps, the well / news-rack monologues, headstone +
-candle re-examines, `barrow_tools` / `scarecrow` / `backwoods_note` /
-`worn_stone` / `bell_tower` / `the_burning` / `the_fall` /
+candle re-examines, `bell_tower` / `the_fall` /
 `threshing_floor` / `works_cistern_seen` / `the_doorframe` flavor
 `_evidence` calls (these write nothing to the book — caption only). Trim
 each to a terse factual line or silence, so the player draws the
@@ -357,21 +399,217 @@ half-out). Locked with the maintainer this pass:
   yard-lights as ISLANDS and the flashlight enabled outdoors (so the
   light-draws-Him double-edge applies there too). This is world rot's LIGHT twin
   (understanding, not a clock — the daytime invariant holds, NARRATIVE §canon).
-  VISUAL + flashlight only so far; no new threat mechanic yet — it is the STAGE
-  the storm fills.
+  It gates one REAL mechanic: the lost-space MOUTH opens at `LOST_EDGE_GLOOM`
+  (92 = `STORM_DARK_GLOOM[2]`, rot stage 2), so the edges of the authored world
+  only let go once understanding has put the lights out (#26).
+- **THE DARK IS NEVER THE PLAYER'S TOOL (ruled 2026-07, and the old item (1) is
+  CLOSED because of it).** The ticket used to ask for a light/dark SPLIT as a
+  mechanic: outdoors, light pools = cover, dark = exposure. **The maintainer
+  ruled that whole framing out** — "darkness shouldn't hide you AT ALL", and
+  "Watchers should be able to gaze at you while you're standing in the light,
+  that's the whole point of them." So both halves of the split are gone, and the
+  pre-existing shadow-cover pass went with them:
+  - Darkness is not concealment anywhere. `SUS_CONCEAL_DARK` and
+    `_tick_dark_cover` are DELETED (they had been live in `DARK_SCENES` since
+    the 2026-07 stealth rework).
+  - Light is not cover from the gaze anywhere. Exposed means NOT IN COVER and
+    nothing else; a lamp pool no longer suppresses a Watcher wave or drops the
+    hold, in the dim interiors or outdoors.
+  The dark is the CONDITION His things need in order to open, so letting the
+  player hide in it was letting them hide inside the threat — and a lamp that
+  turns the gaze off makes the one unopt-out-able threat opt-out-able. Light
+  still does real work, but all of it lands on the THREAT, never on you: it
+  denies a Watcher anywhere to open (`_spawn_watcher` needs a dark spot with
+  line of sight, so a fully lit room is still secured) and it BURNS one caught
+  in a pool or the beam (`WATCHER_LIGHT_BURN`). You clear them with light; you
+  never hide in it. Guarded, `tests/stealth.py` §11 + §18.
 
-**OPEN, in build order:** (1) the **light/dark SPLIT as a MECHANIC** (the
-visual darkening landed, above; #4/#21) — outdoors, light pools = cover and the
-dark = exposure, so bring the surface storm-dark scenes into the shadow-cover
-(`SUS_CONCEAL_DARK`) + Watcher-dark rules the dim interiors already use, giving
-the storm a stage to open in; (2) **wire the storm engine in** — real scene
-dark-spots as anchors (off the darkening), tilt-camera projection, spawn density
-off evidence, and the **catch** (a bearer reaching you = the King-catch death);
-(3) **retire THE UNFOLDING** and rewire the catch / death card / Carcosa
-cutscene (flow-guarded) onto the storm; (4) reconcile canon (NARRATIVE §4/§8 the
-King, DESIGN §1 the apex) ONLY as each piece lands —
-the docs still describe THE UNFOLDING because that is what SHIPS until (3). Land
-each visual beat through a VISION look-pass.
+**LANDED — THE FLOOD (2026-07). The storm is a MODE of the Watcher wave, not a
+second spawner.** Two populations of the same creature under different rules
+reads as a bug rather than escalation (most manifestations already wear the
+amalgam skin), so the existing wave switches instead. Maintainer rulings this
+pass: **Watchers do NOT stop at the gate** — they BECOME the storm; **amalgams
+share `WATCHER_MAX` out of storm and uncap in one** (soft `STORM_MAX` = 22, the
+number asked for, earned by caching each unit's composed sprite at
+`UNIT_ANIM_HZ` with per-unit staggering -- 22 units went 53.3ms/18.8fps to
+27.2ms/32fps with a FLAT frame time); **during a storm every dispel still works** (gaze, light, axe,
+round); **light is the only safety**; and **the amalgam is the default skin now**
+(`AMALGAM_CHANCE` 0.5 → 0.9, the shroud Watcher a rare variant).
+- `Game._storm_active()` — past `STORM_GATE_EVIDENCE` (3) and in a room the dark
+  has actually taken (`scene_gloom() > 0`, the one darkness source, so the flood
+  literally fills the dark and cannot disagree with what the player sees). A lit
+  refuge never storms.
+- Units run `movement="storm"` (`entities/npc.py _storm_tick`): they WALK at the
+  player and refuse any step that would put them in light, so standing in a pool
+  makes them ring its edge. They cannot touch or kill (`solid=False`, no grab
+  path) — a unit walking onto you is a SCARE. Out of storm they keep the old
+  passive `watch`. `_sync_storm_mode` flips live units when the state changes
+  under them.
+- Storm spawns drop the line-of-sight requirement and open across the whole room
+  (`STORM_SPAWN_NEAR/FAR`). The LOS rule exists so a lone Watcher is always
+  answerable; a storm unit answers it by WALKING TO YOU. Out of storm the rule
+  stands exactly as ruled.
+- **The flood has to be SEEN.** Measured on a live 22-unit storm, ZERO units
+  passed the sight cone (7 inside 120px) — the whole thing was invisible and
+  "they ring the light" was unreadable. Units now take the apex's fog curve
+  (`Game.actor_smear_range`, `STORM_SEE_RANGE` 240): a dim smear at range,
+  resolving as they press in. A blanket exemption was rejected — it kills the
+  dread the other way.
+- Guards: `tests/stealth.py` §19 (gate, real cap lift, approach, light refusal,
+  cannot touch, dispel still burns, mode revert, the smear). Every one proven to
+  fail before landing; two first drafts were green for the wrong reason (a
+  constant-vs-constant "cap" check, and a smear check that silently skipped on
+  an empty wave).
+
+**LANDED — THE APEX (2026-07).** The Mask that wears a unit, built to the
+maintainer's spec. It supersedes `systems/storm.py`'s timer-driven migration:
+the hop is EARNED, not on a dwell.
+- **Game state, not scene state** (`Game._apex`, like `_king`): one bearer
+  storm-wide is a fence and `scene.npcs` is cleared on every load, so the Mask
+  lives on the Game and PROJECTS a host into whatever room you are in.
+- **It floats in and BECOMES an amalgam.** Two states: `seeking` (a free-floating
+  Mask drifting to the nearest unit it can reach) and `borne` (it IS that unit).
+  Taking a host DELETES the amalgam and rebuilds it wearing that unit's own seed
+  — its exact deal, reused verbatim — plus `APEX_EXTRA_LO..HI` (2-3) added parts
+  (`assemble(seed, extra=)`, on a separate rng so every ordinary unit's deal
+  stays byte-identical). Replacing rather than stacking keeps the two from
+  z-fighting in the depth sort.
+- **It pierces and ignores light.** `npc._apex_tick` has no light probe at all —
+  neither a fixture pool nor the flashlight beam turns it aside, where both hold a
+  regular unit off. Guarded by a contrast check: through the same beam, the apex
+  reaches contact while a regular unit stays 100px out.
+- **The axe and the gun destroy the HOST, not the Mask.** Every family dispel
+  routes through `_dispel_watcher`, which now hands off to `_apex_lose_host`: the
+  body dies, the Mask drops to seeking and re-hosts. It re-hosts on the NEAREST
+  unit after `APEX_MIGRATE_CD`, so fighting it buys SECONDS, never distance —
+  otherwise it would be a free pressure valve and the safest thing in the room.
+- **It comes at `APEX_VIS_GATE` visibility and withdraws below it** (the
+  maintainer's "until you get below the vis threshold", read from both sides).
+- **Speed is `KING_ROAM_SPEED` verbatim** (117 px/s vs a player sprint of 105):
+  above sprint, so it cannot be outrun, which is the locked ratio (error class 9).
+  Light will not stop it and hiding is not where it should be, so the answer is
+  the axe or a round.
+- **The catch has its OWN death kind, `"apex"` — NOT the King's card**
+  (maintainer, 2026-07: "do not use the existing death card"). It briefly fired
+  `_trigger_death("king")`, which played THE UNFOLDING's throat-swallow: the art
+  of the very body the storm exists to replace, shipped as the new apex's
+  signature. `"apex"` now draws a **wordless placeholder fade** at the King's
+  same 3.8s, so the pacing is already right when the real animation lands, and
+  its teardown clears the Mask + host (`_apex_end`) rather than the King. Sound
+  is still His (`void_sting` + `low_pulse`). Wordless is deliberate: His deaths
+  carry no label, so there is no player-facing text here and none owed to
+  `DIALOGUE.md`. Guarded — `tests/stealth.py` §20 asserts the kind is `"apex"`
+  AND that drawing that card never calls `draw_unfold_catch` (proven: borrowing
+  the King's kind again produces 4 calls).
+- **ONE IMPOSSIBLE THING AT A TIME:** while a host is worn, `_tick_king_roam`
+  stands the roaming Unfolding down and clears him from the room. Gated on a host
+  actually being borne, not on a storm merely being up, so nothing changes for the
+  King anywhere the apex has not taken a body.
+- Guards: `tests/stealth.py` §20, every check proven to fail. Two first drafts
+  were vacuous and are worth remembering: the light check used a "got closer than
+  d0-40" threshold that passed even with a light probe bolted on (the apex just
+  stopped at the pool edge, inside the margin) and now asserts it reaches
+  `APEX_CATCH_DIST`; and the King stand-down check asserted `_king is None` after
+  a bare tick, which was true anyway, and now puts a King in the room first.
+
+**THE APEX IS THE ENTITY THAT GETS SPECIAL TREATMENT (maintainer, 2026-07).**
+"As the main threat this entity is going to get special treatment and care. It
+needs to be scary." A look pass (`tools/preview_apex.py`) found three things: the
+BODY varies across host seeds while the FACE is identical in every one, so the
+part that should feel like a specific thing looking at you is the part that never
+changes; the Mask had no expression vocabulary at all; and at play size the only
+thing separating an apex from its own host is the crown, which reads as a ring of
+gold sparkles. Also, as built it had ONE behaviour -- walk straight at a constant
+speed -- with no moment of noticing you.
+
+**LANDED — THE FACE.** `draw_pallid_3d` takes `intent` / `strain` / `skew`
+(0..1), driven from apex state by `_apex_face` and eased at `APEX_FACE_EASE`.
+The rule it is built on: **a carved object must never EMOTE** -- a mask that
+smiles is a cartoon -- so what it does is WORK, the timber moving in ways timber
+cannot. With no mouth and no nose (NARRATIVE §6a) the whole vocabulary is:
+- `intent` -- it HAS you. Sockets narrow to a slot, embers steady and brighten.
+  Climbs inside `APEX_FOCUS_RANGE`; drops to a floor while you are hidden.
+- `strain` -- it is close enough to take you. The centre seam gaps open and the
+  crack widens and RUNS. Only inside `APEX_STRAIN_RANGE`.
+- `skew` -- the two sockets stop agreeing, wandering on its own clock with a
+  per-host offset so no two apexes wear the same wrongness. A carving is
+  symmetrical by construction, so asymmetry reads as the object being wrong
+  rather than as a face pulling a face.
+Driven by STATE, never a loop (a loop is decoration; this is a tell the player
+learns to read), and EASED so it never snaps -- expression that changes on one
+frame reads as a sprite swap.
+Guarded: `tests/stealth.py` §20 (slack far off, narrows closing, comes apart at
+the throat, eases rather than snaps, settles at a held distance rather than
+cycling, and the skew never settles).
+
+**LANDED — THE ONE TELL.** `Audio._build_apex_roar` + `APEX_ROAR_INTENT`, fired
+from `_apex_face` the frame `intent` first crosses the threshold. A SCREECH, not
+a roar: a roar is an animal with lungs and this is a carved thing wearing a body,
+so it is a 2ms attack, a detuned tritone pair that slides up and then breaks
+downward, splintering noise on the same envelope, and a sub that outlives the
+top. One-shot per host; `_apex_lose_host` re-arms it AND zeroes the face, so the
+next bearer earns its screech from zero instead of inheriting the dead one's
+lock. Below the threshold while you are hidden, so it can never announce a lock
+it does not have. Guarded: `tests/stealth.py` §20 (fires exactly once, never
+again for that host, re-arms on losing one, silent at a hidden player).
+
+**LANDED — THE REACH (the distinguishing feature over the crown).** Grabbing
+limbs that grow out of the body toward WHERE YOU ARE (`amalgam._reach_limbs`,
+fed a screen-space vector by `_apex_mask_for` so they aim true under any camera
+yaw), extended by `APEX_REACH_INTENT * intent + APEX_REACH_STRAIN * strain`. Each
+arm clutches on its own phase, with a palm and four curling fingers -- a hand
+that opens and closes reads as WANTING, and arms that clutch in unison read as a
+machine. They arc up over the body and fan wider the more the reach comes at the
+camera, because a straight-down reach lands on the legs and stops reading as arms
+(the case the tilt makes most common). Drawn into the parts layer, so the bone
+outline strokes them and they are the creature rather than an effect over it.
+This is also the catch's TELEGRAPH: full extension is reached outside
+`APEX_CATCH_DIST`, so the hands are on you before contact is. Guarded:
+`tests/stealth.py` §20 (aims at the player on all four sides, barely out at
+range, fully out at the throat, full extension before contact, and grows from
+the body rather than the feet).
+
+- Movement ideas discussed and NOT yet chosen: it uses APERTURES instead of
+  pathing (sink and rise past a wall rather than walk around it -- the migration
+  machinery already exists); STILLNESS instead of idling (perfectly motionless,
+  facing you, at the edge of the light); speed tied to whether you are LOOKING at
+  it (inverts the family's own gaze rule, so the player's trained instinct
+  becomes a cost); and arriving ALREADY THERE rather than walking in.
+
+**OPEN, in build order:** (1) **THE AMALGAM'S CATCH ANIMATION** — the apex's
+death card is a placeholder wordless fade right now, on purpose. It needs its own
+art, built from the amalgam grammar rather than the Unfolding's: the parts, the
+gold cuts, the Mask coming in. Hooked up and timed already (`_death_kind ==
+"apex"`, 3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing.
+Land it through a VISION look-pass, and note the King's death is wordless — no
+label, no text to write. (2) **retire THE UNFOLDING** and rewire the roaming
+King's own card / the Carcosa cutscene (flow-guarded) onto the storm; the apex no
+longer touches that art at all, so what remains is the King path itself;
+(3) the LAST of the canon reconciliation, which is now only the Unfolding's own
+half: NARRATIVE still describes the walking King as the thing that reaches you
+because that is what SHIPS until (2), so §8's "one pursuit, two shapes" collapses
+back to one shape when the Unfolding retires. Land each visual beat through a
+VISION look-pass.
+
+**Canon reconciled for the storm's half (2026-07).** NARRATIVE now carries the
+shadows as fiction rather than as a system: §4 gains a cast row for His gaze (the
+two skins, the gaps that make an amalgam read as assembled, the dark as His door
+and not your cover, the flood at enough understanding, and that ordinary units
+cannot touch you); §8 states the King's catch as ONE pursuit arriving in two
+shapes, with the bearer's card flagged as an unmade placeholder. **The conflict
+that had to be resolved rather than papered over:** §2 locks "the rite lets Him
+extend a single solid object, the Mask, no more" and §6a puts that one object on
+the cult's altar until the PI lifts it — so an apex wearing a Mask on the surface
+at ev3 was a SECOND one, which breaks the impossible-count discipline the whole
+fiction rests on. Resolution, using machinery §2 already had: the storm's face is
+a **SLICE** of Him, the same cross-section as the drifting masks in fire, not an
+object. It costs no new rule and every apex mechanic falls out of it (one at a
+time = one focus; light does nothing = light closes a cut, not a cross-section;
+the axe takes the body, not the face; it leaves when you stop being worth
+looking at). Guarded: `tests/conventions.py` check 12 fails if the storm/apex
+path ever reaches for the `pallid_mask` item, which is the tell that the two have
+been merged again. A code comment in `rendering/amalgam.py` had already made
+exactly that mistake and is corrected.
 
 **The storm CUTS wear the rift's gold rim (approved 2026-07, option (a)+gold).**
 The amalgam apertures should read as the same portal family as the fold/King
@@ -561,7 +799,17 @@ sprint, light is the ONE system to perfect** — the game's missing
 mastery verb. The doctrine that keeps it coherent with everything
 shipped: **light is safety from the small things and a beacon to the big
 one** (Watchers die in it; the flashlight burn + the King's attention
-still price it). Landed already: the lighting foundation, interior
+still price it).
+
+**Read "safety" as ACTIVE, not passive (ruled 2026-07).** Light is a WEAPON and
+a DENIAL, never a hiding place. It kills Watchers and it takes away the dark
+spots they need to open. It does **not** shelter you: standing in a pool is not
+cover from the gaze, and standing in the dark is not cover from anything (the
+`SUS_CONCEAL_DARK` shadow-cover pass was CUT — see #25). The player's tool is
+the beam they point, not the square they stand on. Every future item here is
+judged against that: a light verb that makes a tile safe is the wrong verb.
+
+Landed already: the lighting foundation, interior
 lighting, `WATCHER_LIGHT_BURN`, the beam-off retirement (light works
 everywhere), and the flashlight opening on the PI's desk
 (`CHANGELOG.md`, "Lighting" / "The light pillar"). Open, in build order:
@@ -603,10 +851,14 @@ everywhere), and the flashlight opening on the PI's desk
   response, rides #23), and any screen-dim beat beyond the lights
   themselves dying.
 - **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
-  line-of-sight spots only, 2026-07). Still open: dark-only EXISTENCE
-  (a live Watcher caught by a room relighting should burn or flee, in
-  any scene, not just the dim interiors) and opening them in every
-  non-refuge room type. Keep the below-3 threat role.
+  line-of-sight spots only, 2026-07), and that is the ONE place a room's
+  light state gates them: a fully lit room has nowhere for one to open.
+  The old "a lit spot is cover from the gaze" half was CUT (ruled
+  2026-07, #25) — do not rebuild it in any scene. Still open: dark-only
+  EXISTENCE (a live Watcher caught by a room RELIGHTING should burn or
+  flee where it stands, in any scene, not only when the player's beam
+  finds it — this is light acting on THEM, so it is the right kind of
+  rule). Keep the below-3 threat role.
 - The **capture→King-unleashed** thread and **procession-across-scenes**
   staging sit here too, unscoped. **The capture fork is RULED (2026-07,
   maintainer): capture is GAME OVER** — the CAPTURED card stays a hard
@@ -640,6 +892,13 @@ compression pass (#4b).
 - **The corn is mundane, never the door's doing.** Keep the impossible
   count at **one**: the single unexplained door, everything else ordinary
   cause-and-effect downstream of it.
+- **Sable's misdirection is never resolved in text** (maintainer ruling,
+  2026-07 story audit). He points suspicion at the cold old families;
+  Hettie says the warm easy ones went soonest. They contradict each other,
+  Sable is the wrong one, and **that is on purpose and for the player to
+  notice.** Do NOT build a beat where the PI puts one man's line to the
+  other, and do NOT file a note that draws the conclusion. The audit
+  flagged this as a gap; it is not one.
 - **No dashes in player-facing text** (HARD RULE; flow-guarded).
 - **L5 — complexity hotspots (awareness only, not a ticket).** The largest
   function bodies (`tests/flow.py main`, `scenes/yards.build_yard_scene`,

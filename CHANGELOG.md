@@ -32,6 +32,325 @@
 
 ## Evidence & the case
 
+- **2026-07 — Hettie's memory, the son read, and the "son" tic.** The last
+  three off the audit list.
+
+  **Hettie's memory of the girl** lost its preamble ("I'll tell you the one
+  thing I know that's worth the telling", a character announcing she is about
+  to be important) and its portrait ("Sad around the eyes, and polite with
+  it"), which contradicted her own answer to the photograph four lines
+  earlier: *"Faces come through this shop. I stopped keeping them."* She
+  either retains faces or she does not. What is left is a shopkeeper talking
+  about her till: a regular, then not, and the rest of them going quiet at the
+  same time as a fact about TRADE rather than a survey of the town, since Vane,
+  Toby and Crane already deliver that observation and a fourth flattens all
+  four. **The tab now comes out of the BIN under the till** rather than off a
+  spike (maintainer's idea): she is not keeping a shrine to the girl, it is
+  refuse she has not taken out because nothing leaves this town, refuse
+  included, and the evidence stops being presented and starts being found.
+
+  **`theory_son` is cut** with the other case reads. It wrote out the
+  connection between the bear's tag and the letter, and "his name breaks her"
+  had the PI predicting a scene he has not reached. The bear still detonates;
+  that always lived in the ITEM's own text (`effective_desc`), not the book.
+  **Nothing in the notebook now solves Mara.** What he writes is the fold, the
+  wrong robes read, and the Mask.
+
+  **"son" is Garrick's alone.** It had spread to eight uses across three
+  speakers (Vane 3 including the hollow turn, Pell 3, Garrick 4) and was a
+  large part of why those three read as interchangeable. Everyone else drops
+  it. **Guarded by a new `tests/conventions.py` check** that attributes every
+  chosen mode of address to its speaker and fails when one is shared, because
+  this drift is invisible one line at a time: each author only ever adds one.
+  The check exempts "mister" deliberately, since nobody in Brimley learns the
+  PI's name, so it is the correct default in every mouth. Writing it turned up
+  the sharing immediately, and it was proven red before commit.
+
+- **2026-07 — The queue: six rulings from the story-audit workshop.**
+
+  **The tab was wrong by a factor of three.** It read "run down most of a
+  year"; Mara drove north in the FALL of 1993 and the present is April 1994,
+  so her account runs three or four months. Corrected to "autumn through the
+  new year" in both the item text and the notebook entry, and the proof moved
+  off duration and onto the KIND of purchase (bread, kerosene, lamp oil).
+
+  **"She lived here" is CUT, and it took three more with it.** The maintainer's
+  ruling: that is the player's connection to make. Applied consistently it also
+  kills `theory_resident`, `theory_came_apart` and `theory_willing`, each of
+  which was the conclusion its own evidence had been built to earn, written out
+  for the reader. **He never solves Mara on the page now.** What survives in
+  his hand is the town: the son, the fold, the wrong robes read, the Mask. Which
+  is what the notebook was asked to become at the top of this thread, reached by
+  cutting rather than adding.
+
+  **Mara does not walk out of the shop smiling.** The exit smile and Hettie's
+  "It was the smiling I minded" are gone. A smile the shopkeeper finds
+  disturbing is a visible mark of claiming, and NARRATIVE §2 says there is
+  none; it also put the wrongness back on the PEOPLE. And Mara is grieving a
+  dead son, not elated. She stopped coming in, the basket sat there, nobody
+  clocked anything.
+
+  **"Before the cold" is deleted from the timeline** (`NARRATIVE.md` §3). It
+  put the procession underground in the fall, which contradicted Hettie seeing
+  Mara in the shop past the new year. The maintainer identified it as detail an
+  earlier session invented and wrote into the story bible, where it then got
+  cited back at them as canon. Worth recording as a class of problem, not one
+  clause: **the canon docs are partly model-authored, so "NARRATIVE.md says" is
+  not the same as "the maintainer decided."**
+
+  **THE ONE WATCHER ENTRY.** The Watchers are the whole below-3 threat, they
+  open whenever the player is exposed, and the PI's notebook did not contain a
+  single word about them. He now writes up the first one he stares out, and
+  **never mentions them again for the rest of the run** while they keep coming.
+  The silence is the design: an arc where he notices he has stopped being
+  frightened is the game announcing that he changed, and a notebook that simply
+  stops recording them lets the player notice it instead. He stays confused and
+  tired and ordinary; he does not harden. Seeing one and staring it out is ONE
+  event, so it fires on the dispel. Five guards, including the silence.
+
+  **"midwestern" is capitalised**, in the Talk's punchline, which is one of
+  the most memorable lines in the game.
+
+- **2026-07 — The recruiter: no miracle, no euphoria (maintainer ruling).**
+  Vane's one fragment of the *how* was a conversation with a blind congregant
+  who had been promised his sight back by the dream, walked into the office
+  without a stick, sat down square in the chair, and left smiling. Three
+  things wrong with it, and the first is the one that matters:
+
+  **The want was a miracle.** `DESIGN.md` §8 says the machine runs on ORDINARY
+  wants, nothing cosmic: a full house, a harvest, a guest at supper, a road
+  home. Sight restored was the only physical repair anyone in the fiction was
+  ever promised, and it made the door read as a faith healer rather than a
+  thing that whispers a bearing to someone in pain. **It was also a visible
+  mark** (a blind man navigating perfectly), against the §2 invariant that
+  being claimed leaves none, and it used a disability as a spook prop.
+
+  He is now a man whose wife is alive in a county home and does not know his
+  face. He used to drive down every Sunday. He stopped, because there is no
+  sense in it until the work is finished and he wants her to know him the
+  first time she sees him. The want is ordinary, unfixable, and not a repeat
+  of Mara's dead child (absence versus presence without recognition). He is
+  **wrecked and certain at the same time** rather than radiant: he cried the
+  whole way through it and it never got near the part of him that was sure.
+
+  The same pass cut the EUPHORIA TELL wherever it was doing work: he no longer
+  leaves smiling, and the congregation are no longer "glad of it." The
+  smiling-cultist motif had become the game's shorthand for possession, which
+  is the visible mark canon forbids and puts the wrongness back on the PEOPLE
+  after the world rot was deliberately relocated onto the PI. Vane calling the
+  newcomers "friendly and smiling" and Sable smiling over the photograph both
+  stay: one is a lawman describing pleasant strangers, the other is a host
+  doing his job.
+
+  Guarded four ways in `tests/flow.py` (the want is his wife and a county
+  home, no blindness, no euphoria, wrecked-and-sure), and the euphoria and
+  wrecked guards were proven to fail red before commit. Canon updated at
+  `NARRATIVE.md` §4 with the reason attached, so the next session cannot
+  restore a miracle want by accident.
+
+- **2026-07 — The Casebook becomes the PI's running notebook (maintainer:
+  "I hate how it's just a bunch of paper that just gets put randomly in the
+  tab").** The Case tab was not a record, it was a filing system. Entries
+  rendered sorted by CATEGORY (evidence first, then notes), so the order the
+  player saw them in was the order the code declared them rather than the order
+  they lived them, and the two pinned surfaces, the Working Theory and the
+  Timeline, were recomputed live on every open. The book had no memory:
+  whatever the PI used to think was silently replaced by whatever he thought
+  now.
+
+  That last part was the real loss, and it was specific to this game.
+  `NARRATIVE.md` holds that his written theory is allowed to reason WRONG and
+  the game never corrects him (the robes are the ones who could stop this).
+  That wrongness was invisible, because the theory edited itself into
+  something less wrong before the player could catch it out.
+
+  **Now it is one running document.** Everything he writes down goes in in the
+  order he wrote it and stays exactly as written. His CONCLUSIONS are journaled
+  once each, at the moment he reaches them (`_THEORY_THOUGHTS`,
+  `_tick_theory_notes`), and they render with no heading, because a conclusion
+  he jots is a line in the flow rather than a titled find. The wrong robes read
+  now sits on its page for the rest of the run, next to the later reads that
+  supersede it, and nothing ever says so. Reading the book start to finish is
+  watching a man's understanding change.
+
+  **The Timeline is CUT** (maintainer ruling): it re-sorted his finds into
+  Mara's chronology, which is exactly the connection the player is supposed to
+  make. He writes the dates down as he finds them instead, and the arithmetic
+  is theirs. The booking slip's entry gained the date it had always been
+  missing ("Dated the eleventh of December") since without it the chronology
+  was unreconstructable from the book at all.
+
+  **How it is stored.** `evidence` and `notes` stay two save lists, because
+  the King-gate counts one and must not count the other; each entry gets a
+  `seq` stamp from the new `Save.next_seq`, and the book merges and orders by
+  it. A single merged list would have been the tidier data model and would have
+  meant rewriting roughly 130 call sites, nearly all of them test fixtures, for
+  no player-visible difference. The split is bookkeeping and never reaches the
+  player.
+
+  Consequences worth recording: `_rewrite_note`, added days earlier so the robe
+  could revise its own entry after the Talk, is GONE. Under a running document
+  the second look is a LATER entry (`clerk_robe_placed`) and the first stays as
+  written; the pair, one describing a garment and one recognising it, is the
+  record of him learning, and collapsing it into one tidy paragraph erased the
+  man who did not know yet. `mc.wrap_lines` was split out of `mc.wrap` so the
+  pagination measures with exactly the rules the renderer draws with. The leaf
+  was repositioned clear of the tab ribbon, its ruling pitched to the body font
+  so his lines sit ON the rules, and the body moved from the case-file mono to
+  the same serif ink as Mara's journal, so the two books read as two hands
+  rather than a document and a typewriter.
+
+- **2026-07 — The small-detail layer, first four (the schoolhouse and the
+  robe).** The discovery catalog showed the surface holding six real finds in
+  37 rooms, three of them mandatory. The maintainer's diagnosis of why a
+  search verb would not fix that: there is nothing small to find, so searching
+  would be busy work over empty containers. Content first, mechanics later or
+  never.
+
+  A longer proposed list was cut down to four, and the rejections are the
+  useful part of the record. Cut: an attendance register (an object whose only
+  job was to announce that time stopped in January, which is the calendar
+  TODO #28 had just ordered removed, rebuilt in a school uniform); stacked
+  bowls and a folded coat (nobody's, pure atmosphere, and the coat existed
+  only to be almost-a-clue); and three red herrings on Pell, Garrick and
+  Calder (narrator boxes explaining the inner life of characters who say it
+  better themselves in dialogue, and inert by construction, since a dead end
+  that resolves into a sad fact costs the player nothing). **The rule the
+  survivors share: a find is a physical trace of a specific person doing a
+  specific thing, and it is an object rather than an explanation.**
+
+  Shipped:
+  - **Toby's desk**, in the pile the cult shoved into the schoolhouse corner.
+    His name inked in the lid, a spelling sheet with three words done. It
+    records NOTHING in the case by design: the name is the whole beat and the
+    player does the rest.
+  - **A newcomer's gas receipt** under a schoolhouse cot: Clark Oil, Seymour,
+    Wisconsin, July 2 1993, fourteen gallons, cash. A walk-over pickup that
+    files a note. It corroborates the one thing Vane could never get out of
+    them, that not one could say where they had driven in from, without a word
+    of testimony.
+  - **The chalkboard's other half.** The board always said the cult's doors
+    were drawn "under a child's faded lesson" and the lesson was never
+    legible, so the room read as a cult set rather than a school somebody
+    moved into. A surviving corner of it now reads first in every pre-rite
+    look: a column of addition worked down in a child's hand, the answer
+    circled by the teacher.
+  - **The robe in Sable's closet, in two stages.** It used to fire one caption
+    calling it "a cult robe" before the player had ever seen a cult, which is
+    knowledge the speaker cannot have (playtest error class 5, caught by the
+    maintainer). Now the first look is a garment: dark, plain, hand-sewn, and
+    the only odd thing about it is that it has never been worn. After THE TALK
+    has put a robed man's hand on the PI's shoulder, the same closet reads
+    differently and the note is REWRITTEN in place rather than filed twice
+    (the new `_rewrite_note` helper). The find is the same find; what changed
+    is the man looking at it.
+
+  Cut in the same pass, all three placeholder narration that recorded nothing:
+  `scarecrow` (the [E] cue and its box gone outright, a scarecrow standing in
+  a corn row being scenery rather than an event), `worn_stone` (the headstone
+  keeps its two-line look, drops the "A weathered headstone." discovery), and
+  `backwoods_note` (the stash keeps its pickup, drops "A small stash.").
+
+- **2026-07 — Vane's menu, cut down and un-gated (the maintainer's pass on the
+  pilot).** Reviewing the gate list for Vane, the maintainer cut and reshaped:
+
+  - **The `car` question is CUT.** "We really dgaf about the car." Its fold
+    material (nothing with an engine leaves, "It's the town.") moved into the
+    town question, where it belongs: the dead engines are a symptom of what is
+    happening to Brimley, not an errand about the PI's own vehicle. The fold
+    note files from there now, and `_vane_car_told` is retired.
+  - **The town question went PRESENT TENSE** — "What's happening to this
+    town?" It was "What happened", which framed the seal as finished history
+    rather than the thing still happening to the man being asked.
+  - **The Ledger share is CUT.** The registers are Sable's thread and pay off
+    at that desk (`checkouts`); Vane's trust should turn on Mara's trail, the
+    case he is actually being asked to believe in. `share_journal` is now the
+    single share, so trust has one clear price.
+  - **The recruitment question became "Where are the cultists gathered?"**,
+    gated on THE TALK rather than the intro: the PI asks after a hand has
+    landed on his shoulder, so he is asking about them as people who are
+    *here*, not as history. Vane answers the WHERE honestly (the school, the
+    barn, the lodge, and then nothing, because he does not know) and the HOW
+    is what he withholds.
+
+  **And the rule the whole menu now follows: trust gates the ANSWER, never
+  the QUESTION.** The two trust-gated rows used to vanish from the menu until
+  earned. They are askable from the moment their situation exists, and an
+  untrusted Vane refuses them in his own voice, saying what would change his
+  mind ("Bring me something I can hold"; "Work the case. Come back and show me
+  you did"). He is written as a mistrusting man, so the mistrust should be
+  something the player *meets*, not an absence they never see. A hidden option
+  teaches nothing; a refusal is characterisation, a stated price, and a reason
+  to come back. Both rows stay askable until he has actually answered, so a
+  refusal is never a lockout, and the grant rides a `("do", ...)` at the end of
+  the trusted branch so a refusal can never arm it.
+
+  Left deliberately un-gated: the booking-slip handover on the photograph. The
+  maintainer raised whether an untrusting Vane should hand it over at all and
+  flagged the soft-lock risk in the same breath; gating it on a share would
+  have forced journal-before-slip and broken the "findable in ANY order"
+  property `DESIGN.md` §9 holds for the surface trail. The reluctance lives in
+  how he gives it instead.
+
+- **2026-07 — The story audit, and the detention night (the investigation-loop
+  pilot; `TODO.md` #1).** A story audit aimed at "make investigating feel much
+  better" measured the loop instead of describing it, and what it found was
+  that there was no loop. Of 31 authored questions across the whole cast,
+  **three** opened on something the PI had found, and two of those three were
+  the Ledger, which is not case evidence. Every `evidence_maras_*` flag was
+  read by nothing but its own re-fire guard and the derived theory/timeline.
+  Two of the three surface pieces needed no investigation at all: the journal
+  a walk-over in the barn, the record an `[E]` on a filing cabinet. So finding
+  and asking were parallel activities that never touched — the case
+  accumulated rather than compounding, and once each principal's rows were
+  spent the town went inert with nothing left to bring anyone.
+
+  The sharpest instance was the record, which had also quietly stopped
+  implementing its own design: `DESIGN.md` §9 specifies the NPC as the **warm
+  delivery** (show the photograph, they react and hand it over) with the paper
+  world-persistent as the no-soft-lock fallback. The receipt did exactly that
+  through Hettie. The record did not — and worse, **Vane's answer to Mara's
+  photograph did not mention that he had arrested her.** He takes her picture
+  to the window, works it corner to corner, and places her only as "one of the
+  new folk," about a woman he personally booked, held overnight and signed a
+  slip for four months earlier. That is `DIALOGUE.md` voice rule 5 (knowledge
+  the speaker can have) and it threw away the best investigative beat on the
+  surface.
+
+  **What shipped (the pilot, scoped to Vane on the maintainer's direction).**
+  The photograph is now a recognition: he knows the face, names the December
+  night, and goes to the files, handing the slip over mid-exchange through a
+  `("do", grant_record)` beat. `grant_record` is the single funnel both ways
+  in share, mirroring `grant_receipt`. The office records drawer is demoted to
+  the **fallback**, opening only once he is no longer the man behind the desk —
+  dead **or hollow**. The hollow case is a real hazard rather than a
+  hypothetical: the newspaper (+2) and the preacher's murder (+1) latch the
+  turn at `VANE_HOLLOW_AT`, which a player can reach before ever showing him
+  the photograph, so without the fallback that ordering would have soft-locked
+  the descent. Both are guarded.
+
+  Holding the slip then opens **`the_night`**, his account of the arrest: the
+  paper says what he wrote down, this is what he saw, and it files as a
+  **statement** note (`the_disturbance`), never counted. Its last beat leaves a
+  second witness as a plain stated fact — the man who fetched him sits the
+  square all day — and **the lead is never pointed at.** He does not say
+  Garrick, and no PI line closes the gap; connecting it is the player's, which
+  is the whole difference between investigating and collecting, and the
+  opposite move from the revisit-nudges #13b is cutting.
+
+  Also from the audit: **Mara was two different ages.** The case-file intake
+  said 26 in both its surfaces while the booking slip said `AGE: 24` on a date
+  four months before the present — in the one class of text the game asks the
+  player to read as self-evident, and the two are read side by side in the
+  Casebook. The maintainer ruled 24; the fact now has one home in
+  `NARRATIVE.md` §4 and a guard holds the intake and the slip together.
+
+  **Ruled, not built:** Sable's misdirection (he points at the cold old
+  families, Hettie says the warm ones went soonest) stays unresolved in text.
+  The audit flagged it as a gap and the maintainer ruled it deliberate and for
+  the player to notice, so it is now a standing fence in `TODO.md` against a
+  later session "fixing" it.
+
 - **2026-07 — Evidence reworked into Mara's trail (`TODO.md` #22, `DESIGN.md`
   §9, `NARRATIVE.md` §6).** The original model was a "pool of six, any 3"
   evidence set. Run against a rubric (must be Mara's, must be a pickup item,
@@ -90,6 +409,250 @@
 
 ## Stealth & threat
 
+- **2026-07 — The apex gets a FACE, and the catch animation is reverted.** The
+  maintainer had asked for that animation to go on the list for later; it was
+  built off a misread "continue" and is reverted here (`git revert`), placeholder
+  and TODO item restored. What they asked for instead: the face, first.
+  A look pass (new `tools/preview_apex.py`) framed the problem. Across six host
+  seeds the BODY varies and the FACE is identical in all of them -- the one part
+  that should feel like a specific thing looking at you is the part that never
+  changes -- the Mask had no expression vocabulary at all, and at play size the
+  only thing separating an apex from its own host is the crown, which reads as a
+  ring of gold sparkles.
+  `draw_pallid_3d` now takes `intent` / `strain` / `skew`. The rule the design
+  hangs on: **a carved object must never EMOTE.** A mask that smiles is a
+  cartoon; what this one does is WORK, the timber moving in ways timber cannot.
+  With no mouth and no nose (NARRATIVE §6a) the vocabulary is the sockets, the
+  embers, the seam and the crack -- sockets narrow to a slot and the embers
+  steady as it acquires you, the seam gaps and the crack RUNS as it closes to
+  take you, and the two sockets disagree on a wandering clock with a per-host
+  offset so no two apexes wear the same wrongness (a carving is symmetrical by
+  construction, so asymmetry reads as the object being wrong rather than as a
+  face emoting).
+  Driven by STATE and never a loop -- on a loop it is decoration, tied to what
+  the thing is doing it becomes a tell the player learns to read -- and eased
+  (`APEX_FACE_EASE`) because expression that changes on one frame reads as a
+  sprite swap. The compose cache had to key on the face or the expression froze
+  at whatever it was when the unit was first composed.
+  Guarded by `tests/stealth.py` §20: slack far off, narrows closing, comes apart
+  only inside the strain range, eases rather than snaps, SETTLES at a held
+  distance rather than cycling (the loop check), and the skew never settles.
+  Proven by pinning intent to a constant. One of those checks was wrong on the
+  first pass while the code was right -- it asserted low strain at 85px, which is
+  well inside the 150px strain range. Full gate green.
+
+- **2026-07 — THE APEX lands: the Mask that wears a unit (`TODO.md` #25).** The
+  storm had a flood but no threat -- regular units cannot touch you by ruling --
+  so this is the piece that makes it dangerous, built to the maintainer's spec.
+  The Mask is **Game state, not scene state** (`Game._apex`, the pattern `_king`
+  already uses): one bearer storm-wide is a locked fence and `scene.npcs` is
+  cleared on every load, so it projects a host into whatever room you are in.
+  It arrives at `APEX_VIS_GATE` visibility, FLOATS to the nearest unit it can
+  reach, then **deletes that amalgam and becomes it** -- wearing the unit's own
+  seed, so its exact deal is reused verbatim, plus 2-3 added parts via a new
+  `assemble(seed, extra=)` on a separate rng so every ordinary unit stays
+  byte-identical. Replacing rather than stacking was deliberate: two NPCs at one
+  position z-fight in the depth sort.
+  **It pierces and ignores light** -- `_apex_tick` has no light probe at all,
+  where `_storm_tick` refuses both a lamp pool and the beam -- and it runs at
+  `KING_ROAM_SPEED` (117 px/s against a player sprint of 105), above sprint by
+  the locked ratio, so it cannot be outrun either. That leaves the axe and the
+  gun, which is the loop the maintainer wanted ("it makes the loop more fun if
+  the player can do something to survive"): every family dispel routes through
+  `_dispel_watcher`, which now hands to `_apex_lose_host` -- the HOST dies, the
+  Mask does not, and it re-hosts on the NEAREST unit after `APEX_MIGRATE_CD`.
+  That cooldown is the entire reward for fighting it, on purpose: re-hosting
+  near you means you buy SECONDS, never distance, or driving it off would be a
+  free pressure valve and the apex would become the safest thing in the room.
+  Contact ends the run, and — after the maintainer caught it — on its OWN death
+  card rather than the King's. It briefly fired `_trigger_death("king")`, which
+  played THE UNFOLDING's throat-swallow: the art of the very body the storm
+  exists to replace, shipped as the new apex's signature. `"apex"` is now its own
+  kind, drawing a wordless placeholder fade at the King's same 3.8s so the pacing
+  is right when the real animation lands, with its teardown clearing the Mask and
+  host instead of the King. Sound stays His. Guarded both ways: the kind must be
+  `"apex"`, and drawing that card must never call `draw_unfold_catch` (borrowing
+  the King's kind again produces 4 calls). The amalgam's own catch animation is
+  now the top open item on #25. And
+  **while a host is worn `_tick_king_roam` stands the roaming Unfolding down** --
+  "the impossible count stays at one" is a canon fence, not a preference. Gated
+  on a host actually being borne rather than a storm merely being up, so nothing
+  changes for the King anywhere the apex has not taken a body.
+  Guarded by `tests/stealth.py` §20, every check proven to fail. **Two of those
+  checks were vacuous on the first draft and both are instructive:** the
+  light-piercing check asserted "closed to within d0-40", which passed even with
+  a light probe bolted onto the apex (it simply stopped at the pool's edge, well
+  inside that margin) and now asserts it reaches `APEX_CATCH_DIST`; and the
+  King-stand-down check asserted `_king is None` after a bare tick, which was
+  already true since he does not spawn in one tick, and now puts a King in the
+  room first. Verified in a live storm capture: the bearer reads clearly beside
+  the player, and running it to contact fired the death.
+
+- **2026-07 — The storm earns its requested size back: 22 units at a flat 32fps.**
+  The self-assessment had cut `STORM_MAX` from the maintainer's 20-25 to a
+  measured 10, because 22 units cost 53.3ms a frame (18.8 fps). Rather than leave
+  the design short, the DRAW was made cheap enough: `draw_amalgam_sprite` now
+  composes each unit into a cached surface and refreshes it at `UNIT_ANIM_HZ`
+  (12) instead of every frame. The render is a pure function of
+  (seed, birth, dispel, gaze, t) -- every part draw is deterministic and the only
+  randomness is seeded off position -- so quantising the clock makes it cacheable.
+  Re-measured: 22 units 27.2ms avg / 31.0ms worst (~32 fps), 25 units starts to
+  graze 30. `STORM_MAX` is 22.
+  **Three wrong turns on the way, each caught only by measuring the thing I had
+  just claimed to fix:**
+  1. Caching alone left a SAWTOOTH -- 22ms most frames, 51ms every fifth -- because
+     every unit shared one clock and rolled over together. The average (28.7ms)
+     hid it completely; only the per-frame sequence showed it.
+  2. The first stagger used `seed % 251`, which maps nearby seeds to nearly
+     identical offsets, so a batch of sequential seeds still refreshed in lockstep
+     and the sawtooth survived. Fixed with a multiplicative hash. Guarded by
+     `tests/conventions.py` check 11, which fails on the modulo version.
+  3. Keying the cache by bucket grew it until a size limit triggered a WHOLESALE
+     clear, re-spiking every unit at once. One entry per unit, replaced in place,
+     removes mass invalidation entirely.
+  Verified by A/B against the pre-cache render at a fixed clock: 2.65% of pixels
+  differ, all of it the animation sampled at a slightly different phase, and the
+  creatures are visually identical. `reset_amalgam_cache()` is called on scene
+  load so the cache never holds sprites for units that no longer exist.
+
+- **2026-07 — Self-assessment pass on the storm: four real bugs, all of them
+  claims I had not measured.** Corrects the entry below, which stated a
+  `STORM_MAX` of 22 "for frame time".
+  - **The flashlight gave NO protection from the flood.** `npc._storm_tick`
+    tested `Scene.lit_at`, which only knows scene FIXTURES, so the beam was
+    invisible to it -- making "during a storm light is your only safety"
+    unachievable in every room without lamps: most of the mine, the lost spaces,
+    any unpowered building. `Game._stamp_beam` now publishes the cone on the
+    player and `npc._in_beam` respects it, using the same `FLASHLIGHT_REACH` /
+    `FLASHLIGHT_SPREAD_DEG` that `_draw_dark` draws it with, so what the player
+    sees and what a unit refuses cannot drift.
+  - **Lifting the population cap silently lifted the THREAT ~4x.** The gaze term
+    (`WATCHER_GAZE`) and the visibility FLOOR (`WATCHER_FLOOR`) are both
+    per-live-unit, so 22 units climbed the meter at 1.1/s -- zero to maxed in
+    under a second -- and pinned the floor at `VIS_FLOOR_TOTAL_CAP` (0.92), just
+    under the King, unclearably for the whole storm. That directly contradicts
+    the ruling that regular units cannot touch or kill. `STORM_PRESS_UNITS`
+    (= `WATCHER_MAX`) now caps how many may press the meter: a storm presses like
+    a full Watcher wave, not like 22 of one.
+  - **`STORM_MAX` 22 was not a lag-safe soft cap; it was a third of the frame
+    rate.** Measured on a real frame (well_passage, dark, storm on): 0 units
+    12.1ms, 5 units 26.2ms, 8 units 34.5ms, 22 units 53.3ms = **18.8 fps**. Each
+    unit costs ~2.8ms, nearly all inside `draw_amalgam_sprite`. Cap set to 10 (a
+    measured ~25fps worst case). Raising it needs the DRAW to get cheaper, not
+    the cap braver -- caching each unit's composed layer at ~12Hz would cut
+    per-unit cost roughly fivefold and put the requested 20-25 back in reach.
+  - **`STORM_UNIT_SPEED`'s comment was wrong by 4x** ("a walk, below player
+    sprint"; it is ~20px/s against a player walk of 84 and a cultist run of
+    51-54 -- a slow drift, which is correct for something that cannot touch you).
+  Also: `_haze` was allocating and blitting a FULL-SIZE layer per call, ~230
+  calls a frame in a storm, with `blit` profiling as the largest single cost in
+  the amalgam draw; localising it to the blob's own surface cut 30.6ms → 25.8ms
+  for 22 sprites at byte-identical output (verified by render hash). The same
+  treatment on `_cut_line` changed the pixels for a 0.4ms gain and was reverted.
+  And `_stamp_beam` sat after `_tick_watchers`'s not-watching early return, so a
+  safe scene never refreshed the cone and a stale one persisted on the player;
+  moved above it. Guards added for the beam barrier and the meter cap, both
+  proven to fail. Full gate green.
+
+- **2026-07 — THE STORM lands as a MODE of the Watcher wave (`TODO.md` #25).**
+  The design question was how amalgams spawn once the storm exists, and the
+  answer was that it must NOT be a second spawner: `systems/storm.py` kept its
+  own `_Unit` list with rules that contradict the live wave's (light SLOWS vs
+  light BURNS, never-dispelled vs stare-to-dispel), and since `AMALGAM_CHANCE`
+  already put the amalgam skin on half of all manifestations, wiring it in would
+  have put two populations of the identical creature under opposite rules in one
+  room. That reads as a bug, not escalation. So the existing wave changes mode.
+  Maintainer rulings this pass, all now live: Watchers do NOT stop at the gate
+  (they BECOME the storm); amalgams share `WATCHER_MAX` out of storm and uncap in
+  one (soft `STORM_MAX` 22 for frame time); every dispel keeps working in a
+  storm; light is the only safety; units walk onto the player as a SCARE and
+  cannot touch or kill; and the amalgam is the default skin now
+  (`AMALGAM_CHANCE` 0.5 → 0.9, the shroud a rare variant).
+  Storm spawns drop the line-of-sight requirement, which is a deliberate
+  narrowing of the 2026-07 rule rather than a break of it: LOS exists so a lone
+  Watcher is always answerable, and a storm unit answers that by walking to you.
+  **The finding that only a live capture could produce:** a driven 22-unit storm
+  had **ZERO units pass the sight cone** — 7 of them inside 120px — so the entire
+  flood was invisible and "they ring the light" was a rule the player could never
+  see. Units now take the apex's fog curve (`actor_smear_range`,
+  `STORM_SEE_RANGE` 240): a dim smear at range, resolving as they press in. A
+  blanket exemption was rejected for killing the dread the other way.
+  Guarded by `tests/stealth.py` §19, every check proven to fail first. Two of
+  those checks were green for the wrong reason on the first draft and are worth
+  remembering: a "cap lifts" check that only compared two CONSTANTS (pinning
+  `cap = WATCHER_MAX` in the tick left it green — replaced with one that drives
+  the real wave past the old ceiling), and a smear check that read
+  `g._watchers[-1]` and SILENTLY SKIPPED whenever the wave was empty. Docs:
+  `DESIGN.md` §1, `CLAUDE.md`, `TODO.md` #25 (which also now carries the
+  maintainer's full spec for the un-built apex/Mask NPC). Full gate green.
+
+- **2026-07 — Darkness stops hiding you, and light stops sheltering you from
+  the gaze (maintainer ruling; supersedes the entry below and half of the
+  2026-07 "no light = danger" pass).** The maintainer read the entry below and
+  rejected its whole framing: *"Watchers should be able to gaze at you while
+  you're standing in the light, that's the whole point of them?? Darkness
+  shouldn't hide you AT ALL."* Both mechanics are now cut, not narrowed.
+  - **Darkness is no longer concealment, anywhere.** `SUS_CONCEAL_DARK` (0.45),
+    `Game._tick_dark_cover`, the `player._in_dark` stamp and the darkness term
+    in `stealth.concealment_factor` are all DELETED. Shadow cover had been live
+    in every `DARK_SCENES` room since the stealth rework.
+  - **A light pool is no longer cover from a Watcher.** `_tick_watchers` now
+    reads `exposed = player.hidden is None` and nothing else, so a lamp neither
+    suppresses the wave nor drops the hold. `_dark_is_exposure` (added in the
+    entry below) is deleted with it.
+  **Why the ruling is right.** The dark is the CONDITION His things need in
+  order to open at all, so letting the player hide in it was letting them hide
+  *inside* the threat — and it paid them for switching the flashlight off in
+  exactly the rooms that should be worst. Symmetrically, a lamp that switches
+  the gaze off makes the one threat that must not be opt-out-able opt-out-able.
+  Light still does real work, but every bit of it lands on the THREAT rather
+  than on the player: it denies a Watcher anywhere to open (`_spawn_watcher`
+  still needs a dark spot with line of sight, so a fully lit room remains
+  secured) and it BURNS one caught in a pool or the beam
+  (`WATCHER_LIGHT_BURN`). You clear them with light; you never hide in it. The
+  doctrine in `TODO.md` #21 ("light is safety from the small things") is
+  therefore ACTIVE safety — a weapon and a denial, never a safe square — and
+  that reading is now written into the ticket so future light verbs are judged
+  against it.
+  **A latent NameError fell out of it.** Removing dark cover let cult chases
+  lock in dark rooms for the first time, which reached
+  `entities/enemy.py:_cult_tick`'s chase branch and crashed on
+  `CULT_CHASE_MULT` — used there but never imported (`enemy.py` has no star
+  import, unlike `threat_mixin`). Fixed, and an AST sweep confirmed it was the
+  only such name in the stealth/threat files.
+  Guards: `tests/stealth.py` §11 (config has no `SUS_CONCEAL_DARK`; the
+  deepest dark conceals nothing; corn and hides still work; a lamp pool does
+  NOT drop the hold and the spawn timer keeps running in it) and §18 (the same
+  outdoors at stage 3). Docs: `DESIGN.md` §1 + §2 + §12, `TODO.md` #21 + #25,
+  `CLAUDE.md`. Full gate green.
+- **2026-07 — The outdoor dark EXPOSES you, and was ruled never to hide you
+  (`TODO.md` #25 item 1, closed).** The surface darkening had been visual for
+  two slices; this gives it teeth. `ThreatMixin._dark_is_exposure` extends the
+  dim interiors' Watcher rule to any `STORM_STAGE_SCENES` scene whose
+  `scene_gloom()` is above zero, so from rot stage 1 standing unlit under the
+  open sky is what opens His gaze, and a yard light or lamp pool is the refuge
+  (the flashlight already burned them). It reads `scene_gloom()` rather than
+  minting a set of its own, joining `_draw_dark` and `_tick_lost_edge` as the
+  third consumer of the one darkness source — so what the player SEES and what
+  the gaze DOES cannot drift apart. Watchers wake at `WATCHER_WAKE_EV` (1),
+  which is also the first stage with any gloom, so the rule is live from the
+  very first outdoor Watcher; at stage 0 the gloom is 0 and the outdoors is
+  unchanged.
+  **The other half was ruled OUT rather than deferred (maintainer, 2026-07:
+  "standing in the dark SHOULDN'T hide you").** The original ticket asked for a
+  symmetric split — outdoor dark as `SUS_CONCEAL_DARK` cover as well as
+  exposure. The asymmetry is the better rule and is now a decision, not a gap:
+  indoors the dark is a room you CHOSE over the lit one, so trading concealment
+  for exposure is a real decision; outdoors at stage 3 the dark is EVERYWHERE,
+  and concealing there would hand the player a free permanent map-wide hide at
+  exactly the moment the game should be closing in. So outdoors the storm dark
+  cuts one way: it costs you and never pays. Light is the last refuge, not the
+  dark. `_tick_dark_cover` stays keyed to `DARK_SCENES`, with the reasoning
+  written at the site because the tempting "symmetry fix" is to change it.
+  Both halves guarded by `tests/stealth.py` §18 (exposure opens, a lamp pool
+  releases the hold, and outdoor dark stamps no `_in_dark` / grants no
+  concealment), and both breakages were confirmed RED before landing. Docs:
+  `DESIGN.md` §1 + §2 + §12, `TODO.md` #25/#21. Full gate green.
 - **2026-07 — Binary hidden-flag stealth replaced with graded suspicion
   (`DESIGN.md` §12, formerly its own `STEALTH_REWORK.md`).** The old system
   was an on/off `hidden` flag. Replaced with a per-enemy `suspicion` value
@@ -139,6 +702,272 @@
 
 ## The shadows program (the amalgams)
 
+- **2026-07 -- Canon reconciled for the storm, and one real conflict found in
+  the doing.** The storm and the apex had been built as systems and documented
+  only in `DESIGN.md`/`TODO.md`; `NARRATIVE.md` still described His gaze as the
+  original Watchers and nothing else. Reconciling it turned up a contradiction
+  rather than a gap: §2 locks "the completed rite is the one thing that lets Him
+  extend a single solid object, the Mask, no more", and §6a puts that one object
+  on the cult's altar until the PI lifts it in the Sign Chamber -- so an apex
+  floating a Mask in on the surface at 3 evidence was a SECOND solid object, in
+  a fiction whose stated discipline is keeping the impossible count at one.
+  Resolved with machinery §2 already had rather than a new rule: the storm's
+  face is a **SLICE** of Him, the same cross-section as "the drifting masks in
+  fire are a slice of Him" and the King-catch furnace -- His face without being
+  a thing anyone could pick up. It is strictly tighter than what was there,
+  because every apex mechanic then falls out of existing canon instead of
+  needing its own: one bearer at a time because His attention has one focus;
+  light does nothing to it because light closes a *cut* and a cross-section is
+  not one; the axe takes away the body it was using, never the face; and it
+  withdraws when the PI stops being worth looking at.
+  A comment in `rendering/amalgam.py` had already made the mistake outright
+  ("His face made an OBJECT (NARRATIVE 6a)") and is corrected.
+  Also added to NARRATIVE: a §4 cast row for the shadows as FICTION (the two
+  skins, the gaps that make an amalgam read as assembled rather than born, the
+  dark as His door and never your cover, the flood at enough understanding, and
+  that ordinary units cannot touch you -- they are attention, not hands); a §8
+  note that the King's catch is ONE pursuit arriving in two shapes, with the
+  bearer's card flagged as the unmade placeholder it is; and four invariants.
+  Guarded by `tests/conventions.py` check 12, which fails if the storm/apex path
+  ever references the `pallid_mask` ITEM key -- the mechanical tell that the
+  slice and the keystone have been merged back into one thing. Prose could not
+  hold this distinction (both are drawn by the same renderer and both get called
+  "the Mask" in conversation), which is exactly the case the make-the-check rule
+  exists for.
+
+- **2026-07 -- The apex gets a SCREECH and a REACH (TODO #25; maintainer: "I
+  like your one tell idea, like a roar or screech more like... another
+  distinguishing feature like limbs that are more reactive and try and grab the
+  player", then "finish the queue in its entirety").** The two beats that were
+  approved after the face landed, both aimed at the same complaint: as built,
+  the apex was entirely continuous -- it drifted in, took a host, walked at a
+  constant speed, and touched you -- with no moment at which anything changed.
+  - **THE ONE TELL.** `Audio._build_apex_roar`, fired from `_apex_face` the
+    frame `intent` crosses `APEX_ROAR_INTENT`. Built as a SCREECH rather than a
+    roar because a roar is an animal with lungs and this is a carved thing
+    wearing a body: 2ms attack (nothing else in the mix starts that fast, which
+    is what makes it land as an event and not a cue), a detuned tritone pair
+    sliding up through the first third and then breaking downward, splintering
+    noise gated by the same envelope so it reads as timber tearing, and a sub
+    that arrives late and outlives the top. Triggering off `intent` rather than
+    off a distance means the sound and the expression are the same event and
+    cannot drift apart -- you hear it narrow.
+    One-shot per host. `_apex_lose_host` re-arms it *and zeroes the face*: the
+    first version only re-armed the flag, so the new host inherited the dead
+    one's lock and screeched instantly, announcing a decision it had not made.
+    A free Mask between bodies has no face at all, so zeroing is also the more
+    honest state.
+  - **THE REACH**, chosen over improving the crown because at play size the
+    crown is a ring of gold sparkles read as ornament while a limb coming at you
+    is read instantly by everybody. `amalgam._reach_limbs` grows arms out of the
+    body toward a SCREEN-space vector (`_apex_mask_for`, the same trick the
+    Unfolding's `to_player` uses -- a world vector would send them off at
+    whatever angle the camera happened to be yawed to). Extension is
+    `APEX_REACH_INTENT * intent + APEX_REACH_STRAIN * strain`, so they are
+    barely out at range and fully out at the throat. Each arm clutches on its
+    own phase with a palm and four curling fingers: a hand that opens and closes
+    reads as WANTING, and arms clutching in unison read as a machine. Two
+    corrections came out of the look pass -- the arms fan wider the more the
+    reach comes down-screen, and every arm arcs UP over the body first, because
+    a reach straight at the camera (the case the tilt makes most common, since
+    anything north of you reaches down-screen) landed on the legs and stopped
+    reading as arms at all. Drawn into the parts layer so the bone outline
+    strokes them; they are the creature, not an effect over it. They also give
+    the catch a telegraph it never had: full extension happens outside
+    `APEX_CATCH_DIST`, so the hands arrive before the body does.
+  - **THE FRAME COST THIS EXPOSED, and it was already shipping.** Benchmarking
+    the reach found the bearer costing 11.9ms/frame *before* it -- a 22-unit
+    storm with an apex ran at 40.8ms/frame (24fps), a regression that landed
+    with the face commit and was never measured. Three causes, all the same
+    mistake in different places:
+    (a) the FACE was in the unit cache's key while not being used by the compose
+    at all (the Mask is drawn live, outside the cache), so it forced a full
+    re-compose of the biggest sprite in the game every frame for zero pixels;
+    (b) `_cut_line` allocated and blitted a copy of the whole TARGET surface,
+    twice, per call -- and the bearer's crown calls it seven times a frame
+    straight onto the 960x640 screen (the crown alone: 4.3ms -> 0.26ms). This is
+    the identical bug `_haze` was fixed for earlier, in a function nobody
+    thought to check;
+    (c) `draw_pallid_mask_part` did the same, and `draw_pallid_3d` rasterises
+    ~1250 polygons per call (5.1ms), live, every frame.
+    Fixes: local bounded surfaces instead of target-sized ones, a memo on the
+    Mask's composed layer, and everything on the bearer that TRACKS the player
+    (reach, face, gaze) HELD to the animation bucket the body already refreshes
+    on -- plus whole-pixel Mask positioning, since a walking apex's fractional x
+    was in the memo key and stopped it hitting even once. Result: 40.8ms -> 7.3ms
+    average for the same storm, with the reach added on top.
+    Diffed against the old code to keep it honest: `_cut_line` is pixel-identical
+    on 600/600 random cuts, `draw_pallid_mask_part` on 200/200, and a composed
+    ordinary unit on 1343/1350 (seed x time x birth/dispel). Where they differ it
+    is a handful of gold-bleed pixels, and the local box is the more accurate one
+    both times -- pygame clips a line to the target rect BEFORE rasterising, so a
+    cut near the sprite's top edge used to lose a pixel of bleed, and it draws a
+    width-2 line as a polygon whose float vertices lose precision at x=900 that
+    they keep at x=30. (The first pass at this measurement compared two
+    `draw_amalgam_sprite` calls back to back and reported 3 in 120 units
+    "changed"; that was the wall clock advancing an animation bucket between the
+    two calls, not the code. Freeze the clock: compare `_compose_unit`, which
+    takes `t` explicitly.)
+    The hold has one visible consequence worth knowing: several apexes drawn in
+    ONE frame with the same host seed all show the first one's pose, which made
+    `tools/preview_apex.py`'s reach row show six identical cells. The tool now
+    calls `reset_amalgam_cache()` between cells. In play there is only ever one
+    bearer, so nothing else is affected.
+  - Guards (`tests/stealth.py` §20, each proven to fail by introducing the
+    violation): the screech fires exactly once, never again for that host,
+    re-arms on losing one, and is silent at a hidden player; the reach aims at
+    the player on all four sides, is barely out at range, fully out at the
+    throat, reaches full extension before contact distance, grows from the body
+    rather than the feet, and actually changes what is drawn.
+    `tools/capture_facings.py` gained `--spawn`, with a special kind `apex` that
+    drops the bearer with its face and limbs live -- without it the tool for
+    judging a creature in a real dark room drew the apex as a plain amalgam.
+
+- **2026-07 -- The legs find the body, and every part can MIRROR (maintainer:
+  "those legs need a way to detect the body and attach, and the ability to flip
+  parts so we double our parts for free").**
+  - **ATTACH.** `assemble` deals the MASS first and places weight parts under
+    it -- a stance around the mass centroid, widening with leg count -- instead
+    of taking fixed offsets off a shared list with no knowledge of where the
+    body was. A wide deal used to put the legs one side and the mass the other.
+    They still never TOUCH (the family rule): they reach up and stop.
+    Vertically, `_MASS_DY` records each mass function's own `cy = y - N` offset
+    (they range 40..62) so the deal can aim at a body HEIGHT rather than a raw
+    number; passing every mass the same y0 was putting some bodies 22px higher
+    than others.
+  - **Some floating is CORRECT and stays** (maintainer, same pass): a part
+    arrives through its own aperture, so a mass hanging clear of anything
+    holding it is the portal carrying it, not a defect. About a quarter of deals
+    ride high deliberately. The bug was that floating happened by ACCIDENT, from
+    the offset spread above, to nearly every deal.
+  - **FLIP doubles the library for free**: each part carries a mirror flag, so
+    22 draw functions cover 44 silhouettes. Implemented by rendering the part to
+    its own layer and flipping THAT, so flesh, clipped cut edge, rim lip and
+    motes all mirror together; the flipped layer is re-blitted at `2*px - W + 1`
+    to return the part's own centre to where it started, since flipping a
+    surface mirrors about the surface centre.
+  - **Guard: `tests/conventions.py` check 10** verifies `_MASS_DY` against each
+    mass function's actual source. A hand-copied table like that rots silently
+    -- nothing crashes, bodies just drift back to floating, which is precisely
+    the defect it was added to fix. Proven to fail both ways (a wrong table
+    entry, and a part whose `cy` moves without the table following). Worth
+    noting the first version of the check was green for the wrong reason: it
+    used `r"cy\s*=\s*y\s*-\s*(\d+)"`, which never matches the tuple form
+    `cx, cy = x + 2, y - 58`, and "passed" three parts by running past the end
+    of their bodies into a later function's line.
+  399 distinct deals in 400 seeds; always-eye-bearing rule intact. Full gate
+  green.
+
+- **2026-07 -- Why the amalgams looked "weird": three causes, all of them the
+  maintainer's guesses.** Asked *"Is it eyes? Too dark? The shapes they
+  make?"*, and rendered at 4x on black the answer was all three.
+  - **No INTERIOR.** `SHROUD`/`SHROUD_LO`/`VOID` sat at 24/12/6 -- three tones
+    within six values -- so a part had no internal form at all. That was
+    survivable while the body was an undifferentiated smudge, but the moment it
+    got an outline it read as a hollow CUT-OUT: a contour with nothing inside.
+    Widened to 47/21/6, which is what makes `_lump`'s shading arcs and the VOID
+    creases read as mass. Still near-black; it was the SPREAD that was missing,
+    not the darkness.
+  - **The GAZE could not be found**, though "every amalgam watches" is the
+    family's one composition rule. `EMBER` was (110,88,30) -- dimmer than the
+    gold on the CUTS -- so the one thing that should read as attention was
+    quieter than the scenery. The eye is now a lit cream (238,208,126),
+    deliberately PALER than gold so a gaze is distinguishable from an aperture
+    (gold is the portal colour), over a near-black socket that reads as a pit.
+    And the incidental `dim` eyes that most weight/mass parts drop are now a
+    socket plus one lit pixel: as filled discs, a five-part deal's five or six
+    of them piled into a cluster of BERRIES stuck to the body. Two wrong
+    intermediate versions are why this is written down -- brightening every eye
+    made the rash worse, and enlarging the socket made the berries bigger.
+  - **The SHAPES were scatter.** Parts were dealt across -28..30 with masses at
+    +/-12 and senses at +/-22: up to 58px of spread in a 150px space. With
+    "nothing touches" that reads as several unrelated objects, and the per-part
+    outline made it plainer by drawing a separate contour around each clump.
+    Tightened to -20..20 / +/-9 / +/-15, chosen off a three-way sweep, and the
+    haze threads that are the only tissue between parts were raised from alpha
+    26 (invisible) to 74 -- kept below `_EMIT_FLOOR` on purpose so tissue takes
+    no outline and the parts still never touch. 392 distinct deals in 400
+    seeds; the always-eye-bearing rule holds. Full gate green.
+
+- **2026-07 -- The Mask remade as a HALF-mask; the amalgams made visible, their
+  cuts made gold, and six more parts.** A maintainer look-pass on the dormant
+  storm art (`TODO.md` #25) and the four things it asked for.
+  - **The Pallid Mask read as a wooden egg.** Three causes, and the first was
+    the real one. (1) It was modelled as a full closed OVAL, but canon says a
+    **half-mask** (NARRATIVE §6a, stated twice including in the invariants
+    index) -- a featureless closed oval IS an egg, and no shading fixes a
+    silhouette. `draw_pallid_3d` now bounds the sheet with a `_mask_hem` cut:
+    brow, eyes and cheekbones, then it STOPS, which also makes the canon "no
+    mouth" honest (there is no lower face to put one on). (2) Ambient was 0.58,
+    squeezing the whole shell into a 0.58-1.0 value range; now 0.20, so light
+    falls ACROSS the form. (3) The sockets were 0.2r pinpricks in dark brown;
+    they are ~1.8x bigger, go to true black, carry a pale orbit rim and take a
+    CAST SHADOW from the brow, plus cheek hollows for one more plane change.
+    The gold is an **ember down a hole**, not a pupil: a filled gold disc in a
+    dark socket read instantly as a cartoon eye (tried, rejected), so there is
+    no solid pupil at all -- just a soft additive bloom and a tiny hot core.
+    Bloom size was picked off a 4-way sweep rendered at r=68/26/13 rather than
+    tuned at preview size alone.
+  - **"Black creatures in black environments are invisible"** (maintainer),
+    answered the wrong way twice before the maintainer supplied the right one:
+    *"can't you just give each sprite a white border pixel? ... The glowing
+    mist isn't good."* The failed attempts are recorded because the reasoning
+    generalises. A bloom must be BRIGHT to register, and brightness spread over
+    a near-black body reads as a glowing spirit, so every tuning pass just
+    traded "too dim to find" for "pale ghost" -- first too subtle, then washed
+    out, then a rim-with-punched-body that was better but still misty. The
+    answer is a one-pixel OUTLINE (`_outline`, `AMALGAM_EDGE`): it states the
+    EDGE and spends nothing on VALUE, so the body stays exactly as black as it
+    was, and it stays sharp at small sizes where a blur is only fog. Each part
+    strokes separately, which is right -- they are separate apertures and
+    nothing touches. **Bone, not gold**, though gold was offered: gold is the
+    PORTAL language (the rift, the folds, and the cuts below), so a gold
+    outline would blur the distinction the family is built on -- the holes are
+    gold, the flesh coming through them is not. Pure white read as a sticker
+    against the Darkwood-dark palette. Fenced as draw-only: not in
+    `Scene._LIGHT_KINDS` or `FIXTURE_POOLS`, casts no pool, invisible to
+    `lit_at`, so it cannot deny a Watcher a spawn spot or gate the lost-space
+    mouth.
+    Two rendering traps found while the glow was still being attempted, kept
+    because they are easy to repeat: tinting a sprite with `BLEND_RGBA_MULT`
+    does NOTHING when the sprite is near-black (near-black x anything is
+    near-black), and an additive blit does not weight by alpha, so stencilling
+    the alpha channel alone lights the whole sprite RECTANGLE -- the RGB has to
+    be premultiplied by the mask.
+  - **The cuts wear the rift's GOLD** (`CUT_RIM` / `CUT_RIM_HOT` + a faint
+    bleed), so every hole He opens reads as one portal family with the fold and
+    the King rift. This was already the approved direction in #25; it is now
+    real on the amalgams. The cool `RIM` stays for FLESH lips inside a part.
+  - **Six more parts, 16 -> 22**: `hoof` + `crutch` (weight), `sack` + `plate`
+    (mass), `cilia` + `lure` (sense). The deal was already varied as data, but
+    16 parts meant the same shapes recurred; 390 distinct deals in 400 seeds
+    now, and the always-eye-bearing first-sense rule is preserved by appending
+    after `SENSE[:2]`. Every seed re-deals, which is expected for procedural
+    creatures and depended on by nothing.
+  Full gate green.
+- **2026-07 -- A way to LOOK at an amalgam (`tools/preview_amalgam.py`), and
+  the part count corrected to 16.** The family had no isolation preview: they
+  are near-black by design, so they are unreadable both in a whole-scene
+  capture and on `preview_bearer.py`'s sheet (which is lit for the Mask). The
+  new tool renders the DEALS side by side against the player for scale, plus
+  the birth build-out, the dispel peel and gaze on/off, with a `--bg
+  dark|mid|lit` switch. What the first look turned up, recorded here so the
+  storm pass (`TODO.md` #25) starts from it rather than rediscovering it:
+  - **Composition is healthy** -- 198 distinct deals in 200 seeds, whole
+    library in use, though unevenly (`eyes` 122 vs `wing` 8 per 200).
+  - **The RENDER flattens it.** On a lit card the deals are plainly different
+    creatures; at their shipped near-black value range on a dark ground the
+    silhouette is the only thing carrying the design, and there is nothing
+    behind it to silhouette against. Fine for a lone Watcher you half-see;
+    a real question for the storm, whose whole premise is FILLING the dark
+    with them (black shapes on black = noise, not dread). Decide before the
+    engine is wired, not after.
+  - **Gaze on vs off is not visually distinguishable**, though it is the tell
+    that you are staring one down.
+  The library is **16 parts** (5 weight, 5 mass, 6 sense), not the 17 that
+  `CLAUDE.md`, `DESIGN.md` and the module docstring all claimed; corrected in
+  those three. The older entry below still says 17 -- it is history, left as
+  written per this file's append-only rule.
 - **2026-07 -- "If it isn't good, remake it now" (maintainer).** Written into
   `VISION.md` with a pointer from `CLAUDE.md`'s working agreements: when you
   look at a model or a design and judge it not good enough, remake it in the

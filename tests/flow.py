@@ -570,10 +570,22 @@ def main():
     check(ge.player.inventory.has("receipt")
           and has_evidence(ge, "maras_receipt"),
           "shop: Hettie hands over the store tab shown Mara's photo (surface evidence)")
-    fire(ge, "sheriff_office", "_record_pos")          # maras_record
+    # The booking slip is Vane's WARM handover on the same contract: he
+    # booked her himself, so the photograph is a recognition and he goes to
+    # the files. The office records drawer is only the world-persistent
+    # FALLBACK for a Sheriff who is dead or hollow, so it must REFUSE while
+    # the man still keeps that desk.
+    from scenes.dialogue import VANE_CONVO as _VCE
+    fire(ge, "sheriff_office", "_record_pos")
+    check(not ge.player.inventory.has("detention_record"),
+          "office: the records drawer refuses while Vane still keeps the desk")
+    _vphoto_ex = next(ex for ex in _VCE["exchanges"] if ex["key"] == "photo")
+    for _vb in _vphoto_ex["beats"]:
+        if _vb[0] == "do":
+            _vb[1](ge)                                 # maras_record
     check(ge.player.inventory.has("detention_record")
           and has_evidence(ge, "maras_record"),
-          "office: the booking slip is a world-persistent pickup (surface evidence)")
+          "office: Vane hands over the booking slip shown Mara's photo (surface evidence)")
     # The journal is a WALK-OVER pickup now (play-notes), not an [E] interact.
     ge.load_scene_now("barn")
     ready(ge)
@@ -612,6 +624,16 @@ def main():
     fire(gwp, "sheriff_office", "_record_pos")
     check(has_evidence(gwp, "maras_record"),
           "persist: the booking slip is reachable with Vane recorded dead")
+    # And with Vane HOLLOW, the other way to lose the man behind the desk.
+    # This one is a real soft-lock hazard, not a hypothetical: the newspaper
+    # (+2) and the preacher's murder (+1) latch the hollow turn at
+    # VANE_HOLLOW_AT, which a player can reach before ever showing him the
+    # photograph. The drawer has to open for him too.
+    ghv = new_game()
+    ghv.save.set_flag("vane_hollow", True)
+    fire(ghv, "sheriff_office", "_record_pos")
+    check(has_evidence(ghv, "maras_record"),
+          "persist: the booking slip is reachable with Vane gone hollow")
 
     # --- 10. The Kid is the witness (NARRATIVE §4): tells, grants no item ---
     from scenes.dialogue import TOBY_CONVO as _TOBY_CV
@@ -1760,18 +1782,27 @@ def main():
                   for e in gsf.save.arg("notes", [])),
           "ask: the revisit nudges are cut (no note on a silent discovery)")
 
-    # Vane's car answer files the fold note WITHOUT hijacking the
+    # The CAR exchange is CUT (maintainer, 2026-07): the dead engines are a
+    # symptom of what is happening to the town, not a separate errand about
+    # the PI's own vehicle, so the fold material lives in the town answer
+    # now. That answer files the fold note WITHOUT hijacking the
     # conversation's float chain (reflect=False), and it opens Sable's
     # folded-roads reproach.
-    from scenes.dialogue import _vane_car_told
+    from scenes.dialogue import _vane_town_beats
+    check(not any(ex["key"] == "car" for ex in _VC["exchanges"]),
+          "vane: the car question is cut")
+    _town_txt = " ".join(b[1].lower() for b in _vane_town_beats(new_game())
+                         if b[0] in ("npc", "pi"))
+    check("engine" in _town_txt and "it's the town" in _town_txt,
+          "vane: the town answer carries the dead engines (the fold material)")
     gvf = new_game()
     _sentinel = lambda: None
     gvf.float_speech.active = True
     gvf.float_speech.on_complete = _sentinel
-    _vane_car_told(gvf)
+    _vane_town_beats(gvf)
     check(any(isinstance(e, dict) and e.get("name") == "the_fold_told"
               for e in gvf.save.arg("notes", [])),
-          "vane: the car answer files the PI's fold note")
+          "vane: the town answer files the PI's fold note")
     check(gvf.float_speech.on_complete is _sentinel,
           "vane: the fold note never hijacks the conversation float chain")
     _qf2 = next(ex for ex in SABLE_CONVO["exchanges"]
@@ -1782,41 +1813,69 @@ def main():
     gvf.float_speech.active = False
     gvf.float_speech.on_complete = None
 
-    # Vane's blind-cultist thread (NARRATIVE §4: his one window into the
+    # Vane's RECRUITER thread (NARRATIVE §4: his one window into the
     # HOW). TRUST-gated (DESIGN.md §2): it waits on the intro AND a real
     # discovery SHARED with him (found alone is not enough -- trust is
     # earned, not ambient); asking files the PI's NOTE (never evidence);
-    # and the account keeps his knowledge boundary (the blind man, the
-    # dream's offer, no destination and no cosmology).
+    # and the account keeps his knowledge boundary (the man, the dream's
+    # offer, no destination and no cosmology).
     from scenes.dialogue import _vane_how_told
     gvh = new_game()
     _qhow = next(ex for ex in _VC["exchanges"] if ex["key"] == "how")
-    check(_qhow.get("once"),
-          "vane: the blind-cultist story is spent once")
+    # ASK ANYTIME, HE REFUSES (maintainer ruling, 2026-07): the row opens on
+    # THE TALK alone, so the player can always put the question. Trust decides
+    # the ANSWER, not the availability -- untrusted he gives the where (which
+    # he does not know) and withholds the how, and the row stays askable.
+    check(not _qhow.get("once"),
+          "vane: the cult question is re-askable after a refusal")
     check(not _qhow["avail"](gvh),
-          "gate: the how waits before the intro and any trust")
+          "gate: the cult question waits on the Talk")
     gvh.save.set_flag("convo_vane_intro_asked", True)
-    check(not _qhow["avail"](gvh),
-          "gate: the intro alone does not open the how")
+    gvh.save.set_flag("cult_talk_given", True)
+    check(_qhow["avail"](gvh),
+          "gate: the Talk opens the cult question with no trust at all")
+    _refused = " ".join(b[1].lower() for b in _qhow["beats"](gvh)
+                        if b[0] in ("npc", "pi"))
+    check("wife" not in _refused,
+          "vane: untrusted, he refuses to spend his one card")
+    check("school" in _refused and "barn" in _refused,
+          "vane: he still answers the where, which costs him nothing")
+    check(not any(b[0] == "do" for b in _qhow["beats"](gvh)),
+          "vane: a refusal never files the how note")
     _evfn2(gvh, "maras_journal", "a", show=False)
-    check(not _qhow["avail"](gvh),
-          "gate: a discovery found but never shared does not open the how")
     _qsj = next(ex for ex in _VC["exchanges"] if ex["key"] == "share_journal")
     check(_qsj["avail"](gvh),
           "gate: finding the journal opens its share")
     _qsj["on_ask"](gvh)
-    check(_qhow["avail"](gvh),
-          "gate: the intro plus a shared discovery opens the how")
     _ev_h = len(gvh.save.arg("evidence", []))
-    _vane_how_told(gvh)
+    for _b in _qhow["beats"](gvh):
+        if _b[0] == "do":
+            _b[1](gvh)
+    check(gvh.save.flag("vane_how_told"),
+          "vane: trusted, the account is told and the row retires")
+    check(not _qhow["avail"](gvh),
+          "vane: the how is spent once it has actually been told")
     check(any(isinstance(e, dict) and e.get("name") == "the_how"
               for e in gvh.save.arg("notes", [])),
           "vane: asking the how files the PI's NOTE")
     check(len(gvh.save.arg("evidence", [])) == _ev_h,
           "vane: the how never inflates the evidence count")
-    _how_txt = " ".join(b[1].lower() for b in _qhow["beats"])
-    check("blind" in _how_txt and "dream" in _how_txt,
-          "canon: the account is the blind cultist promised by the dream")
+    _how_txt = " ".join(b[1].lower() for b in _qhow["beats"](gvh)
+                        if b[0] in ("npc", "pi"))
+    # The recruiter's want is ORDINARY and unfixable (NARRATIVE §2 /
+    # DESIGN.md §8: the machine runs on ordinary wants, nothing cosmic). The
+    # old version promised a blind man his sight, which is the one MIRACLE in
+    # the cast and made the door read as a faith healer; it also gave him an
+    # uncanny tell, against the invariant that being claimed leaves no
+    # visible mark.
+    check("wife" in _how_txt and "county home" in _how_txt,
+          "canon: the recruiter's want is his wife, ordinary and unfixable")
+    check("blind" not in _how_txt,
+          "canon: no miracle wants (the sight promise is cut)")
+    check("smiling" not in _how_txt and "glad of it" not in _how_txt,
+          "canon: no euphoria tell (being claimed leaves no visible mark)")
+    check("crie" in _how_txt and "certain" in _how_txt,
+          "vane: the recruiter is wrecked and sure at the same time")
     check(not any(w in _how_txt for w in ("below", "down there", "under the",
                                           "king", "door")),
           "canon: Vane keeps his knowledge boundary (no destination)")
@@ -1842,18 +1901,166 @@ def main():
 
     # (Vane cache) The office gun cabinet is EARNED: trust-gated like the how,
     # spent once, and granting it arms the office ammo drop (vane_gave_cache).
+    # Same ask-anytime/refuse contract as the cult question: the row is there
+    # from the intro, and trust decides whether he opens the cabinet or tells
+    # you to come back having done some work.
     _cache = next(ex for ex in _VC["exchanges"] if ex["key"] == "cache")
-    check(_cache.get("once"), "vane: the cabinet is handed over once")
+    check(not _cache.get("once"),
+          "vane: the cabinet ask is re-askable after a refusal")
     gca = new_game()
-    check(not _cache["avail"](gca), "vane: the cabinet waits before trust")
+    check(not _cache["avail"](gca), "vane: the cabinet waits on the intro")
     gca.save.set_flag("convo_vane_intro_asked", True)
+    check(_cache["avail"](gca),
+          "vane: the cabinet can be asked for with no trust at all")
+    for _b in _cache["beats"](gca):
+        if _b[0] == "do":
+            _b[1](gca)
+    check(not gca.save.flag("vane_gave_cache"),
+          "vane: untrusted, the refusal never arms the ammo drop")
     gca.save.set_arg("vane_informed", 1)
-    check(_cache["avail"](gca), "vane: intro plus a shared find opens the cabinet")
-    _cache["on_ask"](gca)
+    for _b in _cache["beats"](gca):
+        if _b[0] == "do":
+            _b[1](gca)
     check(gca.save.flag("vane_gave_cache"),
-          "vane: taking the cabinet arms the office ammo drop")
+          "vane: a shared find opens the cabinet and arms the office drop")
     check(not _cache["avail"](gca),
           "vane: the cabinet does not re-offer once given")
+
+    # (Vane, the detention night) The booking slip is a WARM DELIVERY off the
+    # photograph (NARRATIVE §6 / DESIGN.md §9): the man who booked her
+    # recognizes her and goes to the files, and the office records drawer is
+    # only the world-persistent fallback for a Vane who is dead or hollow.
+    # The night exchange opens on the slip and files a STATEMENT note.
+    from scenes.dialogue import grant_record as _gr
+    _vphoto = next(ex for ex in _VC["exchanges"] if ex["key"] == "photo")
+    _pbeats = [b for b in _vphoto["beats"] if b[0] == "do"]
+    check(any(b[1] is _gr for b in _pbeats),
+          "vane: showing him the photograph hands over the booking slip")
+    check(any("booked her" in b[1] for b in _vphoto["beats"]
+              if b[0] == "pi"),
+          "vane: he recognizes a woman he personally booked")
+    grc = new_game()
+    _gr(grc)
+    check(grc.player.inventory.has("detention_record"),
+          "vane: the warm handover puts the slip in the coat")
+    check(any(isinstance(e, dict) and e.get("name") == "maras_record"
+              for e in grc.save.arg("evidence", [])),
+          "vane: the handover files the record as canonical evidence")
+    _gr(grc)
+    check(grc.player.inventory.count("detention_record") == 1,
+          "vane: the slip can never double-fire across its two ways in")
+    _night = next(ex for ex in _VC["exchanges"] if ex["key"] == "the_night")
+    gnt = new_game()
+    check(not _night["avail"](gnt), "vane: the night waits on the slip")
+    gnt.save.set_flag("convo_vane_photo_asked", True)
+    gnt.save.set_flag("evidence_maras_record", True)
+    check(_night["avail"](gnt), "vane: the slip opens the night he booked her")
+    _night["on_ask"](gnt)
+    check(any(isinstance(e, dict) and e.get("name") == "the_disturbance"
+              for e in gnt.save.arg("notes", [])),
+          "vane: his account of the night files as a NOTE")
+    check(not any(isinstance(e, dict) and e.get("name") == "the_disturbance"
+                  for e in gnt.save.arg("evidence", [])),
+          "vane: testimony never counts toward the gate")
+    check(not any("square" in b[1] for b in _night["beats"] if b[0] == "pi"),
+          "vane: the witness lead is stated, never pointed at (no nudge)")
+
+    # (Mara's age) The intake and the booking slip are read side by side in
+    # the Casebook; they must agree. She is 24 (NARRATIVE §4).
+    from systems.items import ITEM_DEFS as _IDF
+    gage = new_game()
+    gage._log_case_entry()
+    _intake = " ".join(next(n["lines"] for n in gage.save.arg("notes", [])
+                            if n.get("name") == "the_case"))
+    check("Mara, 24" in _intake, "case: the intake puts Mara at 24")
+    check("AGE: 24" in _IDF["detention_record"]["desc"],
+          "case: the booking slip agrees with the intake")
+
+    # (The small-detail layer, 2026-07) The finds that are NOT evidence: a
+    # newcomer's gas receipt under a schoolhouse cot, Toby's desk in the
+    # shoved pile, and the robe in Sable's closet. None of them may touch the
+    # evidence count, and the robe may not name the cult before the player
+    # has met one.
+    gdt = new_game()
+    gdt.load_scene_now("schoolhouse")
+    ready(gdt)
+    _rc = [it for it in gdt.scene.items if it["key"] == "gas_receipt"]
+    check(len(_rc) == 1,
+          "school: the gas receipt lies under a cot as a walk-over pickup")
+    _ev_before = len(gdt.save.arg("evidence", []))
+    _nt_before = len(gdt.save.arg("notes", []))
+    _rc[0]["on_pickup"](gdt)
+    gdt.player.inventory.add("gas_receipt", 1)
+    # The receipt IS the record: it writes nothing to the case, because its
+    # own description in Papers carries the whole of it (maintainer, 2026-07).
+    check(len(gdt.save.arg("notes", [])) == _nt_before,
+          "school: the receipt writes no note (the paper is the record)")
+    check(len(gdt.save.arg("evidence", [])) == _ev_before,
+          "school: the receipt never counts toward the gate")
+    from systems.items import ITEM_DEFS as _IDF2
+    _rdesc = _IDF2["gas_receipt"]["desc"]
+    check("SEYMOUR" in _rdesc.upper() and "CASH" in _rdesc.upper(),
+          "school: the receipt's own text carries the drive and the cash")
+    gdt.load_scene_now("schoolhouse")
+    ready(gdt)
+    check(not [it for it in gdt.scene.items if it["key"] == "gas_receipt"],
+          "school: the receipt is gone for good once taken")
+
+    # Toby's desk: texture, so it records NOTHING in the case at all.
+    gtd = new_game()
+    gtd.load_scene_now("schoolhouse")
+    ready(gtd)
+    gtd.player.x, gtd.player.y = gtd.scene._toby_desk_pos
+    _n0 = len(gtd.save.arg("notes", [])) + len(gtd.save.arg("evidence", []))
+    gtd.scene.on_interact_fn(gtd)
+    check(gtd.save.flag("toby_desk_seen"), "school: Toby's desk reads once")
+    check(len(gtd.save.arg("notes", []))
+          + len(gtd.save.arg("evidence", [])) == _n0,
+          "school: his desk writes nothing (the name does the work)")
+
+    # The robe, two stages. The PI cannot call it a cult robe before a
+    # cultist has had a hand on him (playtest error class 5).
+    grb = new_game()
+    grb.load_scene_now("clerk_room")
+    ready(grb)
+    grb.player.x, grb.player.y = grb.scene._closet_pos
+    grb.scene.on_interact_fn(grb)
+    _rnote = next((n for n in grb.save.arg("notes", [])
+                   if n.get("name") == "clerk_robe"), None)
+    check(_rnote is not None, "robe: the first look files a case note")
+    check("cult" not in " ".join(_rnote["lines"]).lower(),
+          "robe: the PI never names the cult before he has met one")
+    check(not any(isinstance(e, dict) and e.get("name") == "clerk_robe"
+                  for e in grb.save.arg("evidence", [])),
+          "robe: it is a note, never evidence")
+    grb.save.set_flag("cult_talk_given", True)
+    ready(grb)
+    grb.scene.on_interact_fn(grb)
+    # The book is a RUNNING DOCUMENT, so the second look is a LATER entry and
+    # the first one stays exactly as he wrote it. The pair is the record of
+    # him learning; an overwrite would erase the man who did not know yet.
+    _first = [n for n in grb.save.arg("notes", [])
+              if n.get("name") == "clerk_robe"]
+    _second = [n for n in grb.save.arg("notes", [])
+               if n.get("name") == "clerk_robe_placed"]
+    check(len(_first) == 1 and len(_second) == 1,
+          "robe: the second look files a SECOND entry, later in the book")
+    check("cult" not in " ".join(_first[0]["lines"]).lower(),
+          "robe: the first entry is never edited after the fact")
+    check("hand on my shoulder" in " ".join(_second[0]["lines"]),
+          "robe: after the Talk the same closet reads differently")
+    check(_second[0]["seq"] > _first[0]["seq"],
+          "robe: the later entry sorts after the earlier one in the book")
+
+    # The three rot boxes are gone (maintainer ruling, 2026-07): placeholder
+    # narration that recorded nothing. A scarecrow is scenery.
+    import os as _os_cut
+    with open(_os_cut.path.join(_os_cut.path.dirname(__file__), "..",
+                                "scenes", "threshold_extras.py")) as _fh:
+        _tx_src = _fh.read()
+    for _dead in ("scarecrow", "worn_stone", "backwoods_note"):
+        check('_evidence(game, "%s"' % _dead not in _tx_src,
+              "cut: no discovery beat left on %s" % _dead)
 
     # (Vane tableau, #2b) Talking to Vane opens the office close-up: the
     # conversation runs in tableau presentation mode, the close-up's POSE
@@ -2334,8 +2541,8 @@ def main():
         "tasting it", "tallow", "the rendering at", "feed what waits",
         "grain threaded through", "fold back on themselves",
         "comes home for dinner",
-        # The cauldron is REMOVED game-wide (eat-cult imagery; the old
-        # clearing centrepiece is now the burn site's dead fire pit).
+        # The cauldron is REMOVED game-wide (eat-cult imagery; the
+        # clearing's centrepiece is a plain dead fire pit).
         "cauldron",
     ]
     _hits = []
@@ -2917,8 +3124,19 @@ def main():
     class _HStub:
         pass
     _hd(gh, _HStub())
-    check(any("smiling I minded" in p for p in _hshown),
+    check(any("she was a regular" in p.lower() for p in _hshown),
           "hettie: the memory of the girl fires once shown Mara's photo")
+    # She either retains faces or she does not. Her answer to the photograph
+    # is "Faces come through this shop. I stopped keeping them", so the memory
+    # cannot then hand over a portrait of the girl.
+    check(not any("sad around the eyes" in p for p in _hshown),
+          "hettie: no portrait after she said she stops keeping faces")
+    check(not any("worth the telling" in p for p in _hshown),
+          "hettie: she does not announce that she is about to say something")
+    # No euphoria tell: Mara is grieving, not elated, and being claimed leaves
+    # no visible mark (NARRATIVE §2). She just stopped coming in.
+    check(not any("smiling" in p for p in _hshown),
+          "hettie: Mara does not walk out of the shop smiling")
     check(gh.player.inventory.has("receipt")
           and has_evidence(gh, "maras_receipt"),
           "hettie: the memory beat hands over the store tab (warm handover)")
@@ -2950,65 +3168,56 @@ def main():
         check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
               "lead: no dashes in the thread line")
 
-    # --- 24d. The PI theory ladder (TODO #13): the notebook THINKS. The
-    # working theory + timeline are first-person syntheses derived from WHICH
-    # clues are held (any order); they revise as the case grows, never inflate
-    # the evidence count, carry no dashes, keep the cosmology unnamed, and lean
-    # toward SPREAD. The two wrong-space fold beats latch crossed_a_fold and
-    # open the trap thread; the robes-as-lever read is the WRONG conclusion the
-    # game never corrects (NARRATIVE invariant).
+    # --- 24d. THE NOTEBOOK IS A RUNNING DOCUMENT (2026-07). His conclusions
+    # are no longer a card recomputed on every open; each is written down ONCE
+    # at the moment he reaches it and stays on its page for the rest of the
+    # run, wrong ones included. The book merges evidence and notes and orders
+    # them by when he wrote them, so reading it start to finish is watching a
+    # man's understanding change. The old derived Timeline is CUT: he writes
+    # dates down as he finds them and the chronology is the player's to make.
     def _dashed(t):
-        return ("—" in t) or ("–" in t) or ("--" in t)
-
-    def _theory(g):
-        return " ".join(g._working_theory())
-
-    def _timeline(g):
-        return " ".join(g._case_timeline())
+        return ("\u2014" in t) or ("\u2013" in t) or ("--" in t)
 
     def _nnames(g):
         return {e.get("name") for e in g.save.arg("notes", [])
                 if isinstance(e, dict)}
+
+    def _wrote(g):
+        return " ".join(l for e in g.save.arg("notes", [])
+                        if isinstance(e, dict) and str(e.get("name", "")).startswith("theory_")
+                        for l in e.get("lines", []))
     gt = new_game()
-    check(gt._working_theory() == [],
-          "theory: a fresh run has no theory yet (the job lives in the_case note)")
-    check(gt._case_timeline() == [],
-          "timeline: a fresh run has no chronology yet")
-    check("get out" not in _theory(gt),
-          "theory: no escape thread before a fold is crossed")
-    # The notebook pins a surface only when it has content: nothing at the
-    # start, the theory card the moment a clue lands.
-    gpin = new_game()
-    gpin.notebook_ui.save = gpin.save
-    gpin.notebook_ui.game = gpin
-    check("working_theory" not in {n for n, _ in gpin.notebook_ui._entries()},
-          "notebook: a fresh run pins no theory card (just the job)")
-    gpin.save.set_arg("evidence", [{"name": "maras_receipt"}])
-    check("working_theory" in {n for n, _ in gpin.notebook_ui._entries()},
-          "notebook: the theory card appears once a clue lands")
-    gt.save.set_arg("evidence", [{"name": "maras_receipt"}])
-    check("resident" in _theory(gt),
-          "theory: the receipt reads her as a resident, not a drifter")
-    gt.save.set_arg("evidence", [{"name": "maras_journal"},
-                                 {"name": "maras_receipt"},
+    gt._tick_theory_notes()
+    check(_wrote(gt) == "",
+          "notebook: a fresh run has concluded nothing (the job is the_case)")
+    check(not hasattr(gt, "_case_timeline"),
+          "notebook: the derived Timeline page is gone")
+    # The three CASE reads are CUT: he never solves Mara on the page, because
+    # every one of those was the conclusion its evidence was built to earn.
+    gt.save.set_arg("evidence", [{"name": "maras_receipt"},
+                                 {"name": "maras_journal"},
                                  {"name": "maras_record"}])
-    check("came apart" in _theory(gt),
-          "theory: record + journal read her breaking here")
-    check("Booked one night" in _timeline(gt),
-          "timeline: the booking slots into her chronology")
-    check("robes" not in _theory(gt),
-          "theory: no robes thread on clues alone, before he's met the cult")
+    gt._tick_theory_notes()
+    for _gone in ("resident", "came apart", "walked to it willing"):
+        check(_gone not in _wrote(gt),
+              "notebook: the case read %r is not written for the player"
+              % _gone)
+    check("robes" not in _wrote(gt),
+          "notebook: no robes read before he has met the cult")
     gt.save.set_flag("cult_talk_given", True)
-    check("robes" in _theory(gt),
-          "theory: meeting the cult (the grab) opens the robes-as-lever read")
+    gt._tick_theory_notes()
+    check("robes" in _wrote(gt),
+          "notebook: the grab opens the robes-as-lever read (the WRONG one)")
     gt.save.set_arg("evidence", [{"name": "maras_dig"}])
-    check("willing" in _theory(gt),
-          "theory: the dig pivots her to willing, not taken")
+    gt._tick_theory_notes()
+    check("robes" in _wrote(gt),
+          "notebook: the wrong read is never corrected or removed")
     gt._note_fold_portal()
+    gt._tick_theory_notes()
     check(gt.save.flag("crossed_a_fold") and "saw_the_door" in _nnames(gt),
           "fold: a visible pane latches crossed_a_fold and files the awe note")
-    check("get out" in _theory(gt),
-          "theory: crossing a fold opens the trap / escape thread")
+    check("how do I get out" in _wrote(gt),
+          "notebook: crossing a fold opens the trap thread")
     gl2 = new_game()
     gl2._note_fold_loop("cornfield_path")
     check("walked_in_circles" not in _nnames(gl2),
@@ -3016,20 +3225,80 @@ def main():
     gl2._note_fold_loop("cornfield_path")
     check("walked_in_circles" in _nnames(gl2),
           "fold: the second silent loop is the tell")
+    # The SON read is cut with the other case reads: it wrote out the
+    # connection between the tag and the letter, and "his name breaks her" had
+    # the PI predicting a scene he has not reached. The bear still detonates,
+    # in the ITEM's own text (systems/items.py effective_desc), not the book.
     gt4 = new_game()
     gt4.save.set_arg("evidence", [{"name": "maras_room"}])
-    check("Sam" not in _theory(gt4), "theory: no son thread without the bear")
+    gt4.save.set_flag("evidence_maras_room", True)
     gt4.player.inventory.add("bear", 1)
-    check("Sam" in _theory(gt4), "theory: bear + letter opens the son thread")
+    gt4._tick_theory_notes()
+    check("Sam" not in _wrote(gt4),
+          "notebook: he never writes the boy's name out for the player")
+    from systems.items import effective_desc as _edesc
+    check("SAM" in _edesc("bear", gt4.save),
+          "bear: the detonation lives in the item, and still fires")
     gt4.player.inventory.add("pallid_mask", 1)
-    check("carry it out" in _theory(gt4),
-          "theory: the Mask leans the read toward carrying it out (SPREAD)")
-    _all = _theory(gt4) + " " + _timeline(gt4)
-    check(not _dashed(_theory(gt)) and not _dashed(_timeline(gt))
-          and not _dashed(_all),
-          "theory / timeline: no dashes in any produced line")
-    check(("King" not in _all) and ("Carcosa" not in _all),
-          "theory: the cosmology stays unnamed (sensation-only)")
+    gt4._tick_theory_notes()
+    check("carry it out" in _wrote(gt4),
+          "notebook: the Mask leans the read toward carrying it out (SPREAD)")
+    check(not _dashed(_wrote(gt)) and not _dashed(_wrote(gt4)),
+          "notebook: no dashes in anything he writes")
+    check(("King" not in _wrote(gt4)) and ("Carcosa" not in _wrote(gt4)),
+          "notebook: the cosmology stays unnamed (sensation-only)")
+    # None of it may ever touch the gate.
+    check(len(gt4.save.arg("evidence", [])) == 1,
+          "notebook: writing a conclusion never inflates the evidence count")
+
+    # THE ONE WATCHER ENTRY, and then silence for the rest of the run. He
+    # writes up the first one he stares out and never mentions them again
+    # while they keep coming; the SILENCE is the tell, not an arc where he
+    # notices he has stopped being frightened (maintainer ruling, 2026-07).
+    # Seeing one and staring it out is a single event, so it fires on the
+    # DISPEL rather than the spawn.
+    gwa = new_game()
+    check(not any(isinstance(e, dict) and e.get("name") == "the_first_one"
+                  for e in gwa.save.arg("notes", [])),
+          "watchers: nothing written before he has met one")
+
+    class _WStub:
+        x = 0.0
+        y = 0.0
+    _w1, _w2 = _WStub(), _WStub()
+    gwa._watchers = [_w1]
+    gwa._cursed = True
+    gwa._dispel_watcher(_w1)
+    _wn = [e for e in gwa.save.arg("notes", [])
+           if isinstance(e, dict) and e.get("name") == "the_first_one"]
+    check(len(_wn) == 1, "watchers: the first one he sees off is written down")
+    _wtxt = " ".join(_wn[0]["lines"])
+    check("did not look away" in _wtxt and "went out" in _wtxt,
+          "watchers: the entry is the whole event, seeing it and ending it")
+    check("cult" not in _wtxt.lower() and "king" not in _wtxt.lower(),
+          "watchers: he names nothing he could not know")
+    gwa._watchers = [_w2]
+    gwa._cursed = True
+    gwa._dispel_watcher(_w2)
+    check(len([e for e in gwa.save.arg("notes", [])
+               if isinstance(e, dict) and e.get("name") == "the_first_one"]) == 1,
+          "watchers: he never writes about them again (the silence is the tell)")
+
+    # THE ORDER IS THE POINT: the book merges both lists and reads in the
+    # order he wrote things, so a note filed after a clue sits after it.
+    gord = new_game()
+    gord.notebook_ui.save = gord.save
+    gord.notebook_ui.game = gord
+    from scenes.dialogue import _evidence as _evo, _log_note as _lno
+    _evo(gord, "maras_receipt", ["a"], show=False)
+    _lno(gord, "the_ledger", ["b"])
+    _evo(gord, "maras_journal", ["c"], show=False)
+    _names = [n for n, _l in gord.notebook_ui._case_entries()]
+    check(_names.index("maras_receipt") < _names.index("the_ledger")
+          < _names.index("maras_journal"),
+          "notebook: one running document, in the order he wrote it")
+    check(len(gord.notebook_ui._case_pages()) >= 1,
+          "notebook: the document paginates into leaves")
 
     # --- 25. The placement pass (DESIGN.md §12): the gauntlet rooms
     # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits

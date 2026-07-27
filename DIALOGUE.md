@@ -87,8 +87,8 @@ Consolidated from the canon. A new or edited line must pass all of these.
    delivered as clean exposition, not "what do you want most", not the King
    feeding on attention, not the lure chain (King → Mara → Walter → PI). A
    cultist may express BELIEF in its own voice; it may not confirm the
-   mechanism. Vane holds exactly ONE fragment of the *how* (the blind
-   cultist's offer) and it stays a hard-won, half-understood piece he
+   mechanism. Vane holds exactly ONE fragment of the *how* (the
+   recruiter's offer) and it stays a hard-won, half-understood piece he
    witnessed, never a lecture.
 4. **No mechanics in the fiction.** No line names a game rule, a verb, an
    input, or an evidence threshold ("press again", "kill them quiet", "3
@@ -111,7 +111,17 @@ Consolidated from the canon. A new or edited line must pass all of these.
    Used on every reflection it becomes its own wallpaper (a play-note
    grievance). Vary the deadpan sign-off: a hard stop, a different beat, or
    nothing at all. At most a couple across the whole game.
-9. **Markup never leaks.** `[c=...]`, `[/c]`, and every style token is
+9. **A mode of address belongs to ONE speaker.** "son" had spread across
+   Vane, Old Pell and Garrick (eight uses, three speakers) and was a large
+   part of why those three read as interchangeable. It is **Garrick's**: he
+   sits the square, he counts who is left, he talks to the PI like a younger
+   man. Nobody else uses it, including the hollow Sheriff. The same holds for
+   "friend", which is Sable's. **"mister" is exempt and stays shared** on
+   purpose: nobody in Brimley ever learns the PI's name, so it is the correct
+   default in every mouth and says nothing about the speaker. Enforced by
+   `tests/conventions.py` check 10, because the drift is invisible one line
+   at a time.
+10. **Markup never leaks.** `[c=...]`, `[/c]`, and every style token is
    stripped on every render path (notebook, scribble toast, caption). Never
    printed literally.
 
@@ -241,20 +251,36 @@ intro:" / "Opener photo:").
   - (pi) "If I were one of them, would I be standing in the law's office announcing myself?"
   - (npc) "No. No, they never had questions. That's the one thing you've got going for you."
   - (npc) "I'd head home if I were you. I'm supposed to say that."
-- **Opener photo:**
-  - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look.)"
-  - (npc) "The new folk came in numbers and they kept to their own. She'd have been one of them."
-  - (npc) "They filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction."
-- **Exchange `car`** — "My car died the night I drove in." / "My car died at the lodge steps the night I drove in. It won't turn over now." (files the fold note, no chained reflection)
-  - (npc) "Won't start. Won't ever. Nothing with an engine leaves Brimley."
-  - (pi) "Engines don't all quit at once. Somebody got to it."
-  - (npc) "Nobody touched your car. I know how that sounds. I've watched men tear three trucks down to the block hunting the part that failed. There is no part."
-  - (npc) "[c=dim]It's the town.[/c]"
-  - (pi) "[c=dim]He said it flat.[/c]"
-- **Exchange `town`** — "What happened to this town?" / "What happened to this town, Sheriff?" (dynamic beats, `_vane_town_beats`: Vane's lived arc, then a reaction that branches on whether the PI already knows the seal)
+- **Opener photo** (the WARM DELIVERY of the booking slip, NARRATIVE §6: he
+  personally booked her, so the photograph is a recognition, not a shrug. The
+  `("do", grant_record)` beat hands the slip over mid-exchange; the office
+  records drawer is only the fallback for a dead or hollow Vane):
+  - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look. Then he stops working it.)"
+  - (npc) "I know that face. I had her in my cell one night in December."
+  - (pi) "You booked her."
+  - (npc) "Disturbance on the main road, near midnight. She was not drunk and she was not hurt, so I held her till first light and let her go. No charge. There was nothing to charge her with."
+  - (npc) "She thanked me for the blanket. Polite as Sunday. Then she walked back out into it."
+  - (npc) "(He goes to the files and comes back with a slip, and holds it out without reading it.) Take it. It is the only paper in this office with her name on it."
+  - (npc) "The new folk filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction."
+- **Exchange `the_night`** (avail: photo shown + the record held; once; files
+  the `the_disturbance` note) — "The night you booked her." / "Tell me about
+  the night you booked her. What was she doing out on that road?" — the slip
+  says what he WROTE DOWN; this is what he saw, and what he did not. The lead
+  it leaves (a man who sits the square all day) is stated as plain fact and
+  never pointed at: connecting it to Garrick is the player's.
+  - (npc) "I did not see the start of it. By the time I walked up she was standing in the middle of the road with her head back."
+  - (pi) "Shouting at what?"
+  - (npc) "Nothing that was there. Words, plain enough, and not one of them for me. I could not tell you a single one now."
+  - (npc) "I have booked drunks and I have booked men out of their heads. She was neither. She was answering somebody."
+  - (pi) "Who came and got you?"
+  - (npc) "One of the old boys who sits the square all day. He stood and watched the whole of it before he ever thought to come for me."
+- **Exchange `town`** — "What's happening to this town?" / "What's happening to this town, Sheriff?" (dynamic beats, `_vane_town_beats`: Vane's lived arc, then a reaction that branches on whether the PI already knows the seal). **Present tense by design** (maintainer, 2026-07): not a history lesson about something finished, the thing still happening to him. It absorbed the retired `car` exchange, so the dead engines are a symptom of the town here rather than an errand about the PI's own vehicle, and this is where the fold note is filed now.
   - (npc) "Brimley was dying before any of this. Half the town gone south for work, storefronts boarded up. Some weeks the phone never rang once."
   - (npc) "Then last summer the strangers started coming up the north road, and they didn't stop. More than we had beds for. Polite, every one. Kept to their own. Not one could tell me where they'd driven in from, or why they'd want a dead town like this."
   - (npc) "I kept waiting on the trouble strangers bring. It never came. Something quieter did. The trucks stopped running. The mail stopped. And the road out stopped taking anybody anywhere."
+  - (npc) "Nothing with an engine leaves Brimley. Not yours, not mine. I have watched men tear three trucks down to the block hunting the part that failed. There is no part."
+  - (npc) "[c=dim]It's the town.[/c]"
+  - (pi) "[c=dim]He said it flat.[/c]"
   - (npc) "You need to get out of here. We all do. No one has been able to leave in months."
   - **first time** (has not learned the seal yet; marks the fold heard): (pi) "Wait. What are you saying, Sheriff? No one has left?" / (npc) "Not a soul, not since the winter. They try. I tried, more times than I'll admit to a stranger. Every road out of Brimley turns you around and sets you back at that well." / (npc) "You'll learn that yourself soon enough. Everybody does."
   - **already knows** (heard the roads loop / walked one / re-asking): (pi) "Then you tell me how, Sheriff. Every road out, every engine, a whole town that can't leave. It's not right. How?" / (npc) "You think I haven't stood right where you're standing and asked that, every night for a year? I don't have a how for you. Just this badge, and a list of folks I can't help."
@@ -264,11 +290,6 @@ intro:" / "Opener photo:").
   - (npc) "A year I've been asking this town for one honest page. You walk in off a dead road and hand me her whole hand."
   - (npc) "That's the first real piece of work anybody has brought through that door since it all shut. I won't forget you did."
   - (pi) "[c=dim]Something in him let go a notch.[/c]"
-- **Exchange `share_ledger`** (avail: intro asked + Ledger read) — "The lodge registers are wrong." / "The lodge's old registers. A year of guests signed in and not one of them ever signed out. The clean book on the desk starts right where the boxes stop."
-  - (npc) "Now that is evidence. Paper with dates on it. God, I have missed paper with dates on it."
-  - (npc) "I never got past that desk. Sable smiles, the whole building goes polite, and you walk out without whatever you came in for."
-  - (npc) "Keep pulling threads like that and this town might finally owe somebody the truth. Watch who sees you pull them."
-  - (pi) "[c=dim]He wrote it down.[/c]"
 - **Exchange `paper`** (avail: intro asked + carries newspaper) — "I brought yesterday's newspaper." / "I've got yesterday's paper in my coat. April fourteenth. Figured the law here should have some word from outside." (despair lever, +VANE_PAPER_DESPAIR)
   - (npc) "(He takes it in both hands, careful, like something that might go out.)"
   - (npc) "(He spreads it flat on the desk and stands over the front page a long time.)"
@@ -279,19 +300,48 @@ intro:" / "Opener photo:").
   - (npc) "So it isn't just here. That's what a front page is for, I guess. Telling you the weather's the same all over."
   - (npc) "Thank you for the paper, son. Go on home now. (He doesn't look up from the page again.)"
   - (pi) "[c=dim]I meant it as a kindness. Walking out, I couldn't remember why I thought it would land as one.[/c]"
-- **Exchange `how`** (avail: intro asked + at least one share, the trust gate) — "How were the newcomers gathered?" / "A hundred strangers drove north to the same dying town. Nobody talks that many people into anything. How was it done?" — his one card, the honest *how* fragment (NARRATIVE §4).
-  - (npc) "I asked that question every night for a year. What I've got is one conversation. I'll spend it on you."
-  - (npc) "After the rooms emptied, one of them came back up the road to this office. Blind. Born blind, he said. Walked in without a stick and sat down square in that chair."
-  - (npc) "No name. I asked twice. He sat there lit up like a man warming his hands at a stove. Said the dream had promised him his eyes. Said when the work is finished he'll open them, and they'll work."
-  - (pi) "He wasn't there to confess anything. He was there to fetch you."
-  - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time and he left smiling."
-  - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it."
-  - (npc) "What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
-- **Exchange `cache`** (avail: intro asked + at least one share, the trust gate; once; sets `vane_gave_cache` and drops the office ammo) — "Am I on my own out there?" / "If this goes the way it's been going, I'll be out there alone. Is there anything you can put in my hand, Sheriff?"
-  - (npc) "Protection. That's a thing this office used to hand out."
-  - (npc) "I've got no deputies, no cell that holds, and a law nobody up here answers to anymore. What I've got is a cabinet in the back. Shells, and a spare piece I kept oiled for no reason I could name."
-  - (npc) "Take what you need. It won't help you against what took this town. But it'll make you feel like it might, and some nights that's the whole of the job."
-  - (pi) "[c=dim]He unlocks the cabinet and steps back. The last thing the law here has to give.[/c]"
+- **Exchange `how`** (avail: THE TALK has happened, and he has not told it
+  yet; re-askable) — "Where are the cultists gathered?" / "One of them put a
+  hand on me today. Where are they gathered, Sheriff?" — **ask anytime, he
+  refuses** (maintainer ruling, 2026-07): the row opens on the Talk alone, so
+  the question can always be put; TRUST decides the ANSWER, not the
+  availability. He answers the WHERE either way, because it costs him nothing
+  and he does not know it (NARRATIVE §4). What he withholds is the HOW, his
+  one card (`_vane_where_beats`).
+  - **untrusted** (no discovery shared yet; the row stays askable):
+    - (npc) "Gathered where? The school, the barn, the lodge. Then one night those rooms were empty, and I have not found the room they went to since."
+    - (pi) "That isn't all you have."
+    - (npc) "(He looks at you a while.) No. It isn't."
+    - (npc) "You have been walking my town asking after one girl, and you have not put one thing in my hand. The ones who came before you were friendly too, son."
+    - (npc) "Bring me something I can hold. Then we will see what I have got."
+  - **trusted** (at least one discovery shared; files `the_how` and retires
+    the row):
+    - (npc) "Gathered where? The school, the barn, the lodge. Then one night those rooms were empty, and I have not found the room they went to since. So I cannot give you where."
+    - (npc) "I can give you how. I have given it to nobody."
+    - (npc) "I asked that question every night for a year. What I've got is one conversation. I'll spend it on you."
+    - (npc) "After the rooms emptied, one of them came back up the road to this office and sat down in that chair. No name. I asked twice."
+    - (npc) "Man had not slept in a week by the look of him. Hands going the whole time. He told me about his wife."
+    - (npc) "She is in a county home down in Aitkin. Three years now. Doesn't know his face, doesn't know her own. He used to drive down every Sunday."
+    - (pi) "Used to."
+    - (npc) "He quit going. Said there was no sense in it yet. Said when the work is finished she will know him, and he wanted her to know him the first time she saw him."
+    - (npc) "He cried the whole way through it. Never once got near the part of him that was certain."
+    - (pi) "He wasn't there to confess anything. He was there to fetch you."
+    - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time."
+    - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something."
+    - (npc) "What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
+- **Exchange `cache`** (avail: intro asked, cabinet not yet given;
+  re-askable) — "Am I on my own out there?" / "If this goes the way it's been
+  going, I'll be out there alone. Is there anything you can put in my hand,
+  Sheriff?" — the same ask-anytime/refuse contract (`_vane_cache_beats`).
+  - **untrusted** (the refusal never arms the ammo drop):
+    - (npc) "I've got no deputies, no cell that holds, and a law nobody up here answers to anymore."
+    - (npc) "What I have got, I am not handing to a man who drove in off that road last week and has told me nothing since."
+    - (npc) "Work the case. Come back and show me you did. Then ask me again."
+  - **trusted** (sets `vane_gave_cache` and drops the office ammo):
+    - (npc) "Protection. That's a thing this office used to hand out."
+    - (npc) "I've got no deputies, no cell that holds, and a law nobody up here answers to anymore. What I've got is a cabinet in the back. Shells, and a spare piece I kept oiled for no reason I could name."
+    - (npc) "Take what you need. It won't help you against what took this town. But it'll make you feel like it might, and some nights that's the whole of the job."
+    - (pi) "[c=dim]He unlocks the cabinet and steps back. The last thing the law here has to give.[/c]"
 - **On leave** (`vane_on_leave`, once):
   - (npc) "Hey. If you do find her, don't bring her by the office. There's no report worth filing anymore."
   - (npc) "Just get her out. If you find a way that works, that is. And then you come tell me what it was."
@@ -335,12 +385,15 @@ intro:" / "Opener photo:").
   - (npc) "If you find the way out. The real one. You don't owe this town a goodbye. Just go."
 - **One-shot: the preacher** (avail: body found + met her):
   - "Heard about the preacher. I won't be saying his prayers in here. Don't ask me to."
-- **One-shot: the Mara memory** (avail: shown the photo; hands over the tab, `grant_receipt`):
-  - "Your girl. I'll tell you the one thing I know that's worth the telling."
-  - "She used to come in here. Matches, canned milk. Counted her change twice, every time, like it mattered. Sad around the eyes, and polite with it."
-  - "Then one day past the new year she set her basket down half filled and walked out smiling. Left the basket on the counter. I never saw her again."
-  - "[c=dim]It was the smiling I minded.[/c]"
-  - (if tab not yet lifted) "[c=dim]She works a curled slip off the spike by the till and sets it on the counter, turned toward you. Her tab for the girl. Matches, canned milk, week on week.[/c]"
+- **One-shot: the Mara memory** (avail: shown the photo; hands over the tab, `grant_receipt`). **Rewritten 2026-07:** the "one thing worth the telling" preamble is gone (a character announcing she is about to say something important), and so is the "sad around the eyes, and polite with it" portrait, which contradicted her own answer to the photograph four lines earlier: *"Faces come through this shop. I stopped keeping them."* She either retains faces or she does not. What is left is a shopkeeper talking about her till.
+  - "Your girl. She was a regular. Up till a few months back."
+  - "Then she wasn't. Whole lot of them stopped coming in around the same time, her with them."
+  - "Last of it, past the new year, she set her basket down half filled and walked out. Left it sitting there. Never came back for it."
+  - *(The smiling exit and "It was the smiling I minded" were CUT, 2026-07: a
+    smile the shopkeeper finds disturbing is a visible mark of claiming, and
+    NARRATIVE §2 says there is none. Mara is grieving, not elated. She simply
+    stopped coming in, and nobody clocked anything.)*
+  - (if tab not yet lifted) "[c=dim]She goes into the bin under the till, digs a while, and comes up with a curled slip. Flattens it on the counter and turns it toward you. Her tab for the girl.[/c]" *(the BIN, not the spike, 2026-07: she is not keeping a shrine to the girl, it is refuse she has not taken out because nothing leaves this town, refuse included)*
 - **One-shot: the newspaper OFFER** (avail: met her, carries newspaper;
   TODO #2 rework: she notices and offers, but the trade is the PLAYER'S
   call now -- one copy, six doors):
@@ -592,11 +645,11 @@ intro:" / "Opener photo:").
   - (npc) "\"Run.\""
   - Then the release (the room stands down, the grace window, the filed
     note `the_talk`) and the PI's reaction as the world resumes:
-    "[c=dim]Well shit, this town really doesn't have a midwestern welcome
+    "[c=dim]Well shit, this town really doesn't have a Midwestern welcome
     at all.[/c]"
   - The **`the_talk` case note**: "One of them put hands on me today. Told
     me to go back to my room. Told me to run." / "Well shit, this town
-    really doesn't have a midwestern welcome at all."
+    really doesn't have a Midwestern welcome at all."
 - **Hollow Vane** (`systems/rot_mixin.py` `_spawn_hunting_sheriff`, once per
   run): notice + "Sheriff Vane stands. \"I'm supposed to tell you to leave,
   son. I can't...\"" (the line he can no longer finish).
@@ -618,14 +671,40 @@ Scriptorium), `maras_room` (the unsent letter, her cell). Notes (never
 counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 `the_how`, `the_talk`, `the_bear`, the cult testimony (`cult_calling` /
 `cult_bargain` / `cult_digging`).
-- **`maras_receipt`** (`grant_receipt`): "A store tab off Hettie's spike,
-  headed 'M. Blaine' in her hand." / "Matches, canned milk, the same short
-  list run down most of a year. The staples a resident buys, week on week." /
-  "She lived here."
-- **`maras_record`** (`_office_interact`, `scenes/villager_houses.py`): "A
-  booking slip in the Sheriff's records. Blaine, Mara." / "Held a night for a
-  disturbance on the main road, shouting at the sky. Released at dawn, no
-  charge filed." Pickup notice: "Her booking slip."
+- **`maras_receipt`** (`grant_receipt`): "A store tab out of the bin under
+  Hettie's till, headed 'M. Blaine' in her hand." / "Matches, canned milk, bread, kerosene,
+  lamp oil. The same short list, week on week, autumn through the new year."
+  The list is the whole entry. **"She lived here" was CUT** (maintainer
+  ruling, 2026-07): that is the player's connection to make, and a tab of
+  lamp oil and canned milk week on week makes it without the book saying so.
+  "Most of a year" was also flatly wrong, since Mara drove north in the fall
+  of 1993 and the present is April 1994.
+- **`maras_record`** (`grant_record`, `scenes/dialogue.py`; the WARM handover
+  is Vane's photo opener in Part A, the office records drawer only the
+  fallback once he is dead or hollow): "A booking slip in the Sheriff's
+  records. Blaine, Mara." / "Held a night for a disturbance on the main road,
+  shouting at the sky. Released at dawn, no charge filed." Pickup notice:
+  "Her booking slip."
+- **`the_first_one`** (`_dispel_watcher`, `systems/threat_mixin.py`; note,
+  fired the FIRST time he sees a Watcher off and **never again**): "Something
+  stood at the edge of the light and did not move while I looked at it." / "I
+  did not look away. Could not tell you why that was the thing I decided to
+  do." / "Whatever was lit behind the eyes went out, and the rest of it went
+  after them." / "I have been awake a long time and this town does not agree
+  with me."
+  > **The silence after it is the design.** They keep opening for the whole
+  > run and he never writes about them again. An arc where he notices he has
+  > stopped being frightened would be the game announcing that he changed; a
+  > notebook that simply stops recording them lets the player notice it. He is
+  > confused and tired and ordinary throughout, not hardening. Seeing one and
+  > staring it out is ONE event, so the entry lands on the dispel, not the
+  > spawn. Guarded in `tests/flow.py`.
+- **`the_disturbance`** (`_vane_night_told`, note; his account of the
+  detention night, a STATEMENT so it never counts): "Vane booked her the
+  eleventh of December. Middle of the main road at night, head back, shouting
+  at nothing he could see. Not drunk and not hurt." / "He came late to it.
+  One of the men who sits the square fetched him, and watched the whole of it
+  before the law got there."
 - **`maras_journal`** (`_barn_update`, `scenes/interiors.py`; a walk-over
   pickup, fires the door-dream ON PICKUP, files quietly): "A notebook,
   shoved down behind the workbench. You know the hand. It's hers." / "Her
@@ -696,11 +775,13 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
   pages stop being sentences. Just the word door, over and over, pressed hard
   enough to tear the paper."
 - **`the_how`** (`_vane_how_told`, note): "[c=dim]The sheriff spent his one
-  card. A blind man, no name, lit up with certainty, promised his own eyes by
-  the dream once the work is finished. Sent to fetch the last holdout, and
-  thanked him for refusing." / "Nobody was argued north. Each of them was
-  promised the one thing they were starving for, and every one came
-  gladly.[/c]"
+  card. One of them came back up the road to his office after the rooms
+  emptied and sat down. No name. Hadn't slept." / "Wife in a county home
+  three years. Doesn't know him. He quit driving down to see her. Said she
+  will know him when the work is finished, and he wanted her to know him the
+  first time." / "Then he put the same offer to Vane. Name the thing you want
+  most, come along, it will be waiting." / "Nobody was argued into this. Every
+  one of them was promised the one thing they were starving for.[/c]"
 - **`the_congregation`** (`_mara_voice`, note): "Mara, kneeling with the congregation. Turned. There was never anyone to bring back."
 - **`the_dream`** (`_log_dream_entry`, note; canon-guarded "a year", no
   recurrence): "Her journal put me back inside the one odd dream. A year
@@ -779,40 +860,55 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 - *(Every case-notebook write, evidence and note alike, is now transcribed
   above or in its speaker's Part A section; see Coverage.)*
 
-## The Casebook derived surfaces
-The Case tab's derived text (`systems/narrative_mixin.py`; TODO #13). All
-first person, none of it evidence.
+## The Casebook: the PI's running notebook
+
+The Case tab is ONE RUNNING DOCUMENT (`ui/journal_ui.py`; maintainer ruling,
+2026-07). Everything he writes down goes in in the order he wrote it, headed
+if it is a thing he FOUND and unheaded if it is a thought he had, and nothing
+is ever reordered, merged or overwritten. Up and down turn the leaf.
+
 - **`the_case`** (the intake, seeded at run start): "Client: Walter Blaine,
-  Minneapolis. Wants his girl home." / "Subject: his daughter Mara, 26.
-  Drove north in the fall, quit calling home by the new year, and that was
-  the last of her." / "I told him what he already knew. She's grown, and
-  nobody makes a grown woman come home who won't. \"See what you can do,\"
-  he says. \"Please.\"" / "So I went looking. Trail ends in Brimley. Find
-  her, put her father's word to her, let her decide. That's the job." / "I
-  don't leave a case open. Whatever's up here, Walter gets his answer."
-- **Working Theory** (`_working_theory`, set-aware threads): "A resident,
-  not a drifter. She didn't wander off. Something kept her here." →
-  "She didn't pass through. She lived here and came apart here. This town
-  took her apart." → "She wasn't taken. She walked to it willing. I'm too
-  late to be solving a kidnapping." The bear+letter thread: "A boy, Sam.
-  She gave his bear to the one live kid here. His name breaks her." The
-  tail: "And the town won't let go. I've felt the ground fold back under my
-  own feet. Her or not, how do I get out?" / "The robes run this. If anyone
-  can shut it off it's them, and the only way out runs through all of them.
-  I hate it." (the WRONG lever, never corrected) / "Got the mask. And I
-  know it clean: carry it out and the town lets me go. Down doesn't come
-  back. God help me, I want out."
-- **Timeline** (`_case_timeline`): "Barn first, for somewhere to sleep. Her
-  journal's there." / "Store tab runs most of a year. She lived here, plain
-  as that." / "Booked one night for a disturbance on the main road.
-  Starting to come apart." / "Went under with the rest. Copied the Sign in
-  her own hand, willing." / "Last thing she wrote is the letter in her
-  cell. A boy. \"I'm not lost.\"" Footer: "No dates on most of it. Ordering
-  by what comes before what." / "And the calendars all stopped in January.
-  It's spring now."
-- *(The old soft-lead `_current_lead` strings are DEAD CODE, cut from the
-  notebook display in the TODO #13 opening rework; they render nowhere and
-  are deliberately not transcribed.)*
+  Minneapolis. Wants his girl home." / "Subject: his daughter Mara, 24. Drove
+  north in the fall, quit calling home by the new year, and that was the last
+  of her." / "I told him what he already knew. She's grown, and nobody makes a
+  grown woman come home who won't. \"See what you can do,\" he says.
+  \"Please.\"" / "So I went looking. Trail ends in Brimley. Find her, put her
+  father's word to her, let her decide. That's the job." / "I don't leave a
+  case open. Whatever's up here, Walter gets his answer."
+
+**What he concludes, written down ONCE each** (`_THEORY_THOUGHTS`,
+`_tick_theory_notes`). Each lands the moment he reaches it and stays on its
+page for the rest of the run. They render with no heading, because a
+conclusion he jots is a line in the flow rather than a titled find.
+> **The three CASE reads are CUT** (maintainer ruling, 2026-07): "A resident,
+> not a drifter", "She lived here and came apart here", "She wasn't taken, she
+> walked to it willing", and the SON read ("A boy, Sam. She gave his bear to
+> the one live kid here. His name breaks her"). Each was the conclusion its own
+> evidence had been built to earn, handed over instead of left; the son one was
+> worse, because "his name breaks her" had the PI predicting a scene he has not
+> reached. **He never solves Mara on the page.** What he writes down is the
+> town. The bear still DETONATES, in the item's own text once the letter is
+> read (`systems/items.py` `effective_desc`), which is where that beat always
+> lived.
+
+- **`theory_fold`** (`crossed_a_fold`): "And the town won't let go. I've felt
+  the ground fold back under my own feet. Her or not, how do I get out?"
+- **`theory_robes`** (has actually met them): "The robes run this. If anyone
+  can shut it off it's them, and the only way out runs through all of them. I
+  hate it." **This is the WRONG read, and the game never corrects it**
+  (NARRATIVE invariant). Because the book never rewrites itself, it stays
+  legible on its page for the whole run, including after he learns better.
+- **`theory_mask`** (holds the Pallid Mask): "Got the mask. And I know it
+  clean: carry it out and the town lets me go. Down doesn't come back. God
+  help me, I want out."
+
+> **The TIMELINE is CUT** (maintainer ruling, 2026-07). It was a derived page
+> that re-sorted his finds into Mara's chronology, which is precisely the
+> connection the player is meant to make. **He writes the dates down as he
+> finds them** (the booking slip's "Dated the eleventh of December", the
+> registers' "a year back", the receipt's year of staples, the gas receipt's
+> July) and the arithmetic of this-then-this-then-this belongs to the player.
+> The old `_current_lead` strings remain DEAD CODE, rendered nowhere.
 
 ## The descent-voice track
 `systems/game.py` `_DESCENT_VOICE`, keyed to descent milestones. The PI's own
@@ -1132,7 +1228,7 @@ text:
   draws the eye."
   - **The case file** (`_tableau_read_case`, sets `read_journal`): "CLIENT:
     Walter Blaine. Wants his daughter found and brought home." / "MARA BLAINE,
-    26. Cut ties, drove north, quit calling home. The trail runs cold at
+    24. Cut ties, drove north, quit calling home. The trail runs cold at
     Brimley." / "The job: ask my questions, find the girl, drive home by
     morning." / "The drive in was easy. Then the engine died at the lodge
     steps and wouldn't catch again."
@@ -1178,9 +1274,6 @@ ones landed so far:
   `scenes/lodge.py`; every locked 'l' door in the guest wing): "[c=dim](Locked.
   A row of them, all the same, all shut.)[/c]" (the uncanny hotel of shut
   rooms kept ready for guests who won't come, NARRATIVE §4).
-- **`the_burning`** (`build_clearing._void_boss_interact`,
-  `scenes/interiors.py`): "A cold fire pit. In the ash, what would not burn:
-  buckles, bowl rims, boot eyelets, a watch case, slagged together."
 - **the procession candles** (`build_depths_procession._candles_interact`,
   first read): "[c=dim]A line of candles down the dark, burned to coins.
   Each one stands in older wax, and older wax under that.[/c]" /
@@ -1188,8 +1281,6 @@ ones landed so far:
   The wax says nobody ever hurried.[/c]" Re-read: "[c=dim]The wax holds its little
   lights steady. Nobody hurried here. The wax says nobody ever
   hurried.[/c]" (files `the_procession`, above)
-- **`barrow_tools`** (the barrow examine on the square, `safe_path._town_square`, note): "Digging tools left
-  in the barrow, rusted over. The edges are still bright."
 - **the emptied church** (`old_man_house_on_enter`, after `preacher_doomed`):
   "[c=dim]Mud on the aisle boards, dried in a line toward the door. River
   mud.[/c]" (the atmospheric "lectern stands empty / stove is cold" line was
@@ -1199,6 +1290,16 @@ ones landed so far:
   phone stays as silent set-dressing; the "you hear your own voice" beat is
   gone. No pointer or evidence was on it.
 
+- *(CUT 2026-07, maintainer ruling: three narrator boxes that recorded
+  nothing and said nothing. The `scarecrow` examine and its [E] cue in the
+  cornfield maze are GONE outright, a scarecrow standing in a corn row being
+  scenery rather than an event; the graveyard's worn headstone keeps its
+  two-line look but no longer files a "A weathered headstone." discovery;
+  and the backwoods stash keeps its pickup without the "A small stash."
+  box.)*
+- **the barrow** (on the square): examine **CUT** (maintainer ruling, with
+  the three above). It is a prop, not a find; its "the edges are still
+  bright" contradiction went with it.
 - **the dead well** (`safe_path._town_square`, first read): "[c=dim](You lean
   over the lip. The shaft drops past where any water should be. No glint,
   no bottom, just cold air climbing up out of it.)[/c]" Re-read: notice
@@ -1228,9 +1329,45 @@ ones landed so far:
   Locked.)[/c]" / "[c=dim]A lodge this size keeps a spare key close. Out of
   the rain, near a door. I'd start behind the house.[/c]" Unlocking: notice
   "The iron key turns. The hatch swings up."
-- **the never-worn robe** (`clerk_robe`, Sable's closet): "A cult robe
-  hangs in the Clerk's closet, pressed and folded. By the creases it has
-  never once been worn."
+- **the never-worn robe** (`clerk_room_interact`, Sable's closet; a case
+  NOTE, never evidence). Read in TWO STAGES, because the PI cannot know what
+  he is looking at the first time. The old single line called it "a cult
+  robe" before the player had ever seen a cult (playtest error class 5).
+  - **first look:** "[c=dim](A robe hangs alone in the Clerk's closet. Dark,
+    plain, hand-sewn, pressed and folded over the rail.)[/c]" / "[c=dim]By
+    the creases it has never once been worn.[/c]" Note: "A robe hanging
+    alone in the Clerk's closet. Dark, plain, hand-sewn, pressed and folded
+    over the rail." / "By the creases it has never once been worn. A man
+    keeps a thing like that for a reason he has not got around to yet."
+  - **after THE TALK** (`cult_talk_given`; the note is REWRITTEN in place,
+    never filed twice): "[c=dim](The robe in the Clerk's closet. Dark,
+    plain, hand-sewn.)[/c]" / "[c=dim]I have seen one of these up close now,
+    with a man inside it and his hand on my shoulder.[/c]" Note: as above,
+    with "I have seen one of these up close since. A man inside it, his hand
+    on my shoulder, telling me to run." / "By the creases, Sable's has never
+    once been worn."
+  - **re-examine after both:** notice "The robe hangs where it hung. Never
+    worn."
+- **Toby's desk** (`_school_interact`, the schoolhouse's shoved pile;
+  records NOTHING by design, the name does the work): "[c=dim](A child's
+  desk, near the bottom of the pile. The lid lifts an inch before the desk
+  above it stops.)[/c]" / "[c=dim]Inked inside, in a careful hand that ran
+  out of room: TOBY. A spelling sheet folded under it, three words
+  done.[/c]" Re-examine: notice "His desk, near the bottom of the pile."
+- **the schoolhouse chalkboard's other half** (`_BOARD_LESSON`, shown ahead
+  of the cult's drawn doors in every pre-rite look): "[c=dim](The
+  chalkboard. One corner of the lesson survives under the chalk dust: a
+  column of addition, worked down in a child's hand, the answer circled by
+  the teacher.)[/c]" then "[c=dim]Over it, the same door drawn again and
+  again, smaller and smaller, into the corner.[/c]"
+- **`gas_receipt`** (a walk-over pickup under a schoolhouse cot). It writes
+  NOTHING to the case: the receipt IS the record, and its item text in
+  Papers carries the whole of it, so a note would only read the thing back
+  to the player who just picked it up. Pickup notice: "A gas receipt, under
+  a cot." The paper itself (`ITEM_DEFS`, quoted here because the player
+  reads it): "CLARK OIL / SEYMOUR, WIS." / "JULY 2 1993" / "14.2 GAL   REG
+  $16.75" / "CASH", closing "Four hundred miles south of here, and paid for
+  in cash. Whoever slept on that cot drove up the same roads I did."
 - **the lodge-candle callback** (`lodge_candle_callback`, after the
   Cistern): "[c=dim]The same guttering candles as the dark below, kept
   burning up here too.[/c]"
@@ -1252,8 +1389,8 @@ ones landed so far:
 - **the receipt's pickup notice** (`grant_receipt`): "Her tab from the
   shop."
 
-The remaining one-line routine examines (headstones, `scarecrow`,
-`worn_stone`, the bell-tower view "From the bell tower the town is small.")
+The remaining one-line routine examines (headstones, the bell-tower view
+"From the bell tower the town is small.")
 and the HUD/system notice layer (see Coverage) stay indexed: the code is
 authoritative for their exact words, and the contract still binds (touch
 one, update the other).

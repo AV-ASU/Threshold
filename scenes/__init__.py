@@ -62,7 +62,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   church             -> church (with belfry; Preacher)
 #   sheriff_office     -> the Sheriff's office (his wooden box; reused fisherman_cottage geometry)
 #   cornfield_path     -> the dirt road east of the yard (cornstalk hides)
-#   clearing           -> the burn site
+#   clearing           -> a glade off the river bank
 #   barn               -> barn (hide spots, tunnel)
 #   well_bottom        -> well_bottom (sigil etched at the binding)
 #   well_passage       -> well_passage (cult tunnels)
@@ -88,7 +88,7 @@ SCENE_BUILDERS = {
     "sheriff_office":     build_sheriff_office,     # -> the Sheriff's office
     # Outlying / paths
     "cornfield_path":     build_cornfield_path,     # the dirt road east of the yard
-    "clearing":           build_clearing,           # the burn site
+    "clearing":           build_clearing,           # glade off the bank
     "barn":               build_barn,
     # The Works -- the Basement Level. Seven rooms, well is the sole
     # entrance (the grove's descent fold); the Mask gates the way to the Depths.
