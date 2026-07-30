@@ -56,7 +56,7 @@ def _place_creature(g, spec):
     "amalgam:3@12,9"; default position is a couple of tiles in front of the
     player so it lands inside the sight cone.
 
-    The special kind **apex** drops the Mask-bearer (TODO #25) rather than an
+    The special kind **apex** drops the Mask-bearer rather than an
     ordinary unit: the host flags plus the `Game._apex` state its face and its
     grabbing limbs are read from, wound to full intent. Without it the bearer
     draws as a plain amalgam and the two features the apex exists for are

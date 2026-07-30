@@ -368,7 +368,7 @@ def build_lodge():
     # props below sit on top of it.
     sc.add_decoration(Decoration(11 * TILE + 24, 7 * TILE + 12, "rug",
                                  w=140, h=92, color=(70, 58, 40), seed=23))
-    # THE DINING SET (interiors pilot, TODO #24, ensemble 2): table + two
+    # THE DINING SET (interiors pilot, ensemble 2): table + two
     # tucked chairs + the ONE set place composed as one object -- Sable
     # keeps the room ready for the full house that no longer comes; the
     # second seat's place is bare wood with the dust-shadow of a setting
@@ -385,7 +385,7 @@ def build_lodge():
     sc.add_decoration(Decoration(1 * TILE + 8, 4 * TILE, "wall_lamp"))
     sc.add_decoration(Decoration(16 * TILE + 24, 6 * TILE, "wall_lamp"))
     # Against the west wall -- the oven door faces east, into the kitchen.
-    # THE KITCHEN WALL (interiors pilot, TODO #24): the old loose stove +
+    # THE KITCHEN WALL (interiors pilot): the old loose stove +
     # the north-wall ham composed into ONE ensemble against the west
     # wall -- cookstove + pipe past the eave, counter run + pot shelf,
     # the ham on the shelf hook, a wood crate under. Collision is the

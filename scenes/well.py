@@ -434,7 +434,7 @@ def build_works_cistern():
     sc.add_cult_station(7 * TILE + 16, 7 * TILE + 16, pose="chant",
                         face=(0, 1), dwell=(3.0, 6.0))
 
-    # River stones on the pool shores (TODO #5, the distraction verb):
+    # River stones on the pool shores (the distraction verb):
     # the dug-into river gives stones down here too.
     for _tx, _ty in ((2, 4), (10, 6)):
         _wx, _wy = _tx * TILE + 16, _ty * TILE + 16
@@ -908,7 +908,7 @@ MARA_CONVO = {
                         "whatever makes him stop.[/c]"),
             ],
         },
-        # The name-beat (NARRATIVE §6). Bear-gated: only the man carrying the
+        # The name-beat. Bear-gated: only the man carrying the
         # boy's bear can say his name. Meant kindly, it is the one word she
         # cannot survive: it splits the fused "he" she has guarded for
         # months. She DETONATES (seizes the PI, the rite's stillness cracks,
@@ -1508,7 +1508,7 @@ def build_the_sump():
     sc.add_decoration(Decoration(7 * TILE + 26, 5 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = []
-    # A river stone on the pool shore (TODO #5, the distraction verb).
+    # A river stone on the pool shore (the distraction verb).
     if not sc.is_solid_at(2 * TILE + 16, 5 * TILE + 16):
         sc.add_item(2 * TILE + 16, 5 * TILE + 16, "stone")
     _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)

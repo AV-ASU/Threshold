@@ -1191,7 +1191,7 @@ def main():
           "chalk: the Scriptorium is swarmed with chalk doors (the compulsion)")
 
     # --- 16c. The fold-talk note: the locals' looping-roads account now
-    # lives in the ask verb (TODO #1 chorus): Royce's roads exchange (and
+    # lives in the ask verb (the chorus): Royce's roads exchange (and
     # Garrick's warning) file the PI's note ONCE, named to the teller,
     # and only when actually ASKED -- earned, not ambient.
     # Each of them is at home in their own house now (DESIGN.md §15), so
@@ -1270,7 +1270,7 @@ def main():
 
     # --- 17. The principal locals are named (NARRATIVE §4/§8) ---
     # A small town knows its people by name. Every principal now speaks
-    # through the organic conversation (TODO #1 expand), so the
+    # through the organic conversation, so the
     # proper-name label rides every floated line via the convo data.
     from scenes.dialogue import (toby_dialogue, clerk_dialogue,
                                  SABLE_CONVO as _SC, VANE_CONVO as _VC,
@@ -1321,7 +1321,7 @@ def main():
                   ("newcomer", "recruiter", "recruit")),
           "sable: never tagged newcomer/recruiter (compulsion, not conspiracy)")
 
-    # --- 17c. The investigation ASK verb (pilot: Mr. Sable, TODO #1) -----
+    # --- 17c. The investigation ASK verb (pilot: Mr. Sable) -----
     # The menu options ARE the PI's own spoken lines; picking one plays an
     # organic PI<->NPC exchange over their heads (ui/conversation), and new
     # questions open as the case grows. Guard the engine + Sable's script.
@@ -1581,7 +1581,7 @@ def main():
     check(gt.audio._room_tone is None,
           "audio: closing the tableau drops its room tone")
 
-    # --- 17d. The ask verb EXPANDED to the principals (TODO #1) ----------
+    # --- 17d. The ask verb EXPANDED to the principals ----------
     # Vane, Hettie, Toby, and Crane each carry their own conversation, and
     # every principal's menu leads with the two guaranteed openers: the PI
     # introducing himself, and Mara's photograph. News does not spread in
@@ -2162,7 +2162,7 @@ def main():
     check(gor.dialog.choices is None,
           "flow: an orphaned talk's pending callback is inert")
 
-    # --- 17e. The ask verb reaches the Brimley chorus (TODO #1) ----------
+    # --- 17e. The ask verb reaches the Brimley chorus ----------
     # Old Pell, Mrs. Calder, Royce, and Garrick come off the
     # _brimley_voice page-lists: each carries a conversation that leads
     # with the two guaranteed openers, and their reactive one-shots (the
@@ -2294,7 +2294,7 @@ def main():
     gch._convo = None
     gch.float_speech.active = False
 
-    # --- 17f. Sheriff Vane's despair/hope arc (DESIGN.md §2) ----------
+    # --- 17f. Sheriff Vane's despair/hope arc (DESIGN.md §2) -
     # A hidden ledger decides the last holdout's fate; the player never
     # sees a number, only his mood. Sharing a discovery is the one hope
     # act (and the trust currency, guarded in 17d); the preacher's murder
@@ -2323,7 +2323,7 @@ def main():
     check("window" in _vane_prompt(gva) and not gva.save.flag("vane_hollow"),
           "vane-arc: despair darkens the framing line before it latches")
 
-    # The newspaper is the break lever (TODO #2): the exchange waits on
+    # The newspaper is the break lever: the exchange waits on
     # the intro, spends the one copy (Hettie's trade goes without), and
     # telegraphs the damage as mood -- the PI's own closing line.
     _qpp = next(ex for ex in _VC["exchanges"] if ex["key"] == "paper")
@@ -2413,7 +2413,7 @@ def main():
                   and getattr(n, "alive", True) for n in gvo2.scene.npcs),
           "vane-arc: the tended holdout still stands at three evidence")
 
-    # --- 17g. The newspaper choice (TODO #2): one copy, six doors --------
+    # --- 17g. The newspaper choice: one copy, six doors --------
     # The April 14 paper is a choose-the-recipient gift: Hettie's trade,
     # Vane's trap (17f above), Royce's batteries + best road, Pell's
     # calendar (no item, mercy), Toby's funny pages, and Sable's NULL (the
@@ -2593,8 +2593,8 @@ def main():
           "mine: surface doors stay framed wood")
 
     # --- 19c. The intro is CULT-FREE, and the welcome sign carries the
-    # town's mundane corn pride (2026-07 intro rework; NARRATIVE §1, TODO
-    # #11). The PI arrives knowing none of the cult, so the opening drive
+    # town's mundane corn pride (2026-07 intro rework; NARRATIVE §1).
+    # The PI arrives knowing none of the cult, so the opening drive
     # cards and the bedroom case notebook must never say "found religion".
     # The old-timey BRIMLEY welcome board (intro drive-in + in-game) carries
     # the boast + the founding year.
@@ -2730,7 +2730,7 @@ def main():
     gp.save.set_flag("hettie_greeted", True)    # she has met you once
     _ammo0 = gp.player.inventory.count("pistol_ammo")
     hettie_dialogue(gp, None)
-    # TODO #2: she OFFERS now (the trade is the player's call); page the
+    # She OFFERS now (the trade is the player's call); page the
     # notice down to the counter choice and take it.
     for _ in range(12):
         if gp.dialog.choices is not None:
@@ -2810,7 +2810,7 @@ def main():
     check(not any(hasattr(_rm.RotMixin, m) for m in
                   ("_rot_locals", "_convert_local", "_spawn_counter_eater")),
           "rot: the people-change methods are removed from RotMixin")
-    # The older mutate body-horror layer stays cut too (NARRATIVE §2).
+    # The older mutate body-horror layer stays cut too.
     check(not hasattr(_cfg, "INFEST_MUTATE")
           and not hasattr(_spr, "draw_infested_overlay")
           and not hasattr(_DB, "_draw_infested_portrait"),
@@ -2843,7 +2843,7 @@ def main():
           "rot: no townsperson is mutated or a cultist at stage 3 (town reads "
           "normal)")
 
-    # (c2) The four-tier PI register (DESIGN.md §2): the rot surfaces as the
+    # (c2) The four-tier PI register: the rot surfaces as the
     # PI's FRAMING of a conversation, keyed to evidence (0 / 1-2 / 3 / 4+),
     # never as a word the NPC says. The prompt is a callable that shifts;
     # the NPC observation is identical across tiers.
@@ -2884,7 +2884,7 @@ def main():
                   for ln in spread_lines),
           "spread: no dashes in player-facing ending text")
 
-    # --- 24. The town reacts to state + the descent beats --------------
+    # --- 24. The town reacts to state + descent beats ----
     # Each ambient local carries ONE state beat (a one-shot, gated on what
     # the PI has learned) before falling back to their ambient loop; the
     # procession's candle beat lands as a NOTE. None of
@@ -3038,7 +3038,7 @@ def main():
     _mkeys = {ex["key"] for ex in _MCV["exchanges"]}
     check(_mkeys == {"leave", "way_out", "father", "name"},
           "mara: the asks are come-with-me / the-way-out / her father / "
-          "the boy's name (bear-gated, NARRATIVE §6)")
+          "the boy's name (bear-gated)")
     _mf = next(ex for ex in _MCV["exchanges"] if ex["key"] == "father")
     check(bool(_mf.get("once")) and bool(_mf.get("ends")),
           "mara: the father card plays once and ENDS the talk (she turns "
@@ -3143,7 +3143,7 @@ def main():
     check(not any(("—" in p) or ("–" in p) or ("--" in p) for p in _hshown),
           "hettie: no dashes in the memory beat")
 
-    # --- 24c. The soft lead (TODO #5): derived, oblique, never empty,
+    # --- 24c. The soft lead: derived, oblique, never empty,
     # never dashed, and it climbs the milestone ladder.
     gl = new_game()
     _lead0 = gl._current_lead()
@@ -3646,7 +3646,7 @@ def main():
           "staging: a dead Mara clears the calling-out (her story's other "
           "end)")
 
-    # --- 28c. The bear + the name-beat (NARRATIVE §6) ---
+    # --- 28c. The bear + the name-beat ---
     from scenes.dialogue import (TOBY_CONVO as _TOBY_B,
                                  CANONICAL_EVIDENCE as _CE_B)
     from scenes.well import MARA_CONVO as _MARA_B
@@ -3885,7 +3885,7 @@ def main():
     check(not gdl.save.arg("dead_locals"),
           "dead-locals: New Game clears the ledger")
 
-    # --- 32b. THE MOUTH: the lost-space loop closes (TODO #26) -----------
+    # --- 32b. THE MOUTH: the lost-space loop closes -----------
     # interior -> yard -> push through the treeline in the dark -> fall ->
     # land on the lit island -> leave its glow -> hunt the light -> climb
     # back out into the yard a few strides from where you fell. Every gate
@@ -4037,7 +4037,7 @@ def main():
           "mouth: every yard opens its three non-road edges"
           + (" -- " + "; ".join(_shut) if _shut else ""))
 
-    # --- 34. THE SAFE PATH: the lit spine (TODO #26, DESIGN.md §14) --------
+    # --- 34. THE SAFE PATH: the lit spine (DESIGN.md §14) --------
     # The layer's promise is mechanical, so every part of it is checked
     # mechanically. If any of these go red the path is not safe, it just
     # looks it.

@@ -137,7 +137,7 @@ def build_cornfield_path():
     # open, so collision, nav, and reachability are unchanged; the corn is
     # solid cover on the shoulders. The pinch itself is the landmark: because
     # the scene wraps on x, walking the loop brings you back past the SAME
-    # corn throat (the "handed back / rearranges" uncanny, TODO #4). Placed
+    # corn throat (the "handed back / rearranges" uncanny). Placed
     # after the forest-band scatter so the band does not overwrite it; the row
     # PATH_ROW gap keeps it Euclidean-honest.
     for _cx in (22, 23, 24):
@@ -220,7 +220,7 @@ def build_cornfield_path():
     # (The secret-clearing branch dressing was removed when the
     # clearing entrance is the hidden trunk in the river road's pines.)
 
-    # Enclosed hides (the 2026-07 stealth pass, TODO #5: the surface was
+    # Enclosed hides (the 2026-07 stealth pass: the surface was
     # a hide desert): the gaps under the two dead vehicles already
     # rusting on the shoulder. Corn cover off either road shoulder stays
     # the mobile concealment.

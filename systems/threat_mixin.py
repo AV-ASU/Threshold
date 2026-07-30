@@ -119,7 +119,7 @@ class ThreatMixin:
             # an enclosed hide is exempt: its threat is the CHECK/
             # struggle). One gate for every grab site:
             # systems/stealth.py grab_allowed. The reach is
-            # CULT_GRAB_REACH now (the stealth economy, TODO #5):
+            # CULT_GRAB_REACH now (the stealth economy):
             # brushing past an awake cultist risks the grab.
             if (d < CULT_GRAB_REACH and self.player.invuln <= 0
                     and _grab_allowed(self.player,
@@ -701,7 +701,7 @@ class ThreatMixin:
                      + getattr(self, "_watcher_gaze", 0.0) * WATCHER_GAZE
                      + lit_rise)
         self._being_seen = max(0.0, min(1.0, seen_rate / BEING_SEEN_FULL))
-        # One-shot teach (TODO #5): the first time eyes really pile on,
+        # One-shot teach: the first time eyes really pile on,
         # name what the notched bar is and what breaks it.
         if (self._being_seen >= 0.5 and self.save
                 and not self.save.flag("teach_seen")):
@@ -848,7 +848,7 @@ class ThreatMixin:
         # it BURNS one caught in a pool or the beam (_tick_watcher_gaze,
         # WATCHER_LIGHT_BURN). You clear them with light; you never hide in it.
         exposed = self.player.hidden is None
-        # STORM MODE: the cap lifts and the wave starts walking (TODO #25).
+        # STORM MODE: the cap lifts and the wave starts walking.
         storming = self._storm_active()
         self._sync_storm_mode(storming)
         cap = STORM_MAX if storming else WATCHER_MAX
@@ -876,7 +876,7 @@ class ThreatMixin:
         self._tick_watcher_gaze(dt)
 
     def _storm_active(self):
-        """Is a STORM up in this room right now? (TODO #25)
+        """Is a STORM up in this room right now?
 
         The storm is not a second spawner -- it is a MODE of the Watcher wave.
         Two populations of the same creature under different rules reads as a
@@ -899,7 +899,7 @@ class ThreatMixin:
             return False
         return self.scene_gloom() > 0
 
-    # ======================= THE APEX (TODO #25) ==========================
+    # ======================= THE APEX ==========================
     # The Mask that wears a unit. Regular storm units cannot touch you; this can.
     # It is GAME state, not scene state -- one bearer storm-wide is a locked
     # fence, and `scene.npcs` is cleared on every load, so the Mask lives on the
@@ -1072,7 +1072,7 @@ class ThreatMixin:
                 return
             # THE CATCH. Light does not stop it and it cannot be outrun, so
             # contact is the run ending -- the King's own death, because it is
-            # the King (the art rewire is TODO #25's retire slice).
+            # the King (the art rewire comes with the retire slice).
             d = math.hypot(host.x - self.player.x, host.y - self.player.y)
             if (self.player.hidden is None and self.player.invuln <= 0
                     and d < APEX_CATCH_DIST):
@@ -1080,7 +1080,7 @@ class ThreatMixin:
                 # apex catch played THE UNFOLDING's throat-swallow -- the art of
                 # the body this is replacing. Maintainer: do not use the existing
                 # death card. "apex" draws a wordless placeholder until the
-                # amalgam's own catch animation is made (TODO #25).
+                # amalgam's own catch animation is made.
                 self._trigger_death("apex")
             return
         # SEEKING: drift toward the nearest unit it can wear, or toward the
@@ -1249,7 +1249,7 @@ class ThreatMixin:
                 pdx, pdy = w.x - p.x, w.y - p.y
                 d = math.hypot(pdx, pdy) or 1.0
                 looking = ((pdx / d) * fdx + (pdy / d) * fdy) > 0.5 and d < 360
-            # LIGHT BURNS a Watcher (TODO #21 "no light = danger"): one standing
+            # LIGHT BURNS a Watcher ("no light = danger"): one standing
             # in a light pool -- or caught in the flashlight beam -- dissolves
             # fast, on top of any gaze. The flashlight is how you clear them,
             # and a bright pool is a place His gaze cannot hold you OR them.

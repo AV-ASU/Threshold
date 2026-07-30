@@ -55,11 +55,10 @@
 > - **`TODO.md`** — the live list of genuinely open work, ordered as ONE
 >   timeline. Not a place for lore, and not a place for landed work either —
 >   once a ticket ships, its story moves to `CHANGELOG.md` and it's deleted
->   from here outright. **A ticket number is a stable ID, never an order:**
->   numbers are never reused or recycled, a retired number stays retired, and
->   anything that has landed is cited by its canon home (`NARRATIVE §n` /
->   `DESIGN §n`) or `CHANGELOG.md` rather than by a dead number (guarded,
->   `tests/conventions.py` check 13).
+>   from here outright. **Bullets only — tickets have NAMES, not numbers.**
+>   Cite one by its name; the code never cites this file at all, and anything
+>   that has landed is cited by its canon home (`NARRATIVE §n` / `DESIGN §n`)
+>   or `CHANGELOG.md` (guarded, `tests/conventions.py` check 13).
 > - **`DIALOGUE.md`** — the dialogue & narrator bible: every word the player
 >   reads (spoken NPC/PI lines and narrator/world boxes), organized by WHO
 >   says what and WHAT causes what, plus the voice rules. **Its contract:
@@ -310,7 +309,7 @@ it renders the procedural sprites to a labelled PNG strip.
     the cult's errand machinery (`stealth.errand_step`; Garrick,
     Royce, the store Hettie, Rev. Crane). `chaser` runs the cultist state
     machine (`_cult_tick`: scout→chase→search→investigate). SCOUT carries
-    the **cult-liveness beats** (TODO #23a; `systems/stealth.py`
+    the **cult-liveness beats** (the complex-behavior ticket; `systems/stealth.py`
     `sync_pause`/`handoff_step`, `CULT_SYNC_*`/`CULT_HANDOFF_*` config):
     the shared-clock synchrony all-stop and the crossing hand-off —
     dressing that never touches the threat states (a frozen scout still
@@ -440,7 +439,7 @@ it renders the procedural sprites to a labelled PNG strip.
     `FIXTURE_POOLS` or it starts gating Watcher spawns and the lost-space
     mouth. The **Pallid Mask part**
     (`draw_pallid_3d` — the one 3D shell — driven through
-    `draw_pallid_mask_part`; the storm-King redesign, `TODO.md` #25) is an 18th
+    `draw_pallid_mask_part`; the storm-King redesign) is an 18th
     part NEVER dealt by `assemble()`, driven ONLY by the `mask=` kwarg
     (player-scale, a REAL 3D object that turns a full 360 with the carved face
     on its front hemisphere only — no eyes from behind — one bearer storm-wide)
@@ -724,7 +723,7 @@ section is the CODE MAP only — where each system lives:
   gloom (72) so a ground-floor room reads dim-lit-by-bulbs, not pitch-black
   (`_draw_dark`); lit by the genset `wall_lamp` fixture (DESIGN §6).
   `STORM_STAGE_SCENES` (Brimley + `OUTDOOR_SCENES`, 2026-07) is the surface
-  world that DARKENS with the evidence count (the storm's stage, TODO #25 /
+  world that DARKENS with the evidence count (the storm's stage, the storm ticket /
   DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
   (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
   become islands and the flashlight works outdoors. Understanding-driven, NOT a
@@ -735,7 +734,7 @@ section is the CODE MAP only — where each system lives:
   things need to open, so hiding in it would be hiding inside the threat.
   `tests/stealth.py` §11 + §18 fail if either comes back. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
   `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
-  island reads as a bright island in a black sea (TODO #26).
+  island reads as a bright island in a black sea (the lost-spaces ticket).
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.
@@ -820,6 +819,17 @@ section is the CODE MAP only — where each system lives:
      footprints re-checked with smoke's flood-fill (hides + exits
      reachable) BEFORE the full gate.
 - `__pycache__/` is gitignored; never commit `.pyc`.
+- **THE CODE NEVER CITES `TODO.md`, and carries no work markers.** Open work
+  lives in `TODO.md` and nowhere else, and that file deletes a ticket the
+  moment it lands — so a comment citing one becomes a pointer into a void by
+  design. 183 of them had accumulated as provenance on shipped code, and the
+  numbers had been REUSED, so a comment reading `TODO #8` in `scenes/depths.py`
+  (the procession beat) resolved to the live ticket for parked terrain
+  megabuilds. All of them are cut. A comment cites **`DESIGN.md`** (how the
+  system works) or **`CHANGELOG.md`** (why it got that way) — both current-state
+  docs that outlive the work — or it just says the thing plainly. Tickets have
+  NAMES now, not numbers. Guarded by `tests/conventions.py` check 13, which
+  also fails on a bare `TODO` or `FIXME`.
 - **PLAYTEST ERROR CLASSES (audit for these BEFORE calling a scene, interaction, or
   line "done" -- a 2026-07 play-test surfaced every one of them, and each is a CLASS,
   not a one-off).** When you touch anything nearby, actively hunt the whole class

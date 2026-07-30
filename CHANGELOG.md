@@ -2706,6 +2706,136 @@
 
 ## Brimley geography
 
+- **2026-07 -- every ticket citation cut out of the source, and a check so they
+  cannot grow back.** The follow-through on the naming pass, from the
+  maintainer's read of it: *"we don't need that in the code."* Correct, and for
+  a reason worth stating once. The 183 `TODO #n` comments were not work markers
+  at all -- essentially every one was PROVENANCE on shipped code (`"""THE
+  KITCHEN WALL (interiors pilot, TODO #24)`, `# THE MOUTH (TODO #26)`). Exactly
+  one marked something open. But `TODO.md`'s contract deletes a ticket the
+  moment it lands, so provenance pointed at it rots ON LANDING, by design. The
+  durable homes already existed and the canon already said so: `DESIGN.md` for
+  how a system works, `CHANGELOG.md` for why it got that way. Neither is
+  deleted when work ships.
+
+  So the operation was DELETION, not the number-to-name mapping the previous
+  entry declined -- and that is what made it tractable. Mapping needs a
+  judgement per site about which ticket a reused number meant; deleting needs
+  none, because the prose around the citation already says what the code is.
+  `(interiors pilot, TODO #24)` loses four characters and nothing else.
+
+  A regex pass took 189 lines across 43 files; 38 of them came out mis-shaped,
+  because a comment's grammar had been leaning on the citation (`(DESIGN.md
+  §2;)`, `#. A LOCAL`, `the gas-genset failure meant to is deferred`). Those
+  were repaired by hand off a full before/after listing of every changed line,
+  not off a sample -- a spot-check had already passed while eight of them sat
+  in the file.
+
+  **The check is `tests/conventions.py` 13:** no `.py` may cite `TODO.md` or
+  carry a bare `TODO`/`FIXME`. Proven to fail before it was kept (an injected
+  marker in `systems/storm.py` and a `FIXME` in `ui/case_titles.py` both fired).
+  The first draft also matched `XXX` and fired on `scenes/lodge.py`'s layout
+  rows, where a wall run is spelled `"W.XX.......XXX.W"` -- so `XXX` is
+  deliberately out of the pattern, and the reason is written beside it. The
+  gate caught one thing this pass that review had not: `TOOLS.md` is generated
+  from tool docstrings, five of which lost citations, so it needed regenerating
+  (`python tools/index.py --md`).
+
+- **2026-07 -- `TODO.md` is bullets, and its tickets have NAMES.** The
+  numbering is retired, on the maintainer's instruction and with a good reason
+  waiting underneath it: the numbers looked like stable identifiers and were
+  not. Nine of the numbers still cited in code comments already pointed at
+  tickets that no longer existed, and worse, several had been REUSED by later
+  tickets, so a comment reading `TODO #8` in `scenes/depths.py` (the
+  procession's diegetic beat) resolved to the live ticket for parked terrain
+  megabuilds, and `TODO #7` in `scenes/well.py` (the lure-chain fence)
+  resolved to the liminal-composition pass. A dead pointer wastes a minute; a
+  pointer that silently lands on an unrelated live ticket is worse than none.
+  A name survives a renumber.
+
+  The canon docs were repointed in the same pass: 35 citations across
+  `CLAUDE.md`, `DESIGN.md` and `DIALOGUE.md` now name the ticket, and the ones
+  that cited retired numbers for work that has since landed (the evidence
+  rework, the four-tier PI register, Vane's ledger, the Mara tableau, WADE)
+  lost the pointer rather than gaining a wrong name. The patch asserted a
+  unique match per site and then asserted that no canon doc still contains the
+  string `TODO #`.
+
+  **Forwarding map, for the numbers that were live when they were dropped:**
+  - #1 -> make evidence askable, the investigation loop
+  - #2 -> the favor economy
+  - #4 -> outdoor dread, the composition pass
+  - #4b -> CUT (see the next entry)
+  - #4c -> the wall program, freeform walls
+  - #5 -> stealth, the deferred verbs and the tight bands
+  - #6 -> combat, the stun window and the difficulty toggle
+  - #7 -> the liminal-composition pass (Deferred)
+  - #8 -> parked terrain megabuilds (Deferred)
+  - #12 -> Royce the trucker + the rusting semi
+  - #13b -> interior voice, quiet the routine reactions
+  - #16 -> the ship track, packaging
+  - #17 -> the ancient altar
+  - #20 -> the endings redraw (Deferred)
+  - #21 -> light is the pillar
+  - #23 (a/b/c/d) -> complex behavior for cultists and locals
+  - #24 -> the interiors program
+  - #25 -> the King becomes the storm
+  - #26 -> the lost spaces, the dark manipulation layer
+  - #27 -> remake the town sign
+  - #28 -> cut the calendars
+  - D -> doc consolidation; R -> the cross-model review gate
+
+  **Still open, deliberately not swept:** 178 `TODO #n` citations in code
+  comments. They were left alone rather than mapped mechanically, because the
+  reuse above means a number-to-name table would rewrite a comment about the
+  procession into a comment about terrain warps. Each site needs a person
+  reading what the comment is actually about; the map above is what they read
+  it against. Fix them as the files are touched for other reasons.
+
+- **2026-07 -- the backlog reprojected onto the new geography, and ticket #4b
+  cut.** The retirement moved the world; the open-work list was still written
+  in the old coordinate system, which made the next steps genuinely hard to
+  see. A pass over `TODO.md` re-homed everything that named a scene that no
+  longer exists.
+
+  **#4b, "Brimley river-centered rebuild, both banks", is deleted rather than
+  re-homed,** because the thing it was designed around is gone in a way that
+  cannot be re-pointed. Its whole argument was that 6 of 7 buildings sat on
+  one bank with the river as an unused spine, and its payoff was that the
+  Sheriff on the far bank makes "cross the river to reach the law" fall out
+  of geography with no gate. Neither survives the string of house islands:
+  the river now runs on the APPROACH (`river_road` / `river_bend`, off
+  `country_lane`), while the law is `sheriff_yard` off `south_row`, four
+  streets deep into the town chain. There is no bank for the buildings to be
+  distributed across, and the crossing the ticket wanted to charge the player
+  is not on the way to anything. The idea is recorded here rather than
+  carried forward as a ticket that reads plausible and builds nothing.
+
+  **Re-homed rather than cut:** #4's outdoor-dread preserves (the "stays ONE
+  square scene" clause was dropped; the well, the fold road, the looping-roads
+  lines and the exits/stations now point at the scenes that own them), and the
+  ticket gained the named scene + named composition it had been asking for
+  since it was written (`farm_yard`, the corn closing the rim). #17's ancient
+  altar moved from "mid-Brimley" to `river_road`, the length of bank the road
+  actually runs beside and the scene already carrying the Preacher's remains.
+  #12's semi moved from "the town edge" to `royce_yard` off `lane_end`, which
+  is both Royce's own lot and the far end of the street chain. #8 lost the
+  "round/organic Brimley reshape" it was parking. #25's stale
+  `STORM_STAGE_SCENES` gloss (it read "Brimley + OUTDOOR_SCENES"; the code has
+  said `set(OUTDOOR_SCENES)` since the retirement) was corrected.
+
+  **The file also changed shape.** ~250 lines of LANDED narration under #25
+  and #26 were deleted outright, all of it already told in this file, which is
+  what `TODO.md`'s own header asks for and what had quietly stopped happening.
+  The "Blocked on a human at the keys" section is gone: #5 and #6 were
+  rewritten as the work they actually contain (the enclosed-hide exit window,
+  the crouch stance, the window vault, `store_row`'s 14% west band; the stun
+  window and the difficulty toggle), and #21 and #16 came up out of Deferred
+  for the same reason. The header now carries the rule that produced all of
+  this: **every ticket is phrased as work that can start now**, and a ticket
+  that only says "wait for X" is not a ticket. The file went 1019 lines to
+  ~600.
+
 - **2026-07 -- a window pane is an assertion.** Every `i` tile in the game
   drew as warm glass lit from within, with a dark silhouette drifting behind
   it on a per-tile clock -- lovely, and a claim that somebody is home. Three

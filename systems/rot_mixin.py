@@ -43,15 +43,15 @@ def _corpse_examine(game, npc):
 
 class RotMixin:
     def _tick_power(self, dt):
-        """The genset power link (the light-security loop's first slice,
-        TODO #21). `_genset_down` holds per-scene blackout timers; while a
+        """The genset power link (the light-security loop's first slice).
+        `_genset_down` holds per-scene blackout timers; while a
         scene's timer runs its ELECTRIC fixtures are dead in every layer at
         once: `Scene.power_on` gates `lit_at` (mechanical), `_draw_dark`
         skips their pools (visible), and the per-deco `_powered` flag turns
         the fixture art itself dark (a dead lamp draws dark glass, and the
         office radio's dial goes out). Power returns on its own when the
         timer runs out; fire is exempt throughout. No live trigger sets a
-        timer yet: the gas-genset failure meant to (TODO #21) is deferred,
+        timer yet: the gas-genset failure meant to fire it is deferred,
         so the mechanism stands ready and is guarded synthetically by the
         stealth section 17 blackout test."""
         down = getattr(self, "_genset_down", None)
@@ -184,8 +184,8 @@ class RotMixin:
                 and not self._local_is_dead("Sheriff"):
             self._spawn_hunting_sheriff()
         # (The stage-2 counter-eater tableau -- a converted "neighbor"
-        # calmly eating in the shop -- was CUT with the people-change, TODO
-        # #22c: a joined local on display is exactly the town-curdling the
+        # calmly eating in the shop -- was CUT with the people-change:
+        # a joined local on display is exactly the town-curdling the
         # rework relocates to the PI. The cult's mundane presence is carried
         # by the enemy patrols now.)
         # The AIR rots too: schedule the scene's ambient one-shot
@@ -288,8 +288,8 @@ class RotMixin:
             self.scene.add_decoration(deco)
             placed += 1
 
-    # (_rot_locals / _convert_local / _spawn_counter_eater were CUT in TODO
-    # #22c. The town stays ordinary to the end: no local is repainted a
+    # (_rot_locals / _convert_local / _spawn_counter_eater were CUT.
+    # The town stays ordinary to the end: no local is repainted a
     # cultist, no resister's voice curdles, and Mrs. Calder keeps her second
     # place setting -- she never stops waiting. The world rot lives in the
     # PI now, in the conversation framing, scenes/dialogue._pi_framing.)

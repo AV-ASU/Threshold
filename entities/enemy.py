@@ -585,7 +585,7 @@ class Enemy:
         # to CHASE above.
         if getattr(self, "lock_facing", False):
             return
-        # The liveness beats first (TODO #23a, mirrors the NPC machine:
+        # The liveness beats first (mirrors the NPC machine:
         # the synchrony all-stop, then a crossing hand-off -- dressing
         # only, detection already scored this tick above), then errands
         # (stations put the workers to WORK), then the pure roam.

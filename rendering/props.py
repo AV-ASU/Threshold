@@ -214,7 +214,7 @@ def _draw_town_sign_solid(surf, cam, deco):
         span = max(1.0, bot_y - top_y)
         if welcome:
             # Three stacked lines: the name, the corn boast, the founding
-            # year -- an old-timey painted welcome board (NARRATIVE §2; the
+            # year -- an old-timey painted welcome board (the
             # corn pride is a mundane human feat, never the door's doing).
             big = pygame.font.SysFont(None, max(9, int(9 * s * cam.scale)),
                                       bold=True)
@@ -1280,7 +1280,7 @@ def _draw_staircase_solid(surf, cam, deco):
 
 
 def _draw_lawman_wall_solid(surf, cam, deco):
-    """THE LAWMAN'S QUARTERS WALL (Wave 2, the sheriff's office; TODO #24):
+    """THE LAWMAN'S QUARTERS WALL (Wave 2, the sheriff's office):
     the west-wall run composed as ONE object -- Vane lives at his desk now,
     and this is the proof. His cot with the blanket tucked army-tight, his
     boots squared under it, the washstand with its basin and hung towel,
@@ -1360,7 +1360,7 @@ def _draw_lawman_wall_solid(surf, cam, deco):
 
 
 def _draw_lawman_desk_solid(surf, cam, deco):
-    """THE LAWMAN'S DESK (Wave 2, the sheriff's office; TODO #24): Vane's
+    """THE LAWMAN'S DESK (Wave 2, the sheriff's office): Vane's
     working desk composed as ONE object -- the two-tile desk with its
     modesty panel, the radio he half-listens to at the back corner, the
     case files stacked square, the tin mug on its years of rings, the
@@ -1425,7 +1425,7 @@ def _draw_lawman_desk_solid(surf, cam, deco):
 
 
 def _draw_stockroom_corner_solid(surf, cam, deco):
-    """THE STOCKROOM CORNER (Wave 2, the shop; TODO #24 ensemble rule):
+    """THE STOCKROOM CORNER (Wave 2, the shop; the ensemble rule):
     the shop's receiving corner composed as ONE object against the west
     wall -- what used to be two loose crates, a table, and a barrel in
     prop soup. A crate stack (two high, a third askew beside), the check
@@ -1519,7 +1519,7 @@ def _draw_stockroom_corner_solid(surf, cam, deco):
 
 
 def _draw_kitchen_wall_solid(surf, cam, deco):
-    """THE KITCHEN WALL (interiors pilot, TODO #24): the lodge's cooking
+    """THE KITCHEN WALL (interiors pilot): the lodge's cooking
     run composed as ONE object against a west wall. Cookstove on legs
     with its pipe climbing past the eave, a counter run north of it with
     the pot shelf over, three hung pots, the house ham on the shelf's
@@ -1734,7 +1734,7 @@ def _draw_kitchen_wall_solid(surf, cam, deco):
 
 
 def _draw_dining_set_solid(surf, cam, deco):
-    """THE DINING SET (interiors pilot, TODO #24, ensemble 2): the lodge
+    """THE DINING SET (interiors pilot, ensemble 2): the lodge
     common room's table composed as one object. A plank table on four
     legs, two chairs tucked at lived angles, and ONE place set clean and
     waiting: Sable keeps the room ready for the full house that no
@@ -1818,7 +1818,7 @@ def _draw_dining_set_solid(surf, cam, deco):
 
 
 def _draw_bar_dressing_solid(surf, cam, deco):
-    """THE SERVICE BAR dressing (interiors pilot, TODO #24, ensemble 3):
+    """THE SERVICE BAR dressing (interiors pilot, ensemble 3):
     what lives on the lodge's pass-through counter run. The counter tiles
     themselves stay the '5' boxes (collision + see-over unchanged); this
     deco lays Sable's service along the top, world-space, with its wear:
@@ -1888,7 +1888,7 @@ def _draw_bar_dressing_solid(surf, cam, deco):
 
 
 def _draw_hearth_mass_solid(surf, cam, deco):
-    """THE HEARTH (interiors pilot, TODO #24, ensemble 4): the lodge's
+    """THE HEARTH (interiors pilot, ensemble 4): the lodge's
     freestanding fireplace composed as one masonry object. A stone
     firebox with an arched ember mouth facing the sitting rug, the
     chimney breast rising past the eave, a wood mantle wrapping the

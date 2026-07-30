@@ -1,5 +1,5 @@
 """THE LOST SPACES -- procedurally generated, NON-REPEATING backrooms fields
-(TODO #26 / the in-between). You fall off a dark edge of the safe world into a
+(the in-between). You fall off a dark edge of the safe world into a
 dark liminal field, land at a lit FOCAL POINT (a hand-authored island), and the
 only way out is a light you HUNT once you leave that island's glow.
 
@@ -31,7 +31,7 @@ edge is hundreds of tiles away and never enters the window. Non-repeating comes
 from hashing the world tile coord. Nav is replaced (return None -> straight-line
 chase). No re-origin in the prototype (a 400-tile bound is a long walk); the
 production build adds per-chunk streaming + silent re-origin for a truly endless
-walk (TODO #26).
+walk.
 """
 import math
 
@@ -170,7 +170,7 @@ class LostSpace(Scene):
           * it is far enough off to be out of mind, and it lands far enough
             off to stay that way.
 
-        THREATS ARE NEVER TOUCHED (the fence, `TODO.md` #26): only scenery
+        THREATS ARE NEVER TOUCHED (the fence): only scenery
         lies. A cultist blinking across the field would be a different, worse
         game -- and it would break the one-impossible-thing rule, because then
         the space would be doing something the FOLD is not."""

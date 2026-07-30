@@ -36,7 +36,7 @@ terminal version is `python tools/index.py [word]`.
 
 - `tools/kind.py` — What do I need to know about this decoration KIND, before I place it?
 - `tools/preview_ashfall.py` — Headless preview of the ashfall overlay (DESIGN.md §2).
-- `tools/preview_bearer.py` — Preview the possessed BEARER's new features (TODO #25):
+- `tools/preview_bearer.py` — Preview the possessed BEARER's new features:
 - `tools/preview_fold_shards.py` — VISION MOCKUP -- the 4D "floating pieces" look as the language of the FOLD.
 - `tools/preview_king_unfold.py` — Preview THE UNFOLDING (rendering/king_unfold.py) headlessly -- the non-humanoid
 - `tools/preview_mask_spin.py` — Preview the Pallid Mask as a REAL 3D object: `yaw` spins it a full 360 --
@@ -46,7 +46,7 @@ terminal version is `python tools/index.py [word]`.
 
 ## Light / Sight / Occlusion
 
-- `tools/light_audit.py` — LIGHT AUDIT — the designer's coverage overlay (TODO #21).
+- `tools/light_audit.py` — LIGHT AUDIT — the designer's coverage overlay.
 - `tools/preview_blindspot_live.py` — Live blind-spot preview (DESIGN.md §10).
 - `tools/preview_heightfield.py` — Ground heightfield preview -- blind-spot hills (DESIGN.md §10).
 - `tools/preview_occlusion.py` — Wall-occlusion demo: player-locked 55deg camera, +/-45deg head-turn arc,
@@ -82,7 +82,7 @@ terminal version is `python tools/index.py [word]`.
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/look.py` — LOOK -- one running game you can look at, EDIT, and PLAY.
 - `tools/preview_amalgam.py` — Preview the AMALGAMS (rendering/amalgam.py): the Watcher-family shadows
-- `tools/preview_apex.py` — Preview THE APEX (TODO #25) -- the Mask wearing a unit, in its various forms.
+- `tools/preview_apex.py` — Preview THE APEX -- the Mask wearing a unit, in its various forms.
 - `tools/preview_look_control.py` — Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
 - `tools/preview_terrain.py` — LOOK at the GROUND and what grows on it, in isolation.
 - `tools/screen_to_world.py` — Turn SCREEN positions in a capture back into WORLD TILES.

@@ -227,7 +227,7 @@ its head) and pings the cult to **investigate the body**, and the body
   promise: a room with no dark spot in view of you cannot open anything.
   **A fully lit room is SECURED; a blackout un-secures it** (guarded,
   `tests/stealth.py` §11).
-  **THE STORM is this same wave in a second MODE** (TODO #25, 2026-07), not a
+  **THE STORM is this same wave in a second MODE** (the storm ticket, 2026-07), not a
   separate spawner: `Game._storm_active()` is true past `STORM_GATE_EVIDENCE`
   (3) in a room the dark has taken (`scene_gloom() > 0`). While it is up the cap
   lifts (`WATCHER_MAX` 5 → `STORM_MAX` 22, a MEASURED bound -- see the config
@@ -242,7 +242,7 @@ its head) and pings the cult to **investigate the body**, and the body
   (`Game.actor_smear_range`, `STORM_SEE_RANGE`): a live 22-unit storm had ZERO
   units pass the plain cone, so the flood was invisible and "they ring the light"
   was unreadable. Guarded, `tests/stealth.py` §19.
-  **THE APEX is the storm's one real threat** (TODO #25, 2026-07): the Mask that
+  **THE APEX is the storm's one real threat** (the storm ticket, 2026-07): the Mask that
   WEARS a unit. **Not the keystone** -- the one Mask OBJECT is on the cult's
   altar until the PI lifts it, and the face riding a shadow here is a SLICE of
   Him (NARRATIVE §6a; guarded, `tests/conventions.py` check 12, which fails if
@@ -261,7 +261,7 @@ its head) and pings the cult to **investigate the body**, and the body
   OWN death card (`_death_kind == "apex"`) -- deliberately NOT the Unfolding's
   throat-swallow, which is the art of the body the storm replaces; it is a
   wordless placeholder fade until the amalgam's own catch animation is made
-  (TODO #25). **Its FACE expresses** (`intent` / `strain` / `skew` on
+  (the storm ticket). **Its FACE expresses** (`intent` / `strain` / `skew` on
   `draw_pallid_3d`, eased from apex state by `_apex_face`): a carved object must
   never EMOTE, so the Mask WORKS instead -- sockets narrowing to a slot as it
   acquires you, the seam gapping and the crack running as it closes to take you,
@@ -391,7 +391,7 @@ What rises with the stage:
   settling on you, not snow, not weather. Light at stage 1, a steady
   yellow drift by stage 3.
 - **The daylight drains — the surface darkens with the stage (the storm's
-  STAGE; TODO #25, LIVE).** The outdoor world (`STORM_STAGE_SCENES`, which is
+  STAGE; the storm ticket, LIVE).** The outdoor world (`STORM_STAGE_SCENES`, which is
   `OUTDOOR_SCENES` -- every road, street and yard) dims monotonically with the rot stage, routed through the
   same `_draw_dark` lightmap the dim interiors use at a gloom that ramps 0 → 138
   (`STORM_DARK_GLOOM`): stage 0 is full day (early-out, byte-identical), stage 3
@@ -408,7 +408,7 @@ What rises with the stage:
   is help the player -- it is never concealment (§12) and a lamp pool is never
   cover from the gaze (§1). The dark is the CONDITION His things need, not a
   tool you get to use; what is still missing is the flood it exists to hold: the
-  amalgam-cut storm (TODO #25).
+  amalgam-cut storm (the storm ticket).
 - **The people do NOT change — the man hearing them does.** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the
   wrongness is the *place*, not the people, NARRATIVE §2/§6). What rises
@@ -449,7 +449,7 @@ What rises with the stage:
   branch only. **Despair** comes from the beats
   that read, to a man who wants it all to *end*, as permission: the
   preacher's murder (`+VANE_DESPAIR_ACT`) and the newspaper's front page
-  (`+VANE_PAPER_DESPAIR` — the break lever, TODO #2; the give-beat
+  (`+VANE_PAPER_DESPAIR` — the break lever, the favor-economy ticket; the give-beat
   telegraphs it as mood). Net despair at `VANE_HOLLOW_AT` **latches the
   hollow turn** (`vane_hollow`) — once hollow, no return — and hope
   banks only to `VANE_DESPAIR_FLOOR`, so rapport is real but never
@@ -880,13 +880,13 @@ Built into the procedural draw layer (`scenes/base.py`,
     gate (`Scene.lit_at`'s angular test: behind a hooded lamp is honest
     dark), the cast-shadow pass, and the audit overlay's outline.
   - **Electric light runs on the gensets, LIVE (the power link;
-    TODO #21 first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
+    the light-pillar ticket, first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
     `wall_lamp`, `drop_bulb`, `yard_light`) emit only while their scene's
     power is on (`Scene.power_on`, maintained by `Game._tick_power` off
     the `_genset_down` blackout timers). A **blackout blacks its room
     out** for `BLACKOUT_DUR` (no live trigger since the moths were cut,
     2026-07 -- the gas-genset failure that will fire it is deferred,
-    TODO #21; the mechanism stands ready, guarded synthetically by
+    the light-pillar ticket; the mechanism stands ready, guarded synthetically by
     `tests/stealth.py` §17); during it the electric fixtures die in
     every layer at once -- no visible pool, no mechanical `lit_at` cover,
     and the fixture ART itself goes dark (a dead lamp is dark glass; the
@@ -972,7 +972,7 @@ Built into the procedural draw layer (`scenes/base.py`,
     (`SAFE_SCENES` -- the PI's room, toby_house -- stay flat-lit + safe;
     DESIGN §12), and the truly-abandoned interiors (`abandoned_farmhouse`,
     `lodge_cellar`) keep the darker gloom + their candles. This is the ground
-    the "no light = danger" Watcher rework will stand on (`TODO.md` #21).
+    the "no light = danger" Watcher rework will stand on.
 - **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
   jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
   Repeated at scale across the Scriptorium and Sign Chamber, faintly
@@ -1814,7 +1814,7 @@ spending a voice blip on UI movement, and Mara's unmask carries a quiet
 ## 12. Stealth -- detection is graded
 
 > BUILT and guarded end-to-end by `tests/stealth.py`. Tuning is the open
-> item (`TODO.md` #5).
+> item (the stealth tuning pass).
 
 Hiding is not an invisibility toggle; it is a **positional gamble**: cover
 lowers how detectable you are, distant enclosure is strong, a searcher
@@ -1965,7 +1965,7 @@ against it (`tests/stealth.py` §13 guards the contract):
   cut (playtest ruling; DIALOGUE.md reconciled). The `hide_enter` /
   `hide_exit` cues and the visible cover are the only tells.
 - **The surface hide desert was watered:** +6 enclosed hides on existing
-  props (TODO #5 lists them and what is still open).
+  props (the stealth ticket lists them and what is still open).
 - **River stones are the distraction verb** (`STONE_*` config; landed
   with the pass): finite walk-over pickups scattered where the water
   runs (both banks of the river run and the bend, the Cistern shores, the
@@ -2002,7 +2002,7 @@ against it (`tests/stealth.py` §13 guards the contract):
   hide is registered; a crosser raises the tell but never routes to the
   player below).
 
-### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
+### Cult liveness -- the scout is a body (the complex-behavior pilot, 2026-07)
 
 Two beats of body language on the SCOUT state alone, shared by both cult
 machines (`systems/stealth.py` `sync_pause` / `handoff_step`;
@@ -2018,9 +2018,10 @@ a tick outside scout: detection, hearing, and suspicion all score
 BEFORE the beats run, so a frozen scout still fills and still promotes,
 and notice/chase/search/investigate never pause (guarded by
 `tests/stealth.py` §12). Set-piece kneelers keep their scripted
-stillness. The rest of the approved behavior plan is `TODO.md` #23.
+stillness. The rest of the approved behavior plan is the
+complex-behavior ticket.
 
-### Placement principles (the tuning-pass guide, `TODO.md` #5)
+### Placement principles (the tuning-pass guide)
 
 Place enclosed hides **near patrol routes**, not in safe corners (a risky
 option, not a panic room). Give each combat room a legible cover rhythm
@@ -2034,14 +2035,14 @@ function).
 
 ---
 
-## 13. The lost spaces -- the in-between (TODO #26)
+## 13. The lost spaces -- the in-between
 
 Three procedurally-generated, non-repeating dark fields
 (`scenes/lost_space.py`; `lost_corn` / `lost_forest` / `lost_road`, plus the
 `lost_space` back-compat alias onto corn). They are the backrooms
 in-between: mostly EMPTY generated ground with sparse wrong things in it,
 built around ONE hand-authored lit island. The full model, the fences, and
-what is still open live in `TODO.md` #26; this section is the shipping
+what is still open live in the lost-spaces ticket; this section is the shipping
 system and its code map.
 
 ### The shape of a field
@@ -2135,7 +2136,7 @@ the one beat the space exists to deliver. Enforced by
 
 ---
 
-## 14. The safe path -- the lit spine (TODO #26)
+## 14. The safe path -- the lit spine
 
 The middle of the three layers: **interior -> yard -> SAFE PATH <-> lost
 spaces** (`scenes/safe_path.py`). A path scene is a wide paved road under
@@ -2276,7 +2277,7 @@ two real landmarks, a full-width dirt row and the car footprint.)
 
 ---
 
-## 15. The yards -- a household without a word (TODO #26)
+## 15. The yards -- a household without a word
 
 The innermost of the three layers: **safe path -> YARD -> house**
 (`scenes/yards.py`). A yard is one household's own ground, and its whole job

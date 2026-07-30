@@ -4,7 +4,7 @@ The spoken lines are final, lore-bearing copy: each NPC reacts to the
 case (the Blaine girl, the well, the cult). The PRINCIPALS (Sable, Vane,
 Hettie, Toby, Crane) AND the Brimley chorus (Old Pell, Mrs. Calder,
 Royce, Garrick) all speak through the organic ask verb now
-(ui/conversation `*_CONVO` data, TODO #1): the menu options are
+(ui/conversation `*_CONVO` data): the menu options are
 the PI's own spoken lines, everyone leads with the two guaranteed openers
 (`_opener_exchanges`: introduce-as-PI + Mara's photograph), and each
 NPC's story-critical one-shots (the witness account, the memory of the
@@ -188,7 +188,7 @@ def _ready_for_the_desk(game, name):
     return lines
 
 
-# ---- The two GUARANTEED openers (TODO #1) ----
+# ---- The two GUARANTEED openers ----
 # Every principal's question menu leads with the same two options: the PI
 # introducing himself as a private investigator, and showing Mara's
 # photograph. The QUESTIONS are shared word for word (he has said them a
@@ -230,7 +230,7 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
     ]
 
 
-# ---- The four-tier PI register (DESIGN.md §2) ----
+# ---- The four-tier PI register ----
 # The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2): the locals stay exactly themselves, and what deteriorates
 # is the man hearing them. It surfaces ONLY as the PI's framing of a
 # conversation -- the question menu's opening line -- never as a word the NPC
@@ -266,8 +266,8 @@ _PI_WEATHER = (
 
 
 def _pi_framing(base):
-    """Wrap a static framing line into a four-tier PI-register callable (TODO
-    #22c): the base observation at tier 0, the same observation plus the PI's
+    """Wrap a static framing line into a four-tier PI-register callable:
+    the base observation at tier 0, the same observation plus the PI's
     deepening interior weather after. The locals stay ordinary; the man
     reading them is the one who rots."""
     def _framing(game):
@@ -276,7 +276,7 @@ def _pi_framing(base):
 
 
 # ---- The Preacher: Reverend Asa Crane ----
-# Ask-verb conversion (TODO #1 expand), carrying the ticket's pilot
+# Ask-verb conversion, carrying the pilot's
 # choice: his doom is no longer an automatic visit counter. The flock
 # exchange ends on a real fork -- press him and he takes his naming to
 # where they can hear it (preacher_doomed; the church swaps him for his
@@ -433,7 +433,7 @@ def toby_dialogue(game, npc):
     It is EARNED, never volunteered: he gives it when the PI holds Mara's
     photograph out (the `photo` exchange below), not as a cold greeting -- a
     kid has no way to know the case on sight (only Sable ever met the PI).
-    The one OBJECT he gives is the bear (NARRATIVE §6), and only to the man he
+    The one OBJECT he gives is the bear, and only to the man he
     trusts: once the PI has heard him out AND reassured him, Toby brings out
     the only toy in town on his own."""
     save = game.save
@@ -485,7 +485,7 @@ def toby_dialogue(game, npc):
 # EARNED -- it rides the `photo` exchange, given when the PI holds Mara's
 # picture out. The menu is what the PI chooses to ask a child; the old
 # visit-ladder lines are now his answers.
-# ---- The newspaper choice (TODO #2): one copy, five doors ----
+# ---- The newspaper choice: one copy, five doors ----
 # The PI carried in the April 14 paper, the first word from outside since
 # the mid-January seal, and there is ONE copy. Who he gives it to yields
 # different, incommensurable payoffs, and the town feels the allocation
@@ -654,7 +654,7 @@ TOBY_CONVO = {
                 ("npc", "[c=dim]Okay. I believe you.[/c]"),
             ],
         },
-        # The funny pages (TODO #2, mercy). One copy; giving a kid the
+        # The funny pages (mercy). One copy; giving a kid the
         # comics spends the town's only word from outside, and that is
         # the choice.
         {
@@ -688,7 +688,7 @@ TOBY_CONVO = {
 # The quiet resister behind the counter -- the same Hettie who keeps the
 # shop open out in town. She has nothing left to sell (the shop is gutted
 # of its old vendor items) -- her value is what she risks saying out loud.
-# Ask-verb conversion (TODO #1 expand): her involuntary beats (the
+# Ask-verb conversion: her involuntary beats (the
 # preacher, the memory of the girl, the paper trade) stay volunteered
 # one-shots ahead of the menu; the old visit ladder is now questions the
 # PI chooses to put to her.
@@ -816,7 +816,7 @@ HETTIE_CONVO = {
                         "owe this town a goodbye. Just go."),
             ],
         },
-        # TODO #2: the trade she offered, reopenable while the copy is
+        # The trade she offered, reopenable while the copy is
         # still in the coat (declining the counter offer is not a
         # forever-no). Quiet mechanics; the beats narrate.
         {
@@ -859,7 +859,7 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    # A faint memory of the girl herself (NARRATIVE §6): fires once the PI has
+    # A faint memory of the girl herself: fires once the PI has
     # SHOWN HER MARA'S PHOTOGRAPH (the asking got real, and it is how you get
     # her tab now -- NARRATIVE §6: show the photo, they react and hand it
     # over; play-notes). Mara passed through Brimley for a season before she
@@ -913,7 +913,7 @@ def hettie_dialogue(game, npc):
             and not save.flag("hettie_paper_offered")
             and not save.flag("newspaper_traded")
             and game.player.inventory.has("newspaper")):
-        # TODO #2 rework: she still NOTICES and makes the offer the moment
+        # The favor-economy rework: she still NOTICES and makes the offer the moment
         # she sees the date, but the trade is the PLAYER'S call now (one
         # copy, five doors). Declining keeps the offer open as a menu
         # question (the `paper` exchange below) for as long as the copy
@@ -967,8 +967,8 @@ def hettie_dialogue(game, npc):
 
 
 # ---- The Sheriff: Hollis Vane ----
-# The despair/hope arc (DESIGN.md §2) on top of the ask-verb conversion
-# (TODO #1). A LOCAL, born here, the last holdout, the town's one real
+# The despair/hope arc (DESIGN.md §2) on top of the ask-verb conversion.
+# A LOCAL, born here, the last holdout, the town's one real
 # investigator (NARRATIVE §4). Hopeful but mistrusting: the PI is one
 # more outsider who drove in, the exact profile of every cultist, so he
 # watches first. He did NOT kill the car (the fold did) and he carries
@@ -980,7 +980,7 @@ def hettie_dialogue(game, npc):
 # as his mood. Sharing a real discovery with him is the one hope act,
 # and it is ALSO the trust that opens his investigation thread (the
 # recruiter's account) -- the same act builds the rapport that makes his
-# fall hurt, and holds him back from it. The newspaper (TODO #2) is its
+# fall hurt, and holds him back from it. The newspaper is its
 # exact inverse: his break lever, +VANE_PAPER_DESPAIR. The hollow turn
 # latches at VANE_HOLLOW_AT net despair (or by the NEGLECT override in
 # systems/rot_mixin._vane_is_hollow); once hollow, no return -- the next
@@ -1054,7 +1054,7 @@ def _vane_night_told(game):
 
 
 def _vane_paper_given(game):
-    """The newspaper handed to Vane (TODO #2: his is a TRAP, not a
+    """The newspaper handed to Vane (his is a TRAP, not a
     gift). To a man who wants it all to end, the front page reads as
     permission, not hope -- the outside is dying the same death one day
     north. One copy: giving it to him means everyone else goes without
@@ -1411,7 +1411,7 @@ VANE_CONVO = {
                 ("pi", "[c=dim]Something in him let go a notch.[/c]"),
             ],
         },
-        # The newspaper (TODO #2): to everyone else in Brimley the paper
+        # The newspaper: to everyone else in Brimley the paper
         # is word from outside. To Vane it is the break lever. The front
         # page tells a man who wants it all to end that the outside is
         # dying the same death, and its brightest walked out of a room he
@@ -1527,7 +1527,7 @@ def sheriff_dialogue(game, npc):
 
 
 # ---- The Clerk: Mr. Sable ----
-# The organic ask-verb, piloted on Sable (TODO #1). The menu options ARE
+# The organic ask-verb, piloted on Sable. The menu options ARE
 # the PI's own spoken lines; picking one plays a back-and-forth over their
 # heads. Sable checked the PI in the night before the game opens
 # (NARRATIVE §3), so every exchange is a host RESUMING an acquaintance,
@@ -1755,7 +1755,7 @@ SABLE_CONVO = {
                         "here. Safer than out there."),
             ],
         },
-        # The newspaper (TODO #2): the NULL door, and the tell. To
+        # The newspaper: the NULL door, and the tell. To
         # everyone else in Brimley the paper is the first word from
         # outside in three months; to the lucky host it is a coaster.
         # His want was never the outside (NARRATIVE 4). No reward on
@@ -1878,14 +1878,14 @@ def clerk_dialogue(game, npc):
 
 
 # ---- The Brimley chorus ----
-# The last of the ask-verb expansion (TODO #1): Old Pell, Mrs. Calder,
+# The last of the ask-verb expansion: Old Pell, Mrs. Calder,
 # Royce, and Garrick came off fixed page-lists and onto the organic
 # conversation. Every one leads with the shared opener pair
 # (introduce-as-PI + the photograph) with short answers of their own,
-# plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the
-# case) keep firing ahead of the menu, exactly as the principals'
-# volunteered beats do. The town stays visually ordinary end to end
-# (DESIGN.md §2): no dialogue swap, no people-transform. What rots is the
+# plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the case)
+# keep firing ahead of the menu, exactly as the principals'
+# volunteered beats do. The town stays visually ordinary end to end:
+# no dialogue swap, no people-transform. What rots is the
 # PI's framing (_pi_framing), never the locals' words. The fold note
 # moves off the old
 # any-talk trigger onto the exchanges that actually carry the account
@@ -1950,7 +1950,7 @@ def _garrick_roads_told(game):
 
 
 # Old Pell -- the schoolhouse step and the corn: Pell corn, the town's
-# northernmost-in-the-world pride (NARRATIVE §2, a mundane human feat, never
+# northernmost-in-the-world pride (a mundane human feat, never
 # the door's doing), dead standing since the missed fall harvest. Stasis
 # register; he turns at rot stage 3, so this talk is his pre-turn
 # window. The stopped calendar stays a rot-layer detail (the decoration
@@ -2005,7 +2005,7 @@ PELL_CONVO = {
                         "anymore.[/c]"),
             ],
         },
-        # The newspaper (TODO #2): mercy, no item. An old man who
+        # The newspaper: mercy, no item. An old man who
         # stopped marking days picks the calendar back up. His stoop
         # beat swaps to match (scenes/yards.py, his own house).
         {
@@ -2187,7 +2187,7 @@ ROYCE_CONVO = {
                 ]),
             ],
         },
-        # The newspaper (TODO #2): escape-hope. Proof the outside is
+        # The newspaper: escape-hope. Proof the outside is
         # still running, paid for in the batteries he hoarded for a
         # drive he quit believing in, and the one road that held
         # longest (his account: testimony, fallible, filed as a note).

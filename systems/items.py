@@ -166,8 +166,8 @@ ITEM_DEFS = {
                                "No captive draws this. She sat and did the "
                                "work with her own hand, willing, like the "
                                "rest of them."},
-    # ---- The bear (the secret fourth; NARRATIVE §4/§6, DESIGN.md §9,
-    # NARRATIVE §6). OPTIONAL, never case-evidence, never gates. Toby lends it.
+    # ---- The bear (the secret fourth; NARRATIVE §4/§6, DESIGN.md §9).
+    # OPTIONAL, never case-evidence, never gates. Toby lends it.
     # On the surface it is a tender, UNEXPLAINED thing in a boy's hands; once
     # the PI has read her letter it detonates (effective_desc, below). The
     # stitched tag is the ONLY place the boy's name appears besides the PI's
@@ -288,7 +288,7 @@ def effective_desc(key, save=None):
     """Return the inventory description for `key`. Static, with one
     exception: once the PI has read Mara's letter (evidence_maras_room) the
     bear's tag and the letter's stillborn son collide and its description
-    DETONATES (NARRATIVE §6) -- the surface plant made the worst thing he
+    DETONATES -- the surface plant made the worst thing he
     carries. MARA never says the name; the tag and the PI do."""
     if (key == "bear" and save is not None
             and save.flag("evidence_maras_room")):

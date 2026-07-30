@@ -727,7 +727,7 @@ def main():
               for n in g.scene.npcs),
           "wake: the first find raises the hooded ones")
 
-    # --- 10. deep-water WADE (DESIGN.md §1) -----------------------------
+    # --- 10. deep-water WADE -----------------------------------
     # The flooded deep works slow the player and throw a loud splash the
     # searchers converge on. Scoped to WADE_SCENES; the Brimley river is
     # NOT one, so its `~` keeps its own set-piece rules.
@@ -799,7 +799,7 @@ def main():
         pygame.key.get_pressed = _orig_gp
     check(splashed, "wade: a wet footfall throws a splash noise event")
 
-    # --- 11. "no light = danger" (TODO #21): the gaze opens under the open
+    # --- 11. "no light = danger": the gaze opens under the open
     # sky, in the deep, AND in a DARK non-refuge interior -- but there a light
     # POOL / the flashlight is the cover, and BURNS them. The true refuges
     # (SAFE_SCENES) stay gaze-free. -------------------------------------------
@@ -923,7 +923,7 @@ def main():
     check(bool(g2._watchers),
           "watchers: the same exposure in the open still opens the wave")
 
-    # ---- §12: cult liveness stays OUT of the threat path (TODO #23a) ----
+    # ---- §12: cult liveness stays OUT of the threat path ----
     # The synchrony beat and the hand-off are scout-only dressing; a frozen
     # scout still detects, and no threat state ever pauses.
     print("[12] cult liveness: synchrony + hand-off never touch the threat")
@@ -999,7 +999,7 @@ def main():
     finally:
         pygame.time.get_ticks = real_ticks
 
-    # ---- §13: the stealth economy (TODO #5, 2026-07 playtest tuning) ----
+    # ---- §13: the stealth economy (2026-07 playtest tuning) ----
     # Running past the cult must not dominate hiding: the speed ladder
     # holds (King > sprint > chase > walk > scout), sprint is conspicuous,
     # and an awake cultist grabs at arm's reach.
@@ -1050,7 +1050,7 @@ def main():
     check(ge.save.flag("cult_talk_given"),
           "reach: brushing an awake scout at 26px fires the grab (the Talk)")
 
-    # ---- §14: river stones (TODO #5, the distraction verb) --------------
+    # ---- §14: river stones (the distraction verb) --------------
     # A thrown stone is a placed noise event: it spends from the pocket,
     # flies, lands, and its clatter turns an idle scout -- but it can
     # never divert a sighting-born search (loud sits under the pull), and
@@ -1363,7 +1363,7 @@ def main():
           is _terr._WALL_STYLES["rock"],
           "rock: the shipped mine (well_passage) renders the rock style")
 
-    # ---- §17: the genset power link (TODO #21 first slice) --------------
+    # ---- §17: the genset power link (the first slice) --------------
     # A blackout kills the ELECTRIC fixtures in every layer at once: the
     # mechanical lit_at gate goes dark at the lamp, fire keeps burning,
     # and power comes back on its own when the timer drains.
@@ -1405,7 +1405,7 @@ def main():
     check(sc.power_on and not sc.lit_at(12 * TILE + 16, 6 * TILE + 16),
           "broken: a burned-out pendant's spot stays dark on full power")
 
-    # ---- §18: the storm's STAGE -- ev-driven surface darkening (TODO #25) --
+    # ---- §18: the storm's STAGE -- ev-driven surface darkening --
     # The daytime invariant: stage 0 is FULL DAY (no darkening, byte-identical),
     # and the gloom only ever deepens with the rot stage -- never a day cycle.
     from systems.config import STORM_DARK_GLOOM, STORM_STAGE_SCENES
@@ -1457,7 +1457,7 @@ def main():
     check(g._watcher_gaze > 0.0,
           "storm dark: and they HOLD you there (light is not cover)")
 
-    # ---- §19: THE STORM as a MODE of the Watcher wave (TODO #25) ----------
+    # ---- §19: THE STORM as a MODE of the Watcher wave ----------
     # Locks the maintainer's spec: Watchers do NOT stop at the gate, they BECOME
     # the storm; the cap lifts; units WALK at the player; light is the only
     # thing that stops them; they cannot touch or kill; and every dispel still
@@ -1704,7 +1704,7 @@ def main():
     check(all(w.movement == "watch" and w.speed == 0.0 for w in g._watchers),
           "storm: units revert to standing still when it ends")
 
-    # ---- §20: THE APEX -- the Mask that wears a unit (TODO #25) -----------
+    # ---- §20: THE APEX -- the Mask that wears a unit -----------
     # The maintainer's spec, end to end: it floats in, BECOMES an amalgam
     # (reusing its exact parts plus 2-3), pierces and ignores light, the axe/gun
     # destroy the HOST but not the Mask, it re-hosts and continues, and it leaves

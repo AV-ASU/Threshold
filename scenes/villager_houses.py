@@ -309,7 +309,7 @@ def build_sheriff_office():
                        voice="blip_gruff", portrait="sheriff",
                        dialogue_fn=sheriff_dialogue, movement="watch"))
 
-    # ---- OFFICE (NW): Vane's working room (Wave 2 ensembles, TODO #24) ----
+    # ---- OFFICE (NW): Vane's working room (Wave 2 ensembles) ----
     # Two composed objects instead of six separates: the LAWMAN'S WALL (his
     # cot, washstand, and coat rack down the west wall -- he lives at his
     # desk now, blanket tucked army-tight, boots squared under the frame)

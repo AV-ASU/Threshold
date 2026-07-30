@@ -362,7 +362,7 @@ never predation.
   cosmic scale. The SEAL tableau (lines on black under the black stars
   and twin suns) is the reference image; every other glimpse (the
   King-catch furnace, the BREAK blast) must read as the same place.
-  Any pale-teal or green cast is off-model (open work: `TODO.md` #20).
+  Any pale-teal or green cast is off-model (open work: the gold-palette pass).
 - **The names stay off the page.** *Carcosa*, *the King in Yellow*,
   and *the Yellow King* never appear in player-facing text — those
   three strings exactly, and they are the ones guarded
@@ -668,7 +668,7 @@ purpose, and keep each one guarded where a guard exists.
   sabotaged it. → §1, §7
 - **The world holds one continuous daytime state** (no day/night
   cycle; no `day_phase` / `day_count`). The **surface darkens with the
-  evidence count** (the storm's stage, `TODO.md` #25) — but that is world
+  evidence count** (the storm's stage) — but that is world
   rot's LIGHT twin, *understanding* thinning the veil as His attention
   gathers, never a clock: the daytime state does not oscillate and time is
   not tracked. → `DESIGN.md` §2

@@ -636,7 +636,7 @@ def build_backwoods_cabin():
         if 3 <= ty_ <= 7 and 4 <= tx_ <= 11:   # keep cabin clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    # Enclosed hide (the 2026-07 stealth pass, TODO #5): burrowed into
+    # Enclosed hide (the 2026-07 stealth pass): burrowed into
     # the hunter's cordwood stack behind the cabin.
     sc.hide_spots = [
         (3 * TILE + 16, 9 * TILE + 16, "in"),        # in the firewood stack

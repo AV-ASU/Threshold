@@ -1904,7 +1904,7 @@ _GRASS_CARD_CAP = 1200
 
 def _tilt_grass_solid(surf, camera, scene, tx, ty, far=False):
     """A `:` cover-floor tile stood up as a TALL-GRASS tuft (the stealth
-    visibility fix, TODO #5: cover the player can hide in must READ as
+    visibility fix: cover the player can hide in must READ as
     something to wade into, not a floor tint). Same cached-card pattern as
     the corn clusters; the blades are the concealment made visible and
     change nothing about collision, sight, or the cover rules."""
@@ -4614,7 +4614,7 @@ def _draw_window_pane(surf, camera, wx, wy, ndx, ndy, broken=False,
                   the glass and nothing moving. Nobody is in there.
       "daylight"  flat overcast -- you are INSIDE, looking out at the sky.
 
-    `broken` (a thrown stone, TODO #5) swaps the glass for a dark hole with
+    `broken` (a thrown stone) swaps the glass for a dark hole with
     shard teeth left in the frame -- the light is out for the run."""
     hw = TILE / 2
     pv = (-ndy, ndx)                 # along-wall axis on this face
