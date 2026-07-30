@@ -694,6 +694,38 @@ def _creature_light_decorative():
                 + "\n".join(rows))
 
 
+# --------------------------------- 15. a storm-capable room can open the gaze
+# THE RULE (DESIGN.md §1): the storm is the Watcher wave in a second MODE, and
+# the wave opens through WATCHER_OPEN_SCENES. So any room the storm can be live
+# in must also be a room the gaze can OPEN in, or the storm is live and empty.
+# WHY THIS CHECK: `lost_corn` -- the darkest scene in the game -- sat at ZERO
+# units forever while `Game._storm_active()` reported True. The lost spaces are
+# not OUTDOOR, not UNDERGROUND and not DIM_INTERIOR, so they fell through the
+# three sets WATCHER_OPEN_SCENES is built from. Every gate said yes and nothing
+# happened, which is the worst shape a bug can have: nothing to see, nothing
+# to grep, and a system that reports itself healthy. `abandoned_farmhouse` was
+# the same gap and is fixed with it.
+# ALLOWLIST = rooms deliberately gaze-free that are not in SAFE/KING_FREE.
+GAZE_FREE_OK = {
+    "lodge_cellar": "DIM_SAFE_SCENES -- the beam is free here, the PI's one "
+                    "room to read by (DESIGN.md §1)",
+}
+
+
+@check("every storm-capable room can actually open the gaze")
+def _storm_rooms_open():
+    import systems.config as C
+    capable = ((set(C.STORM_STAGE_SCENES) | set(C.DARK_SCENES))
+               - set(C.SAFE_SCENES) - set(C.KING_FREE_SCENES))
+    gap = sorted(capable - set(C.WATCHER_OPEN_SCENES) - set(GAZE_FREE_OK))
+    if gap:
+        return ("    the storm can be LIVE in these and the gaze can never\n"
+                "    open, so the wave sits at zero units while every gate\n"
+                "    reports healthy. Add each to WATCHER_OPEN_SCENES, or to\n"
+                "    GAZE_FREE_OK with the reason it is deliberate:\n"
+                + "\n".join(f"    {k}" for k in gap))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     print()

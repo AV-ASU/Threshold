@@ -467,7 +467,16 @@
     **Do not trust `--measure` alone for this** -- its peak deltas sit at 14-15
     whatever you change, because the diff is dominated by the occluder fade a
     visible actor triggers rather than by the creature. Crop 1:1 and look.
-    **Still open:** `lost_corn` builds zero units (above). Untouched.
+    **`lost_corn` is FIXED** and the cause was not what it looked like: the
+    lost spaces were absent from `WATCHER_OPEN_SCENES`, so the gaze could never
+    open there at all while `_storm_active()` reported True. All three fields
+    now storm (`lost_corn` reaches the cap of 22). `abandoned_farmhouse` had
+    the same gap. Guarded by `tests/conventions.py` check 15.
+    **`AMALGAM_EDGE_W` back to 1: tried, UNRESOLVED, left at 2.** Two scene
+    A/Bs both landed with the units outside the beam, so neither frame showed
+    a creature at either width and the comparison proved nothing. 2px stays
+    because it is the safer read; settle it with a frame that has units close
+    and lit, or by scripting the player to face them.
   - **THE AMALGAM'S CATCH ANIMATION.** The apex's death card is a wordless
     placeholder fade, hooked up and timed already (`_death_kind == "apex"`,
     3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing:

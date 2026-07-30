@@ -943,8 +943,22 @@ UNDERGROUND_SCENES = {
 # excluded here AND KING_FREE. A new plain surface interior is still excluded
 # by default. Read by _tick_watchers (the whole wave machine gates on it) and
 # _roll_fold_watcher.
+# THE LOST SPACES ARE IN (2026-07). They are the darkest scenes in the game
+# (gloom 150) and the storm's own rule is that it fills ALL dark -- but they
+# are not OUTDOOR, not UNDERGROUND and not a DIM_INTERIOR, so they fell
+# straight through the three sets this is built from and the gaze could never
+# open there at all. `Game._storm_active()` reported True in `lost_corn` while
+# the wave sat at ZERO units forever, which is the worst shape of bug: every
+# gate says yes and nothing happens. Guarded by tests/conventions.py.
 WATCHER_OPEN_SCENES = (OUTDOOR_SCENES | UNDERGROUND_SCENES
                        | DIM_INTERIOR_SCENES
+                       | LOST_SPACE_SCENES
+                       # a DARK non-refuge interior, which is exactly what the
+                       # "no light = danger" rule describes -- it was simply
+                       # never in any of the three sets above (it is not a
+                       # DIM_INTERIOR, it is full dark) and so was silently
+                       # gaze-free, like the lost spaces were.
+                       | {"abandoned_farmhouse"}
                        | {"effigy_grove"})
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure

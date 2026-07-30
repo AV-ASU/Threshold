@@ -2706,6 +2706,37 @@
 
 ## The light table, and one skin for His gaze
 
+- **2026-07 -- the lost spaces could never open a Watcher, and nothing said
+  so.** `lost_corn` -- the darkest scene in the game, gloom 150 -- sat at ZERO
+  units forever while `Game._storm_active()` returned True. The cause was not
+  spawn geometry, which is where I looked first and measured wrong: 75% of
+  sampled spots in the spawn band were valid, so placement was never the
+  problem. The lost spaces were simply absent from `WATCHER_OPEN_SCENES`. That
+  set is built from OUTDOOR | UNDERGROUND | DIM_INTERIOR, and a lost space is
+  none of the three, so they fell straight through the gap. `lost_road`,
+  `lost_forest` and `abandoned_farmhouse` were all in the same hole.
+
+  This is the worst shape a bug can have: every gate reports healthy, the
+  system says it is running, and nothing happens. There is no error, no
+  wrong-looking value, and nothing to grep for. All three fields now storm --
+  `lost_corn` reaches `STORM_MAX`.
+
+  `tests/conventions.py` check 15 makes the class unrepeatable: every
+  storm-capable room (STORM_STAGE | DARK, minus the refuges) must be able to
+  open the gaze, with an allowlist for `lodge_cellar`, which is DIM_SAFE and
+  deliberately the one room the beam is free in.
+
+- **2026-07 -- `AMALGAM_EDGE_W` back to 1: tried, unresolved, left at 2.**
+  With the bodies bigger and lit, the 2px outline should in principle be able
+  to come back down and settle the preview sheet's complaint that it reads as
+  line-art. Two scene A/Bs both happened to land with the units outside the
+  beam, so neither frame showed a creature at either width and the comparison
+  proved nothing either way. Recorded rather than quietly resolved: legibility
+  in this scene is strongly frame-dependent (the same clip has frames with
+  three creatures plainly readable and frames with none), which is itself
+  worth knowing before anyone tunes off a single screenshot.
+
+
 - **2026-07 -- the flashlight was incinerating the storm, and the amalgams got
   bigger.** Maintainer: *"They completely vanish in the light too fast, make
   them bigger."* Both halves were right, and the first one turned out to be a
