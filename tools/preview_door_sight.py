@@ -1,4 +1,4 @@
-"""See-through door ACTOR sight-gating preview (DESIGN.md §7; TODO #2).
+"""See-through door ACTOR sight-gating preview (DESIGN.md §7).
 
 The see-through door already showed the ACTUAL room beyond through the opening,
 rendered with the live tilt camera -- but the through-view showed that room

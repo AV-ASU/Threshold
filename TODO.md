@@ -24,12 +24,18 @@
 > would make it worth doing. Do not write gating steps into this file.
 >
 > **Bullets only. Tickets have NAMES, not numbers or letters.** Cite one by
-> its name ("the gas economy", "the interiors program"), in this file and in
-> code comments alike. The old numbering is retired: it looked stable and was
-> not, and by the time it was dropped nine of the numbers still cited in code
-> comments pointed at tickets that no longer existed. A name survives a
-> renumber; a number survives nothing. The forwarding map from the old numbers
-> lives in `CHANGELOG.md`, "Brimley geography".
+> its name ("the gas economy", "the interiors program") when you cite it here.
+> The old numbering is retired: it looked stable and was not, and by the time
+> it was dropped nine of the numbers still cited in code pointed at tickets
+> that no longer existed. A name survives a renumber; a number survives
+> nothing. The forwarding map lives in `CHANGELOG.md`, "Brimley geography".
+>
+> **THE CODE DOES NOT CITE THIS FILE.** Open work lives here and nowhere else;
+> a comment that points at a ticket goes stale the moment that ticket lands and
+> is deleted, which is exactly what happened to 183 of them. A comment cites
+> `DESIGN.md` (how the system works) or `CHANGELOG.md` (why it got that way),
+> or it just says the thing. Enforced by `tests/conventions.py` check 13, which
+> also fails on a bare `TODO` or `FIXME` marker.
 >
 > **The geography is the string of house islands** (`DESIGN.md` §13/§14/§15):
 > interior → yard → safe path ↔ lost spaces. There is no town map and no

@@ -1,4 +1,4 @@
-"""THE STORM -- the King as the shadow family's apex (TODO #25).
+"""THE STORM -- the King as the shadow family's apex.
 
 Not one body. His attention floods the flat plane, so the dark fills with
 amalgam units (the same Watcher-family cuts). ONE of them bears the Pallid
@@ -6,7 +6,7 @@ Mask at a time -- the focal "Him" -- and it MIGRATES: the Mask sinks back
 into its bearer's cut and rises from another unit elsewhere (THE UNFOLDING's
 host/sink/rebond, translated to the storm).
 
-Rules locked with the maintainer (TODO #25):
+Rules locked with the maintainer:
 - LIGHT SLOWS a unit, never burns it (burning stays the Watchers'
   privilege); a unit also eases AWAY from a lit spot. He is survived,
   never dispelled.
@@ -18,7 +18,7 @@ Rules locked with the maintainer (TODO #25):
 
 This module is SIM + a draw helper only; it does not touch the live threat
 loop yet. Integration (spawn geography off the darkening, the catch, the
-retire of THE UNFOLDING) is TODO #25's later slices. Tuning lives here for
+retire of THE UNFOLDING) comes in later slices. Tuning lives here for
 now and moves to systems.config on integration.
 """
 import math

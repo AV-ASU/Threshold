@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview the possessed BEARER's new features (TODO #25):
+"""Preview the possessed BEARER's new features:
   1. the Mask turned in 3D (`yaw`) -- seen on the side, respecting the world,
   2. the POWER-UP -- the Mask jumping to an amalgam bulks it up (mass + royal
      parts), ramped by deploy,

@@ -1,4 +1,4 @@
-"""THE SAFE PATH -- the lit spine the town hangs off (TODO #26, DESIGN.md §14).
+"""THE SAFE PATH -- the lit spine the town hangs off (DESIGN.md §14).
 
 The middle of the three layers: **interior -> yard -> SAFE PATH <-> lost
 spaces**. A path scene is a wide paved road under civic lamps, and it is the

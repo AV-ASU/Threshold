@@ -147,7 +147,7 @@ FIXTURE_POOLS = {
 def _deco_cone(d):
     """A fixture deco's optional cone kwarg `cone=(dir_x, dir_y, half_deg)`
     normalized to (nx, ny, half_rad), or None for an omni pool. The SAME
-    kwarg drives all three layers (TODO #21): the visible fan here, the
+    kwarg drives all three layers: the visible fan here, the
     mechanical gate (Scene.light_sources/lit_at), and the audit overlay."""
     raw = getattr(d, "kwargs", {}).get("cone")
     if not raw:
@@ -481,7 +481,7 @@ class RenderMixin:
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
                                      SIGHT_ANG_FEATHER, LOS_STEP)
         aim = self.look.aim
-        # On the storm-darkened surface (TODO #25) the fog must darken WITH the
+        # On the storm-darkened surface the fog must darken WITH the
         # scene: it is drawn AFTER _draw_dark, so a fixed gray reads too bright
         # over a night town. Pull it toward black and thicken it by the stage
         # gloom (the blind spot is UNSEEN -> it should be the darkest). ev0 gloom
@@ -554,7 +554,7 @@ class RenderMixin:
 
     def _draw_bridge_dust(self):
         """A faint dust-fall from the deck overhead while the town crosses
-        the bridge above the under-bridge hide (TODO #5). Screen-space,
+        the bridge above the under-bridge hide. Screen-space,
         keyed to _bridge_dust (set by _tick_bridge_knocks) -- a few pale
         motes sifting down the middle of the frame, so the knocks have a
         visible partner. Pure dressing; nothing gameplay reads it."""
@@ -1056,8 +1056,8 @@ class RenderMixin:
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
         furnace of masks (sprites.draw_king_death), wordless; APEX = a wordless
-        placeholder fade, deliberately NOT the King's card (TODO #25 owes it a
-        real animation); cultist = a stark CAPTURED card over a near-black
+        placeholder fade, deliberately NOT the King's card (a real
+        animation is still owed); cultist = a stark CAPTURED card over a near-black
         wash."""
         if self._death_kind == "apex":
             # THE APEX'S CATCH -- deliberately NOT the Unfolding's throat-swallow
@@ -1070,7 +1070,7 @@ class RenderMixin:
             # when the real animation drops in. WORDLESS by design -- His deaths
             # carry no label (the cult's CAPTURED card is a different register),
             # so there is no player-facing text here and none to write.
-            # The amalgam's own catch animation is on TODO #25.
+            # The amalgam's own catch animation is still owed.
             w, h = self.screen.get_size()
             wash = pygame.Surface((w, h))
             wash.fill((5, 4, 6))
@@ -1306,7 +1306,7 @@ class RenderMixin:
         from rendering.solids import draw_with_alpha
 
         def _apex_mask_for(npc):
-            """The Mask dict for the APEX's host, else None (TODO #25). An
+            """The Mask dict for the APEX's host, else None. An
             ordinary unit passes None and draws exactly as before."""
             if not getattr(npc, "_apex", False):
                 return None
@@ -1342,7 +1342,7 @@ class RenderMixin:
                 return 255
             if king or smear:
                 # A STORM UNIT reads the way the apex does in the fog, and for
-                # the same reason (TODO #25). Measured on a live storm, 0 of 22
+                # the same reason. Measured on a live storm, 0 of 22
                 # units passed the plain cone -- 7 of them within 120px -- so
                 # the whole flood was invisible and "they ring the light" was a
                 # rule the player could never see. Fully exempting them would
@@ -1670,7 +1670,7 @@ class RenderMixin:
             _emit(self.camera.depth(p.x, p.y),
                   lambda p=p, psx=psx, psy=psy:
                   p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift)))
-        # Thrown river stones (TODO #5): a tiny pebble on a cosmetic arc
+        # Thrown river stones: a tiny pebble on a cosmetic arc
         # (sine of flight progress) over its ground shadow. The player's
         # own action, so never sight-gated -- like the pickups it must
         # always READ.

@@ -1244,7 +1244,7 @@ def build_pell_house():
                                  "overturned_chair"))
     _resident(sc, 3, 4, "Old Pell", "old_townsman", PELL_CONVO,
               movement="idle", beats=[
-        # The newspaper's ripple (TODO #2): once the PI has spent the one
+        # The newspaper's ripple: once the PI has spent the one
         # copy on him, the stopped-calendar line would be a lie -- he picked
         # the pencil back up. The marked beat fires first and the coal beat
         # stands down for good.

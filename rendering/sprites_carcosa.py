@@ -26,7 +26,7 @@ def _cold_fire_pit(surf, cx, cy, R, t):
     Carcosa). Fire, but wrong and cold -- the wrongness reads through its
     darkness and its writhing/drooling motion, NOT through hue: the palette
     is the codified black + dim cursed gold over a black throat (NARRATIVE
-    §5; regraded from the old pale-teal/green, TODO #19)."""
+    §5; regraded from the old pale-teal/green)."""
     R = int(R)
     if R < 6:
         return

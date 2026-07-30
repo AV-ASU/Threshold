@@ -979,6 +979,17 @@ section is the CODE MAP only — where each system lives:
      footprints re-checked with smoke's flood-fill (hides + exits
      reachable) BEFORE the full gate.
 - `__pycache__/` is gitignored; never commit `.pyc`.
+- **THE CODE NEVER CITES `TODO.md`, and carries no work markers.** Open work
+  lives in `TODO.md` and nowhere else, and that file deletes a ticket the
+  moment it lands — so a comment citing one becomes a pointer into a void by
+  design. 183 of them had accumulated as provenance on shipped code, and the
+  numbers had been REUSED, so a comment reading `TODO #8` in `scenes/depths.py`
+  (the procession beat) resolved to the live ticket for parked terrain
+  megabuilds. All of them are cut. A comment cites **`DESIGN.md`** (how the
+  system works) or **`CHANGELOG.md`** (why it got that way) — both current-state
+  docs that outlive the work — or it just says the thing plainly. Tickets have
+  NAMES now, not numbers. Guarded by `tests/conventions.py` check 13, which
+  also fails on a bare `TODO` or `FIXME`.
 - **PLAYTEST ERROR CLASSES (audit for these BEFORE calling a scene, interaction, or
   line "done" -- a 2026-07 play-test surfaced every one of them, and each is a CLASS,
   not a one-off).** When you touch anything nearby, actively hunt the whole class

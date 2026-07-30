@@ -209,7 +209,7 @@ class Scene:
         # fold). Off by default.
         self.wrap_x = False
         self.wrap_y = False
-        # THE MOUTH (TODO #26): which of this scene's non-wrapping map edges
+        # THE MOUTH: which of this scene's non-wrapping map edges
         # can swallow the player into a lost space, as {side: lost_scene_key}
         # for sides in "nesw". None (the default) = every edge is what it has
         # always been, an invisible bound, so an un-opted scene is unchanged.
@@ -513,7 +513,7 @@ class Scene:
         decorations (see _LIGHT_KINDS). `cone` is None for an omni pool,
         else (nx, ny, half_rad) from the deco's `cone=(dir_x, dir_y,
         half_deg)` kwarg -- a DIRECTIONAL fixture lights (and gates) only
-        inside its fan (TODO #21 cone fixtures). The cache holds the
+        inside its fan (cone fixtures). The cache holds the
         FILTERED DECO LIST, never positions: readers take x/y live off the
         deco, so a MOVING light source (a carried lantern, a swinging
         pendant) gates correctly (2026-07, maintainer: expect moving

@@ -181,7 +181,7 @@ class KingRoamMixin:
     def _tick_king_roam(self, dt):
         """Drive the roaming King. Called every world-sim frame from
         Game.step (the sole King tick)."""
-        # ONE IMPOSSIBLE THING AT A TIME (TODO #25 fence, "the impossible count
+        # ONE IMPOSSIBLE THING AT A TIME (the fence, "the impossible count
         # stays at one"). While the storm's APEX is worn, HE is that -- so the
         # roaming Unfolding does not also walk the room. Gated on a host actually
         # being borne, not merely on a storm being up, so nothing changes for the

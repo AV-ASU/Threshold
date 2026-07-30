@@ -1,4 +1,4 @@
-"""LIGHT AUDIT — the designer's coverage overlay (TODO #21).
+"""LIGHT AUDIT — the designer's coverage overlay.
 
 Renders a scene under the tilt camera and overlays every light emitter's
 two truths so darkness can be DESIGNED instead of discovered:
