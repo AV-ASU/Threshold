@@ -411,8 +411,8 @@ STORM_PRESS_UNITS = WATCHER_MAX
 STORM_SPAWN_BASE = 2.4        # s between manifestations while a storm is up
 STORM_SPAWN_MIN = 0.9         # ... shaved by evidence down to this floor
 STORM_SPAWN_STEP = 0.5
-# 0.34 * 60 = ~20 px/s, matching systems/storm.py's original STORM_UNIT_SPEED of
-# 22 px/s. For scale: the player walks at 84 px/s and a cultist runs 51-54, so a
+# 0.34 * 60 = ~20 px/s, carried over from the standalone storm sim that was
+# superseded by the flood-as-a-mode implementation. For scale: the player walks at 84 px/s and a cultist runs 51-54, so a
 # unit is a slow DRIFT, not a walk -- it cannot chase you down, which is correct
 # for something that cannot touch you. (An earlier comment here called it "a
 # walk, below player sprint"; that was wrong by a factor of four.)
@@ -430,8 +430,17 @@ STORM_LIGHT_PROBE = 12.0      # px ahead a unit tests for light before stepping
 # lamps in it (most of the mine, the lost spaces, any unpowered building). These
 # are the numbers `_draw_dark` already draws the cone with; they live here so the
 # beam the player SEES and the beam a unit RESPECTS cannot drift apart.
-FLASHLIGHT_REACH = 300.0      # px
-FLASHLIGHT_SPREAD_DEG = 30.0  # half-angle
+# THE BEAM. Raised 2026-07 (maintainer: "you can make the flashlight
+# brighter"). At 300px reach the beam cleared barely more than the ground at
+# the player's feet, which made the one tool the player has against a dark room
+# feel like a candle -- and at ev3, when the storm has taken the surface and the
+# whole read of the game is "what is out there", a short beam means the answer
+# is always "nothing you can see". The reach now covers most of the spawn band
+# (STORM_SPAWN_NEAR..FAR is 150..420), so sweeping the beam is how you find the
+# flood before it reaches you. It costs what it always cost: the beam RAISES
+# visibility while it burns (VIS_LIT_RISE), so a longer look is a louder one.
+FLASHLIGHT_REACH = 460.0      # px
+FLASHLIGHT_SPREAD_DEG = 34.0  # half-angle
 # How near a storm unit RESOLVES out of the blind-spot fog. Storm units are not
 # gated by the sight cone the way a standing Watcher is: measured on a live
 # storm, 0 of 22 units passed the cone (7 of them inside 120px), so the flood
@@ -444,14 +453,27 @@ STORM_SPAWN_NEAR = 150.0      # px: closest a storm unit opens
 STORM_SPAWN_FAR = 420.0       # px: furthest (wider than a Watcher's 200 -- the
                               # flood comes from the whole room, not just ahead)
 
+# THE LANTERN EYE's brightness curve (rendering/amalgam.py EYE_LAMP). Purely
+# a DRAW value: the eye throws decorative light onto the creature's own flesh
+# and nothing else, so these never reach Scene.lit_at, the light table, or any
+# gate. It exists because a near-black body had no value to spend and the bone
+# outline was carrying legibility alone, which read as line-art.
+# First tuned at idle 0.30 / near 260 and it changed nothing you could see:
+# units sit at 130-400px, so the curve was firing at ~0.44 at best, and the
+# blind-spot fade, the body's own phase alpha and the room gloom each took a
+# cut of what was left. Measured in isolation the eye was working (max pixel
+# delta 96); measured in a scene it was invisible. Tuned for where the units
+# ACTUALLY are, which is the whole spawn band, not arm's reach.
+AMALGAM_LAMP_IDLE = 0.62      # burning while it has not found you
+AMALGAM_LAMP_NEAR = 430.0     # px at which it reaches full. Covers the spawn
+                              # band (STORM_SPAWN_NEAR..FAR is 150..420), so a
+                              # unit anywhere you can see it is lit by its own
+                              # eye and brightens as it closes
+
 WATCHER_LIGHT_BURN = 2.0      # "no light = danger": a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
-AMALGAM_CHANCE = 0.9          # fraction of Watcher manifestations that arrive
-                              # as an AMALGAM (a seeded parts assembly,
-                              # rendering/amalgam.py) instead of the OG shroud;
-                              # behavior is identical either way
 # Walking through a rift FOLD has this chance to open an extra Watcher on the
 # far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
 FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal
@@ -921,8 +943,22 @@ UNDERGROUND_SCENES = {
 # excluded here AND KING_FREE. A new plain surface interior is still excluded
 # by default. Read by _tick_watchers (the whole wave machine gates on it) and
 # _roll_fold_watcher.
+# THE LOST SPACES ARE IN (2026-07). They are the darkest scenes in the game
+# (gloom 150) and the storm's own rule is that it fills ALL dark -- but they
+# are not OUTDOOR, not UNDERGROUND and not a DIM_INTERIOR, so they fell
+# straight through the three sets this is built from and the gaze could never
+# open there at all. `Game._storm_active()` reported True in `lost_corn` while
+# the wave sat at ZERO units forever, which is the worst shape of bug: every
+# gate says yes and nothing happens. Guarded by tests/conventions.py.
 WATCHER_OPEN_SCENES = (OUTDOOR_SCENES | UNDERGROUND_SCENES
                        | DIM_INTERIOR_SCENES
+                       | LOST_SPACE_SCENES
+                       # a DARK non-refuge interior, which is exactly what the
+                       # "no light = danger" rule describes -- it was simply
+                       # never in any of the three sets above (it is not a
+                       # DIM_INTERIOR, it is full dark) and so was silently
+                       # gaze-free, like the lost spaces were.
+                       | {"abandoned_farmhouse"}
                        | {"effigy_grove"})
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure

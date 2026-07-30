@@ -2704,6 +2704,263 @@
   farmhouse hatch nailed shut, the car moved to the lodge yard). Saves are
   in-memory only, so there was no persistence concern in cutting them.
 
+## The light table, and one skin for His gaze
+
+- **2026-07 -- the lost spaces could never open a Watcher, and nothing said
+  so.** `lost_corn` -- the darkest scene in the game, gloom 150 -- sat at ZERO
+  units forever while `Game._storm_active()` returned True. The cause was not
+  spawn geometry, which is where I looked first and measured wrong: 75% of
+  sampled spots in the spawn band were valid, so placement was never the
+  problem. The lost spaces were simply absent from `WATCHER_OPEN_SCENES`. That
+  set is built from OUTDOOR | UNDERGROUND | DIM_INTERIOR, and a lost space is
+  none of the three, so they fell straight through the gap. `lost_road`,
+  `lost_forest` and `abandoned_farmhouse` were all in the same hole.
+
+  This is the worst shape a bug can have: every gate reports healthy, the
+  system says it is running, and nothing happens. There is no error, no
+  wrong-looking value, and nothing to grep for. All three fields now storm --
+  `lost_corn` reaches `STORM_MAX`.
+
+  `tests/conventions.py` check 15 makes the class unrepeatable: every
+  storm-capable room (STORM_STAGE | DARK, minus the refuges) must be able to
+  open the gaze, with an allowlist for `lodge_cellar`, which is DIM_SAFE and
+  deliberately the one room the beam is free in.
+
+- **2026-07 -- `AMALGAM_EDGE_W` back to 1: tried, unresolved, left at 2.**
+  With the bodies bigger and lit, the 2px outline should in principle be able
+  to come back down and settle the preview sheet's complaint that it reads as
+  line-art. Two scene A/Bs both happened to land with the units outside the
+  beam, so neither frame showed a creature at either width and the comparison
+  proved nothing either way. Recorded rather than quietly resolved: legibility
+  in this scene is strongly frame-dependent (the same clip has frames with
+  three creatures plainly readable and frames with none), which is itself
+  worth knowing before anyone tunes off a single screenshot.
+
+
+- **2026-07 -- the flashlight was incinerating the storm, and the amalgams got
+  bigger.** Maintainer: *"They completely vanish in the light too fast, make
+  them bigger."* Both halves were right, and the first one turned out to be a
+  design fault rather than a tuning number.
+
+  **Light now REPELS the storm and never BURNS it.** A storm unit already
+  refuses any step that would put it in a pool or the beam, and that repulsion
+  is the whole mechanic; letting the beam also KILL made the flashlight an
+  area-denial death ray. Measured at ev3 in `farm_yard` over 90 seconds with
+  the beam on: **79 units burned, 11 alive at the end**, the flood a conveyor
+  belt of creatures walking into the light to die, and the storm never once
+  reaching its own cap. With the rule corrected: **peak 22 (`STORM_MAX`), 19
+  alive, 0 burned.** Raising the beam to 460px had made it far worse, which is
+  how it surfaced.
+
+  This was a DRIFT, not a new decision -- the design already said burning stays
+  the un-stormed Watcher's privilege, and the code had quietly done otherwise.
+  A first pass at this halved `WATCHER_LIGHT_BURN` instead; that was a
+  band-aid on a rule that was simply wrong, and it is reverted. Below the gate
+  the ordinary wave burns exactly as it always did.
+
+  `tests/stealth.py` §19 had a guard asserting the drifted behaviour, which is
+  why it survived. It now asserts BOTH halves -- storm immune, un-stormed wave
+  still burning -- because the interesting way to get this wrong is to fix one
+  and silently take the other with it.
+
+  **`AMALGAM_SCALE` 1.25** (multiplying the base 0.8, so the body lands at full
+  part-space scale). Legibility here was a SIZE problem before it was a
+  lighting one: the lantern eye measured a peak delta of 96 in isolation and
+  still read as a dot at 130px, because the whole creature was only a few dozen
+  pixels tall. With the size raised and the flood no longer being burned away,
+  three and four creatures read clearly in a single frame where none did.
+
+
+- **2026-07 -- the beam reaches, and the capture tool now turns it on.** Two
+  things, one of them an outright error on my part.
+
+  **The error:** every clip `tools/capture_storm.py` had produced was recorded
+  with the FLASHLIGHT OFF. That is not a state a player is ever in at ev3 --
+  the beam is the only way to read a dark room -- so those captures were
+  pictures of a game nobody plays, and they made the storm look far darker and
+  emptier than it is. The tool now switches the beam on by default
+  (`--no-beam` restores the old behaviour for judging a room with no light of
+  your own).
+
+  **The change:** `FLASHLIGHT_REACH` 300 -> 460, spread 30 -> 34 degrees
+  (maintainer: *"you can make the flashlight brighter"*). At 300 the beam
+  cleared barely more than the ground at the player's feet, which made the one
+  tool they have against a dark room feel like a candle -- and at ev3, when the
+  storm has taken the surface and the whole read of the game is "what is out
+  there", a short beam means the answer is always "nothing you can see". The
+  reach now covers most of the spawn band (150..420), so sweeping the beam is
+  how you find the flood before it arrives. It costs what it always cost: the
+  beam raises visibility while it burns, so a longer look is a louder one.
+
+  **THE LANTERN EYE was retuned and is still under-delivering.** First tuned at
+  idle 0.30 / near 260px, which changed nothing visible: units sit at 130-400px
+  so the curve fired at ~0.44 at best, and the blind-spot fade, the body's phase
+  alpha and the room gloom each took a cut of what was left. Now idle 0.62 /
+  near 430 (the spawn band). In isolation the eye is unambiguously working -- a
+  lamp-off vs lamp-on A/B on one creature measures a peak pixel delta of 96 --
+  but cropped 1:1 out of a real dark scene at 130px it still reads as a faint
+  dot rather than as a lit body. Honest state: the mechanism is right, the
+  scale is not. Remainder in `TODO.md`.
+
+  **A note on the measurement, because it misled me twice.** `--measure`
+  reports peak deltas stuck at 14-15 no matter what changes -- alpha, gloom,
+  lamp tuning all move it by about 1. A number that will not move is not
+  evidence that nothing changed; here it means the diff is dominated by
+  something constant (most likely the occluder FADE that a visible actor
+  triggers) rather than by the creature's own pixels. Treat it as a floor, not
+  a verdict, and crop 1:1 and LOOK.
+
+
+- **2026-07 -- THE LANTERN EYE: the amalgam lights its own flesh.** The
+  maintainer's idea, and a better one than the pass it replaced: *"what if the
+  eye acts like a pseudo light source allowing for the player to have
+  visibility but in practice it's completely decorative ... a separate eyeball
+  part attached to the body."*
+
+  It answers the real problem, which the previous entry established by
+  elimination: neither alpha nor the room gloom could ever have fixed the
+  amalgam's legibility, because a near-black body has no VALUE to spend. That
+  left the bone outline carrying the whole job and the creature reading as
+  line-art -- a silhouette with nothing inside it. A point source AT the eye
+  puts light INSIDE the silhouette, which is the one place it was missing.
+
+  It is deliberately not the blurred halo this family already threw out. A
+  bloom spreads brightness evenly and reads as a glowing spirit; a point source
+  with falloff makes some of the body brighter than the rest, which is
+  MODELLING. The pass blits additively with `BLEND_RGB_ADD`, which touches RGB
+  and leaves destination ALPHA alone -- so it can only brighten pixels that are
+  already flesh and physically cannot paint into the empty space around the
+  creature. That property is the whole design.
+
+  Structurally it follows the Pallid Mask's rule: an extra part `assemble()`
+  never deals, attached after the deal, so every existing creature is the
+  creature it always was with an eye added. It burns hotter as the thing closes
+  (`AMALGAM_LAMP_IDLE` / `AMALGAM_LAMP_NEAR`) so it reads as a TELL rather than
+  a lamp, and it dies when stared at like every other ember -- the lantern does
+  not get to be an exception to the one rule the player can act on.
+
+  **Decorative is load-bearing here, not a preference,** and it has a check.
+  A real light on a creature would deny other amalgams a dark spawn spot, burn
+  its own neighbours, seal the lost-space mouth, and -- the one that ends the
+  system -- freeze the storm solid, since a unit refuses any step into light
+  and a flood would be walking into its own. `tests/conventions.py` check 14
+  fails if the eye ever appears in THE LIGHT TABLE, proved failing before it
+  was kept.
+
+  The check earned itself on its first run by catching something else: the part
+  was originally called `lantern`, which is already the game's hand-carried
+  hurricane lantern and a real light kind. A false positive, and still worth
+  the rename to `eyelamp` -- two unrelated things answering to one name is how
+  the light declarations got confusing in the first place. The check now
+  doubles as that collision rule.
+
+
+- **2026-07 -- the road is storm-proof, and the LIGHT is what does it.**
+  Maintainer ruling, in their words: *"the road is only safe because of
+  light."* Measured first: `store_row` is 69% lit, because §14's lamp pattern
+  keeps the whole carriageway inside a pool, so a unit that refuses to step
+  into light cannot set foot on a street -- a live wave stalls in the verge
+  with its nearest unit 231px out. Ruled deliberate. The safe path now has TWO
+  separate safeties and they are worth keeping distinct: §14's GEOMETRY is
+  what keeps a lost-space mouth off the asphalt, and the LAMPS are what keep
+  the flood off it. Take the lamps away and a road is still not a mouth, but
+  it is stormable -- which is the trade a dark stretch of road should make.
+
+- **2026-07 -- the flood was unfindable, and the fix was the outline.** With
+  15 units up in `farm_yard` at ev3 you could find one. Two plausible causes
+  were tried and MEASURED to be wrong, which is the useful part of this entry:
+  the blind-spot fog floor (raised it, no effect -- units inside the sight cone
+  are already at alpha 255, so the floor never applies to the ones you are
+  looking at) and the room gloom (forced it to 0, median peak delta moved 14.0
+  -> 15.2). A near-black body has no VALUE to spend, so neither alpha nor
+  brightness could ever have been the lever. `AMALGAM_EDGE_W` 1 -> 2 took the
+  same frame from one findable unit to five or six.
+
+  The old note beside that constant said 2px "reads as cartoon line-art", and
+  on `tools/preview_amalgam.py` that is still true -- at sheet scale against a
+  neutral card the edge swallows the body. Both judgements are real; they
+  disagree about which screen matters, and the player only ever sees the dark
+  one. The colour was left at the original bone rather than brightened, which
+  keeps the sheet's complaint to a quibble. The body still reads as outline
+  more than as creature at game scale; that remainder is in `TODO.md`.
+
+  The measuring is now `tools/capture_storm.py --measure`, which renders the
+  frame with and without the units and DIFFS, because the first attempt at
+  this sampled the brightest pixel near each unit and got fooled by the corn
+  behind it -- reporting four separate units with identical peaks.
+
+
+- **2026-07 -- THE LIGHT TABLE: three declarations become one row.** A
+  light-emitting kind used to be declared in three places that nothing tied
+  together -- `Scene._LIGHT_KINDS` (the mechanical radius `lit_at` answers
+  with), `FIXTURE_POOLS` (the visible pool `_draw_dark` casts), and
+  `Scene._ELECTRIC_KINDS` (whether the genset powers it). A kind could gate
+  without shining or shine without gating, and both shipped: `campfire`, the
+  COLD scorch decal, handed out 80px of stealth cover while casting nothing,
+  and `burn_barrel` cast a pool while giving no cover at all. A conventions
+  check existed purely to catch the drift.
+
+  `systems/lights.py` now carries one row per kind and the three old names are
+  DERIVED from it, so every call site is unchanged and half a light is no
+  longer expressible. **`gate` and `pool` stay separately expressible on
+  purpose** -- a bare bulb floods its room visibly (pool 108) while its
+  stealth-cover radius stays tight (gate 58); that divergence is a decision,
+  and the merged row is where it is now stated rather than a coincidence of
+  two tables. Conventions check 3 is RETIRED with a tombstone comment saying
+  why, which is the better outcome than a check that keeps passing: the bug it
+  looked for cannot be written. Proved byte-identical with
+  `tools/capture_world.py --diff` before and after.
+
+  The retirement also broke `main()`, which held a hand-maintained tuple of
+  check function names inside a loop whose body was `pass`. Every check runs at
+  import via the decorator, so the loop had never done anything except create a
+  list to keep in sync -- and that is exactly what failed. Cut.
+
+- **2026-07 -- His gaze has ONE skin: the shroud Watcher is CUT.** Maintainer
+  ruling: *"Amalgs are to completely replace watchers and exist above at 1+
+  ev."* `AMALGAM_CHANCE` (0.9) is gone and so is the shroud's 76-line draw
+  branch. Two bodies running identical behavior read as an inconsistency
+  rather than as variety, and the assembly already deals far more silhouettes
+  (3-5 parts from a library of 22, doubled by per-part mirroring) than a second
+  hand-drawn body ever did. The ev1 half was already true (`WATCHER_WAKE_EV`
+  is 1), so nothing moved there. The stealth guard that asserted the amalgam
+  was merely the COMMON skin now asserts the shroud draw is gone outright.
+
+  **Not renamed:** `_tick_watchers`, `_spawn_watcher`, `WATCHER_MAX` and the
+  rest still carry the name of a creature that no longer exists. That is a
+  known ghost name and a separate mechanical sweep, called out here so it is
+  not discovered as a surprise.
+
+- **2026-07 -- `systems/storm.py` deleted.** The standalone storm sim was
+  superseded by the flood-as-a-mode implementation (its timer-driven Mask
+  migration is not how the hop works -- the hop is EARNED), and it was imported
+  by nothing but its own preview tool. Both are gone. It cost real time before
+  it went: the first attempt to record the shipping storm reached for it,
+  because two modules named for the same system is exactly the ambiguity dead
+  code buys you.
+
+- **2026-07 -- `tools/capture_storm.py`, and what it measured.** The storm's
+  entire content is MOTION -- units ringing a pool rather than entering it, the
+  apex crossing a ring the others will not, a wave building -- and none of that
+  survives a still frame. The tool drives a real `Game` through the real update
+  loop and records real `draw_world` to MP4.
+
+  What it found on first use is in `TODO.md` under the storm ticket, and none
+  of it was visible by looking: **18 units up in `farm_yard`, all 18 on screen,
+  11 inside the smear range, and one or two legible.** **`store_row` is 69%
+  lit**, so the flood cannot set foot on a street at all and stalls at 231px --
+  every road in the game is storm-proof as a side effect of the safe path's
+  lamp chain meeting the units' refusal to enter light. **`lost_corn` builds
+  zero units**, because the crop circle's corn ring leaves the spawn band
+  nowhere to open.
+
+  Two tool lessons worth keeping. A cold clip shows a trickle and a Mask that
+  never finds a host, because the storm is a CONDITION you walk into rather
+  than an event -- hence `--warmup`, which builds the flood off-camera. And at
+  max visibility the overlay paints His red wash plus a hard edge-crush tunnel
+  vignette that reduces the frame to a porthole, so the default holds
+  visibility at 0.78: above the apex gate, below the vignette.
+
 ## Brimley geography
 
 - **2026-07 -- every ticket citation cut out of the source, and a check so they

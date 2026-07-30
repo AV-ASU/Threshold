@@ -10,6 +10,8 @@ import random
 import pygame
 from constants import SCREEN_W, SCREEN_H, TILE
 from scenes import terrain as _terrain
+from systems.lights import (LIGHT_GATE_RADII as _LIGHT_GATE_RADII,
+                            ELECTRIC_KINDS as _ELECTRIC_KINDS_)
 # Re-export EVERY terrain name (including _private ones external modules
 # import) into this module's namespace so the facade is transparent.
 globals().update({_k: _v for _k, _v in vars(_terrain).items()
@@ -487,26 +489,14 @@ class Scene:
         st["hold"] = max(st["hold"], hold)
         return False
 
-    # Light-emitting decoration kinds and their mechanical pool radii
-    # (px). Mirrors the fixtures _draw_dark renders visibly so what
-    # LOOKS lit IS lit to the stealth model.
-    # `campfire` is NOT here on purpose: it is the COLD indoor scorch decal
-    # ("long dead but for one last dull ember"), so it must not hand out light
-    # cover or suppress a Watcher. The LIT ground fire is `camp_fire`.
-    _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
-                    "camp_fire": 88.0, "burn_barrel": 80.0,
-                    "haven_fire": 200.0, "neon_pylon": 190.0,
-                    "lantern": 60.0, "candle": 55.0,
-                    "yard_light": 85.0, "street_lamp": 150.0,
-                    "generator": 42.0,
-                    "wall_lamp": 62.0, "drop_bulb": 58.0,
-                    "kerosene_lamp": 40.0}
-    # The genset-powered ELECTRIC subset: these emit (and gate) only while
-    # the scene's power is on (`Scene.power_on`, maintained by
-    # Game._tick_power off the `_genset_down` blackout timers). Fire keeps
-    # burning through a blackout.
-    _ELECTRIC_KINDS = frozenset({"wall_lamp", "drop_bulb", "yard_light",
-                                 "street_lamp"})
+    # The scene's view of THE LIGHT TABLE (`systems/lights.py`): the
+    # mechanical pool radius `lit_at` answers with, and the genset-powered
+    # subset that dies in a blackout. Both are DERIVED from the one table,
+    # so a kind cannot gate without shining or shine without gating -- it
+    # used to take three separate declarations to add one light, and two
+    # of them shipped out of sync.
+    _LIGHT_KINDS = _LIGHT_GATE_RADII
+    _ELECTRIC_KINDS = _ELECTRIC_KINDS_
 
     def light_sources(self):
         """Cached [(deco, r, cone, elec)] of the scene's light-emitting

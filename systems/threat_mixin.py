@@ -1206,12 +1206,12 @@ class ThreatMixin:
             break
         if spot is None:
             return
-        # The shadow FAMILY: some of His gaze manifests as the OG Watcher,
-        # some as an AMALGAM -- a seeded assembly of parts, each emerging
-        # from its own cut (rendering/amalgam.py). Same behavior end to end
-        # (this spawn rule, the hold, every dispel); only the flesh differs.
-        kind = "amalgam" if random.random() < AMALGAM_CHANCE else "watcher"
-        w = NPC(spot[0], spot[1], "", kind,
+        # His gaze has ONE skin: the AMALGAM (rendering/amalgam.py), a seeded
+        # assembly of parts each emerging from its own cut. The OG shroud
+        # Watcher is CUT (maintainer, 2026-07) -- two skins with identical
+        # behavior read as an inconsistency rather than variety, and the
+        # assembly already deals more silhouettes than a second body ever did.
+        w = NPC(spot[0], spot[1], "", "amalgam",
                 voice="blip_low", portrait="watcher",
                 movement="storm" if storming else "watch",
                 speed=STORM_UNIT_SPEED if storming else 0.0,
@@ -1253,8 +1253,21 @@ class ThreatMixin:
             # in a light pool -- or caught in the flashlight beam -- dissolves
             # fast, on top of any gaze. The flashlight is how you clear them,
             # and a bright pool is a place His gaze cannot hold you OR them.
-            burn = ((scene is not None and scene.lit_at(w.x, w.y))
-                    or (flit and looking))
+            # IN A STORM, LIGHT REPELS BUT NEVER BURNS. A storm unit already
+            # refuses any step that would put it in a pool or the beam, and
+            # that repulsion IS the mechanic; letting the beam also KILL made
+            # the flashlight an area-denial death ray. Measured at ev3 in
+            # farm_yard over 90s with the beam on: 79 units burned, 11 alive at
+            # the end -- the flood was a conveyor belt of creatures walking
+            # into the light and dying, and it got far worse when the beam
+            # reached 460px. Below the gate the ordinary wave still burns
+            # exactly as it did; burning stays the un-stormed Watcher's
+            # privilege, which is what the design said before the code drifted
+            # from it (DESIGN.md §1).
+            storming = getattr(w, "movement", None) == "storm"
+            burn = (not storming
+                    and ((scene is not None and scene.lit_at(w.x, w.y))
+                         or (flit and looking)))
             gt = getattr(w, "_gaze_dispel_t", 0.0)
             if looking or burn:
                 gt += dt * (1.0 + (WATCHER_LIGHT_BURN if burn else 0.0))

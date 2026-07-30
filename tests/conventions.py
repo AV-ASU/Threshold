@@ -140,34 +140,14 @@ def _tilt_sets():
                 + "\n".join(rows))
 
 
-# --------------------------------------------------------- 3. light tables
-# THE RULE (CLAUDE.md): a light-emitting kind lives in TWO tables --
-# Scene._LIGHT_KINDS (the MECHANICAL cover radius stealth reads) and
-# FIXTURE_POOLS (the VISIBLE pool _draw_dark casts). A kind in only one is a
-# light that gates but does not shine, or shines but does not gate.
-# No exemptions. The two this check found on its first run were real bugs and
-# are fixed: `campfire` (the COLD indoor scorch decal) was handing out an 80px
-# light-cover radius while casting nothing, and `burn_barrel` was casting a
-# visible pool while giving no cover at all. Keep this empty if you can.
-LIGHT_EXEMPT = {}
-
-
-@check("light kinds agree across the mechanical + visible tables")
-def _light_tables():
-    from systems.render_mixin import FIXTURE_POOLS
-    from scenes.base import Scene
-    mech, vis = set(Scene._LIGHT_KINDS), set(FIXTURE_POOLS)
-    rows = []
-    for k in sorted(vis - mech):
-        if k not in LIGHT_EXEMPT:
-            rows.append(f"    {k!r}: in FIXTURE_POOLS, missing from Scene._LIGHT_KINDS "
-                        "(shines but gives no stealth cover)")
-    for k in sorted(mech - vis):
-        if k not in LIGHT_EXEMPT:
-            rows.append(f"    {k!r}: in Scene._LIGHT_KINDS, missing from FIXTURE_POOLS "
-                        "(gates as lit but casts no visible light)")
-    if rows:
-        return "\n".join(rows)
+# ------------------------------------------ 3. light tables (RETIRED, 2026-07)
+# This check compared Scene._LIGHT_KINDS against FIXTURE_POOLS and failed when
+# a kind sat in one and not the other -- a light that gates but does not shine,
+# or shines but does not gate. It caught two real bugs in its life. It is gone
+# because the two tables were MERGED into one row per kind (`systems/lights.py`,
+# THE LIGHT TABLE) and both names are now derived from it, so the disagreement
+# it looked for is no longer expressible. Do not reinstate it; if you find
+# yourself declaring a light in two places again, that is the regression.
 
 
 # ------------------------------------------------- 3b. windows tell the truth
@@ -638,35 +618,116 @@ def _address_tics():
 # silently lands on unrelated work is worse than no citation. The whole set
 # was cut in 2026-07; this keeps them from growing back one comment at a time.
 # `TODO.md` as a bare FILENAME is fine (this file's own DOCS tuple names it).
-@check("no ticket citations or work markers in the source")
+@check("no ticket citations or work markers in the source or canon docs")
 def _no_work_markers():
     # XXX is deliberately NOT in here: the scene layout rows spell walls with
     # runs of X ("W.XX.......XXX.W"), so it fires on the map grammar itself.
+    # Scanned over the WHOLE text rather than line by line, because a citation
+    # that WRAPS ("..., TODO\n  #21; ...") is exactly what a per-line scan
+    # misses -- one survived in DESIGN.md for precisely that reason.
     pat = re.compile(r"\bTODO\b(?!\.md)|\bFIXME\b")
+    _DOCS = ("CLAUDE.md", "NARRATIVE.md", "DESIGN.md", "DIALOGUE.md",
+             "VISION.md", "README.md")
     rows = []
     for base, dirs, files in os.walk(_ROOT):
         dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git")]
         for fn in sorted(files):
-            if not fn.endswith(".py"):
-                continue
             rel = os.path.relpath(os.path.join(base, fn), _ROOT)
+            if not (fn.endswith(".py") or rel in _DOCS):
+                continue
             if rel == os.path.join("tests", "conventions.py"):
                 continue          # this check's own pattern and prose
-            with open(os.path.join(base, fn)) as fh:
-                for i, line in enumerate(fh, 1):
-                    if pat.search(line):
-                        rows.append("    %s:%d  %s" % (rel, i, line.strip()[:88]))
+            text = open(os.path.join(base, fn)).read()
+            for m in pat.finditer(text):
+                ln = text.count("\n", 0, m.start()) + 1
+                frag = " ".join(text[m.start():m.start() + 74].split())
+                rows.append("    %s:%d  %s" % (rel, ln, frag))
     if rows:
-        return ("    Open work belongs in TODO.md, not in a comment. Cite\n"
-                "    DESIGN.md or CHANGELOG.md instead, or say the thing\n"
-                "    plainly and drop the pointer:\n" + "\n".join(rows[:20]))
+        return ("    Open work belongs in TODO.md, not in a comment and not\n"
+                "    in a current-state doc. Cite DESIGN.md or CHANGELOG.md\n"
+                "    instead, or say the thing plainly and drop the\n"
+                "    pointer:\n" + "\n".join(rows[:20]))
+
+
+# ------------------------------------- 14. the creature's light is DECORATIVE
+# THE RULE (DESIGN.md §1, rendering/amalgam.py EYE_LAMP): THE LANTERN EYE
+# throws light onto the amalgam's own flesh and onto NOTHING ELSE. It must
+# never appear in THE LIGHT TABLE (systems/lights.py) and must stay invisible
+# to Scene.lit_at.
+# WHY THIS CHECK: "decorative" here is load-bearing, not a preference. A real
+# light on a creature would deny other amalgams a spawn spot (they open only
+# at a DARK spot), burn its own neighbours (WATCHER_LIGHT_BURN), seal the
+# lost-space mouth (a lit edge is a wall), and -- the one that ends the system
+# outright -- a storm unit refuses any step into light, so a flood walking at
+# the player would freeze itself solid. The same fence already guards the bone
+# outline; this extends it to the eye, which is far likelier to be "promoted"
+# to a real light by someone who reads the draw and thinks it looks like one.
+@check("the amalgam's own light never becomes a real light source")
+def _creature_light_decorative():
+    from systems.lights import LIGHTS
+    from scenes.base import Scene
+    from systems.render_mixin import FIXTURE_POOLS
+    import rendering.amalgam as _am
+    rows = []
+    # every part name the assembler can produce, plus the eye itself.
+    # NOTE the collision rule this doubles as: an amalgam part must not be
+    # NAMED after a light kind either. On this check's first run the eye part
+    # was called "lantern" and matched the game's hand-carried hurricane
+    # lantern -- a false positive that was still worth fixing, because two
+    # unrelated things answering to one name is how the light tables got
+    # confusing in the first place.
+    names = {"eyelamp"}
+    for lst in (_am.WEIGHT, _am.MASS, _am.SENSE):
+        names |= {nm for nm, _fn in lst}
+    for table, label in ((LIGHTS, "systems/lights.py LIGHTS"),
+                         (Scene._LIGHT_KINDS, "Scene._LIGHT_KINDS"),
+                         (FIXTURE_POOLS, "FIXTURE_POOLS"),
+                         ({k: 1 for k in Scene._ELECTRIC_KINDS},
+                          "Scene._ELECTRIC_KINDS")):
+        for nm in sorted(names & set(table)):
+            rows.append(f"    {nm!r} is in {label}")
+    if rows:
+        return ("    A creature's light must stay DRAW-ONLY. In a real light\n"
+                "    table it would deny amalgams their dark spawn spots, burn\n"
+                "    its neighbours, seal the lost-space mouth, and freeze the\n"
+                "    storm (a unit refuses any step into light):\n"
+                + "\n".join(rows))
+
+
+# --------------------------------- 15. a storm-capable room can open the gaze
+# THE RULE (DESIGN.md §1): the storm is the Watcher wave in a second MODE, and
+# the wave opens through WATCHER_OPEN_SCENES. So any room the storm can be live
+# in must also be a room the gaze can OPEN in, or the storm is live and empty.
+# WHY THIS CHECK: `lost_corn` -- the darkest scene in the game -- sat at ZERO
+# units forever while `Game._storm_active()` reported True. The lost spaces are
+# not OUTDOOR, not UNDERGROUND and not DIM_INTERIOR, so they fell through the
+# three sets WATCHER_OPEN_SCENES is built from. Every gate said yes and nothing
+# happened, which is the worst shape a bug can have: nothing to see, nothing
+# to grep, and a system that reports itself healthy. `abandoned_farmhouse` was
+# the same gap and is fixed with it.
+# ALLOWLIST = rooms deliberately gaze-free that are not in SAFE/KING_FREE.
+GAZE_FREE_OK = {
+    "lodge_cellar": "DIM_SAFE_SCENES -- the beam is free here, the PI's one "
+                    "room to read by (DESIGN.md §1)",
+}
+
+
+@check("every storm-capable room can actually open the gaze")
+def _storm_rooms_open():
+    import systems.config as C
+    capable = ((set(C.STORM_STAGE_SCENES) | set(C.DARK_SCENES))
+               - set(C.SAFE_SCENES) - set(C.KING_FREE_SCENES))
+    gap = sorted(capable - set(C.WATCHER_OPEN_SCENES) - set(GAZE_FREE_OK))
+    if gap:
+        return ("    the storm can be LIVE in these and the gaze can never\n"
+                "    open, so the wave sits at zero units while every gate\n"
+                "    reports healthy. Add each to WATCHER_OPEN_SCENES, or to\n"
+                "    GAZE_FREE_OK with the reason it is deliberate:\n"
+                + "\n".join(f"    {k}" for k in gap))
 
 
 def main():
     print("THRESHOLD conventions guard\n")
-    for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,
-               _lost_silent):
-        pass  # checks already ran at import via the decorator
     print()
     if FAILURES:
         print(f"FAILED: {len(FAILURES)} convention(s) violated.")

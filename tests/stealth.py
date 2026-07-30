@@ -1463,10 +1463,11 @@ def main():
     # thing that stops them; they cannot touch or kill; and every dispel still
     # works. Out of storm, nothing changes.
     from systems.config import (STORM_MAX, STORM_GATE_EVIDENCE, STORM_UNIT_SPEED,
-                                AMALGAM_CHANCE, WATCHER_MAX)
+                                WATCHER_MAX)
     print("[19] storm: one wave, two modes -- cap, approach, light, dispel")
-    check(AMALGAM_CHANCE >= 0.85,
-          "storm: the amalgam is the default skin now, the shroud is rare")
+    check("kind == \"watcher\"" not in
+          open(os.path.join(PROJECT_ROOT, "rendering/sprites_npc.py")).read(),
+          "storm: the amalgam is the ONLY skin -- the shroud draw is gone")
     g = new_game()
     g.load_scene_now("well_passage", "default")
     tick(g, 20)
@@ -1570,29 +1571,45 @@ def main():
     tick(g, 60)
     check(g.player.hp >= hp0 and g.state == "playing",
           "storm: a unit standing ON the player deals nothing (a scare)")
-    # --- every DISPEL still works in a storm: light burns one caught in a pool.
+    # --- LIGHT REPELS THE STORM AND NEVER BURNS IT, but the un-stormed wave
+    # still burns exactly as it did. Both halves, because the interesting way
+    # to get this wrong is to fix one and silently take the other with it.
+    #
+    # This guard used to assert the opposite for storm units, which locked in a
+    # drift from the design: a beam that KILLS as well as repels is an
+    # area-denial death ray. Measured at ev3 in farm_yard over 90s with the
+    # beam on, the old rule burned 79 units and left 11 alive; the flood was a
+    # conveyor belt walking into the light to die, and the storm never reached
+    # its own cap. It now peaks at STORM_MAX and holds.
     if lit:
-        # a FRESH unit: the world ticks above may have swept or dispelled the
-        # earlier one, and reusing it made this check depend on that.
         from entities.npc import NPC as _NPC
-        w2 = _NPC(lit[0][0], lit[0][1], "", "amalgam", movement="storm",
-                  speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
-        w2.tag = "watcher"
-        w2.sprite_seed = 5
-        sc.add_npc(w2)
-        g._watchers.append(w2)
-        g._cursed = True
-        w2.x, w2.y = lit[0]
-        burned = False
-        for _ in range(int((WATCHER_GAZE_DISPEL / (1 + WATCHER_LIGHT_BURN)
-                            + 1.0) * 30)):
-            w2.x, w2.y = lit[0]
-            g._tick_watcher_gaze(1 / 30.0)
-            if w2 not in g._watchers:
-                burned = True
-                break
-        check(burned,
-              "storm: light still BURNS a unit caught in a pool")
+
+        def _park_in_light(movement):
+            # a FRESH unit each time: the world ticks above may have swept the
+            # earlier one, and reusing it made this depend on that.
+            u = _NPC(lit[0][0], lit[0][1], "", "amalgam", movement=movement,
+                     speed=STORM_UNIT_SPEED, no_prompt=True, solid=False)
+            u.tag = "watcher"
+            u.sprite_seed = 5
+            sc.add_npc(u)
+            g._watchers.append(u)
+            g._cursed = True
+            gone = False
+            for _ in range(int((WATCHER_GAZE_DISPEL / (1 + WATCHER_LIGHT_BURN)
+                                + 1.5) * 30)):
+                u.x, u.y = lit[0]          # pinned in the pool it refuses
+                g._tick_watcher_gaze(1 / 30.0)
+                if u not in g._watchers:
+                    gone = True
+                    break
+            if not gone:
+                g._dispel_watcher(u)
+            return gone
+
+        check(not _park_in_light("storm"),
+              "storm: light REPELS a unit but never burns it")
+        check(_park_in_light("watch"),
+              "storm: the un-stormed wave still BURNS in a pool")
     # --- THE BEAM is a real barrier. Scene.lit_at only knows scene FIXTURES, so
     # testing against it alone left every lamp-less room (most of the mine, the
     # lost spaces, an unpowered building) with no safety in it at all -- while

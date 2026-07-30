@@ -98,51 +98,11 @@ _PROP_STATIC_CAP = 2000
 # this table -- not just wall_torch -- so any real fixture (a cult brazier, a
 # candle, a town yard light) lights the dark it stands in (the shared light
 # logic: one table drives the surface if it ever darkens and the underground).
-FIXTURE_POOLS = {
-    #                radius  color            peak  src_z  arm  amp   spd
-    "wall_torch":   (102,  (255, 168, 78),   74,   24,    0,   0.18, 7.0),
-    "brazier":      (106,  (255, 150, 56),   76,   12,    0,   0.16, 6.0),
-    "burn_barrel":  (94,   (255, 150, 56),   68,   16,    0,   0.16, 6.0),
-    "camp_fire":    (106,  (255, 158, 60),   76,   4,     0,   0.18, 5.0),
-    # the lost-space CROP-CIRCLE bonfire: a wide, high-peak warm pool that
-    # fills the whole grass clearing inside the corn ring (the fire "protects
-    # the entirety of the circle"). Bigger than a cult camp_fire on purpose --
-    # the lit haven you fall into, not a background campsite.
-    "haven_fire":   (250,  (255, 156, 58),  112,   6,     0,   0.16, 4.5),
-    # the derelict station's NEON: a saturated cold sign-glow (a SIGN is
-    # allowed colour where room-light isn't). Elevated on its pole, so the
-    # pool falls on the forecourt in front of the dark station.
-    # the derelict station's NEON PYLON: a saturated cold sign-glow (a SIGN is
-    # allowed colour where room-light isn't), thrown from high on its pole so
-    # the pool floods the whole lot you land on.
-    "neon_pylon":   (280,  (255, 226, 168),  104,   96,    0,   0.06, 15.0),
-    "lantern":      (70,   (255, 176, 84),   58,   20,    0,   0.10, 3.0),
-    "candle":       (44,   (255, 178, 92),   46,   6,     0,   0.14, 9.0),
-    "yard_light":   (120,  (200, 222, 255),  60,   44,    9,   0.05, 2.0),
-    # the SAFE PATH's highway lamp (DESIGN.md §14): the same cold head as the
-    # yard light, up a tall mast with a long gooseneck, throwing far enough
-    # that poles every few tiles keep the WHOLE carriageway inside a pool --
-    # which is the mechanism, not the mood (an unlit stretch of safe path is a
-    # stretch you can fall out of the world on).
-    "street_lamp":  (196,  (200, 222, 255),  72,   78,    26,  0.04, 2.0),
-    "generator":    (50,   (255, 212, 152),  44,   8,     0,   0.08, 5.0),
-    # COLD electric (2026-07 light ruling: no warm-lamp cosiness indoors;
-    # the civic light is cold blue-white -- the maintainer's "LED" read,
-    # delivered in 1994 by fluorescent tube/cold bulb -- with a fast
-    # shallow shimmer instead of a candle flicker. Fire is a PROP now,
-    # never the room's light.)
-    "wall_lamp":    (88,   (205, 218, 240),  62,   20,    3,   0.05, 13.0),
-    # a bare bulb on a drop cord (the ceiling workhorse of the 90% rule): the
-    # same cold family, hung high, the barest shimmer. The VISIBLE pool is
-    # wide (a bare bulb floods its room); the mechanical gate stays the
-    # tighter _LIGHT_KINDS radius, so stealth cover doesn't move with it.
-    "drop_bulb":    (108,  (205, 218, 240),  56,   30,    0,   0.06, 11.0),
-    # the brass oil lamp burns a real flame everywhere it is drawn, so it
-    # emits everywhere too -- a small WARM accent pool, never a room's light
-    # (2026-07 shop pass; the warm+cold overlap at Hettie's counter is the
-    # additive-interaction showcase)
-    "kerosene_lamp": (48,  (255, 186, 96),   44,   14,    0,   0.12, 8.0),
-}
+# The VISIBLE pools come straight off THE LIGHT TABLE (`systems/lights.py`),
+# which also carries each kind's mechanical gate radius and whether the
+# genset powers it. Re-exported here under the old name so every reader
+# (_draw_dark, the solid-emit pass, tools/light_audit.py) is unchanged.
+from systems.lights import FIXTURE_POOLS
 
 def _deco_cone(d):
     """A fixture deco's optional cone kwarg `cone=(dir_x, dir_y, half_deg)`
@@ -1610,6 +1570,18 @@ class RenderMixin:
                         # reads.
                         w_gaze = (npc.sprite_kind in ("watcher", "amalgam")
                                   and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
+                        # THE LANTERN EYE burns hotter the closer it is: a
+                        # tell the player can read, not a lamp on a loop. It
+                        # is decorative light on the creature's own flesh --
+                        # it lights nothing in the world and is invisible to
+                        # Scene.lit_at (see rendering/amalgam.py EYE_LAMP).
+                        w_lamp = 0.0
+                        if npc.sprite_kind == "amalgam":
+                            _d = math.hypot(npc.x - self.player.x,
+                                            npc.y - self.player.y)
+                            w_lamp = AMALGAM_LAMP_IDLE + (
+                                (1.0 - AMALGAM_LAMP_IDLE)
+                                * max(0.0, 1.0 - _d / AMALGAM_LAMP_NEAR) ** 2)
                         nview = "front"
                         if self._tilt_on():
                             nview = view_from_facing(npc.facing[0],
@@ -1626,7 +1598,8 @@ class RenderMixin:
                                         lean=king_lean, scale_mul=king_scale_mul,
                                         pose=getattr(npc, "pose", None),
                                         gape=getattr(npc, "_gape", 0.0),
-                                        apex_mask=_apex_mask_for(npc))
+                                        apex_mask=_apex_mask_for(npc),
+                                        lamp=w_lamp)
                     # The rising "?" tell (DESIGN.md §12 Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.

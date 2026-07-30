@@ -53,8 +53,26 @@ CUT_RIM_HOT = (206, 164, 62)
 # tinted: enough to lift a near-black body off a near-black room, not enough
 # to read as the creature emitting light.
 # The visibility OUTLINE (see draw_amalgam_sprite).
+# The OUTLINE is the whole locator, so it is sized for the DARK SCENE it ships
+# in, not for the preview sheet. At 1px of (206,202,196) a live 15-unit storm
+# was unfindable: every unit was drawing ~400px, but the shapes did not
+# separate from a frame averaging 14 luminance. Neither alpha
+# (the blind-spot fog floor) nor the room gloom turned out to be the lever --
+# both were tried and measured, and both moved the peak delta by ~1 -- because
+# a near-black body simply has no value to spend. The EDGE is the only thing
+# that can carry it, which is what the outline was for in the first place.
+# The old note here said 2px "reads as cartoon line-art". On the isolated
+# contact sheet that is STILL TRUE and worth knowing -- at sheet scale against
+# the neutral card the edge swallows the body and the deals read as white line
+# drawings. Both judgements are real; they just disagree about which screen
+# matters, and the player only ever sees the dark one, where 2px is the
+# difference between counting six creatures and finding one. So: width raised,
+# COLOUR left at the original bone rather than brightened, which is what keeps
+# the sheet's complaint down to a quibble instead of a fair hit. Judge any
+# further change in a SCENE, in the dark (tools/capture_storm.py), and glance
+# at tools/preview_amalgam.py after to see what it costs.
 AMALGAM_EDGE = (206, 202, 196)   # bone; see the colour note in the docstring
-AMALGAM_EDGE_W = 1               # px. 2 reads as cartoon line-art.
+AMALGAM_EDGE_W = 2               # px, sized for the dark scene, not the sheet
 _EMIT_FLOOR = 90                 # alpha below this is atmosphere, not flesh
 # THE GAZE. "Every amalgam watches" is the family's one composition rule
 # (assemble), and at the old values you could not find an eye: EMBER was
@@ -79,6 +97,58 @@ EMBER = (238, 208, 126)
 # happens to watch. Only the SENSE parts light up.
 EMBER_DIM = (96, 78, 34)
 EMBER_HOT = (255, 247, 216)      # the core; skipped when dim or stared at
+
+# ---- THE EYE LANTERN (2026-07, maintainer: "what if the eye acts like a
+# pseudo light source ... in practice completely decorative") ---------------
+# The amalgam's legibility problem was never alpha and never the room's gloom
+# (both were tried and measured to move the peak delta by ~1). A near-black
+# body has no VALUE to spend, so the bone outline was carrying the whole job
+# alone and the creature read as line-art: a silhouette with nothing inside it.
+#
+# This puts light INSIDE the silhouette. One guaranteed eyeball part, and a
+# point source AT it that brightens the flesh around it with falloff. That is
+# the opposite of the blurred halo this family already rejected: a bloom spreads
+# brightness evenly and reads as a glowing spirit, while a point source with
+# falloff makes some of the body brighter than the rest, which is MODELLING.
+# The body stays as black as it ever was everywhere the light does not reach.
+#
+# IT IS DECORATIVE, AND THAT IS LOAD-BEARING, NOT A PREFERENCE. It must never
+# appear in THE LIGHT TABLE (`systems/lights.py`) and must stay invisible to
+# `Scene.lit_at`. A real light here would deny other amalgams a spawn spot
+# (they open only in the dark), burn its own neighbours (WATCHER_LIGHT_BURN),
+# seal the lost-space mouth (a lit edge is a wall), and -- the one that ends
+# the system -- a storm unit refuses any step into light, so a flood would
+# freeze itself solid walking toward you. Guarded by tests/conventions.py.
+EYE_LAMP = (255, 214, 138)       # His light: neither the lamp's warm nor the
+                                 # civic cold, so it is never mistaken for
+                                 # safety. Sits between EMBER and CUT_RIM.
+EYE_LAMP_R = 34                  # px in the 150x104 part space
+_LAMP_CACHE = {}
+
+
+def _lamp_surface(radius, amount):
+    """A radial falloff disc, additive, cached by (radius, quantised amount).
+
+    Blitted with BLEND_RGB_ADD, which touches RGB and leaves the destination
+    ALPHA alone -- so it can only brighten pixels that are already flesh and
+    can never paint a halo into the empty space around the creature. That one
+    property is what makes this modelling rather than the glow this family
+    threw out.
+    """
+    key = (radius, round(amount, 2))
+    hit = _LAMP_CACHE.get(key)
+    if hit is not None:
+        return hit
+    s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+    for r in range(radius, 0, -1):
+        f = 1.0 - (r / float(radius))
+        f = f * f                                  # inverse-square-ish falloff
+        col = (int(EYE_LAMP[0] * f * amount),
+               int(EYE_LAMP[1] * f * amount),
+               int(EYE_LAMP[2] * f * amount))
+        pygame.draw.circle(s, col, (radius, radius), r)
+    _LAMP_CACHE[key] = s
+    return s
 
 GY = 96                      # the internal floor row of the part space
 _GAZE = False                # stared-at: every ember goes dark (family rule)
@@ -712,6 +782,47 @@ def f_ember_pair(s, x, y, d, mode, k):
             _eye(s, cx + dx * 4, cy + dy * 4, r=2, dim=blink)
 
 
+def f_eye_lantern(s, x, y, d, mode, k):
+    """THE LANTERN EYE -- the one part every amalgam carries.
+
+    A single big eyeball held in a socket of flesh, surfacing from its own cut
+    like every other part. It is drawn here as an OBJECT only; the light it
+    appears to throw is applied to the composed body in `_compose_unit`, so the
+    lit flesh is real pixels of the creature rather than a halo pasted over it.
+
+    It is deliberately the largest, roundest thing on the body: at game scale
+    in a dark room the eye is the read, and a round bright disc survives
+    distance and the room's gloom better than any amount of edge does.
+    """
+    cx, cy = x, y - 50
+    sc = _ease(d)
+    br = k if mode == "idle" else 0.5
+
+    def dd(lay):
+        # the socket: flesh cupping the ball, so it is HELD rather than stuck on
+        _lump(lay, cx, cy + 3 * sc, 11 * sc, 9.5 * sc, lo=False)
+        _lump(lay, cx - 5 * sc, cy + 7 * sc, 5 * sc, 4 * sc)
+        if d <= 0.45:
+            return
+        r = max(2, int(6.2 * sc))
+        # the ball, then the iris, then the core. Stared at, the whole thing
+        # goes dark like every other ember in the family -- the lantern is not
+        # an exception to the one rule the player can act on.
+        pygame.draw.circle(lay, VOID, (int(cx), int(cy)), r + 2)
+        pygame.draw.circle(lay, RIM, (int(cx), int(cy)), r + 2, 1)
+        if _GAZE:
+            pygame.draw.circle(lay, EMBER_G, (int(cx), int(cy)), max(1, r - 2))
+            return
+        pygame.draw.circle(lay, EMBER_G, (int(cx), int(cy)), r + 1)
+        pygame.draw.circle(lay, EMBER, (int(cx), int(cy)), r)
+        pygame.draw.circle(lay, EYE_LAMP, (int(cx), int(cy)),
+                           max(1, int(r * 0.62)))
+        pygame.draw.circle(lay, EMBER_HOT, (int(cx), int(cy)),
+                           max(1, int(r * (0.24 + 0.10 * br))))
+    _part(s, cx, cy, 0.4, 1, dd)
+    _cut_line(s, cx, cy, 0.4, 20 * _cl(d), alpha=_cl(d), side=1)
+
+
 # ---- 2026-07: six more parts (maintainer: "more almg parts?"). The deal was
 # already varied as DATA -- 198 distinct combinations in 200 seeds -- but the
 # library was only 16, so the same shapes recurred once you had seen a few
@@ -944,6 +1055,14 @@ def assemble(seed, extra=0):
         sx = int(round(max(-26, min(26, cx + rng.randint(-11, 11)))))
         parts.append((nm, fn, sx, 96 - rng.randint(12, 32), rng.random() < 0.5))
     out = parts[:5]
+    # THE LANTERN, attached to the body and never DEALT -- the same shape of
+    # rule the Pallid Mask follows (an extra part no deal can roll). It goes on
+    # after the [:5] slice so it displaces nothing and every existing deal is
+    # the creature it always was, with an eye added. Placed on the mass column,
+    # high, because that is where a head would be if this had one.
+    out.append(("eyelamp", f_eye_lantern,
+                int(round(max(-26, min(26, cx + rng.randint(-5, 5))))),
+                96 - rng.randint(20, 30), rng.random() < 0.5))
     if extra > 0:
         # THE APEX wears its host's deal and adds to it: the Mask
         # "deletes it and becomes it, reusing that amalg's exact parts while
@@ -1452,6 +1571,16 @@ def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
 # arc of ember-cuts (watching apertures) over the Mask. No hitbox; dread only.
 BEARER_SCALE = 1.5
 
+# HOW BIG AN ORDINARY AMALGAM DRAWS (maintainer, 2026-07: "make them bigger").
+# The body used to render at 0.8 of the part space and no amount of interior
+# detail survived it -- the lantern eye measured a peak delta of 96 in
+# isolation and still read as a faint dot at 130px in a real dark scene,
+# because the whole creature was only a few dozen pixels tall. Legibility here
+# is a SIZE problem before it is a lighting one. Multiplies the base 0.8, so
+# 1.25 lands the body at full part-space scale; the bearer stacks BEARER_SCALE
+# on top of this and stays proportionally the bigger thing.
+AMALGAM_SCALE = 1.25
+
 
 def _bearer_crown(surf, mcx, mcy, mr, power, seed):
     """An arc of ember-cuts over the Mask -- a crown of watching apertures."""
@@ -1591,7 +1720,8 @@ def reset_amalgam_cache():
     _MASK_PART_CACHE.clear()
 
 
-def _compose_unit(seed, b, g, gaze, t, bearer, extra=0, reach=None):
+def _compose_unit(seed, b, g, gaze, t, bearer, extra=0, reach=None,
+                  lamp=0.0):
     """Render ONE unit -- parts, tissue, outline, ghost, body -- into its own
     padded surface. Returns (surface, dx, dy) where (dx, dy) is where to blit it
     relative to the unit's feet. Pure in its arguments, which is what makes the
@@ -1643,9 +1773,33 @@ def _compose_unit(seed, b, g, gaze, t, bearer, extra=0, reach=None):
         rdx, rdy, ramt = reach
         ax, ay = _reach_anchor(parts)
         _reach_limbs(lay, ax, ay, rdx, rdy, ramt, t, seed, n=REACH_ARMS)
+    # ---- THE LANTERN'S LIGHT, onto the flesh it stands in ------------------
+    # Additive over the assembled parts and BEFORE the outline/ghost/scale, so
+    # the lit flesh is composited, scaled and stroked as one body. BLEND_RGB_ADD
+    # leaves destination alpha alone, so this can only brighten pixels that are
+    # already there -- it cannot paint into the empty space around the creature,
+    # which is exactly the failure the blurred halo had.
+    #
+    # Killed outright while stared at. The lantern obeys the family's one rule
+    # (look straight at it and every ember dies) or it would hand the player a
+    # creature that is easier to find the harder they look away, which inverts
+    # the dispel the whole family is built on.
+    if lamp > 0.0 and not gaze:
+        for nm, fn, x0, y0, flip in parts:
+            if nm != "eyelamp":
+                continue
+            # its own build-out fades the light in with it: a part still
+            # surfacing through its cut is not yet an eye that can shine.
+            amt = lamp * (b if b < 1.0 else 1.0) * (1.0 - g)
+            if amt <= 0.02:
+                break
+            gs = _lamp_surface(EYE_LAMP_R, min(1.0, amt))
+            lay.blit(gs, (int(75 + x0 - EYE_LAMP_R), int(y0 - 50 - EYE_LAMP_R)),
+                     special_flags=pygame.BLEND_RGB_ADD)
+            break
     _GAZE = False
     # THE BEARER is simply a BIGGER amalgam -- that size IS the power-up tell.
-    sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
+    sc = 0.8 * AMALGAM_SCALE * (BEARER_SCALE if bearer else 1.0)
     sw, sh = int(LW * sc), int(LH * sc)
     scaled = pygame.transform.scale(lay, (sw, sh))
     base = int(GY * sc) + 2
@@ -1680,11 +1834,20 @@ def _compose_unit(seed, b, g, gaze, t, bearer, extra=0, reach=None):
 
 
 def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
-                        dispel=None, mask=None):
+                        dispel=None, mask=None, lamp=0.0):
     """Feet at (x, y). `birth` 0..1 is the manifest ramp (parts build out
     staggered); `dispel` 0..1 is the gaze-dispel fraction (parts peel back
     into their cuts in reverse); `gaze` darkens every ember while the
-    player stares (the family rule)."""
+    player stares (the family rule).
+
+    `lamp` 0..1 is how hot THE LANTERN EYE burns -- decorative light thrown
+    onto the creature's own flesh, never onto the world and never into the
+    light table (see the EYE_LAMP note). Feed it a STATE, not a loop: it is
+    meant to be a tell the player learns to read, the way the apex's face
+    works, so it should say something true about what the thing is doing.
+    Quantised into the cache identity below, because a value that changes
+    every frame would re-compose every unit every frame and undo the cache
+    the storm's frame budget depends on."""
     t = pygame.time.get_ticks() / 1000.0
     b = 1.0 if birth is None else _clamp(birth)
     g = 0.0 if dispel is None else _clamp(dispel)
@@ -1752,16 +1915,18 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
         if reach is not None:
             reach = hit[0][4]
         face = hit[0][5]
-    state = (round(b, 2), round(g, 2), bool(gaze), bucket, reach, face)
+    state = (round(b, 2), round(g, 2), bool(gaze), bucket, reach, face,
+             round(_clamp(lamp), 1))
     if hit is None or hit[0] != state:
         hit = (state, _compose_unit(seed, b, g, gaze,
                                     (bucket - off) / float(UNIT_ANIM_HZ),
-                                    bearer, extra, reach))
+                                    bearer, extra, reach,
+                                    lamp=round(_clamp(lamp), 1)))
         _UNIT_CACHE[ident] = hit
     hit = hit[1]
     body, dx, dy = hit
     surf.blit(body, (int(x) + dx, int(y) + dy))
-    sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
+    sc = 0.8 * AMALGAM_SCALE * (BEARER_SCALE if bearer else 1.0)
     sw, sh = int(150 * sc), int(104 * sc)
     base = int(GY * sc) + 2
     # THE BEARER, when the storm passes `mask` (None for every ordinary

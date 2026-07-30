@@ -406,9 +406,11 @@
     and it is on the altar; the storm's face is a **SLICE** of Him, the same
     cross-section as the drifting masks in fire. That is what keeps the
     impossible count at one (NARRATIVE §2/§6a; `tests/conventions.py` check 12).
-  - **Light SLOWS and repels the storm, never burns it** (burning stays the
-    Watchers' privilege); the apex ignores light entirely. He is survived,
-    never dispelled.
+  - **Light REPELS the storm, never burns it** (burning stays the un-stormed
+    Watcher's privilege): a unit refuses any step that would put it in a pool
+    or the beam, so standing in light makes them ring its edge. This was the
+    written rule all along and the code had drifted from it; it is now what
+    ships. The apex ignores light entirely. He is survived, never dispelled.
   - **The storm fills ALL dark, corn included.** Light is the last refuge.
   - The idle horizon King is **CUT**; the storm is the full-power apex at the
     source, and its overwhelm is the point.
@@ -419,6 +421,62 @@
     dissolve is reserved for the CATCH beat, never routine crossing.
 
   Build order:
+  - **THE FLOOD IS INVISIBLE, AND ON THE SAFE PATH IT CANNOT REACH YOU.**
+    Measured on the live system with `tools/capture_storm.py`, not judged off a
+    still. In `farm_yard` at full evidence: 18 units up, all 18 on screen, 11
+    inside `STORM_SEE_RANGE`, and **one or two legible in the frame**. The bone
+    outline is the only thing that makes a unit findable at all, and it is
+    doing that job alone. Two separate problems live here:
+    - **Reach.** In `store_row` the same run puts 13 units up with the nearest
+      at 231px and exactly ONE inside the smear range. The cause is geometry,
+      not the units: the safe path is **69% lit** (the lamp chain floods the
+      whole carriageway by design, `DESIGN.md` §14), and a unit refuses any
+      step into light, so the flood physically cannot come onto a street. Every
+      street in the game is storm-proof. That may be the right answer — the
+      path is the safe layer — but it is currently an accident of two correct
+      rules meeting, and it means the town's whole connective tissue is a
+      no-storm zone. Decide it on purpose.
+    - **Absence.** `lost_corn` builds **zero** units, because the crop circle's
+      corn ring is solid and the `STORM_SPAWN_NEAR..FAR` band has nowhere to
+      open. The lost spaces are the darkest scenes in the game and the storm
+      never arrives in them, which contradicts "the storm fills ALL dark".
+      Small enclosed rooms are the same shape of failure (`well_passage` and
+      `lodge_yard` each build a single unit).
+    **Reach is RULED and closed** (maintainer, 2026-07): the road is
+    storm-proof and the light is what does it, deliberately (`DESIGN.md` §1).
+    **Legibility is PARTLY fixed** -- `AMALGAM_EDGE_W` went to 2px, which took
+    a `farm_yard` frame from one findable unit to five or six. Two things were
+    tried and MEASURED not to be the lever, so do not re-try them: the
+    blind-spot fog floor (units in the sight cone are already at alpha 255) and
+    the room gloom (forcing it to 0 moved the median peak delta 14.0 -> 15.2).
+    A near-black body has no value to spend; only the EDGE can carry it.
+    **THE LANTERN EYE landed** and is the answer to "the body has nothing in
+    it": a guaranteed eyeball part throwing decorative light onto the
+    creature's own flesh (`CHANGELOG.md`, `DESIGN.md` §1). Interior value now
+    exists, so the outline is no longer carrying legibility alone.
+    **Still open, and this is the honest state: the units are STILL not
+    legible enough.** The eye works in isolation (lamp-off vs lamp-on on one
+    creature measures a peak delta of 96) but cropped 1:1 from a real dark
+    scene at 130px it reads as a faint dot, not a lit body. The mechanism is
+    right and the SCALE is wrong. Things worth trying, in order: draw the
+    creature LARGER at game scale (they are small enough that no amount of
+    interior detail survives); raise `AMALGAM_LAMP_*` further and widen
+    `EYE_LAMP_R` so the lit area is a body rather than a bulb; and once the
+    interior really carries, drop `AMALGAM_EDGE_W` back to 1, which would also
+    settle the preview sheet's fair complaint that 2px reads as line-art.
+    **Do not trust `--measure` alone for this** -- its peak deltas sit at 14-15
+    whatever you change, because the diff is dominated by the occluder fade a
+    visible actor triggers rather than by the creature. Crop 1:1 and look.
+    **`lost_corn` is FIXED** and the cause was not what it looked like: the
+    lost spaces were absent from `WATCHER_OPEN_SCENES`, so the gaze could never
+    open there at all while `_storm_active()` reported True. All three fields
+    now storm (`lost_corn` reaches the cap of 22). `abandoned_farmhouse` had
+    the same gap. Guarded by `tests/conventions.py` check 15.
+    **`AMALGAM_EDGE_W` back to 1: tried, UNRESOLVED, left at 2.** Two scene
+    A/Bs both landed with the units outside the beam, so neither frame showed
+    a creature at either width and the comparison proved nothing. 2px stays
+    because it is the safer read; settle it with a frame that has units close
+    and lit, or by scripting the player to face them.
   - **THE AMALGAM'S CATCH ANIMATION.** The apex's death card is a wordless
     placeholder fade, hooked up and timed already (`_death_kind == "apex"`,
     3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing:
