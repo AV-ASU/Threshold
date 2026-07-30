@@ -41,24 +41,27 @@ game most needs next**, and the maintainer reshuffles it freely.
 
 | # | Phase | Ticket | Why here |
 |---|---|---|---|
-| 1 | **Standing asks** | **#28** cut the calendars | A maintainer directive with a canon hole to fill first |
-| 1 | | **#27** remake the town sign | A maintainer directive; retires the last font-rendered lettering |
-| 1 | | **#13b** quiet the routine reactions | A maintainer grievance; one ruling, then ~30 small cuts |
-| 2 | **Finish the apex** | **#25** the bearer's catch animation | The main threat's death card is a placeholder fade |
-| 2 | | **#25** retire THE UNFOLDING | Two apex bodies ship today; one of them is dead weight |
-| 2 | | **#25** the storm's gold-rimmed cuts | Approved presentation, unbuilt |
+| 1 | **IN FLIGHT** | **#26** the in-between + the town layer | The live rework: the yards and the paths between them, away from Brimley |
+| 1 | | **#25** the storm | The live threat rework; three items left, art-first |
+| 2 | **Standing asks** | **#28** cut the calendars | A maintainer directive with a canon hole to fill first |
+| 2 | | **#27** remake the town sign | A maintainer directive; retires the last font-rendered lettering |
+| 2 | | **#13b** quiet the routine reactions | A maintainer grievance; one ruling, then ~30 small cuts |
 | 3 | **Make the case compound** | **#1** evidence askable | The story audit's central finding: finding and asking never touch |
 | 3 | | **#12** Royce the trucker | The chorus thread the shop's bare shelves already imply |
 | 3 | | **#2** the favor economy | Direction-stage; rides #1's conversation work |
 | 4 | **The rooms and the ground** | **#24** the interiors program | Rooms read as prop soup; the biggest look debt in the game |
 | 4 | | **#4** outdoor dread composition | The weakest dread zone; needs ONE scene named to start |
-| 4 | | **#26** the in-between remainder | The three-layer world is built; its manipulation layer is half-built |
 | 5 | **The pillar** | **#21** light is the pillar | The mandated ONE system to perfect; wants the rooms lit first |
 | 6 | **Systems depth** | **#23** cultist + local behavior | Wants the #5 tuning pass to absorb it |
 | 6 | | **#4c** freeform walls (Phase 4) | The wall program's north star; unlocks the deferred church shapes |
 | 7 | **End-stage** | **#17** the ancient altar | A set-piece cap; needs a site now that Brimley is a street string |
 | 7 | | **#20** endings redraw | Parked pending a fresh decision |
 | 7 | | **#16** packaging | Do near ship |
+
+**The two in Phase 1 are what is actually on the bench right now** (maintainer,
+2026-07: *"the storm is still something I am working on. We are trying to set
+up those paths in between each scene's yard, we are trying to abandon
+Brimley"*). Everything under them is queued, not started.
 
 Off the timeline on purpose: **#5** and **#6** need a person at the keys
 (below); the **dead ends** are closed and listed so they are not
@@ -67,7 +70,115 @@ and **process** sections are reference, not sequence.
 
 ---
 
-# Phase 1 — the standing asks
+# Phase 1 — IN FLIGHT: the town layer, and the storm
+
+### 26. **[Opus + Fable]** The in-between — the manipulation layer's remainder
+
+The three-layer world SHIPS: **interior → yard → safe path ↔ lost spaces**
+(`DESIGN.md` §13/§14/§15). The lost fields, the safe path, the yards and the
+retirement of the one-square town all landed (`CHANGELOG.md`).
+
+**WHERE THE TOWN STANDS TODAY** — the abandon-Brimley work is DONE, and this
+is the whole surface, verified by loading it (`brimley` is out of
+`SCENE_BUILDERS`, guarded by `tests/flow.py`; every yard reaches a street,
+every street chains to the next, and the whole thing walks from
+`arrival_road`):
+
+| street | households off it |
+|---|---|
+| `arrival_road` | lodge |
+| `country_lane` | *(through-road)* |
+| `gravel_road_north` | *(through-road)* |
+| `store_row` | school, shop |
+| `chapel_row` | barn, church |
+| `south_row` | farm, sheriff |
+| `bank_row` | Calder, Toby |
+| `lane_end` | Garrick, Pell, Royce |
+| `river_road` / `river_bend` | *(the river run)* |
+
+Ten street scenes, twelve yards, one household each, every resident inside
+their own building. So what is left here is NOT the town layer — it is the
+half of the model that was only ever a design conversation:
+
+1. **The rest of the dark manipulation layer.** The observer-dependent
+   reshuffle landed; the **asymmetric return** (the way back is not the way
+   you came) and **breathe-with-threat** (the space stretching as the meter
+   fills) have not.
+2. **A truly endless walk.** Per-chunk landmark/exit generation + a silent
+   **re-origin**; today it is a large finite bound with the player spawned at
+   centre.
+3. **The ev-warp variants** — the field swaps for a longer / warped /
+   more-hostile version as evidence climbs — plus richer linear field features
+   (fences, ruined buildings you can't enter).
+4. **Interiors for the yard buildings that have none.** The three new
+   households (Mrs. Calder, Royce, Garrick) have small one-room interiors; no
+   other yard building gained interior work. Nothing needs it, and it is the
+   obvious next ask.
+
+**Judge the shipped slice by FEEL first.** One mouth on one scene (the lodge
+yard's treeline) is a vertical slice, not the restructure — how many mouths
+the world wants is a play question, not a code one.
+
+**Fences:** the safe path is never tricked; the lost space is always escapable
+(the exit light stays in the 6-20 tile band); a THREAT never blinks out via the
+observer trick (only geometry lies); keep the impossible count at one (the fold
+is the one phenomenon).
+
+---
+
+### 25. **[Fable + Opus]** The King as the STORM — the remainder
+
+The storm, the apex, the migrating Mask, the face, the screech and the reach
+all SHIP (`DESIGN.md` §1, `CHANGELOG.md`). Three things are left, in build
+order:
+
+1. **THE BEARER'S CATCH ANIMATION.** The apex's death card is a placeholder
+   wordless fade, on purpose. It needs its own art, built from the amalgam
+   grammar rather than the Unfolding's: the parts, the gold cuts, the Mask
+   coming in. Hooked up and timed already (`_death_kind == "apex"`, 3.8s,
+   `render_mixin._draw_death_screen`), so this is purely the drawing. Land it
+   through a `VISION.md` look-pass. His deaths carry no label, so there is no
+   player-facing text here and none owed to `DIALOGUE.md`.
+2. **RETIRE THE UNFOLDING** (`rendering/king_unfold.py`, the `KING_UNFOLD`
+   flag, and the `sprites_king._draw_king` fallback under it). The apex no
+   longer touches that art at all; what remains is the roaming King's own path
+   — his death card and the Carcosa cutscene (both flow-guarded) rewired onto
+   the storm. **The canon reconciliation rides this:** `NARRATIVE.md` §8's
+   "one pursuit, two shapes" describes the walking King because that is what
+   ships until this lands, and collapses back to one shape when it does.
+3. **THE STORM'S CUTS WEAR THE RIFT'S GOLD** (approved 2026-07, option
+   (a)+gold, unbuilt). The amalgam apertures should read as the same portal
+   family as the fold/King rift (`rendering/portal.py`): an **ANCHORED**
+   gold-rimmed cut, not a billboard, with the off-angle falloff FLOORED so a
+   storm cut thins yet never fully vanishes (you always sense them). Same gold
+   language as the rift's rim/pool, at aperture size (gold rim + motes, no
+   expensive see-through — the rift stays the only full doorway). A "pool of
+   water that faces you" billboard presentation was weighed and rejected: it
+   breaks the pseudo-3D "an object you can circle, not a billboard that
+   swivels" canon (`DESIGN.md` §7). The **fade-until-gone dissolve is reserved
+   for the CATCH beat** (a bearer reaches you → you fade into His portal),
+   never routine crossing (folds stay "the crossing is nothing, the frame is
+   the spectacle").
+
+**Movement ideas discussed and NOT chosen** (open directions, pick or drop
+deliberately rather than drifting): it uses APERTURES instead of pathing (sink
+and rise past a wall rather than walk around it — the migration machinery
+already exists); STILLNESS instead of idling (perfectly motionless, facing
+you, at the edge of the light); speed tied to whether you are LOOKING at it
+(inverts the family's own gaze rule, so the player's trained instinct becomes
+a cost); and arriving ALREADY THERE rather than walking in.
+
+**Fences:** the Mask stays player-scale and a real 3D object (it turns to face
+you or away, never a billboard); **one bearer at a time**; the flood
+concentrates on His last *sense* of you, not your true position
+(luck-not-omniscience); **the impossible count stays at one** — the storm's
+face is a SLICE of Him, never the keystone object (`NARRATIVE.md` §6a, guarded
+by `tests/conventions.py` check 12); light SLOWS and repels the storm and
+never burns it (burning stays the Watchers' privilege).
+
+---
+
+# Phase 2 — the standing asks
 
 ### 28. **[Opus + Fable]** Cut the calendars (maintainer: "I hate it")
 
@@ -138,60 +249,6 @@ one-shots that ARE the dread (the frozen news rack, the empty church).
 Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
 assert on several of these captions/notes) and update the ones whose
 behavior legitimately changes.
-
----
-
-# Phase 2 — finish the apex
-
-### 25. **[Fable + Opus]** The King as the STORM — the remainder
-
-The storm, the apex, the migrating Mask, the face, the screech and the reach
-all SHIP (`DESIGN.md` §1, `CHANGELOG.md`). Three things are left, in build
-order:
-
-1. **THE BEARER'S CATCH ANIMATION.** The apex's death card is a placeholder
-   wordless fade, on purpose. It needs its own art, built from the amalgam
-   grammar rather than the Unfolding's: the parts, the gold cuts, the Mask
-   coming in. Hooked up and timed already (`_death_kind == "apex"`, 3.8s,
-   `render_mixin._draw_death_screen`), so this is purely the drawing. Land it
-   through a `VISION.md` look-pass. His deaths carry no label, so there is no
-   player-facing text here and none owed to `DIALOGUE.md`.
-2. **RETIRE THE UNFOLDING** (`rendering/king_unfold.py`, the `KING_UNFOLD`
-   flag, and the `sprites_king._draw_king` fallback under it). The apex no
-   longer touches that art at all; what remains is the roaming King's own path
-   — his death card and the Carcosa cutscene (both flow-guarded) rewired onto
-   the storm. **The canon reconciliation rides this:** `NARRATIVE.md` §8's
-   "one pursuit, two shapes" describes the walking King because that is what
-   ships until this lands, and collapses back to one shape when it does.
-3. **THE STORM'S CUTS WEAR THE RIFT'S GOLD** (approved 2026-07, option
-   (a)+gold, unbuilt). The amalgam apertures should read as the same portal
-   family as the fold/King rift (`rendering/portal.py`): an **ANCHORED**
-   gold-rimmed cut, not a billboard, with the off-angle falloff FLOORED so a
-   storm cut thins yet never fully vanishes (you always sense them). Same gold
-   language as the rift's rim/pool, at aperture size (gold rim + motes, no
-   expensive see-through — the rift stays the only full doorway). A "pool of
-   water that faces you" billboard presentation was weighed and rejected: it
-   breaks the pseudo-3D "an object you can circle, not a billboard that
-   swivels" canon (`DESIGN.md` §7). The **fade-until-gone dissolve is reserved
-   for the CATCH beat** (a bearer reaches you → you fade into His portal),
-   never routine crossing (folds stay "the crossing is nothing, the frame is
-   the spectacle").
-
-**Movement ideas discussed and NOT chosen** (open directions, pick or drop
-deliberately rather than drifting): it uses APERTURES instead of pathing (sink
-and rise past a wall rather than walk around it — the migration machinery
-already exists); STILLNESS instead of idling (perfectly motionless, facing
-you, at the edge of the light); speed tied to whether you are LOOKING at it
-(inverts the family's own gaze rule, so the player's trained instinct becomes
-a cost); and arriving ALREADY THERE rather than walking in.
-
-**Fences:** the Mask stays player-scale and a real 3D object (it turns to face
-you or away, never a billboard); **one bearer at a time**; the flood
-concentrates on His last *sense* of you, not your true position
-(luck-not-omniscience); **the impossible count stays at one** — the storm's
-face is a SLICE of Him, never the keystone object (`NARRATIVE.md` §6a, guarded
-by `tests/conventions.py` check 12); light SLOWS and repels the storm and
-never burns it (burning stays the Watchers' privilege).
 
 ---
 
@@ -355,39 +412,6 @@ free. The lever is **composition** with tools already shipped:
 sightline broken by this corn lane, this landmark passed twice in fog). Do not
 start against the abstract goal. Keep the sim Euclidean-honest so stealth
 distance-falloff + NPC nav stay true under any presentation lie.
-
-### 26. **[Opus + Fable]** The in-between — the manipulation layer's remainder
-
-The three-layer world SHIPS: **interior → yard → safe path ↔ lost spaces**
-(`DESIGN.md` §13/§14/§15). The lost fields, the safe path, the eleven yards
-and the retirement of the one-square town all landed (`CHANGELOG.md`). What
-is left is the half of the model that was design-conversation only:
-
-1. **The rest of the dark manipulation layer.** The observer-dependent
-   reshuffle landed; the **asymmetric return** (the way back is not the way
-   you came) and **breathe-with-threat** (the space stretching as the meter
-   fills) have not.
-2. **A truly endless walk.** Per-chunk landmark/exit generation + a silent
-   **re-origin**; today it is a large finite bound with the player spawned at
-   centre.
-3. **The ev-warp variants** — the field swaps for a longer / warped /
-   more-hostile version as evidence climbs — plus richer linear field features
-   (fences, ruined buildings you can't enter).
-4. **Interiors for the yard buildings that have none.** The three new
-   households (Mrs. Calder, Royce, Garrick) have small one-room interiors; no
-   other yard building gained interior work. Nothing needs it, and it is the
-   obvious next ask.
-
-**Judge the shipped slice by FEEL first.** One mouth on one scene (the lodge
-yard's treeline) is a vertical slice, not the restructure — how many mouths
-the world wants is a play question, not a code one.
-
-**Fences:** the safe path is never tricked; the lost space is always escapable
-(the exit light stays in the 6-20 tile band); a THREAT never blinks out via the
-observer trick (only geometry lies); keep the impossible count at one (the fold
-is the one phenomenon).
-
----
 
 # Phase 5 — the pillar
 
