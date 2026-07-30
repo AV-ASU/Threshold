@@ -450,37 +450,48 @@
   The restructure is committed and shipped: three layers (interior → yard →
   safe path ↔ lost spaces), eleven yards on five streets, the three biome
   fields reachable through the lodge yard's treeline mouth, and no town map at
-  all (`DESIGN.md` §13/§14/§15; `CHANGELOG.md`). What is open is the half that
-  makes the restructure pay off — the manipulation that is supposed to be FELT
-  moment to moment rather than told.
+  all (`DESIGN.md` §13/§14/§15; `CHANGELOG.md`). The maintainer's ruling on the
+  half that is open: **the in-between is CORRIDORS, hand drawn, and nothing
+  about their shape is generated.** Branching left and right, offsets rather
+  than everything down the middle, loops that come back on themselves, warps,
+  and paths that shift both while you watch and behind your back.
+
+  The corridor deck exists (`scenes/lost_pieces.py`, `DESIGN.md` §13): 22 drawn
+  20x20 pieces, 164 placements, the mouth grammar, and a gate check that fails
+  on a mis-drawn one. `tools/plan_page.py` draws the whole thing. What is left
+  is everything that turns the deck into a field.
 
   Build order:
+  - **Piece into scene.** One drawn grid plus a biome becomes a real room:
+    wall material per biome, props, lights, the mouths wired as exits. The
+    existing `LostSpace` island art is where the dressing comes from.
+  - **The field director.** What lies beyond each mouth, chosen from the
+    pieces whose facing edge matches. Plus the memory: what is pinned (the room
+    you stand in, lit rooms, rooms where you found someone) and what is free to
+    change.
+  - **The shifting span.** The watched law: the span slides between its
+    sockets while it is in the sight cone, never under the player. The
+    discovered law is the director re-deciding rooms two away.
+  - **The people in there.** A `haven` holds one person, pinned the moment you
+    find them. They are not Mara; she is what the field stands between you and.
   - **Asymmetric return.** The way back is not the way you came. Today the
     hunted lantern climbs you out where you fell (`Game._lost_return`); the
     field should be able to put you out somewhere else on the same street
-    network, so a lost space is a thing you come out of changed in position,
-    not a detour.
-  - **Breathe with threat.** The space stretches as the meter fills: the exit
-    light's 6-20 tile band, the reshuffle rate, and the field's feature density
-    all read the visibility meter, so being hunted makes the walk longer.
+    network.
+  - **Breathe with threat.** The space stretches as the meter fills: how far
+    the way out sits, how often the field re-decides, how dense the rooms get.
   - **More mouths.** One mouth on one scene is a vertical slice. Open the
     remaining dark, non-wrapping edges that earn it — the street verges already
     derive WHICH field they lead to (`_VERGE_LOST`), so this is `set_lost_edge`
     calls plus a look pass per edge.
-  - **Per-chunk generation + a silent re-origin** for a truly endless walk
-    (today: a large finite bound + spawn-at-centre), with landmark/exit
-    generation moving per-chunk with it.
-  - **The ev-warp variants:** the field swaps for a longer / warped /
-    more-hostile version with evidence, plus richer linear features (fences,
-    ruined buildings you cannot enter).
   - **Interiors for the yard buildings that have none.** Mrs. Calder, Royce and
     Garrick got small one-room interiors with the yard layer; the other
     households have their exteriors only. Give the ones a scene actually sends
     you into a room, through the interiors library.
 
-  **Fences:** the safe path is never tricked; the lost space is always escapable
-  (the exit light stays in the 6-20 band); a THREAT never blinks out via the
-  observer trick (only geometry lies); keep the impossible count at one.
+  **Fences:** no shape is ever generated, only chosen; the safe path is never
+  tricked; the lost space is always escapable; a THREAT never blinks out via
+  the observer trick (only geometry lies); keep the impossible count at one.
 
 - ### Remake the town sign **[Opus]**
 

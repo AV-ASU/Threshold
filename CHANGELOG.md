@@ -3072,6 +3072,71 @@
   town column on its east arm), and `river_road` / `clearing` disagree by a
   quarter turn.
 
+## The corridor deck (the in-between, hand drawn)
+
+- **2026-07 — 22 pieces drawn, and a rule that the shapes are never
+  generated.** The maintainer's ruling, in their words: *"you aren't
+  generating this. You are hand making these shifting corridors and you're
+  gonna make a buck ton of them and you're gonna make it respect the goddamn
+  geography."* The spec alongside it: corridors and hallways, branching left
+  and right, **not perfectly in the middle**, offsets, exits, loops in circles,
+  warps, and paths that shift **both watched and discovered** — 20x20 at most
+  per space, then more.
+
+  The shipped field was the opposite of that: a 400-tile procedural sea around
+  one hand-authored island, where the only authored geometry was the island
+  and everything else was hashed noise. `scenes/lost_pieces.py` is the
+  replacement geometry, and it is data plus a validator, not a generator: 22
+  drawn 20x20 blocks, each legal in eight orientations, which is 164 rooms.
+  The machine picks the ORDER and nothing else.
+
+  **Why 20x20 turned out to be the right unit.** One piece is one scene, and
+  crossing a mouth is `Game.cross_fold`, the seamless step the world edges and
+  the maze already use: no fade, no sting, stride and screen position kept. So
+  the size limit costs nothing — a chain of small rooms walks exactly like one
+  large map, and no room is ever bigger than the camera window.
+
+  **The mouth grammar is what "respect the geography" turned into
+  mechanically.** An edge is 20 tiles; a mouth is exactly 2 wide at offset 3,
+  6, 12 or 15; the centre is excluded, because a passage that always arrives
+  down the middle of the wall is the tell that gives a laid-out corridor away.
+  Those four offsets were not free choices: they are the ones closed under
+  rotation and mirroring (3 <-> 15, 6 <-> 12), which is what lets a drawn piece
+  be turned or flipped eight ways and still mate. Two pieces mate when the
+  edges they meet carry the same offsets, and that single rule means the field
+  can never open a corridor into a wall or close the way you came.
+
+  **A property that fell out, and one that had to be checked.** Because the
+  eight orientations include the vertical flip, every mouth can always be
+  continued — a piece can always follow itself, so continuation needs no
+  guard. Variety does: a mouth shape only one drawn piece offers is a corridor
+  that always opens onto the same room. `tests/conventions.py` check 15 holds
+  the floor at two drawn shapes per mouth set, alongside the mechanical rules
+  (rows the right length, mouths on their slots, every floor tile reachable
+  from some mouth, warp panes paired, a shifting span with somewhere to
+  slide), in all eight orientations. Both halves were proven to fail before
+  being kept: a row typed one character short, a mouth one tile off its slot,
+  and deleting `comb` to strand the staircase's three-mouth edge.
+
+  **Two pieces exist only because the check demanded them.** `comb` is the
+  landing the staircase reaches, drawn so a shifting span is not forced to mate
+  with another shifting span. `pit` gives the warp pane a second home so the
+  fold is not a one-off.
+
+  **The shifting span validates differently on purpose.** A `moving_stair` is
+  not one shape, it is the shapes it takes: with the span at one socket the
+  other two ways out do not exist. So its rule is not "every mouth reaches
+  every mouth" but "every mouth is reachable at some span position, and no
+  position strands you". Its sockets are derived from the drawn gap rather
+  than declared, so moving a wall in the drawing moves the sockets with it
+  instead of leaving a hand-written list pointing at nothing.
+
+  Also `tools/plan_page.py`, which draws the whole plan onto one page: every
+  surface scene as a mini map read out of its built tile grid, every piece at
+  tile resolution beside what it is for, the mouth grammar, and the two shift
+  laws. Rendered from the game, so a page that disagrees with the game is one
+  that has not been regenerated.
+
 ## The workbench, and scenes as data
 
 - **2026-07 — ONE tool that looks, edits and plays** (maintainer: *"why can't

@@ -713,6 +713,54 @@ def _dead_names():
                 + "\n".join(uniq[:20]))
 
 
+# ------------------------------------------- 15. the corridor deck is legal
+# THE RULE (scenes/lost_pieces.py): every piece in the hand-drawn corridor deck
+# is a legal 20x20 block. Its mouths sit on the four allowed offsets and
+# nowhere else, every walkable tile is reachable from some mouth, warp panes
+# come in pairs, a shifting span has somewhere to shift to, and the same holds
+# for all eight orientations the field is allowed to place it in.
+# AND: every mouth shape has a CHOICE of at least two drawn pieces behind it.
+# Continuation itself is free and needs no check: the eight orientations
+# include the vertical flip, so any piece can always follow itself. What is
+# not free is variety. A mouth shape only one drawn piece offers is a corridor
+# that always opens onto the same room, which is the exact tell that gives a
+# built space away.
+# WHY THIS CHECK: the pieces are typed in by hand, twenty rows of twenty
+# characters each. A row one character short, or a mouth two tiles off its
+# slot, produces a piece that is not obviously wrong to read and that simply
+# never gets placed: the field would silently shrink to the pieces that
+# happened to be typed correctly, and nothing would ever report it.
+# Frozen by COUNT, not by name: two drawn shapes minimum behind every mouth
+# shape. Raise it when the deck grows; never allowlist a shape past it.
+_DECK_CHOICE = 2
+
+
+@check("every hand-drawn corridor piece is legal, in all eight orientations")
+def _corridor_deck():
+    from scenes.lost_pieces import DECK, all_faults, edge_slots, orientations
+    bad = list(all_faults())
+    # The choice scan turns every piece, so it only runs on shapes that are
+    # the right shape: rotating a mis-typed grid raises instead of reporting.
+    if not bad:
+        offers = {}
+        for name, p in DECK.items():
+            for rot in set(orientations(p["rows"])):
+                for side in "nesw":
+                    slots = edge_slots(rot, side)
+                    if slots:
+                        offers.setdefault(slots, set()).add(name)
+        for slots, who in sorted(offers.items()):
+            if len(who) < _DECK_CHOICE:
+                bad.append("only %d drawn piece(s) offer a mouth set %s (%s), "
+                           "so the field has no choice there and the corridor "
+                           "repeats" % (len(who), list(slots), ", ".join(sorted(who))))
+    if bad:
+        return ("    a piece the field cannot place is a piece that is not in\n"
+                "    the game, and nothing else reports it:\n"
+                + "\n".join("    " + b for b in bad[:20])
+                + ("\n    ... and %d more" % (len(bad) - 20) if len(bad) > 20 else ""))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

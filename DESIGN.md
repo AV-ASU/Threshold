@@ -2127,6 +2127,54 @@ is ambiguous: the way out, or someone coming. All of them are ordinary cult
 NPCs, so the lost scenes sit in `CULTIST_SCENES` (with `cult_target = 0`,
 so the field never musters a patrol of its own).
 
+### The corridor deck (`scenes/lost_pieces.py`)
+
+The geometry the in-between is being rebuilt on, and the maintainer's ruling
+that governs it: **the shapes are hand drawn and only the ORDER is chosen at
+runtime.** The deck ships as data plus its validator; the field that places
+it is the open work (`TODO.md`).
+
+A piece is a **20x20 block**, and one piece is one scene. Crossing between
+them is `Game.cross_fold`, the same seamless step the world edges use, so a
+mouth is a stride rather than a load and a field can run forever without any
+room being bigger than the camera window.
+
+**The mouth grammar.** An edge is 20 tiles; a mouth is exactly 2 wide and
+starts at offset **3, 6, 12 or 15**. The centre (9, 10) is excluded on
+purpose: a passage that always arrives down the middle of the wall reads as
+graph paper. Those four are closed under rotation and mirroring (3 <-> 15,
+6 <-> 12), so a drawn piece is legal in all **eight** orientations, which is
+what turns 22 drawn shapes into 164 rooms without a generator touching any of
+them. **Two pieces mate when the edges they meet carry the same offsets** --
+the one rule that keeps the field from opening a corridor into a wall or
+closing the way you came. Continuation is therefore free (the vertical flip
+means a piece can always follow itself); what is NOT free is variety, so
+`tests/conventions.py` check 15 fails when fewer than two drawn shapes stand
+behind any mouth set, along with mis-typed rows, mouths off their slot,
+unreachable floor, and unpaired warps, in every orientation.
+
+**The deck authors SHAPE; the biome authors MATERIAL.** A wall is corn in the
+corn field, trees in the forest, black nothing on the road. The characters are
+wall, floor, void (`@`, ground that has fallen away: seen across, never
+crossed), a find, a fixed light, a shifting span, and a warp pair.
+
+**The two shift laws run at the same time.** *WATCHED*: a span slides between
+the sockets its room gives it while it is inside your sight cone, and never
+under your feet. *DISCOVERED*: the field re-decides what lies beyond mouths
+you have not crossed, and re-decides a room you left once you are two rooms
+away. This is a deliberate widening of "the dark rearranges itself" above:
+that rule moves only what you cannot see, and the span is the one thing that
+moves while you watch it. What never lies stays the same in both: the room you
+stand in, any room holding a fixed light, and any room where you found a
+person.
+
+Drawn today, by group: the runs (`west_run`, `twin_run`, `throat`, `pinch`),
+the turns and junctions (`bend_se`, `tee_south`, `cross_skew`, `fork_rejoin`,
+`hub`, `comb`), the loops (`ring`, `loop_blind`, `spiral`, `switchback`), the
+rooms (`gallery`, `hall_cells`, `haven`, `collapse`, `deadend_find`), and the
+impossible ones (`warp_pair`, `pit`, `moving_stair`). `tools/plan_page.py`
+draws every one of them, and every surface scene, onto one page.
+
 ### The fields are WORDLESS
 
 No narrator boxes, no notices, no case-notebook writes, no place name. The

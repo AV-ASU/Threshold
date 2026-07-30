@@ -170,6 +170,12 @@ python tools/look.py help             # the full verb list
 # reads as a sideways teleport.
 python tools/surface_map.py [--svg out.svg] [--json net.json]
 
+# THE WHOLE PLAN ON ONE PAGE -- every surface scene as a mini map read out of
+# its built tile grid, plus every hand-drawn corridor piece at tile resolution
+# beside what it is for. Regenerate it after the geography changes; it is
+# rendered from the game, never written down by hand.
+python tools/plan_page.py [out.html]
+
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
 ```
@@ -291,6 +297,19 @@ it renders the procedural sprites to a labelled PNG strip.
     `Game._tick_lost_edge` — **light gates entry: a lit edge is a wall.**
     Shipping mouth today: the lodge yard's treeline. Guards:
     `tests/flow.py` §32b, `tests/conventions.py` check 6.
+  - `scenes/lost_pieces.py` — **THE CORRIDOR DECK**, the geometry the
+    in-between is being rebuilt on (the SYSTEM is `DESIGN.md` §13). 22
+    hand-drawn 20x20 pieces; **nothing about a shape is generated, only the
+    ORDER is chosen.** One piece is one scene, crossed by `cross_fold`. What
+    bites when editing: a mouth is exactly 2 tiles wide at offset **3, 6, 12
+    or 15** and the CENTRE is never one (a corridor down the middle of the
+    wall reads as graph paper), the four are closed under rotate/mirror so
+    every piece is legal in 8 orientations, and **two pieces mate when the
+    edges they meet carry the same offsets**. The deck authors SHAPE, the
+    biome authors MATERIAL. Guarded by `tests/conventions.py` check 15, which
+    fails on a mis-typed row, a mouth off its slot, floor no mouth can reach,
+    an unpaired warp, a span with nowhere to slide, and on any mouth set fewer
+    than two drawn shapes stand behind. Draw it: `tools/plan_page.py`.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,

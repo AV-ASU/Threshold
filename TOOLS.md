@@ -81,6 +81,7 @@ terminal version is `python tools/index.py [word]`.
 - `tools/discoveries.py` — THE DISCOVERY CATALOG -- every single thing the player can find, listed.
 - `tools/inspect_spot.py` — LOOK CLOSE at one CORNER of a real scene -- the middle altitude.
 - `tools/look.py` — LOOK -- one running game you can look at, EDIT, and PLAY.
+- `tools/plan_page.py` — THE PLAN, DRAWN -- one HTML page showing the world's geography as shapes.
 - `tools/preview_amalgam.py` — Preview the AMALGAMS (rendering/amalgam.py): the Watcher-family shadows
 - `tools/preview_apex.py` — Preview THE APEX -- the Mask wearing a unit, in its various forms.
 - `tools/preview_look_control.py` — Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
