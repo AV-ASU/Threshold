@@ -55,15 +55,19 @@ def main():
         print("no piece %r. --list to see them." % args.piece)
         return 1
 
-    # Pin the piece into the entry cell of a fresh field, then load the field's
-    # ROOT key: the room the mouth drops you in is cell (0, 0), so the ordinary
-    # capture path reaches it with no special casing.
+    # Pin the piece into a field cell and load THAT cell's key, not the
+    # field's root. The root of a biome the field does not own yet is still
+    # the generated field's registry entry, so loading it hands back the pond
+    # island and the tool cheerfully reports four distinct facings of the
+    # wrong place. A cell key always routes through `build_room`.
     root = ROOT[args.biome]
+    cell = (0, 1)
     rots = LP.orientations(LP.DECK[args.piece]["rows"])
     fld = LF.LostField(root, args.biome, seed=5)
-    fld.cells[(0, 0)] = (args.piece, args.orient % len(rots))
-    fld.span.pop((0, 0), None)
+    fld.cells[cell] = (args.piece, args.orient % len(rots))
+    fld.span.pop(cell, None)
     LF.FIELD = fld
+    key = fld.key_for(cell)
 
     out = "/tmp/lostroom_%s" % args.tag
     os.makedirs(out, exist_ok=True)
@@ -72,8 +76,15 @@ def main():
     for name, heading, fv in FACINGS:
         # every capture reloads the scene, and the field must survive that
         LF.FIELD = fld
-        shots[name] = capture(g, root, heading, fv, None, None, args.bright,
+        shots[name] = capture(g, key, heading, fv, None, None, args.bright,
                               0, 0, None)
+        # Loud, not silent: if anything but the pinned room came back, the
+        # sheet is a picture of somewhere else.
+        got = getattr(g.scene, "_cell", None)
+        if got != cell or g.scene._field.cells[cell][0] != args.piece:
+            print("FAIL: loaded %s, not the pinned %s"
+                  % (g.scene.key, args.piece))
+            return 1
         pygame.image.save(shots[name],
                           "%s/%s_%s.png" % (out, args.piece, name))
     print("  %s (%s, orientation %d) -> %s"

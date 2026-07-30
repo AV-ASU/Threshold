@@ -468,9 +468,17 @@
 
   Build order:
   - **Corn and forest move onto the deck.** They are still the generated sea
-    with a hand-authored island. The island, the occupied camp and the
-    lamp-carriers are the content that has to become PIECES first, or moving
-    them loses the best thing in the in-between. Draw the camp as a room.
+    with a hand-authored island. Two things block it. (1) The island, the
+    occupied camp and the lamp-carriers are the best content in the
+    in-between and have to become PIECES first, or the move loses them. Draw
+    the camp as a room. (2) **Neither biome has a wall material that reads as
+    a corridor under the tilt.** Looked at with `tools/preview_lost_room.py`:
+    a tree wall closes its canopy over a two-tile path and the drawn shape is
+    invisible from above; swapping to the rock tile makes the shape perfectly
+    legible and reads as a grid of identical pebbles in lockstep rows, which
+    is error class #8. The road ships because a stone wall is a real slab
+    volume. Forest and corn need one of those, and it is a draw problem, not a
+    deck problem.
   - **The people in there.** A `haven` holds one person, pinned the moment you
     find them. They are not Mara; she is what the field stands between you and.
     Needs a reason they are down here and something they can say.
