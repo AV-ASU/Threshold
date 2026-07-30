@@ -50,13 +50,21 @@ from scenes import lost_pieces as LP
 # ---- the field's material, per biome ---------------------------------------
 # The deck authors SHAPE; this authors MATERIAL.
 #
-# THE ROAD'S WALL IS NOTHING, and that is the whole look of it. Built out of
-# `#` it was a stone canyon: grey wall-tops running either side of a dirt
-# track, which is a place, and the in-between is specifically not one. So the
-# road's wall is the same near-black ground the void gaps are made of, with an
-# invisible solid over it: the tarmac simply stops, and past the edge there is
-# nothing to see and nothing to walk on. The corridor is legible because the
-# GROUND ends, not because something was built beside it.
+# THERE ARE NO WALLS. In every biome the ground simply STOPS, and past the
+# edge is nothing to see and nothing to walk on. Everything else was tried and
+# every one failed the same way, by filling a wall with a material: `#` was a
+# stone canyon, `R` was a grid of identical pebbles in lockstep rows, and `T`
+# closed its canopy over the two-tile path so the drawn shape was invisible
+# from a camera looking down at 55 degrees. Trimming the trees to a single tile
+# at the lip did not save it either, because a coil's walls ARE one tile and
+# every one of them is a lip.
+#
+# So the corridor is legible because the GROUND ENDS, in all three. What tells
+# you which place you are lost from is the FLOOR you are walking on, the litter
+# left on it, a low FRINGE of growth along the lip -- knee-high things that
+# cannot roof anything -- and the TALL growth one rank further back, standing
+# out past where the ground ends. A tree on the lip is a wall; a tree beyond
+# the lip is a treeline you are looking out at across the dark.
 # SMALL vs BIG is not decoration, it is fit. A corridor is two tiles wide and
 # a rust hulk is wider than that, so scattering vehicles through corridors
 # stacks three of them on one bend and reads as a scrapyard rather than a
@@ -64,14 +72,21 @@ from scenes import lost_pieces as LP
 # (see `_ROOMY`), which is what makes the gallery and the hub feel like the
 # rooms they are drawn as.
 BIOMES = {
-    "road":   {"floor": "d", "wall": None, "music": "village",
+    "road":   {"floor": "d", "fringe": (), "beyond": (),
+               "beyond_tile": None, "music": "village",
+               "pillar": ("rust_van", "rust_wagon", "rust_sedan"),
                "small": ("tin_cans", "glass_litter", "crate_stack",
                          "dead_crow"),
                "big": ("rust_sedan", "rust_wagon", "rust_van", "rust_coupe")},
-    "forest": {"floor": "g", "wall": "T", "music": "village",
+    "forest": {"floor": "g", "fringe": ("bush", "bush", "tall_grass"),
+               "beyond": ("creepy_tree",), "beyond_tile": None,
+               "pillar": ("creepy_tree",), "music": "village",
                "small": ("grass_tuft", "tall_grass", "log_seat", "leaves"),
                "big": ("creepy_tree", "standing_stone", "boulder")},
-    "corn":   {"floor": "g", "wall": "C", "music": "village",
+    "corn":   {"floor": ";", "fringe": ("tall_grass", "tall_grass", "bush"),
+               "beyond": (), "beyond_tile": "C",
+               "pillar": ("corn_altar", "standing_stone"),
+               "music": "village",
                "small": ("tall_grass", "grass_tuft", "corn_doll",
                          "tin_cans"),
                "big": ("corn_altar", "standing_stone", "wheelbarrow")},
@@ -103,10 +118,26 @@ _STEP = {"n": (0, -1), "s": (0, 1), "e": (1, 0), "w": (-1, 0)}
 
 
 def _hash01(*vals):
-    h = 2166136261
+    """A deterministic 0..1 from any ints, and it has to be UNIFORM.
+
+    The first version was a plain FNV chain read from the top bits, and for
+    the small, nearly-constant arguments this module actually passes it (a
+    seed, two cell coordinates, a tile index) every result landed between 0.87
+    and 0.95. Nothing crashed. What it did instead was quieter: `int(h * n)`
+    always picked near the END of a list, so the field leaned on the same
+    pieces, the fringe never fell under its threshold and simply did not
+    appear, and the shifting span oscillated between two of its three sockets.
+    A biased hash does not fail, it just makes everything downstream duller
+    than it was written to be. So: finalise each value with an avalanche mix
+    before folding it in, and read the LOW bits.
+    """
+    h = 0x9e3779b9
     for v in vals:
-        h = ((h ^ (int(v) & 0xffffffff)) * 16777619) & 0xffffffff
-    return ((h >> 8) & 0xffff) / 65535.0
+        x = (int(v) ^ h) & 0xffffffff
+        x = (x ^ (x >> 16)) * 0x85ebca6b & 0xffffffff
+        x = (x ^ (x >> 13)) * 0xc2b2ae35 & 0xffffffff
+        h = (x ^ (x >> 16)) & 0xffffffff
+    return (h & 0xffffff) / float(0x1000000)
 
 
 
@@ -125,6 +156,87 @@ def _roomy(rows, x, y):
 def _pick(cfg, rows, x, y, h):
     lib = cfg["big"] if _roomy(rows, x, y) else cfg["small"]
     return lib[int(h * len(lib)) % len(lib)]
+
+
+
+def _is_pillar(rows, x, y):
+    """A wall tile standing INSIDE a room rather than forming its edge.
+
+    The gallery and the hub are drawn with pillars in them, and a pillar built
+    out of nothing is a hole in the floor: the room reads as a raft with bites
+    taken out of it instead of a hall you weave through. So a wall tile with
+    open ground most of the way round it gets something that STANDS on it, and
+    the absence stays the job of the edges and the authored void.
+    """
+    if rows[y][x] != LP.WALL:
+        return False
+    open_n = 0
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if dx == 0 and dy == 0:
+                continue
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < LP.SIZE and 0 <= ny < LP.SIZE):
+                continue
+            if rows[ny][nx] in LP._WALKABLE:
+                open_n += 1
+    return open_n >= 5
+
+
+def _pillar_anchor(rows, x, y):
+    """The one tile of a pillar clump that carries its prop.
+
+    A drawn pillar is two tiles by two, so one prop per TILE puts four wrecks
+    in the space of one and they overlap into a heap. The clump's top-left
+    tile owns it, and it is drawn at the clump's centre.
+    """
+    if not _is_pillar(rows, x, y):
+        return False
+    for dx, dy in ((-1, 0), (0, -1), (-1, -1)):
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < LP.SIZE and 0 <= ny < LP.SIZE and _is_pillar(rows, nx, ny):
+            return False
+    return True
+
+
+def _second_rank(rows, x, y):
+    """A wall tile one step BACK from the lip.
+
+    Where the tall growth goes. A tree planted on the lip overhangs the path
+    it is meant to edge, because the lip is by definition the tile against the
+    corridor; one rank back its canopy falls over the lip and the dark instead,
+    and what you get is a treeline standing out there past where the ground
+    ends. Returns False anywhere the wall is too thin to have a second rank,
+    which is exactly where a tree would have closed over the corridor.
+    """
+    if rows[y][x] != LP.WALL or _at_the_lip(rows, x, y):
+        return False
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < LP.SIZE and 0 <= ny < LP.SIZE):
+                continue
+            if rows[ny][nx] == LP.WALL and _at_the_lip(rows, nx, ny):
+                return True
+    return False
+
+
+def _at_the_lip(rows, x, y):
+    """Is this wall tile the LAST one before the ground you can walk on?
+
+    The fringe is planted here and only here: a rim of low growth along the
+    edge of the ground, so the biome is legible without anything standing tall
+    enough to roof the path. Diagonals count, so an outside corner keeps its
+    rim unbroken.
+    """
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < LP.SIZE and 0 <= ny < LP.SIZE):
+                continue
+            if rows[ny][nx] in LP._WALKABLE:
+                return True
+    return False
 
 
 # ============================================================ THE DIRECTOR ==
@@ -348,16 +460,22 @@ def _make(fld, cell):
     rows = fld.rows_at(cell)
     cfg = BIOMES[fld.biome]
     floor, obj = [], []
-    for r in rows:
+    for y, r in enumerate(rows):
         f_row, o_row = [], []
-        for ch in r:
+        for x, ch in enumerate(r):
             if ch == LP.WALL:
-                if cfg["wall"] is None:          # the wall is nothing
+                # The corn has no decoration kind, only a tile, so its tall
+                # growth is stamped here rather than dressed on afterwards.
+                # Same rule as the trees: one rank BACK from the lip, gapped
+                # so it is a field edge and not a hedge.
+                bt = cfg.get("beyond_tile")
+                if (bt and _second_rank(rows, x, y)
+                        and _hash01(fld.seed, x * 3, y * 11) < 0.7):
+                    f_row.append(cfg["floor"])
+                    o_row.append(bt)
+                else:
                     f_row.append(VOID_FLOOR)
                     o_row.append(WALL_VOID)
-                else:
-                    f_row.append(cfg["floor"])
-                    o_row.append(cfg["wall"])
             elif ch == LP.VOID:
                 f_row.append(VOID_FLOOR)
                 o_row.append(VOID_OBJECT)
@@ -411,6 +529,42 @@ def _dress(sc, fld, rows, cfg):
     """
     sc._warps = []
     sc._exit_light = None
+    # THE FRINGE: low growth along the lip of the ground. Sparse and hashed,
+    # never every tile -- an unbroken rim reads as a hedge somebody planted,
+    # and a perfectly even one is the grid lockstep the playtest keeps
+    # catching.
+    lib = cfg["fringe"]
+    tall = cfg["beyond"]
+    if lib or tall or cfg.get("pillar"):
+        for y, row in enumerate(rows):
+            for x, ch in enumerate(row):
+                if ch != LP.WALL:
+                    continue
+                if cfg.get("pillar") and _pillar_anchor(rows, x, y):
+                    pick, cut = cfg["pillar"], 1.1     # never gapped
+                elif lib and _at_the_lip(rows, x, y):
+                    pick, cut = lib, 0.55
+                elif tall and _second_rank(rows, x, y):
+                    pick, cut = tall, 0.42
+                else:
+                    continue
+                h = _hash01(fld.seed, sc._cell[0] * 31, sc._cell[1] * 17,
+                            x * 7 + y * 131)
+                if h > cut:
+                    continue
+                k = pick[int(_hash01(x * 13, y * 29, fld.seed) * len(pick))
+                         % len(pick)]
+                px, py = x, y
+                if cut > 1.0:            # a pillar: centre it on its clump
+                    w = h = 1
+                    while x + w < LP.SIZE and _is_pillar(rows, x + w, y):
+                        w += 1
+                    while y + h < LP.SIZE and _is_pillar(rows, x, y + h):
+                        h += 1
+                    px, py = x + (w - 1) / 2.0, y + (h - 1) / 2.0
+                sc.add_decoration(Decoration(px * TILE + TILE // 2,
+                                             py * TILE + TILE // 2, k,
+                                             seed=(x * 41 + y) & 0xffff))
     for y, row in enumerate(rows):
         for x, ch in enumerate(row):
             wx, wy = x * TILE + TILE // 2, y * TILE + TILE // 2
@@ -594,14 +748,8 @@ def _tick_span(game, sc, dt):
         return                       # only ever moves while it is watched
     nxt = [s for s in sockets if s != here]
     sc._span_n = getattr(sc, "_span_n", 0) + 1
-    # The move counter is mixed hard before it is hashed. Fed in raw it made
-    # the span oscillate between two sockets and visit the third about one
-    # time in twelve, which reads as a bridge stuck between two positions
-    # rather than one that goes anywhere.
-    pick = nxt[int(_hash01(sc._field.seed, sc._cell[0] * 7919,
-                           sc._cell[1] * 104729,
-                           (sc._span_n * 2654435761) & 0xffffffff, here)
-                   * len(nxt)) % len(nxt)]
+    pick = nxt[int(_hash01(sc._field.seed, sc._cell[0], sc._cell[1],
+                           sc._span_n, here) * len(nxt)) % len(nxt)]
     sc._field.span[sc._cell] = pick
     _restamp_span(sc, rows, LP.with_span_at(rows, pick))
 

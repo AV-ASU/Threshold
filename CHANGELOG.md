@@ -3187,9 +3187,42 @@
   position: you go through by walking through, and a shove onto the edge cannot
   fire it.
 
-  **The road's wall is NOTHING** (maintainer, on the first shots: *"as long
-  as it doesn't look like a stone canyon path or that stone spiral, we should
-  be good"*). It shipped built out of the stone wall char, which is exactly
+  **THERE ARE NO WALLS** (maintainer: *"as long as it doesn't look like a
+  stone canyon path or that stone spiral, we should be good"*, then *"can you
+  fix it"* about the two parked biomes). Every attempt at a wall failed the
+  same way, by filling it with a material: stone was the canyon, rock was a
+  grid of identical pebbles in lockstep rows, and trees closed their canopy
+  over the two-tile path so the drawn shape was invisible from a camera
+  looking down at 55 degrees. Trimming the trees to a single tile at the lip
+  did not save it either, because a coil's walls ARE one tile thick and every
+  one of them is a lip. So in all three biomes the ground simply STOPS, and
+  the corridor is legible because the ground ends rather than because
+  something was built beside it.
+
+  What tells you which place you are lost from is the floor, the litter on it,
+  a low FRINGE along the lip, and the TALL growth one rank further back: a
+  tree on the lip is a wall, a tree beyond the lip is a treeline you are
+  looking out at across the dark. Corn has no decoration kind so its stalks
+  are stamped as tiles on that same second rank. Interior PILLARS are the
+  exception and get something that stands (a road wreck, a tree, an altar),
+  one per clump rather than one per tile, because a pillar built out of
+  nothing is a hole in the floor and the gallery read as a raft with bites
+  taken out of it.
+
+  **And the hash was broken, which is what had been flattening everything.**
+  `_hash01` was a plain FNV chain read from the top bits, and for the small,
+  nearly-constant arguments this module passes it (a seed, two cell
+  coordinates, a tile index) every result landed between 0.87 and 0.95. It
+  never failed. What it did instead was quieter: `int(h * n)` always picked
+  near the END of a list, so the field leaned on the same few pieces, the
+  fringe never fell under its threshold and simply did not appear at all, and
+  the shifting span oscillated between two of its three sockets. Found by
+  asking why a room with 64 eligible lip tiles had two props on it. Fixed with
+  an avalanche mix per value, read from the low bits: over 60 rooms the field
+  now deals 19 distinct pieces where before it repeated a handful, and the
+  span's earlier hand-mixed workaround came back out.
+
+  The road's original wall was the first case of all this. It shipped built out of the stone wall char, which is exactly
   the stone canyon: grey wall-tops running either side of a dirt track, which
   is a PLACE, and the in-between is specifically not one. The plan had already
   said the road's wall was a black nothing; the build had quietly not done it.

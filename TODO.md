@@ -467,25 +467,19 @@
   puts you back on the street you fell from. What is open:
 
   Build order:
-  - **Corn and forest move onto the deck.** They are still the generated sea
-    with a hand-authored island. Two things block it. (1) The island, the
-    occupied camp and the lamp-carriers are the best content in the
-    in-between and have to become PIECES first, or the move loses them. Draw
-    the camp as a room. (2) **Neither biome has a wall material that reads as
-    a corridor under the tilt.** Looked at with `tools/preview_lost_room.py`:
-    a tree wall closes its canopy over a two-tile path and the drawn shape is
-    invisible from above; swapping to the rock tile makes the shape perfectly
-    legible and reads as a grid of identical pebbles in lockstep rows, which
-    is error class #8. The road ships because a stone wall is a real slab
-    volume. Forest and corn need one of those, and it is a draw problem, not a
-    deck problem.
+  - **Corn and forest move onto the deck.** Both READ now (there are no walls
+    in any biome, `DESIGN.md` §13; look with `tools/preview_lost_room.py
+    <piece> --biome forest`), so what is left is the content: the island, the
+    occupied camp and the lamp-carriers are the best things in the in-between
+    and have to become PIECES first, or the move loses them. Draw the camp as
+    a room.
   - **The people in there.** A `haven` holds one person, pinned the moment you
     find them. They are not Mara; she is what the field stands between you and.
     Needs a reason they are down here and something they can say.
-  - **The void reads as shadow, not a drop.** The gap is a near-black floor
-    with an invisible solid over it, so under the tilt it is a dark stripe
-    rather than ground that has fallen away. It wants an edge: the near lip
-    catching light, the far side visibly lower.
+  - **The void wants an edge.** It is a near-black floor with an invisible
+    solid over it, which now carries the whole look of the field, so it is
+    worth more than flat black: the near lip catching light, the far side
+    visibly lower. Everything reads without it; it would read better with it.
   - **More pieces.** 22 drawn, and the check holds the floor at two shapes per
     mouth set. The thin ones are the three-mouth edges (`moving_stair` and
     `comb` only). Draw against that number, not at random.

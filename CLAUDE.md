@@ -311,7 +311,8 @@ it renders the procedural sprites to a labelled PNG strip.
     wall reads as graph paper), the four are closed under rotate/mirror so
     every piece is legal in 8 orientations, and **two pieces mate when the
     edges they meet carry the same offsets**. The deck authors SHAPE, the
-    biome authors MATERIAL. Guarded by `tests/conventions.py` check 15, which
+    biome authors MATERIAL, and **there are no walls in any biome** (the
+    ground stops; see `DESIGN.md` §13 for why every filled wall failed). Guarded by `tests/conventions.py` check 15, which
     fails on a mis-typed row, a mouth off its slot, floor no mouth can reach,
     an unpaired warp, a span with nowhere to slide, and on any mouth set fewer
     than two drawn shapes stand behind. Draw it: `tools/plan_page.py`.

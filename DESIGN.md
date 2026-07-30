@@ -2153,10 +2153,28 @@ means a piece can always follow itself); what is NOT free is variety, so
 behind any mouth set, along with mis-typed rows, mouths off their slot,
 unreachable floor, and unpaired warps, in every orientation.
 
-**The deck authors SHAPE; the biome authors MATERIAL.** A wall is corn in the
-corn field, trees in the forest, black nothing on the road. The characters are
-wall, floor, void (`@`, ground that has fallen away: seen across, never
-crossed), a find, a fixed light, a shifting span, and a warp pair.
+**The deck authors SHAPE; the biome authors MATERIAL, and there are no
+walls.** In every biome the ground simply STOPS and past the edge is nothing
+to see and nothing to walk on. Everything else was tried and failed the same
+way, by filling a wall with a material: stone was a canyon, rock was a grid of
+identical pebbles, and trees closed their canopy over the two-tile path so the
+drawn shape was invisible from a camera looking down at 55 degrees. Trimming
+the trees to a single tile at the lip did not save it either, because a coil's
+walls ARE one tile and every one of them is a lip. So the corridor is legible
+because the GROUND ENDS.
+
+What says which place you are lost from is the FLOOR, the litter on it, a low
+FRINGE along the lip (knee-high things that cannot roof anything), and the
+TALL growth one rank further back, standing out past where the ground ends: a
+tree on the lip is a wall, a tree beyond the lip is a treeline seen across the
+dark. Interior pillars are the exception and get something that STANDS (a road
+wreck, a tree, an altar), one per clump, because a pillar built out of nothing
+is a hole in the floor and the room reads as a raft with bites out of it. The
+deck's characters are wall, floor, void (`@`, ground fallen away: seen across,
+never crossed), a find, a fixed light, a shifting span, and a warp pair; the
+gap and the wall are the same black and differ only in whether the eye passes
+(`x` vs `X`), and swapping them shows the player the corridors either side of
+the one they are in.
 
 **The two shift laws run at the same time.** *WATCHED*: a span slides between
 the sockets its room gives it while it is inside your sight cone, and never
