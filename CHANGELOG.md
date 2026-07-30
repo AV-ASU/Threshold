@@ -2706,6 +2706,57 @@
 
 ## Brimley geography
 
+- **2026-07 -- `TODO.md` is bullets, and its tickets have NAMES.** The
+  numbering is retired, on the maintainer's instruction and with a good reason
+  waiting underneath it: the numbers looked like stable identifiers and were
+  not. Nine of the numbers still cited in code comments already pointed at
+  tickets that no longer existed, and worse, several had been REUSED by later
+  tickets, so a comment reading `TODO #8` in `scenes/depths.py` (the
+  procession's diegetic beat) resolved to the live ticket for parked terrain
+  megabuilds, and `TODO #7` in `scenes/well.py` (the lure-chain fence)
+  resolved to the liminal-composition pass. A dead pointer wastes a minute; a
+  pointer that silently lands on an unrelated live ticket is worse than none.
+  A name survives a renumber.
+
+  The canon docs were repointed in the same pass: 35 citations across
+  `CLAUDE.md`, `DESIGN.md` and `DIALOGUE.md` now name the ticket, and the ones
+  that cited retired numbers for work that has since landed (the evidence
+  rework, the four-tier PI register, Vane's ledger, the Mara tableau, WADE)
+  lost the pointer rather than gaining a wrong name. The patch asserted a
+  unique match per site and then asserted that no canon doc still contains the
+  string `TODO #`.
+
+  **Forwarding map, for the numbers that were live when they were dropped:**
+  - #1 -> make evidence askable, the investigation loop
+  - #2 -> the favor economy
+  - #4 -> outdoor dread, the composition pass
+  - #4b -> CUT (see the next entry)
+  - #4c -> the wall program, freeform walls
+  - #5 -> stealth, the deferred verbs and the tight bands
+  - #6 -> combat, the stun window and the difficulty toggle
+  - #7 -> the liminal-composition pass (Deferred)
+  - #8 -> parked terrain megabuilds (Deferred)
+  - #12 -> Royce the trucker + the rusting semi
+  - #13b -> interior voice, quiet the routine reactions
+  - #16 -> the ship track, packaging
+  - #17 -> the ancient altar
+  - #20 -> the endings redraw (Deferred)
+  - #21 -> light is the pillar
+  - #23 (a/b/c/d) -> complex behavior for cultists and locals
+  - #24 -> the interiors program
+  - #25 -> the King becomes the storm
+  - #26 -> the lost spaces, the dark manipulation layer
+  - #27 -> remake the town sign
+  - #28 -> cut the calendars
+  - D -> doc consolidation; R -> the cross-model review gate
+
+  **Still open, deliberately not swept:** 178 `TODO #n` citations in code
+  comments. They were left alone rather than mapped mechanically, because the
+  reuse above means a number-to-name table would rewrite a comment about the
+  procession into a comment about terrain warps. Each site needs a person
+  reading what the comment is actually about; the map above is what they read
+  it against. Fix them as the files are touched for other reasons.
+
 - **2026-07 -- the backlog reprojected onto the new geography, and ticket #4b
   cut.** The retirement moved the world; the open-work list was still written
   in the old coordinate system, which made the next steps genuinely hard to
