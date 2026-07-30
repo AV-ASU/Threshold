@@ -148,6 +148,15 @@ python tools/preview_terrain.py [--chars g d ";"] [--seams] [--plants]
 python tools/screen_to_world.py <scene> --facing S --ev 2 --at 60,245 --at ...
 python tools/screen_to_world.py <scene> --facing S --grid /tmp/g.png
 
+# LOOK AT A SCENE, AND TURN IT. A headless game that stays BOOTED: load a
+# scene, face n/e/s/w or spin, and take a clean frame -- the WHOLE map in shot,
+# with the HUD, the interact prompt, the toasts and the tutorial notice all
+# muted (the clock is frozen for reproducibility, so a notice never times out
+# on its own). Turning costs a command instead of a re-boot, which is what the
+# still-capture tools charge.
+python tools/look.py serve &          # boot once, leave it up
+python tools/look.py scene shop_yard  # then: face e / spin 30 / at 12 9 / shot
+
 # HOW DOES THE SURFACE CONNECT? There is no town map (DESIGN.md §15) -- the
 # geography lives in two dozen scenes' exit tables, so READ it out of the built
 # scenes rather than remembering it. Also reports the seams where the two
