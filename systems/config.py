@@ -869,14 +869,14 @@ MAX_FULLSCREEN_DARK = 204
 # at 3 evidence. The stage is min(3, evidence) for the surface (monotonic;
 # the underground deepens past that on its own evidence clock).
 #
-# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2): the
+# The TOWNSFOLK do NOT change (NARRATIVE §2): the
 # old ROT_CONVERT / ROT_TURN tables (peace-makers repainted cultist,
 # resisters' dialogue curdled) were CUT. The world rot is the PI's now, and
 # it lives in the four-tier conversation framing (scenes/dialogue._pi_framing
 # / _pi_tier). Sheriff Vane's fall stays PLAYER-DRIVEN (the VANE_* ledger
 # below, DESIGN.md §2).
 
-# ---- Sheriff Vane's despair/hope ledger (DESIGN.md §2; was TODO #2a) --
+# ---- Sheriff Vane's despair/hope ledger (DESIGN.md §2) ----------------
 # A hidden balance decides the last holdout's fate; the player never sees
 # a number, only his mood (the conversation's framing line + the beats).
 # HOPE is earned one way: the PI SHARING a real discovery with him

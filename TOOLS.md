@@ -57,7 +57,7 @@ terminal version is `python tools/index.py [word]`.
 
 - `tools/portal_poc.py` — Non-Euclidean portal / hidden-fold proof of concept (offline, headless).
 - `tools/preview_door_live.py` — LIVE verify -- see-through doors through the REAL game renderer.
-- `tools/preview_door_sight.py` — See-through door ACTOR sight-gating preview (DESIGN.md §7; TODO #2).
+- `tools/preview_door_sight.py` — See-through door ACTOR sight-gating preview (DESIGN.md §7).
 - `tools/preview_portal.py` — VISION MOCKUP -- the PORTAL: a standing 4D pane with a dim black-gold electric
 - `tools/preview_rift_anchored.py` — LIVE preview -- the ANCHORED rift frame, through the real game renderer.
 - `tools/preview_seethrough_door.py` — PROTOTYPE preview -- the SEE-THROUGH DOOR.

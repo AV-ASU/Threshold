@@ -625,6 +625,53 @@ def _address_tics():
                 "    speaker that shares it (story audit, 2026-07):\n"
                 + "\n".join(rows))
 
+# ------------------------------------------------- 13. ticket refs resolve
+# THE RULE (TODO.md): a ticket number is a STABLE ID. It is never reused,
+# renumbered, or recycled, and when a ticket lands its number retires with it
+# -- so a `TODO #n` citation anywhere in the code or the canon docs must still
+# resolve to a live ticket heading in TODO.md. Cite the canon home
+# (NARRATIVE §n / DESIGN §n) or CHANGELOG.md for anything that has landed.
+# WHY THIS CHECK: the 2026-07 consolidation found 47 citations pointing at
+# retired tickets, and worse, NINE pointing at a number that had since been
+# handed to an UNRELATED live ticket -- the deep-water WADE cited ticket eight,
+# which by then meant a parked-terrain megabuild, and the lure-chain fence
+# cited seven, which by then meant an outdoor composition pass. A dangling
+# reference is merely dead; a recycled one actively misdirects, and neither is
+# visible one comment at a time.
+# CHANGELOG.md is exempt: it is history, and history correctly cites the
+# numbers that were live when the work landed.
+_TICKET_RE = re.compile(r'TODO(?:\.md)?`?\s#(\d+[a-z]?)')
+_TICKET_HEAD_RE = re.compile(r'^#{2,4}\s+\**(\d+[a-z]?)\.', re.M)
+
+
+@check("every TODO #n citation resolves to a live ticket")
+def _ticket_refs():
+    todo = open(os.path.join(_ROOT, "TODO.md")).read()
+    live = set(_TICKET_HEAD_RE.findall(todo))
+    # Sub-items authored inside a parent ticket's body (23a, 23b ...) count as
+    # live: they are the parent's build order, not tickets of their own.
+    live |= set(re.findall(r'\*\*(\d+[a-z])\b', todo))
+    if not live:
+        return "    TODO.md exposes no ticket headings -- the check cannot work"
+    rows = []
+    for root, dirs, files in os.walk("."):
+        dirs[:] = [d for d in dirs
+                   if d not in ("__pycache__", ".git", "scratchpad")]
+        for fn in sorted(files):
+            if not fn.endswith((".py", ".md")) or fn == "CHANGELOG.md":
+                continue
+            rel = os.path.join(root, fn)
+            for i, line in enumerate(open(rel, errors="replace"), 1):
+                for num in _TICKET_RE.findall(line):
+                    if num not in live:
+                        rows.append(f"    {rel[2:]}:{i} -> TODO #{num} "
+                                    f"is not a live ticket")
+    if rows:
+        return ("    A retired ticket number never comes back (TODO.md):\n"
+                + "\n".join(rows[:40])
+                + (f"\n    ... and {len(rows) - 40} more" if len(rows) > 40 else ""))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

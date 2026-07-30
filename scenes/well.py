@@ -142,7 +142,7 @@ def build_well_bottom():
     sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
-    # TODO #9 -- the SPREAD counterweight. A SPREAD-bound player never
+    # The SPREAD counterweight. A SPREAD-bound player never
     # passes the Deepest Face fuse (where both roads are spoken), so the
     # fork could end without ever reading as a fork. One interior-voice
     # beat, fired ONCE, on standing at the way up with His face in hand:
@@ -894,7 +894,7 @@ MARA_CONVO = {
                         "whatever makes him stop.[/c]"),
             ],
         },
-        # The name-beat (TODO #22b). Bear-gated: only the man carrying the
+        # The name-beat (NARRATIVE §6). Bear-gated: only the man carrying the
         # boy's bear can say his name. Meant kindly, it is the one word she
         # cannot survive: it splits the fused "he" she has guarded for
         # months. She DETONATES (seizes the PI, the rite's stillness cracks,
@@ -976,7 +976,7 @@ def _mara_voice(game, npc):
         "Mara, kneeling with the congregation. Turned. There was never anyone to bring back.",
     ])
     game._open_mara_tableau(npc)
-    # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence: never
+    # The lure chain, felt ONCE (NARRATIVE §1 fence: never
     # stated, no chain named; the PI starts the thought and declines to
     # finish it). A caption under her greeting (queued behind the frozen
     # close-up, it lands as the tableau drops and the PI walks away), only
@@ -1203,7 +1203,7 @@ def build_works_sign():
                     return
                 game._mara_stage = None
                 # The one that never moved is the room's last word
-                # (TODO #8; NARRATIVE §2: the self dissolved into the
+                # (NARRATIVE §2: the self dissolved into the
                 # work).
                 game.dialog.show([
                     "[c=dim]The one bowed at the altar's foot never "

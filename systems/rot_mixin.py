@@ -2,7 +2,7 @@
 
 The evidence-driven decay pass (decals + the hunting sheriff) and the
 airborne ashfall overlay, extracted from systems/game.py as an RotMixin on
-the Game class. Since TODO #22c the pass NO LONGER changes the townsfolk
+the Game class. The pass NO LONGER changes the townsfolk
 (the town stays ordinary; the rot is the PI's, in the conversation
 framing) -- only the corpse dialogue helper travels here now
 (_corpse_examine, re-imported by game.py for _make_corpse). Tuning lives
@@ -35,7 +35,7 @@ def _corpse_examine(game, npc):
 
 
 # (The converted-local dialogue, the ROT_TURN line table, and the
-# turned-local dialogue were CUT in TODO #22c. The town stays ordinary
+# turned-local dialogue were CUT. The town stays ordinary
 # to the end: no local joins on-screen and no resister's voice curdles.
 # The world rot is the PI's now, carried by the four-tier conversation
 # framing (scenes/dialogue._pi_framing); NARRATIVE §2.)
@@ -166,7 +166,7 @@ class RotMixin:
             self._rot_decals(max(1, self._evidence_count()), underground=True)
         elif surface_stage > 0:
             self._rot_decals(surface_stage, underground=False)
-        # The town stays ORDINARY to the end (TODO #22c, NARRATIVE §2): the world rot is the INVESTIGATOR'S now, not the
+        # The town stays ORDINARY to the end (NARRATIVE §2): the world rot is the INVESTIGATOR'S now, not the
         # townsfolk's. The old people-change (converting peace-makers into
         # cultist sprites, curdling the resisters' dialogue) is CUT; the
         # locals keep their bodies, faces, and voices. Only the PI curdles,
@@ -295,7 +295,7 @@ class RotMixin:
     # PI now, in the conversation framing, scenes/dialogue._pi_framing.)
 
     def _vane_is_hollow(self):
-        """Sheriff Vane's fate gate (DESIGN.md §2; was TODO #2a). True once the hollow turn
+        """Sheriff Vane's fate gate (DESIGN.md §2). True once the hollow turn
         has latched: by the despair ledger (scenes/dialogue._vane_ledger --
         the newspaper and the preacher's murder against the hope the PI
         shared), or by the NEGLECT OVERRIDE evaluated here: the case

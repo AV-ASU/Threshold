@@ -214,7 +214,7 @@ def _draw_town_sign_solid(surf, cam, deco):
         span = max(1.0, bot_y - top_y)
         if welcome:
             # Three stacked lines: the name, the corn boast, the founding
-            # year -- an old-timey painted welcome board (TODO #11; the
+            # year -- an old-timey painted welcome board (NARRATIVE §2; the
             # corn pride is a mundane human feat, never the door's doing).
             big = pygame.font.SysFont(None, max(9, int(9 * s * cam.scale)),
                                       bold=True)

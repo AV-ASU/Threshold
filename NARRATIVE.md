@@ -19,7 +19,7 @@ Brimley, 1994. You are an unnamed **private investigator**. The client,
 **Mara**, who cut ties, drove north, and stopped calling home. The only
 lead runs to Brimley, a small corn town in northern Minnesota — that she
 found the cult there is something the PI **learns on the ground, never
-intake** (his case file carries no religion or cult; §4, `TODO.md` #13).
+intake** (his case file carries no religion or cult; §4).
 You drove in to ask a few questions and drive out.
 
 You can't. The **King in Yellow** has the town folded shut: the roads
@@ -344,7 +344,7 @@ never predation.
   cap above (a prior cycle's scar, holding nothing). The congregation
   mined toward the frame and never reached it; the PI is the first
   living soul to stand before it.
-- **Carcosa (codified 2026-07).** The King's dead city on the far side
+- **Carcosa.** The King's dead city on the far side
   of the Threshold. It is not a level, and it is never a destination:
   **no soul from Brimley is in Carcosa, and no one is ever carried
   there one at a time.** Everyone inside the town line stays inside
@@ -356,13 +356,13 @@ never predation.
   look *into* Him — the furnace of drifting masks — and those masks
   are slices of *Him* crossing the plane (§2), never trophies of the
   taken. You only ever see it by losing.
-- **Carcosa's one look (codified 2026-07).** Black is the ground note:
+- **Carcosa's one look.** Black is the ground note:
   a black sky, the black stars, the twin suns low at the horizon, and
   His gold fire the only light — the rift's black-gold grammar at
   cosmic scale. The SEAL tableau (lines on black under the black stars
   and twin suns) is the reference image; every other glimpse (the
   King-catch furnace, the BREAK blast) must read as the same place.
-  Any pale-teal or green cast is off-model (open work: `TODO.md` #19).
+  Any pale-teal or green cast is off-model (open work: `TODO.md` #20).
 - **The names stay off the page.** *Carcosa*, *the King in Yellow*,
   and *the Yellow King* never appear in player-facing text — those
   three strings exactly, and they are the ones guarded
@@ -386,19 +386,10 @@ The thread that drags you down. It is **Mara's case** — a missing
 person — so the evidence is **Mara's trail and nothing else**: a
 biography of one woman's descent, reconstructed piece by piece.
 
-> **Rework landed (2026-07; build `TODO.md` #22, design `DESIGN.md` §9).**
-> The code now implements this section. `CANONICAL_EVIDENCE` is the trail
-> (`maras_receipt`, `maras_record`, `maras_journal`, `maras_dig`,
-> `maras_room`); the Ledger and Preacher file as notes, the Pallid Mask is
-> the keystone item, and Mara is proof (the calling-out fires but no longer
-> counts). The **bear** is Toby's optional loan (item `bear`, tag reads the
-> boy's name, never gates), it detonates in the inventory once the letter is
-> read, and the bear-gated **name-beat** (`MARA_CONVO`) lets the PI say the
-> name: she breaks, refuses the bear, and turns back to the dig unchanged
-> (**invariant:** Mara never says the name; only the PI and the tag do). And
-> the world rot is the **PI's**, not the town's: the old people-change is cut
-> (the townsfolk stay ordinary to the end), replaced by a four-tier PI
-> register in the conversation framing (0 / 1-2 / 3 / 4+ evidence).
+> **In code:** the trail below is `CANONICAL_EVIDENCE` and nothing else
+> counts toward the gate. The wiring is `DESIGN.md` §9; the world rot this
+> section's understanding drives is the **PI's**, not the town's (the
+> townsfolk stay ordinary to the end, `DESIGN.md` §2).
 
 **Three categories, and only one is evidence:**
 
@@ -543,10 +534,8 @@ one choice.
 you — that arrives in either of the two ways He is in the world at all: as
 the thing that walks, or as the storm's bearer, His face riding a shadow
 (§4). It is the same ending and the same taking; only what closes the
-distance differs. Their cards are separate (`DESIGN.md` §1), and the
-bearer's is unmade at the time of writing: a wordless placeholder stands in
-until its own art is drawn (`TODO.md` #25). Whichever reaches you, the
-fiction is unchanged and nobody goes to Carcosa (§5).
+distance differs. Their cards are separate (`DESIGN.md` §1). Whichever
+reaches you, the fiction is unchanged and nobody goes to Carcosa (§5).
 
 **The fork.** Both chosen endings branch from one object, the **Pallid
 Mask**, lifted in the Sign Chamber. There is only one, and from the
@@ -666,7 +655,7 @@ purpose, and keep each one guarded where a guard exists.
   never statements or notes. The surface trail must be reachable above
   ground so the threat has something to ramp against; the descent is
   gated on it. (Implemented as `CANONICAL_EVIDENCE`, Mara's five pickups; the King arms
-  at 3 evidence, met by the three surface beats. `TODO.md` #22, landed.) → §6
+  at 3 evidence, met by the three surface beats.) → §6
 - **One way down: the rite.** Invitation (Sable, 3 evidence) → school
   chalk door → grove rite → the Works. The well is set-dressing; the
   barn hatch is nailed shut from below. → §7
@@ -757,4 +746,4 @@ purpose, and keep each one guarded where a guard exists.
   that he was lured (the why-him stays the felt unease of §1). Accepting
   the impossible *fact* is his arc; the cosmology stays dark. His written
   theory is allowed to reason WRONG (the robes are the ones who could
-  stop this) and the game never corrects him. → §1b, §2, `TODO.md` #13
+  stop this) and the game never corrects him. → §1, §2

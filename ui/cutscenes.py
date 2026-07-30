@@ -537,7 +537,7 @@ class CutsceneMixin:
         (rendering/props.py _draw_town_sign_solid, the BRIMLEY variant): the
         name, the corn boast, the founding year, on a weathered two-post
         wooden board. The corn pride is a mundane human feat, never the
-        door's doing (TODO #11 guardrail)."""
+        door's doing (NARRATIVE §2 guardrail)."""
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
         bw, bh = 112, 48

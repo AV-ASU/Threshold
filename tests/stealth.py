@@ -727,7 +727,7 @@ def main():
               for n in g.scene.npcs),
           "wake: the first find raises the hooded ones")
 
-    # --- 10. deep-water WADE (TODO #8) -----------------------------------
+    # --- 10. deep-water WADE (DESIGN.md §1) -----------------------------
     # The flooded deep works slow the player and throw a loud splash the
     # searchers converge on. Scoped to WADE_SCENES; the Brimley river is
     # NOT one, so its `~` keeps its own set-piece rules.

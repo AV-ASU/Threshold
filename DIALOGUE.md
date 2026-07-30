@@ -150,7 +150,7 @@ intro:" / "Opener photo:").
   **"That's all for now."** (Mara's confrontation alone closes on **"Say
   nothing."**). The engine's fallback framing prompt, if a conversation
   authors none, is "What do you ask?" (every shipped convo authors its own).
-- **The PI's four-tier weather** (`_PI_WEATHER`, TODO #22c): every framing
+- **The PI's four-tier weather** (`_PI_WEATHER`, `DESIGN.md` §2): every framing
   line below composes one of these onto its base as evidence mounts (tier 0
   is empty; the NPC's words never change, the man hearing them does):
   - tier 1 (1-2 evidence): " Something in this town isn't sitting right, and
@@ -614,7 +614,7 @@ intro:" / "Opener photo:").
   "[c=dim]She has gone back to the kneeling. She won't look at you
   again.[/c]"
 - **The lure-chain caption** (queued behind the tableau, only if the PI
-  lived the dream, `flashback_seen`; TODO #7 fence, felt once, never
+  lived the dream, `flashback_seen`; the `NARRATIVE.md` §1 fence, felt once, never
   stated): (narrator) "[c=dim](A door in your sleep, a year back. Then a
   grief job you had no reason to take, and an itch that drove you north
   with it.)[/c]" / "[c=dim](And every road in handed you here. To her,

@@ -87,7 +87,7 @@ class ThreatMixin:
                 self._gaze_count += w
             if tag == "cult_convert":
                 # Vestigial: the `cult_convert` tag is never set anymore (the
-                # turned-local layer was cut, TODO #22c; guarded dead by
+                # turned-local layer was cut; guarded dead by
                 # tests/flow.py). This branch no longer runs.
                 continue
             # Regular cultist: one "they've seen you" beat per fresh

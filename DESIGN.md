@@ -337,7 +337,7 @@ its head) and pings the cult to **investigate the body**, and the body
   Limbs walk backwards into their cuts; masses breathe themselves shut; a
   dying cut smokes. The gun and axe **share one weapon slot** (left-click
   to use; switch which is equipped from the inventory screen).
-- **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
+- **Deep-water WADE** (`WADE_*` config, `Game._wading`): the
   flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
   depths_threshing) stand in walkable `~` water. Wading a water tile
   **halves the player's speed** (sprint can't clear it) and throws a
@@ -409,8 +409,7 @@ What rises with the stage:
   cover from the gaze (§1). The dark is the CONDITION His things need, not a
   tool you get to use; what is still missing is the flood it exists to hold: the
   amalgam-cut storm (TODO #25).
-- **The people do NOT change — the man hearing them does (TODO #22c,
-  2026-07).** The town stays ordinary end to end: every local keeps their
+- **The people do NOT change — the man hearing them does.** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the
   wrongness is the *place*, not the people, NARRATIVE §2/§6). What rises
   with the stage is the **PI's own reading** of them — a four-tier
@@ -422,7 +421,7 @@ What rises with the stage:
   people-change layer — peace-makers *convert*, resisters *turn* — was CUT
   with this rework; DESIGN.md §9, NARRATIVE §6.)
 - **Sheriff Vane falls last, and hardest — and his fall is
-  player-driven (TODO #2a, built 2026-07).** The last holdout, and the
+  player-driven.** The last holdout, and the
   one soul in town **claimed but unattuned** (he never dreamed the door;
   NARRATIVE §4). The world rot never turns him on its own; a hidden
   **despair/hope ledger** decides his fate (`vane_despair`, the `VANE_*`
@@ -580,7 +579,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. **Two dug side-chambers off the sorting floor (#14, 2026-07):** a FINISHED overflow store (crates, a shed-life pile, a kept candle, a wall tally) and a HALF-DUG niche (a low spoil pile, pick gouges, no light), each through a single ADIT cut into the north block clear of the tally + taxidermy mounts, off the patrol floor so the tuned crossing/tables/hides are untouched. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence: the unsent letter (`maras_room`, a canonical trail beat — NARRATIVE §6).** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (NARRATIVE §2). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (NARRATIVE §9), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Old Stores). |
-| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands (Mara is **proof, not a counted beat** since the TODO #22 rework: the calling-out fires but no longer counts). The talk itself is the last **close-up tableau** (`_open_mara_tableau`, TODO #2b): she opens masked and hooded, listed as one of the congregation, until the greet unmasks her — the reveal. **Lift the Pallid Mask → `pallid_mask`** — the **keystone item**, not a case beat (it left the count; NARRATIVE §6). No charcoal; you take the object itself. |
+| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands (Mara is **proof, not a counted beat**: the calling-out fires but no longer counts). The talk itself is the last **close-up tableau** (`_open_mara_tableau`, §16): she opens masked and hooded, listed as one of the congregation, until the greet unmasks her — the reveal. **Lift the Pallid Mask → `pallid_mask`** — the **keystone item**, not a case beat (it left the count; NARRATIVE §6). No charcoal; you take the object itself. |
 | 7 | **The Deepest Face** | `works_deepface` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
@@ -745,9 +744,17 @@ Built into the procedural draw layer (`scenes/base.py`,
   corners stay sharp so tiles connect flush; collision/sight/nav keep the
   square bands underneath (the rounding sits inside the drawn face).
   Thickness, corner round, surface roughness, and a dark muddy colour tint
-  are per-MATERIAL (`_WALL_STYLES`: plank/plaster/timber/brick/stone/rock),
-  keyed per scene via `_SLAB_STYLE` and read through `_wall_style(scene)`;
-  `_SLAB_SCENES` is derived from it. Gated to `_SLAB_SCENES` -- every
+  are per-MATERIAL (`_WALL_STYLES`:
+  plank/plaster/timber/brick/stone/rock/turf), keyed per scene via
+  `_SLAB_STYLE` and read through `_wall_style(scene)`; `_SLAB_SCENES` is
+  derived from it, so adding a scene is one `_SLAB_STYLE` line. An optional
+  **`top_tint` tints the TOP cap face separately** from the sides
+  (`_wall_top_tint_for`, applied in both draw layers) and only `turf` sets
+  one: a GRASS-green top over cold STONE sides, so a full-thick mound reads
+  as a grassy HILL with bare stone where it has been cut into (the grove's
+  mine mouth is a turf hill in `_ROCK_STYLE` with a stone adit). Every other
+  style omits it, the top falls back to the side tint, and those scenes stay
+  byte-identical. Gated to `_SLAB_SCENES` -- every
   above-ground building interior has opted in; every non-slab scene returns
   `None` -> full tile -> byte-identical. The MINE (Works + Depths + Mara's
   cell) instead renders full-thick hewn ROCK (`_ROCK_STYLE`/`_ROCK_SCENES`:
@@ -1368,7 +1375,7 @@ game lets a character find, it takes.
 
 > The evidence rework, settled with the user 2026-07. This is the DESIGN
 > of record; the hard canon (the set, the invariants) lives in
-> NARRATIVE §6, and the code catch-up is TODO #22. It supersedes the
+> NARRATIVE §6, and the code implements it. It supersedes the
 > "pool of six, any 3" model, which was never true in play.
 
 **Three categories, and only one is evidence.**
@@ -2461,3 +2468,110 @@ name (NARRATIVE §3/§4), and walking into that emptiness is a beat. So they
 got new 5x4 houses with the FACADE door `l` -- solid, closed, no interior
 modelled. The yard is what tells you about the household; the door only has
 to be a door somebody comes out of.
+
+---
+
+## 16. The surfaces the words arrive on
+
+Everything the player READS or leans into reaches them through one of four
+surfaces. The words themselves are `DIALOGUE.md`'s; this is the machinery
+that carries them, and the reason each channel exists.
+
+### The three dialogue channels
+
+`DialogueBox.show` routes every line, and which channel takes it is a design
+decision, not a formatting one:
+
+- **The modal band** (`ui/dialog.py`) survives ONLY for choices and for
+  scripted beats with an `on_complete`. It stops the world, so it is spent
+  only where a stop is the point.
+- **Float speech** (`ui/float_speech.py`) carries a named NPC's line through
+  the interact path, over the speaker's head. A person talking is a person in
+  the room, so the room keeps running.
+- **The narrator caption** (`ui/narration.py`) carries narrator and
+  world-object text — examines, pickups, every `_evidence` beat — as a
+  frameless lower-third while the WORLD KEEPS RUNNING. This is the channel the
+  PI's interior voice uses, and the reason a caption can never be a modal
+  stop: his thinking is not an event.
+
+Two rules fall out of that: **E answers the world first** and only skims the
+caption when nothing else takes the press (it is last in `try_interact`), and
+replacing an active caption **fires its pending `on_complete` early** rather
+than dropping it, so a beat chained behind a caption can never be lost to a
+fast reader.
+
+### The Casebook — one book, three ribbons
+
+The old split Inventory (I) + Case Notebook (N) are ONE book
+(`ui/journal_ui.py`, `JournalUI`), because a PI carries one case and the split
+was a menu convention rather than a fiction:
+
+- **Case** — the PI's RUNNING NOTEBOOK: everything he has written down, in the
+  order he wrote it, paged. No index, no cards, nothing reordered or
+  overwritten, so an early wrong read stays legible next to the later one (§9,
+  "the notebook is a running document").
+- **Tools** — axe, gun, keys, flashlight.
+- **Papers** — Mara's journal + letter, the records, the cult testimony, the
+  Mask.
+
+Both `I` and `N` open the SAME book (N lands on Case, I on Tools; pressing the
+ribbon you are already on closes it); left/right turns the tab, up/down walks
+the index, Enter reads or takes in hand. `game.inv_ui` / `game.notebook_ui`
+are aliases onto the one `game.journal_ui`. Note titles for save slugs live in
+`ui/case_titles.py` (`humanise`), shared by the book AND the corner toast.
+
+**Every write to the book is SEEN.** `_flash_notebook(name)` →
+`_draw_notebook_toast` (`render_mixin`) is a small leaf the PI scribbles a beat
+onto, NAMED with the humanised title, and it fires on every note and evidence
+write. A silent write is a bug: the player has no other reliable tell that
+something was recorded. The **floppy save toast** (`_draw_save_toast`) is its
+sibling and is gated on the disk write actually succeeding, so it can never
+lie about a failed save (§3, the save model).
+
+**Conversation menus mark SPENT questions.** Every finished exchange sets its
+asked flag; re-askable spent rows render dimmed in both menu presentations,
+the cursor opens on the first fresh row, and a tableau menu swallows confirms
+for its first `CONVO_MENU_GUARD` beat, so the E that skimmed the last caption
+can never pick an option unread.
+
+### The close-up tableaux
+
+`systems/tableau_mixin.py` (`_open_desk_tableau` / `_tableau_input` /
+`_draw_tableau`); the art is `ui/tableau.py`. A tableau is a modal close-up of
+a prop with a menu that mutates it LIVE — take the gun off the desk, read the
+case file — with the world frozen while it is up. The pilot is the bedroom
+writing desk.
+
+**The face-across-a-table talks ride the same frame, all six seats.**
+`clerk_dialogue` / `sheriff_dialogue` / `hettie_dialogue` /
+`preacher_dialogue` / `toby_dialogue` / `_mara_voice` each open their talk as a
+tableau (the `_open_*_tableau` openers + `open_conversation(..., tableau=True)`);
+the conversation's beats render as the caption and its menu as the option panel
+(`_convo_tableau_input`). **The art reads save flags, so the close-up carries
+what the talk earned** — Sable's photo/Invitation on the register; Vane's pose
+reading his despair ledger, the given paper, the opened cabinet; Hettie's
+door-glance idle, the tab leaving the spike, the traded paper; Crane's hands
+folding or gripping the lectern on the press fork; Toby's corn-line watch, the
+procession drawing, the brows the promise levels. The chorus still FLOATS its
+talk (not a tableau) — the frame is for the people the case turns on.
+
+**Mara is the last seat and carries the REVEAL.** The calling-out opens with
+her masked and hooded, one of the congregation, the caption LISTING her as
+"One of them" (`MARA_CONVO["name"]` is a callable), until the greet's
+`("do", ...)` beat (`_mara_unmask`) pulls the carved mask off — the face from
+the photograph, gone thin — and the listing turns to her name. Her captions
+page on Escape (the reveal cannot be skipped), and the art reads `mara_lucid`
+(raised bleeding palms) / `mara_named` (her fist on the PI's coat, the rank
+stirring). The conversation engine's `("do", fn)` beats and callable `name`
+exist for this; `load_scene_now` drops a stale tableau alongside the convo.
+
+**Two non-conversation frames.** THE TALK is the tone inversion (`_cult_talk`
+→ `_open_talk_tableau`): a scripted caption chain rather than a Conversation —
+the grip close-up, the one reach-for-the-revolver choice, Escape pages instead
+of aborting. THE PEDESTAL (`_open_altar_tableau`) is the OBJECT close-up of
+His face on the stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN
+(BREAK → `_play_ending("rite_broken")`), Escape backs out.
+
+Every close-up carries a soundscape — `lean_in` on open plus a per-seat room
+tone while it is up, and Mara's seat is silent on purpose. That layer is §11,
+"The close-up tableaux (the sound pass)". The words are `DIALOGUE.md` Part B.

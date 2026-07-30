@@ -29,8 +29,9 @@
 > **Reading was never the failure — applying at the moment of action was.**
 > So the enforcement moved to where it can actually fire: **`tests/conventions.py`**,
 > in the gate, which fails on the mechanical half of these rules (fonts,
-> tilt-set registration, light-table pairing, dead doc references, scene-gate
-> typos, lost-space silence). The docs keep what a machine cannot judge:
+> tilt-set registration, light-table pairing, dead doc references, dead ticket
+> references, scene-gate typos, lost-space silence). The docs keep what a
+> machine cannot judge:
 > canon facts, intent, taste, and why. **If you find yourself relying on
 > memory of a rule that a script could check, the fix is to write the check**
 > (see "Make the check, not the note" below).
@@ -51,9 +52,14 @@
 > - **`DESIGN.md`** — every game system and its code map: the threat model,
 >   world rot, the fold, the tilted camera, audio, stealth, the Works level,
 >   and art direction.
-> - **`TODO.md`** — the live list of genuinely open work. Not a place for
->   lore, and not a place for landed work either — once a ticket ships,
->   its story moves to `CHANGELOG.md` and it's deleted from here outright.
+> - **`TODO.md`** — the live list of genuinely open work, ordered as ONE
+>   timeline. Not a place for lore, and not a place for landed work either —
+>   once a ticket ships, its story moves to `CHANGELOG.md` and it's deleted
+>   from here outright. **A ticket number is a stable ID, never an order:**
+>   numbers are never reused or recycled, a retired number stays retired, and
+>   anything that has landed is cited by its canon home (`NARRATIVE §n` /
+>   `DESIGN §n`) or `CHANGELOG.md` rather than by a dead number (guarded,
+>   `tests/conventions.py` check 13).
 > - **`DIALOGUE.md`** — the dialogue & narrator bible: every word the player
 >   reads (spoken NPC/PI lines and narrator/world boxes), organized by WHO
 >   says what and WHAT causes what, plus the voice rules. **Its contract:
@@ -182,47 +188,11 @@ it renders the procedural sprites to a labelled PNG strip.
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
   - `systems/tableau_mixin.py` — the **close-up examine tableaux**
-    (`_open_desk_tableau` / `_tableau_input` / `_draw_tableau`): a modal
-    close-up of a prop with a menu that mutates it live (take the gun off
-    the desk, read the case file), the world frozen while it is up. Art
-    (the procedural close-ups) lives in `ui/tableau.py`; the pilot is the
-    bedroom writing desk. The **face-across-a-table principal talks** ride
-    the same frame, all six seats: `clerk_dialogue` / `sheriff_dialogue` /
-    `hettie_dialogue` / `preacher_dialogue` / `toby_dialogue` /
-    `_mara_voice` each open their talk as a tableau (the `_open_*_tableau`
-    openers + `open_conversation(..., tableau=True)`); the conversation's
-    beats render as the caption and its menu as the option panel
-    (`_convo_tableau_input`), and the art reads save flags so the close-up
-    carries what the talk earned (Sable's photo/Invitation on the
-    register; Vane's pose reading his despair ledger, the given paper, the
-    opened cabinet; Hettie's door-glance idle, the tab leaving the spike,
-    the traded paper; Crane's hands folding or gripping the lectern on the
-    press fork; Toby's corn-line watch, the procession drawing, the brows
-    the promise levels). **Mara is the last seat and carries the REVEAL:**
-    the calling-out confrontation opens with her masked and hooded, one of
-    the congregation, the caption LISTING her "One of them"
-    (`MARA_CONVO["name"]` is a callable), until the greet's `("do", ...)`
-    beat (`_mara_unmask`) pulls the carved mask off (the face from the
-    photograph, gone thin) and the listing turns to her name; her
-    captions page on Escape (the reveal can't be skipped), and the art
-    reads `mara_lucid` (raised bleeding palms) / `mara_named` (her fist on
-    the PI's coat, the rank stirring). The conversation engine's `("do",
-    fn)` beats and callable `name` support this; `load_scene_now` drops a
-    stale tableau alongside the convo. The chorus still floats its talk
-    (not a tableau; `tests/flow.py` §26 float guards ride Royce). **THE
-    TALK rides the frame too** (the tone inversion: `_cult_talk` →
-    `_open_talk_tableau`, a scripted caption chain, not a Conversation —
-    the grip close-up, the one reach-for-the-revolver choice, Escape
-    pages instead of aborting). **THE PEDESTAL** (the Sign Chamber altar,
-    `_open_altar_tableau`) is the OBJECT close-up of His face on the
-    stone: LIFT the Mask (keystone + temptation) or TEAR IT DOWN (BREAK →
-    `_play_ending("rite_broken")`), Escape backs out. Every close-up
-    carries a soundscape: `lean_in` on open (the world holding its
-    breath) + a per-seat ROOM TONE looped while it is up (`_TABLEAU_TONES`
-    here, `Audio.room_tone`). Mara's seat stays silent by design
-    (`_mara_voice` force-silences the room). How this landed (pilot →
-    the six seats → the Talk → the pedestal → the sound pass) is in
-    `CHANGELOG.md`. See `DESIGN.md` §11. Player-facing text is in
+    (`_open_desk_tableau` / `_tableau_input` / `_draw_tableau`, art in
+    `ui/tableau.py`, room tones in `_TABLEAU_TONES`): a modal close-up of a
+    prop or a face, world frozen, menu mutating it live. The six principal
+    seats, Mara's unmask, THE TALK and THE PEDESTAL all ride this one frame
+    — **the SYSTEM is `DESIGN.md` §16**, its sound is §11, its words are
     `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`). A scene has spawns, exits,
@@ -239,121 +209,52 @@ it renders the procedural sprites to a labelled PNG strip.
     `terrain.py` for draw code, `base.py` for the Scene model. terrain
     depends only on `constants` + lazy `scenes`/`rendering.*` imports,
     never on `Scene`, so there is no cycle.
-  - `scenes/safe_path.py` — **the SAFE PATH** (`SafePath` / `build_path`;
-    the SYSTEM is `DESIGN.md` §14): the lit paved spine, middle of the three
-    layers (interior → yard → PATH ↔ lost spaces). A scene is built from
-    ARMS (a subset of `"nesw"` around one centre junction): two opposite =
-    an **I**, two adjacent = an **L**, three = a **T**. `build_path` lays the
-    surface, lamps, verge, exits and mouths from that alone. **The road is
-    safe by its GEOMETRY, not by its lamps** — §13's mouth only reaches a MAP
-    EDGE, an arm's end is an exit (and `_tick_lost_edge` refuses on an exit
-    tile), and a flank edge carries no asphalt; so the asphalt is safe
-    everywhere while the verge beside it lets go like any flank. Guarded by
-    `tests/flow.py` §34 as a WALK (every lane of every arm at ev3, none may
-    fall). The LAMP PATTERN is the maintainer's, read off marks on a capture
-    and generalised: a junction is lit at its CORNERS between two arms (plus
-    one centred mast on any armless side), runs carry facing PAIRS every
-    `LAMP_STEP` (11) tiles out, and the ends of a run go DARK. Masts sit on
-    the OUTER shoulder edge and never on asphalt (each is pushed outward until
-    its tile is not asphalt, dropped if it cannot get clear, and an explicit
-    position on asphalt raises at build time). `build_path(..., lamps=((tx,ty),
-    ...))` overrides the pattern outright where a scene is art-directed;
-    `tools/screen_to_world.py` turns marks on a capture into that list (the
-    country lane's eight are the maintainer's own).
-    `street_lamp`
-    (a new `SOLID_PROPS` volume, in BOTH light tables and in
-    `_ELECTRIC_KINDS`) still gates stealth cover and dies with the gensets. Arms paint in two
-    passes (all gravel, then all asphalt) so a junction is surfaced, not
-    quartered; the dashed centre lane (`"Y"` N-S, `"-"` E-W — two floor chars
-    because tiles cache BY CHAR) stops at the junction box. Every side is a
-    mouth including the arms, with the road exit winning (exits span the full
-    corridor, and `_tick_lost_edge` refuses on an exit tile); WHICH lost space
-    is derived from the verge (`_VERGE_LOST`), never hand-picked. A `river=`
-    channel keeps `RIVER_BANK` tiles of bank clear so the water is SEEN, and a
-    crossing gets a paved deck plus a `bridge_rail` parapet down both lips.
-    Ships `country_lane` (T) / `river_road` (I) / `river_bend` (L).
+  - `scenes/safe_path.py` — **the SAFE PATH** (`SafePath` / `build_path`; the
+    SYSTEM is `DESIGN.md` §14): the lit paved spine, middle of the three
+    layers (interior → yard → PATH ↔ lost spaces). A scene is declared as
+    ARMS off one centre junction (two opposite = **I**, two adjacent = **L**,
+    three = **T**) and `build_path` lays surface, lamps, verge, exits and
+    mouths from that alone. Two things to hold when editing it: **the road is
+    safe by its GEOMETRY, not by its lamps** (guarded, `tests/flow.py` §34 as
+    a WALK), and the lamp pattern is the maintainer's own — override it with
+    `build_path(..., lamps=(...))` for an art-directed scene rather than
+    editing the pattern. `tools/screen_to_world.py` turns marks on a capture
+    into that list. Ships `country_lane` (T) / `river_road` (I) /
+    `river_bend` (L).
   - `scenes/yards.py` — **the YARDS** (the SYSTEM is `DESIGN.md` §15):
     **SAFE PATH → YARD → HOUSE.** A yard is the innermost of the three layers
-    and it is a **SCENE** — one building in it, a road exit on one edge and
-    that building's door on the other side of the ground you cross; never a
-    dressed patch of a bigger map. **Each building gets its own; they are
-    never shared.** Every edge that is not the road is a §13 mouth.
-    `build_yard_scene` makes the scene (footprint, door, road exit, the worn
-    track routed AROUND the house, the verge band and the lot inside it);
-    `Yard` is the vocabulary you dress that lot with, deliberately THIN and
-    authored PER HOUSEHOLD: `Yard` knows only the building's footprint, which face the door
-    is in, and the walkable tile outside it, and offers the vocabulary against
-    that geometry (`step` / `genset` / `mailbox` / `fence` / `hedge` /
-    `woodpile` / `washing` / `crates` / `bed` / `siding` / `put`). WHAT a yard
-    says is written out in the scene, because a vocabulary applied evenly says
-    the same thing about every house in town, which is the one thing the layer
-    exists not to do. **Every piece goes through `put`**, which refuses the
-    building, the door and the door's one approach, so error class #8 (a prop
-    across the way in) is a build-time failure. `siding` is the exception and
-    has the opposite rule: a `_WALL_DECO` goes on the OPEN tile the wall faces,
-    never on the wall tile, or the wall's own volume paints over it. The genset
-    is the layer's keystone (`running=False` also passes `broken`, which both
-    light tables read, so a dark bulb and dark ground can never disagree).
-    Ships ELEVEN yards on five town streets, one per household, each with
-    its resident INSIDE the building (a yard is empty of people on purpose:
-    it has to speak when nobody is there to). `shop_yard` off `store_row` is the worked chain. **Brimley is kept
-    exactly as it is** until the whole town has moved into yard scenes, then
-    retired in one piece; its ten in-scene yard dressings and three new small
-    houses are the INTERIM and go when it does. An interior served by a yard
-    gets a SECOND door pointing at it, so both routes stay live meanwhile.
-  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
-    the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
-    NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
-    renderer is already a camera-window system and collision/sight route through
+    and it is a **SCENE** — one building, a road exit on one edge, that
+    building's door across the ground you cross; never a dressed patch of a
+    bigger map, and never shared between buildings. Every non-road edge is a
+    §13 mouth. `build_yard_scene` makes the scene; `Yard` is the THIN
+    vocabulary you dress the lot with (`step` / `genset` / `mailbox` / `fence`
+    / `hedge` / `woodpile` / `washing` / `crates` / `bed` / `siding` / `put`),
+    and **WHAT a yard says is authored per household in the scene** — a
+    vocabulary applied evenly says the same thing about every house, which is
+    the one thing the layer exists not to do. Three rules to hold when editing:
+    **every piece goes through `put`** (it refuses the building, the door and
+    the door's one approach, so a prop across the way in is a build-time
+    failure); `siding` is the exception with the opposite rule (a `_WALL_DECO`
+    goes on the OPEN tile the wall faces, never the wall tile); and the genset
+    passes `broken` alongside `running=False` so both light tables agree.
+    Ships ELEVEN yards on five town streets, one per household, each resident
+    INSIDE their building. `shop_yard` off `store_row` is the worked chain.
+  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`; the SYSTEM and
+    its full code map are `DESIGN.md` §13): a procedurally-generated,
+    NON-REPEATING dark field, three biomes (`lost_corn` / `lost_forest` /
+    `lost_road`, plus a `lost_space` alias → corn), each a hand-authored lit
+    FOCAL ISLAND in a sea of generation. It works BECAUSE the tilt renderer is
+    already a camera-window system and collision/sight route through
     `char_object_at`/`char_floor_at`: a `Scene` whose `floor`/`objects` are
-    generator-backed proxies (`_GenGrid`, bounded so stray full iteration stops)
-    over a hashed per-tile field, with a huge finite `w/h` and the player at
-    CENTRE (the edge never enters the window), gets collision + sight + render
-    for free. It sets **`self.procedural = True`** — smoke (`tests/smoke.py`)
-    skips flood-fill + full-grid scans for any `procedural` scene (an infinite
-    field would hang them; `terrain._build_water_bank_edges` also early-outs on
-    it). `nav_path` returns None (straight-line chasers). **Biome-parameterized**
-    into three registered scenes — `lost_corn` / `lost_forest` / `lost_road`
-    (plus `lost_space`, a back-compat alias → corn). Each is a hand-authored
-    lit FOCAL ISLAND in the sea of generation: corn = a **crop circle** (grass
-    clearing + a corn-wall ring + an abandoned cult camp lit by a wide
-    `haven_fire`); forest = a **pond** (animated water + a see-over solid
-    barrier, a near-bank `camp_fire` + far-shore lanterns, reeds + mist); road =
-    a fenced filling-station **lot** (you land under a tall bright `neon_pylon`
-    at the driveway; the sealed `gas_station` building -- a Casey's-style
-    convenience store, **CASSILDA'S**, `STATION_NAME` in props, face-culled with
-    every side dressed, brick wainscot + storefront + red awning + a
-    procedural-neon-tube name fascia -- with a separate `pump_island` (canopy +
-    pumps, split out so it depth-sorts on its own) sit NW, the `neon_pylon` is a
-    googie bulb-star sign, `parking_bay` decals + `chain_fence` panels dress the
-    lot, and a winding
-    paved road generated river-style runs past the east edge, drifting west as it
-    goes north). The island light is the haven; the
-    hunted exit lantern is HELD until you leave that glow, then held 6-20 tiles
-    off (`lit_at` reads deco positions live). All three sit in
-    `LOST_SPACE_SCENES` (a `DARK_SCENES` subset with a heavier gloom so the
-    island pops). New light kinds `haven_fire` + `neon_pylon` live in
-    `FIXTURE_POOLS` (render_mixin) + `Scene._LIGHT_KINDS`; the road also adds
-    non-light solids `gas_station` / `chain_fence` / `boulder` and the
-    `parking_bay` floor decal. **How you get in and out (the loop):** a scene
-    opts a NON-wrapping map edge in with `Scene.set_lost_edge(sides, key)`
-    (`Scene.lost_edges`; None everywhere else, so an un-opted scene is
-    unchanged), and `Game._tick_lost_edge` swallows you there only when the
-    room is genuinely dark (`Game.scene_gloom() >= LOST_EDGE_GLOOM`, which on
-    the surface is the storm climbing with the evidence count) AND the spot
-    is unlit — **light gates entry: a lit edge is a wall.** The fall writes
-    `Game._lost_return` (the scene + a spot `LOST_EDGE_BACKOFF` tiles back
-    inside it) and crosses through `cross_fold`; reaching the hunted lantern
-    spends that anchor and climbs you back out where you fell. No anchor (a
-    direct load or a preview) falls back to the static `exit_to` chain. The
-    fields also REARRANGE themselves behind you (`_tick_reshuffle`: only
-    unlit, out-of-cone, far-off scatter props move, and only to somewhere
-    also unlit and out-of-cone — geometry lies, threats never do), carry a
-    manned camp + lamp-carrying cultists (so the lost scenes are in
-    `CULTIST_SCENES` with `cult_target = 0`), and are WORDLESS, including
-    `display_name = ""` so the HUD never names the place. Shipping mouth
-    today: the lodge yard's treeline. Guards: `tests/flow.py` §32b,
-    `tests/conventions.py` check 6.
+    generator-backed proxies (`_GenGrid`) over a hashed per-tile field, huge
+    finite `w/h`, player at CENTRE, gets collision + sight + render for free.
+    The two things that bite when editing: it sets **`self.procedural = True`**
+    and `tests/smoke.py` skips flood-fill + full-grid scans for any such scene
+    (an infinite field hangs them), and `nav_path` returns None (straight-line
+    chasers). The loop in and out is `Scene.set_lost_edge(sides, key)` +
+    `Game._tick_lost_edge` — **light gates entry: a lit edge is a wall.**
+    Shipping mouth today: the lodge yard's treeline. Guards:
+    `tests/flow.py` §32b, `tests/conventions.py` check 6.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -619,42 +520,16 @@ it renders the procedural sprites to a labelled PNG strip.
     DESIGN.md §1; flow §27/§32).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
-- `ui/` — dialog, the Casebook, fonts, text input. **The Casebook is ONE
-  book now (2026-07 merge):** the old split Inventory (I) + Case Notebook
-  (N) were fused into `ui/journal_ui.py` (`JournalUI`), a single tabbed book
-  — **Case** (the PI's RUNNING NOTEBOOK: everything he has written down, in
-  the order he wrote it, paged; no index, no cards, nothing reordered or
-  overwritten, so an early wrong read stays legible next to the later one),
-  **Tools** (axe, gun, keys, flashlight), **Papers** (Mara's journal +
-  letter, the records, the cult testimony, the Mask). Both `I` and `N` open
-  the SAME book (N lands on Case, I on Tools; pressing the ribbon you're on
-  closes it); left/right turns the tab, up/down walks the index, Enter reads
-  or takes in hand. `game.inv_ui` / `game.notebook_ui` are kept as **aliases**
-  onto the one `game.journal_ui`, so old call sites (draw gating, tests)
-  still resolve. Note titles for save slugs live in `ui/case_titles.py`
-  (`humanise`), shared by the book AND the corner scribble toast. The dead
-  combat-era "Consumables" tab is gone. **Writing to the case book fires the
-  corner scribble toast** (`_flash_notebook(name)` → `_draw_notebook_toast`
-  in `render_mixin`): a small leaf the PI scribbles a beat onto, now NAMED
-  (the humanised title beside it) so the player knows what was recorded —
-  the one reliable per-write tell. EVERY note/evidence write flashes it now
-  (the module `_log_note`, `the_ledger`/`the_preacher`, and the revisit
-  notes used to file silently — a bug). **Dialog is
-  three channels:** `dialog.py`'s modal band survives ONLY
-  for choices and scripted beats with an
-  `on_complete`; a named NPC line through the interact path floats over
-  the speaker's head (`float_speech.py`); narrator/world-object text
-  (examines, pickups, every `_evidence` beat) runs as the frameless
-  lower-third caption in `narration.py` while the WORLD KEEPS RUNNING.
-  `DialogueBox.show` does the routing. E answers the world first and only
-  skims the caption when nothing else takes the press (last in
-  `try_interact`). Replacing an active caption fires its pending
-  `on_complete` early rather than dropping it. **Conversation menus mark
-  SPENT questions** (2026-07): every finished exchange sets its asked flag;
-  re-askable spent rows render dimmed in both menu presentations, the
-  cursor opens on the first fresh row, and a tableau menu swallows confirms
-  for its first `CONVO_MENU_GUARD` beat so the E that skimmed the last
-  caption can never pick an option unread.
+- `ui/` — the surfaces the words arrive on; **the SYSTEM is `DESIGN.md` §16**
+  (why each channel exists, the Casebook's three ribbons, the tableau frame).
+  The code map: `journal_ui.py` (`JournalUI`, the one Casebook — `game.inv_ui`
+  and `game.notebook_ui` are aliases onto `game.journal_ui`), `case_titles.py`
+  (`humanise`, shared by the book and the corner toast), `dialog.py` (the
+  modal band: choices + `on_complete` beats only), `float_speech.py` (a named
+  NPC's line over their head), `narration.py` (the frameless lower-third
+  caption; the world keeps running), `conversation.py` (menus, spent rows,
+  `CONVO_MENU_GUARD`), plus fonts + text input. `DialogueBox.show` does the
+  routing.
 
 ## Threat model — the code map
 
@@ -683,38 +558,32 @@ section is the CODE MAP only — where each system lives:
   `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
-- **The STORM** (TODO #25) — a MODE of the Watcher wave, never a second
-  spawner: `_storm_active()` (past `STORM_GATE_EVIDENCE` in a room with
-  `scene_gloom() > 0`), `_sync_storm_mode`, `npc._storm_tick` (walk at the
-  player, refuse any step into light, cannot touch), `actor_smear_range` (units
-  ignore the sight cone or the flood is invisible), `STORM_*` config. Cap lifts
-  to `STORM_MAX`; every dispel still works. **THE APEX** (the Mask that wears a
-  unit) is `Game._apex` + `_tick_apex`/`_apex_take`/`_apex_lose_host`
-  (threat_mixin) + `npc._apex_tick`; `APEX_*` config. **Its Mask is NOT the
-  `pallid_mask` keystone** -- there is one Mask object and it is on the altar;
-  this is a SLICE of Him (NARRATIVE §6a, conventions check 12). It ignores light entirely,
-  runs at `KING_ROAM_SPEED`, wears an EXPRESSIVE Mask (`intent`/`strain`/`skew`
-  eased by `_apex_face`; a carved thing WORKS, it never emotes), and the axe/gun kill its HOST not the Mask (hooked in
-  `_dispel_watcher`); its catch fires its OWN
-  `_death_kind == "apex"` (a wordless PLACEHOLDER fade -- never the Unfolding's
-  card; the amalgam's real catch animation is owed, TODO #25), and
-  `_tick_king_roam` stands the Unfolding down while a host is worn. Its two
-  distinguishing beats: **THE SCREECH** (`Audio.apex_roar`, fired from
-  `_apex_face` when `intent` crosses `APEX_ROAR_INTENT` -- one-shot per host,
-  re-armed from zero by `_apex_lose_host`, silent at a hidden player) and **THE
-  REACH** (`amalgam._reach_limbs`, aimed by the SCREEN-space vector
-  `_apex_mask_for` puts in `mask["reach"]`, extended by `APEX_REACH_INTENT` /
-  `APEX_REACH_STRAIN`; also the catch's telegraph). stealth §20.
-  **A storm draws 22 sprites, so
-  `draw_amalgam_sprite` CACHES each unit's composed surface and refreshes it at
-  `UNIT_ANIM_HZ`, staggered per unit by a hashed seed offset** (a modulo offset
-  clusters neighbouring seeds and the whole storm re-renders in lockstep --
-  conventions check 11). **Anything on the bearer that TRACKS the player -- the
-  reach, the face, the gaze -- is HELD to that same bucket** and the Mask's own
-  layer is memoised (`_MASK_PART_CACHE`), or the bearer re-composes every frame:
-  a 22-unit storm with an apex measured 40.8ms/frame before this and 7.3ms after.
-  A tool drawing several apexes in one frame must `reset_amalgam_cache()` between
-  them or the hold shows it the same pose every time. stealth §19.
+- **The STORM** — a MODE of the Watcher wave, never a second spawner (design:
+  `DESIGN.md` §1): `_storm_active()` (past `STORM_GATE_EVIDENCE` in a room with
+  `scene_gloom() > 0`), `_sync_storm_mode`, `npc._storm_tick` (walks at the
+  player, refuses any step into light, cannot touch), `actor_smear_range`
+  (units ignore the sight cone or the flood is invisible), `STORM_*` config;
+  cap lifts to `STORM_MAX` and every dispel still works. Guards:
+  `tests/stealth.py` §19.
+- **THE APEX** — the Mask that wears a unit: `Game._apex` +
+  `_tick_apex`/`_apex_take`/`_apex_lose_host` (threat_mixin) +
+  `npc._apex_tick`; `APEX_*` config; the face `_apex_face`
+  (`intent`/`strain`/`skew`), the screech `Audio.apex_roar`, the reach
+  `amalgam._reach_limbs` (aimed by the SCREEN-space vector `_apex_mask_for`
+  puts in `mask["reach"]`). The axe/gun kill its HOST, not the Mask (hooked in
+  `_dispel_watcher`); its catch is its OWN `_death_kind == "apex"`, never the
+  Unfolding's card; `_tick_king_roam` stands the Unfolding down while a host is
+  worn. **Its Mask is NOT the `pallid_mask` keystone** — one Mask object exists
+  and it is on the altar; this is a SLICE of Him (NARRATIVE §6a, conventions
+  check 12). Guards: `tests/stealth.py` §20.
+  **Two performance traps.** `draw_amalgam_sprite` CACHES each unit's composed
+  surface at `UNIT_ANIM_HZ`, staggered per unit by a HASHED seed offset (a
+  modulo offset clusters neighbouring seeds and the whole storm re-renders in
+  lockstep — conventions check 11); and anything on the bearer that TRACKS the
+  player (reach, face, gaze) is HELD to that same bucket with the Mask layer
+  memoised (`_MASK_PART_CACHE`), or the bearer re-composes every frame (40.8ms
+  → 7.3ms on a 22-unit storm). A tool drawing several apexes in one frame must
+  `reset_amalgam_cache()` between them or the hold shows it one pose.
 - **Watchers** — `_tick_watchers`/`_apply_curse`/`_dispel_watcher`
   (threat_mixin); `WATCHER_*` config. Light works on THEM, never on you: it
   denies them a spawn spot (`_spawn_watcher` needs dark + line of sight) and
@@ -785,96 +654,31 @@ section is the CODE MAP only — where each system lives:
   itself). One-way is the King's signature alone. See DESIGN.md §7 "One
   phenomenon, two presentations" + DESIGN.md §7 "Decisions landed". Live
   proof sheet: `tools/preview_rift_anchored.py`.
-- **Interior doors — the subroom divider (2026-07, DESIGN.md §7).** The
-  third door kind, and NOT a teleport: a swinging leaf on a floor GAP in a
-  wall line WITHIN one scene, the tool that splits a box building into
-  several subrooms. State on `Scene._inner_doors`; author with
-  `Scene.add_inner_door(tx, ty, kind, open=False)` on a floor tile inside a
-  wall run. A shut leaf behaves like a wall (hooked into `is_solid_at` +
-  `blocks_sight` — so it occludes AND breaks a pursuer's line of sight,
-  buying time; the same `blocks_sight` `clear_sight_line` runs, one hook for
-  render + cult AI), open passes both; `_nav_solid_at` never counts a door
-  tile so NPCs route AT it and open their own way through. `Scene.update`
-  runs the open/close (most start CLOSED; an NPC nearing a shut door opens
-  it, it swings shut a beat after the last actor leaves); the player toggles
-  the nearest with **E** (`toggle_nearest_inner_door`, last in
-  `try_interact`). Kinds: `plank` (opaque wood) / `bars` + `half`
-  (see-through, block the body but not the sight cone — `_SEE_THROUGH_DOOR_KINDS`)
-  / `curtain` (drape). Draw: `rendering.props.draw_inner_door`, emitted +
-  depth-sorted in `draw_world`'s tilt pass. **Vary the wall**: `ew` (the swing
-  axis) is derived from the tile's wall neighbours, so a door in a SIDE (N-S)
-  wall opens E-W and a door in an E-W wall opens N-S. Don't put every door of a
-  building in E-W walls or the leaves all "face south" (error class #8); mix
-  side-wall and E-W-wall doors by what the geometry wants (the shop does).
-  Guard: `tests/stealth.py` §15.
-- **Interior partition corners are BEVELED (2026-07, `scenes/terrain.py`,
-  DESIGN.md §6).** A wall tile's exposed CONVEX corners (both adjacent faces +
-  the diagonal open to floor `.`) are chamfered in BOTH wall draw layers —
-  `_extrude_box` (a `bevel` bitmask param from `_bevel_corners`) and
-  `_draw_wall_mass` (clips `_wall_tile_flat` to `_bevel_poly_local`) — so the
-  chunky 90° jut softens while runs/tees/shell stay a full-thickness continuous
-  mass (byte-identical, no convex corner there). Draw-only; gated to
-  `_BEVEL_SCENES` (frozenset of the above-ground building interiors — shop,
-  church, barn, schoolhouse, sheriff_office, bedroom, clerk/guest rooms, lodge +
-  lodge_hall, toby_house, farmhouse, lodge_cellar — never the mine or outdoors).
-  `_BEVEL_INSET` = 0.28·TILE tunes the chamfer. Cache-safe (pure function of
-  tile + neighbours).
-- **Thin-SLAB walls — REAL geometry, not draw-only (2026-07, `scenes/terrain.py`,
-  DESIGN.md §6; maintainer "walls are no longer tiles / connect them by smoothing
-  it out").** The step past the bevel: a wall tile becomes a THIN slab
-  (`_SLAB_THICK` = 0.5·TILE). To keep the thin walls CONNECTED + smooth (no fat
-  junction, no notch), `_wall_slab(scene, tx, ty)` returns the footprint as a
-  LIST of up to two BANDS — a VERTICAL band (wall neighbour N or S) and/or a
-  HORIZONTAL band (wall neighbour E or W). A run is one band; an L / T / cross is
-  the union of both, meeting flush; each band reaches the edge only where the run
-  continues, else stops at the crossbar (no stub into a room). Cross-thickness:
-  floor/wall both sides → CENTRE (two-sided partition); one flank off-map → the
-  SHELL, which hugs the EXTERIOR edge (outer face stays on the silhouette, no
-  floor lip, thins inward). It is the SINGLE SOURCE for both draw layers
-  (`_extrude_box`'s `foot` rect, looped per band + `_draw_wall_mass`'s union
-  clip) AND the collision/sight/nav predicates (`scenes/base.py`
-  `_obj_solid_here`, shared by `is_solid_at` / `blocks_sight` / `_nav_solid_at`,
-  point-in-ANY-band, inclusive bounds so collision sits a hair proud of the drawn
-  face and a nav-grid centre on a slab stays solid) — so what the player bumps
-  and the AI sees IS what the player sees. Gated to `_SLAB_SCENES` (shop the
-  pilot; now EVERY above-ground building interior — the Wave A refuges, the
-  principal seats, and Wave 3's barn / schoolhouse / lodge_hall / lodge_cellar /
-  farmhouse — each with a per-material style). The MINE (Works + Depths) instead
-  renders full-thick hewn **ROCK** (`_ROCK_STYLE` / `_ROCK_SCENES`, Phase 3): the
-  same styled rough-outline + prism DRAW, but `thick`=1.0, and it stays OUT of
-  `_SLAB_SCENES` so its collision/sight/nav read the tile grid UNCHANGED (the
-  roughening is draw-only). Only the OUTDOORS renders verbatim full-tile +
-  byte-identical (`capture_world --diff` confirms the non-styled scenes).
-  SUPERSEDES the bevel
-  where both apply (`_bevel_corners` returns 0 in a slab scene, so a slab
-  scene's `_BEVEL_SCENES` membership is inert). Roll out one interior at a time
-  per VISION. **Corners are
-  ROUNDED:** `_rounded_wall_poly` traces the band union to an outline and fillets
-  each FREE corner (facing floor) into an arc while a wall-neighbour SEAM corner
-  stays sharp (so tiles still connect flush); it drives the flat mass + a 3D
-  `_extrude_prism`. Collision/sight/nav keep the square bands (rounding sits
-  inside the drawn face). **Thickness + round + roughness + COLOUR are
-  per-MATERIAL:** `_WALL_STYLES` (`{thick, round, rough, tint, top_tint?}`) keyed
-  by scene via `_SLAB_STYLE`, read through `_wall_style(scene)`; `_SLAB_SCENES` is
-  derived from it. So a scene reads its construction (`plank`/`plaster`/`timber`/
-  `brick`/`stone`/`rock`/`turf`) from geometry AND a dark muddy colour `tint`
-  (added to the near-black palette in both draw layers, Darkwood-safe); a
-  non-slab scene's tint is (0,0,0) → byte-identical. Add a scene = one
-  `_SLAB_STYLE` line. **`top_tint` (2026-07) tints the TOP cap face separately**
-  from the sides (`_wall_top_tint_for`, applied in both draw layers): only
-  `turf` sets it — a GRASS-green top over cold STONE sides, so a full-thick mound
-  reads as a grassy HILL with bare stone where it is cut into (the effigy grove's
-  mine mouth: a green hill in `_ROCK_STYLE` with a stone adit). Every other style
-  omits `top_tint` → the top falls back to the side `tint` → byte-identical.
-- **No diagonal-only wall joins in a slab scene (2026-07, maintainer "add a rule
-  not to have walls like that").** Two walls that meet only at a DIAGONAL (the
-  shared corner tile missing) look fine as fat full tiles but render as
-  DISCONNECTED thin stubs under the slab. So a `_SLAB_SCENES` wall layout must
-  never have one: where two perpendicular walls turn a corner, the corner TILE
-  itself must be a wall (an orthogonal L), not a diagonal near-miss. Enforced by
+- **Walls are thin-SLAB GEOMETRY, per material — the SYSTEM is `DESIGN.md`
+  §6.** What matters at the point of edit: `_wall_slab` is the SINGLE SOURCE
+  for the draw AND for collision/sight/nav, so never special-case one of them;
+  thickness/round/roughness/tint/`top_tint` are per-material in `_WALL_STYLES`,
+  so **adding a scene is one `_SLAB_STYLE` line** (and a non-slab scene stays
+  byte-identical); the mine is full-thick hewn `rock` and deliberately stays
+  OUT of `_SLAB_SCENES` so its collision reads the tile grid unchanged. Roll
+  out one interior at a time per VISION, and re-derive interior cover as you go
+  (thinner walls occlude less).
+- **No diagonal-only wall joins in a slab scene** (maintainer: "add a rule not
+  to have walls like that"). Two walls meeting only at a DIAGONAL — the shared
+  corner tile missing — look fine as fat full tiles and render as DISCONNECTED
+  thin stubs under the slab. So where two perpendicular walls turn a corner,
+  the corner TILE itself must be a wall (an orthogonal L). Enforced by
   `tests/smoke.py [10/10]` via `terrain.diagonal_wall_joins(scene)`; fix a
-  failure by adding the missing corner tile (on the non-room side) so the walls
-  connect. Applies as each interior opts into `_SLAB_SCENES`.
+  failure by adding the missing corner tile on the non-room side.
+- **Interior doors — the subroom divider (the SYSTEM is `DESIGN.md` §7).** The
+  third door kind and NOT a teleport: a swinging leaf on a floor GAP in a wall
+  line WITHIN one scene, the tool that splits a box building into subrooms.
+  Author with `Scene.add_inner_door(tx, ty, kind, open=False)` on a floor tile
+  inside a wall run; kinds are `plank` / `bars` + `half` (see-through: stop the
+  body, not the sight cone) / `curtain`. **Vary the wall**: the swing axis is
+  derived from the tile's wall neighbours, so a door in a side (N-S) wall opens
+  E-W and vice versa — put every door of a building in E-W walls and the leaves
+  all "face south" (error class #8). Guard: `tests/stealth.py` §15.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
@@ -1028,44 +832,29 @@ section is the CODE MAP only — where each system lives:
      placement (never on the player's exit tile), and monster visibility/design must
      preserve dread rather than expose it. Re-derive the ratios whenever you touch a speed.
 
-## The journal door-dream + "He knows you" (NARRATIVE §4)
+## The journal door-dream — the code map (canon is NARRATIVE §2/§4)
 
-- **Trigger (two-stage):** picking up `mom_notebook` (Mara's journal, a
-  WALK-OVER pickup in the barn, `scenes/interiors.py _barn_update`) sets
-  `flashback_pending` (play-notes: the dream fires ON PICKUP, not the old
-  3rd-read; reading the journal is now just reading); `Game._tick_flashback`
-  polls it, sets `flashback_seen`, and fires a ~2.2s MEMORY FLASH (a dwelling
-  fade-in/hold/out look at the door, no swarm; `FLASHBACK_FLASH_DUR`). The
-  pickup logs the gate beat QUIETLY (`_evidence(..., quiet=True)`) so no case
-  note pops before he has read it. The FULL ~7s wordless dream
-  (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
-  `begin_rite_dream` — completing it sets `rite_performed` (the grove's
-  `on_update` then carries the PI down the mine shaft to `well_bottom` — the
-  dream IS the descent, 2026-07) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;
-  the `FLASHBACK_*` tuning block (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
-  `_RATE_MIN/_MAX`, `_FOCAL_Y`) is defined in `ui/cutscenes.py`.
-- **Visuals:** dried-wood doorframe in black; a pulsing gold glow pooled at
-  the door's **base** (`FLASHBACK_FOCAL_Y`), contained by the frame; faint
-  peeking eyes; and an **accelerating swarm** of carved dark-wood masks
-  (`_spawn_flashback_masks` → pre-rendered `_build_flashback_pool`) that clip
-  on the jamb and whose gold gazes all aim back at the player. Mask art is
-  `door_mask_surface(height, vis, gaze, seed)` in `rendering/sprites.py`
-  (recessed sockets, no mouth; `gaze=(gx,gy)` points the pupils; `_jag_blob`
-  gives irregular shapes). Audio bed: `Audio.flashback_air()` +
-  `falling_air` SFX in `systems/audio.py`.
-- **CANON — do not break:** the PI dreamed the door **exactly once, a year
-  ago, and never reached it** (it never took root). The journal *reminds* him
-  of that single dream — it is **not** recurring. The case note
-  (`Game._log_dream_entry`) must read as that half-dismissed memory.
-- **"He knows you":** `_log_dream_entry` writes the dream to save arg
-  **`notes`** (shown on the Casebook's Case tab after the clues). It must NOT go in
-  `evidence` — `_evidence_count` is `len(save.arg("evidence"))` and drives the
-  King-gate + world rot; only the five `CANONICAL_EVIDENCE` beats of Mara's
-  trail (`maras_receipt`/`maras_record`/`maras_journal`/`maras_dig`/`maras_room`;
-  NARRATIVE §6, TODO #22) belong there — the bear is an optional non-counting
-  item, and the Ledger/Preacher/dream file as notes. At the real Threshold (`scenes/depths.py build_threshold`
-  `on_enter`), if `flashback_seen`, a recognition line lands before the
-  doorframe beat: *"You have stood here before. In sleep."*
+- **Trigger (two-stage):** picking up `mom_notebook` (a WALK-OVER pickup in
+  the barn, `scenes/interiors.py _barn_update`) sets `flashback_pending`;
+  `Game._tick_flashback` (`systems/narrative_mixin.py`) polls it, sets
+  `flashback_seen`, and fires a ~2.2s MEMORY FLASH (`FLASHBACK_FLASH_DUR`, no
+  swarm). The pickup logs its gate beat QUIETLY (`_evidence(..., quiet=True)`)
+  so no case note pops before he has read the thing. The FULL ~7s wordless
+  dream (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
+  `begin_rite_dream`; completing it sets `rite_performed` (the grove's
+  `on_update` then carries the PI down to `well_bottom` — the dream IS the
+  descent) and `flashback_seen`. Tuning: the `FLASHBACK_*` block in
+  `ui/cutscenes.py`. Art: `door_mask_surface` (`rendering/sprites.py`) +
+  `_build_flashback_pool`; audio `Audio.flashback_air()` + `falling_air`.
+- **The trap to know:** `_log_dream_entry` writes the dream to save arg
+  **`notes`**, never `evidence`. `_evidence_count` is
+  `len(save.arg("evidence"))` and drives the King-gate + world rot, so only
+  the five `CANONICAL_EVIDENCE` beats of Mara's trail belong there
+  (NARRATIVE §6); the bear, the Ledger, the Preacher and the dream are notes.
+- **Canon, guarded:** he dreamed the door exactly ONCE, a year ago, and never
+  reached it; the journal reminds him, it is not recurring (NARRATIVE §2, the
+  invariants). The threshold recognition rides `flashback_seen`
+  (`scenes/depths.py build_threshold`); its wording is `DIALOGUE.md`'s.
 
 ## Working agreements (process — learned the hard way)
 

@@ -17,165 +17,57 @@
 > — don't leave "LANDED" narration sitting here as a trophy. This file
 > should be short enough to read start to finish in one sitting; if it
 > isn't, something in it is actually done.
-
-> **Model tags** (2026-07): each ticket is marked **[Opus]** (systems
-> reasoning, geometry, rendering, correctness) or **[Fable]** (prose, voice,
+>
+> **Ticket numbers are STABLE IDs, never an order.** Code comments and the
+> other docs cite them, so a number is never reused, renumbered, or
+> recycled when a ticket is cut — the order lives in the timeline below.
+> A retired number is retired forever: cite the canon home
+> (`NARRATIVE §n` / `DESIGN §n`) or `CHANGELOG.md` instead, never the dead
+> number. Guarded by `tests/conventions.py` check 13, which fails on any
+> `TODO #n` reference in the code or the docs that no longer resolves here.
+>
+> **Model tags:** each ticket is marked **[Opus]** (systems reasoning,
+> geometry, rendering, correctness) or **[Fable]** (prose, voice,
 > atmosphere). A few straddle and say so. Routing hint, not a rule.
 
 ---
 
-## Buildable now
+## THE TIMELINE
 
-### 1. **[Fable]** Make evidence ASKABLE — the investigation loop
+One order for everything open, so the work stops being a pile. Phases are
+sequential; items inside a phase are not. Nothing below is blocked on
+anything above it except where it says so — the order is about **what the
+game most needs next**, and the maintainer reshuffles it freely.
 
-**Reframed by the 2026-07 story audit** (which superseded this ticket's old
-"remaining revisit-nudges" scope: nudges tell the player to go ask, and #13b
-is cutting them; a question that is simply THERE when he arrives is the same
-beat without the hand-holding).
+| # | Phase | Ticket | Why here |
+|---|---|---|---|
+| 1 | **Standing asks** | **#28** cut the calendars | A maintainer directive with a canon hole to fill first |
+| 1 | | **#27** remake the town sign | A maintainer directive; retires the last font-rendered lettering |
+| 1 | | **#13b** quiet the routine reactions | A maintainer grievance; one ruling, then ~30 small cuts |
+| 2 | **Finish the apex** | **#25** the bearer's catch animation | The main threat's death card is a placeholder fade |
+| 2 | | **#25** retire THE UNFOLDING | Two apex bodies ship today; one of them is dead weight |
+| 2 | | **#25** the storm's gold-rimmed cuts | Approved presentation, unbuilt |
+| 3 | **Make the case compound** | **#1** evidence askable | The story audit's central finding: finding and asking never touch |
+| 3 | | **#12** Royce the trucker | The chorus thread the shop's bare shelves already imply |
+| 3 | | **#2** the favor economy | Direction-stage; rides #1's conversation work |
+| 4 | **The rooms and the ground** | **#24** the interiors program | Rooms read as prop soup; the biggest look debt in the game |
+| 4 | | **#4** outdoor dread composition | The weakest dread zone; needs ONE scene named to start |
+| 4 | | **#26** the in-between remainder | The three-layer world is built; its manipulation layer is half-built |
+| 5 | **The pillar** | **#21** light is the pillar | The mandated ONE system to perfect; wants the rooms lit first |
+| 6 | **Systems depth** | **#23** cultist + local behavior | Wants the #5 tuning pass to absorb it |
+| 6 | | **#4c** freeform walls (Phase 4) | The wall program's north star; unlocks the deferred church shapes |
+| 7 | **End-stage** | **#17** the ancient altar | A set-piece cap; needs a site now that Brimley is a street string |
+| 7 | | **#20** endings redraw | Parked pending a fresh decision |
+| 7 | | **#16** packaging | Do near ship |
 
-**What the audit measured.** Of 31 authored questions across the whole cast,
-three opened on something the PI had found, and two of those three were the
-Ledger, which is not case evidence. Not one of the five canonical pieces
-except the journal opened a question anywhere. You could lift Mara's booking
-slip out of the Sheriff's own cabinet and never mention it to the Sheriff.
-Finding and asking were parallel activities that never touched, so the case
-accumulated instead of compounding, and the town went inert once every
-principal's rows were spent.
+Off the timeline on purpose: **#5** and **#6** need a person at the keys
+(below); the **dead ends** are closed and listed so they are not
+restarted; the **standing fences**, **optional polish**, **voice polish**
+and **process** sections are reference, not sequence.
 
-**The shape.** A find should open a question with the person it came from,
-or the person it points at. No new systems: the engine already does it with
-`avail` + `beats`, and every piece of the pattern is worked in Vane.
+---
 
-**LANDED: the detention night, the pilot** (`CHANGELOG.md`). The photograph
-now earns the booking slip off Vane himself (he booked her, so he recognizes
-her); the office drawer demoted to the dead/hollow fallback; the slip opens
-`the_night`, his account of the arrest, filed as a statement note; and his
-answer leaves a second witness as plain stated fact, unpointed.
-
-**Open, in build order:**
-- **Garrick's witness** — canon since NARRATIVE §6 and DESIGN §9 and still
-  unbuilt: he saw her curse at the sky, and Vane's `the_night` now points at
-  him without naming him. He has exactly one question today. This closes the
-  detention night at both ends and is the payoff for the pilot's unpointed
-  lead, so it goes first.
-- **The receipt** → Hettie (a year of her own handwriting), Vane (paper with
-  dates, his stated appetite).
-- **The journal** → Crane (she sat his pews twice, so he can date when she
-  stopped), Toby (the barn he named).
-- **Not the deep two.** The dig leaf and the letter reach nobody by design;
-  there is no one down there to tell, and that isolation is doing work.
-
-**Fences:** a statement is a note, never evidence (NARRATIVE §6); the lead is
-stated, never pointed at (no "I should go ask him" append, #13b); every new
-line lands in `DIALOGUE.md` in the same commit.
-
-**And the pattern the rest of the cast follows** (from the maintainer's pass
-on Vane, `CHANGELOG.md`): **a POSSESSION gate hides the row** (you cannot ask
-about a thing you are not holding), but a **TRUST or disposition gate does
-NOT** — the question is askable and the character refuses it in their own
-voice, naming what would change their mind. Hidden options teach nothing;
-refusals are characterisation and a reason to come back. The refusal branch
-must never fire the grant.
-
-### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
-
-The newspaper's one-copy, six-recipient choice shipped as the pilot
-(`CHANGELOG.md`). Still open, direction-stage only:
-- **Requests variant (same engine):** a local asks for a thing → fulfill /
-  refuse / SUBVERT (use it another way) → the town feels it.
-- **Fences to hold if this grows:** rewards stay **incommensurable** (no
-  dominant pick); **never evidence**; the ripple is **mood, not a meter**;
-  it **never gates an ending**; **existing verbs only** (give via E /
-  dialog).
-
-### 4. **[Fable]** Outdoor dread — the composition pass
-
-Open ground is the game's weakest dread zone (long sightlines, reads as an
-open field). The heavy-tech answers (a Brimley reshape, a general ground
-floor-roll) are parked on purpose — see `CHANGELOG.md`, "Brimley
-geography" — because the tilt camera + blind-spot sight-gating already buy
-most of the geometry illusion for free. The lever is **composition** with
-tools already shipped:
-- **Corn + treeline as outdoor walls.** Denser stands, winding corn lanes
-  that break the long shot, a treeline that closes the rim. Draw +
-  placement only; the standee billboards + `_corn_runs` LOD already exist.
-- **Fog / mist volume** between the player and the distance, shortening
-  the effective sightline. Rides the skybox/void rim, already ~80% there.
-- **Landmark repetition + same-scene silent folds** (`Game.cross_fold`,
-  draw-only) for the "handed back / the town rearranges" uncanny with no
-  sim change.
-- **Turf HILLS + unified roof caps** (shipped 2026-07 for the grove mine
-  mouth): the `turf` wall material (grass top, stone sides, via `top_tint`) +
-  the `hill_cap` dome prop raise a grassy hill from the game's OWN wall
-  geometry — real occlusion + relief for an outdoor scene, static/correct
-  from every facing, WITHOUT the parked heightfield floor-roll. A new lever
-  for this pass (`rendering/props.py`, `scenes/terrain.py _WALL_STYLES`).
-
-**To turn into work: name ONE scene and the ONE composition it gets** (this
-sightline broken by this corn lane, this landmark passed twice in fog). Do
-not start against the abstract goal. Keep the sim Euclidean-honest so
-stealth distance-falloff + NPC nav stay true under any presentation lie.
-**Preserve (load-bearing) if the scene is Brimley:** it stays ONE square
-scene (do not split, do not reshape); the fold road + Royce/Garrick
-looping-roads lines; the well as dread set-dressing (never the way down);
-all exits/locals/cult stations; in player-facing text call it a bounded
-fog-edge / void-ringed town, never "island."
-
-### 4b. **[Opus]** Brimley river-centered rebuild, both banks
-
-**Concept approved 2026-07, not yet built.** A top-down layout check found
-6 of 7 buildings on one bank with the river as an unused spine. Approved
-fix: redistribute the 7 buildings tight on BOTH banks around the river +
-bridge — a redistribution, not a shape/boundary change (Brimley still
-stays one square scene with the torus wrap; see #4).
-
-- **Flow, from the real topology:** the player enters from the EAST (the
-  Arcadia sits off-map via the east lodge road), so the near bank is
-  first-contact town (shop, barn, Toby's house) and the sheriff sits on
-  the FAR bank — "cross the river to reach the law" falls out of geography
-  with no gate needed.
-- **Acceptance test:** everything fits IN SCALE on the 60x60 map at real
-  building footprints, with cover lanes per bank, NPC/King nav across the
-  torus wrap, the fold-road E-W loop, homebody door anchors, and every
-  exit/spawn reconciled; reachability re-checked with smoke's flood-fill.
-- Its own build, scoped to run after the conversation/tableau work so two
-  big changes are never in the air at once.
-
-### 4c. **[Opus]** Wall program — Phase 4 (freeform walls)
-
-The **interior-door rollout is COMPLETE** (`CHANGELOG.md`, "Walls & interior
-geometry"): the shop pilot, the church vestry, the barn, the abandoned
-farmhouse, the sheriff's office, and Toby's closet are all doored, and the
-schoolhouse + the Lodge interiors were assessed and deliberately left whole as
-authentic open spaces (a one-room schoolhouse with the rite fold in the open
-floor; an open-plan lodge common room; a hall of separate room-scenes; a
-single-room cellar). The **wall-material rollout program** (thin-slab + rounded
-+ per-material styles) has landed Phase 2 (every above-ground interior) and
-Phase 3 (the mine as full-thick hewn `rock`), `CHANGELOG.md`. **Still open:**
-- **Phase 4 — freeform walls** (the north star): a wall SEGMENT primitive
-  off the tile grid, unlocking diagonal walls, a curved church apse, a
-  round silo/tower. Prototype ONE curved feature first.
-- **Deferred church shapes** (the curved apse / arched-window geometry)
-  wait on Phase 4.
-- **Cross-cutting every phase:** thinner walls occlude less, so re-derive
-  interior cover as styles land; extend `tests/stealth.py` §16; VISION
-  toward the Darkwood organic read.
-
-### 27. **[Opus]** Remake the town sign (maintainer: "I want the town sign remade")
-
-The old-timey painted BRIMLEY board (WELCOME TO / NORTHERNMOST CORN / EST.
-1894) needs a redesign. It is also the game's **last font-rendered world
-lettering** (`rendering/props.py`, 3 of the 3 uses in `FONT_BUDGET`), so the
-remake is the chance to retire that: spell it in the procedural neon-tube
-alphabet's cousin, a **painted**-letter stroke set (`_GLYPH` +
-`_draw_neon_word` in `rendering/props.py` are the worked reference; a painted
-board wants flat opaque strokes with wear, not tube glow). Drop the file's
-`FONT_BUDGET` entry to 0 when it lands and the guard locks it shut.
-Verify with `tools/capture_facings.py` (a roadside board is read from the
-approach, so check the angles a driver/walker actually gets, not just N).
-**Reconcile:** the SPREAD ending's drive-out sign (`rendering/spread_drive.py
-_sign_back`) shares the board's shape and is already flagged under Optional
-polish; do both in one pass so they cannot disagree.
+# Phase 1 — the standing asks
 
 ### 28. **[Opus + Fable]** Cut the calendars (maintainer: "I hate it")
 
@@ -186,8 +78,8 @@ the replacement before it is built:
 
 - **The prop.** The `calendar` decoration (`entities/deco_horror.py
   _draw_calendar`, placed in `scenes/yards.py` on Old Pell's own siding and
-  read in the Vane tableau's dressing). Removing it also clears that file's 3 `FONT_BUDGET`
-  entries (the month/day label), so the guard tightens for free.
+  read in the Vane tableau's dressing). Removing it also clears that file's 3
+  `FONT_BUDGET` entries (the month/day label), so the guard tightens for free.
 - **Pell's whole thread rides it** (`scenes/dialogue.py`, `scenes/yards.py`):
   the `beat_pell_coal` stoop line ("I've got the calendar where I want it.
   Stopped."), the `beat_pell_marked` ripple after the newspaper, and the
@@ -203,32 +95,42 @@ the replacement before it is built:
 - **Guards:** `tests/flow.py` asserts several Pell/paper beats; expect to
   update them in the same commit.
 
-### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
+### 27. **[Opus]** Remake the town sign (maintainer: "I want the town sign remade")
 
-Promote Royce to the man who drove Brimley's supply run (Hettie's shelves
-are bare because *his* deliveries stopped). **[Fable]** a small dialogue
-nudge (he ran the route, goods in and out) — his newspaper exchange
-already carries some of this; confirm it's enough or add the nudge.
-**[Opus]** place his picked-clean semi rusting at the town edge (optional
-light scavenge, never evidence). Reconcile with his worker job-loop.
+The old-timey painted BRIMLEY board (WELCOME TO / NORTHERNMOST CORN / EST.
+1894) needs a redesign. It is also the game's **last font-rendered world
+lettering** (`rendering/props.py`, 3 of the 3 uses in `FONT_BUDGET`), so the
+remake is the chance to retire that: spell it in the procedural neon-tube
+alphabet's cousin, a **painted**-letter stroke set (`_GLYPH` +
+`_draw_neon_word` in `rendering/props.py` are the worked reference; a painted
+board wants flat opaque strokes with wear, not tube glow). Drop the file's
+`FONT_BUDGET` entry to 0 when it lands and the guard locks it shut.
+Verify with `tools/capture_facings.py` (a roadside board is read from the
+approach, so check the angles a driver/walker actually gets, not just N).
+**Do both signs in one pass so they cannot disagree:** the SPREAD ending's
+drive-out board (`rendering/spread_drive.py _sign_back`) still carries the old
+blank-back shape — its proportions/posts need to match the new board (the back
+stays blank/unpainted by design; only the shape agrees). Verify that half with
+a headless capture of the SPREAD drive-out.
 
 ### 13b. **[Fable]** Interior voice — quiet the routine reactions
 
-The Casebook structure landed (Case/Tools/Papers tabs, the Case tab now the
-PI's running notebook, the named scribble toast — `CHANGELOG.md`), and a first trim
-cut the three worst offenders. **Still open — the maintainer's actual
-grievance ("every interaction does something and never leaves the player
-thinking"):** on-screen PI narrator captions still fire on nearly every
-world-prop examine. Cut candidates (~30 sites, prop examines that
+**The maintainer's grievance: "every interaction does something and never
+leaves the player thinking."** On-screen PI narrator captions still fire on
+nearly every world-prop examine. Cut candidates (~30 sites, prop examines that
 editorialize a conclusion instead of stating the fact): the lodge
 register/ledger recaps, the well / news-rack monologues, headstone +
-candle re-examines, `bell_tower` / `the_fall` /
-`threshing_floor` / `works_cistern_seen` / `the_doorframe` flavor
-`_evidence` calls (these write nothing to the book — caption only). Trim
-each to a terse factual line or silence, so the player draws the
-inference. **The revisit-nudges** (`_REVISIT_NUDGES`, the "I should go
-back and ask him" appends) are the clearest instance of "the game does
-the thinking for you" — decide with the maintainer whether they go.
+candle re-examines, `bell_tower` / `the_fall` / `threshing_floor` /
+`works_cistern_seen` / `the_doorframe` flavor `_evidence` calls (these write
+nothing to the book — caption only). Trim each to a terse factual line or
+silence, so the player draws the inference.
+
+**One ruling first:** the revisit-nudges (`_REVISIT_NUDGES`, the "I should go
+back and ask him" appends) are the clearest instance of "the game does the
+thinking for you" — decide with the maintainer whether they go. #1 assumes
+they do (a question that is simply THERE when he arrives is the same beat
+without the hand-holding).
+
 **KEEP, do not touch:** the five `CANONICAL_EVIDENCE` beats, the
 descent-voice arc, the dream, the Mask temptation, Mara's calling-out, the
 fold notes, the threshold recognition, and the deliberate atmospheric
@@ -237,24 +139,144 @@ Each cut must keep the `tests/flow.py` guards green (§16, §17b/c/d, §24
 assert on several of these captions/notes) and update the ones whose
 behavior legitimately changes.
 
+---
+
+# Phase 2 — finish the apex
+
+### 25. **[Fable + Opus]** The King as the STORM — the remainder
+
+The storm, the apex, the migrating Mask, the face, the screech and the reach
+all SHIP (`DESIGN.md` §1, `CHANGELOG.md`). Three things are left, in build
+order:
+
+1. **THE BEARER'S CATCH ANIMATION.** The apex's death card is a placeholder
+   wordless fade, on purpose. It needs its own art, built from the amalgam
+   grammar rather than the Unfolding's: the parts, the gold cuts, the Mask
+   coming in. Hooked up and timed already (`_death_kind == "apex"`, 3.8s,
+   `render_mixin._draw_death_screen`), so this is purely the drawing. Land it
+   through a `VISION.md` look-pass. His deaths carry no label, so there is no
+   player-facing text here and none owed to `DIALOGUE.md`.
+2. **RETIRE THE UNFOLDING** (`rendering/king_unfold.py`, the `KING_UNFOLD`
+   flag, and the `sprites_king._draw_king` fallback under it). The apex no
+   longer touches that art at all; what remains is the roaming King's own path
+   — his death card and the Carcosa cutscene (both flow-guarded) rewired onto
+   the storm. **The canon reconciliation rides this:** `NARRATIVE.md` §8's
+   "one pursuit, two shapes" describes the walking King because that is what
+   ships until this lands, and collapses back to one shape when it does.
+3. **THE STORM'S CUTS WEAR THE RIFT'S GOLD** (approved 2026-07, option
+   (a)+gold, unbuilt). The amalgam apertures should read as the same portal
+   family as the fold/King rift (`rendering/portal.py`): an **ANCHORED**
+   gold-rimmed cut, not a billboard, with the off-angle falloff FLOORED so a
+   storm cut thins yet never fully vanishes (you always sense them). Same gold
+   language as the rift's rim/pool, at aperture size (gold rim + motes, no
+   expensive see-through — the rift stays the only full doorway). A "pool of
+   water that faces you" billboard presentation was weighed and rejected: it
+   breaks the pseudo-3D "an object you can circle, not a billboard that
+   swivels" canon (`DESIGN.md` §7). The **fade-until-gone dissolve is reserved
+   for the CATCH beat** (a bearer reaches you → you fade into His portal),
+   never routine crossing (folds stay "the crossing is nothing, the frame is
+   the spectacle").
+
+**Movement ideas discussed and NOT chosen** (open directions, pick or drop
+deliberately rather than drifting): it uses APERTURES instead of pathing (sink
+and rise past a wall rather than walk around it — the migration machinery
+already exists); STILLNESS instead of idling (perfectly motionless, facing
+you, at the edge of the light); speed tied to whether you are LOOKING at it
+(inverts the family's own gaze rule, so the player's trained instinct becomes
+a cost); and arriving ALREADY THERE rather than walking in.
+
+**Fences:** the Mask stays player-scale and a real 3D object (it turns to face
+you or away, never a billboard); **one bearer at a time**; the flood
+concentrates on His last *sense* of you, not your true position
+(luck-not-omniscience); **the impossible count stays at one** — the storm's
+face is a SLICE of Him, never the keystone object (`NARRATIVE.md` §6a, guarded
+by `tests/conventions.py` check 12); light SLOWS and repels the storm and
+never burns it (burning stays the Watchers' privilege).
+
+---
+
+# Phase 3 — make the case compound
+
+### 1. **[Fable]** Make evidence ASKABLE — the investigation loop
+
+**What the 2026-07 story audit measured.** Of 31 authored questions across the
+whole cast, three opened on something the PI had found, and two of those three
+were the Ledger, which is not case evidence. Not one of the five canonical
+pieces except the journal opened a question anywhere. You could lift Mara's
+booking slip out of the Sheriff's own cabinet and never mention it to the
+Sheriff. Finding and asking were parallel activities that never touched, so
+the case accumulated instead of compounding, and the town went inert once
+every principal's rows were spent.
+
+**The shape.** A find should open a question with the person it came from, or
+the person it points at. No new systems: the engine already does it with
+`avail` + `beats`, and the whole pattern is worked in Vane (the detention
+night, the pilot — `CHANGELOG.md`).
+
+**Open, in build order:**
+- **Garrick's witness** — canon since `NARRATIVE.md` §6 / `DESIGN.md` §9 and
+  still unbuilt: he saw her curse at the sky, and Vane's `the_night` already
+  points at him without naming him. He has exactly one question today. This
+  closes the detention night at both ends and is the payoff for the pilot's
+  unpointed lead, so it goes first.
+- **The receipt** → Hettie (a year of her own handwriting), Vane (paper with
+  dates, his stated appetite).
+- **The journal** → Crane (she sat his pews twice, so he can date when she
+  stopped), Toby (the barn he named).
+- **Not the deep two.** The dig leaf and the letter reach nobody by design;
+  there is no one down there to tell, and that isolation is doing work.
+
+**The gate pattern** (from the maintainer's pass on Vane): a **POSSESSION**
+gate hides the row (you cannot ask about a thing you are not holding), but a
+**TRUST or disposition** gate does NOT — the question is askable and the
+character refuses it in their own voice, naming what would change their mind.
+Hidden options teach nothing; refusals are characterisation and a reason to
+come back. The refusal branch must never fire the grant.
+
+**Fences:** a statement is a note, never evidence (`NARRATIVE.md` §6); the
+lead is stated, never pointed at (no "I should go ask him" append — see #13b);
+every new line lands in `DIALOGUE.md` in the same commit.
+
+### 12. **[Fable + Opus]** Royce the trucker + the rusting semi
+
+Promote Royce to the man who drove Brimley's supply run (Hettie's shelves are
+bare because *his* deliveries stopped). **[Fable]** a small dialogue nudge (he
+ran the route, goods in and out) — his newspaper exchange already carries some
+of this; confirm it's enough or add the nudge. **[Opus]** place his
+picked-clean semi rusting at the town edge (optional light scavenge, never
+evidence) — it wants a road or yard scene now that there is no town map.
+Reconcile with his worker job-loop.
+
+### 2. **[Fable + Opus]** The favor economy — beyond the newspaper pilot
+
+The newspaper's one-copy, six-recipient choice shipped as the pilot
+(`CHANGELOG.md`). Still open, direction-stage only:
+- **Requests variant (same engine):** a local asks for a thing → fulfill /
+  refuse / SUBVERT (use it another way) → the town feels it.
+- **Fences to hold if this grows:** rewards stay **incommensurable** (no
+  dominant pick); **never evidence**; the ripple is **mood, not a meter**; it
+  **never gates an ending**; **existing verbs only** (give via E / dialog).
+
+---
+
+# Phase 4 — the rooms and the ground
+
 ### 24. **[Opus + Fable]** INTERIORS PROGRAM — ensembles, floor plans, the prop fifteen
 
-**Maintainer directive (2026-07 playtest): "props seem scattered without
-any purpose... treat what you have as multiple props touching each other
-and make those into ONE new object with more handcrafted detail."** The
-rooms read as prop soup; the fix is composed ensembles, not more
-placement.
+**Maintainer directive (2026-07 playtest): "props seem scattered without any
+purpose... treat what you have as multiple props touching each other and make
+those into ONE new object with more handcrafted detail."** The rooms read as
+prop soup; the fix is composed ensembles, not more placement.
 
-- **THE ENSEMBLE RULE.** Props that touch each other or a shared wall
-  merge into ONE handcrafted multi-tile object (a `SOLID_PROPS` volume
-  with a designed silhouette), authored for the projection, never
-  re-scattered as separates. Design each from the FIXED CAMERA's four
-  facings, E/W FIRST (the historically weakest angles).
-- **REAL FLOOR PLANS FIRST.** Before re-dressing a room, sketch it from a
-  real reference plan (1990s Minnesota cabin / small hotel / farmhouse):
-  work zones, walk lanes, furniture against walls, one focal wall using
-  volume and negative space. Provenance stays king (SCENE-DRESSING
-  PROCESS).
+- **THE ENSEMBLE RULE.** Props that touch each other or a shared wall merge
+  into ONE handcrafted multi-tile object (a `SOLID_PROPS` volume with a
+  designed silhouette), authored for the projection, never re-scattered as
+  separates. Design each from the FIXED CAMERA's four facings, E/W FIRST (the
+  historically weakest angles).
+- **REAL FLOOR PLANS FIRST.** Before re-dressing a room, sketch it from a real
+  reference plan (1990s Minnesota cabin / small hotel / farmhouse): work
+  zones, walk lanes, furniture against walls, one focal wall using volume and
+  negative space. Provenance stays king (SCENE-DRESSING PROCESS, `CLAUDE.md`).
 - **The prop fifteen (reusable ensembles, build as a library):**
   1. kitchen (wood stove + counter + stovepipe + hung pots),
   2. hearth wall (fireplace + mantle + fire tools + log basket),
@@ -268,437 +290,256 @@ placement.
   12. reading chair + side table + oil lamp,
   13. workbench wall (hung tools + vise),
   14. woodpile + stove pairing,
-  15. wardrobe with the robe made legible (Sable's closet: the tell
-      reads the moment you round the partition, no squinting).
+  15. wardrobe with the robe made legible (Sable's closet: the tell reads the
+      moment you round the partition, no squinting).
   Each through the render-first loop (preview sheet → approve → place).
-- **15 INSIDE + 15 OUTSIDE (maintainer refinement).** The fifteen above
-  are the INTERIOR library; a matching EXTERIOR fifteen follows (porch
-  ensemble, lean-to + stacked wood, clothesline, rain barrel + gutter,
-  fence-and-gate runs, mailbox post, burn barrel, machine shed face,
-  pump + trough, chicken wire pen, propane/fuel tank, junk pile, tarped
-  equipment, porch chair + rifle, antler-over-door). Same rules.
-- **USE ALL SIX SURFACES.** This is a 3D environment: on top of, next
-  to, underneath, hung from walls, standing on floors, and dropped from
-  ceilings/rooflines are all placement options. An ensemble is allowed
-  to span floor-to-ceiling (stovepipe up through the roof, hams hung
-  from beams, a wall of pelts reaching the eave).
-- **ANIMATE WHERE IT EARNS IT.** Each ensemble asks: could a part move,
-  and does the world state show through it (a TV that plays static only
-  while the genset runs, a stovepipe that smokes when lit, a fan that
-  turns)? Powered behavior rides the light pillar's genset link (#21).
-  Not everything can or should move; a still room with ONE moving thing
-  is scarier than a busy one.
-- **EVERY ENSEMBLE SHIPS ITS WEAR LAYER, WORLD-SPACE.** The object's
-  years (rust, soot, scratches), its stains on the surfaces around it
-  (the floor wears where feet stood), and at least one piece of honest
-  mess -- with FEW, BIG, DISTINGUISHABLE items, never same-weight
-  speckle. Every mark is projected geometry in its true plane (a plate
-  is a world-plane circle); screen-aligned marks are error class 7.
-  The floors set the bar; the decor rises to it.
+- **15 INSIDE + 15 OUTSIDE (maintainer refinement).** The fifteen above are
+  the INTERIOR library; a matching EXTERIOR fifteen follows (porch ensemble,
+  lean-to + stacked wood, clothesline, rain barrel + gutter, fence-and-gate
+  runs, mailbox post, burn barrel, machine shed face, pump + trough, chicken
+  wire pen, propane/fuel tank, junk pile, tarped equipment, porch chair +
+  rifle, antler-over-door). Same rules.
+- **USE ALL SIX SURFACES.** This is a 3D environment: on top of, next to,
+  underneath, hung from walls, standing on floors, and dropped from
+  ceilings/rooflines are all placement options. An ensemble is allowed to span
+  floor-to-ceiling (stovepipe up through the roof, hams hung from beams, a
+  wall of pelts reaching the eave).
+- **ANIMATE WHERE IT EARNS IT.** Each ensemble asks: could a part move, and
+  does the world state show through it (a TV that plays static only while the
+  genset runs, a stovepipe that smokes when lit, a fan that turns)? Powered
+  behavior rides the light pillar's genset link (#21). Not everything can or
+  should move; a still room with ONE moving thing is scarier than a busy one.
+- **EVERY ENSEMBLE SHIPS ITS WEAR LAYER, WORLD-SPACE.** The object's years
+  (rust, soot, scratches), its stains on the surfaces around it (the floor
+  wears where feet stood), and at least one piece of honest mess — with FEW,
+  BIG, DISTINGUISHABLE items, never same-weight speckle. Every mark is
+  projected geometry in its true plane (a plate is a world-plane circle);
+  screen-aligned marks are error class 7. The floors set the bar; the decor
+  rises to it.
 - **Rug rework rides along:** the rug must read from every facing (its
   pattern/fringe currently only reads from N).
-- **Blank building faces:** E/W exterior shells (the backwoods cabin is
-  a bare grey slab from the side) need relief — windows, timber framing,
-  a lean-to, stacked wood — via the exterior library, not one-offs.
-- **Pilot: the LODGE COMMON ROOM** — LANDED (kitchen wall, dining set,
-  hearth mass, the host's desk + key wall; `CHANGELOG.md`). **Wave 2
-  rollout underway:** the shop's stockroom receiving corner landed
-  (crate stack + check table + flour barrel as ONE object with its
-  wear; the candle stays a separate emitter seated on the table).
-  The sheriff's OFFICE quad landed next (the lawman's wall: cot +
-  washstand + coat rack as one west-wall run; the lawman's desk: desk +
-  radio + files + mug + tucked chair as one working surface). Next
-  rooms: the office's booking/waiting corners if they earn it, then
-  the church vestry.
+- **Blank building faces:** E/W exterior shells (the backwoods cabin is a bare
+  grey slab from the side) need relief — windows, timber framing, a lean-to,
+  stacked wood — via the exterior library, not one-offs.
+- **Where the rollout stands.** The lodge common room was the pilot; wave 2 has
+  landed the shop's stockroom receiving corner and the sheriff's office quad
+  (`CHANGELOG.md`). **Next rooms:** the office's booking/waiting corners if
+  they earn it, then the church vestry.
 
-### 23. **[Opus + Fable]** Complex behavior for cultists and locals
+### 4. **[Fable + Opus]** Outdoor dread — the composition pass
 
-Built in pilots, inside hard fences: systemic not scripted; the people do
-NOT change (only the cult may act wrong, and only in cult ways; locals
-stay mundane and never signal the cosmology); nothing touches the pacing
-ratios, the SAFE_SCENES refuge, fold-only pursuit carry, or the
-Talk/two-touch gates; no new behavior ships with explanatory player-facing
-text (the behavior IS the tell); the King and hollow Sheriff keep their
-exemptions.
+Open ground is the game's weakest dread zone (long sightlines, reads as an
+open field). This ticket also absorbed the standing **liminal-composition**
+direction (composed emptiness, long sightlines, uncanny repetition; the
+retired #7) — the two were separate tickets saying the same thing, and this is
+the one aimed at a zone that actually needs it. The heavy-tech answers (a general ground
+floor-roll, a whole-map reshape) are parked on purpose (#8) because the tilt
+camera + blind-spot sight-gating already buy most of the geometry illusion for
+free. The lever is **composition** with tools already shipped:
+- **Corn + treeline as outdoor walls.** Denser stands, winding corn lanes that
+  break the long shot, a treeline that closes the rim. Draw + placement only;
+  the billboards + `_corn_runs` LOD already exist.
+- **Fog / mist volume** between the player and the distance, shortening the
+  effective sightline. Rides the skybox/void rim, already ~80% there.
+- **Landmark repetition + same-scene silent folds** (`Game.cross_fold`,
+  draw-only) for the "handed back / the town rearranges" uncanny with no sim
+  change.
+- **Turf HILLS + unified roof caps** (shipped for the grove mine mouth): the
+  `turf` wall material (grass top, stone sides, via `top_tint`) + the
+  `hill_cap` dome prop raise a grassy hill from the game's OWN wall geometry —
+  real occlusion + relief for an outdoor scene, static/correct from every
+  facing, WITHOUT the parked heightfield floor-roll
+  (`rendering/props.py`, `scenes/terrain.py _WALL_STYLES`).
 
-- **23a remainder:** job-station authoring for the patrolled cult rooms
-  that have none (`works_sign`'s lone patrol) — place via the
-  SCENE-DRESSING PROCESS (render first, never by name). The synchrony +
-  hand-off beats themselves are landed (`CHANGELOG.md`).
-- **23b. The town half (open).** The **yield**: a local a cult patrol
-  passes steps off the lane, eyes down, waits, resumes; the cultist never
-  acknowledges them. **Mundane witness reactions**: a local who sees the
-  drawn gun or a sprint flinches or hurries indoors (rides
-  homebody `_inside`); a kill nearby empties the street for the visit.
-  Strictly mundane reactions only.
-- **23c. The mechanical pieces (open), sequenced for the #5 tuning
-  pass.** SEARCH **sweep partition** (multiple searchers divide
-  `sweep_points`, no duplicate checks); **room posture** (a per-scene
-  calm/uneasy/roused int raised by shots, struggles, found bodies,
-  decaying; modulates walk speed, scan time, sweep budget — ship
-  OFF-default behind config until the #5 tuning pass absorbs it); the
-  **flank call** (a locked chaser pulls at most one nearby patrol to a
-  flank point, same LOS/suspicion rules, normal search timer, never soft
-  omniscience); **object-state investigation** (a left-on noisemaker, an
-  opened door: pause at it, mark the room uneasy).
-- **23d. Content passes (open, anytime, Fable).** Fuller local **day-loops**
-  on the JOBS `stations` plumbing (Pell to the field edge he doesn't look
-  at, Calder to her gate, Royce circling his truck; door-anchor honesty
-  rules apply); **disposition framing** read off existing save flags
-  (mood, never a meter).
+**To turn into work: name ONE scene and the ONE composition it gets** (this
+sightline broken by this corn lane, this landmark passed twice in fog). Do not
+start against the abstract goal. Keep the sim Euclidean-honest so stealth
+distance-falloff + NPC nav stay true under any presentation lie.
 
-### 25. **[Fable + Opus]** The King → the STORM (apex redesign, IN PROGRESS)
+### 26. **[Opus + Fable]** The in-between — the manipulation layer's remainder
 
-Replacing THE UNFOLDING (`rendering/king_unfold.py`) with the shadow family's
-apex: the King is not one body, He is the **STORM** — His attention flooding
-the flat plane so every dark space erupts amalgam-cuts (portals with a part
-half-out). Locked with the maintainer this pass:
-- **No apex body.** The "bearer" is just another amalgam; nothing marks it but
-  the Mask.
-- **The Mask is a PART** (the 18th), surfaced from its own cut in the family
-  grammar, held by the flesh. His face made an object: **player scale** and a
-  **real 3D object** (`draw_pallid_3d`) that turns a full 360 — the carved face
-  toward the PI, the blank shell turned away, a curved lens at profile —
-  superseding the earlier always-camera-facing call so it respects the tilted
-  world. Timber is a bone↔wood blend (carved-pallid). No halo, no mouth, no nose.
-- **One Mask storm-wide, MIGRATING** — surfaces on one unit, is borne, sinks,
-  rises elsewhere (THE UNFOLDING's host/sink/rebond state, translated). It IS
-  the focal "Him" and keeps luck-not-omniscience: the Mask surfacing near you
-  is His attention finding you; while it is borne far off, His regard is
-  elsewhere.
-- **Light SLOWS the storm, never burns it** (burning stays the Watchers'
-  privilege); the AI avoids light regardless. He is survived, never dispelled.
-- **The storm fills ALL dark, corn included** ("no light = danger" taken to its
-  end). Rides the ev-driven outdoor darkening (#4/#21). Light = the last
-  refuge.
-- The idle horizon King is **CUT** (maintainer ruling); the storm is the
-  full-power apex at the source, so its overwhelm is the point.
+The three-layer world SHIPS: **interior → yard → safe path ↔ lost spaces**
+(`DESIGN.md` §13/§14/§15). The lost fields, the safe path, the eleven yards
+and the retirement of the one-square town all landed (`CHANGELOG.md`). What
+is left is the half of the model that was design-conversation only:
 
-**LANDED (dormant, wired into NOTHING in the game):**
-- The **Mask part** in `rendering/amalgam.py`: `draw_pallid_3d` (the one
-  reusable 3D Mask — a single bent SHEET, the front cap of an ellipsoid, NOT a
-  closed egg; pale carved FACE on the front only: deep jagged sockets + gold,
-  seam, crack, NO eyes from behind; BOTH sides pale so from behind you see its
-  pale concave inside and it still reads as a mask; a bent-crescent profile)
-  driven through `draw_pallid_mask_part` + a `mask=` kwarg on
-  `draw_amalgam_sprite`, NEVER dealt by `assemble()`, so every ordinary amalgam
-  is byte-identical. Player scale (`STORM_MASK_R`). Previews
-  `tools/preview_mask_spin.py` (the full spin) + `tools/preview_bearer.py`.
-- The **bearer power-up** (drawn ONLY when the storm passes `mask=`): the
-  possessed amalgam is simply a **BIGGER** amalgam (`BEARER_SCALE`) wearing the
-  Mask + a **crown** of ember-cuts (`_bearer_crown`) — size is the tell, not a
-  busier body.
-- The **storm ENGINE** `systems/storm.py` (`Storm`): the single migrating Mask
-  bearer, units drifting to His **lagged sense** of the player (luck, not
-  omniscience), **light slows + repels, never burns**. Sim + draw helper only;
-  imported by nothing in the game. Preview `tools/preview_storm.py`.
-- The **storm's STAGE** — the ev-driven surface darkening (LIVE). `STORM_STAGE_SCENES`
-  (Brimley + `OUTDOOR_SCENES`) route through `_draw_dark` at a gloom that ramps
-  with the rot stage (`STORM_DARK_GLOOM = (0, 44, 92, 138)`): stage 0 is full
-  day (early-out, byte-identical), and by stage 3 it is night with the road
-  yard-lights as ISLANDS and the flashlight enabled outdoors (so the
-  light-draws-Him double-edge applies there too). This is world rot's LIGHT twin
-  (understanding, not a clock — the daytime invariant holds, NARRATIVE §canon).
-  It gates one REAL mechanic: the lost-space MOUTH opens at `LOST_EDGE_GLOOM`
-  (92 = `STORM_DARK_GLOOM[2]`, rot stage 2), so the edges of the authored world
-  only let go once understanding has put the lights out (#26).
-- **THE DARK IS NEVER THE PLAYER'S TOOL (ruled 2026-07, and the old item (1) is
-  CLOSED because of it).** The ticket used to ask for a light/dark SPLIT as a
-  mechanic: outdoors, light pools = cover, dark = exposure. **The maintainer
-  ruled that whole framing out** — "darkness shouldn't hide you AT ALL", and
-  "Watchers should be able to gaze at you while you're standing in the light,
-  that's the whole point of them." So both halves of the split are gone, and the
-  pre-existing shadow-cover pass went with them:
-  - Darkness is not concealment anywhere. `SUS_CONCEAL_DARK` and
-    `_tick_dark_cover` are DELETED (they had been live in `DARK_SCENES` since
-    the 2026-07 stealth rework).
-  - Light is not cover from the gaze anywhere. Exposed means NOT IN COVER and
-    nothing else; a lamp pool no longer suppresses a Watcher wave or drops the
-    hold, in the dim interiors or outdoors.
-  The dark is the CONDITION His things need in order to open, so letting the
-  player hide in it was letting them hide inside the threat — and a lamp that
-  turns the gaze off makes the one unopt-out-able threat opt-out-able. Light
-  still does real work, but all of it lands on the THREAT, never on you: it
-  denies a Watcher anywhere to open (`_spawn_watcher` needs a dark spot with
-  line of sight, so a fully lit room is still secured) and it BURNS one caught
-  in a pool or the beam (`WATCHER_LIGHT_BURN`). You clear them with light; you
-  never hide in it. Guarded, `tests/stealth.py` §11 + §18.
+1. **The rest of the dark manipulation layer.** The observer-dependent
+   reshuffle landed; the **asymmetric return** (the way back is not the way
+   you came) and **breathe-with-threat** (the space stretching as the meter
+   fills) have not.
+2. **A truly endless walk.** Per-chunk landmark/exit generation + a silent
+   **re-origin**; today it is a large finite bound with the player spawned at
+   centre.
+3. **The ev-warp variants** — the field swaps for a longer / warped /
+   more-hostile version as evidence climbs — plus richer linear field features
+   (fences, ruined buildings you can't enter).
+4. **Interiors for the yard buildings that have none.** The three new
+   households (Mrs. Calder, Royce, Garrick) have small one-room interiors; no
+   other yard building gained interior work. Nothing needs it, and it is the
+   obvious next ask.
 
-**LANDED — THE FLOOD (2026-07). The storm is a MODE of the Watcher wave, not a
-second spawner.** Two populations of the same creature under different rules
-reads as a bug rather than escalation (most manifestations already wear the
-amalgam skin), so the existing wave switches instead. Maintainer rulings this
-pass: **Watchers do NOT stop at the gate** — they BECOME the storm; **amalgams
-share `WATCHER_MAX` out of storm and uncap in one** (soft `STORM_MAX` = 22, the
-number asked for, earned by caching each unit's composed sprite at
-`UNIT_ANIM_HZ` with per-unit staggering -- 22 units went 53.3ms/18.8fps to
-27.2ms/32fps with a FLAT frame time); **during a storm every dispel still works** (gaze, light, axe,
-round); **light is the only safety**; and **the amalgam is the default skin now**
-(`AMALGAM_CHANCE` 0.5 → 0.9, the shroud Watcher a rare variant).
-- `Game._storm_active()` — past `STORM_GATE_EVIDENCE` (3) and in a room the dark
-  has actually taken (`scene_gloom() > 0`, the one darkness source, so the flood
-  literally fills the dark and cannot disagree with what the player sees). A lit
-  refuge never storms.
-- Units run `movement="storm"` (`entities/npc.py _storm_tick`): they WALK at the
-  player and refuse any step that would put them in light, so standing in a pool
-  makes them ring its edge. They cannot touch or kill (`solid=False`, no grab
-  path) — a unit walking onto you is a SCARE. Out of storm they keep the old
-  passive `watch`. `_sync_storm_mode` flips live units when the state changes
-  under them.
-- Storm spawns drop the line-of-sight requirement and open across the whole room
-  (`STORM_SPAWN_NEAR/FAR`). The LOS rule exists so a lone Watcher is always
-  answerable; a storm unit answers it by WALKING TO YOU. Out of storm the rule
-  stands exactly as ruled.
-- **The flood has to be SEEN.** Measured on a live 22-unit storm, ZERO units
-  passed the sight cone (7 inside 120px) — the whole thing was invisible and
-  "they ring the light" was unreadable. Units now take the apex's fog curve
-  (`Game.actor_smear_range`, `STORM_SEE_RANGE` 240): a dim smear at range,
-  resolving as they press in. A blanket exemption was rejected — it kills the
-  dread the other way.
-- Guards: `tests/stealth.py` §19 (gate, real cap lift, approach, light refusal,
-  cannot touch, dispel still burns, mode revert, the smear). Every one proven to
-  fail before landing; two first drafts were green for the wrong reason (a
-  constant-vs-constant "cap" check, and a smear check that silently skipped on
-  an empty wave).
-
-**LANDED — THE APEX (2026-07).** The Mask that wears a unit, built to the
-maintainer's spec. It supersedes `systems/storm.py`'s timer-driven migration:
-the hop is EARNED, not on a dwell.
-- **Game state, not scene state** (`Game._apex`, like `_king`): one bearer
-  storm-wide is a fence and `scene.npcs` is cleared on every load, so the Mask
-  lives on the Game and PROJECTS a host into whatever room you are in.
-- **It floats in and BECOMES an amalgam.** Two states: `seeking` (a free-floating
-  Mask drifting to the nearest unit it can reach) and `borne` (it IS that unit).
-  Taking a host DELETES the amalgam and rebuilds it wearing that unit's own seed
-  — its exact deal, reused verbatim — plus `APEX_EXTRA_LO..HI` (2-3) added parts
-  (`assemble(seed, extra=)`, on a separate rng so every ordinary unit's deal
-  stays byte-identical). Replacing rather than stacking keeps the two from
-  z-fighting in the depth sort.
-- **It pierces and ignores light.** `npc._apex_tick` has no light probe at all —
-  neither a fixture pool nor the flashlight beam turns it aside, where both hold a
-  regular unit off. Guarded by a contrast check: through the same beam, the apex
-  reaches contact while a regular unit stays 100px out.
-- **The axe and the gun destroy the HOST, not the Mask.** Every family dispel
-  routes through `_dispel_watcher`, which now hands off to `_apex_lose_host`: the
-  body dies, the Mask drops to seeking and re-hosts. It re-hosts on the NEAREST
-  unit after `APEX_MIGRATE_CD`, so fighting it buys SECONDS, never distance —
-  otherwise it would be a free pressure valve and the safest thing in the room.
-- **It comes at `APEX_VIS_GATE` visibility and withdraws below it** (the
-  maintainer's "until you get below the vis threshold", read from both sides).
-- **Speed is `KING_ROAM_SPEED` verbatim** (117 px/s vs a player sprint of 105):
-  above sprint, so it cannot be outrun, which is the locked ratio (error class 9).
-  Light will not stop it and hiding is not where it should be, so the answer is
-  the axe or a round.
-- **The catch has its OWN death kind, `"apex"` — NOT the King's card**
-  (maintainer, 2026-07: "do not use the existing death card"). It briefly fired
-  `_trigger_death("king")`, which played THE UNFOLDING's throat-swallow: the art
-  of the very body the storm exists to replace, shipped as the new apex's
-  signature. `"apex"` now draws a **wordless placeholder fade** at the King's
-  same 3.8s, so the pacing is already right when the real animation lands, and
-  its teardown clears the Mask + host (`_apex_end`) rather than the King. Sound
-  is still His (`void_sting` + `low_pulse`). Wordless is deliberate: His deaths
-  carry no label, so there is no player-facing text here and none owed to
-  `DIALOGUE.md`. Guarded — `tests/stealth.py` §20 asserts the kind is `"apex"`
-  AND that drawing that card never calls `draw_unfold_catch` (proven: borrowing
-  the King's kind again produces 4 calls).
-- **ONE IMPOSSIBLE THING AT A TIME:** while a host is worn, `_tick_king_roam`
-  stands the roaming Unfolding down and clears him from the room. Gated on a host
-  actually being borne, not on a storm merely being up, so nothing changes for the
-  King anywhere the apex has not taken a body.
-- Guards: `tests/stealth.py` §20, every check proven to fail. Two first drafts
-  were vacuous and are worth remembering: the light check used a "got closer than
-  d0-40" threshold that passed even with a light probe bolted on (the apex just
-  stopped at the pool edge, inside the margin) and now asserts it reaches
-  `APEX_CATCH_DIST`; and the King stand-down check asserted `_king is None` after
-  a bare tick, which was true anyway, and now puts a King in the room first.
-
-**THE APEX IS THE ENTITY THAT GETS SPECIAL TREATMENT (maintainer, 2026-07).**
-"As the main threat this entity is going to get special treatment and care. It
-needs to be scary." A look pass (`tools/preview_apex.py`) found three things: the
-BODY varies across host seeds while the FACE is identical in every one, so the
-part that should feel like a specific thing looking at you is the part that never
-changes; the Mask had no expression vocabulary at all; and at play size the only
-thing separating an apex from its own host is the crown, which reads as a ring of
-gold sparkles. Also, as built it had ONE behaviour -- walk straight at a constant
-speed -- with no moment of noticing you.
-
-**LANDED — THE FACE.** `draw_pallid_3d` takes `intent` / `strain` / `skew`
-(0..1), driven from apex state by `_apex_face` and eased at `APEX_FACE_EASE`.
-The rule it is built on: **a carved object must never EMOTE** -- a mask that
-smiles is a cartoon -- so what it does is WORK, the timber moving in ways timber
-cannot. With no mouth and no nose (NARRATIVE §6a) the whole vocabulary is:
-- `intent` -- it HAS you. Sockets narrow to a slot, embers steady and brighten.
-  Climbs inside `APEX_FOCUS_RANGE`; drops to a floor while you are hidden.
-- `strain` -- it is close enough to take you. The centre seam gaps open and the
-  crack widens and RUNS. Only inside `APEX_STRAIN_RANGE`.
-- `skew` -- the two sockets stop agreeing, wandering on its own clock with a
-  per-host offset so no two apexes wear the same wrongness. A carving is
-  symmetrical by construction, so asymmetry reads as the object being wrong
-  rather than as a face pulling a face.
-Driven by STATE, never a loop (a loop is decoration; this is a tell the player
-learns to read), and EASED so it never snaps -- expression that changes on one
-frame reads as a sprite swap.
-Guarded: `tests/stealth.py` §20 (slack far off, narrows closing, comes apart at
-the throat, eases rather than snaps, settles at a held distance rather than
-cycling, and the skew never settles).
-
-**LANDED — THE ONE TELL.** `Audio._build_apex_roar` + `APEX_ROAR_INTENT`, fired
-from `_apex_face` the frame `intent` first crosses the threshold. A SCREECH, not
-a roar: a roar is an animal with lungs and this is a carved thing wearing a body,
-so it is a 2ms attack, a detuned tritone pair that slides up and then breaks
-downward, splintering noise on the same envelope, and a sub that outlives the
-top. One-shot per host; `_apex_lose_host` re-arms it AND zeroes the face, so the
-next bearer earns its screech from zero instead of inheriting the dead one's
-lock. Below the threshold while you are hidden, so it can never announce a lock
-it does not have. Guarded: `tests/stealth.py` §20 (fires exactly once, never
-again for that host, re-arms on losing one, silent at a hidden player).
-
-**LANDED — THE REACH (the distinguishing feature over the crown).** Grabbing
-limbs that grow out of the body toward WHERE YOU ARE (`amalgam._reach_limbs`,
-fed a screen-space vector by `_apex_mask_for` so they aim true under any camera
-yaw), extended by `APEX_REACH_INTENT * intent + APEX_REACH_STRAIN * strain`. Each
-arm clutches on its own phase, with a palm and four curling fingers -- a hand
-that opens and closes reads as WANTING, and arms that clutch in unison read as a
-machine. They arc up over the body and fan wider the more the reach comes at the
-camera, because a straight-down reach lands on the legs and stops reading as arms
-(the case the tilt makes most common). Drawn into the parts layer, so the bone
-outline strokes them and they are the creature rather than an effect over it.
-This is also the catch's TELEGRAPH: full extension is reached outside
-`APEX_CATCH_DIST`, so the hands are on you before contact is. Guarded:
-`tests/stealth.py` §20 (aims at the player on all four sides, barely out at
-range, fully out at the throat, full extension before contact, and grows from
-the body rather than the feet).
-
-- Movement ideas discussed and NOT yet chosen: it uses APERTURES instead of
-  pathing (sink and rise past a wall rather than walk around it -- the migration
-  machinery already exists); STILLNESS instead of idling (perfectly motionless,
-  facing you, at the edge of the light); speed tied to whether you are LOOKING at
-  it (inverts the family's own gaze rule, so the player's trained instinct
-  becomes a cost); and arriving ALREADY THERE rather than walking in.
-
-**OPEN, in build order:** (1) **THE AMALGAM'S CATCH ANIMATION** — the apex's
-death card is a placeholder wordless fade right now, on purpose. It needs its own
-art, built from the amalgam grammar rather than the Unfolding's: the parts, the
-gold cuts, the Mask coming in. Hooked up and timed already (`_death_kind ==
-"apex"`, 3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing.
-Land it through a VISION look-pass, and note the King's death is wordless — no
-label, no text to write. (2) **retire THE UNFOLDING** and rewire the roaming
-King's own card / the Carcosa cutscene (flow-guarded) onto the storm; the apex no
-longer touches that art at all, so what remains is the King path itself;
-(3) the LAST of the canon reconciliation, which is now only the Unfolding's own
-half: NARRATIVE still describes the walking King as the thing that reaches you
-because that is what SHIPS until (2), so §8's "one pursuit, two shapes" collapses
-back to one shape when the Unfolding retires. Land each visual beat through a
-VISION look-pass.
-
-**Canon reconciled for the storm's half (2026-07).** NARRATIVE now carries the
-shadows as fiction rather than as a system: §4 gains a cast row for His gaze (the
-two skins, the gaps that make an amalgam read as assembled, the dark as His door
-and not your cover, the flood at enough understanding, and that ordinary units
-cannot touch you); §8 states the King's catch as ONE pursuit arriving in two
-shapes, with the bearer's card flagged as an unmade placeholder. **The conflict
-that had to be resolved rather than papered over:** §2 locks "the rite lets Him
-extend a single solid object, the Mask, no more" and §6a puts that one object on
-the cult's altar until the PI lifts it — so an apex wearing a Mask on the surface
-at ev3 was a SECOND one, which breaks the impossible-count discipline the whole
-fiction rests on. Resolution, using machinery §2 already had: the storm's face is
-a **SLICE** of Him, the same cross-section as the drifting masks in fire, not an
-object. It costs no new rule and every apex mechanic falls out of it (one at a
-time = one focus; light does nothing = light closes a cut, not a cross-section;
-the axe takes the body, not the face; it leaves when you stop being worth
-looking at). Guarded: `tests/conventions.py` check 12 fails if the storm/apex
-path ever reaches for the `pallid_mask` item, which is the tell that the two have
-been merged again. A code comment in `rendering/amalgam.py` had already made
-exactly that mistake and is corrected.
-
-**The storm CUTS wear the rift's gold rim (approved 2026-07, option (a)+gold).**
-The amalgam apertures should read as the same portal family as the fold/King
-rift (`rendering/portal.py`): an **ANCHORED gold-rimmed cut** (not a billboard),
-but with the off-angle falloff FLOORED so a storm cut thins yet never fully
-vanishes (you always sense them). Same gold language as the rift's rim/pool, at
-aperture size (gold rim + motes, no expensive see-through — the rift stays the
-only full doorway). The maintainer weighed a "pool of water that faces you,
-things fade into it" presentation and chose anchored-never-vanish over a
-billboard (protects the pseudo-3D "object you can circle, not a billboard that
-swivels" canon, DESIGN §7). The **fade-until-gone dissolve is reserved for the
-CATCH/death beat** (a bearer reaches you → you fade into His portal), NOT
-routine crossing (folds stay "the crossing is nothing, the frame is the
-spectacle").
-
-**Fences:** Mask stays player-scale + a real 3D object (it turns to face you or
-away, never a billboard); one bearer at a time; the flood concentrates on His
-last *sense* of you, not your true position (luck-not-omniscience); the
-impossible count stays at one.
-
-### 26. **[Opus + Fable]** The in-between / lost spaces — Brimley restructure (EXPLORATION, prototype landed)
-
-**Maintainer idea (2026-07); the design conversation settled the MODEL, but it
-is NOT yet a committed canon decision.** Dissolve one-square Brimley into
-per-building scenes connected by a dark liminal IN-BETWEEN, so the fold is FELT
-moment to moment (you get lost) rather than told. The restructure IS committed
-and wired: the old "Brimley stays ONE square scene" preserve is gone, the town
-is the yard/street string (§15), and NARRATIVE §5 + DESIGN §7 are reconciled to
-it.
-
-**The model (locked in conversation):**
-- Three layers: **interior -> yard -> safe path <-> lost spaces**. Buildings hang
-  off a **safe lit PATH** (the paved road, lamp posts, NO tricks, navigable).
-- The **lost spaces** are the dark liminal fields (corn / forest / road) you fall
-  into off a **dark scene edge** (a lit edge is a wall, a dark edge is the mouth
-  -- light gates entry). They are **procedurally generated, NON-REPEATING**
-  (forward is always new ground, backrooms-style, NOT the torus wrap).
-- The **exit is a light you HUNT**: held 6-20 tiles off, relocating out of your
-  sight cone if you drift, so always escapable and always a search.
-- Manipulation lives in the dark: observer-dependent layout (space reshuffles
-  when unlooked-at), light = the only stable/true thing, asymmetric return (the
-  way back isn't the way you came), the space breathes with threat, evidence
-  swaps the field for a longer/warped/more-hostile version, odd landmarks for
-  variety.
-
-**The prototype is REACHABLE now, through one mouth.** The three biome
-fields, the cult presence in them, the observer-dependent dark, and the
-whole loop (interior -> yard -> treeline -> fall -> hunt -> climb out) are
-built and wired to the lodge yard's north/south edge; the shipping system
-and its code map are `DESIGN.md` §13, how it landed is `CHANGELOG.md`. It
-is still here to be judged by FEEL: one mouth on one scene is a vertical
-slice, not the restructure.
-
-**The SAFE PATH layer landed** (`DESIGN.md` §14, `scenes/safe_path.py`): the
-I / L / T shape vocabulary, a five-lane road in a nine-tile corridor, the
-maintainer's own lamp pattern, and the river both seen and crossed. **Every
-road in the game is on it**, and the town's own streets are path scenes too;
-`arrival_road` keeps its treadmill/render-band machinery but took the same
-cross-section and lamps.
-
-**THE YARD LAYER LANDED, AND BRIMLEY THE SCENE IS RETIRED** (`DESIGN.md`
-§15, `scenes/yards.py`; the story is in `CHANGELOG.md`). The town is the
-maintainer's *"string of house islands in a sea of spatial manipulation"*:
-eleven yards on five streets, one household each, every resident inside their
-own building, and no town map at all. The one 60x60 scene is gone from the
-registry and the tree, and a `flow.py` guard asserts it cannot come back.
-
-**Still open here:** the three new households (Mrs. Calder, Royce, Garrick)
-have small one-room interiors, but no other yard building gained interior
-work. Nothing needs it, and it is the obvious next ask.
-
-**OPEN, in build order:** (1) the
-rest of the **dark manipulation layer**: the observer-dependent reshuffle
-landed, but the **asymmetric return** (the way back is not the way you came)
-and **breathe-with-threat** (the space stretching as the meter fills) have
-not; (2) **per-chunk** landmark/exit generation + a silent **re-origin** for
-a truly endless walk (today: a large finite bound + spawn-at-centre); (3) the
-**ev-warp** variants (the field swaps for a longer / warped / more-hostile
-version with evidence) + richer linear field features (fences, ruined
-buildings you can't enter).
+**Judge the shipped slice by FEEL first.** One mouth on one scene (the lodge
+yard's treeline) is a vertical slice, not the restructure — how many mouths
+the world wants is a play question, not a code one.
 
 **Fences:** the safe path is never tricked; the lost space is always escapable
-(the exit light stays in the 6-20 band); a THREAT never blinks out via the
+(the exit light stays in the 6-20 tile band); a THREAT never blinks out via the
 observer trick (only geometry lies); keep the impossible count at one (the fold
 is the one phenomenon).
 
 ---
 
-## Blocked on a human at the keys
+# Phase 5 — the pillar
+
+### 21. **[Opus + Fable]** LIGHT IS THE PILLAR — the perfected system
+
+**Maintainer mandate: after the quality-floor sprint, light is the ONE system
+to perfect** — the game's missing mastery verb. The doctrine that keeps it
+coherent with everything shipped: **light is safety from the small things and
+a beacon to the big one** (Watchers die in it; the flashlight burn + the
+King's attention still price it).
+
+**Read "safety" as ACTIVE, not passive (ruled 2026-07).** Light is a WEAPON
+and a DENIAL, never a hiding place. It kills Watchers and it takes away the
+dark spots they need to open. It does **not** shelter you: standing in a pool
+is not cover from the gaze, and standing in the dark is not cover from
+anything. The player's tool is the beam they point, not the square they stand
+on. Every future item here is judged against that: **a light verb that makes a
+tile safe is the wrong verb.**
+
+Landed already (`CHANGELOG.md`, "Lighting" / "The light pillar"): the lighting
+foundation, interior lighting, `WATCHER_LIGHT_BURN`, light working everywhere,
+the flashlight on the PI's desk, the light audit overlay
+(`tools/light_audit.py` — run placement passes through it), the COLD ruling
+(`wall_lamp` cold blue-white, fire demoted to prop), cone fixtures
+(`cone=(dir_x, dir_y, half_deg)`, pilot on the shop's hooded east lamp — aim
+further lamps per room as each placement pass reaches them), the
+genset→fixtures power link, and the Watcher spawn rule that makes a fully lit
+room secured.
+
+**Open, in build order:**
+- **The gas economy — the core, and the missing trigger.** The blackout
+  machinery exists (`Scene.power_on`, `Game._tick_power`, `BLACKOUT_DUR`, the
+  ELECTRIC kinds dying in all three layers at once) but **nothing fires a
+  blackout in play** — the moth flare that used to was cut with the moths. The
+  fuel item + siphon/refill economy is the intended trigger, alongside lights
+  decaying and failing on their own, and the player verbs to answer it
+  (restore/switch a fixture). Keep the tension: a lit town is a town He can
+  see.
+- **Riding on the gas economy when it lands:** the cult camp PROCESSES to a
+  room going dark and fans out (a staged response, rides #23), and any
+  screen-dim beat beyond the lights themselves dying.
+- **Dark-only EXISTENCE (the Watcher remainder).** A live Watcher caught by a
+  room RELIGHTING should burn or flee where it stands, in any scene, not only
+  when the player's beam finds it — this is light acting on THEM, so it is the
+  right kind of rule. Keep the below-3-evidence threat role. The old "a lit
+  spot is cover from the gaze" half was CUT; do not rebuild it in any scene.
+- **Amalgam light response.** From the blessed idea set and still open: the
+  beam forcing individual PARTS to retract (per-part light burn), and the
+  build-out reading the hold timer rather than a fixed ramp.
+- **The capture thread.** `capture → King unleashed` and
+  procession-across-scenes staging sit here, unscoped. **The fork is RULED:
+  capture is GAME OVER** — the CAPTURED card stays a hard run-end, no
+  capture-as-continuation. The corollary work item: cultists must EARN that
+  ending (the "cultists feel too weak" playtest note), which lands through the
+  #5/#6 tuning loop, not a new system.
+
+---
+
+# Phase 6 — systems depth
+
+### 23. **[Opus + Fable]** Complex behavior for cultists and locals
+
+Built in pilots, inside hard fences: systemic not scripted; the people do NOT
+change (only the cult may act wrong, and only in cult ways; locals stay
+mundane and never signal the cosmology); nothing touches the pacing ratios,
+the `SAFE_SCENES` refuge, fold-only pursuit carry, or the Talk/two-touch
+gates; no new behavior ships with explanatory player-facing text (the behavior
+IS the tell); the King and hollow Sheriff keep their exemptions.
+
+- **23a remainder:** job-station authoring for the patrolled cult rooms that
+  have none (`works_sign`'s lone patrol) — place via the SCENE-DRESSING
+  PROCESS (render first, never by name). The synchrony + hand-off beats
+  themselves are landed (`CHANGELOG.md`).
+- **23b. The town half.** The **yield**: a local a cult patrol passes steps
+  off the lane, eyes down, waits, resumes; the cultist never acknowledges
+  them. **Mundane witness reactions**: a local who sees the drawn gun or a
+  sprint flinches or hurries indoors (rides homebody `_inside`); a kill nearby
+  empties the street for the visit. Strictly mundane reactions only.
+- **23c. The mechanical pieces, sequenced for the #5 tuning pass.** SEARCH
+  **sweep partition** (multiple searchers divide `sweep_points`, no duplicate
+  checks); **room posture** (a per-scene calm/uneasy/roused int raised by
+  shots, struggles, found bodies, decaying; modulates walk speed, scan time,
+  sweep budget — ship OFF-default behind config until the #5 tuning pass
+  absorbs it); the **flank call** (a locked chaser pulls at most one nearby
+  patrol to a flank point, same LOS/suspicion rules, normal search timer,
+  never soft omniscience); **object-state investigation** (a left-on
+  noisemaker, an opened door: pause at it, mark the room uneasy).
+- **23d. Content passes (anytime, Fable).** Fuller local **day-loops** on the
+  JOBS `stations` plumbing (Pell to the field edge he doesn't look at, Calder
+  to her gate, Royce circling his truck; door-anchor honesty rules apply);
+  **disposition framing** read off existing save flags (mood, never a meter).
+  The last of the food-scarcity pass belongs here too: the domestic-horror beat
+  of a cultist eating an ordinary meal at a counter (`DESIGN.md` §4).
+  Wallpaper, not a mechanic.
+
+### 4c. **[Opus]** Wall program — Phase 4 (freeform walls)
+
+The interior-door rollout and the wall-material rollout (thin-slab + rounded +
+per-material styles, Phase 2 every above-ground interior, Phase 3 the mine as
+full-thick hewn `rock`) are COMPLETE (`CHANGELOG.md`, "Walls & interior
+geometry"). **Still open:**
+- **Phase 4 — freeform walls** (the north star): a wall SEGMENT primitive off
+  the tile grid, unlocking diagonal walls, a curved church apse, a round
+  silo/tower. Prototype ONE curved feature first.
+- **Deferred church shapes** (the curved apse / arched-window geometry) wait
+  on Phase 4.
+- **Cross-cutting:** thinner walls occlude less, so re-derive interior cover
+  as styles land; extend `tests/stealth.py` §16; VISION toward the Darkwood
+  organic read.
+
+---
+
+# Phase 7 — end-stage
+
+### 17. **[Opus + Fable]** The ancient altar — the CAP of the last sealing
+
+The spent surface altar over the point the Threshold sits beneath: pre-cult
+dressing, lichened, weathered, sunken, nothing yellow, reading OLDER than
+every cult mark. ONE worn carving that recontextualizes after the player has
+seen the Sign (matches the Mask grammar) + a single `notes` beat (never
+evidence, no cosmology). Gives SEAL its precedent without a word.
+
+**Needs a site.** The ticket used to say "move the mid-Brimley standing stones
+to the riverbank" — there is no Brimley scene to move them from now. Pick the
+river path scene that sits above the Threshold (`river_road` / `river_bend`)
+and place it there with its worn cult path, or fold it into #4's composition
+pass for that scene.
+
+### 20. **[Opus + Fable]** Endings redraw with the close-up techniques
+
+Parked, NOT scoped. The ending presentations (the King-catch furnace, SEAL's
+lines-on-black tableau, SPREAD's drive-out, BREAK's mask-yank + blast) predate
+the close-up tableau art pass and could in principle be redrawn with those
+techniques (bespoke portrait register, reactive state, a corrected vignette
+ramp — note the older shared vignette loop actually darkens the CENTER, so any
+redraw should use Mara's frame's corrected ramp instead). The endings
+themselves are approved, flow-guarded set-pieces (their lines + palettes are
+canon), so this is a re-presentation question, not a gap. Do not start without
+a fresh maintainer decision; land each ending only through a `VISION.md` look
+pass. **Carcosa's colour is the one real defect in the set:** any pale-teal or
+green cast is off-model (`NARRATIVE.md` §5 — black ground note, black stars,
+twin suns, His gold the only light).
+
+### 16. **[Opus]** Ship track — packaging
+
+Itch-ready build: pyinstaller (or equivalent) one-file win/linux builds,
+save-dir sanity, a settings sanity pass, a version stamp. End-stage; do near
+ship.
+
+---
+
+# Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code
 inspection and needs a person playing the game.
@@ -707,18 +548,18 @@ inspection and needs a person playing the game.
 
 The mechanic, the placement pass, and a first human tuning pass all landed
 (`CHANGELOG.md`, "Stealth & threat" — includes what that pass found and
-fixed). What remains proves out only against further play: the new
-constants' FEEL, the suspicion fill curve (`SUS_FILL_RATE`), the
-concealment factors, the sweep budget, and the struggle window/press
-count. Also deferred on purpose: the Pillar-2 **peek** verb (free look
-under tilt already carries the information function) and an
-exit-takes-a-beat vulnerability window on enclosed hides. Spitballed and
-parked for a decision: the crouch stance (after the next playtest) and
-the window-vault prototype (one building, look-passed, last).
+fixed). What remains proves out only against further play: the new constants'
+FEEL, the suspicion fill curve (`SUS_FILL_RATE`), the concealment factors, the
+sweep budget, and the struggle window/press count. Also deferred on purpose:
+the Pillar-2 **peek** verb (free look under tilt already carries the
+information function) and an exit-takes-a-beat vulnerability window on
+enclosed hides. Spitballed and parked for a decision: the crouch stance (after
+the next playtest) and the window-vault prototype (one building, look-passed,
+last).
 
 **Also needs a person walking it: how PERMEABLE the treelines feel.** Since
 trees became solid with round sub-tile feet, a stand is something you thread
-and the gaps fall out of the geometry, which is right and has one cost --
+and the gaps fall out of the geometry, which is right and has one cost —
 connectivity passing says only that SOME route exists, not that pushing north
 at a treeline feels like walking rather than pinball.
 `tools/band_gaps.py` measures the thing the eye cannot: what fraction of
@@ -731,289 +572,202 @@ player holding north holds north). Where it stands today, pushing 8 tiles in:
 | lodge_yard | **14%** | 52% | 25% | 27% |
 | cornfield_path | 24% | 27% | 29% | 35% |
 
-The street's WEST band and the lodge yard's NORTH band are the two tightest real
-outdoor bands in the game, and the lodge yard's north is also the §13 MOUTH,
-where tight may well be the point. Nothing here is broken; the question is
-whether ~14% reads as a wood you thread or a wood you fight, and only a person
-walking it can answer that. (The `clearing`, `effigy_grove` and
+The street's WEST band and the lodge yard's NORTH band are the two tightest
+real outdoor bands in the game, and the lodge yard's north is also the §13
+MOUTH, where tight may well be the point. Nothing here is broken; the question
+is whether ~14% reads as a wood you thread or a wood you fight, and only a
+person walking it can answer that. (The `clearing`, `effigy_grove` and
 `cornfield_maze` figures the tool also prints are hard tree WALLS with one
 authored doorway, so their low numbers are the design, not a finding.)
 
 ### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 
-Not bugs; deliberate choices worth confirming rather than leaving by
-default: the gun goes **stun-only at 3 evidence** with ~14 rounds total
-per run, so the main combat verb is removed exactly when danger spikes
-(agency loss vs. intended dread). There are **no difficulty options**, so
-the visibility/Watcher death-spiral hits newcomers hard and is trivial to
-experts. Items are gates, not resources (armor slots return 0). The
-two-touch grab softening already landed (`CHANGELOG.md`) and directly
-answered the "nothing you can do once they're on you" play-note; still
-open here: the gun stun-window and whether to add difficulty options —
-consider transforming the stun into a tactical window rather than a tax,
-an easy/hard toggle, or light resource tension, only if it serves the
-horror, not despite it.
+Not bugs; deliberate choices worth confirming rather than leaving by default:
+the gun goes **stun-only at 3 evidence** with ~14 rounds total per run, so the
+main combat verb is removed exactly when danger spikes (agency loss vs.
+intended dread). There are **no difficulty options**, so the visibility/Watcher
+death-spiral hits newcomers hard and is trivial to experts. Items are gates,
+not resources (armor slots return 0). The two-touch grab softening already
+landed (`CHANGELOG.md`) and directly answered the "nothing you can do once
+they're on you" play-note; still open here: the gun stun-window and whether to
+add difficulty options — consider transforming the stun into a tactical window
+rather than a tax, an easy/hard toggle, or light resource tension, only if it
+serves the horror, not despite it.
 
 ---
 
-## Deferred / north star
+# Dead ends — closed, do not restart
 
-### 7. **[Fable]** The liminal-composition pass
+Directions that were live enough to be written down and are now decided
+against or obsolete. Kept as a short list so nobody rediscovers them; the
+reasoning lives in `CHANGELOG.md`.
 
-Not a discrete ticket — a standing direction for per-scene level-design
-polish: composed emptiness, long sightlines, uncanny repetition.
-Inherently iterative. **To turn it into work, name ONE scene and the ONE
-composition it gets** (this sightline, this repeated landmark); do not
-start against the abstract goal. *(The buildable-now #4 is this pass aimed
-specifically at outdoor dread — start there.)*
+- **#4b — the Brimley river-centered rebuild, both banks.** Approved as a
+  redistribution of 7 buildings across the river on the one 60x60 square map.
+  **Obsolete:** that scene is retired and the town is a string of yard scenes
+  off street scenes (`DESIGN.md` §15), so there is no map to redistribute. What
+  the ticket actually wanted — the river as a spine you cross to reach the law
+  — is now a question for the street network's shape, and belongs to #4.
+- **A round / organic Brimley reshape** (was part of #8). Same reason.
+- **Darkness as the player's cover.** `SUS_CONCEAL_DARK` and `_tick_dark_cover`
+  are deleted, and light is not cover from a Watcher's gaze either. The dark is
+  the CONDITION His things need, so hiding in it was hiding inside the threat
+  (ruled 2026-07; guarded, `tests/stealth.py` §11 + §18). Do not rebuild
+  either half in any scene.
+- **The idle horizon King** (a distant standing figure on the skyline). Cut by
+  maintainer ruling with the storm: the storm is the full-power apex at the
+  source, and its overwhelm is the point.
+- **A second Mask object.** There is exactly ONE, on the cult's altar until the
+  PI lifts it; the storm's face is a SLICE of Him (`NARRATIVE.md` §6a). Guarded
+  by `tests/conventions.py` check 12.
+- **Capture as continuation.** Capture is GAME OVER; the CAPTURED card is a
+  hard run-end (ruled). What is open is making the cultists EARN it (#5/#6).
+- **A billboarded storm cut / mask.** Rejected in favour of anchored geometry
+  (#25 item 3); a swivelling card breaks the pseudo-3D canon (`DESIGN.md` §7).
+- **The general ground floor-roll** and the terrain directions that depend on
+  it (sunken-lane cover, King crest-reveal, terrain-herding, the peek verb's
+  home) stay parked, not cut — see #8 below.
+- **Two dead prototypes still on disk.** `systems/storm.py` (the timer-driven
+  migration engine, superseded by the earned apex hop in
+  `threat_mixin`/`npc`; imported by nothing, and its docstring still states the
+  superseded camera-facing Mask rule) and `rendering/pseudo3d.py` (the Watcher
+  volumetric proof, used only by its own preview tool). Both are candidates for
+  deletion; they are listed here so their contents are never mistaken for
+  shipping behaviour.
 
-### 8. Parked — terrain & reshape megabuilds
+### 8. **[Opus]** Parked — terrain megabuilds
 
-Do NOT pull forward without a set-piece that demands it AND a fresh
-decision. The reasoning for parking these lives in `CHANGELOG.md`,
-"Brimley geography." Cut from active work because their payoff fights
-their cost at this camera. The DORMANT heightfield prototype + the SHIPPED
-carved river channel STAY (harmless, byte-identical at pitch 0); it's the
-general-purpose builds that are parked: the floor-roll warp, the terrain
-design directions that depend on it (sunken-lane cover, King crest-reveal,
-terrain-herding, the peek verb's home), and the round/organic Brimley
-reshape.
-
-### 20. **[Opus + Fable]** Endings redraw with the close-up techniques
-
-Parked, NOT scoped. The ending presentations (the King-catch furnace,
-SEAL's lines-on-black tableau, SPREAD's drive-out, BREAK's mask-yank +
-blast) predate the close-up tableau art pass and could in principle be
-redrawn with those techniques (bespoke portrait register, reactive state,
-a corrected vignette ramp — note the older shared vignette loop actually
-darkens the CENTER, so any redraw should use Mara's frame's corrected
-ramp instead). The endings themselves are approved, flow-guarded
-set-pieces (their lines + palettes are canon), so this is a
-re-presentation question, not a gap. Do not start without a fresh
-maintainer decision; land each ending only through a VISION.md look pass.
-
-### 21. **[Opus + Fable]** LIGHT IS THE PILLAR — the perfected system
-
-**Maintainer mandate (2026-07 QC discussion): after the quality-floor
-sprint, light is the ONE system to perfect** — the game's missing
-mastery verb. The doctrine that keeps it coherent with everything
-shipped: **light is safety from the small things and a beacon to the big
-one** (Watchers die in it; the flashlight burn + the King's attention
-still price it).
-
-**Read "safety" as ACTIVE, not passive (ruled 2026-07).** Light is a WEAPON and
-a DENIAL, never a hiding place. It kills Watchers and it takes away the dark
-spots they need to open. It does **not** shelter you: standing in a pool is not
-cover from the gaze, and standing in the dark is not cover from anything (the
-`SUS_CONCEAL_DARK` shadow-cover pass was CUT — see #25). The player's tool is
-the beam they point, not the square they stand on. Every future item here is
-judged against that: a light verb that makes a tile safe is the wrong verb.
-
-Landed already: the lighting foundation, interior
-lighting, `WATCHER_LIGHT_BURN`, the beam-off retirement (light works
-everywhere), and the flashlight opening on the PI's desk
-(`CHANGELOG.md`, "Lighting" / "The light pillar"). Open, in build order:
-- **LANDED en route: the light audit overlay** (`tools/light_audit.py`,
-  the dev design surface: mechanical radius + visible pool + the hatched
-  dark map per scene) and the COLD ruling (wall_lamp cold blue-white;
-  fire demoted to prop). Next placement passes run through the audit.
-- **LANDED en route: cone fixtures** (`cone=(dir_x, dir_y, half_deg)`
-  per-deco kwarg in all three layers, pilot on the shop's hooded east
-  lamp; `CHANGELOG.md` "Lighting"). Aim further lamps per room as each
-  placement pass reaches it.
-- **The light-security loop (the core).** The FIRST SLICE landed
-  (`CHANGELOG.md` "Lighting"): the genset→fixtures power link exists —
-  per-scene power state (`Scene.power_on`, `Game._tick_power`,
-  `_genset_down` timers), the ELECTRIC kinds die in all three layers at
-  once during a blackout (pool, `lit_at` gate, and the fixture art
-  itself goes dark; fire is exempt) for `BLACKOUT_DUR`, and the office
-  radio's static crawl runs on power (the appliance tell). Guarded by
-  `tests/stealth.py` §17. **No live trigger fires a blackout now** — the
-  moth flare that used to was cut with the moths (2026-07); the gas
-  fuel/failure economy below is what will feed it.
-  **Lit-rooms-SECURED landed via the 2026-07 Watcher spawn rule** (a
-  Watcher opens only at a dark spot with line of sight to the player,
-  so a fully lit room cannot open anything; `CHANGELOG.md`). **Still
-  open:** player verbs (restore/switch a fixture), the fuel item +
-  siphon/refill economy, and lights decaying/failing on their own.
-  Keep the tension: a lit town is a town He can see.
-- **Watcher variety — LANDED as the AMALGAMS** (`rendering/amalgam.py`,
-  DESIGN.md §1; history in `CHANGELOG.md` "The shadows program"). Still
-  open from the blessed idea set: the beam forcing individual PARTS to
-  retract (per-part light burn), and the build-out reading the hold
-  timer rather than a fixed ramp.
-- **The blackout trigger + response — deferred to the gas system.** The
-  blackout machinery landed (a room's electric light dies), but its only
-  live trigger, the moth flare, was cut with the moths (2026-07), so
-  nothing fires a blackout in play yet. The gas-genset fuel/failure
-  economy (above) is the intended trigger. Riding on it when it lands:
-  the cult camp PROCESSES to a room going dark and fans out (a staged
-  response, rides #23), and any screen-dim beat beyond the lights
-  themselves dying.
-- **Watchers-in-the-dark, remainder.** The spawn half landed (dark +
-  line-of-sight spots only, 2026-07), and that is the ONE place a room's
-  light state gates them: a fully lit room has nowhere for one to open.
-  The old "a lit spot is cover from the gaze" half was CUT (ruled
-  2026-07, #25) — do not rebuild it in any scene. Still open: dark-only
-  EXISTENCE (a live Watcher caught by a room RELIGHTING should burn or
-  flee where it stands, in any scene, not only when the player's beam
-  finds it — this is light acting on THEM, so it is the right kind of
-  rule). Keep the below-3 threat role.
-- The **capture→King-unleashed** thread and **procession-across-scenes**
-  staging sit here too, unscoped. **The capture fork is RULED (2026-07,
-  maintainer): capture is GAME OVER** — the CAPTURED card stays a hard
-  run-end, no capture-as-continuation. The corollary work item: cultists
-  must EARN that ending (the "cultists feel too weak" playtest note) —
-  lands through the #5/#6 tuning loop, not a new system.
-
-### 16. **[Opus]** Ship track — packaging
-
-Itch-ready build: pyinstaller (or equivalent) one-file win/linux builds,
-save-dir sanity, a settings sanity pass, a version stamp. End-stage; do
-near ship.
-
-### 17. **[Opus + Fable]** The ancient altar — the CAP of the last sealing
-
-Move the mid-Brimley standing stones to the riverbank (over the point the
-Threshold sits beneath; keep the worn cult path). Pre-cult dressing:
-lichened, weathered, sunken, nothing yellow, reads OLDER than every cult
-mark. ONE worn carving that recontextualizes after the player has seen the
-Sign (matches the Mask grammar) + a single `notes` beat (never evidence,
-no cosmology). Gives SEAL its precedent without a word. Lands with the
-compression pass (#4b).
+Do NOT pull forward without a set-piece that demands it AND a fresh decision.
+The reasoning lives in `CHANGELOG.md`, "Brimley geography". Cut from active
+work because their payoff fights their cost at this camera. The DORMANT
+heightfield prototype (`rendering/heightfield.py`, wired but no scene opts in)
+and the SHIPPED carved river channel STAY — harmless. What is parked is the
+general-purpose floor-roll warp and the terrain design directions that depend
+on it. The **turf hill** (#4) is the cheap answer that landed instead.
 
 ---
 
-## Standing fences (guardrails, not tickets)
+# Standing fences (guardrails, not tickets)
 
-- **The lure chain is NEVER stated diegetically.** King → Mara → Walter →
-  PI is felt, not said. Do NOT build on any of it. King/Watcher moments
-  read as **luck, not omniscience** (powerful, not infallible).
-- **The corn is mundane, never the door's doing.** Keep the impossible
-  count at **one**: the single unexplained door, everything else ordinary
+- **The lure chain is NEVER stated diegetically.** King → Mara → Walter → PI
+  is felt, not said. Do NOT build on any of it. King/Watcher moments read as
+  **luck, not omniscience** (powerful, not infallible).
+- **The corn is mundane, never the door's doing.** Keep the impossible count at
+  **one**: the single unexplained door, everything else ordinary
   cause-and-effect downstream of it.
-- **Sable's misdirection is never resolved in text** (maintainer ruling,
-  2026-07 story audit). He points suspicion at the cold old families;
-  Hettie says the warm easy ones went soonest. They contradict each other,
-  Sable is the wrong one, and **that is on purpose and for the player to
-  notice.** Do NOT build a beat where the PI puts one man's line to the
-  other, and do NOT file a note that draws the conclusion. The audit
-  flagged this as a gap; it is not one.
+- **Sable's misdirection is never resolved in text** (maintainer ruling). He
+  points suspicion at the cold old families; Hettie says the warm easy ones
+  went soonest. They contradict each other, Sable is the wrong one, and **that
+  is on purpose and for the player to notice.** Do NOT build a beat where the
+  PI puts one man's line to the other, and do NOT file a note that draws the
+  conclusion. The story audit flagged this as a gap; it is not one.
 - **No dashes in player-facing text** (HARD RULE; flow-guarded).
 - **L5 — complexity hotspots (awareness only, not a ticket).** The largest
   function bodies (`tests/flow.py main`, `scenes/yards.build_yard_scene`,
   `systems/render_mixin.draw_world`, `rendering/sprites_npc.draw_npc_sprite`,
   `rendering/king_unfold.draw_king_unfold`) match the project's deliberate
-  "one cohesive beat per function" style and sit behind the test gate.
-  Listed so growth stays a choice, not an accident — not a call to split
-  them.
+  "one cohesive beat per function" style and sit behind the test gate. Listed
+  so growth stays a choice, not an accident — not a call to split them.
 
 ---
 
-## Optional polish (no canon/lore change; do as time allows)
+# Backlog — polish (no canon/lore change; do as time allows)
 
-- **[Opus]** **SPREAD ending sign sync** — the intro drive-in sign and the
-  in-game welcome sign render the old-timey BRIMLEY board (WELCOME TO /
-  NORTHERNMOST CORN / EST. 1894). The SPREAD ending's drive-out still shows
-  the old blank-back sign shape (`rendering/spread_drive.py _sign_back`).
-  Update its proportions/posts to match the new board (the back stays
-  blank/unpainted by design; only the shape needs to agree). Verify with a
-  headless capture of the SPREAD drive-out.
-- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** — the
-  discovery location + staging landed (`CHANGELOG.md`). Still open: (1)
-  **bespoke sprite** — the current corpse is a placeholder medieval knight
-  (`_draw_body`); replace with a gutted-preacher draw (dark palette, white
-  collar, cross in the mess). (2) Stage the approach (wrongness before
-  sight, long sightline). Art only; lore unchanged.
-- **[Opus]** **Held-weapon offset per camera yaw** — `draw_axe_held` reads
-  at rest; eyeball the equipped-weapon offset at every camera yaw so it
-  never floats off the hand. Verify with a tilt capture across yaws.
-- **[Opus]** **Higher-contrast see-through doors** — opt in the doors where
-  the sight-gated aperture effect reads strongest: a lit room off a dark
-  hall, the front door onto the yard. Draw/opt-in only; no new tech.
-- **[Opus]** **Permanently-visible King through an OPEN fold** — currently
-  he looms through the rift only while it forms, then steps through
-  (intentional). A persistent silhouette on the far side of an already-open
-  fold is not built; revisit only if the direction changes.
-- **[Opus]** **Mine retrofit tail cleanups** (none player-visible) — (a)
-  cache the `_tilt_rack_box` extrusion per (tile, yaw-bucket) like the wall
-  cards (`well_passage` re-projects ~280 points/frame live); (b) fold
-  `_RACK_CHARS` into the shared wall-scan char-set plumbing instead of a
-  third parallel set; (c) the cave `door_style` key list in
-  `scenes/__init__.py` duplicates the `UNDERGROUND_SCENES` gating idea,
-  derive from one source; (d) `husk_bundle` + `pillar` are registered
-  kinds with no placements (keep as reusable art or cut).
-- **[Opus]** **Grove mine-hill finish level-up** (deferred, maintainer "fine
-  for now") — the mouth is a green turf HILL with a stone adit; its grass-dome
-  ROOF got a full detail pass, but the stone side/cut faces + the adit mouth
-  are plainer by comparison. Bring the stone up to the roof's finish (strata,
+- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** — the discovery
+  location + staging landed (`CHANGELOG.md`). Still open: (1) **bespoke
+  sprite** — the current corpse is a placeholder medieval knight (`_draw_body`);
+  replace with a gutted-preacher draw (dark palette, white collar, cross in the
+  mess). (2) Stage the approach (wrongness before sight, long sightline). Art
+  only; lore unchanged.
+- **[Opus]** **Held-weapon offset per camera yaw** — `draw_axe_held` reads at
+  rest; eyeball the equipped-weapon offset at every camera yaw so it never
+  floats off the hand. Verify with a tilt capture across yaws.
+- **[Opus]** **Higher-contrast see-through doors** — opt in the doors where the
+  sight-gated aperture effect reads strongest: a lit room off a dark hall, the
+  front door onto the yard. Draw/opt-in only; no new tech.
+- **[Opus]** **Permanently-visible King through an OPEN fold** — currently he
+  looms through the rift only while it forms, then steps through (intentional).
+  A persistent silhouette on the far side of an already-open fold is not built;
+  revisit only if the direction changes.
+- **[Opus]** **Mine retrofit tail cleanups** (none player-visible) — (a) cache
+  the `_tilt_rack_box` extrusion per (tile, yaw-bucket) like the wall cards
+  (`well_passage` re-projects ~280 points/frame live); (b) fold `_RACK_CHARS`
+  into the shared wall-scan char-set plumbing instead of a third parallel set;
+  (c) the cave `door_style` key list in `scenes/__init__.py` duplicates the
+  `UNDERGROUND_SCENES` gating idea, derive from one source; (d) `pillar` is a
+  registered kind with no placements (keep as reusable art or cut).
+- **[Opus]** **Grove mine-hill finish level-up** (deferred, maintainer "fine for
+  now") — the mouth is a green turf HILL with a stone adit; its grass-dome ROOF
+  got a full detail pass, but the stone side/cut faces + the adit mouth are
+  plainer by comparison. Bring the stone up to the roof's finish (strata,
   cracks, a little scree/moss at the base) and make the adit read a touch more
   as the focal point, so the whole object sits at one level of craft.
   `hill_cap` (`rendering/props.py`) + the `turf` walls + `_grove_interact`
   dressing (`scenes/hidden_folds.py`).
-- **[Opus]** **Louvered belfry openings** — the bell tower's belfry uses
-  the glazed cottage-window char (`'i'`), which renders as glass everywhere.
-  A belfry wants louvered slats, which needs its own window style or a
-  wall-deco louver over the openings (a small per-scene window-style
-  mechanism). Deferred from the redecoration-audit polish (the rest of which
-  landed, `CHANGELOG.md`).
+- **[Opus]** **Louvered belfry openings** — the bell tower's belfry uses the
+  glazed cottage-window char (`'i'`), which renders as glass everywhere. A
+  belfry wants louvered slats, which needs its own window style or a wall-deco
+  louver over the openings (a small per-scene window-style mechanism).
+- **[Opus]** **Dormant plumbing to use or cut:** `Enemy.shoot_sfx` is wired and
+  never fired.
 
 ---
 
-## Voice / polish (player-facing text — still open)
+# Backlog — voice / polish (player-facing text)
 
 - Descent interior voice wobbles POV (first-person notes vs. second-person
   on-screen beats, `systems/game.py`) — confirm this is the deliberate
-  self-vs-lure split `DIALOGUE.md` documents (`chalk_surface`/
-  `descent_dig`/`chalk_deep` first-person vs. `descent_leave`/
-  `descent_mask` second-person) and not accidental drift elsewhere.
-- HUD fall-through labels: "Dark" (the Hive!), "Depths Antechamber",
-  "Effigy Grove", "Threshold" (`scenes/base.py` fallback).
-- NPC object names "Clerk"/"Sheriff"/"Preacher" leak on generic paths
-  (corpse examine: "Clerk. Face-down where the round put them.").
+  self-vs-lure split `DIALOGUE.md` documents (`chalk_surface`/`descent_dig`/
+  `chalk_deep` first-person vs. `descent_leave`/`descent_mask` second-person)
+  and not accidental drift elsewhere.
+- HUD fall-through labels: "Dark" (the Hive!), "Depths Antechamber", "Effigy
+  Grove", "Threshold" (`scenes/base.py` fallback).
+- NPC object names "Clerk"/"Sheriff"/"Preacher" leak on generic paths (corpse
+  examine: "Clerk. Face-down where the round put them.").
 - Placeholder texts on cued interactions: "A small stash.", "A weathered
   headstone.", "A scarecrow.", "A key.", "An axe for chopping wood."
-- Small ones: Sable's "last night"/"tonight" against elapsed play; the
-  robe "hangs... pressed and folded"; the Invitation's "Sleep where we
-  slept" with no sleep verb at the school; threshold recognition + "A
-  doorframe with no wall." fire at the cave mouth, 13 sight-gated rows
-  before the frame is visible; lowercase hide notices; "waking the dark ."
-  double space; "midwestern" casing; Garrick and hollow Vane both call the
-  PI "son"; two simultaneous Hetties (door + counter); duplicate candle
-  decoration in Toby's house.
-- Missing canon clincher: `NARRATIVE.md` §4's ledger entry promises "your
-  own name, signed in tonight, already among them" — the cellar text only
-  gestures at it and the desk sign-in is optional; one clause conditioned
-  on `register_signed` closes the loop.
+- Small ones: Sable's "last night"/"tonight" against elapsed play; the robe
+  "hangs... pressed and folded"; the Invitation's "Sleep where we slept" with
+  no sleep verb at the school; threshold recognition + "A doorframe with no
+  wall." fire at the cave mouth, 13 sight-gated rows before the frame is
+  visible; lowercase hide notices; "waking the dark ." double space;
+  "midwestern" casing; Garrick and hollow Vane both call the PI "son"; two
+  simultaneous Hetties (door + counter); duplicate candle decoration in Toby's
+  house.
+- Missing canon clincher: `NARRATIVE.md` §4's ledger entry promises "your own
+  name, signed in tonight, already among them" — the cellar text only gestures
+  at it and the desk sign-in is optional; one clause conditioned on
+  `register_signed` closes the loop.
 
 ---
 
-## Process
+# Process
 
 ### D. **[Fable]** Doc consolidation — remainder
 
-Phase 1 landed (the threat section moved to DESIGN §1; `CHANGELOG.md`,
-"Documentation process"). Still open: CLAUDE.md's Layout section carries a
-tableau mega-paragraph and several system narrations (Casebook, dialogue
-channels, stealth asides) that duplicate or should live in
-DESIGN/DIALOGUE; move each to its one home and leave a code-map pointer,
-one section per pass, keeping the every-turn read shrinking.
+The threat section moved to `DESIGN.md` §1; the tableau system, the Casebook,
+and the dialogue-channel model moved out of `CLAUDE.md` into `DESIGN.md`
+§11/§16 with code-map pointers left behind; the single timeline above replaced
+this file's readiness buckets (`CHANGELOG.md`, "Documentation process").
+**Still open:** `CLAUDE.md`'s Layout section is still the longest thing read
+every turn — keep moving system narration to its one home one section per
+pass, leaving a code-map pointer, so the every-turn read keeps shrinking.
 
 ### R. **[Fable]** Cross-model review gate
 
 After an **[Opus]** ticket lands, run a **Fable** review pass before it
-merges. This is NOT a code-correctness re-audit (use `/code-review` or a
-fresh Opus context for that, since a model self-reviewing its own diff is
-the weakest check). Fable judges what it is strongest at for THIS game:
-**does the change land the feeling and hold canon.** For a given diff +
-the running build it answers:
+merges. This is NOT a code-correctness re-audit (use `/code-review` or a fresh
+Opus context for that, since a model self-reviewing its own diff is the
+weakest check). Fable judges what it is strongest at for THIS game: **does the
+change land the feeling and hold canon.** For a given diff + the running build
+it answers:
 - Does it read as dread, or as a mechanic showing through? (atmosphere,
   pacing, the tell)
-- Does any player-facing string break the no-dashes rule or the
-  `NARRATIVE.md` voice?
+- Does any player-facing string break the no-dashes rule or the `NARRATIVE.md`
+  voice?
 - Does it contradict a locked canon fact (`NARRATIVE.md`)?
 - What is the cheapest change that would make it land harder?
 
 Output is a short verdict + ranked notes, not a rewrite. The value is a
-SECOND, independent model looking at the work, so the direction can flip:
-if Fable is doing the implementing, an Opus pass reviews it the same way.
+SECOND, independent model looking at the work, so the direction can flip: if
+Fable is doing the implementing, an Opus pass reviews it the same way.

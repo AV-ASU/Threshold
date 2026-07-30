@@ -2294,7 +2294,7 @@ def main():
     gch._convo = None
     gch.float_speech.active = False
 
-    # --- 17f. Sheriff Vane's despair/hope arc (DESIGN.md §2; was TODO #2a) -
+    # --- 17f. Sheriff Vane's despair/hope arc (DESIGN.md §2) ----------
     # A hidden ledger decides the last holdout's fate; the player never
     # sees a number, only his mood. Sharing a discovery is the one hope
     # act (and the trust currency, guarded in 17d); the preacher's murder
@@ -2794,7 +2794,7 @@ def main():
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: the murder beat fires exactly once")
 
-    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2): the world rot is the PI's now, not the townsfolk's.
+    # (c) The TOWN STAYS ORDINARY to the end (NARRATIVE §2): the world rot is the PI's now, not the townsfolk's.
     # The old people-change is CUT -- no peace-maker is repainted a cultist,
     # no resister's voice curdles, and the machinery is gone.
     import systems.config as _cfg
@@ -2810,7 +2810,7 @@ def main():
     check(not any(hasattr(_rm.RotMixin, m) for m in
                   ("_rot_locals", "_convert_local", "_spawn_counter_eater")),
           "rot: the people-change methods are removed from RotMixin")
-    # The older mutate body-horror layer stays cut too (TODO #9).
+    # The older mutate body-horror layer stays cut too (NARRATIVE §2).
     check(not hasattr(_cfg, "INFEST_MUTATE")
           and not hasattr(_spr, "draw_infested_overlay")
           and not hasattr(_DB, "_draw_infested_portrait"),
@@ -2843,7 +2843,7 @@ def main():
           "rot: no townsperson is mutated or a cultist at stage 3 (town reads "
           "normal)")
 
-    # (c2) The four-tier PI register (TODO #22c): the rot surfaces as the
+    # (c2) The four-tier PI register (DESIGN.md §2): the rot surfaces as the
     # PI's FRAMING of a conversation, keyed to evidence (0 / 1-2 / 3 / 4+),
     # never as a word the NPC says. The prompt is a callable that shifts;
     # the NPC observation is identical across tiers.
@@ -2884,7 +2884,7 @@ def main():
                   for ln in spread_lines),
           "spread: no dashes in player-facing ending text")
 
-    # --- 24. The town reacts to state (TODO #10) + descent beats (#8) ----
+    # --- 24. The town reacts to state + the descent beats --------------
     # Each ambient local carries ONE state beat (a one-shot, gated on what
     # the PI has learned) before falling back to their ambient loop; the
     # procession's candle beat lands as a NOTE. None of
@@ -2968,8 +2968,8 @@ def main():
               for e in _pnotes) and evidence_count(gp2) == _evp,
           "descent: the procession candles land as a NOTE, never evidence")
 
-    # --- 24b. Mara's exchange displays; the lure collides once (TODO #6/#7);
-    # the SPREAD counterweight names the other road (TODO #9).
+    # --- 24b. Mara's exchange displays; the lure collides once;
+    # the SPREAD counterweight names the other road.
     gm = new_game()
     gm.load_scene_now("works_sign")
     ready(gm)
@@ -3038,7 +3038,7 @@ def main():
     _mkeys = {ex["key"] for ex in _MCV["exchanges"]}
     check(_mkeys == {"leave", "way_out", "father", "name"},
           "mara: the asks are come-with-me / the-way-out / her father / "
-          "the boy's name (bear-gated, TODO #22b)")
+          "the boy's name (bear-gated, NARRATIVE §6)")
     _mf = next(ex for ex in _MCV["exchanges"] if ex["key"] == "father")
     check(bool(_mf.get("once")) and bool(_mf.get("ends")),
           "mara: the father card plays once and ENDS the talk (she turns "
@@ -3646,7 +3646,7 @@ def main():
           "staging: a dead Mara clears the calling-out (her story's other "
           "end)")
 
-    # --- 28c. The bear + the name-beat (TODO #22b) ---
+    # --- 28c. The bear + the name-beat (NARRATIVE §6) ---
     from scenes.dialogue import (TOBY_CONVO as _TOBY_B,
                                  CANONICAL_EVIDENCE as _CE_B)
     from scenes.well import MARA_CONVO as _MARA_B

@@ -230,7 +230,7 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
     ]
 
 
-# ---- The four-tier PI register (TODO #22c) ----
+# ---- The four-tier PI register (DESIGN.md §2) ----
 # The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2): the locals stay exactly themselves, and what deteriorates
 # is the man hearing them. It surfaces ONLY as the PI's framing of a
 # conversation -- the question menu's opening line -- never as a word the NPC
@@ -433,7 +433,7 @@ def toby_dialogue(game, npc):
     It is EARNED, never volunteered: he gives it when the PI holds Mara's
     photograph out (the `photo` exchange below), not as a cold greeting -- a
     kid has no way to know the case on sight (only Sable ever met the PI).
-    The one OBJECT he gives is the bear (TODO #22b), and only to the man he
+    The one OBJECT he gives is the bear (NARRATIVE §6), and only to the man he
     trusts: once the PI has heard him out AND reassured him, Toby brings out
     the only toy in town on his own."""
     save = game.save
@@ -859,7 +859,7 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    # A faint memory of the girl herself (TODO #6): fires once the PI has
+    # A faint memory of the girl herself (NARRATIVE §6): fires once the PI has
     # SHOWN HER MARA'S PHOTOGRAPH (the asking got real, and it is how you get
     # her tab now -- NARRATIVE §6: show the photo, they react and hand it
     # over; play-notes). Mara passed through Brimley for a season before she
@@ -967,7 +967,7 @@ def hettie_dialogue(game, npc):
 
 
 # ---- The Sheriff: Hollis Vane ----
-# The despair/hope arc (DESIGN.md §2; was TODO #2a) on top of the ask-verb conversion
+# The despair/hope arc (DESIGN.md §2) on top of the ask-verb conversion
 # (TODO #1). A LOCAL, born here, the last holdout, the town's one real
 # investigator (NARRATIVE §4). Hopeful but mistrusting: the PI is one
 # more outsider who drove in, the exact profile of every cultist, so he
@@ -1882,10 +1882,10 @@ def clerk_dialogue(game, npc):
 # Royce, and Garrick came off fixed page-lists and onto the organic
 # conversation. Every one leads with the shared opener pair
 # (introduce-as-PI + the photograph) with short answers of their own,
-# plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the case,
-# TODO #10) keep firing ahead of the menu, exactly as the principals'
+# plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the
+# case) keep firing ahead of the menu, exactly as the principals'
 # volunteered beats do. The town stays visually ordinary end to end
-# (TODO #22c): no dialogue swap, no people-transform. What rots is the
+# (DESIGN.md §2): no dialogue swap, no people-transform. What rots is the
 # PI's framing (_pi_framing), never the locals' words. The fold note
 # moves off the old
 # any-talk trigger onto the exchanges that actually carry the account
@@ -1950,7 +1950,7 @@ def _garrick_roads_told(game):
 
 
 # Old Pell -- the schoolhouse step and the corn: Pell corn, the town's
-# northernmost-in-the-world pride (TODO #11, a mundane human feat, never
+# northernmost-in-the-world pride (NARRATIVE §2, a mundane human feat, never
 # the door's doing), dead standing since the missed fall harvest. Stasis
 # register; he turns at rot stage 3, so this talk is his pre-turn
 # window. The stopped calendar stays a rot-layer detail (the decoration

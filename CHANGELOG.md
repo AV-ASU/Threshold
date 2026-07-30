@@ -2920,6 +2920,54 @@
 
 ## Documentation process
 
+- **2026-07 — The consolidation: one timeline, and ticket numbers made
+  stable IDs** (maintainer: *"we are all over the place... clean up the todo
+  list file, the narrative, and Claude.md"*). Four things had drifted at once,
+  and they compounded:
+  - **TODO.md had become a trophy case.** Against its own stated rule, ~350
+    lines of it narrated work that had LANDED — the storm, the apex, the face,
+    the screech, the reach, the safe path, the yards, the lost fields — all of
+    which `CHANGELOG.md` already carried in full. The remaining open work was
+    filed by READINESS (buildable / blocked / deferred / polish), which is not
+    an order, so nothing said what to do next. Rewritten as **one timeline**:
+    seven phases from the maintainer's standing asks through to end-stage, with
+    an index table at the top, every ticket trimmed to its open remainder, and
+    a new **Dead ends** section for the directions that are closed (so they are
+    not rediscovered). 1019 → ~770 lines, and what is left is all live.
+  - **A dead ticket was pointing at a live one.** Ticket numbers had been
+    treated as disposable: retired numbers were cited in 47 places across the
+    code and docs, and NINE of those numbers had since been handed to an
+    unrelated live ticket — the deep-water WADE cited ticket eight, which by
+    then meant a parked-terrain megabuild; the lure-chain fence cited seven,
+    which by then meant an outdoor composition pass. Every citation was
+    repointed at its canon home (`NARRATIVE §n` / `DESIGN §n`) or at this
+    file, the stable-ID rule was written into TODO.md's header and CLAUDE.md,
+    and `tests/conventions.py` **check 13** now fails on any `TODO #n`
+    citation that no longer resolves to a live ticket heading (CHANGELOG
+    exempt — history correctly cites the numbers that were live then).
+    Fault-injected to prove it fails.
+  - **CLAUDE.md was still narrating systems it should only map.** The tableau
+    mega-paragraph, the Casebook, the three dialogue channels, the safe path,
+    the yards, the lost spaces, and the whole wall program were described at
+    length in the file that gets read EVERY turn. Worse, the tableaux pointed
+    at "DESIGN §11", which is the audio section — the tableau system, the
+    Casebook and the dialogue-channel model had **no home in DESIGN at all**,
+    so they could not simply be deleted. They now have one: **DESIGN §16, "The
+    surfaces the words arrive on."** CLAUDE.md keeps a code-map pointer for
+    each. 1194 → ~985 lines off the every-turn read, no fact lost.
+  - **NARRATIVE.md had drifted back into narrating its own history.** A
+    "Rework landed (2026-07)" blockquote in §6 restated facts the section
+    already carried; §5 dated two Carcosa rulings as events; §8 reported which
+    art was and was not drawn yet. All current-state now, with implementation
+    status handed back to TODO. Also fixed: a reference to a NARRATIVE §1b
+    that does not exist, and a Carcosa-colour pointer aimed at a retired
+    ticket.
+  Two stale FACTS surfaced while trimming and were corrected rather than
+  moved: CLAUDE.md still said "Brimley is kept exactly as it is until the
+  whole town has moved into yard scenes" (Brimley the scene is retired), and
+  DESIGN §6's material list omitted `turf` + `top_tint` (which existed only in
+  CLAUDE.md, and would have been lost with the cut).
+
 - **2026-07 — CLAUDE.md threat section consolidated (the quality sprint's
   doc pass, phase 1).** CLAUDE.md had grown into a second design doc: the
   evidence ladder, the Moths, the Watchers, and the WADE had their ONLY

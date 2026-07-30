@@ -1,6 +1,6 @@
 """Shared fold-wound glow helper.
 
-The per-local body-horror overlays that used to live here were cut (TODO #9:
+The per-local body-horror overlays that used to live here were cut (NARRATIVE §2:
 the town reads normal, the wrongness is the *place*, not the people). What
 remains is the one reusable primitive the corpse art still leans on: gold
 welling up from inside an opened wound.

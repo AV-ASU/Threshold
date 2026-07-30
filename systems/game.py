@@ -494,7 +494,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.narration.clear()
         self._speaking_npc = None
         self._convo = None
-        # TODO #13: count of SILENT-fold crossings this run; the "walked in
+        # DESIGN.md §7: count of SILENT-fold crossings this run; the "walked in
         # circles" case note fires on the second (the repeat is the tell).
         self._fold_loop_count = 0
         self._chant_t = 0.0
@@ -613,7 +613,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         screen_dx = self.player.x - self.cam_x
         screen_dy = self.player.y - self.cam_y
         same_scene = (target_scene == self.scene.key)
-        # The wrong-space beats for the PI's notebook (TODO #13). Classify
+        # The wrong-space beats for the PI's notebook (DESIGN.md §7). Classify
         # this crossing: a SILENT fold (same-scene maze loop or a seamless
         # world edge -- no visible frame, the roads just loop) vs a VISIBLE
         # fold pane (he saw the gold-rimmed door and stepped through). The
