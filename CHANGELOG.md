@@ -3024,6 +3024,31 @@
   function in the tree and fails on any global load that does not resolve.
   Fault-injected to prove it fails.
 
+- **2026-07 — The two disputed surface seams, straightened.** Both were cases
+  of the same thing: a crossing authored twice, from either side, with the two
+  sides naming different directions. `tools/surface_map.py` finds them by
+  trying to lay the network on a grid and watching it refuse.
+  **The gravel road was over-subscribed.** The lane named it as the road to
+  its west; the road named the lane as the one to its south and hung the whole
+  town off its east arm. The lane's four arms are all spoken for, so the road
+  gave way: the lane is its EAST now, which frees the south arm for the town.
+  That reads better than the state it replaced, because the town's own column
+  already runs north to south -- it now hangs off the road the way it already
+  grows. `store_row` takes the gravel road on its north and Hettie's gate
+  moves to the west arm it vacates, which puts her yard's road on its east
+  side. Her lot was re-dressed to match: the gate is in the road-side run
+  level with her door, the box stands where the carrier came from, and the
+  fence returns along both flanks. The yard layer's own placement assert
+  caught the first attempt (a mailbox left inside the building footprint once
+  the building moved), which is the assert doing exactly what it is for.
+  **The clearing faced the wrong way.** The river road names the glade as the
+  pocket on its west, and the glade named the road as south, so the crossing
+  read as a quarter turn. Its hidden doorway moved from the south treeline to
+  the east, and its worn approach path with it -- a path that walks to the way
+  out rather than to a wall.
+  Surface seams: 3 -> 0. The eight that remain are all interior doors between
+  rooms of one building, where a compass direction means much less.
+
 ## Documentation process
 
 - **2026-07 — The consolidation: one timeline, and ticket numbers made

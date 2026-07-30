@@ -7,13 +7,13 @@
   "gggggggggggggggggg",
   "gggggggggggggggggg",
   "gggggxxxxxxxxggggg",
-  "gggggxxxxxxxxggggg",
-  "gggggxxxxxxxxggggg",
-  "gggggxxxxxxxxggggg",
-  "gggggggggdgggggggg",
-  "gggggggggdgggggggg",
-  "ggggggggdddggggggg",
-  "ggggggggdddggggggg",
+  "gggggxxxxxxxxggddg",
+  "gggggxxxxxxxxddddg",
+  "gggggxxxxxxxxggddg",
+  "gggggggggggggggggg",
+  "gggggggggggggggggg",
+  "gggggggggggggggggg",
+  "gggggggggggggggggg",
   "gggggggggggggggggg"
  ],
  "objects": [
@@ -24,13 +24,13 @@
   "T................T",
   "T................T",
   "T.x............x.T",
+  "T................j",
   "T................T",
   "T................T",
   "T................T",
   "T................T",
   "T................T",
-  "T................T",
-  "TTTTTTTTTjTTTTTTTT"
+  "TTTTTTTTTTTTTTTTTT"
  ],
  "decorations": [
   {
@@ -356,14 +356,14 @@
   "spawns": {
    "default": {
     "()": [
-     304,
-     368
+     496,
+     240
     ]
    },
    "from_river_road": {
     "()": [
-     304,
-     368
+     496,
+     240
     ]
    }
   },

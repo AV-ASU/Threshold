@@ -875,7 +875,7 @@ def build_lane_end():
 def build_store_row():
     """The **X**: the first of the town's own streets.
 
-    It turns east off the gravel road; the store's gate is north, the school's
+    It turns south off the gravel road; the store's gate is west, the school's
     east, and the rest of the string runs on south.
     This is the layer's connective tissue -- SAFE PATH -> YARD -> HOUSE
     (DESIGN.md §15) -- and it is a path like any other, which is the point:
@@ -893,11 +893,11 @@ def build_store_row():
     sc = build_path(
         "store_row", "wnes", 36, 36,
         verge_char=("C", "A"),
-        exits=(("w", "4", "gravel_road_north", "from_store_row"),
-               ("n", "e", "shop_yard", "from_store_row"),
+        exits=(("n", "4", "gravel_road_north", "from_store_row"),
+               ("w", "e", "shop_yard", "from_store_row"),
                ("e", "a", "school_yard", "from_store_row"),
                ("s", "^", "chapel_row", "from_store_row")),
-        spawns=(("from_gravel_road_north", "w"), ("from_shop_yard", "n"),
+        spawns=(("from_gravel_road_north", "n"), ("from_shop_yard", "w"),
                 ("from_school_yard", "e"), ("from_chapel_row", "s")),
         seed=2039)
     _town_square(sc)
@@ -1040,8 +1040,8 @@ def _town_square(sc):
 
 
 def build_gravel_road_north():
-    """The **X** north of town: the country lane south, the backwoods north,
-    the river bend west and the town's own streets east.
+    """The **X** north of town: the country lane east, the backwoods north,
+    the river bend west and the town's own streets south.
 
     The last of the old three-tile dirt roads to get the path treatment. It
     keeps its gravel identity -- the shoulders read wider and looser here than
@@ -1057,16 +1057,16 @@ def build_gravel_road_north():
     sc = build_path(
         "gravel_road_north", "nsew", W, H,
         verge_char=("T", "p"),
-        exits=(("s", "a", "country_lane", "from_gravel_road_north"),
+        exits=(("e", "a", "country_lane", "from_gravel_road_north"),
                ("n", "e", "backwoods_cabin", "from_road"),
                ("w", "^", "river_bend", "from_gravel_road_north"),
-               # THE TOWN TURNING. The T became an X when the town's own
-               # streets started hanging off the network (DESIGN.md §15):
-               # its east flank was the only side of any shipped path with
-               # no road already on it.
-               ("e", "4", "store_row", "from_gravel_road_north")),
-        spawns=(("from_country_lane", "s"), ("from_backwoods_cabin", "n"),
-                ("from_river_bend", "w"), ("from_store_row", "e")),
+               # THE TOWN TURNING, on the SOUTH arm. The lane names this road
+               # as the one to its west, so the lane is this road's EAST -- and
+               # the town, whose own column already runs north to south, hangs
+               # off the south arm and keeps running that way.
+               ("s", "4", "store_row", "from_gravel_road_north")),
+        spawns=(("from_country_lane", "e"), ("from_backwoods_cabin", "n"),
+                ("from_river_bend", "w"), ("from_store_row", "s")),
         seed=2031)
     cx, cy = sc.junction
     # THE BOARDED PANEL, still in the east treeline: nailed planks over a

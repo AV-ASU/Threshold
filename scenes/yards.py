@@ -661,7 +661,7 @@ def build_shop_yard():
         "shop_yard",
         door_face="e", door_char="D",
         interior="shop", interior_spawn="from_shop_yard",
-        path_side="s", path_char="e",
+        path_side="e", path_char="e",
         path_target="store_row", path_spawn="from_shop_yard",
         verge=("C", "A"), building=(9, 6), seed=37)
     # KEPT, and every piece of it is an errand she is still running to a
@@ -669,15 +669,17 @@ def build_shop_yard():
     y.step()
     y.genset(running=True, side="s", along=0.25)
     y.crates(y.right + 2, y.bot, opened=True)
-    y.mailbox(y.left + 6, 14, toward="s", full=False)
+    # The box stands where the yard meets the road, which is the EAST side:
+    # the store row runs down that flank, so the carrier came from there.
+    y.mailbox(y.right + 3, y.bot, toward="e", full=False)
     # HER GATE, not a hole in her fence: she opens it every morning and it
-    # stands open all day, which is the whole of what her yard is saying.
-    y.fence("s", at=y.lot[3], span=(y.lot[0], y.lot[1]),
-            gate=y.out[0] - 3)
-    # and the line RETURNS up both sides, so the boundary ENCLOSES a lot
-    # instead of reading as one ruled line laid across the front
-    y.fence("e", at=y.lot[1], span=(y.lot[2] + 3, y.lot[3] - 1), gap=False)
-    y.fence("w", at=y.lot[0], span=(y.lot[3] - 4, y.lot[3] - 1), gap=False)
+    # stands open all day, which is the whole of what her yard is saying. It
+    # is in the road-side run, level with her door.
+    y.fence("e", at=y.lot[1], span=(y.lot[2], y.lot[3]), gate=y.out[1] + 1)
+    # and the line RETURNS along both flanks, so the boundary ENCLOSES a lot
+    # instead of reading as one ruled line laid down the side
+    y.fence("s", at=y.lot[3], span=(y.lot[1] - 6, y.lot[1] - 1), gap=False)
+    y.fence("n", at=y.lot[2], span=(y.lot[1] - 6, y.lot[1] - 1), gap=False)
     y.hedge("w", n=7, at=y.left - 3, span=(2, 12))
     # her burn barrel, out where she can see the road from it
     sc.add_decoration(Decoration((y.left - 1) * TILE + 16,

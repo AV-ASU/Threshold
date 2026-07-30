@@ -125,6 +125,11 @@ half of the model that was only ever a design conversation:
    other yard building gained interior work. Nothing needs it, and it is the
    obvious next ask.
 
+**The surface seams all agree now** (`CHANGELOG.md`): the gravel road takes
+the lane on its east and the town on its south, and the clearing's doorway
+faces the river road. `tools/surface_map.py` reports zero disagreements above
+ground; the eight left are interior doors inside single buildings.
+
 **Judge the shipped slice by FEEL first.** One mouth on one scene (the lodge
 yard's treeline) is a vertical slice, not the restructure — how many mouths
 the world wants is a play question, not a code one.

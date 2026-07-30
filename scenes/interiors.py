@@ -45,9 +45,9 @@ def build_clearing():
         for x in range(18):
             if 5 <= x <= 12 and 5 <= y <= 8:
                 row += "x"      # charred dirt
-            elif x == 9 and 9 <= y <= 12:
-                row += "d"      # worn approach path
-            elif 8 <= x <= 10 and 11 <= y <= 12:
+            elif y == 7 and 13 <= x <= 16:
+                row += "d"      # worn approach path, in from the east
+            elif 15 <= x <= 16 and 6 <= y <= 8:
                 row += "d"      # path widens at the threshold
             else:
                 row += "g"      # grass
@@ -59,9 +59,12 @@ def build_clearing():
         else:
             row = ["T"] + ["."] * 16 + ["T"]
             objects_l.append(row)
-    # Transition tree at the south threshold. Visually identical to
-    # a tree, walking onto it sends the player back to cornfield_path.
-    objects_l[13][9] = "j"
+    # Transition tree in the EAST treeline. Visually identical to a tree,
+    # walking onto it sends the player back to the river road -- which names
+    # this glade as the pocket on its WEST, so the way back has to face east.
+    # It used to sit on the south edge, and the two scenes disagreed about
+    # where each other were (tools/surface_map.py).
+    objects_l[7][17] = "j"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("clearing", floor, objects, music="wrong")
     # Cordwood stacks flanking the fire pit. Real
@@ -76,8 +79,8 @@ def build_clearing():
     # The way back out is the pine flank of the river road, where the
     # hidden doorway in the treeline came through (DESIGN.md §15).
     sc.add_exit("j", "river_road", "from_clearing")
-    sc.set_spawn("default",          9, 11)
-    sc.set_spawn("from_river_road",  9, 11)
+    sc.set_spawn("default",          15, 7)
+    sc.set_spawn("from_river_road",  15, 7)
 
     # The dead fire pit at centre -- scaled up so it reads as a gathering
     # fire rather than a campsite. Scrap around it.
