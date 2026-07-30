@@ -251,7 +251,7 @@ def _cap(surf, x, y, crown, crown_lo, bill, s=0):
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0, curse=0.0,
                     view="front", to_player=None, lean=None, scale_mul=1.0,
-                    pose=None, gape=0.0, apex_mask=None):
+                    pose=None, gape=0.0, apex_mask=None, lamp=0.0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (the named locals -- townswoman, toby, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
@@ -814,7 +814,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # `apex_mask` is stamped by Game._tick_apex on the host it created; an
         # ordinary unit passes None and its draw is untouched.
         draw_amalgam_sprite(surf, x, y, seed=seed, gaze=gaze,
-                            birth=birth, dispel=gait, mask=apex_mask)
+                            birth=birth, dispel=gait, mask=apex_mask,
+                            lamp=lamp)
     else:
         # generic placeholder
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))

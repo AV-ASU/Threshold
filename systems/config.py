@@ -444,6 +444,15 @@ STORM_SPAWN_NEAR = 150.0      # px: closest a storm unit opens
 STORM_SPAWN_FAR = 420.0       # px: furthest (wider than a Watcher's 200 -- the
                               # flood comes from the whole room, not just ahead)
 
+# THE LANTERN EYE's brightness curve (rendering/amalgam.py EYE_LAMP). Purely
+# a DRAW value: the eye throws decorative light onto the creature's own flesh
+# and nothing else, so these never reach Scene.lit_at, the light table, or any
+# gate. It exists because a near-black body had no value to spend and the bone
+# outline was carrying legibility alone, which read as line-art.
+AMALGAM_LAMP_IDLE = 0.30      # burning while it has not found you
+AMALGAM_LAMP_NEAR = 260.0     # px at which it reaches full -- it brightens as
+                              # it closes, so the tell is "it has me now"
+
 WATCHER_LIGHT_BURN = 2.0      # "no light = danger": a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is

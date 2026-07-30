@@ -338,7 +338,27 @@ its head) and pings the cult to **investigate the body**, and the body
   Composition rules bind every deal: at least one weight-bearing part on
   the ground, masses centre, and ALWAYS at least one eye-bearing part
   (every amalgam watches; the dim-ember tone is bright enough to survive
-  game scale). Behavior is the Watcher's, identical (this spawn rule, the
+  game scale).
+  **THE LANTERN EYE** (2026-07) is the one part no deal can roll: a single big
+  eyeball attached to the body, always present, following the same rule the
+  Pallid Mask does (an extra part `assemble()` never deals). It throws
+  **decorative light onto the creature's own flesh** -- a point source with
+  falloff, additive over the assembled parts and masked to what is already
+  there, so it can only brighten flesh and can never paint a halo into the
+  empty space around the body. That is what separates it from the blurred glow
+  this family rejected: a bloom spreads brightness evenly and reads as a
+  spirit, while a point source makes some of the body brighter than the rest,
+  which is MODELLING. It exists because a near-black body has no VALUE to
+  spend, which left the bone outline carrying legibility alone and the
+  creature reading as line-art. It burns hotter the closer the thing is
+  (`AMALGAM_LAMP_IDLE` / `AMALGAM_LAMP_NEAR`), so it is a TELL the player can
+  learn rather than a lamp on a loop, and it **dies when stared at** like every
+  other ember (the lantern is not an exception to the one rule the player can
+  act on). **It is DECORATIVE and that is load-bearing:** it never enters THE
+  LIGHT TABLE and is invisible to `Scene.lit_at`. A real light here would deny
+  other amalgams a dark spawn spot, burn its own neighbours, seal the
+  lost-space mouth, and freeze the storm solid, because a unit refuses any step
+  into light. Guarded by `tests/conventions.py` check 14. Behavior is the Watcher's, identical (this spawn rule, the
   hold, gaze/axe/round/light dispel); the amalgam adds presentation only:
   a staggered part-by-part BUILD-OUT on manifest (`npc._birth`, ticked in
   `_tick_watchers`), and the gaze-dispel plays as a PEELING -- parts

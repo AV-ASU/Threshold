@@ -451,12 +451,15 @@
     blind-spot fog floor (units in the sight cone are already at alpha 255) and
     the room gloom (forcing it to 0 moved the median peak delta 14.0 -> 15.2).
     A near-black body has no value to spend; only the EDGE can carry it.
-    **Still open:** the units read as outlines more than as creatures now, and
-    on the isolated preview sheet 2px is frankly line-art. The next move is
-    giving the body itself something to read at game scale in the dark
-    (interior value, not a glow) so the edge is not carrying the whole job
-    alone. Re-measure with `tools/capture_storm.py --measure`, and look in a
-    SCENE, never on the sheet.
+    **THE LANTERN EYE landed** and is the answer to "the body has nothing in
+    it": a guaranteed eyeball part throwing decorative light onto the
+    creature's own flesh (`CHANGELOG.md`, `DESIGN.md` §1). Interior value now
+    exists, so the outline is no longer carrying legibility alone.
+    **Still open on legibility:** with the interior doing work, try dropping
+    `AMALGAM_EDGE_W` back to 1 -- the 2px edge was a crutch for a body that had
+    nothing, and 1px would settle the preview sheet's fair complaint that 2px
+    reads as line-art. Re-measure with `tools/capture_storm.py --measure` and
+    look in a SCENE before deciding.
     **Still open:** `lost_corn` builds zero units (above). Untouched.
   - **THE AMALGAM'S CATCH ANIMATION.** The apex's death card is a wordless
     placeholder fade, hooked up and timed already (`_death_kind == "apex"`,

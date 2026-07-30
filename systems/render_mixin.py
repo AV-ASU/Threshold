@@ -1570,6 +1570,18 @@ class RenderMixin:
                         # reads.
                         w_gaze = (npc.sprite_kind in ("watcher", "amalgam")
                                   and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
+                        # THE LANTERN EYE burns hotter the closer it is: a
+                        # tell the player can read, not a lamp on a loop. It
+                        # is decorative light on the creature's own flesh --
+                        # it lights nothing in the world and is invisible to
+                        # Scene.lit_at (see rendering/amalgam.py EYE_LAMP).
+                        w_lamp = 0.0
+                        if npc.sprite_kind == "amalgam":
+                            _d = math.hypot(npc.x - self.player.x,
+                                            npc.y - self.player.y)
+                            w_lamp = AMALGAM_LAMP_IDLE + (
+                                (1.0 - AMALGAM_LAMP_IDLE)
+                                * max(0.0, 1.0 - _d / AMALGAM_LAMP_NEAR) ** 2)
                         nview = "front"
                         if self._tilt_on():
                             nview = view_from_facing(npc.facing[0],
@@ -1586,7 +1598,8 @@ class RenderMixin:
                                         lean=king_lean, scale_mul=king_scale_mul,
                                         pose=getattr(npc, "pose", None),
                                         gape=getattr(npc, "_gape", 0.0),
-                                        apex_mask=_apex_mask_for(npc))
+                                        apex_mask=_apex_mask_for(npc),
+                                        lamp=w_lamp)
                     # The rising "?" tell (DESIGN.md §12 Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.

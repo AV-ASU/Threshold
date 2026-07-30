@@ -649,6 +649,51 @@ def _no_work_markers():
                 "    pointer:\n" + "\n".join(rows[:20]))
 
 
+# ------------------------------------- 14. the creature's light is DECORATIVE
+# THE RULE (DESIGN.md §1, rendering/amalgam.py EYE_LAMP): THE LANTERN EYE
+# throws light onto the amalgam's own flesh and onto NOTHING ELSE. It must
+# never appear in THE LIGHT TABLE (systems/lights.py) and must stay invisible
+# to Scene.lit_at.
+# WHY THIS CHECK: "decorative" here is load-bearing, not a preference. A real
+# light on a creature would deny other amalgams a spawn spot (they open only
+# at a DARK spot), burn its own neighbours (WATCHER_LIGHT_BURN), seal the
+# lost-space mouth (a lit edge is a wall), and -- the one that ends the system
+# outright -- a storm unit refuses any step into light, so a flood walking at
+# the player would freeze itself solid. The same fence already guards the bone
+# outline; this extends it to the eye, which is far likelier to be "promoted"
+# to a real light by someone who reads the draw and thinks it looks like one.
+@check("the amalgam's own light never becomes a real light source")
+def _creature_light_decorative():
+    from systems.lights import LIGHTS
+    from scenes.base import Scene
+    from systems.render_mixin import FIXTURE_POOLS
+    import rendering.amalgam as _am
+    rows = []
+    # every part name the assembler can produce, plus the eye itself.
+    # NOTE the collision rule this doubles as: an amalgam part must not be
+    # NAMED after a light kind either. On this check's first run the eye part
+    # was called "lantern" and matched the game's hand-carried hurricane
+    # lantern -- a false positive that was still worth fixing, because two
+    # unrelated things answering to one name is how the light tables got
+    # confusing in the first place.
+    names = {"eyelamp"}
+    for lst in (_am.WEIGHT, _am.MASS, _am.SENSE):
+        names |= {nm for nm, _fn in lst}
+    for table, label in ((LIGHTS, "systems/lights.py LIGHTS"),
+                         (Scene._LIGHT_KINDS, "Scene._LIGHT_KINDS"),
+                         (FIXTURE_POOLS, "FIXTURE_POOLS"),
+                         ({k: 1 for k in Scene._ELECTRIC_KINDS},
+                          "Scene._ELECTRIC_KINDS")):
+        for nm in sorted(names & set(table)):
+            rows.append(f"    {nm!r} is in {label}")
+    if rows:
+        return ("    A creature's light must stay DRAW-ONLY. In a real light\n"
+                "    table it would deny amalgams their dark spawn spots, burn\n"
+                "    its neighbours, seal the lost-space mouth, and freeze the\n"
+                "    storm (a unit refuses any step into light):\n"
+                + "\n".join(rows))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     print()

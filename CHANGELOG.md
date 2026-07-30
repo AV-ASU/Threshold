@@ -2706,6 +2706,50 @@
 
 ## The light table, and one skin for His gaze
 
+- **2026-07 -- THE LANTERN EYE: the amalgam lights its own flesh.** The
+  maintainer's idea, and a better one than the pass it replaced: *"what if the
+  eye acts like a pseudo light source allowing for the player to have
+  visibility but in practice it's completely decorative ... a separate eyeball
+  part attached to the body."*
+
+  It answers the real problem, which the previous entry established by
+  elimination: neither alpha nor the room gloom could ever have fixed the
+  amalgam's legibility, because a near-black body has no VALUE to spend. That
+  left the bone outline carrying the whole job and the creature reading as
+  line-art -- a silhouette with nothing inside it. A point source AT the eye
+  puts light INSIDE the silhouette, which is the one place it was missing.
+
+  It is deliberately not the blurred halo this family already threw out. A
+  bloom spreads brightness evenly and reads as a glowing spirit; a point source
+  with falloff makes some of the body brighter than the rest, which is
+  MODELLING. The pass blits additively with `BLEND_RGB_ADD`, which touches RGB
+  and leaves destination ALPHA alone -- so it can only brighten pixels that are
+  already flesh and physically cannot paint into the empty space around the
+  creature. That property is the whole design.
+
+  Structurally it follows the Pallid Mask's rule: an extra part `assemble()`
+  never deals, attached after the deal, so every existing creature is the
+  creature it always was with an eye added. It burns hotter as the thing closes
+  (`AMALGAM_LAMP_IDLE` / `AMALGAM_LAMP_NEAR`) so it reads as a TELL rather than
+  a lamp, and it dies when stared at like every other ember -- the lantern does
+  not get to be an exception to the one rule the player can act on.
+
+  **Decorative is load-bearing here, not a preference,** and it has a check.
+  A real light on a creature would deny other amalgams a dark spawn spot, burn
+  its own neighbours, seal the lost-space mouth, and -- the one that ends the
+  system -- freeze the storm solid, since a unit refuses any step into light
+  and a flood would be walking into its own. `tests/conventions.py` check 14
+  fails if the eye ever appears in THE LIGHT TABLE, proved failing before it
+  was kept.
+
+  The check earned itself on its first run by catching something else: the part
+  was originally called `lantern`, which is already the game's hand-carried
+  hurricane lantern and a real light kind. A false positive, and still worth
+  the rename to `eyelamp` -- two unrelated things answering to one name is how
+  the light declarations got confusing in the first place. The check now
+  doubles as that collision rule.
+
+
 - **2026-07 -- the road is storm-proof, and the LIGHT is what does it.**
   Maintainer ruling, in their words: *"the road is only safe because of
   light."* Measured first: `store_row` is 69% lit, because §14's lamp pattern
