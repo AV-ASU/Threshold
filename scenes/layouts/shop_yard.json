@@ -5486,7 +5486,17 @@
      304
     ]
    },
-   "dialogue": "?doorstep_voice.<locals>._fn"
+   "dialogue": {
+    "factory": "scenes.dialogue:doorstep_voice",
+    "args": {
+     "pages": [
+      "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
+      "No deliveries. In a while now. But we manage. We always.",
+      "I keep the lights on. So they know. Someone's keeping them on."
+     ],
+     "voice": "blip_mid"
+    }
+   }
   }
  ],
  "hooks": {

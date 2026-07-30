@@ -375,7 +375,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_graveyard.<locals>._graveyard_interact"
+  "on_interact": "scenes.threshold_extras:_graveyard_interact"
  },
  "attrs": {
   "h": 10,

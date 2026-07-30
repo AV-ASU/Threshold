@@ -120,8 +120,8 @@
  "hooks": {
   "on_enter": null,
   "on_update": null,
-  "on_exit": "?build_works_deepface.<locals>._on_exit",
-  "on_interact": "?build_works_deepface.<locals>._interact"
+  "on_exit": "scenes.well:_deepface_on_exit",
+  "on_interact": "scenes.well:_deepface_interact"
  },
  "attrs": {
   "h": 9,

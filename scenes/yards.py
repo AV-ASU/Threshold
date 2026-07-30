@@ -67,6 +67,31 @@ _ALONG = {"n": 0.0, "s": 0.0, "e": math.pi / 2, "w": math.pi / 2}
 BAY = 33.0
 
 
+# ---------------------------------------------------------------- beat gates
+# A chorus beat fires when its condition holds. These are module-level and
+# NAMED because a lambda defined inside a builder is the one piece of
+# behaviour a layout can never refer to (`scenes/layout.py`): everything else
+# is either importable or rebuildable from the factory that made it.
+def _beat_calder_unlatched(g):
+    return g._evidence_count() >= 1
+
+
+def _beat_royce_throat(g):
+    return g._evidence_count() >= 2
+
+
+def _beat_garrick_quiet(g):
+    return g.save.flag("preacher_body_seen")
+
+
+def _beat_pell_marked(g):
+    return g.save.arg("paper_given") == "pell"
+
+
+def _beat_pell_coal(g):
+    return g._evidence_count() >= 1 and g.save.arg("paper_given") != "pell"
+
+
 class Yard(object):
     """The ground around one building, and the vocabulary you dress it with.
 
@@ -852,6 +877,29 @@ def build_farm_yard():
     return sc
 
 
+def _cult_camp_raise(game, scene):
+    if game._evidence_count() < 1:
+        return
+    cx, cy = scene._camp_pos
+    tx, ty = int(cx // TILE), int(cy // TILE)
+    rows = [list(r) for r in scene.floor]
+    for qy in range(ty - 2, ty + 2):
+        for qx in range(tx - 2, tx + 3):
+            if (0 <= qy < scene.h and 0 <= qx < scene.w
+                    and rows[qy][qx] in (":", ";", "g")):
+                rows[qy][qx] = "d"
+    scene.floor = ["".join(r) for r in rows]
+    scene.add_decoration(Decoration(cx, cy, "camp_fire", seed=71))
+    for (dx, dy, kind, sd) in ((-42, -4, "bedroll", 1),
+                               (36, -12, "bedroll", 2),
+                               (-8, 40, "bedroll", 3),
+                               (44, 18, "log_seat", 4),
+                               (-44, 22, "log_seat", 5),
+                               (10, -40, "log_seat", 6)):
+        scene.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=sd))
+    scene.add_decoration(Decoration(cx + 48, cy - 34, "lantern"))
+
+
 def _cult_camp(sc, ctx, cty):
     """THE CAMP the newcomers rest and gather at, raised on entry once the
     cult is awake.
@@ -869,29 +917,8 @@ def _cult_camp(sc, ctx, cty):
     sc.add_cult_station(ctx * TILE + 16, (cty + 1) * TILE + 16,
                         face=(0, -1), dwell=(8.0, 14.0))
 
-    def _raise(game, scene):
-        if game._evidence_count() < 1:
-            return
-        cx, cy = scene._camp_pos
-        tx, ty = int(cx // TILE), int(cy // TILE)
-        rows = [list(r) for r in scene.floor]
-        for qy in range(ty - 2, ty + 2):
-            for qx in range(tx - 2, tx + 3):
-                if (0 <= qy < scene.h and 0 <= qx < scene.w
-                        and rows[qy][qx] in (":", ";", "g")):
-                    rows[qy][qx] = "d"
-        scene.floor = ["".join(r) for r in rows]
-        scene.add_decoration(Decoration(cx, cy, "camp_fire", seed=71))
-        for (dx, dy, kind, sd) in ((-42, -4, "bedroll", 1),
-                                   (36, -12, "bedroll", 2),
-                                   (-8, 40, "bedroll", 3),
-                                   (44, 18, "log_seat", 4),
-                                   (-44, 22, "log_seat", 5),
-                                   (10, -40, "log_seat", 6)):
-            scene.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=sd))
-        scene.add_decoration(Decoration(cx + 48, cy - 34, "lantern"))
 
-    sc.on_enter_fn = _raise
+    sc.on_enter_fn = _cult_camp_raise
 
 
 def build_toby_yard():
@@ -1087,7 +1114,7 @@ def build_calder_house():
     sc.add_furniture("cot", [(9, 2)], w=30, h=16)
     _resident(sc, 8, 4, "Mrs. Calder", "townswoman", CALDER_CONVO, beats=[
         ("beat_calder_unlatched",
-         lambda g: g._evidence_count() >= 1, [
+         _beat_calder_unlatched, [
              "Closer now. Whoever the place is set for. An old woman can "
              "feel a knock coming before it lands.",
              "I've started leaving the door unlatched at night. It "
@@ -1131,7 +1158,7 @@ def build_royce_house():
                                  tipped=True))
     _resident(sc, 4, 3, "Royce", "royce", ROYCE_CONVO, movement="watch",
               beats=[("beat_royce_throat",
-                      lambda g: g._evidence_count() >= 2, [
+                      _beat_royce_throat, [
                           "You're still here. Course you're still here.",
                           "I keep turning it over. Every road out of Brimley "
                           "hands you back. Except the one that carried you "
@@ -1171,7 +1198,7 @@ def build_garrick_house():
     _resident(sc, 5, 2, "Garrick", "old_townsman", GARRICK_CONVO,
               movement="watch",
               beats=[("beat_garrick_quiet",
-                      lambda g: g.save.flag("preacher_body_seen"), [
+                      _beat_garrick_quiet, [
                           "The reverend's gone quiet. Any other week you'd "
                           "hear him clear from here, worked up over "
                           "something or other.",
@@ -1254,15 +1281,14 @@ def build_pell_house():
         # the pencil back up. The marked beat fires first and the coal beat
         # stands down for good.
         ("beat_pell_marked",
-         lambda g: g.save.arg("paper_given") == "pell", [
+         _beat_pell_marked, [
              "Wrote the date in this morning. April 15, plain as "
              "you like. First one since the winter.",
              "[c=dim]Can't say it did anything. Can't say it "
              "didn't. I'll write tomorrow in tomorrow.[/c]",
          ]),
         ("beat_pell_coal",
-         lambda g: (g._evidence_count() >= 1
-                    and g.save.arg("paper_given") != "pell"), [
+         _beat_pell_coal, [
              "You've been digging at it. I can tell. It's on you like "
              "coal dust.",
              "Whatever you're finding out there, don't bring it up my "

@@ -1338,8 +1338,8 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_threshold.<locals>._threshold_on_enter",
-  "on_update": "?build_threshold.<locals>._threshold_update",
+  "on_enter": "scenes.depths:_threshold_on_enter",
+  "on_update": "scenes.depths:_threshold_update",
   "on_exit": null,
   "on_interact": null
  },

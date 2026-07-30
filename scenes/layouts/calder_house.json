@@ -136,7 +136,28 @@
      144
     ]
    },
-   "dialogue": "?chorus_dialogue.<locals>._fn"
+   "dialogue": {
+    "factory": "scenes.dialogue:chorus_dialogue",
+    "args": {
+     "beats": [
+      {
+       "()": [
+        "beat_calder_unlatched",
+        {
+         "fn": "scenes.yards:_beat_calder_unlatched"
+        },
+        [
+         "Closer now. Whoever the place is set for. An old woman can feel a knock coming before it lands.",
+         "I've started leaving the door unlatched at night. It seemed... polite."
+        ]
+       ]
+      }
+     ],
+     "convo": {
+      "const": "scenes.dialogue:CALDER_CONVO"
+     }
+    }
+   }
   }
  ],
  "hooks": {

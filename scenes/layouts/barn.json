@@ -393,9 +393,9 @@
  "npcs": [],
  "hooks": {
   "on_enter": null,
-  "on_update": "?build_barn.<locals>._barn_update",
+  "on_update": "scenes.interiors:_barn_update",
   "on_exit": null,
-  "on_interact": "?build_barn.<locals>._barn_interact"
+  "on_interact": "scenes.interiors:_barn_interact"
  },
  "attrs": {
   "h": 12,

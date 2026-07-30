@@ -498,12 +498,12 @@
      272
     ]
    },
-   "dialogue": "?hettie_dialogue"
+   "dialogue": "scenes.dialogue:hettie_dialogue"
   }
  ],
  "hooks": {
   "on_enter": null,
-  "on_update": "?build_shop.<locals>._shop_update",
+  "on_update": "scenes.interiors:_shop_update",
   "on_exit": null,
   "on_interact": null
  },

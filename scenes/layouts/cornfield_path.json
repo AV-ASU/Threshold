@@ -796,8 +796,8 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_cornfield_path.<locals>._forest_on_enter",
-  "on_update": "?build_cornfield_path.<locals>._forest_on_update",
+  "on_enter": "scenes.cornfield_path:_forest_on_enter",
+  "on_update": "scenes.cornfield_path:_forest_on_update",
   "on_exit": null,
   "on_interact": null
  },

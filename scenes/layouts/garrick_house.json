@@ -115,7 +115,29 @@
      80
     ]
    },
-   "dialogue": "?chorus_dialogue.<locals>._fn"
+   "dialogue": {
+    "factory": "scenes.dialogue:chorus_dialogue",
+    "args": {
+     "beats": [
+      {
+       "()": [
+        "beat_garrick_quiet",
+        {
+         "fn": "scenes.yards:_beat_garrick_quiet"
+        },
+        [
+         "The reverend's gone quiet. Any other week you'd hear him clear from here, worked up over something or other.",
+         "Nothing out of him for days now. Man spends his life raising his voice, then nothing at all.",
+         "You go by and look in on him, son. Somebody ought to."
+        ]
+       ]
+      }
+     ],
+     "convo": {
+      "const": "scenes.dialogue:GARRICK_CONVO"
+     }
+    }
+   }
   }
  ],
  "hooks": {

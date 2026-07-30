@@ -2993,6 +2993,37 @@
   props take different cache paths. That is a property of the draw layer, not
   the layout. The guard asserts the authored content instead, exactly.
 
+- **2026-07 — Every scene's behaviour can be named, so the move to data is
+  finished.** A layout carries placement; behaviour travels by name. 40 scenes
+  did not have one: their hooks were defined INSIDE the builder
+  (`build_shop.<locals>._shop_update`), which is a function with no address,
+  so those rooms still needed their builder to run.
+  All of them are lifted to module level. Most were textual; the ones that
+  captured something needed the captured thing to have a home first, and in
+  almost every case the scene ALREADY carried it (`sc._barn_hatch_pos`,
+  `sc._axe_pos`, `sc._gate_pos`, `sc._well_pos`) — the closure had simply been
+  reading the builder's local instead. An interact hook is only ever called on
+  the loaded scene (`self.scene.on_interact_fn(self)`), so a captured `sc`
+  became `game.scene` and 13 hooks stopped capturing anything at all.
+  Two additions to the format did the rest without any lifting. A closure a
+  FACTORY built out of plain data now travels as the recipe that made it
+  (`doorstep_voice(pages)` → the factory plus what it captured), which named
+  every doorstep voice at once. And a module-level constant travels by
+  REFERENCE: `CALDER_CONVO` is a large authored structure with functions
+  inside it, and copying it into a layout would have been both impossible and
+  wrong, since the layout would then hold a stale duplicate of something the
+  writer edits.
+  Five beat conditions were lambdas — the one shape with no name at all — and
+  are now named predicates (`_beat_pell_coal`).
+  **0 scenes keep unnameable behaviour, down from 40.**
+  The lift broke something first, and the way it broke is the useful part:
+  four builder locals became global loads that `compileall` accepts, that every
+  scene BUILDS correctly with, and that the whole gate imports happily — they
+  only died when the threshold's own update actually ran, deep inside a story
+  beat. `tests/conventions.py` **check 14** now reads the bytecode of every
+  function in the tree and fails on any global load that does not resolve.
+  Fault-injected to prove it fails.
+
 ## Documentation process
 
 - **2026-07 — The consolidation: one timeline, and ticket numbers made

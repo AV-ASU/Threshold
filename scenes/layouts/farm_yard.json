@@ -4860,7 +4860,7 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?_cult_camp.<locals>._raise",
+  "on_enter": "scenes.yards:_cult_camp_raise",
   "on_update": null,
   "on_exit": null,
   "on_interact": null

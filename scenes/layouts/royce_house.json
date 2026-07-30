@@ -113,7 +113,29 @@
      112
     ]
    },
-   "dialogue": "?chorus_dialogue.<locals>._fn"
+   "dialogue": {
+    "factory": "scenes.dialogue:chorus_dialogue",
+    "args": {
+     "beats": [
+      {
+       "()": [
+        "beat_royce_throat",
+        {
+         "fn": "scenes.yards:_beat_royce_throat"
+        },
+        [
+         "You're still here. Course you're still here.",
+         "I keep turning it over. Every road out of Brimley hands you back. Except the one that carried you in. If a door only opens the one way, mister, it isn't a door.",
+         "[c=dim]It's a throat.[/c]"
+        ]
+       ]
+      }
+     ],
+     "convo": {
+      "const": "scenes.dialogue:ROYCE_CONVO"
+     }
+    }
+   }
   }
  ],
  "hooks": {

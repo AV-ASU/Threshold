@@ -522,6 +522,6 @@
   ]
  },
  "fn_attrs": {
-  "exit_gate_fn": "?build_lodge.<locals>._house_gate"
+  "exit_gate_fn": "scenes.lodge:_house_gate"
  }
 }

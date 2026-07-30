@@ -313,7 +313,7 @@
      208
     ]
    },
-   "dialogue": "?toby_dialogue"
+   "dialogue": "scenes.dialogue:toby_dialogue"
   }
  ],
  "hooks": {

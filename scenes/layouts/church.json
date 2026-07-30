@@ -522,7 +522,7 @@
      144
     ]
    },
-   "dialogue": "?preacher_dialogue"
+   "dialogue": "scenes.dialogue:preacher_dialogue"
   }
  ],
  "hooks": {

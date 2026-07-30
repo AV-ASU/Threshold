@@ -322,7 +322,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_depths_threshing.<locals>._interact"
+  "on_interact": "scenes.depths:_threshing_interact"
  },
  "attrs": {
   "h": 11,

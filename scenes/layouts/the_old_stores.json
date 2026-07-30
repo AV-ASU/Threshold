@@ -131,7 +131,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_the_old_stores.<locals>._interact"
+  "on_interact": "scenes.depths:_old_stores_interact"
  },
  "attrs": {
   "h": 12,

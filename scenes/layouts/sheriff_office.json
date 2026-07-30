@@ -473,14 +473,14 @@
      144
     ]
    },
-   "dialogue": "?sheriff_dialogue"
+   "dialogue": "scenes.dialogue:sheriff_dialogue"
   }
  ],
  "hooks": {
-  "on_enter": "?build_sheriff_office.<locals>._fc_on_enter",
+  "on_enter": "scenes.villager_houses:_fc_on_enter",
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_sheriff_office.<locals>._office_interact"
+  "on_interact": "scenes.villager_houses:_office_interact"
  },
  "attrs": {
   "h": 12,

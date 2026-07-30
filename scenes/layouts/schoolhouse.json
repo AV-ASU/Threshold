@@ -658,10 +658,10 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_schoolhouse.<locals>._school_on_enter",
+  "on_enter": "scenes.threshold_extras:_school_on_enter",
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_schoolhouse.<locals>._school_interact"
+  "on_interact": "scenes.threshold_extras:_school_interact"
  },
  "attrs": {
   "h": 12,
@@ -774,10 +774,16 @@
     368,
     336
    ]
+  },
+  "_gas_receipt_pos": {
+   "()": [
+    112,
+    248
+   ]
   }
  },
  "fn_attrs": {
-  "fold_charge_fn": "?build_schoolhouse.<locals>._door_charge",
-  "exit_gate_fn": "?build_schoolhouse.<locals>._door_gate"
+  "fold_charge_fn": "scenes.threshold_extras:_door_charge",
+  "exit_gate_fn": "scenes.threshold_extras:_door_gate"
  }
 }

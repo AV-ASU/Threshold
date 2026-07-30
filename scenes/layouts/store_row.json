@@ -303,7 +303,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?_town_square.<locals>._square_interact"
+  "on_interact": "scenes.safe_path:_square_interact"
  },
  "attrs": {
   "h": 36,

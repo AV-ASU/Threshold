@@ -29,13 +29,13 @@ os.chdir(_ROOT)
 
 FAILURES = []
 
-# Scenes whose behaviour is a closure inside its builder, so it cannot be named
-# and imported back. Their PLACEMENT round-trips exactly; their behaviour still
-# needs the builder. Frozen BY COUNT so the number can only fall: lifting a
-# hook to module level is what finishes the move to data, and a new closure
-# hook would otherwise slip in unnoticed.
+# Scenes with behaviour a layout still cannot name: not merely a closure (one
+# built by a factory out of plain data travels as the recipe that made it) but
+# one with nothing to refer to at all. Their PLACEMENT round-trips exactly;
+# their behaviour still needs the builder to run. Frozen BY COUNT so the
+# number can only fall.
 NAMELESS = set()
-NAMELESS_BUDGET = 42
+NAMELESS_BUDGET = 12
 
 # Runtime scratch that is expected to start empty on a fresh scene: comparing
 # it would assert that two never-played scenes have played identically.
@@ -143,24 +143,25 @@ def main():
         # Registering them here is what a scene module will do once its hooks
         # are lifted to module level; until then this is the shim that lets
         # the PLACEMENT half be verified exactly.
-        closures = 0
-        for n in a.npcs:
-            if n.dialogue_fn:
-                register("?%s" % getattr(n.dialogue_fn, "__qualname__", ""),
-                         n.dialogue_fn)
-                closures += 1
-        for hk in ("on_enter", "on_update", "on_exit", "on_interact"):
-            fn = getattr(a, hk + "_fn", None)
-            if fn is not None and "<locals>" in getattr(fn, "__qualname__", ""):
-                register("?%s" % fn.__qualname__, fn)
-                closures += 1
-        # ... and a callable hung on the scene as an attribute (a fold's charge
-        # test, the lodge's gate) is behaviour of exactly the same kind.
-        for k, v in list(vars(a).items()):
-            if callable(v) and "<locals>" in getattr(v, "__qualname__", ""):
-                register("?%s" % v.__qualname__, v)
-                closures += 1
-        if closures:
+        # Ask the LAYOUT whether it can name each piece of behaviour, rather
+        # than counting closures: a closure built by a factory out of plain
+        # data travels as the recipe that made it, so it is nameable even
+        # though it has no name of its own.
+        from scenes.layout import _fn_name
+        nameless = 0
+        behaviour = [getattr(a, hk + "_fn", None)
+                     for hk in ("on_enter", "on_update", "on_exit",
+                                "on_interact")]
+        behaviour += [n.dialogue_fn for n in a.npcs]
+        behaviour += [v for v in vars(a).values() if callable(v)]
+        for fn in behaviour:
+            if fn is None:
+                continue
+            rec = _fn_name(fn)
+            if isinstance(rec, str) and rec.startswith("?"):
+                register(rec, fn)      # shim, so PLACEMENT can still be checked
+                nameless += 1
+        if nameless:
             NAMELESS.add(key)
         try:
             dump(a)

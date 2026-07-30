@@ -19,6 +19,103 @@ from .base import Scene
 
 # ----- #2: The Work-Clearing (no worker) ----------------------------
 
+def _grove_enter(game, scene):
+    # No first-sight rift beat now: the mine mouth is a physical place,
+    # not a clarifying portal. (grove_seen kept for any downstream read.)
+    game.save.set_flag("grove_seen", True)
+
+
+def _grove_update(game, scene, dt):
+    # THE DESCENT: once the rite-dream has run, the shaft HAS you --
+    # carry the PI down to the works (the dream IS the descent). Fires
+    # the frame the dream ends; you cannot linger at the lip. You only
+    # return to the grove holding the Mask, and coming up seals the
+    # descent, so this never re-fires.
+    if (game.save.flag("rite_performed")
+            and not game.save.flag("descent_sealed")):
+        game.load_scene_now("well_bottom", "from_grove")
+        return
+    if game.save.flag("descent_sealed"):
+        return
+    # THE LOOM: a low bed at the shaft mouth -- the dark under the mine
+    # breathing, panned to the shaft and leaning in as you near it.
+    t = getattr(scene, "_loom_t", 0.0) - dt
+    if t <= 0.0:
+        fx, fy = 12 * TILE + 32, 10 * TILE + 24
+        d = math.hypot(game.player.x - fx, game.player.y - fy)
+        prox = max(0.25, 1.0 - d / (12 * TILE))
+        pan = game.audio.pan_for_world(fx, game.player.x)
+        game.audio.play("low_pulse", min(0.7, 0.18 + 0.4 * prox),
+                        pan=pan)
+        t = 3.2
+    scene._loom_t = t
+
+
+def _grove_exit(game, scene):
+    # Re-arm the two-press rite each visit (the point-of-no-return lesson:
+    # a player who steps away and returns gets the warning again).
+    game.save.set_flag("rite_laid", False)
+
+
+def _grove_charge(game, ch):
+    if ch != "M":
+        return 1.0
+    if (game.save.flag("rite_performed")
+            and not game.save.flag("descent_sealed")):
+        return 0.0                     # the circle holds: the pane is dead
+    if not game.save.flag("school_door_open"):
+        return 0.0
+    # The school door forms over a few seconds when first drawn; on any
+    # later load it simply stands.
+    t0 = getattr(game, "_school_door_t0", None)
+    if t0 is None:
+        return 1.0
+    import pygame as _pg
+    return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
+
+
+def _grove_interact(game):
+    fx, fy = game.scene._rite_pos
+    if (abs(game.player.x - fx) > 44
+            or abs(game.player.y - fy) > 44):
+        return
+    save = game.save
+    if save.flag("descent_sealed"):
+        game.show_notice("Cold air climbs out of the mine. It is done "
+                         "with this place.")
+        return
+    if not save.flag("rite_laid"):
+        save.set_flag("rite_laid", True)
+        game.audio.play("low_pulse", 0.5)
+        game.dialog.show([
+            "[c=dim](You stand at the mouth of the mine. A few feet in, "
+            "the floor drops away into a shaft, and the cut haul rope "
+            "hangs into it, frayed, a body's length, then nothing.)[/c]",
+            "[c=dim]You have stood here before. A year ago, asleep, at "
+            "a door you never reached.[/c]",
+            "[c=dim](Press again to go down.)[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+    game.begin_rite_dream()
+
+
+def _grove_gate(game, ch):
+    if ch != "M":
+        return True
+    if (game.save.flag("rite_performed")
+            and not game.save.flag("descent_sealed")):
+        # The circle holds you (one sensation line, once).
+        if not game.save.flag("grove_held_noticed"):
+            game.save.set_flag("grove_held_noticed", True)
+            game.audio.play("low_pulse", 0.5)
+            game.show_notice("The way you came does not open. The "
+                             "circle holds. There is only down.",
+                             duration=3.4)
+        return False
+    return (game.save.flag("school_door_open")
+            and _grove_charge(game, "M") >= 0.999)
+
+
 def build_effigy_grove():
     """A worked HOLLOW on the near bank of the river north of Brimley --
     the clearing the cult dug at, at the mouth of their mine. Reached ONLY
@@ -165,39 +262,9 @@ def build_effigy_grove():
     # below (the two-press rite + door-dream, _grove_interact). The only fold
     # that SHOWS here is the school pane -- the way back, dead while the
     # circle holds (after the rite, before the Mask seals the descent).
-    def _charge(game, ch):
-        if ch != "M":
-            return 1.0
-        if (game.save.flag("rite_performed")
-                and not game.save.flag("descent_sealed")):
-            return 0.0                     # the circle holds: the pane is dead
-        if not game.save.flag("school_door_open"):
-            return 0.0
-        # The school door forms over a few seconds when first drawn; on any
-        # later load it simply stands.
-        t0 = getattr(game, "_school_door_t0", None)
-        if t0 is None:
-            return 1.0
-        import pygame as _pg
-        return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
-    sc.fold_charge_fn = _charge
+    sc.fold_charge_fn = _grove_charge
 
-    def _gate(game, ch):
-        if ch != "M":
-            return True
-        if (game.save.flag("rite_performed")
-                and not game.save.flag("descent_sealed")):
-            # The circle holds you (one sensation line, once).
-            if not game.save.flag("grove_held_noticed"):
-                game.save.set_flag("grove_held_noticed", True)
-                game.audio.play("low_pulse", 0.5)
-                game.show_notice("The way you came does not open. The "
-                                 "circle holds. There is only down.",
-                                 duration=3.4)
-            return False
-        return (game.save.flag("school_door_open")
-                and _charge(game, "M") >= 0.999)
-    sc.exit_gate_fn = _gate
+    sc.exit_gate_fn = _grove_gate
 
     # ---- THE DESCENT (E at the shaft mouth) ----
     # The mine mouth is physical, but the rope is CUT (NARRATIVE §7): you
@@ -210,67 +277,12 @@ def build_effigy_grove():
     sc._rite_pos = (12 * TILE + 32, 10 * TILE + 24)
     sc.add_interactable(sc._rite_pos[0], sc._rite_pos[1], 46)
 
-    def _grove_interact(game):
-        fx, fy = sc._rite_pos
-        if (abs(game.player.x - fx) > 44
-                or abs(game.player.y - fy) > 44):
-            return
-        save = game.save
-        if save.flag("descent_sealed"):
-            game.show_notice("Cold air climbs out of the mine. It is done "
-                             "with this place.")
-            return
-        if not save.flag("rite_laid"):
-            save.set_flag("rite_laid", True)
-            game.audio.play("low_pulse", 0.5)
-            game.dialog.show([
-                "[c=dim](You stand at the mouth of the mine. A few feet in, "
-                "the floor drops away into a shaft, and the cut haul rope "
-                "hangs into it, frayed, a body's length, then nothing.)[/c]",
-                "[c=dim]You have stood here before. A year ago, asleep, at "
-                "a door you never reached.[/c]",
-                "[c=dim](Press again to go down.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
-        game.begin_rite_dream()
     sc.on_interact_fn = _grove_interact
 
-    def _grove_exit(game, scene):
-        # Re-arm the two-press rite each visit (the point-of-no-return lesson:
-        # a player who steps away and returns gets the warning again).
-        game.save.set_flag("rite_laid", False)
     sc.on_exit_fn = _grove_exit
 
-    def _grove_update(game, scene, dt):
-        # THE DESCENT: once the rite-dream has run, the shaft HAS you --
-        # carry the PI down to the works (the dream IS the descent). Fires
-        # the frame the dream ends; you cannot linger at the lip. You only
-        # return to the grove holding the Mask, and coming up seals the
-        # descent, so this never re-fires.
-        if (game.save.flag("rite_performed")
-                and not game.save.flag("descent_sealed")):
-            game.load_scene_now("well_bottom", "from_grove")
-            return
-        if game.save.flag("descent_sealed"):
-            return
-        # THE LOOM: a low bed at the shaft mouth -- the dark under the mine
-        # breathing, panned to the shaft and leaning in as you near it.
-        t = getattr(scene, "_loom_t", 0.0) - dt
-        if t <= 0.0:
-            fx, fy = 12 * TILE + 32, 10 * TILE + 24
-            d = math.hypot(game.player.x - fx, game.player.y - fy)
-            prox = max(0.25, 1.0 - d / (12 * TILE))
-            pan = game.audio.pan_for_world(fx, game.player.x)
-            game.audio.play("low_pulse", min(0.7, 0.18 + 0.4 * prox),
-                            pan=pan)
-            t = 3.2
-        scene._loom_t = t
     sc.on_update_fn = _grove_update
 
-    def _grove_enter(game, scene):
-        # No first-sight rift beat now: the mine mouth is a physical place,
-        # not a clarifying portal. (grove_seen kept for any downstream read.)
-        game.save.set_flag("grove_seen", True)
     sc.on_enter_fn = _grove_enter
 
     # ---- Decorations ----

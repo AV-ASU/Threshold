@@ -210,6 +210,37 @@ def old_man_house_on_enter(game, scene):
         ], speaker="", voice="blip_soft", portrait="narrator")
 
 
+def _fc_on_enter(game, scene):
+    # The lawman's cartridges -- the best ammo source in town (one-time),
+    # kept in the back records room. EARNED, not free (DESIGN.md §2): the
+    # drop waits until Vane hands over the cabinet (the trust-gated "cache"
+    # exchange sets vane_gave_cache and also drops it live). Neglect him and
+    # the town's one weapon cache stays locked -- the gun is never required,
+    # so this soft-locks nothing.
+    if game.save.flag("vane_gave_cache"):
+        from .base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
+
+
+def _office_interact(game):
+    # The records drawer is the world-persistent FALLBACK for Mara's
+    # booking slip, not the way in (NARRATIVE §6, DESIGN.md §9: the NPC
+    # is the warm delivery). While Vane is still the man behind that
+    # desk you get the slip from HIM -- show him her photograph, and the
+    # lawman who booked her goes to the files. The drawer opens only
+    # once he is gone: shot, or turned hollow. So neither killing him
+    # nor breaking him can soft-lock the descent, and an unspoken-to
+    # Sheriff never has his own case beat lifted out from under him.
+    if game.save.flag("evidence_maras_record"):
+        return
+    if not (game._local_is_dead("Sheriff") or game._vane_is_hollow()):
+        return
+    rx, ry = game.scene._record_pos
+    if abs(game.player.x - rx) > 40 or abs(game.player.y - ry) > 40:
+        return
+    grant_record(game)
+
+
 def build_sheriff_office():
     """The Sheriff's office (#4c redesign, 2026-07): FOUR rooms, not a box + a
     back room. A cross of partition walls quarters the interior into a public
@@ -378,38 +409,20 @@ def build_sheriff_office():
     for mx, my in [(4, 2), (9, 3), (3, 9), (10, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    def _office_interact(game):
-        # The records drawer is the world-persistent FALLBACK for Mara's
-        # booking slip, not the way in (NARRATIVE §6, DESIGN.md §9: the NPC
-        # is the warm delivery). While Vane is still the man behind that
-        # desk you get the slip from HIM -- show him her photograph, and the
-        # lawman who booked her goes to the files. The drawer opens only
-        # once he is gone: shot, or turned hollow. So neither killing him
-        # nor breaking him can soft-lock the descent, and an unspoken-to
-        # Sheriff never has his own case beat lifted out from under him.
-        if game.save.flag("evidence_maras_record"):
-            return
-        if not (game._local_is_dead("Sheriff") or game._vane_is_hollow()):
-            return
-        rx, ry = sc._record_pos
-        if abs(game.player.x - rx) > 40 or abs(game.player.y - ry) > 40:
-            return
-        grant_record(game)
     sc.on_interact_fn = _office_interact
     sc.hide_spots = []
 
-    def _fc_on_enter(game, scene):
-        # The lawman's cartridges -- the best ammo source in town (one-time),
-        # kept in the back records room. EARNED, not free (DESIGN.md §2): the
-        # drop waits until Vane hands over the cabinet (the trust-gated "cache"
-        # exchange sets vane_gave_cache and also drops it live). Neglect him and
-        # the town's one weapon cache stays locked -- the gun is never required,
-        # so this soft-locks nothing.
-        if game.save.flag("vane_gave_cache"):
-            from .base import drop_ammo_cache
-            drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
     sc.on_enter_fn = _fc_on_enter
     return sc
+
+
+def _farmhouse_interact(game):
+    hatch_x, hatch_y = game.scene._farmhouse_hatch
+    # Sealed. The grove fold is the only way down (NARRATIVE §7/§9).
+    if (abs(game.player.x - hatch_x) < 36
+            and abs(game.player.y - hatch_y) < 36):
+        game.audio.play("door_close", 0.5)
+        game.show_notice("The hatch is sealed shut. It does not budge.")
 
 
 def build_abandoned_farmhouse():
@@ -519,12 +532,6 @@ def build_abandoned_farmhouse():
 
     sc.hide_spots = []
 
-    def _farmhouse_interact(game):
-        # Sealed. The grove fold is the only way down (NARRATIVE §7/§9).
-        if (abs(game.player.x - hatch_x) < 36
-                and abs(game.player.y - hatch_y) < 36):
-            game.audio.play("door_close", 0.5)
-            game.show_notice("The hatch is sealed shut. It does not budge.")
     sc.on_interact_fn = _farmhouse_interact
 
     return sc

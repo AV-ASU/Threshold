@@ -642,10 +642,10 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_lodge_yard.<locals>._yard_on_enter",
+  "on_enter": "scenes.lodge_yard:_yard_on_enter",
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_lodge_yard.<locals>._outside_interact"
+  "on_interact": "scenes.lodge_yard:_outside_interact"
  },
  "attrs": {
   "h": 18,

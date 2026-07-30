@@ -129,12 +129,124 @@ def _plain(v):
 
 
 # ----------------------------------------------------------------- behaviour
+_UNWRITABLE = object()
+
+
+def _const_name(v):
+    """If this value IS a module-level constant, its name.
+
+    A conversation (`CALDER_CONVO`) is a large authored structure that already
+    lives in the code, and parts of it are functions. Copying it into a layout
+    would both fail and be wrong -- the layout would carry a stale duplicate of
+    something the writer edits. It travels as a reference instead.
+    """
+    import sys
+    if isinstance(v, (str, bytes, int, float, bool)) or v is None:
+        return None
+    for modname, mod in list(sys.modules.items()):
+        if not modname.startswith(("scenes", "systems", "entities")):
+            continue
+        d = getattr(mod, "__dict__", None)
+        if not d:
+            continue
+        for name, obj in list(d.items()):
+            if obj is v and name.isupper():
+                return "%s:%s" % (modname, name)
+    return None
+
+
+def _enc_deep(v):
+    """Encode a factory argument that may CONTAIN behaviour.
+
+    A chorus beat is `(flag, condition, pages)` -- data around a function. The
+    condition travels by name like any other behaviour, so the whole beat can
+    be written down; anything genuinely unwritable stops the recipe instead of
+    being silently dropped.
+    """
+    const = _const_name(v)
+    if const:
+        return {"const": const}
+    if callable(v) and not isinstance(v, type):
+        name = _fn_name(v)
+        return {"fn": name} if isinstance(name, str) and not name.startswith("?") \
+            else _UNWRITABLE
+    if isinstance(v, (list, tuple)):
+        out = [_enc_deep(x) for x in v]
+        if any(x is _UNWRITABLE for x in out):
+            return _UNWRITABLE
+        return {"()": out} if isinstance(v, tuple) else out
+    if isinstance(v, dict):
+        out = {k: _enc_deep(x) for k, x in v.items()}
+        if any(x is _UNWRITABLE for x in out.values()):
+            return _UNWRITABLE
+        return out
+    return _enc(v) if _plain(v) else _UNWRITABLE
+
+
+def _dec_deep(v):
+    if isinstance(v, dict):
+        if set(v) == {"const"}:
+            mod, _, name = v["const"].partition(":")
+            return getattr(importlib.import_module(mod), name)
+        if set(v) == {"fn"}:
+            return _fn(v["fn"])
+        if set(v) == {"()"}:
+            return tuple(_dec_deep(x) for x in v["()"])
+        if set(v) == {"{}"}:
+            return set(_dec_deep(x) for x in v["{}"])
+        return {k: _dec_deep(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_dec_deep(x) for x in v]
+    return v
+
+
+def _factory_call(fn):
+    """A closure REBUILT by calling the function that made it.
+
+    Most dialogue is built per person by a factory -- `doorstep_voice(pages)`
+    hands back a function that has captured those pages. The closure itself has
+    no name, but the factory does, and what it captured is plain data, so the
+    pair `(factory, what it captured)` is a complete recipe: call it again and
+    you get the same behaviour. Only works when the captured names ARE the
+    factory's parameters, which is the shape every factory here has.
+    """
+    qual = getattr(fn, "__qualname__", "")
+    mod = getattr(fn, "__module__", None)
+    if not mod or "<locals>" not in qual:
+        return None
+    outer = qual.split(".<locals>.")[0]
+    if "." in outer:                      # nested deeper than one factory
+        return None
+    names = fn.__code__.co_freevars
+    cells = fn.__closure__ or ()
+    if not names or len(names) != len(cells):
+        return None
+    args = {}
+    for name, cell in zip(names, cells):
+        try:
+            v = cell.cell_contents
+        except ValueError:
+            return None
+        enc = _enc_deep(v)
+        if enc is _UNWRITABLE:
+            return None
+        args[name] = enc
+    try:
+        factory = getattr(importlib.import_module(mod), outer)
+    except Exception:
+        return None
+    if not callable(factory):
+        return None
+    return {"factory": "%s:%s" % (mod, outer), "args": args}
+
+
 def _fn_name(fn):
     """`module:qualname`, so the loader can import the behaviour back.
 
-    A closure (dialogue is usually built per person) has no importable name; it
-    is recorded with a `?` so the failure at load names what went missing
-    instead of quietly handing back a mute character.
+    A closure has no importable name. If it was made by a factory out of plain
+    data, the recipe travels instead (`_factory_call`); otherwise it is
+    recorded with a `?` so the failure at load names what went missing rather
+    than quietly handing back a mute character.
     """
     if fn is None:
         return None
@@ -145,12 +257,19 @@ def _fn_name(fn):
     qual = getattr(fn, "__qualname__", "")
     if mod and qual and "<locals>" not in qual:
         return "%s:%s" % (mod, qual)
+    recipe = _factory_call(fn)
+    if recipe is not None:
+        return recipe
     return "?" + (qual or repr(fn))
 
 
 def _fn(name, who=""):
     if not name:
         return None
+    if isinstance(name, dict) and "factory" in name:
+        mod, _, outer = name["factory"].partition(":")
+        factory = getattr(importlib.import_module(mod), outer)
+        return factory(**{k: _dec_deep(v) for k, v in name["args"].items()})
     if name in _OVERRIDES:
         return _OVERRIDES[name]
     if name.startswith("?"):

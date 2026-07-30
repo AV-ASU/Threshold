@@ -215,7 +215,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_lodge_hall.<locals>._hall_interact"
+  "on_interact": "scenes.lodge:_hall_interact"
  },
  "attrs": {
   "h": 6,

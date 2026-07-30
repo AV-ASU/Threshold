@@ -149,6 +149,14 @@ def _cavern(objs, seed, keep_rows=(), keep_cols=(), bite=0.55):
                     objs[yy][x] = "#"
 
 
+def _antechamber_interact(game):
+    px, py = game.player.x, game.player.y
+    if abs(px - (5 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
+        _evidence(game, "the_fall",
+            "There is no way back above you, and you are not hurt. Cut stone, worn smooth by years of feet that came this way before you."
+        )
+
+
 def build_depths_antechamber():
     # A diamond pit -- the fall zone, walls beveled steeply back to a
     # near-diamond so you land in the middle of an open drop.
@@ -199,14 +207,33 @@ def build_depths_antechamber():
     sc.add_chalk_door(3 * TILE + 16, 5 * TILE + 16, voice="chalk_deep", seed=6)
     sc.add_chalk_door(7 * TILE + 16, 3 * TILE + 10, seed=1, wall=True)
 
-    def _interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - (5 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
-            _evidence(game, "the_fall",
-                "There is no way back above you, and you are not hurt. Cut stone, worn smooth by years of feet that came this way before you."
-            )
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _antechamber_interact
     return sc
+
+
+def _candles_interact(game):
+    px, py = game.player.x, game.player.y
+    if abs(px - (8 * TILE + 16)) > 36 or abs(py - (4 * TILE + 16)) > 36:
+        return
+    if game.save.flag("procession_candles_read"):
+        game.dialog.show([
+            "[c=dim]The wax holds its little lights steady. Nobody "
+            "hurried here. The wax says nobody ever hurried.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+    game.save.set_flag("procession_candles_read", True)
+    game.audio.play("low_pulse", 0.4)
+    game.dialog.show([
+        "[c=dim]A line of candles down the dark, burned to coins. Each "
+        "one stands in older wax, and older wax under that.[/c]",
+        "[c=dim]They walked this in single file, carrying light. Nobody hurried. The wax says nobody ever hurried.[/c]",
+    ], speaker="", voice="blip_soft", portrait="narrator")
+    if hasattr(game, "_log_note"):
+        game._log_note("the_procession", [
+            "A candle line tended half a mile under Brimley, wax on "
+            "old wax. They filed to their rite the way other towns "
+            "file to Sunday service. Unhurried. Certain.",
+        ])
 
 
 def build_depths_procession():
@@ -309,29 +336,6 @@ def build_depths_procession():
     # evidence; the five canonical beats are locked).
     sc.add_interactable(8 * TILE + 16, 4 * TILE + 16, 36)
 
-    def _candles_interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - (8 * TILE + 16)) > 36 or abs(py - (4 * TILE + 16)) > 36:
-            return
-        if game.save.flag("procession_candles_read"):
-            game.dialog.show([
-                "[c=dim]The wax holds its little lights steady. Nobody "
-                "hurried here. The wax says nobody ever hurried.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
-        game.save.set_flag("procession_candles_read", True)
-        game.audio.play("low_pulse", 0.4)
-        game.dialog.show([
-            "[c=dim]A line of candles down the dark, burned to coins. Each "
-            "one stands in older wax, and older wax under that.[/c]",
-            "[c=dim]They walked this in single file, carrying light. Nobody hurried. The wax says nobody ever hurried.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-        if hasattr(game, "_log_note"):
-            game._log_note("the_procession", [
-                "A candle line tended half a mile under Brimley, wax on "
-                "old wax. They filed to their rite the way other towns "
-                "file to Sunday service. Unhurried. Certain.",
-            ])
     sc.on_interact_fn = _candles_interact
     return sc
 
@@ -456,6 +460,15 @@ def build_depths_hall():
     return sc
 
 
+def _threshing_interact(game):
+    px, py = game.player.x, game.player.y
+    if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
+        _evidence(game, "threshing_floor",
+            "The yield, raked into low heaps: grain, all of it, tithed "
+            "down from the fields above."
+        )
+
+
 def build_depths_threshing():
     # A raw cavern -- ragged, bitten-out walls (the room the dig opened into,
     # never squared off), the threshing heaps raked across its floor.
@@ -513,14 +526,7 @@ def build_depths_threshing():
     _ambient(sc, "step_grass", 0.22, 3.5, 6.0)
     sc.add_interactable(6 * TILE + 16, 5 * TILE + 16, 36)   # [E] cue: the threshing heaps
 
-    def _interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
-            _evidence(game, "threshing_floor",
-                "The yield, raked into low heaps: grain, all of it, tithed "
-                "down from the fields above."
-            )
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _threshing_interact
     return sc
 
 
@@ -542,6 +548,26 @@ def build_depths_stair():
     _ambient(sc, "low_pulse", 0.10, 11.0, 16.0)
 
     return sc
+
+
+def _old_stores_interact(game):
+    px, py = game.player.x, game.player.y
+    if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
+        _evidence(game, "the_old_stores_shelves",
+            "Shelves of the dig's gear: lamps burned black, pick hafts "
+            "worn down to the grain, every one tagged in the same steady brown hand.")
+        return
+    nx, ny = game.scene._dig_note_pos
+    if abs(px - nx) < 36 and abs(py - ny) < 36:
+        if not game.save.flag("old_stores_digging_taken"):
+            game.save.set_flag("old_stores_digging_taken", True)
+            game.player.inventory.add("cult_digging", 1)
+            game.audio.play("pickup_rare", 0.6)
+            game._log_note("cult_digging", [
+                "The last pages stop being sentences. Just the word door, over and over, pressed hard enough to tear the paper.",
+            ])
+            game.show_notice("The Digging. Their last pages.")
+            return
 
 
 def build_the_old_stores():
@@ -585,26 +611,20 @@ def build_the_old_stores():
     sc._dig_note_pos = (6 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._dig_note_pos[0], sc._dig_note_pos[1], 36)
 
-    def _interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
-            _evidence(game, "the_old_stores_shelves",
-                "Shelves of the dig's gear: lamps burned black, pick hafts "
-                "worn down to the grain, every one tagged in the same steady brown hand.")
-            return
-        nx, ny = sc._dig_note_pos
-        if abs(px - nx) < 36 and abs(py - ny) < 36:
-            if not game.save.flag("old_stores_digging_taken"):
-                game.save.set_flag("old_stores_digging_taken", True)
-                game.player.inventory.add("cult_digging", 1)
-                game.audio.play("pickup_rare", 0.6)
-                game._log_note("cult_digging", [
-                    "The last pages stop being sentences. Just the word door, over and over, pressed hard enough to tear the paper.",
-                ])
-                game.show_notice("The Digging. Their last pages.")
-                return
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _old_stores_interact
     return sc
+
+
+def _hive_murmur(game, npc):
+    game.dialog.show(
+        ["[c=dim]The kneeler doesn't stir. Its lips move, no sound.[/c]"],
+        speaker="", voice="blip_soft", portrait="narrator")
+# The congregation: hooded, idle, facing the south doorframe they
+# worship. Solid, so the player threads between them in the dark.
+# (2026-07: Mara is no longer here -- she kneels at the Sign
+# Chamber's altar now, where the calling-out stages her rising.
+# Down here nothing has a name left; the hive is the ones who went
+# first, past answering.)
 
 
 def build_dark():
@@ -621,24 +641,178 @@ def build_dark():
     # dread aperture's clear circle finds the congregation a face at a
     # time. They're NPCs, not enemies: no chase, no contact penalty. The
     # room's whole work is the recognition.
-    def _murmur(game, npc):
-        game.dialog.show(
-            ["[c=dim]The kneeler doesn't stir. Its lips move, no sound.[/c]"],
-            speaker="", voice="blip_soft", portrait="narrator")
-    # The congregation: hooded, idle, facing the south doorframe they
-    # worship. Solid, so the player threads between them in the dark.
-    # (2026-07: Mara is no longer here -- she kneels at the Sign
-    # Chamber's altar now, where the calling-out stages her rising.
-    # Down here nothing has a name left; the hive is the ones who went
-    # first, past answering.)
     for kx, ky in [(3, 4), (8, 4), (4, 6), (9, 6), (8, 7), (6, 5)]:
         n = NPC(kx * TILE + 16, ky * TILE + 16, "A kneeler", "cultist",
-                dialogue_fn=_murmur, movement="idle")
+                dialogue_fn=_hive_murmur, movement="idle")
         n.facing = (0, 1)
         sc.add_npc(n)
     sc.hide_spots = []
     _ambient(sc, "heartbeat", 0.18, 3.5, 5.0)
     return sc
+
+
+def _threshold_on_enter(game, scene):
+    if game.save.flag("first_threshold"):
+        return
+    game.save.set_flag("first_threshold", True)
+
+    def _log_doorframe():
+        _evidence(game, "the_doorframe",
+            "A doorframe with no wall."
+        )
+    # 'He knows you': if the PI dreamed this doorway (read Mara's
+    # journal through), recognition lands as ONE quiet line first,
+    # then the doorframe logs. Otherwise just the doorframe.
+    if game.save.flag("flashback_seen"):
+        game.dialog.show(
+            ["[c=dim]You have stood here before. In sleep.[/c]"],
+            speaker="", voice="blip_soft", portrait="narrator",
+            on_complete=_log_doorframe)
+    else:
+        _log_doorframe()
+
+
+def _threshold_seal(game, scene):
+    lintel_x, lintel_y = scene._lintel_pos
+    if (getattr(game, "_ending_active", None)
+            or getattr(game, "_seal_warp", None)):
+        return                                    # already sealing
+    p = game.player
+    if p is None:
+        return
+    if abs(p.x - lintel_x) > 16 or abs(p.y - lintel_y) > 18:
+        return                                    # not in the frame yet
+    inv = p.inventory
+    if not inv.has("pallid_mask"):
+        if not game.save.flag("threshold_blank_seen"):
+            game.save.set_flag("threshold_blank_seen", True)
+            game.show_notice("You step through the frame. You are standing "
+                             "in the same room. It is only a frame, and "
+                             "cold.")
+        return
+    # DELIBERATE lone-trigger (NOT the blast/grove two-press commit).
+    # Unlike the blast (well.py) and the grove rite (hidden_folds.py),
+    # there is no *_laid re-arm and no second press here -- ON PURPOSE
+    # (C15). The point-of-no-return fork is spent UPSTREAM: the blast at
+    # the Deepest Face is the two-press choice (climb out to SPREAD vs
+    # light it and FALL, "no way back up"). A player standing at the
+    # frame has already chosen the descent AND carried the Mask down;
+    # walking it through IS the commit (NARRATIVE §7, Mask-only). A
+    # redundant warning here would only blunt that upstream fork, so the
+    # crossing stays silent.
+    inv.remove("pallid_mask", 1)                # spent at the door
+    # File the beat SILENTLY (show=False): no narrator box may talk
+    # over the warp -- the world going through the door IS the line.
+    _evidence(game, "the_seal", "It is done.", show=False)
+    _begin_seal_warp(game, scene)
+
+
+def _tick_seal_warp(game, scene, sw, dt):
+    """Drive the live warp: launch the room's dressing, stream in the
+    world beyond, fly every flight into the frame (accelerating,
+    shrinking, gone), then hand off to the ending."""
+    sw["t"] = t = sw["t"] + dt
+    dx, dy = sw["door"]
+    rng = sw["rng"]
+    # The dread builds the whole pour: the drone swells under the
+    # falling air, whispers + static stack as the world goes through.
+    if game.audio.enabled:
+        game.audio.drive_channel.set_volume(
+            min(0.55, (t / SEAL_WARP_DUR) * 0.65))
+    for cue, at, name, vol in (("w1", 1.8, "whisper", 0.30),
+                               ("s1", 2.4, "static", 0.30),
+                               ("w2", 3.2, "whisper", 0.45),
+                               ("s2", 3.8, "static", 0.35),
+                               ("w3", 4.3, "whisper", 0.55)):
+        if t > at and cue not in sw["cues"]:
+            sw["cues"].add(cue)
+            game.audio.play(name, vol)
+    while sw["pending"] and sw["pending"][0][0] <= t:
+        _, d = sw["pending"].pop(0)
+        dur = max(0.35, min(0.95,
+                            math.hypot(d.x - dx, d.y - dy) / 420.0))
+        sw["flights"].append({"d": d, "sx": d.x, "sy": d.y,
+                              "t0": t, "dur": dur, "s0": d.scale})
+    while sw["foreign"] and sw["foreign"][0][0] <= t:
+        _, kind = sw["foreign"].pop(0)
+        ang = rng.uniform(0, math.tau)
+        rad = rng.uniform(240, 380)
+        d = Decoration(dx + math.cos(ang) * rad,
+                       dy + math.sin(ang) * rad, kind)
+        scene.decorations.append(d)
+        sw["flights"].append({"d": d, "sx": d.x, "sy": d.y,
+                              "t0": t, "dur": rng.uniform(0.45, 0.7),
+                              "s0": d.scale})
+    done = []
+    for f in sw["flights"]:
+        p = (t - f["t0"]) / f["dur"]
+        if p >= 1.0:
+            done.append(f)
+            continue
+        e = p * p                                 # ease-in: the suck
+        f["d"].x = f["sx"] + (dx - f["sx"]) * e
+        f["d"].y = f["sy"] + (dy - f["sy"]) * e
+        f["d"].scale = f["s0"] * (1.0 - 0.75 * e)
+    for f in done:
+        sw["flights"].remove(f)
+        if f["d"] in scene.decorations:
+            scene.decorations.remove(f["d"])
+        if rng.random() < 0.35:
+            game.audio.play("bump", 0.16)
+    if t >= SEAL_WARP_DUR:                        # the room is bare
+        game._seal_warp = None
+        game.audio.flashback_air(False)
+        game._play_ending("seal_threshold")       # force_silence cuts all
+        game.audio.play("carcosa_boom", 0.9)      # ...one boom INTO black
+
+
+def _threshold_update(game, scene, dt):
+    sw = getattr(game, "_seal_warp", None)
+    if sw is not None:
+        _tick_seal_warp(game, scene, sw, dt)
+    else:
+        _threshold_seal(game, scene)
+
+
+def _begin_seal_warp(game, scene):
+    lintel_x, lintel_y = scene._lintel_pos
+    rng = random.Random(417)
+    pending = [(rng.uniform(0.25, 2.0), d) for d in scene.decorations
+               if d.kind != "doorframe"]          # the door itself stays
+    game._seal_warp = {
+        "t": 0.0, "door": (lintel_x, lintel_y - 2),
+        "pending": sorted(pending, key=lambda e: e[0]),
+        "flights": [], "foreign": list(_WARP_FOREIGN), "rng": rng,
+        "cues": set(),
+    }
+    game._closure_locked = True                   # he has crossed; hold
+    game.dialog.active = False                    # nothing talks over it
+    game.narration.clear()
+    game.float_speech.active = False
+    game.float_speech.speaker = None
+    game.notice_text = None
+    game.audio.force_silence()
+    game.audio.play("arg_chime", 0.7)
+    game.audio.flashback_air(True)                # the falling-air bed
+    if game.audio.enabled:                        # the pressure under it
+        game.audio.drive_channel.play(game.audio.carcosa_drone_snd,
+                                      loops=-1)
+        game.audio.drive_channel.set_volume(0.0)
+
+
+# What the SEAL's warp drags through the room, and when: the surface world
+# arriving where it does not belong, one thing at a time.
+_WARP_FOREIGN = [
+    (1.60, "bush"), (1.75, "tall_grass"), (1.90, "firewood"),
+    (2.05, "grass_tuft"), (2.20, "crate"), (2.35, "barrel"),
+    (2.50, "chair"), (2.65, "kerosene_lamp"), (2.80, "corn_doll"),
+    (2.95, "wheelbarrow"), (3.10, "calendar"), (3.25, "photo"),
+    (3.40, "radio"), (3.55, "doll"), (3.70, "stalk_marker"),
+    (3.85, "pew"), (4.05, "town_sign"),
+]
+
+# How long the seal's warp takes to strip the room bare.
+SEAL_WARP_DUR = 4.8
 
 
 def build_threshold():
@@ -758,25 +932,6 @@ def build_threshold():
                      (6, 35), (8, 25)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mist"))
 
-    def _threshold_on_enter(game, scene):
-        if game.save.flag("first_threshold"):
-            return
-        game.save.set_flag("first_threshold", True)
-
-        def _log_doorframe():
-            _evidence(game, "the_doorframe",
-                "A doorframe with no wall."
-            )
-        # 'He knows you': if the PI dreamed this doorway (read Mara's
-        # journal through), recognition lands as ONE quiet line first,
-        # then the doorframe logs. Otherwise just the doorframe.
-        if game.save.flag("flashback_seen"):
-            game.dialog.show(
-                ["[c=dim]You have stood here before. In sleep.[/c]"],
-                speaker="", voice="blip_soft", portrait="narrator",
-                on_complete=_log_doorframe)
-        else:
-            _log_doorframe()
     sc.on_enter_fn = _threshold_on_enter
 
     # The SEAL: walking THROUGH the empty frame carrying the keystone (the
@@ -788,136 +943,10 @@ def build_threshold():
     # through the one door. Then the approved black-screen lines + the
     # wordless tableau take over (_play_ending("seal_threshold")). Without
     # the Mask the frame is only a frame; it never opens (NARRATIVE §2).
-    SEAL_WARP_DUR = 4.8
-    _WARP_FOREIGN = [
-        (1.60, "bush"), (1.75, "tall_grass"), (1.90, "firewood"),
-        (2.05, "grass_tuft"), (2.20, "crate"), (2.35, "barrel"),
-        (2.50, "chair"), (2.65, "kerosene_lamp"), (2.80, "corn_doll"),
-        (2.95, "wheelbarrow"), (3.10, "calendar"), (3.25, "photo"),
-        (3.40, "radio"), (3.55, "doll"), (3.70, "stalk_marker"),
-        (3.85, "pew"), (4.05, "town_sign"),
-    ]
 
-    def _begin_seal_warp(game, scene):
-        rng = random.Random(417)
-        pending = [(rng.uniform(0.25, 2.0), d) for d in scene.decorations
-                   if d.kind != "doorframe"]          # the door itself stays
-        game._seal_warp = {
-            "t": 0.0, "door": (lintel_x, lintel_y - 2),
-            "pending": sorted(pending, key=lambda e: e[0]),
-            "flights": [], "foreign": list(_WARP_FOREIGN), "rng": rng,
-            "cues": set(),
-        }
-        game._closure_locked = True                   # he has crossed; hold
-        game.dialog.active = False                    # nothing talks over it
-        game.narration.clear()
-        game.float_speech.active = False
-        game.float_speech.speaker = None
-        game.notice_text = None
-        game.audio.force_silence()
-        game.audio.play("arg_chime", 0.7)
-        game.audio.flashback_air(True)                # the falling-air bed
-        if game.audio.enabled:                        # the pressure under it
-            game.audio.drive_channel.play(game.audio.carcosa_drone_snd,
-                                          loops=-1)
-            game.audio.drive_channel.set_volume(0.0)
 
-    def _threshold_seal(game, scene):
-        if (getattr(game, "_ending_active", None)
-                or getattr(game, "_seal_warp", None)):
-            return                                    # already sealing
-        p = game.player
-        if p is None:
-            return
-        if abs(p.x - lintel_x) > 16 or abs(p.y - lintel_y) > 18:
-            return                                    # not in the frame yet
-        inv = p.inventory
-        if not inv.has("pallid_mask"):
-            if not game.save.flag("threshold_blank_seen"):
-                game.save.set_flag("threshold_blank_seen", True)
-                game.show_notice("You step through the frame. You are standing "
-                                 "in the same room. It is only a frame, and "
-                                 "cold.")
-            return
-        # DELIBERATE lone-trigger (NOT the blast/grove two-press commit).
-        # Unlike the blast (well.py) and the grove rite (hidden_folds.py),
-        # there is no *_laid re-arm and no second press here -- ON PURPOSE
-        # (C15). The point-of-no-return fork is spent UPSTREAM: the blast at
-        # the Deepest Face is the two-press choice (climb out to SPREAD vs
-        # light it and FALL, "no way back up"). A player standing at the
-        # frame has already chosen the descent AND carried the Mask down;
-        # walking it through IS the commit (NARRATIVE §7, Mask-only). A
-        # redundant warning here would only blunt that upstream fork, so the
-        # crossing stays silent.
-        inv.remove("pallid_mask", 1)                # spent at the door
-        # File the beat SILENTLY (show=False): no narrator box may talk
-        # over the warp -- the world going through the door IS the line.
-        _evidence(game, "the_seal", "It is done.", show=False)
-        _begin_seal_warp(game, scene)
 
-    def _tick_seal_warp(game, scene, sw, dt):
-        """Drive the live warp: launch the room's dressing, stream in the
-        world beyond, fly every flight into the frame (accelerating,
-        shrinking, gone), then hand off to the ending."""
-        sw["t"] = t = sw["t"] + dt
-        dx, dy = sw["door"]
-        rng = sw["rng"]
-        # The dread builds the whole pour: the drone swells under the
-        # falling air, whispers + static stack as the world goes through.
-        if game.audio.enabled:
-            game.audio.drive_channel.set_volume(
-                min(0.55, (t / SEAL_WARP_DUR) * 0.65))
-        for cue, at, name, vol in (("w1", 1.8, "whisper", 0.30),
-                                   ("s1", 2.4, "static", 0.30),
-                                   ("w2", 3.2, "whisper", 0.45),
-                                   ("s2", 3.8, "static", 0.35),
-                                   ("w3", 4.3, "whisper", 0.55)):
-            if t > at and cue not in sw["cues"]:
-                sw["cues"].add(cue)
-                game.audio.play(name, vol)
-        while sw["pending"] and sw["pending"][0][0] <= t:
-            _, d = sw["pending"].pop(0)
-            dur = max(0.35, min(0.95,
-                                math.hypot(d.x - dx, d.y - dy) / 420.0))
-            sw["flights"].append({"d": d, "sx": d.x, "sy": d.y,
-                                  "t0": t, "dur": dur, "s0": d.scale})
-        while sw["foreign"] and sw["foreign"][0][0] <= t:
-            _, kind = sw["foreign"].pop(0)
-            ang = rng.uniform(0, math.tau)
-            rad = rng.uniform(240, 380)
-            d = Decoration(dx + math.cos(ang) * rad,
-                           dy + math.sin(ang) * rad, kind)
-            scene.decorations.append(d)
-            sw["flights"].append({"d": d, "sx": d.x, "sy": d.y,
-                                  "t0": t, "dur": rng.uniform(0.45, 0.7),
-                                  "s0": d.scale})
-        done = []
-        for f in sw["flights"]:
-            p = (t - f["t0"]) / f["dur"]
-            if p >= 1.0:
-                done.append(f)
-                continue
-            e = p * p                                 # ease-in: the suck
-            f["d"].x = f["sx"] + (dx - f["sx"]) * e
-            f["d"].y = f["sy"] + (dy - f["sy"]) * e
-            f["d"].scale = f["s0"] * (1.0 - 0.75 * e)
-        for f in done:
-            sw["flights"].remove(f)
-            if f["d"] in scene.decorations:
-                scene.decorations.remove(f["d"])
-            if rng.random() < 0.35:
-                game.audio.play("bump", 0.16)
-        if t >= SEAL_WARP_DUR:                        # the room is bare
-            game._seal_warp = None
-            game.audio.flashback_air(False)
-            game._play_ending("seal_threshold")       # force_silence cuts all
-            game.audio.play("carcosa_boom", 0.9)      # ...one boom INTO black
 
-    def _threshold_update(game, scene, dt):
-        sw = getattr(game, "_seal_warp", None)
-        if sw is not None:
-            _tick_seal_warp(game, scene, sw, dt)
-        else:
-            _threshold_seal(game, scene)
+
     sc.on_update_fn = _threshold_update
     return sc

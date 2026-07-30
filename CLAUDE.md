@@ -226,14 +226,15 @@ it renders the procedural sprites to a labelled PNG strip.
     work: **placement is data, behaviour is not.** Tiles, props and their
     kwargs, people and their numbers, and anything else a builder stashed on
     the scene all travel as data (tuples and sets survive; JSON has neither).
-    Hooks, dialogue and any callable hung on the scene travel as
-    `module:name` and are imported back — so a layout can move a woodpile but
-    can never invent what happens when you knock. A closure defined inside a
-    builder has no importable name and fails LOUDLY at load rather than
-    handing back a room that lost its story; 40 scenes still do that, frozen
-    by count in `tests/layouts.py`, and lifting a hook to module level is what
-    finishes the move. Guarded: every scene is built, dumped, rebuilt and
-    compared field by field.
+    Behaviour travels three ways, in order: a **module-level function** as
+    `module:name`; a **closure a factory made out of data** as the RECIPE that
+    made it (`doorstep_voice(pages)` → factory + captures, so calling it again
+    gives the same behaviour); and a **module-level constant** (a `*_CONVO`) by
+    reference, never copied. Anything else fails LOUDLY at load rather than
+    handing back a room that lost its story. **Every scene is nameable today**
+    (budget 12 in `tests/layouts.py`, currently 0) — so when you add a hook,
+    define it at MODULE level, not inside the builder. Guarded: every scene is
+    built, dumped, rebuilt and compared field by field.
   - `scenes/base.py` — the `Scene` class + scene-builder helpers
     (`scatter_forest_band`, `chest_interact` …). Since 2026-07 it is a
     **facade**: the tile definitions + the entire terrain draw layer

@@ -11,6 +11,46 @@ from entities.decoration import Decoration
 from .base import Scene
 
 
+def _forest_on_enter(game, scene):
+    # First-visit: arm the wind-dies beat. The music silence
+    # is restored automatically; we just track the schedule.
+    scene._fp_silence_state = "armed" if not game.save.flag(
+        "forest_first_silence") else "done"
+    scene._fp_silence_t = 0.0
+
+
+def _forest_on_update(game, scene, dt):
+    # Pacing the wind-cut beat. State machine:
+    #   armed   -> count up to ~10s, then enter "cutting"
+    #   cutting -> stop the wind track, count to 1.4s, fire
+    #              a single faint child_hum, count out to 3s
+    #   resume  -> restart the scene's music track, mark done
+    #
+    # The cut is the loudest beat: the player suddenly notices
+    # the world has gone quiet, then hears something a kid would
+    # make in the silence, then the wind comes back. The music
+    # restart is handled by play_music's same-track guard.
+    state = getattr(scene, "_fp_silence_state", "done")
+    if state == "done":
+        return
+    scene._fp_silence_t += dt
+    t = scene._fp_silence_t
+    if state == "armed" and t >= 10.0:
+        scene._fp_silence_state = "cutting"
+        scene._fp_silence_t = 0.0
+        game.audio.stop_music(fade_ms=400)
+        game.audio.current_music = None
+    elif state == "cutting":
+        if t >= 1.4 and not getattr(scene, "_fp_hum_played", False):
+            scene._fp_hum_played = True
+            game.audio.play("child_hum", 0.35)
+        if t >= 3.0:
+            scene._fp_silence_state = "done"
+            game.save.set_flag("forest_first_silence", True)
+            if not game.audio.music_muted:
+                game.audio.play_music(scene.music, fade_in_ms=600)
+
+
 def build_cornfield_path():
     W = 60
     H = 14
@@ -200,44 +240,8 @@ def build_cornfield_path():
     sc.objects[1][30] = "!"
     sc.objects[1][31] = "!"
 
-    def _forest_on_enter(game, scene):
-        # First-visit: arm the wind-dies beat. The music silence
-        # is restored automatically; we just track the schedule.
-        scene._fp_silence_state = "armed" if not game.save.flag(
-            "forest_first_silence") else "done"
-        scene._fp_silence_t = 0.0
     sc.on_enter_fn = _forest_on_enter
 
-    def _forest_on_update(game, scene, dt):
-        # Pacing the wind-cut beat. State machine:
-        #   armed   -> count up to ~10s, then enter "cutting"
-        #   cutting -> stop the wind track, count to 1.4s, fire
-        #              a single faint child_hum, count out to 3s
-        #   resume  -> restart the scene's music track, mark done
-        #
-        # The cut is the loudest beat: the player suddenly notices
-        # the world has gone quiet, then hears something a kid would
-        # make in the silence, then the wind comes back. The music
-        # restart is handled by play_music's same-track guard.
-        state = getattr(scene, "_fp_silence_state", "done")
-        if state == "done":
-            return
-        scene._fp_silence_t += dt
-        t = scene._fp_silence_t
-        if state == "armed" and t >= 10.0:
-            scene._fp_silence_state = "cutting"
-            scene._fp_silence_t = 0.0
-            game.audio.stop_music(fade_ms=400)
-            game.audio.current_music = None
-        elif state == "cutting":
-            if t >= 1.4 and not getattr(scene, "_fp_hum_played", False):
-                scene._fp_hum_played = True
-                game.audio.play("child_hum", 0.35)
-            if t >= 3.0:
-                scene._fp_silence_state = "done"
-                game.save.set_flag("forest_first_silence", True)
-                if not game.audio.music_muted:
-                    game.audio.play_music(scene.music, fade_in_ms=600)
     sc.on_update_fn = _forest_on_update
 
     return sc

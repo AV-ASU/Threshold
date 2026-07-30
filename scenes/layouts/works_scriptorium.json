@@ -258,7 +258,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_works_scriptorium.<locals>._interact"
+  "on_interact": "scenes.well:_scriptorium_interact"
  },
  "attrs": {
   "h": 9,

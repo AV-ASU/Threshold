@@ -224,7 +224,7 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_well_bottom.<locals>._bottom_on_enter",
+  "on_enter": "scenes.well:_bottom_on_enter",
   "on_update": null,
   "on_exit": null,
   "on_interact": null
@@ -300,7 +300,7 @@
   "hide_spots": []
  },
  "fn_attrs": {
-  "fold_charge_fn": "?build_well_bottom.<locals>._up_charge",
-  "exit_gate_fn": "?build_well_bottom.<locals>._up_gate"
+  "fold_charge_fn": "scenes.well:_up_charge",
+  "exit_gate_fn": "scenes.well:_up_gate"
  }
 }

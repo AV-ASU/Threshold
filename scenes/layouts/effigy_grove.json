@@ -246,10 +246,10 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_effigy_grove.<locals>._grove_enter",
-  "on_update": "?build_effigy_grove.<locals>._grove_update",
-  "on_exit": "?build_effigy_grove.<locals>._grove_exit",
-  "on_interact": "?build_effigy_grove.<locals>._grove_interact"
+  "on_enter": "scenes.hidden_folds:_grove_enter",
+  "on_update": "scenes.hidden_folds:_grove_update",
+  "on_exit": "scenes.hidden_folds:_grove_exit",
+  "on_interact": "scenes.hidden_folds:_grove_interact"
  },
  "attrs": {
   "h": 19,
@@ -321,7 +321,7 @@
   "hide_spots": []
  },
  "fn_attrs": {
-  "fold_charge_fn": "?build_effigy_grove.<locals>._charge",
-  "exit_gate_fn": "?build_effigy_grove.<locals>._gate"
+  "fold_charge_fn": "scenes.hidden_folds:_grove_charge",
+  "exit_gate_fn": "scenes.hidden_folds:_grove_gate"
  }
 }

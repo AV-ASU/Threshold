@@ -125,7 +125,40 @@
      144
     ]
    },
-   "dialogue": "?chorus_dialogue.<locals>._fn"
+   "dialogue": {
+    "factory": "scenes.dialogue:chorus_dialogue",
+    "args": {
+     "beats": [
+      {
+       "()": [
+        "beat_pell_marked",
+        {
+         "fn": "scenes.yards:_beat_pell_marked"
+        },
+        [
+         "Wrote the date in this morning. April 15, plain as you like. First one since the winter.",
+         "[c=dim]Can't say it did anything. Can't say it didn't. I'll write tomorrow in tomorrow.[/c]"
+        ]
+       ]
+      },
+      {
+       "()": [
+        "beat_pell_coal",
+        {
+         "fn": "scenes.yards:_beat_pell_coal"
+        },
+        [
+         "You've been digging at it. I can tell. It's on you like coal dust.",
+         "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped."
+        ]
+       ]
+      }
+     ],
+     "convo": {
+      "const": "scenes.dialogue:PELL_CONVO"
+     }
+    }
+   }
   }
  ],
  "hooks": {

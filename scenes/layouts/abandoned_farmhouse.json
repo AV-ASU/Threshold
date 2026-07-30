@@ -250,7 +250,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_abandoned_farmhouse.<locals>._farmhouse_interact"
+  "on_interact": "scenes.villager_houses:_farmhouse_interact"
  },
  "attrs": {
   "h": 10,

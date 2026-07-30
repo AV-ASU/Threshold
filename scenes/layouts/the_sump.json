@@ -129,10 +129,10 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_the_sump.<locals>._on_enter",
+  "on_enter": "scenes.well:_sump_on_enter",
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_the_sump.<locals>._interact"
+  "on_interact": "scenes.well:_sump_interact"
  },
  "attrs": {
   "h": 9,

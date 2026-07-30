@@ -101,10 +101,10 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_woodshed.<locals>._woodshed_on_enter",
+  "on_enter": "scenes.lodge_yard:_woodshed_on_enter",
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_woodshed.<locals>._woodshed_interact"
+  "on_interact": "scenes.lodge_yard:_woodshed_interact"
  },
  "attrs": {
   "h": 9,

@@ -787,16 +787,6 @@ this file's readiness buckets (`CHANGELOG.md`, "Documentation process").
 every turn — keep moving system narration to its one home one section per
 pass, leaving a code-map pointer, so the every-turn read keeps shrinking.
 
-### T. **[Opus]** Finish the move to layouts
-
-`scenes/layout.py` writes a scene as data and reads it back, and 67 of the 71
-scenes round-trip exactly (`tests/layouts.py`, in the gate). **What is left is
-one thing:** 40 scenes define their hooks as closures INSIDE the builder
-(`build_shop.<locals>._shop_update`), which have no importable name, so their
-behaviour still needs the builder to run. Lifting each to module level is
-mechanical and the guard's count can then only fall. Until it does, a layout
-carries the room and the builder carries the story.
-
 ### R. **[Fable]** Cross-model review gate
 
 After an **[Opus]** ticket lands, run a **Fable** review pass before it

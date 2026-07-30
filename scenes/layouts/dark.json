@@ -61,7 +61,7 @@
      144
     ]
    },
-   "dialogue": "?build_dark.<locals>._murmur"
+   "dialogue": "scenes.depths:_hive_murmur"
   },
   {
    "name": "A kneeler",
@@ -98,7 +98,7 @@
      144
     ]
    },
-   "dialogue": "?build_dark.<locals>._murmur"
+   "dialogue": "scenes.depths:_hive_murmur"
   },
   {
    "name": "A kneeler",
@@ -135,7 +135,7 @@
      208
     ]
    },
-   "dialogue": "?build_dark.<locals>._murmur"
+   "dialogue": "scenes.depths:_hive_murmur"
   },
   {
    "name": "A kneeler",
@@ -172,7 +172,7 @@
      208
     ]
    },
-   "dialogue": "?build_dark.<locals>._murmur"
+   "dialogue": "scenes.depths:_hive_murmur"
   },
   {
    "name": "A kneeler",
@@ -209,7 +209,7 @@
      240
     ]
    },
-   "dialogue": "?build_dark.<locals>._murmur"
+   "dialogue": "scenes.depths:_hive_murmur"
   },
   {
    "name": "A kneeler",
@@ -246,7 +246,7 @@
      176
     ]
    },
-   "dialogue": "?build_dark.<locals>._murmur"
+   "dialogue": "scenes.depths:_hive_murmur"
   }
  ],
  "hooks": {

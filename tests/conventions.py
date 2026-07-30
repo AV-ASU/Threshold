@@ -672,6 +672,57 @@ def _ticket_refs():
                 + (f"\n    ... and {len(rows) - 40} more" if len(rows) > 40 else ""))
 
 
+# ------------------------------------------- 14. no function loads a dead name
+# THE RULE: a module-level function may only load globals that exist. Python
+# does not check this until the line RUNS, so a function can sit in the tree
+# for weeks and blow up the first time a player reaches it.
+# WHY THIS CHECK: lifting scene hooks out of their builders (so a layout can
+# name them, scenes/layout.py) turned builder locals into global loads. Four
+# survived compileall, the whole test gate's import phase, and every scene
+# BUILDING correctly -- they only failed when the threshold's own update
+# actually ran, deep in a story beat. `compileall` cannot see it and a smoke
+# test only sees the paths it walks; the bytecode says it plainly.
+@check("no function loads a global that does not exist")
+def _dead_names():
+    import builtins
+    import dis
+    import importlib
+    import pkgutil
+    import types
+    rows = []
+    for pkg in ("scenes", "entities", "systems", "rendering", "ui"):
+        try:
+            top = importlib.import_module(pkg)
+        except Exception:
+            continue
+        mods = [pkg] + ["%s.%s" % (pkg, m.name)
+                        for m in pkgutil.iter_modules(getattr(top, "__path__", []))]
+        for name in mods:
+            try:
+                mod = importlib.import_module(name)
+            except Exception:
+                continue
+            known = set(vars(mod)) | set(dir(builtins))
+            for fname, fn in list(vars(mod).items()):
+                if not isinstance(fn, types.FunctionType) or fn.__module__ != name:
+                    continue
+                stack = [fn.__code__]
+                while stack:
+                    code = stack.pop()
+                    for ins in dis.get_instructions(code):
+                        if (ins.opname == "LOAD_GLOBAL"
+                                and ins.argval not in known
+                                and not str(ins.argval).startswith("__")):
+                            rows.append("    %s.%s -> %s"
+                                        % (name, fname, ins.argval))
+                    stack += [c for c in code.co_consts if hasattr(c, "co_names")]
+    if rows:
+        uniq = sorted(set(rows))
+        return ("    these names do not exist where the function looks for them,\n"
+                "    so the call dies the first time it actually runs:\n"
+                + "\n".join(uniq[:20]))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

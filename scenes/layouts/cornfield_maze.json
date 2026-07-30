@@ -610,8 +610,8 @@
  ],
  "npcs": [],
  "hooks": {
-  "on_enter": "?build_cornfield_maze.<locals>._cornfield_maze_on_enter",
-  "on_update": "?build_cornfield_maze.<locals>._cornfield_maze_on_update",
+  "on_enter": "scenes.threshold_extras:_cornfield_maze_on_enter",
+  "on_update": "scenes.threshold_extras:_cornfield_maze_on_update",
   "on_exit": null,
   "on_interact": null
  },

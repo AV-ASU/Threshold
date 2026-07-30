@@ -353,7 +353,7 @@
      176
     ]
    },
-   "dialogue": "?_mara_voice"
+   "dialogue": "scenes.well:_mara_voice"
   },
   {
    "name": "The rite-holder",
@@ -394,10 +394,10 @@
   }
  ],
  "hooks": {
-  "on_enter": "?build_works_sign.<locals>._sign_on_enter",
-  "on_update": "?build_works_sign.<locals>._sign_update",
+  "on_enter": "scenes.well:_sign_on_enter",
+  "on_update": "scenes.well:_sign_update",
   "on_exit": null,
-  "on_interact": "?build_works_sign.<locals>._interact"
+  "on_interact": "scenes.well:_sign_interact"
  },
  "attrs": {
   "h": 11,

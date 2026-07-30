@@ -270,6 +270,20 @@ def bedroom_interact(game):
 
 # ---- innkeeper_house (key: 'lodge') ----
 
+def _house_gate(game, ch):
+    if ch != "L":
+        return True
+    if game.save.flag("cellar_unlocked"):
+        return True
+    if game.player.inventory.has("cellar_key"):
+        game.save.set_flag("cellar_unlocked", True)
+        game.audio.play("door_open", 0.55)
+        game.show_notice("The iron key turns. The hatch swings up.",
+                         duration=2.4)
+        return True
+    return False
+
+
 def build_lodge():
     """The Arcadia's ground-floor COMMON ROOM + guest intake (2026-07
     expansion). Kitchen on the left, sitting room on the right, and the
@@ -347,18 +361,6 @@ def build_lodge():
     sc.add_decoration(Decoration(sc._hatch_pos[0], sc._hatch_pos[1],
                                  "cellar_hatch", padlock=True))
 
-    def _house_gate(game, ch):
-        if ch != "L":
-            return True
-        if game.save.flag("cellar_unlocked"):
-            return True
-        if game.player.inventory.has("cellar_key"):
-            game.save.set_flag("cellar_unlocked", True)
-            game.audio.play("door_open", 0.55)
-            game.show_notice("The iron key turns. The hatch swings up.",
-                             duration=2.4)
-            return True
-        return False
     sc.exit_gate_fn = _house_gate
 
     # A large worn rug before the hearth in the living room -- off-grid
@@ -624,6 +626,17 @@ def house_interact(game):
 
 # ---- the guest wing HALLWAY (key: 'lodge_hall') ----
 
+def _hall_interact(game):
+    px, py = game.player.x, game.player.y
+    for lx, ly in getattr(game.scene, "_locked_doors", []):
+        if abs(px - lx) <= 40 and abs(py - ly) <= 44:
+            game.audio.play("door_locked", 0.5)
+            game.dialog.show([
+                "[c=dim](Locked. A row of them, all the same, all shut.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+
+
 def build_lodge_hall():
     """The Arcadia's guest-wing corridor (2026-07 expansion). A long hall
     of doors, most of them LOCKED and shut -- the uncanny hotel kept ready
@@ -709,15 +722,6 @@ def build_lodge_hall():
                 sc.add_interactable(tx * TILE + 16, ty * TILE + 16, 40)
     sc._locked_doors = locked
 
-    def _hall_interact(game):
-        px, py = game.player.x, game.player.y
-        for lx, ly in getattr(sc, "_locked_doors", []):
-            if abs(px - lx) <= 40 and abs(py - ly) <= 44:
-                game.audio.play("door_locked", 0.5)
-                game.dialog.show([
-                    "[c=dim](Locked. A row of them, all the same, all shut.)[/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
-                return
     sc.on_interact_fn = _hall_interact
     return sc
 

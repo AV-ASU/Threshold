@@ -153,7 +153,7 @@
   "on_enter": null,
   "on_update": null,
   "on_exit": null,
-  "on_interact": "?build_depths_antechamber.<locals>._interact"
+  "on_interact": "scenes.depths:_antechamber_interact"
  },
  "attrs": {
   "h": 11,

@@ -24,6 +24,44 @@ from .base import Scene
 from .dialogue import _evidence
 
 
+def _yard_on_enter(game, scene):
+    # The CELLAR KEY hangs on a nail behind the house (2026-07: the
+    # Ledger moved down into the padlocked cellar; this is its
+    # gate). Walk-over pickup with a glimmer marker, flag-gated so
+    # it drops exactly once per save.
+    if (game.save.flag("cellar_key_taken")
+            or game.player.inventory.has("cellar_key")):
+        return
+    kx, ky = 7 * TILE + 16, 1 * TILE + 16
+
+    def _took(g):
+        g.save.set_flag("cellar_key_taken", True)
+        g.scene.decorations = [
+            d for d in g.scene.decorations
+            if not (d.kind == "item_drop"
+                    and abs(d.x - kx) < 2 and abs(d.y - ky) < 2)]
+    scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
+    scene.add_decoration(Decoration(kx, ky, "item_drop"))
+
+
+def _outside_interact(game):
+    px, py = game.player.x, game.player.y
+    # The woodshed -- locked facade door. Needs the woodshed key from the
+    # Lodge cellar workbench; opens to the woodshed interior (axe,
+    # flashlight). Now in the yard, west of the Lodge, where you'd expect
+    # it -- not across town.
+    sdx, sdy = game.scene._shed_door_pos
+    if abs(px - sdx) < 44 and abs(py - sdy) < 44:
+        if not game.player.inventory.has("woodshed_key"):
+            game.audio.play("door_locked", 0.6)
+            game.show_notice("Locked. The key's somewhere inside the "
+                             "Lodge.")
+            return
+        game.audio.play("door_open", 0.7)
+        game.begin_transition("woodshed", "from_yard")
+        return
+
+
 def build_lodge_yard():
     # 24w x 18h. The Clerk's house occupies the upper-left quadrant
     # with a back door (H) into the kitchen. The woodshed sits in the
@@ -246,22 +284,6 @@ def build_lodge_yard():
         (20 * TILE + 16, 13 * TILE + 16, "under"),   # under the pickup's bed
     ]
 
-    def _outside_interact(game):
-        px, py = game.player.x, game.player.y
-        # The woodshed -- locked facade door. Needs the woodshed key from the
-        # Lodge cellar workbench; opens to the woodshed interior (axe,
-        # flashlight). Now in the yard, west of the Lodge, where you'd expect
-        # it -- not across town.
-        sdx, sdy = sc._shed_door_pos
-        if abs(px - sdx) < 44 and abs(py - sdy) < 44:
-            if not game.player.inventory.has("woodshed_key"):
-                game.audio.play("door_locked", 0.6)
-                game.show_notice("Locked. The key's somewhere inside the "
-                                 "Lodge.")
-                return
-            game.audio.play("door_open", 0.7)
-            game.begin_transition("woodshed", "from_yard")
-            return
     sc.on_interact_fn = _outside_interact
     # [E] cue on the shed door.
     sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 44)
@@ -320,27 +342,41 @@ def build_lodge_yard():
         if 6 <= ty_ <= 8: continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
-    def _yard_on_enter(game, scene):
-        # The CELLAR KEY hangs on a nail behind the house (2026-07: the
-        # Ledger moved down into the padlocked cellar; this is its
-        # gate). Walk-over pickup with a glimmer marker, flag-gated so
-        # it drops exactly once per save.
-        if (game.save.flag("cellar_key_taken")
-                or game.player.inventory.has("cellar_key")):
-            return
-        kx, ky = 7 * TILE + 16, 1 * TILE + 16
-
-        def _took(g):
-            g.save.set_flag("cellar_key_taken", True)
-            g.scene.decorations = [
-                d for d in g.scene.decorations
-                if not (d.kind == "item_drop"
-                        and abs(d.x - kx) < 2 and abs(d.y - ky) < 2)]
-        scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
-        scene.add_decoration(Decoration(kx, ky, "item_drop"))
     sc.on_enter_fn = _yard_on_enter
 
     return sc
+
+
+def _road_update(game, scene, dt):
+    # The TELL. Walking the northern band long enough warps you back to its
+    # south edge (the `_treadmill`) -- the same anonymous forest coming round
+    # with no landmark to catch the eye, the road going nowhere. No narration
+    # (NARRATIVE §2 discipline); a soft, escalating dread pulse underscores
+    # the wrongness each time the fold folds the band back. Detected as the
+    # single-frame y jump the treadmill warp produces (a band-height hop).
+    p = game.player
+    if p is None:
+        return
+    tm = getattr(scene, "_treadmill", None)
+    band = (tm[1] - tm[0]) if tm else scene.h * TILE
+    last = getattr(scene, "_last_py", None)
+    if last is not None and abs(p.y - last) > band * 0.5:
+        scene._loops = getattr(scene, "_loops", 0) + 1
+        game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
+    scene._last_py = p.y
+
+
+def _road_interact(game):
+    cx, cy = game.scene._car_pos
+    if abs(game.player.x - cx) < 44 and abs(game.player.y - cy) < 44:
+        if (game.player.inventory.has("pallid_mask")
+                and hasattr(game, "_begin_car_escape")):
+            game._begin_car_escape()          # His face breaks the fold
+            return
+        game.audio.play("door_locked", 0.6)
+        game.show_notice("You turn the key. The engine catches, and "
+                         "catches, and dies. Brimley won't let the car "
+                         "go. Not with empty hands.")
 
 
 def build_arrival_road():
@@ -531,17 +567,6 @@ def build_arrival_road():
                 objs[cy][cx] = "x"
     sc.objects = objs
 
-    def _road_interact(game):
-        cx, cy = sc._car_pos
-        if abs(game.player.x - cx) < 44 and abs(game.player.y - cy) < 44:
-            if (game.player.inventory.has("pallid_mask")
-                    and hasattr(game, "_begin_car_escape")):
-                game._begin_car_escape()          # His face breaks the fold
-                return
-            game.audio.play("door_locked", 0.6)
-            game.show_notice("You turn the key. The engine catches, and "
-                             "catches, and dies. Brimley won't let the car "
-                             "go. Not with empty hands.")
     sc.on_interact_fn = _road_interact
     sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 44)
 
@@ -609,25 +634,33 @@ def build_arrival_road():
         ry += tree_rng.randint(3, 8)
     sc.hide_spots = []
 
-    def _road_update(game, scene, dt):
-        # The TELL. Walking the northern band long enough warps you back to its
-        # south edge (the `_treadmill`) -- the same anonymous forest coming round
-        # with no landmark to catch the eye, the road going nowhere. No narration
-        # (NARRATIVE §2 discipline); a soft, escalating dread pulse underscores
-        # the wrongness each time the fold folds the band back. Detected as the
-        # single-frame y jump the treadmill warp produces (a band-height hop).
-        p = game.player
-        if p is None:
-            return
-        tm = getattr(scene, "_treadmill", None)
-        band = (tm[1] - tm[0]) if tm else scene.h * TILE
-        last = getattr(scene, "_last_py", None)
-        if last is not None and abs(p.y - last) > band * 0.5:
-            scene._loops = getattr(scene, "_loops", 0) + 1
-            game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
-        scene._last_py = p.y
     sc.on_update_fn = _road_update
     return sc
+
+
+def _woodshed_interact(game):
+    axe_pos = game.scene._axe_pos
+    px, py = game.player.x, game.player.y
+    # Axe on the wall.
+    if abs(px - axe_pos[0]) < 36 and abs(py - axe_pos[1]) < 36:
+        if not game.save.flag("axe_taken"):
+            game.save.set_flag("axe_taken", True)
+            game.player.inventory.add("lumber_axe", 1)
+            game.audio.play("pickup_rare", 0.7)
+            game.show_notice("Splitting axe.")
+            game.scene.clear_ground_marker(*axe_pos)
+            return
+
+
+def _woodshed_on_enter(game, scene):
+    axe_pos = scene._axe_pos
+    # The axe had no world object AND no [E] cue -- a critical item
+    # you'd walk right past. Glimmer-mark it while still on offer and
+    # register it for the [E] prompt; drop the marker once taken.
+    if not game.save.flag("axe_taken"):
+        scene.add_decoration(Decoration(axe_pos[0], axe_pos[1],
+                                        "item_drop"))
+        scene.add_interactable(axe_pos[0], axe_pos[1], 36)
 
 
 def build_woodshed():
@@ -678,26 +711,7 @@ def build_woodshed():
                                  ang=math.pi / 2))
     sc.hide_spots = []
 
-    def _woodshed_interact(game):
-        px, py = game.player.x, game.player.y
-        # Axe on the wall.
-        if abs(px - axe_pos[0]) < 36 and abs(py - axe_pos[1]) < 36:
-            if not game.save.flag("axe_taken"):
-                game.save.set_flag("axe_taken", True)
-                game.player.inventory.add("lumber_axe", 1)
-                game.audio.play("pickup_rare", 0.7)
-                game.show_notice("Splitting axe.")
-                game.scene.clear_ground_marker(*axe_pos)
-                return
     sc.on_interact_fn = _woodshed_interact
 
-    def _woodshed_on_enter(game, scene):
-        # The axe had no world object AND no [E] cue -- a critical item
-        # you'd walk right past. Glimmer-mark it while still on offer and
-        # register it for the [E] prompt; drop the marker once taken.
-        if not game.save.flag("axe_taken"):
-            scene.add_decoration(Decoration(axe_pos[0], axe_pos[1],
-                                            "item_drop"))
-            scene.add_interactable(axe_pos[0], axe_pos[1], 36)
     sc.on_enter_fn = _woodshed_on_enter
     return sc

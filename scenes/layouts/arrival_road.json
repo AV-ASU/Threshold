@@ -852,9 +852,9 @@
  "npcs": [],
  "hooks": {
   "on_enter": null,
-  "on_update": "?build_arrival_road.<locals>._road_update",
+  "on_update": "scenes.lodge_yard:_road_update",
   "on_exit": null,
-  "on_interact": "?build_arrival_road.<locals>._road_interact"
+  "on_interact": "scenes.lodge_yard:_road_interact"
  },
  "attrs": {
   "h": 80,

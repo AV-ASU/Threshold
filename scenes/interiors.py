@@ -133,6 +133,19 @@ def build_clearing():
     # keeps its props as plain dressing; it asserts nothing now. Its stated
     # PURPOSE is an open question -- see TODO #1.)
     return sc
+def _shop_update(game, scene, dt):
+    # The spike is the fallback: a walk-over pickup, and ONLY once Hettie
+    # is dead (while she's alive, talk to her for the tab -- no dead [E]
+    # cue advertising the spike).
+    if game.save.flag("evidence_maras_receipt"):
+        return
+    if not game._local_is_dead("Hettie"):
+        return
+    rx, ry = scene._receipt_pos
+    if abs(game.player.x - rx) < 22 and abs(game.player.y - ry) < 22:
+        grant_receipt(game)
+
+
 def build_shop():
     """The General Store, rebuilt as a NESTED warren of subrooms (2026-07, the
     interior-door pass; the pilot for the room redesign): an L-shaped public
@@ -356,20 +369,64 @@ def build_shop():
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 6, "papers",
                                  seed=23))
 
-    def _shop_update(game, scene, dt):
-        # The spike is the fallback: a walk-over pickup, and ONLY once Hettie
-        # is dead (while she's alive, talk to her for the tab -- no dead [E]
-        # cue advertising the spike).
-        if game.save.flag("evidence_maras_receipt"):
-            return
-        if not game._local_is_dead("Hettie"):
-            return
-        rx, ry = scene._receipt_pos
-        if abs(game.player.x - rx) < 22 and abs(game.player.y - ry) < 22:
-            grant_receipt(game)
     sc.on_update_fn = _shop_update
     sc.hide_spots = []
     return sc
+def _barn_update(game, scene, dt):
+    # Mara's journal is a WALK-OVER pickup (play-notes: an item, not an
+    # [E] prompt). Stepping onto it takes it and drops the PI back into his
+    # one year-old dream ON PICKUP (not the 3rd read). The gate beat is
+    # logged QUIETLY -- no case note pops before he has read it.
+    if game.save.flag("evidence_maras_journal"):
+        # Already taken: strip the token the scene rebuild re-adds.
+        if any(getattr(d, "tag", None) == "maras_journal"
+               for d in scene.decorations):
+            scene.decorations = [
+                d for d in scene.decorations
+                if getattr(d, "tag", None) != "maras_journal"]
+        return
+    px, py = game.player.x, game.player.y
+    jx, jy = scene._journal_pos
+    if abs(px - jx) < 22 and abs(py - jy) < 22:
+        game.player.inventory.add("mom_notebook", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game.audio.play("low_pulse", 0.45)
+        game.show_notice("Her journal.")
+        # The log excerpts quote MARA_JOURNAL_PAGES (systems/items.py) so
+        # the evidence beat and the readable journal never drift apart.
+        _evidence(game, "maras_journal", [
+            "A notebook, shoved down behind the workbench. You know the "
+            "hand. It's hers.",
+            "Her journal. Three leaves, in a hand that gets calmer "
+            "as it goes:",
+            "\"They told me grief would pass. It did not pass. It only "
+            "learned my name.\"",
+            "\"I have started to dream of a door. It is not "
+            "frightening. It feels like being remembered.\"",
+            "\"They dreamed the same door, every one of them. We are "
+            "digging down to it together now. I am not lost. I have "
+            "never been this close.\"",
+        ], show=False, quiet=True)
+        # The door-dream hits ON PICKUP now (play-notes), not the 3rd read.
+        if not game.save.flag("flashback_seen"):
+            game.save.set_flag("flashback_pending", True)
+        scene.decorations = [
+            d for d in scene.decorations
+            if getattr(d, "tag", None) != "maras_journal"]
+
+
+def _barn_interact(game):
+    hatch_x, hatch_y = game.scene._barn_hatch_pos
+    px, py = game.player.x, game.player.y
+    # The old tunnel down to the Works has been nailed shut: the
+    # rite (the grove's descent fold) is the ONLY way underground
+    # now (no secret paths).
+    if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
+        game.audio.play("door_locked", 0.6)
+        game.show_notice("Nailed fast from the underside. It does "
+                         "not give.")
+
+
 def build_barn():
     """The barn, off the chapel row (its yard is barn_yard), divided (#4c) into a front working
     bay, an open sleeping-floor dormitory, and an enclosed back workroom, split
@@ -529,58 +586,8 @@ def build_barn():
     sc.add_chalk_door(4 * TILE + 16, 9 * TILE + 16, voice="chalk_surface", seed=3)
     sc.add_chalk_door(7 * TILE + 16, 1 * TILE + 10, seed=5, wall=True)
 
-    def _barn_interact(game):
-        px, py = game.player.x, game.player.y
-        # The old tunnel down to the Works has been nailed shut: the
-        # rite (the grove's descent fold) is the ONLY way underground
-        # now (no secret paths).
-        if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
-            game.audio.play("door_locked", 0.6)
-            game.show_notice("Nailed fast from the underside. It does "
-                             "not give.")
     sc.on_interact_fn = _barn_interact
 
-    def _barn_update(game, scene, dt):
-        # Mara's journal is a WALK-OVER pickup (play-notes: an item, not an
-        # [E] prompt). Stepping onto it takes it and drops the PI back into his
-        # one year-old dream ON PICKUP (not the 3rd read). The gate beat is
-        # logged QUIETLY -- no case note pops before he has read it.
-        if game.save.flag("evidence_maras_journal"):
-            # Already taken: strip the token the scene rebuild re-adds.
-            if any(getattr(d, "tag", None) == "maras_journal"
-                   for d in scene.decorations):
-                scene.decorations = [
-                    d for d in scene.decorations
-                    if getattr(d, "tag", None) != "maras_journal"]
-            return
-        px, py = game.player.x, game.player.y
-        jx, jy = scene._journal_pos
-        if abs(px - jx) < 22 and abs(py - jy) < 22:
-            game.player.inventory.add("mom_notebook", 1)
-            game.audio.play("pickup_rare", 0.7)
-            game.audio.play("low_pulse", 0.45)
-            game.show_notice("Her journal.")
-            # The log excerpts quote MARA_JOURNAL_PAGES (systems/items.py) so
-            # the evidence beat and the readable journal never drift apart.
-            _evidence(game, "maras_journal", [
-                "A notebook, shoved down behind the workbench. You know the "
-                "hand. It's hers.",
-                "Her journal. Three leaves, in a hand that gets calmer "
-                "as it goes:",
-                "\"They told me grief would pass. It did not pass. It only "
-                "learned my name.\"",
-                "\"I have started to dream of a door. It is not "
-                "frightening. It feels like being remembered.\"",
-                "\"They dreamed the same door, every one of them. We are "
-                "digging down to it together now. I am not lost. I have "
-                "never been this close.\"",
-            ], show=False, quiet=True)
-            # The door-dream hits ON PICKUP now (play-notes), not the 3rd read.
-            if not game.save.flag("flashback_seen"):
-                game.save.set_flag("flashback_pending", True)
-            scene.decorations = [
-                d for d in scene.decorations
-                if getattr(d, "tag", None) != "maras_journal"]
     sc.on_update_fn = _barn_update
     return sc
 

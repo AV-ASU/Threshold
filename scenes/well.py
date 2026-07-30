@@ -47,6 +47,53 @@ from .depths import _box, _cultist, _ambient, _wall, _bevel, _flood, _rect_tiles
 
 # ---- Room 1: the Shaft Floor (key: well_bottom) ----
 
+def _bottom_on_enter(game, scene):
+    if game.save.flag("spread_counterweight"):
+        return
+    if game.save.flag("descent_sealed"):
+        return
+    if not game.player.inventory.has("pallid_mask"):
+        return
+    game.save.set_flag("spread_counterweight", True)
+    game.audio.play("low_pulse", 0.5)
+    game.dialog.show([
+        "[c=dim]The pane stands where the rope hung, and with His "
+        "face in your hands you can feel it holding the door open "
+        "for you. Up is real again. The roads would run.[/c]",
+        "[c=dim]And under your feet the dig runs the other way, down "
+        "to the thing this whole town kneels to. You could end it "
+        "where it starts. Nobody is coming down here after you to do "
+        "it instead.[/c]",
+    ], speaker="", voice="blip_soft", portrait="narrator")
+
+
+def _up_charge(game, ch):
+    if ch == "O" and game.save.flag("descent_sealed"):
+        return 0.0
+    return 1.0
+
+
+def _up_gate(game, ch):
+    if ch != "O":
+        return True
+    if game.save.flag("descent_sealed"):
+        return False
+    # The way home answers only His face (the Mask). NOT one-way --
+    # one-way stays the King's signature; this pane is KEYED. The
+    # crossing itself spends the privilege: the descent seals at
+    # your back (descent_sealed), and SPREAD is all that is left.
+    if not game.player.inventory.has("pallid_mask"):
+        if not game.save.flag("pane_refused_noticed"):
+            game.save.set_flag("pane_refused_noticed", True)
+            game.audio.play("low_pulse", 0.5)
+            game.show_notice("The pane stands where the rope hung, "
+                             "and it does not open. It is waiting on "
+                             "a face.", duration=3.6)
+        return False
+    game.save.set_flag("descent_sealed", True)
+    return True
+
+
 def build_well_bottom():
     # The shaft floor: a round (octagonal) stone pit at the bottom of the
     # cult's mine shaft. No rope, no ladder: the descent fold in the grove
@@ -68,31 +115,8 @@ def build_well_bottom():
     #                                       clear of it)
     sc.set_spawn("from_below", 9, 5)      # back up from the racks
 
-    def _up_charge(game, ch):
-        if ch == "O" and game.save.flag("descent_sealed"):
-            return 0.0
-        return 1.0
     sc.fold_charge_fn = _up_charge
 
-    def _up_gate(game, ch):
-        if ch != "O":
-            return True
-        if game.save.flag("descent_sealed"):
-            return False
-        # The way home answers only His face (the Mask). NOT one-way --
-        # one-way stays the King's signature; this pane is KEYED. The
-        # crossing itself spends the privilege: the descent seals at
-        # your back (descent_sealed), and SPREAD is all that is left.
-        if not game.player.inventory.has("pallid_mask"):
-            if not game.save.flag("pane_refused_noticed"):
-                game.save.set_flag("pane_refused_noticed", True)
-                game.audio.play("low_pulse", 0.5)
-                game.show_notice("The pane stands where the rope hung, "
-                                 "and it does not open. It is waiting on "
-                                 "a face.", duration=3.6)
-            return False
-        game.save.set_flag("descent_sealed", True)
-        return True
     sc.exit_gate_fn = _up_gate
 
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
@@ -150,24 +174,6 @@ def build_well_bottom():
     # fold stays a non-event; the stakes land BEFORE the pane, never on
     # it). Fires for a SEAL-bound backtracker too, which only sharpens
     # the choice. Never evidence.
-    def _bottom_on_enter(game, scene):
-        if game.save.flag("spread_counterweight"):
-            return
-        if game.save.flag("descent_sealed"):
-            return
-        if not game.player.inventory.has("pallid_mask"):
-            return
-        game.save.set_flag("spread_counterweight", True)
-        game.audio.play("low_pulse", 0.5)
-        game.dialog.show([
-            "[c=dim]The pane stands where the rope hung, and with His "
-            "face in your hands you can feel it holding the door open "
-            "for you. Up is real again. The roads would run.[/c]",
-            "[c=dim]And under your feet the dig runs the other way, down "
-            "to the thing this whole town kneels to. You could end it "
-            "where it starts. Nobody is coming down here after you to do "
-            "it instead.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
     sc.on_enter_fn = _bottom_on_enter
 
     # The Works gauntlet is walkable both ways for the Mask-bearer; for
@@ -316,6 +322,18 @@ def build_well_passage():
 
 # ---- Room 3: the Cistern (key: works_cistern) ----
 
+def _vats_on_enter(game, scene):
+    # First entry: the dig hit water. This is the river (NARRATIVE §2) --
+    # the artery the cult followed down toward the door. Gated by the
+    # evidence flag (non-canonical, so it doesn't move the King-gate).
+    # The note key is works_cistern_seen (the Water Below).
+    if game.save.flag("evidence_works_cistern_seen"):
+        return
+    _evidence(game, "works_cistern_seen", [
+        "[c=dim]The water runs on, downward, and does not echo back.[/c]",
+    ])
+
+
 def build_works_cistern():
     # A cruciform cistern: four flooded arms off a central crossing, the
     # corners walled off into solid stone, a basin sunk in each arm.
@@ -423,21 +441,20 @@ def build_works_cistern():
         if not sc.is_solid_at(_wx, _wy):
             sc.add_item(_wx, _wy, "stone")
 
-    def _vats_on_enter(game, scene):
-        # First entry: the dig hit water. This is the river (NARRATIVE §2) --
-        # the artery the cult followed down toward the door. Gated by the
-        # evidence flag (non-canonical, so it doesn't move the King-gate).
-        # The note key is works_cistern_seen (the Water Below).
-        if game.save.flag("evidence_works_cistern_seen"):
-            return
-        _evidence(game, "works_cistern_seen", [
-            "[c=dim]The water runs on, downward, and does not echo back.[/c]",
-        ])
     sc.on_enter_fn = _vats_on_enter
     return sc
 
 
 # ---- Room 4: the Sorting Hall (key: works_sorting) ----
+
+def _sorting_interact(game):
+    tx, ty = game.scene._table_pos
+    if (abs(game.player.x - tx) < 40 and abs(game.player.y - ty) < 40):
+        # Examining the catalogued lives the diggers shed fires the PI's
+        # voice (the dig's scale -- first fear). A distinct trigger from
+        # the chalk doors: different thing, different words.
+        game._descent_voice("descent_dig")
+
 
 def build_works_sorting():
     # A T-shaped hall: a wide sorting floor with a short north stem in the
@@ -573,18 +590,49 @@ def build_works_sorting():
     sc.add_cult_station(12 * TILE + 16, 6 * TILE + 16,
                         face=(0, -1), dwell=(3.5, 6.5))
 
-    def _interact(game):
-        tx, ty = sc._table_pos
-        if (abs(game.player.x - tx) < 40 and abs(game.player.y - ty) < 40):
-            # Examining the catalogued lives the diggers shed fires the PI's
-            # voice (the dig's scale -- first fear). A distinct trigger from
-            # the chalk doors: different thing, different words.
-            game._descent_voice("descent_dig")
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _sorting_interact
     return sc
 
 
 # ---- Mara's Room (key: maras_room) -- a convert's cell off the Sorting Hall ----
+
+def _maras_room_interact(game):
+    cx, cy = game.scene._cot_pos
+    if (abs(game.player.x - cx) > 44 or abs(game.player.y - cy) > 48):
+        return
+    if game.save.flag("evidence_maras_room"):
+        return
+    game.player.inventory.add("robe", 1)
+    # The unsent letter is its own item so the player still carries
+    # her last sane line into the Dark -- re-readable from inventory.
+    game.player.inventory.add("unsent_letter", 1)
+    game.audio.play("pickup_rare", 0.7)
+    _evidence(game, "maras_room", [
+        "Her cell. A cot, a burnt-down candle, a cult robe on a peg, "
+        "worn soft. Chosen.",
+        "Folded inside the robe: a letter to her father. Stamped, never "
+        "mailed. It opens \"Dad.\"",
+        "\"There was going to be a baby. A boy. I never told you, and "
+        "then I could not find a way to tell you the rest. I almost "
+        "decided different, right at the last, and then I wanted him "
+        "more than I have ever wanted anything. He came still.\"",
+        "\"I keep finding ways it was my fault. I know that isn't sane. "
+        "I keep finding them anyway. I wanted a son the way you wanted "
+        "a daughter, Dad. Somebody to wait up for.\"",
+        "\"Don't come after me. I'm not lost. I've never been this "
+        "close.\" It stops there. No signature.",
+        "A journal page, weighted flat under the candle: \"I was the last "
+        "one in. The rest had been here since the summer, and "
+        "still they looked up when I came down the road like they had set "
+        "a place for me. Whatever it cost them to give in, it cost me next "
+        "to nothing. I was driving north before I had even finished "
+        "dreaming it.\"",
+        "This is a room someone moved into. Blaine hired you to bring "
+        "her home. She was already home.",
+        "The letter is addressed to a man you cannot reach. You are "
+        "the only one who will ever read it.",
+    ])
+
 
 def build_maras_room():
     """Mara Blaine's cell, a side room off the Sorting Hall. She didn't
@@ -623,47 +671,60 @@ def build_maras_room():
     ]
     _ambient(sc, "whisper", 0.10, 8.0, 13.0)
 
-    def _interact(game):
-        cx, cy = sc._cot_pos
-        if (abs(game.player.x - cx) > 44 or abs(game.player.y - cy) > 48):
-            return
-        if game.save.flag("evidence_maras_room"):
-            return
-        game.player.inventory.add("robe", 1)
-        # The unsent letter is its own item so the player still carries
-        # her last sane line into the Dark -- re-readable from inventory.
-        game.player.inventory.add("unsent_letter", 1)
-        game.audio.play("pickup_rare", 0.7)
-        _evidence(game, "maras_room", [
-            "Her cell. A cot, a burnt-down candle, a cult robe on a peg, "
-            "worn soft. Chosen.",
-            "Folded inside the robe: a letter to her father. Stamped, never "
-            "mailed. It opens \"Dad.\"",
-            "\"There was going to be a baby. A boy. I never told you, and "
-            "then I could not find a way to tell you the rest. I almost "
-            "decided different, right at the last, and then I wanted him "
-            "more than I have ever wanted anything. He came still.\"",
-            "\"I keep finding ways it was my fault. I know that isn't sane. "
-            "I keep finding them anyway. I wanted a son the way you wanted "
-            "a daughter, Dad. Somebody to wait up for.\"",
-            "\"Don't come after me. I'm not lost. I've never been this "
-            "close.\" It stops there. No signature.",
-            "A journal page, weighted flat under the candle: \"I was the last "
-            "one in. The rest had been here since the summer, and "
-            "still they looked up when I came down the road like they had set "
-            "a place for me. Whatever it cost them to give in, it cost me next "
-            "to nothing. I was driving north before I had even finished "
-            "dreaming it.\"",
-            "This is a room someone moved into. Blaine hired you to bring "
-            "her home. She was already home.",
-            "The letter is addressed to a man you cannot reach. You are "
-            "the only one who will ever read it.",
-        ])
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _maras_room_interact
     return sc
 
 
 # ---- Room 5: the Scriptorium (key: works_scriptorium) ----
+
+def _scriptorium_interact(game):
+    px, py = game.player.x, game.player.y
+    # The first of the congregation's testimony fragments (The Calling),
+    # bound and whole among their endless flat copies of the Sign. Pure
+    # lore -- it gates nothing (the keystone is the Mask alone now). The
+    # cult's voice is the item description; the PI's reaction is the note
+    # below. Reading it ALSO seeds the §8 want-to-leave (descent_leave).
+    dx, dy = game.scene._desk_pos
+    if abs(px - dx) < 40 and abs(py - dy) < 40:
+        if not game.save.flag("scriptorium_calling_taken"):
+            game.save.set_flag("scriptorium_calling_taken", True)
+            game.player.inventory.add("cult_calling", 1)
+            game.audio.play("pickup_rare", 0.7)
+            game.audio.play("low_pulse", 0.45)
+            game._log_note("cult_calling", [
+                "Every hand different. Every one of them grateful. I keep "
+                "waiting for the page where somebody admits they were "
+                "tricked. It isn't here.",
+            ])
+            game.show_notice("The Calling. Their own testimony.")
+            # Carrying off their confessions seeds the want-to-leave (the
+            # King's pull to bear the Sign out, felt as the PI's own
+            # sourceless urge, never named). The testimony itself reads
+            # from the kit, not on pickup; the PI's interior pull fires
+            # here.
+            game._descent_voice("descent_leave")
+        return
+    # Mara's OWN hand at the Sign (the dig, a deep trail beat; DESIGN.md §9). Proof
+    # she was one of the willing, not a captive -- the same hand as the
+    # journal and the letter, working the cult's compulsion. Files
+    # silently; the leaf itself reads from the kit.
+    mx, my = game.scene._mara_desk_pos
+    if abs(px - mx) < 40 and abs(py - my) < 40:
+        if game.save.flag("evidence_maras_dig"):
+            return
+        game.player.inventory.add("maras_scrawl", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game.audio.play("low_pulse", 0.45)
+        _evidence(game, "maras_dig", [
+            "A leaf pulled from a copying desk. The Sign, inked over and "
+            "over down the page.",
+            "The hand is hers. The same as the journal, the same as the "
+            "letter.",
+            "No captive draws this.",
+        ], show=False)
+        game.show_notice("The Sign, in her hand.")
+        return
+
 
 def build_works_scriptorium():
     # An octagonal vaulted scriptorium, copying desks ringed under the dome.
@@ -733,54 +794,7 @@ def build_works_scriptorium():
     sc.add_enemy(scribe)
     _ambient(sc, "blip_soft", 0.11, 3.0, 5.0)
 
-    def _interact(game):
-        px, py = game.player.x, game.player.y
-        # The first of the congregation's testimony fragments (The Calling),
-        # bound and whole among their endless flat copies of the Sign. Pure
-        # lore -- it gates nothing (the keystone is the Mask alone now). The
-        # cult's voice is the item description; the PI's reaction is the note
-        # below. Reading it ALSO seeds the §8 want-to-leave (descent_leave).
-        dx, dy = sc._desk_pos
-        if abs(px - dx) < 40 and abs(py - dy) < 40:
-            if not game.save.flag("scriptorium_calling_taken"):
-                game.save.set_flag("scriptorium_calling_taken", True)
-                game.player.inventory.add("cult_calling", 1)
-                game.audio.play("pickup_rare", 0.7)
-                game.audio.play("low_pulse", 0.45)
-                game._log_note("cult_calling", [
-                    "Every hand different. Every one of them grateful. I keep "
-                    "waiting for the page where somebody admits they were "
-                    "tricked. It isn't here.",
-                ])
-                game.show_notice("The Calling. Their own testimony.")
-                # Carrying off their confessions seeds the want-to-leave (the
-                # King's pull to bear the Sign out, felt as the PI's own
-                # sourceless urge, never named). The testimony itself reads
-                # from the kit, not on pickup; the PI's interior pull fires
-                # here.
-                game._descent_voice("descent_leave")
-            return
-        # Mara's OWN hand at the Sign (the dig, a deep trail beat; DESIGN.md §9). Proof
-        # she was one of the willing, not a captive -- the same hand as the
-        # journal and the letter, working the cult's compulsion. Files
-        # silently; the leaf itself reads from the kit.
-        mx, my = sc._mara_desk_pos
-        if abs(px - mx) < 40 and abs(py - my) < 40:
-            if game.save.flag("evidence_maras_dig"):
-                return
-            game.player.inventory.add("maras_scrawl", 1)
-            game.audio.play("pickup_rare", 0.7)
-            game.audio.play("low_pulse", 0.45)
-            _evidence(game, "maras_dig", [
-                "A leaf pulled from a copying desk. The Sign, inked over and "
-                "over down the page.",
-                "The hand is hers. The same as the journal, the same as the "
-                "letter.",
-                "No captive draws this.",
-            ], show=False)
-            game.show_notice("The Sign, in her hand.")
-            return
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _scriptorium_interact
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
     # the floor + walls with chalk doors, none overlapping (the room reads as
     # a compulsion, not a workshop). The testimony desk is left clear.
@@ -993,6 +1007,184 @@ def _mara_voice(game, npc):
         ], speaker="", voice="blip_soft", portrait="narrator")
 
 
+def _sign_on_enter(game, scene):
+    # C14c: once the Mask is lifted, _interact early-returns, so drop
+    # the altar's [E] cue to stop a phantom prompt on backtrack. Scenes
+    # rebuild each load, so this re-applies cleanly on every re-entry.
+    # The Mask itself leaves the altar with the same event (it is in the
+    # PI's inventory now), so drop the altar_mask decoration too.
+    if game.save.flag("pallid_mask_taken"):
+        scene.interactables = [t for t in scene.interactables
+                               if (t[0], t[1]) != scene._sign_pos]
+        scene.decorations = [d for d in scene.decorations
+                             if d.kind != "altar_mask"]
+
+
+def _sign_update(game, scene, dt):
+    st = getattr(game, "_mara_stage", None)
+    if st is None:
+        return
+    # A stage born on a torn-down scene instance (the player walked
+    # out mid-beat) dies here: the room resets to the kneeling, and
+    # Mara's E-press still carries the full exchange (no soft-lock).
+    if st.get("sc") is not scene:
+        game._mara_stage = None
+        return
+    mn = getattr(scene, "_mara", None)
+    if mn is None or not getattr(mn, "alive", True):
+        game._mara_stage = None
+        return
+    st["t"] += dt
+    t = st["t"]
+    p = game.player
+
+    def _face(n, tx, ty):
+        dx, dy = tx - n.x, ty - n.y
+        dd = math.hypot(dx, dy) or 1.0
+        n.facing = (dx / dd, dy / dd)
+    # The patrol holds off while the room performs.
+    for e in scene.enemies:
+        if getattr(e, "kind", "") == "cultist" and e.alive:
+            e._stun_t = max(getattr(e, "_stun_t", 0.0), 0.3)
+            e._cult_state = "scout"
+            e._suspicion = 0.0
+    if st["step"] == 0:
+        # The kneelers rise one by one, and turn to face you.
+        for i, k in enumerate(scene._kneelers):
+            if t > 0.4 + 0.3 * i and getattr(k, "pose", None) == "kneel":
+                k.pose = None
+                _face(k, p.x, p.y)
+                game.audio.play("wood_creak", 0.22)
+        if t > 0.4 + 0.3 * len(scene._kneelers) + 0.6:
+            st["step"] = 1
+            caller = min(scene._kneelers,
+                         key=lambda k: math.hypot(k.x - p.x, k.y - p.y))
+            # No speaker label: just her name, said at the room.
+            game.float_speech.begin(caller, ["Mara."], name="")
+    elif st["step"] == 1:
+        if t > 3.1:
+            st["step"] = 2
+            mn.pose = None
+            _face(mn, p.x, p.y)
+            game.audio.play("low_pulse", 0.5)
+    elif st["step"] == 2:
+        # She comes to you. A straight walk (the nave is open floor);
+        # the exchange fires when she arrives, or wherever she stands
+        # if you keep backing away from her.
+        dx, dy = p.x - mn.x, p.y - mn.y
+        d = math.hypot(dx, dy)
+        if t > 3.8 and d > 40.0:
+            step_len = min(52.0 * dt, d - 38.0)
+            mn.x += dx / d * step_len
+            mn.y += dy / d * step_len
+            _face(mn, p.x, p.y)
+        if (t > 3.8 and d <= 42.0) or t > 10.0:
+            st["step"] = 3
+            _face(mn, p.x, p.y)
+            _mara_voice(game, mn)
+    elif st["step"] == 3:
+        # Her confrontation runs as the frozen close-up tableau (the
+        # world holds while it is up, so this step only ticks again
+        # once it drops). The rank folds back once the talk ends: the
+        # father card ("ends"), the name-beat, or "Say nothing."
+        cv = getattr(game, "_convo", None)
+        if cv is None or not cv.active:
+            st["step"] = 4
+    elif st["step"] == 4:
+        hx, hy = scene._mara_home
+        dx, dy = hx - mn.x, hy - mn.y
+        d = math.hypot(dx, dy)
+        if d > 3.0:
+            step_len = min(48.0 * dt, d)
+            mn.x += dx / d * step_len
+            mn.y += dy / d * step_len
+            _face(mn, hx, hy)
+        else:
+            mn.x, mn.y = hx, hy
+            mn.pose = "kneel"
+            mn.facing = (0, -1)
+            for k in scene._kneelers:
+                k.pose = "kneel"
+                k.facing = (0, -1)
+            # Hold the closer while the lure caption is still up (C1).
+            # It is a narrator caption with no on_complete, so
+            # narration.begin() would NOT preserve its unread page
+            # (ui/narration.py) -- showing over it would drop it. Mara
+            # has already settled home above, so returning early each
+            # frame is idempotent; the stage re-enters step 4 until the
+            # caption clears, then the closer shows.
+            if getattr(game, "narration", None) is not None \
+                    and game.narration.active:
+                return
+            game._mara_stage = None
+            # The one that never moved is the room's last word
+            # (NARRATIVE §2: the self dissolved into the
+            # work).
+            game.dialog.show([
+                "[c=dim]The one bowed at the altar's foot never "
+                "paused. Not when they rose. Not at her name. Its "
+                "share of the rite is the whole of it now.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+
+
+def _take_mask(game):
+    game.save.set_flag("pallid_mask_taken", True)
+    game.player.inventory.add("pallid_mask", 1)
+    game.audio.play("pickup_rare", 0.7)
+    game.audio.play("low_pulse", 0.5)
+    _evidence(game, "the_sign", [
+        "On the altar, beneath the daubed Sign: a mask. Pale as a "
+        "drowned face, the eyeholes black.",
+        "Every scrawl in this place is a flat copy of it. This is the "
+        "thing itself.",
+        "You lift it. Lighter than it should be, and warm. It knows "
+        "your hands.",
+        "His face. You're holding His face.",
+    ])
+    # The TEMPTATION lands as the recognition finishes: with His face in
+    # hand comes the certainty it is the way OUT -- the Spread off-ramp
+    # (NARRATIVE §8). The recognition routes through whichever channel
+    # DialogueBox.show picked (the frameless caption for narrator text,
+    # the modal band otherwise), so chain off the channel that is
+    # actually live -- an on_complete parked on an inactive modal never
+    # fires (the 2026-07 audit found this beat dead).
+    # The note (and its one-shot flag) files NOW: a scene load clears
+    # the caption channel WITHOUT firing chained callbacks, so only
+    # the on-screen beat may ride the chain, never the note.
+    game._descent_voice("descent_mask", note_only=True)
+    _tempt = lambda: game._descent_voice_beat("descent_mask")
+    if game.dialog.active:
+        game.dialog.on_complete = _tempt
+    elif getattr(game, "narration", None) is not None \
+            and game.narration.active:
+        game.narration.on_complete = _tempt
+    else:
+        _tempt()
+
+
+def _sign_interact(game):
+    sx, sy = game.scene._sign_pos
+    if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
+        return
+    if game.save.flag("pallid_mask_taken"):
+        return
+    # Two instincts at the altar (NARRATIVE §8). Lifting the mask is the
+    # controlled keystone-removal the chosen endings need. Tearing the
+    # whole rite down here -- the obvious heroic move -- is THE TRAP:
+    # the rite is the only lid on Him, and breaking it before the source
+    # (the Threshold) is sealed lets His influence out uncontained. It is
+    # always pre-seal here, so this is always the catastrophe.
+    # PRESENTED as the altar close-up tableau (#2b): His face on the hewn
+    # stone under the daubed Sign, the kneeling behind. The two instincts
+    # ride on as the tableau menu -- LIFT (the keystone, the Spread/Seal
+    # fork) or TEAR IT DOWN (BREAK, the trap: the rite is the only lid, so
+    # breaking it before the source is sealed floods Him out uncontained;
+    # always pre-seal here, so always the catastrophe -> rite_broken).
+    game._open_altar_tableau(
+        on_lift=lambda: _take_mask(game),
+        on_break=lambda: game._play_ending("rite_broken"))
+
+
 def build_works_sign():
     # An apse: the north end rounded (beveled) around the altar, the
     # congregation floor opening out square to the south.
@@ -1105,183 +1297,13 @@ def build_works_sign():
         "fired": False,
     })
 
-    def _sign_update(game, scene, dt):
-        st = getattr(game, "_mara_stage", None)
-        if st is None:
-            return
-        # A stage born on a torn-down scene instance (the player walked
-        # out mid-beat) dies here: the room resets to the kneeling, and
-        # Mara's E-press still carries the full exchange (no soft-lock).
-        if st.get("sc") is not scene:
-            game._mara_stage = None
-            return
-        mn = getattr(scene, "_mara", None)
-        if mn is None or not getattr(mn, "alive", True):
-            game._mara_stage = None
-            return
-        st["t"] += dt
-        t = st["t"]
-        p = game.player
-
-        def _face(n, tx, ty):
-            dx, dy = tx - n.x, ty - n.y
-            dd = math.hypot(dx, dy) or 1.0
-            n.facing = (dx / dd, dy / dd)
-        # The patrol holds off while the room performs.
-        for e in scene.enemies:
-            if getattr(e, "kind", "") == "cultist" and e.alive:
-                e._stun_t = max(getattr(e, "_stun_t", 0.0), 0.3)
-                e._cult_state = "scout"
-                e._suspicion = 0.0
-        if st["step"] == 0:
-            # The kneelers rise one by one, and turn to face you.
-            for i, k in enumerate(scene._kneelers):
-                if t > 0.4 + 0.3 * i and getattr(k, "pose", None) == "kneel":
-                    k.pose = None
-                    _face(k, p.x, p.y)
-                    game.audio.play("wood_creak", 0.22)
-            if t > 0.4 + 0.3 * len(scene._kneelers) + 0.6:
-                st["step"] = 1
-                caller = min(scene._kneelers,
-                             key=lambda k: math.hypot(k.x - p.x, k.y - p.y))
-                # No speaker label: just her name, said at the room.
-                game.float_speech.begin(caller, ["Mara."], name="")
-        elif st["step"] == 1:
-            if t > 3.1:
-                st["step"] = 2
-                mn.pose = None
-                _face(mn, p.x, p.y)
-                game.audio.play("low_pulse", 0.5)
-        elif st["step"] == 2:
-            # She comes to you. A straight walk (the nave is open floor);
-            # the exchange fires when she arrives, or wherever she stands
-            # if you keep backing away from her.
-            dx, dy = p.x - mn.x, p.y - mn.y
-            d = math.hypot(dx, dy)
-            if t > 3.8 and d > 40.0:
-                step_len = min(52.0 * dt, d - 38.0)
-                mn.x += dx / d * step_len
-                mn.y += dy / d * step_len
-                _face(mn, p.x, p.y)
-            if (t > 3.8 and d <= 42.0) or t > 10.0:
-                st["step"] = 3
-                _face(mn, p.x, p.y)
-                _mara_voice(game, mn)
-        elif st["step"] == 3:
-            # Her confrontation runs as the frozen close-up tableau (the
-            # world holds while it is up, so this step only ticks again
-            # once it drops). The rank folds back once the talk ends: the
-            # father card ("ends"), the name-beat, or "Say nothing."
-            cv = getattr(game, "_convo", None)
-            if cv is None or not cv.active:
-                st["step"] = 4
-        elif st["step"] == 4:
-            hx, hy = scene._mara_home
-            dx, dy = hx - mn.x, hy - mn.y
-            d = math.hypot(dx, dy)
-            if d > 3.0:
-                step_len = min(48.0 * dt, d)
-                mn.x += dx / d * step_len
-                mn.y += dy / d * step_len
-                _face(mn, hx, hy)
-            else:
-                mn.x, mn.y = hx, hy
-                mn.pose = "kneel"
-                mn.facing = (0, -1)
-                for k in scene._kneelers:
-                    k.pose = "kneel"
-                    k.facing = (0, -1)
-                # Hold the closer while the lure caption is still up (C1).
-                # It is a narrator caption with no on_complete, so
-                # narration.begin() would NOT preserve its unread page
-                # (ui/narration.py) -- showing over it would drop it. Mara
-                # has already settled home above, so returning early each
-                # frame is idempotent; the stage re-enters step 4 until the
-                # caption clears, then the closer shows.
-                if getattr(game, "narration", None) is not None \
-                        and game.narration.active:
-                    return
-                game._mara_stage = None
-                # The one that never moved is the room's last word
-                # (NARRATIVE §2: the self dissolved into the
-                # work).
-                game.dialog.show([
-                    "[c=dim]The one bowed at the altar's foot never "
-                    "paused. Not when they rose. Not at her name. Its "
-                    "share of the rite is the whole of it now.[/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
     sc.on_update_fn = _sign_update
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
-    def _take_mask(game):
-        game.save.set_flag("pallid_mask_taken", True)
-        game.player.inventory.add("pallid_mask", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.audio.play("low_pulse", 0.5)
-        _evidence(game, "the_sign", [
-            "On the altar, beneath the daubed Sign: a mask. Pale as a "
-            "drowned face, the eyeholes black.",
-            "Every scrawl in this place is a flat copy of it. This is the "
-            "thing itself.",
-            "You lift it. Lighter than it should be, and warm. It knows "
-            "your hands.",
-            "His face. You're holding His face.",
-        ])
-        # The TEMPTATION lands as the recognition finishes: with His face in
-        # hand comes the certainty it is the way OUT -- the Spread off-ramp
-        # (NARRATIVE §8). The recognition routes through whichever channel
-        # DialogueBox.show picked (the frameless caption for narrator text,
-        # the modal band otherwise), so chain off the channel that is
-        # actually live -- an on_complete parked on an inactive modal never
-        # fires (the 2026-07 audit found this beat dead).
-        # The note (and its one-shot flag) files NOW: a scene load clears
-        # the caption channel WITHOUT firing chained callbacks, so only
-        # the on-screen beat may ride the chain, never the note.
-        game._descent_voice("descent_mask", note_only=True)
-        _tempt = lambda: game._descent_voice_beat("descent_mask")
-        if game.dialog.active:
-            game.dialog.on_complete = _tempt
-        elif getattr(game, "narration", None) is not None \
-                and game.narration.active:
-            game.narration.on_complete = _tempt
-        else:
-            _tempt()
 
-    def _interact(game):
-        sx, sy = sc._sign_pos
-        if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
-            return
-        if game.save.flag("pallid_mask_taken"):
-            return
-        # Two instincts at the altar (NARRATIVE §8). Lifting the mask is the
-        # controlled keystone-removal the chosen endings need. Tearing the
-        # whole rite down here -- the obvious heroic move -- is THE TRAP:
-        # the rite is the only lid on Him, and breaking it before the source
-        # (the Threshold) is sealed lets His influence out uncontained. It is
-        # always pre-seal here, so this is always the catastrophe.
-        # PRESENTED as the altar close-up tableau (#2b): His face on the hewn
-        # stone under the daubed Sign, the kneeling behind. The two instincts
-        # ride on as the tableau menu -- LIFT (the keystone, the Spread/Seal
-        # fork) or TEAR IT DOWN (BREAK, the trap: the rite is the only lid, so
-        # breaking it before the source is sealed floods Him out uncontained;
-        # always pre-seal here, so always the catastrophe -> rite_broken).
-        game._open_altar_tableau(
-            on_lift=lambda: _take_mask(game),
-            on_break=lambda: game._play_ending("rite_broken"))
 
-    def _sign_on_enter(game, scene):
-        # C14c: once the Mask is lifted, _interact early-returns, so drop
-        # the altar's [E] cue to stop a phantom prompt on backtrack. Scenes
-        # rebuild each load, so this re-applies cleanly on every re-entry.
-        # The Mask itself leaves the altar with the same event (it is in the
-        # PI's inventory now), so drop the altar_mask decoration too.
-        if game.save.flag("pallid_mask_taken"):
-            scene.interactables = [t for t in scene.interactables
-                                   if (t[0], t[1]) != scene._sign_pos]
-            scene.decorations = [d for d in scene.decorations
-                                 if d.kind != "altar_mask"]
     sc.on_enter_fn = _sign_on_enter
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _sign_interact
     return sc
 
 
@@ -1293,6 +1315,84 @@ def build_works_sign():
 # Sump), laid and lit at the face. The blast drops the floor and he
 # FALLS into something older than the dig (depths_antechamber, the fall
 # zone -- cut stone worn smooth by feet that came before the cult).
+
+def _deepface_on_exit(game, scene):
+    # Re-arm the two-press fuse each visit: a player who steps away to
+    # weigh the Spread road and returns gets the warning again before
+    # the irreversible commit -- never a lone-press point-of-no-return.
+    # Harmless after the blast (depths_breached wins).
+    game.save.set_flag("blast_laid", False)
+
+
+def _deepface_interact(game):
+    gate_x, gate_y = game.scene._gate_pos
+    if (abs(game.player.x - gate_x) > 40
+            or abs(game.player.y - gate_y) > 40):
+        return
+    inv = game.player.inventory
+    if game.save.flag("depths_breached"):
+        # The blown floor: re-descend the hole (the fall is one-way;
+        # this is the mouth of it).
+        game.audio.play("low_pulse", 0.6)
+        game.begin_transition("depths_antechamber", "from_above")
+        return
+    if not inv.has("powder"):
+        game.audio.play("low_pulse", 0.4)
+        game.dialog.show([
+            "[c=dim](The dig stops here. Dead earth, picked at and "
+            "given up on. You put your ear to it, and you would "
+            "swear there is a hollow behind it.)[/c]",
+            "A charge would open it. A dig like this keeps powder "
+            "somewhere.",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+    if not inv.has("pallid_mask"):
+        # The investigator's discipline: you do not blow a scene
+        # before you have seen all of it. (Mechanically: the Mask
+        # first -- the temptation -- then the refusal.)
+        game.audio.play("low_pulse", 0.4)
+        game.dialog.show([
+            "[c=dim](You lay the charge out, and stop. The thing all "
+            "of this kneels to is still down here somewhere, and you "
+            "have not seen its face.)[/c]",
+            "Finish the sweep first. Then the wall.",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+    # Powder + the Mask in hand: lay the fork out once, commit on the
+    # next press. This is where Seal and Spread part in practice:
+    # climb out with His face and the world learns His name (SPREAD),
+    # or light it and go down to the door (no way back up from the
+    # fall). The Mask is NOT spent here (§7): it is spent at the
+    # Threshold, or carried out.
+    if not game.save.flag("blast_laid"):
+        game.save.set_flag("blast_laid", True)
+        game.audio.play("low_pulse", 0.5)
+        game.dialog.show([
+            "[c=dim](You set the charge against the last few feet of "
+            "earth and run the fuse back. Your hands are steady. You "
+            "note that the way you note evidence.)[/c]",
+            "You have enough. The register, the names, the Preacher, "
+            "the girl her father sent you for, and His face in your "
+            "hands. The way up answers it. The car answers it. You "
+            "could climb out and let the world learn His name.",
+            "[s=slow]Or you light it, and you cut this thing off at "
+            "its source.[/s]",
+            "[c=dim](Your thumb finds the striker. Once it catches, there is no way back up from where this goes.)[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+    # Light it. The wall goes, and the floor goes with it -- the dig
+    # breaks into the OLD workings and the PI falls through, delivered
+    # (depths_antechamber on_interact carries the_fall beat).
+    inv.remove("powder", 1)
+    game.save.set_flag("depths_breached", True)
+    game.audio.force_silence()
+    game.audio.play("low_pulse", 1.0)
+    game.audio.play("hit", 0.9)
+    game.show_notice("The charge takes the wall, and the floor goes "
+                     "with it. You drop with the stone into a dark "
+                     "the dig never reached.", duration=4.5)
+    game.begin_transition("depths_antechamber", "from_above")
+
 
 def build_works_deepface():
     # An octagonal dead-end chamber, the dig's final face in the north wall.
@@ -1333,86 +1433,46 @@ def build_works_deepface():
     sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 10.0, 15.0)
 
-    def _interact(game):
-        if (abs(game.player.x - gate_x) > 40
-                or abs(game.player.y - gate_y) > 40):
-            return
-        inv = game.player.inventory
-        if game.save.flag("depths_breached"):
-            # The blown floor: re-descend the hole (the fall is one-way;
-            # this is the mouth of it).
-            game.audio.play("low_pulse", 0.6)
-            game.begin_transition("depths_antechamber", "from_above")
-            return
-        if not inv.has("powder"):
-            game.audio.play("low_pulse", 0.4)
-            game.dialog.show([
-                "[c=dim](The dig stops here. Dead earth, picked at and "
-                "given up on. You put your ear to it, and you would "
-                "swear there is a hollow behind it.)[/c]",
-                "A charge would open it. A dig like this keeps powder "
-                "somewhere.",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
-        if not inv.has("pallid_mask"):
-            # The investigator's discipline: you do not blow a scene
-            # before you have seen all of it. (Mechanically: the Mask
-            # first -- the temptation -- then the refusal.)
-            game.audio.play("low_pulse", 0.4)
-            game.dialog.show([
-                "[c=dim](You lay the charge out, and stop. The thing all "
-                "of this kneels to is still down here somewhere, and you "
-                "have not seen its face.)[/c]",
-                "Finish the sweep first. Then the wall.",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
-        # Powder + the Mask in hand: lay the fork out once, commit on the
-        # next press. This is where Seal and Spread part in practice:
-        # climb out with His face and the world learns His name (SPREAD),
-        # or light it and go down to the door (no way back up from the
-        # fall). The Mask is NOT spent here (§7): it is spent at the
-        # Threshold, or carried out.
-        if not game.save.flag("blast_laid"):
-            game.save.set_flag("blast_laid", True)
-            game.audio.play("low_pulse", 0.5)
-            game.dialog.show([
-                "[c=dim](You set the charge against the last few feet of "
-                "earth and run the fuse back. Your hands are steady. You "
-                "note that the way you note evidence.)[/c]",
-                "You have enough. The register, the names, the Preacher, "
-                "the girl her father sent you for, and His face in your "
-                "hands. The way up answers it. The car answers it. You "
-                "could climb out and let the world learn His name.",
-                "[s=slow]Or you light it, and you cut this thing off at "
-                "its source.[/s]",
-                "[c=dim](Your thumb finds the striker. Once it catches, there is no way back up from where this goes.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
-        # Light it. The wall goes, and the floor goes with it -- the dig
-        # breaks into the OLD workings and the PI falls through, delivered
-        # (depths_antechamber on_interact carries the_fall beat).
-        inv.remove("powder", 1)
-        game.save.set_flag("depths_breached", True)
-        game.audio.force_silence()
-        game.audio.play("low_pulse", 1.0)
-        game.audio.play("hit", 0.9)
-        game.show_notice("The charge takes the wall, and the floor goes "
-                         "with it. You drop with the stone into a dark "
-                         "the dig never reached.", duration=4.5)
-        game.begin_transition("depths_antechamber", "from_above")
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _deepface_interact
 
-    def _on_exit(game, scene):
-        # Re-arm the two-press fuse each visit: a player who steps away to
-        # weigh the Spread road and returns gets the warning again before
-        # the irreversible commit -- never a lone-press point-of-no-return.
-        # Harmless after the blast (depths_breached wins).
-        game.save.set_flag("blast_laid", False)
-    sc.on_exit_fn = _on_exit
+    sc.on_exit_fn = _deepface_on_exit
     return sc
 
 
 # ---- Side branch: the Overflow Sump (key: the_sump) off the Cistern ----
+
+def _sump_on_enter(game, scene):
+    from .base import drop_ammo_cache
+    drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
+
+
+def _sump_interact(game):
+    pxp, pyp = game.scene._powder_pos
+    if (abs(game.player.x - pxp) <= 40
+            and abs(game.player.y - pyp) <= 40
+            and not game.save.flag("powder_taken")):
+        game.save.set_flag("powder_taken", True)
+        game.player.inventory.add("powder", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game.show_notice("Blasting powder, kept dry on the ledge. "
+                         "Enough to open a few feet of dead earth.")
+        return
+    nx, ny = game.scene._note_pos
+    if abs(game.player.x - nx) > 40 or abs(game.player.y - ny) > 40:
+        return
+    if not game.save.flag("sump_bargain_taken"):
+        game.save.set_flag("sump_bargain_taken", True)
+        game.player.inventory.add("cult_bargain", 1)
+        game.audio.play("pickup_rare", 0.6)
+        game._log_note("cult_bargain", [
+            "They write about the bargain like a debt almost paid off. "
+            "Not one of them can say what they put up for it, only that "
+            "the last payment is close. I never took a confession this "
+            "happy.",
+        ])
+        game.show_notice("The Bargain. Their own testimony.")
+        return
+
 
 def build_the_sump():
     """A round overflow sump off the Cistern -- a dead-end pocket where the
@@ -1453,10 +1513,7 @@ def build_the_sump():
         sc.add_item(2 * TILE + 16, 5 * TILE + 16, "stone")
     _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)
 
-    def _on_enter(game, scene):
-        from .base import drop_ammo_cache
-        drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
-    sc.on_enter_fn = _on_enter
+    sc.on_enter_fn = _sump_on_enter
 
     # Optional lore: The Bargain (second testimony fragment), left among the
     # diggers' supplies on the dry ledge. Pure lore, gates nothing.
@@ -1468,33 +1525,7 @@ def build_the_sump():
     sc._powder_pos = (7 * TILE + 16, 4 * TILE + 16)
     sc.add_interactable(sc._powder_pos[0], sc._powder_pos[1], 40)
 
-    def _interact(game):
-        pxp, pyp = sc._powder_pos
-        if (abs(game.player.x - pxp) <= 40
-                and abs(game.player.y - pyp) <= 40
-                and not game.save.flag("powder_taken")):
-            game.save.set_flag("powder_taken", True)
-            game.player.inventory.add("powder", 1)
-            game.audio.play("pickup_rare", 0.7)
-            game.show_notice("Blasting powder, kept dry on the ledge. "
-                             "Enough to open a few feet of dead earth.")
-            return
-        nx, ny = sc._note_pos
-        if abs(game.player.x - nx) > 40 or abs(game.player.y - ny) > 40:
-            return
-        if not game.save.flag("sump_bargain_taken"):
-            game.save.set_flag("sump_bargain_taken", True)
-            game.player.inventory.add("cult_bargain", 1)
-            game.audio.play("pickup_rare", 0.6)
-            game._log_note("cult_bargain", [
-                "They write about the bargain like a debt almost paid off. "
-                "Not one of them can say what they put up for it, only that "
-                "the last payment is close. I never took a confession this "
-                "happy.",
-            ])
-            game.show_notice("The Bargain. Their own testimony.")
-            return
-    sc.on_interact_fn = _interact
+    sc.on_interact_fn = _sump_interact
     return sc
 
 

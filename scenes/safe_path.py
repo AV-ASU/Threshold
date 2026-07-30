@@ -585,6 +585,34 @@ def _river_stones(sc, rows=(6, 14, 22, 30, 38)):
             sc.add_item(x, y, "stone")
 
 
+def _river_road_update(game, scene, dt):
+    """Finding the body counts on SIGHT, not only on the E-press: walking
+    up on the remains sets `preacher_body_seen`, the flag Sheriff Vane's
+    and Hettie's murder one-shots key on (they can never announce a
+    killing the player hasn't found)."""
+    if (game.save.flag("preacher_doomed")
+            and not game.save.flag("preacher_body_seen")):
+        bx, by = scene._preacher_bank_pos
+        if (abs(game.player.x - bx) < 110
+                and abs(game.player.y - by) < 110):
+            game.save.set_flag("preacher_body_seen", True)
+
+
+def _river_road_on_enter(game, scene):
+    from .dialogue import preacher_body_examine
+    from entities.npc import NPC
+    if not game.save.flag("preacher_doomed"):
+        return
+    bx, by = scene._preacher_bank_pos
+    scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
+    scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
+    scene.add_decoration(Decoration(bx, by, "body"))
+    scene.add_npc(NPC(bx, by, "The Preacher", "_invisible",
+                      voice="blip_soft", portrait="narrator",
+                      dialogue_fn=preacher_body_examine,
+                      movement="idle", solid=True, tag="preacher_body"))
+
+
 def _preacher_bank(sc):
     """THE PREACHER'S END, laid on the bank every entry once he is doomed.
 
@@ -601,32 +629,10 @@ def _preacher_bank(sc):
     col = (min(wet) - 1) if wet else sc.w - 4
     sc._preacher_bank_pos = (col * TILE + 16, row * TILE + 16)
 
-    def _on_enter(game, scene):
-        if not game.save.flag("preacher_doomed"):
-            return
-        bx, by = scene._preacher_bank_pos
-        scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
-        scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
-        scene.add_decoration(Decoration(bx, by, "body"))
-        scene.add_npc(NPC(bx, by, "The Preacher", "_invisible",
-                          voice="blip_soft", portrait="narrator",
-                          dialogue_fn=preacher_body_examine,
-                          movement="idle", solid=True, tag="preacher_body"))
 
-    def _on_update(game, scene, dt):
-        """Finding the body counts on SIGHT, not only on the E-press: walking
-        up on the remains sets `preacher_body_seen`, the flag Sheriff Vane's
-        and Hettie's murder one-shots key on (they can never announce a
-        killing the player hasn't found)."""
-        if (game.save.flag("preacher_doomed")
-                and not game.save.flag("preacher_body_seen")):
-            bx, by = scene._preacher_bank_pos
-            if (abs(game.player.x - bx) < 110
-                    and abs(game.player.y - by) < 110):
-                game.save.set_flag("preacher_body_seen", True)
 
-    sc.on_enter_fn = _on_enter
-    sc.on_update_fn = _on_update
+    sc.on_enter_fn = _river_road_on_enter
+    sc.on_update_fn = _river_road_update
 
 
 def build_river_bend():
@@ -898,6 +904,49 @@ def build_store_row():
     return sc
 
 
+def _square_interact(game):
+    wx, wy = game.scene._well_pos
+    nx, ny = game.scene._news_rack_pos
+    px_, py_ = game.player.x, game.player.y
+    if abs(px_ - wx) < 36 and abs(py_ - wy) < 36:
+        if (game.save.flag("well_examined")
+                and game.player.inventory.count("stone") > 0):
+            # A stone over the lip: the knocks fall away, the shaft's
+            # rattle carries across the square -- and no bottom ever
+            # sounds. WORDLESS by design (the missing landing IS the
+            # beat; the well stays the bottomless dread it is).
+            game.player.inventory.remove("stone", 1)
+            game.audio.play("bump", 0.5)
+            game._echoes.extend([
+                {"t": 0.35, "x": wx, "y": wy, "vol": 0.34},
+                {"t": 0.80, "x": wx, "y": wy, "vol": 0.22, "emit": True},
+                {"t": 1.45, "x": wx, "y": wy, "vol": 0.12},
+            ])
+            return
+        if not game.save.flag("well_examined"):
+            game.save.set_flag("well_examined", True)
+            game.audio.play("low_pulse", 0.4)
+            game.dialog.show([
+                "[c=dim](You lean over the lip. The shaft drops "
+                "past where any water should be. No glint, no "
+                "bottom, just cold air climbing up out of it.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        game.audio.play("low_pulse", 0.4)
+        game.show_notice("Cold air climbs out of the dark. No way "
+                         "down for you here.")
+        return
+    if abs(px_ - nx) < 36 and abs(py_ - ny) < 36:
+        game.audio.play("blip_low", 0.4)
+        game.dialog.show([
+            "A coin rack of newspapers, bleached behind the scratched "
+            "plastic. The county weekly.",
+            "[c=dim]Dated January 15. Every copy in the stack. Nobody "
+            "ever fed it another.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+
+
 def _town_square(sc):
     """THE SQUARE: the town's public things, at the crossing outside the store.
 
@@ -974,45 +1023,6 @@ def _town_square(sc):
     sc.add_decoration(Decoration((cx - off - 2) * TILE + 16,
                                  (cy + off + 1) * TILE + 16, "creepy_tree"))
 
-    def _square_interact(game):
-        px_, py_ = game.player.x, game.player.y
-        if abs(px_ - wx) < 36 and abs(py_ - wy) < 36:
-            if (game.save.flag("well_examined")
-                    and game.player.inventory.count("stone") > 0):
-                # A stone over the lip: the knocks fall away, the shaft's
-                # rattle carries across the square -- and no bottom ever
-                # sounds. WORDLESS by design (the missing landing IS the
-                # beat; the well stays the bottomless dread it is).
-                game.player.inventory.remove("stone", 1)
-                game.audio.play("bump", 0.5)
-                game._echoes.extend([
-                    {"t": 0.35, "x": wx, "y": wy, "vol": 0.34},
-                    {"t": 0.80, "x": wx, "y": wy, "vol": 0.22, "emit": True},
-                    {"t": 1.45, "x": wx, "y": wy, "vol": 0.12},
-                ])
-                return
-            if not game.save.flag("well_examined"):
-                game.save.set_flag("well_examined", True)
-                game.audio.play("low_pulse", 0.4)
-                game.dialog.show([
-                    "[c=dim](You lean over the lip. The shaft drops "
-                    "past where any water should be. No glint, no "
-                    "bottom, just cold air climbing up out of it.)[/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
-                return
-            game.audio.play("low_pulse", 0.4)
-            game.show_notice("Cold air climbs out of the dark. No way "
-                             "down for you here.")
-            return
-        if abs(px_ - nx) < 36 and abs(py_ - ny) < 36:
-            game.audio.play("blip_low", 0.4)
-            game.dialog.show([
-                "A coin rack of newspapers, bleached behind the scratched "
-                "plastic. The county weekly.",
-                "[c=dim]Dated January 15. Every copy in the stack. Nobody "
-                "ever fed it another.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
 
     sc.add_interactable(wx, wy, 36)
     sc.add_interactable(nx, ny, 36)
