@@ -140,6 +140,10 @@ def main():
                          "frame to a porthole. That overlay is real and worth "
                          "looking at, but it is a different study than how the "
                          "flood moves -- pass --vis 1.0 for it.")
+    ap.add_argument("--no-beam", action="store_true",
+                    help="record with the flashlight OFF (the old behaviour). "
+                         "Only useful for judging what the room looks like "
+                         "with no light of your own at all.")
     ap.add_argument("--measure", action="store_true",
                     help="print how much INK the flood actually puts on screen "
                          "instead of recording. See measure().")
@@ -164,6 +168,14 @@ def main():
                                 for i in range(STORM_GATE_EVIDENCE)])
     (px, py), in_light = lit_stand(g.scene)
     g.player.x, g.player.y = px, py
+
+    # THE FLASHLIGHT IS ON. Every earlier clip from this tool was recorded with
+    # the beam off, which is not a state a player is ever in at ev3: the beam is
+    # the only way to read a dark room, so a capture without it is a picture of
+    # a game nobody plays. It also made the storm look darker than it is.
+    if not args.no_beam:
+        g.player.inventory.add("flashlight")
+        g.flashlight_on = True
 
     for _ in range(6):
         g.state = "playing"

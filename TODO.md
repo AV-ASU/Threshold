@@ -455,11 +455,19 @@
     it": a guaranteed eyeball part throwing decorative light onto the
     creature's own flesh (`CHANGELOG.md`, `DESIGN.md` §1). Interior value now
     exists, so the outline is no longer carrying legibility alone.
-    **Still open on legibility:** with the interior doing work, try dropping
-    `AMALGAM_EDGE_W` back to 1 -- the 2px edge was a crutch for a body that had
-    nothing, and 1px would settle the preview sheet's fair complaint that 2px
-    reads as line-art. Re-measure with `tools/capture_storm.py --measure` and
-    look in a SCENE before deciding.
+    **Still open, and this is the honest state: the units are STILL not
+    legible enough.** The eye works in isolation (lamp-off vs lamp-on on one
+    creature measures a peak delta of 96) but cropped 1:1 from a real dark
+    scene at 130px it reads as a faint dot, not a lit body. The mechanism is
+    right and the SCALE is wrong. Things worth trying, in order: draw the
+    creature LARGER at game scale (they are small enough that no amount of
+    interior detail survives); raise `AMALGAM_LAMP_*` further and widen
+    `EYE_LAMP_R` so the lit area is a body rather than a bulb; and once the
+    interior really carries, drop `AMALGAM_EDGE_W` back to 1, which would also
+    settle the preview sheet's fair complaint that 2px reads as line-art.
+    **Do not trust `--measure` alone for this** -- its peak deltas sit at 14-15
+    whatever you change, because the diff is dominated by the occluder fade a
+    visible actor triggers rather than by the creature. Crop 1:1 and look.
     **Still open:** `lost_corn` builds zero units (above). Untouched.
   - **THE AMALGAM'S CATCH ANIMATION.** The apex's death card is a wordless
     placeholder fade, hooked up and timed already (`_death_kind == "apex"`,

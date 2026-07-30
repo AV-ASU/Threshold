@@ -2706,6 +2706,46 @@
 
 ## The light table, and one skin for His gaze
 
+- **2026-07 -- the beam reaches, and the capture tool now turns it on.** Two
+  things, one of them an outright error on my part.
+
+  **The error:** every clip `tools/capture_storm.py` had produced was recorded
+  with the FLASHLIGHT OFF. That is not a state a player is ever in at ev3 --
+  the beam is the only way to read a dark room -- so those captures were
+  pictures of a game nobody plays, and they made the storm look far darker and
+  emptier than it is. The tool now switches the beam on by default
+  (`--no-beam` restores the old behaviour for judging a room with no light of
+  your own).
+
+  **The change:** `FLASHLIGHT_REACH` 300 -> 460, spread 30 -> 34 degrees
+  (maintainer: *"you can make the flashlight brighter"*). At 300 the beam
+  cleared barely more than the ground at the player's feet, which made the one
+  tool they have against a dark room feel like a candle -- and at ev3, when the
+  storm has taken the surface and the whole read of the game is "what is out
+  there", a short beam means the answer is always "nothing you can see". The
+  reach now covers most of the spawn band (150..420), so sweeping the beam is
+  how you find the flood before it arrives. It costs what it always cost: the
+  beam raises visibility while it burns, so a longer look is a louder one.
+
+  **THE LANTERN EYE was retuned and is still under-delivering.** First tuned at
+  idle 0.30 / near 260px, which changed nothing visible: units sit at 130-400px
+  so the curve fired at ~0.44 at best, and the blind-spot fade, the body's phase
+  alpha and the room gloom each took a cut of what was left. Now idle 0.62 /
+  near 430 (the spawn band). In isolation the eye is unambiguously working -- a
+  lamp-off vs lamp-on A/B on one creature measures a peak pixel delta of 96 --
+  but cropped 1:1 out of a real dark scene at 130px it still reads as a faint
+  dot rather than as a lit body. Honest state: the mechanism is right, the
+  scale is not. Remainder in `TODO.md`.
+
+  **A note on the measurement, because it misled me twice.** `--measure`
+  reports peak deltas stuck at 14-15 no matter what changes -- alpha, gloom,
+  lamp tuning all move it by about 1. A number that will not move is not
+  evidence that nothing changed; here it means the diff is dominated by
+  something constant (most likely the occluder FADE that a visible actor
+  triggers) rather than by the creature's own pixels. Treat it as a floor, not
+  a verdict, and crop 1:1 and LOOK.
+
+
 - **2026-07 -- THE LANTERN EYE: the amalgam lights its own flesh.** The
   maintainer's idea, and a better one than the pass it replaced: *"what if the
   eye acts like a pseudo light source allowing for the player to have

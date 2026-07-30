@@ -430,8 +430,17 @@ STORM_LIGHT_PROBE = 12.0      # px ahead a unit tests for light before stepping
 # lamps in it (most of the mine, the lost spaces, any unpowered building). These
 # are the numbers `_draw_dark` already draws the cone with; they live here so the
 # beam the player SEES and the beam a unit RESPECTS cannot drift apart.
-FLASHLIGHT_REACH = 300.0      # px
-FLASHLIGHT_SPREAD_DEG = 30.0  # half-angle
+# THE BEAM. Raised 2026-07 (maintainer: "you can make the flashlight
+# brighter"). At 300px reach the beam cleared barely more than the ground at
+# the player's feet, which made the one tool the player has against a dark room
+# feel like a candle -- and at ev3, when the storm has taken the surface and the
+# whole read of the game is "what is out there", a short beam means the answer
+# is always "nothing you can see". The reach now covers most of the spawn band
+# (STORM_SPAWN_NEAR..FAR is 150..420), so sweeping the beam is how you find the
+# flood before it reaches you. It costs what it always cost: the beam RAISES
+# visibility while it burns (VIS_LIT_RISE), so a longer look is a louder one.
+FLASHLIGHT_REACH = 460.0      # px
+FLASHLIGHT_SPREAD_DEG = 34.0  # half-angle
 # How near a storm unit RESOLVES out of the blind-spot fog. Storm units are not
 # gated by the sight cone the way a standing Watcher is: measured on a live
 # storm, 0 of 22 units passed the cone (7 of them inside 120px), so the flood
@@ -449,9 +458,17 @@ STORM_SPAWN_FAR = 420.0       # px: furthest (wider than a Watcher's 200 -- the
 # and nothing else, so these never reach Scene.lit_at, the light table, or any
 # gate. It exists because a near-black body had no value to spend and the bone
 # outline was carrying legibility alone, which read as line-art.
-AMALGAM_LAMP_IDLE = 0.30      # burning while it has not found you
-AMALGAM_LAMP_NEAR = 260.0     # px at which it reaches full -- it brightens as
-                              # it closes, so the tell is "it has me now"
+# First tuned at idle 0.30 / near 260 and it changed nothing you could see:
+# units sit at 130-400px, so the curve was firing at ~0.44 at best, and the
+# blind-spot fade, the body's own phase alpha and the room gloom each took a
+# cut of what was left. Measured in isolation the eye was working (max pixel
+# delta 96); measured in a scene it was invisible. Tuned for where the units
+# ACTUALLY are, which is the whole spawn band, not arm's reach.
+AMALGAM_LAMP_IDLE = 0.62      # burning while it has not found you
+AMALGAM_LAMP_NEAR = 430.0     # px at which it reaches full. Covers the spawn
+                              # band (STORM_SPAWN_NEAR..FAR is 150..420), so a
+                              # unit anywhere you can see it is lit by its own
+                              # eye and brightens as it closes
 
 WATCHER_LIGHT_BURN = 2.0      # "no light = danger": a Watcher caught
                               # in a light pool / the flashlight beam dissolves
