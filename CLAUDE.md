@@ -922,15 +922,19 @@ section is the CODE MAP only — where each system lives:
   reads which side the wall is on from the same neighbours (local geometry
   first, the nearest-scene-edge rule only as a fallback, so an outdoor building
   and an interior both resolve).
-  **A LIGHT-emitting kind lives in TWO tables (2026-07 lighting pass):**
-  `Scene._LIGHT_KINDS` (`scenes/base.py`, the MECHANICAL pool radius
-  `Scene.lit_at` reads — the Watcher spawn/burn gate and the lost-edge gate;
-  NOT a concealment gate, darkness never hides you) AND `FIXTURE_POOLS`
-  (`systems/render_mixin.py`, the VISIBLE light `_draw_dark` casts in a dark
-  scene: `radius, color, peak, src_z, arm, flicker_amp, flicker_speed`).
-  `_draw_dark` iterates EVERY emitter through `FIXTURE_POOLS` (not just
-  `wall_torch`), so a fixture missing from it will read + gate as lit but cast
-  no visible light in the dark. `src_z` is the light source's real world
+  **A LIGHT-emitting kind is ONE ROW in THE LIGHT TABLE** (`systems/lights.py`,
+  2026-07). It used to take three separate declarations that could disagree —
+  the mechanical radius, the visible pool, and the genset-powered subset — and
+  two of them shipped out of sync, so a check existed purely to catch the
+  drift. Now one row carries `gate` (the MECHANICAL pool radius `Scene.lit_at`
+  answers with — the Watcher spawn/burn gate and the lost-edge gate; NOT a
+  concealment gate, darkness never hides you), `pool` (the VISIBLE light
+  `_draw_dark` casts), `color, peak, src_z, arm, amp, spd`, and `elec`.
+  `Scene._LIGHT_KINDS`, `Scene._ELECTRIC_KINDS` and `FIXTURE_POOLS` are all
+  DERIVED from it, so every existing call site is unchanged and half a light
+  is no longer expressible. **`gate` and `pool` are allowed to differ and that
+  is a decision, not drift** — a bare bulb floods its room visibly (pool 108)
+  while its stealth-cover radius stays tight (gate 58). `src_z` is the light source's real world
   HEIGHT and `arm` its gooseneck offset: the pool is a tilt-squashed ELLIPSE
   cast on the floor UNDER the 3D source, pools blend ADDITIVELY (they combine
   + lift the objects they lie on), and solid casters throw SUBTRACTIVE cast
@@ -983,13 +987,14 @@ section is the CODE MAP only — where each system lives:
   lives in `TODO.md` and nowhere else, and that file deletes a ticket the
   moment it lands — so a comment citing one becomes a pointer into a void by
   design. 183 of them had accumulated as provenance on shipped code, and the
-  numbers had been REUSED, so a comment reading `TODO #8` in `scenes/depths.py`
-  (the procession beat) resolved to the live ticket for parked terrain
-  megabuilds. All of them are cut. A comment cites **`DESIGN.md`** (how the
-  system works) or **`CHANGELOG.md`** (why it got that way) — both current-state
-  docs that outlive the work — or it just says the thing plainly. Tickets have
-  NAMES now, not numbers. Guarded by `tests/conventions.py` check 13, which
-  also fails on a bare `TODO` or `FIXME`.
+  numbers had been REUSED, so a citation of ticket 8 in `scenes/depths.py` (the
+  procession beat) resolved to the live ticket for parked terrain megabuilds.
+  All of them are cut. A comment cites **`DESIGN.md`** (how the system works)
+  or **`CHANGELOG.md`** (why it got that way) — both current-state docs that
+  outlive the work — or it just says the thing plainly. Tickets have NAMES now,
+  not numbers. Guarded by `tests/conventions.py` check 13, which scans the
+  source AND the canon docs, over the whole text so a citation that wraps
+  across a line cannot hide, and which also fails on a bare work marker.
 - **PLAYTEST ERROR CLASSES (audit for these BEFORE calling a scene, interaction, or
   line "done" -- a 2026-07 play-test surfaced every one of them, and each is a CLASS,
   not a one-off).** When you touch anything nearby, actively hunt the whole class

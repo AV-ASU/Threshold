@@ -406,9 +406,12 @@
     and it is on the altar; the storm's face is a **SLICE** of Him, the same
     cross-section as the drifting masks in fire. That is what keeps the
     impossible count at one (NARRATIVE §2/§6a; `tests/conventions.py` check 12).
-  - **Light SLOWS and repels the storm, never burns it** (burning stays the
-    Watchers' privilege); the apex ignores light entirely. He is survived,
-    never dispelled.
+  - **Light REPELS the storm, never burns it** (burning stays the amalgam
+    dispel's privilege): a unit refuses any step that would put it in a pool,
+    so standing in one makes them ring its edge. This is the shipped rule and
+    it supersedes the earlier "light slows them" wording, which was never
+    built and described a different mechanic. The apex ignores light entirely.
+    He is survived, never dispelled.
   - **The storm fills ALL dark, corn included.** Light is the last refuge.
   - The idle horizon King is **CUT**; the storm is the full-power apex at the
     source, and its overwhelm is the point.
@@ -419,6 +422,30 @@
     dissolve is reserved for the CATCH beat, never routine crossing.
 
   Build order:
+  - **THE FLOOD IS INVISIBLE, AND ON THE SAFE PATH IT CANNOT REACH YOU.**
+    Measured on the live system with `tools/capture_storm.py`, not judged off a
+    still. In `farm_yard` at full evidence: 18 units up, all 18 on screen, 11
+    inside `STORM_SEE_RANGE`, and **one or two legible in the frame**. The bone
+    outline is the only thing that makes a unit findable at all, and it is
+    doing that job alone. Two separate problems live here:
+    - **Reach.** In `store_row` the same run puts 13 units up with the nearest
+      at 231px and exactly ONE inside the smear range. The cause is geometry,
+      not the units: the safe path is **69% lit** (the lamp chain floods the
+      whole carriageway by design, `DESIGN.md` §14), and a unit refuses any
+      step into light, so the flood physically cannot come onto a street. Every
+      street in the game is storm-proof. That may be the right answer — the
+      path is the safe layer — but it is currently an accident of two correct
+      rules meeting, and it means the town's whole connective tissue is a
+      no-storm zone. Decide it on purpose.
+    - **Absence.** `lost_corn` builds **zero** units, because the crop circle's
+      corn ring is solid and the `STORM_SPAWN_NEAR..FAR` band has nowhere to
+      open. The lost spaces are the darkest scenes in the game and the storm
+      never arrives in them, which contradicts "the storm fills ALL dark".
+      Small enclosed rooms are the same shape of failure (`well_passage` and
+      `lodge_yard` each build a single unit).
+    Fix the legibility first, since it is the one that makes every other
+    judgement about this system possible. Re-measure with the same tool rather
+    than eyeballing a frame.
   - **THE AMALGAM'S CATCH ANIMATION.** The apex's death card is a wordless
     placeholder fade, hooked up and timed already (`_death_kind == "apex"`,
     3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing:

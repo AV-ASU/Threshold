@@ -21,6 +21,7 @@ terminal version is `python tools/index.py [word]`.
 ## Look At The World
 
 - `tools/capture_facings.py` — Four-facing capture for ONE scene -- the VISION.md look-pass harness.
+- `tools/capture_storm.py` — Record THE STORM as it actually ships -- a real Game, the real update loop,
 - `tools/capture_world.py` — Deterministic draw_world capture — the before/after gate for the camera-seam
 - `tools/contact_sheet.py` — Contact sheet for THRESHOLD's scenes.
 - `tools/preview_arrival_road.py` — Headless preview of the arrival_road under the LIVE tilt camera.
@@ -42,7 +43,6 @@ terminal version is `python tools/index.py [word]`.
 - `tools/preview_mask_spin.py` — Preview the Pallid Mask as a REAL 3D object: `yaw` spins it a full 360 --
 - `tools/preview_props_sheet.py` — Isolated prop contact sheet -- CLAUDE.md scene-dressing process step 2.
 - `tools/preview_pseudo3d.py` — Render the pseudo-3D Watcher proto to a labelled turntable strip + a GIF.
-- `tools/preview_storm.py` — Preview THE STORM (systems.storm.Storm): the sim run over time, six
 
 ## Light / Sight / Occlusion
 

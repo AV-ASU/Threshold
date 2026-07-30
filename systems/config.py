@@ -411,8 +411,8 @@ STORM_PRESS_UNITS = WATCHER_MAX
 STORM_SPAWN_BASE = 2.4        # s between manifestations while a storm is up
 STORM_SPAWN_MIN = 0.9         # ... shaved by evidence down to this floor
 STORM_SPAWN_STEP = 0.5
-# 0.34 * 60 = ~20 px/s, matching systems/storm.py's original STORM_UNIT_SPEED of
-# 22 px/s. For scale: the player walks at 84 px/s and a cultist runs 51-54, so a
+# 0.34 * 60 = ~20 px/s, carried over from the standalone storm sim that was
+# superseded by the flood-as-a-mode implementation. For scale: the player walks at 84 px/s and a cultist runs 51-54, so a
 # unit is a slow DRIFT, not a walk -- it cannot chase you down, which is correct
 # for something that cannot touch you. (An earlier comment here called it "a
 # walk, below player sprint"; that was wrong by a factor of four.)
@@ -448,10 +448,6 @@ WATCHER_LIGHT_BURN = 2.0      # "no light = danger": a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
-AMALGAM_CHANCE = 0.9          # fraction of Watcher manifestations that arrive
-                              # as an AMALGAM (a seeded parts assembly,
-                              # rendering/amalgam.py) instead of the OG shroud;
-                              # behavior is identical either way
 # Walking through a rift FOLD has this chance to open an extra Watcher on the
 # far side (His gaze reaching across the wrongness). Never past WATCHER_MAX.
 FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold traversal

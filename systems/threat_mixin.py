@@ -1206,12 +1206,12 @@ class ThreatMixin:
             break
         if spot is None:
             return
-        # The shadow FAMILY: some of His gaze manifests as the OG Watcher,
-        # some as an AMALGAM -- a seeded assembly of parts, each emerging
-        # from its own cut (rendering/amalgam.py). Same behavior end to end
-        # (this spawn rule, the hold, every dispel); only the flesh differs.
-        kind = "amalgam" if random.random() < AMALGAM_CHANCE else "watcher"
-        w = NPC(spot[0], spot[1], "", kind,
+        # His gaze has ONE skin: the AMALGAM (rendering/amalgam.py), a seeded
+        # assembly of parts each emerging from its own cut. The OG shroud
+        # Watcher is CUT (maintainer, 2026-07) -- two skins with identical
+        # behavior read as an inconsistency rather than variety, and the
+        # assembly already deals more silhouettes than a second body ever did.
+        w = NPC(spot[0], spot[1], "", "amalgam",
                 voice="blip_low", portrait="watcher",
                 movement="storm" if storming else "watch",
                 speed=STORM_UNIT_SPEED if storming else 0.0,

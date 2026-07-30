@@ -207,8 +207,8 @@ its head) and pings the cult to **investigate the body**, and the body
   **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
   `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
   `FOLD_WATCHER_CHANCE` to open an extra. **The gaze OPENS under the open sky,
-  in the deep, AND in a DARK non-refuge interior ("no light = danger", TODO
-  #21; `WATCHER_OPEN_SCENES` folds in `DIM_INTERIOR_SCENES`).** **EXPOSED means
+  in the deep, AND in a DARK non-refuge interior ("no light = danger";
+  `WATCHER_OPEN_SCENES` folds in `DIM_INTERIOR_SCENES`).** **EXPOSED means
   NOT IN COVER, and nothing else** (maintainer ruling, 2026-07: "Watchers should
   be able to gaze at you while you're standing in the light, that's the whole
   point of them"). **Light is NOT cover from the gaze.** A Watcher holds you
@@ -283,10 +283,11 @@ its head) and pings the cult to **investigate the body**, and the body
   impossible count stays at one"). Guarded, `tests/stealth.py` §20. The **true refuges stay gaze-free**
   (`SAFE_SCENES` are excluded + `KING_FREE`); a plain interior outside both
   sets is gaze-free too (`tests/stealth.py` §11). (The old GAZE_BIND
-  high-visibility trigger is retired.) **The gaze wears two skins (the
-  shadow family), and the AMALGAM is now the ordinary one:** `AMALGAM_CHANCE`
-  is 0.9, so the OG shroud Watcher is the rare spawn the maintainer asked to
-  keep rather than the default. A manifestation is an
+  high-visibility trigger is retired.) **His gaze has ONE skin, the
+  AMALGAM** (maintainer ruling, 2026-07). The OG shroud Watcher is CUT: two
+  bodies running identical behavior read as an inconsistency rather than as
+  variety, and the assembly already deals far more silhouettes than a second
+  hand-drawn body ever did. Every manifestation is an
   **AMALGAM** (`rendering/amalgam.py`) -- a
   seeded assembly of 3-5 parts from a 22-part library (44 with MIRRORING --
   every part carries a flip flag, so a limb on the left is not the same
@@ -529,31 +530,14 @@ Only display names and fiction change.
   **CAPTURED card** (`kind="cultist"`, ~2.8s) and the **Carcosa** furnace
   cutscene (`kind="king"`, ~3.5s); both end the run and return to title.
 
-## 4. Still loose (design TODO)
+## 4. Where open work lives
 
-> The **concrete code changes** for canon-alignment work live in
-> **`TODO.md`**; the decisions themselves are canon and live where canon
-> lives (`NARRATIVE.md` §§1, 2, 4, 6, 8, 9). The history of everything this
-> section used to list as loose, and how it landed, moved to
-> `CHANGELOG.md`. What's still genuinely open is below.
-
-- Dynamic cultist AI (no preset patrol coordinates, line-of-sight
-  detection, nav-aware pursuit, fold-only chase carry), the eat-cult and
-  time-loop fiction scrubs, Toby's cut "dad" line, the journal door-dream,
-  the maker-less effigy grove, the Watchers' rehoming as His gaze, the
-  gun's false-power threshold, corpse persistence, the "he knows you"
-  threshold recognition, and naming the principal locals are all landed —
-  see `CHANGELOG.md` for what each was and why it changed.
-- **The liminal-composition pass** (§6): per-scene level design —
-  composed emptiness, long sightlines, uncanny repetition.
-- **Food scarcity — the VISUAL pass (mostly done).** The dialogue side is
-  done (Hettie: "The shelves don't empty anymore... No deliveries.";
-  "Shelves are bare. Till's been empty since the new year"), and the world
-  art largely landed: the shop's `bare_shelf` runs (dust-ghosts where the
-  stock stood, one tin left), Hettie's storeroom preserves, garden patches
-  on some town lots and not others. Still open: the domestic-horror beat
-  of a cultist eating an ordinary meal at a counter (NARRATIVE §4). Wallpaper, not a
-  mechanic.
+Open work lives in **`TODO.md`** and nowhere else, so this section holds no
+list of its own -- it used to, and the copy went stale in both directions (it
+was still carrying the counter-eater tableau as open a year after
+`_spawn_counter_eater` was cut). The decisions themselves are canon and live
+where canon lives (`NARRATIVE.md`); how anything got the way it is lives in
+`CHANGELOG.md`. This section number is kept because the code cites it.
 
 ---
 
@@ -973,7 +957,7 @@ Built into the procedural draw layer (`scenes/base.py`,
 - These compound with the runtime dread-aperture / flashlight / vignette
   (the static look is the floor; in-game dark scenes go darker).
 
-**Still TODO (the liminal-composition pass):** composed emptiness, long
+**Still open, the liminal-composition pass:** composed emptiness, long
 sightlines, and uncanny repetition (identical houses, endless identical
 corn rows) — that's per-scene level design, not a global draw change.
 

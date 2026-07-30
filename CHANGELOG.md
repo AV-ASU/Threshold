@@ -2704,6 +2704,79 @@
   farmhouse hatch nailed shut, the car moved to the lodge yard). Saves are
   in-memory only, so there was no persistence concern in cutting them.
 
+## The light table, and one skin for His gaze
+
+- **2026-07 -- THE LIGHT TABLE: three declarations become one row.** A
+  light-emitting kind used to be declared in three places that nothing tied
+  together -- `Scene._LIGHT_KINDS` (the mechanical radius `lit_at` answers
+  with), `FIXTURE_POOLS` (the visible pool `_draw_dark` casts), and
+  `Scene._ELECTRIC_KINDS` (whether the genset powers it). A kind could gate
+  without shining or shine without gating, and both shipped: `campfire`, the
+  COLD scorch decal, handed out 80px of stealth cover while casting nothing,
+  and `burn_barrel` cast a pool while giving no cover at all. A conventions
+  check existed purely to catch the drift.
+
+  `systems/lights.py` now carries one row per kind and the three old names are
+  DERIVED from it, so every call site is unchanged and half a light is no
+  longer expressible. **`gate` and `pool` stay separately expressible on
+  purpose** -- a bare bulb floods its room visibly (pool 108) while its
+  stealth-cover radius stays tight (gate 58); that divergence is a decision,
+  and the merged row is where it is now stated rather than a coincidence of
+  two tables. Conventions check 3 is RETIRED with a tombstone comment saying
+  why, which is the better outcome than a check that keeps passing: the bug it
+  looked for cannot be written. Proved byte-identical with
+  `tools/capture_world.py --diff` before and after.
+
+  The retirement also broke `main()`, which held a hand-maintained tuple of
+  check function names inside a loop whose body was `pass`. Every check runs at
+  import via the decorator, so the loop had never done anything except create a
+  list to keep in sync -- and that is exactly what failed. Cut.
+
+- **2026-07 -- His gaze has ONE skin: the shroud Watcher is CUT.** Maintainer
+  ruling: *"Amalgs are to completely replace watchers and exist above at 1+
+  ev."* `AMALGAM_CHANCE` (0.9) is gone and so is the shroud's 76-line draw
+  branch. Two bodies running identical behavior read as an inconsistency
+  rather than as variety, and the assembly already deals far more silhouettes
+  (3-5 parts from a library of 22, doubled by per-part mirroring) than a second
+  hand-drawn body ever did. The ev1 half was already true (`WATCHER_WAKE_EV`
+  is 1), so nothing moved there. The stealth guard that asserted the amalgam
+  was merely the COMMON skin now asserts the shroud draw is gone outright.
+
+  **Not renamed:** `_tick_watchers`, `_spawn_watcher`, `WATCHER_MAX` and the
+  rest still carry the name of a creature that no longer exists. That is a
+  known ghost name and a separate mechanical sweep, called out here so it is
+  not discovered as a surprise.
+
+- **2026-07 -- `systems/storm.py` deleted.** The standalone storm sim was
+  superseded by the flood-as-a-mode implementation (its timer-driven Mask
+  migration is not how the hop works -- the hop is EARNED), and it was imported
+  by nothing but its own preview tool. Both are gone. It cost real time before
+  it went: the first attempt to record the shipping storm reached for it,
+  because two modules named for the same system is exactly the ambiguity dead
+  code buys you.
+
+- **2026-07 -- `tools/capture_storm.py`, and what it measured.** The storm's
+  entire content is MOTION -- units ringing a pool rather than entering it, the
+  apex crossing a ring the others will not, a wave building -- and none of that
+  survives a still frame. The tool drives a real `Game` through the real update
+  loop and records real `draw_world` to MP4.
+
+  What it found on first use is in `TODO.md` under the storm ticket, and none
+  of it was visible by looking: **18 units up in `farm_yard`, all 18 on screen,
+  11 inside the smear range, and one or two legible.** **`store_row` is 69%
+  lit**, so the flood cannot set foot on a street at all and stalls at 231px --
+  every road in the game is storm-proof as a side effect of the safe path's
+  lamp chain meeting the units' refusal to enter light. **`lost_corn` builds
+  zero units**, because the crop circle's corn ring leaves the spawn band
+  nowhere to open.
+
+  Two tool lessons worth keeping. A cold clip shows a trickle and a Mask that
+  never finds a host, because the storm is a CONDITION you walk into rather
+  than an event -- hence `--warmup`, which builds the flood off-camera. And at
+  max visibility the overlay paints His red wash plus a hard edge-crush tunnel
+  vignette that reduces the frame to a porthole, so the default holds
+  visibility at 0.78: above the apex gate, below the vignette.
+
 ## Brimley geography
 
 - **2026-07 -- every ticket citation cut out of the source, and a check so they

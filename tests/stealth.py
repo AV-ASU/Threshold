@@ -1463,10 +1463,11 @@ def main():
     # thing that stops them; they cannot touch or kill; and every dispel still
     # works. Out of storm, nothing changes.
     from systems.config import (STORM_MAX, STORM_GATE_EVIDENCE, STORM_UNIT_SPEED,
-                                AMALGAM_CHANCE, WATCHER_MAX)
+                                WATCHER_MAX)
     print("[19] storm: one wave, two modes -- cap, approach, light, dispel")
-    check(AMALGAM_CHANCE >= 0.85,
-          "storm: the amalgam is the default skin now, the shroud is rare")
+    check("kind == \"watcher\"" not in
+          open(os.path.join(PROJECT_ROOT, "rendering/sprites_npc.py")).read(),
+          "storm: the amalgam is the ONLY skin -- the shroud draw is gone")
     g = new_game()
     g.load_scene_now("well_passage", "default")
     tick(g, 20)

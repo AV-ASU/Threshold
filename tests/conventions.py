@@ -140,34 +140,14 @@ def _tilt_sets():
                 + "\n".join(rows))
 
 
-# --------------------------------------------------------- 3. light tables
-# THE RULE (CLAUDE.md): a light-emitting kind lives in TWO tables --
-# Scene._LIGHT_KINDS (the MECHANICAL cover radius stealth reads) and
-# FIXTURE_POOLS (the VISIBLE pool _draw_dark casts). A kind in only one is a
-# light that gates but does not shine, or shines but does not gate.
-# No exemptions. The two this check found on its first run were real bugs and
-# are fixed: `campfire` (the COLD indoor scorch decal) was handing out an 80px
-# light-cover radius while casting nothing, and `burn_barrel` was casting a
-# visible pool while giving no cover at all. Keep this empty if you can.
-LIGHT_EXEMPT = {}
-
-
-@check("light kinds agree across the mechanical + visible tables")
-def _light_tables():
-    from systems.render_mixin import FIXTURE_POOLS
-    from scenes.base import Scene
-    mech, vis = set(Scene._LIGHT_KINDS), set(FIXTURE_POOLS)
-    rows = []
-    for k in sorted(vis - mech):
-        if k not in LIGHT_EXEMPT:
-            rows.append(f"    {k!r}: in FIXTURE_POOLS, missing from Scene._LIGHT_KINDS "
-                        "(shines but gives no stealth cover)")
-    for k in sorted(mech - vis):
-        if k not in LIGHT_EXEMPT:
-            rows.append(f"    {k!r}: in Scene._LIGHT_KINDS, missing from FIXTURE_POOLS "
-                        "(gates as lit but casts no visible light)")
-    if rows:
-        return "\n".join(rows)
+# ------------------------------------------ 3. light tables (RETIRED, 2026-07)
+# This check compared Scene._LIGHT_KINDS against FIXTURE_POOLS and failed when
+# a kind sat in one and not the other -- a light that gates but does not shine,
+# or shines but does not gate. It caught two real bugs in its life. It is gone
+# because the two tables were MERGED into one row per kind (`systems/lights.py`,
+# THE LIGHT TABLE) and both names are now derived from it, so the disagreement
+# it looked for is no longer expressible. Do not reinstate it; if you find
+# yourself declaring a light in two places again, that is the regression.
 
 
 # ------------------------------------------------- 3b. windows tell the truth
@@ -638,35 +618,39 @@ def _address_tics():
 # silently lands on unrelated work is worse than no citation. The whole set
 # was cut in 2026-07; this keeps them from growing back one comment at a time.
 # `TODO.md` as a bare FILENAME is fine (this file's own DOCS tuple names it).
-@check("no ticket citations or work markers in the source")
+@check("no ticket citations or work markers in the source or canon docs")
 def _no_work_markers():
     # XXX is deliberately NOT in here: the scene layout rows spell walls with
     # runs of X ("W.XX.......XXX.W"), so it fires on the map grammar itself.
+    # Scanned over the WHOLE text rather than line by line, because a citation
+    # that WRAPS ("..., TODO\n  #21; ...") is exactly what a per-line scan
+    # misses -- one survived in DESIGN.md for precisely that reason.
     pat = re.compile(r"\bTODO\b(?!\.md)|\bFIXME\b")
+    _DOCS = ("CLAUDE.md", "NARRATIVE.md", "DESIGN.md", "DIALOGUE.md",
+             "VISION.md", "README.md")
     rows = []
     for base, dirs, files in os.walk(_ROOT):
         dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git")]
         for fn in sorted(files):
-            if not fn.endswith(".py"):
-                continue
             rel = os.path.relpath(os.path.join(base, fn), _ROOT)
+            if not (fn.endswith(".py") or rel in _DOCS):
+                continue
             if rel == os.path.join("tests", "conventions.py"):
                 continue          # this check's own pattern and prose
-            with open(os.path.join(base, fn)) as fh:
-                for i, line in enumerate(fh, 1):
-                    if pat.search(line):
-                        rows.append("    %s:%d  %s" % (rel, i, line.strip()[:88]))
+            text = open(os.path.join(base, fn)).read()
+            for m in pat.finditer(text):
+                ln = text.count("\n", 0, m.start()) + 1
+                frag = " ".join(text[m.start():m.start() + 74].split())
+                rows.append("    %s:%d  %s" % (rel, ln, frag))
     if rows:
-        return ("    Open work belongs in TODO.md, not in a comment. Cite\n"
-                "    DESIGN.md or CHANGELOG.md instead, or say the thing\n"
-                "    plainly and drop the pointer:\n" + "\n".join(rows[:20]))
+        return ("    Open work belongs in TODO.md, not in a comment and not\n"
+                "    in a current-state doc. Cite DESIGN.md or CHANGELOG.md\n"
+                "    instead, or say the thing plainly and drop the\n"
+                "    pointer:\n" + "\n".join(rows[:20]))
 
 
 def main():
     print("THRESHOLD conventions guard\n")
-    for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,
-               _lost_silent):
-        pass  # checks already ran at import via the decorator
     print()
     if FAILURES:
         print(f"FAILED: {len(FAILURES)} convention(s) violated.")
