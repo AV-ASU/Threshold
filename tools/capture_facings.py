@@ -112,6 +112,11 @@ def capture(g, key, heading, facing_vec, px=None, py=None, bright=False,
         g.save.set_arg("evidence", [{"name": f"cap_ev{i}", "content": "x"}
                                     for i in range(ev)])
     g.load_scene_now(key)
+    # A look pass judges the ROOM, and a scene's on_enter tutorial notice
+    # paints a black band across the middle of every one of the four frames.
+    # The clock does not advance here, so it never times out on its own.
+    g.notice_text = None
+    g.notice_t = 0.0
     g.look.body = wrap(heading)
     g.look.aim = wrap(heading)
     g.look.cam_yaw = wrap(heading + math.pi / 2)

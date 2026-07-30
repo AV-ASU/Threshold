@@ -2168,6 +2168,26 @@ moves while you watch it. What never lies stays the same in both: the room you
 stand in, any room holding a fixed light, and any room where you found a
 person.
 
+**The field that deals it** (`scenes/lost_field.py`) is the ROAD biome today;
+corn and forest stay the generated fields above. Nothing in it is a new
+spatial system: `Game.cross_fold` carries every mouth crossing (so walking
+room to room is walking, not loading, which is what makes a 20-tile room feel
+continuous), the SAME-SCENE fold carries the warp panes (silent by
+construction: there is no frame to see, so the room itself is the lie), the
+sight cone drives both shift laws, `terrain.invalidate_tilt_objects()` lets
+the span be a real edit to the live object grid, the `x` object char under an
+`@` floor is the gap you see across and cannot cross, and `Game._lost_return`
+is still the anchor the way out spends. The director chooses which piece lies
+beyond a mouth by the one rule above and re-chooses rooms two behind you; a
+room is dealt to `lost_road@cx,cy` and built on demand by `scenes.load_scene`.
+`systems/config._KeyFamily` is what keeps those dynamic keys inside the scene
+families every gate reads, so a corridor room is dark, lost and cult-tagged
+exactly as the field it hangs off is. Scatter is sized to the space it sits
+in and tested against the room's own collision before it is placed, because a
+rust hulk is wider than a two-tile corridor. Walked end to end by
+`tests/lost_field.py`; look at one piece as a room with
+`tools/preview_lost_room.py`.
+
 Drawn today, by group: the runs (`west_run`, `twin_run`, `throat`, `pinch`),
 the turns and junctions (`bend_se`, `tee_south`, `cross_skew`, `fork_rejoin`,
 `hub`, `comb`), the loops (`ring`, `loop_blind`, `spiral`, `switchback`), the

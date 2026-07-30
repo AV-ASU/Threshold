@@ -103,8 +103,9 @@ the lethal apex pursuer. (See the tilted-camera track below + `DESIGN.md §10`.)
 # Run (needs a display)
 python main.py
 
-# Full test gate — runs all eight harnesses (conventions + smoke + flow +
-# stealth + fold_pursuit + king_roam + render_smoke + layouts) and exits
+# Full test gate — runs all nine harnesses (conventions + smoke + flow +
+# stealth + fold_pursuit + king_roam + render_smoke + layouts + lost_field)
+# and exits
 # nonzero if any fails. Self-configures SDL dummy drivers, so no env vars needed. Run from
 # repo root before every commit/push.
 python tests/run_all.py
@@ -175,6 +176,10 @@ python tools/surface_map.py [--svg out.svg] [--json net.json]
 # beside what it is for. Regenerate it after the geography changes; it is
 # rendered from the game, never written down by hand.
 python tools/plan_page.py [out.html]
+
+# LOOK AT ONE DRAWN CORRIDOR PIECE AS A REAL ROOM, four facings, before you
+# trust it. The plan page draws a piece flat; this is what it is to stand in.
+python tools/preview_lost_room.py <piece> [--biome road|forest|corn] [--bright]
 
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
@@ -310,6 +315,21 @@ it renders the procedural sprites to a labelled PNG strip.
     fails on a mis-typed row, a mouth off its slot, floor no mouth can reach,
     an unpaired warp, a span with nowhere to slide, and on any mouth set fewer
     than two drawn shapes stand behind. Draw it: `tools/plan_page.py`.
+  - `scenes/lost_field.py` — **THE FIELD** the deck is dealt into (the SYSTEM
+    is `DESIGN.md` §13). One room is one SCENE with key `lost_road@cx,cy`,
+    built on demand by `scenes.load_scene`; the ROAD biome routes here, corn
+    and forest stay the generated fields. Built entirely out of primitives
+    that already existed: `cross_fold` for every mouth crossing AND for the
+    warp panes (same-scene = silent), the sight cone for both shift laws,
+    `invalidate_tilt_objects()` for the live span edit, `x` over `@` for the
+    void. Three things bite when editing: **a dynamic key is only in the right
+    scene families because of `config._KeyFamily`** (miss that and a corridor
+    room is full daylight with no lost-space rules); **scatter must be tested
+    against the room's own collision** (`_would_wall_off`) because a solid prop
+    is wider than a two-tile corridor; and the field is MODULE state, so
+    `clear_field()` is called from `_reset_run_state` and when you climb out.
+    Guards: `tests/lost_field.py`. Look at a piece as a room:
+    `tools/preview_lost_room.py`.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -1007,7 +1027,7 @@ section is the CODE MAP only — where each system lives:
   PR and ask. Don't ask for a second confirmation.
 - **Verify before you commit.** Run compile + `python tests/run_all.py` (the
   full gate: conventions + smoke + flow + stealth + fold_pursuit + king_roam +
-  render_smoke) and confirm green BEFORE `git commit`/`push`. A commit was pushed twice this project with a
+  render_smoke + layouts + lost_field) and confirm green BEFORE `git commit`/`push`. A commit was pushed twice this project with a
   `NameError` because edits were batched and not re-verified. For
   rendering/refactor work also run the byte-identity gate
   (`tools/capture_world.py --tag before/after`, then `--diff`). CI also runs

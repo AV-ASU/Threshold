@@ -59,8 +59,9 @@ python tests/run_all.py   # the full gate: every harness below, in order
 Or run one harness standalone: `tests/smoke.py` (every scene builds, every
 spawn point is walkable, every exit resolves), `tests/flow.py` (drives a
 full headless run through the critical path to every ending), plus
-`tests/stealth.py`, `tests/fold_pursuit.py`, `tests/king_roam.py`, and
-`tests/render_smoke.py`. All of them force SDL to dummy video/audio
+`tests/conventions.py`, `tests/stealth.py`, `tests/fold_pursuit.py`,
+`tests/king_roam.py`, `tests/render_smoke.py`, `tests/layouts.py`, and
+`tests/lost_field.py`. All of them force SDL to dummy video/audio
 drivers, so no display or audio device is required. CI runs the same full
 gate (plus a canon-key drift check) on every push and PR.
 

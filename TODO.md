@@ -461,19 +461,26 @@
   on a mis-drawn one. `tools/plan_page.py` draws the whole thing. What is left
   is everything that turns the deck into a field.
 
+  The field is built and walkable on the ROAD biome (`scenes/lost_field.py`,
+  `DESIGN.md` §13; guarded by `tests/lost_field.py`): rooms deal, seams hold,
+  the span shifts while watched, rooms re-decide behind you, and the way out
+  puts you back on the street you fell from. What is open:
+
   Build order:
-  - **Piece into scene.** One drawn grid plus a biome becomes a real room:
-    wall material per biome, props, lights, the mouths wired as exits. The
-    existing `LostSpace` island art is where the dressing comes from.
-  - **The field director.** What lies beyond each mouth, chosen from the
-    pieces whose facing edge matches. Plus the memory: what is pinned (the room
-    you stand in, lit rooms, rooms where you found someone) and what is free to
-    change.
-  - **The shifting span.** The watched law: the span slides between its
-    sockets while it is in the sight cone, never under the player. The
-    discovered law is the director re-deciding rooms two away.
+  - **Corn and forest move onto the deck.** They are still the generated sea
+    with a hand-authored island. The island, the occupied camp and the
+    lamp-carriers are the content that has to become PIECES first, or moving
+    them loses the best thing in the in-between. Draw the camp as a room.
   - **The people in there.** A `haven` holds one person, pinned the moment you
     find them. They are not Mara; she is what the field stands between you and.
+    Needs a reason they are down here and something they can say.
+  - **The void reads as shadow, not a drop.** The gap is a near-black floor
+    with an invisible solid over it, so under the tilt it is a dark stripe
+    rather than ground that has fallen away. It wants an edge: the near lip
+    catching light, the far side visibly lower.
+  - **More pieces.** 22 drawn, and the check holds the floor at two shapes per
+    mouth set. The thin ones are the three-mouth edges (`moving_stair` and
+    `comb` only). Draw against that number, not at random.
   - **Asymmetric return.** The way back is not the way you came. Today the
     hunted lantern climbs you out where you fell (`Game._lost_return`); the
     field should be able to put you out somewhere else on the same street

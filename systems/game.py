@@ -470,6 +470,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # hunted exit light. None = the field was entered some other way (a
         # direct load, a preview) and its static exit_to carries instead.
         self._lost_return = None
+        # The corridor field is module state (one field at a time), so a New
+        # Game has to end it explicitly or the next run walks back into the
+        # rooms the last one left.
+        from scenes.lost_field import clear_field
+        clear_field()
         # The hide-check struggle (DESIGN.md §12): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None

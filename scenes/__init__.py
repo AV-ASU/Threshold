@@ -38,6 +38,7 @@ from .yards import (build_shop_yard, build_school_yard, build_church_yard,
                     build_pell_yard, build_pell_house)
 from .lost_space import (build_lost_space, build_lost_corn,
                          build_lost_forest, build_lost_road)
+from .lost_field import build_lost_road_field
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_backwoods_cabin,
                                 build_backwoods_cabin_interior,
@@ -155,11 +156,15 @@ SCENE_BUILDERS = {
     "cornfield_maze":     build_cornfield_maze,
     # Hidden fold scenes (direction-sensitive warps off the main world).
     "effigy_grove":        build_effigy_grove,
-    # The lost spaces (prototype): procedural non-repeating dark field.
+    # The lost spaces. Corn and forest are the generated fields: a sea of
+    # hashed ground around one hand-authored lit island (`scenes/lost_space.py`).
+    # ROAD is the corridor field: a chain of hand-drawn 20x20 rooms dealt from
+    # the deck (`scenes/lost_pieces.py` + `scenes/lost_field.py`), which is what
+    # the whole in-between is being rebuilt as.
     "lost_space":          build_lost_space,
     "lost_corn":           build_lost_corn,
     "lost_forest":         build_lost_forest,
-    "lost_road":           build_lost_road,
+    "lost_road":           build_lost_road_field,
 }
 
 # DELETED (the prior combat/loot game -- removed wholesale, not just
@@ -175,6 +180,15 @@ from constants import TILE
 
 
 def load_scene(key):
+    # A CORRIDOR ROOM is not in the registry and never will be: one room is
+    # one scene, the field deals as many as the player walks, and their keys
+    # carry the cell (`lost_road@3,-1`). The field builds them on demand.
+    from .lost_field import is_field_key, build_room
+    if is_field_key(key):
+        sc = build_room(key)
+        sc.seat_tabletop_props()
+        _clear_plants_under_content(sc)
+        return sc
     if key not in SCENE_BUILDERS:
         # Any save or exit pointing at a deleted scene falls back to the
         # player's room rather than crashing.

@@ -219,7 +219,38 @@ BLACKOUT_DUR = 45.0          # seconds a blacked-out genset stays dark
 DIM_INTERIOR_SCENES = {"shop", "church", "barn", "schoolhouse",
                        "sheriff_office"}
 
-DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
+
+class _KeyFamily(frozenset):
+    """A scene-family set that also answers for a family's DYNAMIC keys.
+
+    Nearly every gate in the game is spelled `scene.key in SOME_SCENES`, which
+    works perfectly for a world where every scene key is written down. The
+    corridor field is not: one room is one scene, its key is
+    `lost_road@3,-1`, and there are as many of them as the player walks
+    (`scenes/lost_field.py`).
+
+    Rather than teach twenty call sites about that, the FAMILY answers for its
+    own members. `key in DARK_SCENES` is true for `lost_road` and for every
+    room the field deals off it, because they are the same kind of place and
+    every gate that cares about one cares about the other in the same way.
+    Miss this and a corridor room silently takes every default: full daylight,
+    no gloom, no lost-space rules.
+    """
+    __slots__ = ("_prefixes",)
+
+    def __new__(cls, items, prefixes=()):
+        self = super().__new__(cls, items)
+        self._prefixes = tuple(prefixes)
+        return self
+
+    def __contains__(self, key):
+        if frozenset.__contains__(self, key):
+            return True
+        return (isinstance(key, str)
+                and any(key.startswith(p) for p in self._prefixes))
+
+
+DARK_SCENES = _KeyFamily({"lodge_cellar", "well_passage", "well_bottom",
                "works_cistern", "works_sorting", "maras_room",
                "works_scriptorium",
                "works_sign", "works_deepface",
@@ -229,13 +260,15 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "the_sump", "the_cells", "the_old_stores",
                "dark", "threshold",
                "lost_space", "lost_corn", "lost_forest",
-               "lost_road"} | DIM_INTERIOR_SCENES
+               "lost_road"} | set(DIM_INTERIOR_SCENES),
+               prefixes=("lost_",))
 
 # The LOST SPACES: the liminal in-between fields. A DARK_SCENES
 # subset that sits HEAVIER than an ordinary dark room so the hand-authored
 # focal island (the crop-circle bonfire, the pond lanterns, the station neon)
 # reads as a bright island in a black sea, and the sight-cone dark presses in.
-LOST_SPACE_SCENES = {"lost_space", "lost_corn", "lost_forest", "lost_road"}
+LOST_SPACE_SCENES = _KeyFamily({"lost_space", "lost_corn", "lost_forest",
+                                "lost_road"}, prefixes=("lost_",))
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
 # mechanically disabled and the dread aperture closes regardless
@@ -318,7 +351,7 @@ LOST_EDGE_BACKOFF = 3.0  # tiles: how far in from the edge you climb back out
 # hostile. Your first find is what makes the hooded ones appear.
 CULT_WAKE_EV = 1
 
-CULTIST_SCENES = {
+CULTIST_SCENES = _KeyFamily({
     "cornfield_path", "lodge_yard", "graveyard",
     "country_lane",
     "gravel_road_north", "backwoods_cabin",
@@ -340,7 +373,7 @@ CULTIST_SCENES = {
     # here). Everything else -- gaze, suspicion, the Talk, the two-touch
     # grab -- is the ordinary cult behaviour, unchanged.
     "lost_space", "lost_corn", "lost_forest", "lost_road",
-} | YARD_SCENES
+} | set(YARD_SCENES), prefixes=("lost_",))
 # (The old GAZE_BIND high-visibility trigger was retired in the play-notes
 # Watcher rework: Watchers now open on EXPOSURE from WATCHER_WAKE_EV evidence,
 # not on a visibility threshold. See the WATCHER_* block below and

@@ -3137,6 +3137,61 @@
   laws. Rendered from the game, so a page that disagrees with the game is one
   that has not been regenerated.
 
+- **2026-07 — the deck dealt: the corridor field walks.** The other half of
+  the ruling. 22 drawn pieces are a deck; this is the field they are dealt
+  into, and it is playable end to end on the ROAD biome: fall off any street
+  verge in the dark and you are in corridors, cross five or so rooms, find the
+  light, and you climb out on the street you fell from.
+
+  **One room is one SCENE.** A room key carries its cell (`lost_road@3,-1`)
+  and is built on demand; the registry key `lost_road` IS cell (0, 0), which is
+  why `Game._tick_lost_edge` needed no change at all to reach it. What makes
+  the size cap free is `cross_fold`: crossing a mouth is the seamless step the
+  world edges already used, so a chain of 20-tile rooms walks like one map.
+
+  **Nothing in it is a new spatial system**, which was the maintainer's
+  instruction ("take advantage of our spatial manipulation strategies"). The
+  warp panes are the cornfield maze's same-scene relocation, silent because
+  there is no frame to see. Both shift laws read the blind-spot sight cone,
+  and read it in OPPOSITE directions: the generated fields move scenery only
+  when it is out of the cone, and the span here moves only when it is IN it,
+  so the field lies behind your back while the architecture refuses to hold
+  still in front of your face. The span is a real edit to the live object grid
+  followed by `invalidate_tilt_objects()`, the call the chopped boards make.
+  The void is the `x` object char (solid, see-over) over the `@` floor: two
+  chars that already existed, and between them a gap you see across and cannot
+  cross. `Game._lost_return` is still the anchor the way out spends.
+
+  **Three things this turned up that were not obvious.**
+
+  *A dynamic key falls through every gate.* Nearly every rule in the game is
+  spelled `scene.key in SOME_SCENES`, which is perfect until a scene key is
+  dealt rather than written down: a corridor room would have been full
+  daylight with no lost-space rules and no cult, silently. Rather than teach
+  twenty call sites, `config._KeyFamily` lets a family answer for its own
+  dynamic members, and `key in DARK_SCENES` is true for every room the field
+  deals off `lost_road`.
+
+  *Scatter can wall a corridor off while staying perfectly legal.* A rust hulk
+  is a solid prop and a corridor is two tiles wide. The first dressed rooms put
+  three vehicles on one bend of the ring. Two fixes: every candidate is tested
+  by blocking it and re-flooding (the deck's own reachability, reused), and
+  props are sized to the space they sit in, so the big things only land where
+  there is open ground on every side. `tests/lost_field.py` re-checks all 176
+  dressed rooms through their REAL collision, which is stronger than the
+  placement rule itself.
+
+  *A proximity band is a suction cup.* The crossing first fired on standing
+  near a mouth. `_tick_lost_edge` takes the movement intent as an argument, but
+  a scene update only gets dt, so the motion now comes from the last frame's
+  position: you go through by walking through, and a shove onto the edge cannot
+  fire it.
+
+  Also `tools/preview_lost_room.py` (one drawn piece as a real room, four
+  facings, through the ordinary look-pass harness), and `capture_facings` now
+  clears the tutorial notice, which had been painting a black band across the
+  middle of every four-facing sheet in the project.
+
 ## The workbench, and scenes as data
 
 - **2026-07 — ONE tool that looks, edits and plays** (maintainer: *"why can't

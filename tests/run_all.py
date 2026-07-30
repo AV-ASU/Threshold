@@ -25,7 +25,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Order: cheapest/most-fundamental first.
 SUITES = ["conventions", "smoke", "flow", "stealth", "fold_pursuit",
-          "king_roam", "render_smoke", "layouts"]
+          "king_roam", "render_smoke", "layouts", "lost_field"]
 
 
 def main():
