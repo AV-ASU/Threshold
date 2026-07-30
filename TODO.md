@@ -406,12 +406,11 @@
     and it is on the altar; the storm's face is a **SLICE** of Him, the same
     cross-section as the drifting masks in fire. That is what keeps the
     impossible count at one (NARRATIVE §2/§6a; `tests/conventions.py` check 12).
-  - **Light REPELS the storm, never burns it** (burning stays the amalgam
-    dispel's privilege): a unit refuses any step that would put it in a pool,
-    so standing in one makes them ring its edge. This is the shipped rule and
-    it supersedes the earlier "light slows them" wording, which was never
-    built and described a different mechanic. The apex ignores light entirely.
-    He is survived, never dispelled.
+  - **Light REPELS the storm, never burns it** (burning stays the un-stormed
+    Watcher's privilege): a unit refuses any step that would put it in a pool
+    or the beam, so standing in light makes them ring its edge. This was the
+    written rule all along and the code had drifted from it; it is now what
+    ships. The apex ignores light entirely. He is survived, never dispelled.
   - **The storm fills ALL dark, corn included.** Light is the last refuge.
   - The idle horizon King is **CUT**; the storm is the full-power apex at the
     source, and its overwhelm is the point.

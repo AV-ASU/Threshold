@@ -2706,6 +2706,40 @@
 
 ## The light table, and one skin for His gaze
 
+- **2026-07 -- the flashlight was incinerating the storm, and the amalgams got
+  bigger.** Maintainer: *"They completely vanish in the light too fast, make
+  them bigger."* Both halves were right, and the first one turned out to be a
+  design fault rather than a tuning number.
+
+  **Light now REPELS the storm and never BURNS it.** A storm unit already
+  refuses any step that would put it in a pool or the beam, and that repulsion
+  is the whole mechanic; letting the beam also KILL made the flashlight an
+  area-denial death ray. Measured at ev3 in `farm_yard` over 90 seconds with
+  the beam on: **79 units burned, 11 alive at the end**, the flood a conveyor
+  belt of creatures walking into the light to die, and the storm never once
+  reaching its own cap. With the rule corrected: **peak 22 (`STORM_MAX`), 19
+  alive, 0 burned.** Raising the beam to 460px had made it far worse, which is
+  how it surfaced.
+
+  This was a DRIFT, not a new decision -- the design already said burning stays
+  the un-stormed Watcher's privilege, and the code had quietly done otherwise.
+  A first pass at this halved `WATCHER_LIGHT_BURN` instead; that was a
+  band-aid on a rule that was simply wrong, and it is reverted. Below the gate
+  the ordinary wave burns exactly as it always did.
+
+  `tests/stealth.py` §19 had a guard asserting the drifted behaviour, which is
+  why it survived. It now asserts BOTH halves -- storm immune, un-stormed wave
+  still burning -- because the interesting way to get this wrong is to fix one
+  and silently take the other with it.
+
+  **`AMALGAM_SCALE` 1.25** (multiplying the base 0.8, so the body lands at full
+  part-space scale). Legibility here was a SIZE problem before it was a
+  lighting one: the lantern eye measured a peak delta of 96 in isolation and
+  still read as a dot at 130px, because the whole creature was only a few dozen
+  pixels tall. With the size raised and the flood no longer being burned away,
+  three and four creatures read clearly in a single frame where none did.
+
+
 - **2026-07 -- the beam reaches, and the capture tool now turns it on.** Two
   things, one of them an outright error on my part.
 

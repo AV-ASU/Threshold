@@ -1253,8 +1253,21 @@ class ThreatMixin:
             # in a light pool -- or caught in the flashlight beam -- dissolves
             # fast, on top of any gaze. The flashlight is how you clear them,
             # and a bright pool is a place His gaze cannot hold you OR them.
-            burn = ((scene is not None and scene.lit_at(w.x, w.y))
-                    or (flit and looking))
+            # IN A STORM, LIGHT REPELS BUT NEVER BURNS. A storm unit already
+            # refuses any step that would put it in a pool or the beam, and
+            # that repulsion IS the mechanic; letting the beam also KILL made
+            # the flashlight an area-denial death ray. Measured at ev3 in
+            # farm_yard over 90s with the beam on: 79 units burned, 11 alive at
+            # the end -- the flood was a conveyor belt of creatures walking
+            # into the light and dying, and it got far worse when the beam
+            # reached 460px. Below the gate the ordinary wave still burns
+            # exactly as it did; burning stays the un-stormed Watcher's
+            # privilege, which is what the design said before the code drifted
+            # from it (DESIGN.md §1).
+            storming = getattr(w, "movement", None) == "storm"
+            burn = (not storming
+                    and ((scene is not None and scene.lit_at(w.x, w.y))
+                         or (flit and looking)))
             gt = getattr(w, "_gaze_dispel_t", 0.0)
             if looking or burn:
                 gt += dt * (1.0 + (WATCHER_LIGHT_BURN if burn else 0.0))

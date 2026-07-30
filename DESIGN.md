@@ -245,7 +245,16 @@ its head) and pings the cult to **investigate the body**, and the body
   mouth off the asphalt, and the lamps are what keep the flood off it. Take the
   lamps away and the road is still not a mouth, but it IS stormable, which is
   exactly the trade a dark stretch of road should make. A unit **cannot touch or kill**: walking onto you is a scare, nothing
-  more. **Every dispel still works** in a storm -- gaze, light, axe, round.
+  more. **LIGHT REPELS THE STORM AND NEVER BURNS IT** (2026-07): a unit refuses any
+  step into a pool or the beam, and that repulsion IS light's whole effect on
+  the flood. Gaze, axe and round still dispel one. Burning stays the
+  UN-STORMED wave's privilege, which is what this section always said and what
+  the code had drifted from -- a beam that kills as well as repels is an
+  area-denial death ray, and once the beam reached 460px it cleared the flood
+  as fast as it spawned (measured at ev3 in `farm_yard` over 90s: 79 units
+  burned, 11 alive, the storm never reaching its own cap; with the rule
+  corrected it peaks at `STORM_MAX` and holds). Guarded both ways by
+  `tests/stealth.py` §19.
   Watchers do NOT stop at the gate; they become the storm. Units also stop
   obeying the sight cone and take the apex's fog curve instead
   (`Game.actor_smear_range`, `STORM_SEE_RANGE`): a live 22-unit storm had ZERO

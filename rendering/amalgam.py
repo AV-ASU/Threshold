@@ -1571,6 +1571,16 @@ def draw_pallid_mask_part(surf, cx, cy, r, deploy=1.0, gaze=(0.0, 0.3),
 # arc of ember-cuts (watching apertures) over the Mask. No hitbox; dread only.
 BEARER_SCALE = 1.5
 
+# HOW BIG AN ORDINARY AMALGAM DRAWS (maintainer, 2026-07: "make them bigger").
+# The body used to render at 0.8 of the part space and no amount of interior
+# detail survived it -- the lantern eye measured a peak delta of 96 in
+# isolation and still read as a faint dot at 130px in a real dark scene,
+# because the whole creature was only a few dozen pixels tall. Legibility here
+# is a SIZE problem before it is a lighting one. Multiplies the base 0.8, so
+# 1.25 lands the body at full part-space scale; the bearer stacks BEARER_SCALE
+# on top of this and stays proportionally the bigger thing.
+AMALGAM_SCALE = 1.25
+
 
 def _bearer_crown(surf, mcx, mcy, mr, power, seed):
     """An arc of ember-cuts over the Mask -- a crown of watching apertures."""
@@ -1789,7 +1799,7 @@ def _compose_unit(seed, b, g, gaze, t, bearer, extra=0, reach=None,
             break
     _GAZE = False
     # THE BEARER is simply a BIGGER amalgam -- that size IS the power-up tell.
-    sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
+    sc = 0.8 * AMALGAM_SCALE * (BEARER_SCALE if bearer else 1.0)
     sw, sh = int(LW * sc), int(LH * sc)
     scaled = pygame.transform.scale(lay, (sw, sh))
     base = int(GY * sc) + 2
@@ -1916,7 +1926,7 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     hit = hit[1]
     body, dx, dy = hit
     surf.blit(body, (int(x) + dx, int(y) + dy))
-    sc = 0.8 * (BEARER_SCALE if bearer else 1.0)
+    sc = 0.8 * AMALGAM_SCALE * (BEARER_SCALE if bearer else 1.0)
     sw, sh = int(150 * sc), int(104 * sc)
     base = int(GY * sc) + 2
     # THE BEARER, when the storm passes `mask` (None for every ordinary
