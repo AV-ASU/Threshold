@@ -48,8 +48,15 @@ from entities.decoration import Decoration
 from scenes import lost_pieces as LP
 
 # ---- the field's material, per biome ---------------------------------------
-# The deck authors SHAPE; this authors MATERIAL. A wall is a stand of trees in
-# the forest, a wall of corn in the corn, and a black nothing on the road.
+# The deck authors SHAPE; this authors MATERIAL.
+#
+# THE ROAD'S WALL IS NOTHING, and that is the whole look of it. Built out of
+# `#` it was a stone canyon: grey wall-tops running either side of a dirt
+# track, which is a place, and the in-between is specifically not one. So the
+# road's wall is the same near-black ground the void gaps are made of, with an
+# invisible solid over it: the tarmac simply stops, and past the edge there is
+# nothing to see and nothing to walk on. The corridor is legible because the
+# GROUND ends, not because something was built beside it.
 # SMALL vs BIG is not decoration, it is fit. A corridor is two tiles wide and
 # a rust hulk is wider than that, so scattering vehicles through corridors
 # stacks three of them on one bend and reads as a scrapyard rather than a
@@ -57,9 +64,9 @@ from scenes import lost_pieces as LP
 # (see `_ROOMY`), which is what makes the gallery and the hub feel like the
 # rooms they are drawn as.
 BIOMES = {
-    "road":   {"floor": "d", "wall": "#", "music": "village",
+    "road":   {"floor": "d", "wall": None, "music": "village",
                "small": ("tin_cans", "glass_litter", "crate_stack",
-                         "boulder"),
+                         "dead_crow"),
                "big": ("rust_sedan", "rust_wagon", "rust_van", "rust_coupe")},
     "forest": {"floor": "g", "wall": "T", "music": "village",
                "small": ("grass_tuft", "tall_grass", "log_seat", "leaves"),
@@ -72,7 +79,14 @@ BIOMES = {
 _ROOMY = 1      # tiles of open ground on every side before a BIG thing fits
 
 VOID_FLOOR = "@"        # near-black ground
-VOID_OBJECT = "x"       # solid, see_over: seen across, never crossed
+VOID_OBJECT = "x"       # solid, see_over: a GAP, seen across, never crossed
+WALL_VOID = "X"         # solid, no see_over: nothing, and no view past it
+#
+# The two are the same black and differ in one thing: a gap is a hole in a
+# room you are standing in, so you look across it and judge the jump; a wall
+# of nothing is the end of the room, so it stops the eye like any other wall.
+# Getting these the wrong way round shows the player the corridors either side
+# of the one they are in.
 
 _EDGE_BAND = 0.9        # tiles: this close to the edge and pressing out
 _SPAN_EVERY = 2.4       # seconds between a watched span's moves
@@ -338,8 +352,12 @@ def _make(fld, cell):
         f_row, o_row = [], []
         for ch in r:
             if ch == LP.WALL:
-                f_row.append(cfg["floor"])
-                o_row.append(cfg["wall"])
+                if cfg["wall"] is None:          # the wall is nothing
+                    f_row.append(VOID_FLOOR)
+                    o_row.append(WALL_VOID)
+                else:
+                    f_row.append(cfg["floor"])
+                    o_row.append(cfg["wall"])
             elif ch == LP.VOID:
                 f_row.append(VOID_FLOOR)
                 o_row.append(VOID_OBJECT)

@@ -3187,6 +3187,23 @@
   position: you go through by walking through, and a shove onto the edge cannot
   fire it.
 
+  **The road's wall is NOTHING** (maintainer, on the first shots: *"as long
+  as it doesn't look like a stone canyon path or that stone spiral, we should
+  be good"*). It shipped built out of the stone wall char, which is exactly
+  the stone canyon: grey wall-tops running either side of a dirt track, which
+  is a PLACE, and the in-between is specifically not one. The plan had already
+  said the road's wall was a black nothing; the build had quietly not done it.
+  Now the road's wall is the same near-black ground the void gaps are made of
+  with an invisible solid over it, so the tarmac simply stops and there is
+  nothing past the edge. The corridor is legible because the GROUND ends, not
+  because something was built beside it.
+
+  The two blacks are not the same char, and swapping them shows the player the
+  corridors either side of the one they are in: a GAP is a hole in the room
+  you are standing in, so it is `x` (see-over) and you look across it and
+  judge the jump; a WALL of nothing is the end of the room, so it is `X` and
+  it stops the eye like any other wall.
+
   Also `tools/preview_lost_room.py` (one drawn piece as a real room, four
   facings, through the ordinary look-pass harness), and `capture_facings` now
   clears the tutorial notice, which had been painting a black band across the
