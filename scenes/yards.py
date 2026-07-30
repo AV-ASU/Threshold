@@ -829,7 +829,12 @@ def build_farm_yard():
         "farm_yard",
         door_face="w", door_char="D",
         interior="abandoned_farmhouse", interior_spawn="from_farm_yard",
-        path_side="e", path_char="e",
+        # The road is on the WEST: south_row leaves EAST to get here, so the
+        # way back has to face west. It read "e" until 2026-07, which made the
+        # two scenes both claim to be east of the other and turned the
+        # crossing into a sideways teleport -- the one yard on the whole
+        # column that broke the pattern (tools/surface_map.py finds this).
+        path_side="w", path_char="e",
         path_target="south_row", path_spawn="from_farm_yard",
         verge=("C", "A"), building=(9, 7), seed=79)
     y.step()

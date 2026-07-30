@@ -2460,6 +2460,16 @@ with its keeper visible at the door, and she is the only household in town
 still performing that. It is the exception that proves the rule rather than a
 hole in it: every other yard is empty of people, on purpose.
 
+**A yard's `path_side` is the OPPOSITE of the street's exit side, always.**
+The street declares which way it leaves to reach the yard and the yard declares
+which edge its road is on, so the same seam is authored twice and the two
+halves have to agree. When they do not, both scenes think the other is in the
+same direction and the crossing reads as a sideways teleport. `farm_yard` shipped
+that way until 2026-07 -- the one yard of the twelve that broke the pattern.
+`tools/surface_map.py` finds the whole class by trying to lay the network on a
+grid, and `--editor` makes it unauthorable by DERIVING the side from where a
+scene sits instead of taking it as a typed value.
+
 **The three small houses.** Mrs. Calder, Royce and Garrick stood on open
 ground with no building at all. The three EMPTY buildings are the wrong three
 to move them into: the schoolhouse and the barn are where the congregation

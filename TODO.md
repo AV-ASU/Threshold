@@ -110,7 +110,28 @@ half of the model that was only ever a design conversation:
 3. **The ev-warp variants** — the field swaps for a longer / warped /
    more-hostile version as evidence climbs — plus richer linear field features
    (fences, ruined buildings you can't enter).
-4. **Interiors for the yard buildings that have none.** The three new
+4. **THE TOWN IS A CORRIDOR, and it should not be** (maintainer, 2026-07:
+   *"I don't like how there is a town in a line that defeated the point of
+   finding the house by wandering the path"*). Measured by
+   `tools/surface_map.py --editor`: of the six streets that carry a door,
+   **not one has more than two ways on**, so the player never chooses and
+   nothing can be gotten wrong -- `store_row -> chapel_row -> south_row ->
+   bank_row -> lane_end` is a list you read, and each street hands over both
+   its households the moment you arrive. The two junctions in the game are
+   both out on the approach, where they buy nothing. This is the layer's
+   stated purpose failing: *a string of house islands in a sea of spatial
+   manipulation* needs the sea, and a chain has none.
+   **The tools are already there:** `build_path` takes any subset of `"nesw"`
+   as arms, so a T or an X street is one character of change, and the editor
+   emits the declarations. The levers, cheapest first: give the column
+   **branches** (a street with three arms forces a choice); leave some
+   streets **empty** (ground you cross for nothing is what makes finding
+   something feel found); **one door per street** instead of two so a
+   household is not handed over on arrival; and let a branch **dead-end** so
+   being wrong costs a walk back. Re-measure in the editor after each -- the
+   verdict line flips from "a corridor" once the door-carrying streets have
+   real junctions.
+5. **Interiors for the yard buildings that have none.** The three new
    households (Mrs. Calder, Royce, Garrick) have small one-room interiors; no
    other yard building gained interior work. Nothing needs it, and it is the
    obvious next ask.

@@ -148,6 +148,21 @@ python tools/preview_terrain.py [--chars g d ";"] [--seams] [--plants]
 python tools/screen_to_world.py <scene> --facing S --ev 2 --at 60,245 --at ...
 python tools/screen_to_world.py <scene> --facing S --grid /tmp/g.png
 
+# HOW DOES THE SURFACE CONNECT? There is no town map (DESIGN.md §15) -- the
+# geography lives in two dozen scenes' exit tables, so READ it out of the built
+# scenes rather than remembering it. Also reports the seams where the two
+# scenes disagree about which way the other lies, which is a crossing that
+# reads as a sideways teleport.
+python tools/surface_map.py [--svg out.svg] [--json net.json]
+
+# EDIT THE CONNECTION LAYER VISUALLY. Bakes the live network into a
+# drag-and-drop editor (tools/network_editor.html is a TEMPLATE with no data of
+# its own, so it cannot drift): a link's side is DERIVED from where you drop a
+# scene, so the two ends of a seam can never disagree, and it prints the
+# `build_path(...)` / `build_yard_scene(...)` declarations to paste back. It
+# also measures whether the street network makes the player WANDER.
+python tools/surface_map.py --editor /tmp/net.html    # then open it in a browser
+
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
 ```
