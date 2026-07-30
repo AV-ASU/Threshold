@@ -45,7 +45,7 @@ RIM = (46, 46, 60)
 # The APERTURE rim is GOLD, so an amalgam's cuts read as the same portal
 # family as the fold / King rift (rendering/portal.py) rather than as a
 # separate cold-blue phenomenon -- one grammar for every hole He opens
-# (TODO #25, maintainer-approved). RIM above stays cool: it is the FLESH lip
+# (maintainer-approved). RIM above stays cool: it is the FLESH lip
 # drawn inside a part, not the hole itself.
 CUT_RIM = (150, 116, 40)
 CUT_RIM_HOT = (206, 164, 62)
@@ -945,7 +945,7 @@ def assemble(seed, extra=0):
         parts.append((nm, fn, sx, 96 - rng.randint(12, 32), rng.random() < 0.5))
     out = parts[:5]
     if extra > 0:
-        # THE APEX wears its host's deal and adds to it (TODO #25): the Mask
+        # THE APEX wears its host's deal and adds to it: the Mask
         # "deletes it and becomes it, reusing that amalg's exact parts while
         # adding 2-3 more". A SEPARATE rng so the base deal is untouched --
         # extra=0 must stay byte-identical for every ordinary unit.
@@ -1082,8 +1082,8 @@ def draw_pallid_3d(surf, cx, cy, r, yaw=0.0, lean=6.0, gaze=(0.0, 0.25),
     culls as it turns -- NO eyes from behind. `lean` is a small in-plane roll;
     `gaze` aims the gold; `ember` its life.
 
-    EXPRESSION (`intent`, `strain`, `skew`, all 0..1) -- the apex's face, TODO
-    #25. The Mask is a CARVED OBJECT, so it must never emote: a mask that smiles
+    EXPRESSION (`intent`, `strain`, `skew`, all 0..1) -- the apex's face.
+    The Mask is a CARVED OBJECT, so it must never emote: a mask that smiles
     is a cartoon. What it does instead is WORK -- the timber itself moving in
     ways timber cannot. There is no mouth and no nose to act with (NARRATIVE
     §6a), so the whole vocabulary is the sockets, the embers, the centre seam and
@@ -1471,7 +1471,7 @@ def _bearer_crown(surf, mcx, mcy, mr, power, seed):
             _eye(surf, cx, cy, r=1)
 
 
-# ---- THE REACH: the apex's grabbing limbs (TODO #25) ------------------------
+# ---- THE REACH: the apex's grabbing limbs ------------------------
 # The apex's second distinguishing feature, after the face, and the maintainer
 # picked it over improving the crown for a plain reason: at play size the crown
 # is a ring of sparkles you read as ornament, while a limb coming at you is
@@ -1689,7 +1689,7 @@ def draw_amalgam_sprite(surf, x, y, seed=0, gaze=False, birth=None,
     b = 1.0 if birth is None else _clamp(birth)
     g = 0.0 if dispel is None else _clamp(dispel)
     bearer = mask is not None
-    # THE APEX wears its host's deal plus 2-3 added parts (TODO #25). It rides in
+    # THE APEX wears its host's deal plus 2-3 added parts. It rides in
     # the mask dict so an ordinary unit's call is untouched.
     extra = int(mask.get("extra", 0)) if bearer else 0
     # THE REACH is quantised into the cache identity, because it really is

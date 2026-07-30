@@ -119,7 +119,7 @@ def detection_score(scene, ex, ey, facing, player, sight_range,
     if not scene.clear_sight_line(ex, ey, player.x, player.y):
         return 0.0
     score = fall * face * conceal
-    # Sprint is CONSPICUOUS (the stealth economy, TODO #5): a running
+    # Sprint is CONSPICUOUS (the stealth economy): a running
     # figure in the line of sight reads louder than a walking one, so
     # blowing past a scout actually lights the bar.
     if getattr(player, "sprint_active", False):
@@ -406,7 +406,7 @@ def errand_drop(actor):
     actor._handoff_partner = None
 
 
-# ---- Cult liveness (TODO #23a pilot): scout-only body language -----------
+# ---- Cult liveness (the behavior pilot): scout-only body language -----------
 # Two beats of the claimed-as-one-body wrongness, dressing on the SCOUT
 # state alone. Both run AFTER detection/suspicion/hearing have already
 # scored the tick in the cult machines, and neither ever runs in

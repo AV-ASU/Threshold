@@ -284,9 +284,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []            # Watcher NPCs currently manifested
         self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
-        self._stones = []              # thrown river stones in flight (TODO #5)
+        self._stones = []              # thrown river stones in flight
         self._echoes = []              # delayed knocks (the well drop)
-        self._bridge_dust = 0.0        # under-bridge deck-knock tell (TODO #5)
+        self._bridge_dust = 0.0        # under-bridge deck-knock tell
         self._bridge_knock_t = 0.0
         self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
@@ -461,11 +461,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
-        # Genset blackout timers (the power link, TODO #21): scene key ->
+        # Genset blackout timers (the power link): scene key ->
         # seconds of blackout left. Cleared per run; _tick_power drains it.
         self._genset_down = {}
-        self._apex = None      # the Mask (TODO #25) is per-RUN game state
-        # Where a lost space puts you back (TODO #26): (scene_key, x, y),
+        self._apex = None      # the Mask is per-RUN game state
+        # Where a lost space puts you back: (scene_key, x, y),
         # written by _tick_lost_edge when the world lets go and spent by the
         # hunted exit light. None = the field was entered some other way (a
         # direct load, a preview) and its static exit_to carries instead.
@@ -494,7 +494,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.narration.clear()
         self._speaking_npc = None
         self._convo = None
-        # TODO #13: count of SILENT-fold crossings this run; the "walked in
+        # The count of SILENT-fold crossings this run; the "walked in
         # circles" case note fires on the second (the repeat is the tell).
         self._fold_loop_count = 0
         self._chant_t = 0.0
@@ -613,7 +613,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         screen_dx = self.player.x - self.cam_x
         screen_dy = self.player.y - self.cam_y
         same_scene = (target_scene == self.scene.key)
-        # The wrong-space beats for the PI's notebook (TODO #13). Classify
+        # The wrong-space beats for the PI's notebook. Classify
         # this crossing: a SILENT fold (same-scene maze loop or a seamless
         # world edge -- no visible frame, the roads just loop) vs a VISIBLE
         # fold pane (he saw the gold-rimmed door and stepped through). The
@@ -673,7 +673,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.cam_x = self.player.x - screen_dx
         self.cam_y = self.player.y - screen_dy
 
-    # ---- THE MOUTH: falling out of the world (TODO #26) --------------------
+    # ---- THE MOUTH: falling out of the world --------------------
     def _tick_lost_edge(self, vx, vy):
         """Walk into an opted-in map edge in the DARK and the world lets go.
 
@@ -1026,7 +1026,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # is never disturbed (rot skips _is_corpse). Nobody leaves
         # Brimley, not even by dying (NARRATIVE §5).
         self._apply_dead_locals()
-        # Broken windows stay broken for the RUN (TODO #5, the stone
+        # Broken windows stay broken for the RUN (the stone
         # smash): lay the ledger back onto the rebuilt scene.
         self.scene._broken_windows = {
             tuple(p) for p in
@@ -2157,7 +2157,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
 
     def _throw_stone(self):
         """Right-click: lob a river stone along the aim (the distraction
-        verb, TODO #5). The stone is a placed NOISE EVENT and nothing
+        verb). The stone is a placed NOISE EVENT and nothing
         else -- no damage, no stagger; it rides the existing cult ear
         (stealth.hear_noise) untouched. A rooted enclosed hide cannot
         throw (you are folded under furniture); corn can (mobile
@@ -2224,7 +2224,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
 
     def _tick_bridge_knocks(self, dt):
         """While the player is in the under-bridge hide, anything walking
-        the deck overhead knocks on the planks (TODO #5, the maintainer's
+        the deck overhead knocks on the planks (the maintainer's
         bridge pick). Pure DRESSING: an audio + a faint dust tell, no
         threat wiring at all -- the searchers up top neither know you are
         below nor react to the footfalls. The dread is that you HEAR the
@@ -2979,7 +2979,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 # world clock, NOT the player-can-move gate: a stone in
                 # flight keeps flying while the PI is pinned mid-struggle,
                 # emerging from a hide, or held by closure -- it only
-                # pauses when a modal freezes the whole sim (TODO #5; this
+                # pauses when a modal freezes the whole sim (this
                 # decoupling also fixes a stealth-§14 flake where a
                 # carried-over struggle/emerge state stalled the throw).
                 self._tick_stones(dt)
@@ -3049,8 +3049,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # capture felt random ("some take me, some don't"). Enclosed
             # hides / invuln / mid-death are exempt, matching
             # _tick_cultists -- one gate for every grab site
-            # (systems/stealth.py grab_allowed). The stealth economy
-            # (TODO #5): any AWAKE cultist grabs at arm's reach
+            # (systems/stealth.py grab_allowed). The stealth economy:
+            # any AWAKE cultist grabs at arm's reach
             # (CULT_GRAB_REACH), not only a locked chaser -- brushing past
             # a scout is a risk now. The oblivious set-pieces (the Sign
             # Chamber kneelers, the scribe: aggro 0 / lock_facing) still
@@ -3397,7 +3397,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._use_weapon()
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
                 # Right-click: lob a river stone along the aim -- the
-                # distraction verb (TODO #5). A placed noise event only.
+                # distraction verb. A placed noise event only.
                 self._throw_stone()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass

@@ -303,7 +303,7 @@ def build_depths_procession():
                         face=(0, 1), dwell=(2.5, 4.5))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
 
-    # The procession's one diegetic beat (TODO #8): the candle line read
+    # The procession's one diegetic beat: the candle line read
     # up close. Wax on old wax -- they filed to the rite many more times
     # than once, and never hurried. Narration + a case NOTE (never
     # evidence; the five canonical beats are locked).
@@ -441,7 +441,7 @@ def build_depths_hall():
                 e.aggro = 600
                 e.lock_facing = False
         game.audio.play("low_pulse", 0.55)
-        # The narrative half of the trigger (TODO #8): the grid was
+        # The narrative half of the trigger: the grid was
         # facing the door, and it turns as one body. Not startled. Called.
         game.show_notice("The kneeling rise together. Not startled. Called.",
                          duration=2.8)

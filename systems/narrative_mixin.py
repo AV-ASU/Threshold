@@ -204,7 +204,7 @@ class NarrativeMixin:
 
     def _current_lead(self):
         """The single soft "where the thread points" line the notebook
-        shows (TODO #5). DERIVED from run state on every read, so there
+        shows. DERIVED from run state on every read, so there
         is no wiring to go stale and no scatter of setters: the deepest
         milestone that holds wins. Authored, oblique, PI-voiced. Never
         a checklist, never a waypoint, never evidence."""

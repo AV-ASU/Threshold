@@ -155,7 +155,7 @@ SCENE_BUILDERS = {
     "cornfield_maze":     build_cornfield_maze,
     # Hidden fold scenes (direction-sensitive warps off the main world).
     "effigy_grove":        build_effigy_grove,
-    # The lost spaces (TODO #25 prototype): procedural non-repeating dark field.
+    # The lost spaces (prototype): procedural non-repeating dark field.
     "lost_space":          build_lost_space,
     "lost_corn":           build_lost_corn,
     "lost_forest":         build_lost_forest,

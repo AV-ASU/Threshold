@@ -197,13 +197,13 @@ KING_LUNGE_GATHER = 0.30     # crawl multiplier during the telegraph
 KING_LUNGE_CD_LO = 3.5       # s between lunges (randomised)
 KING_LUNGE_CD_HI = 6.0
 
-# ---- the genset blackout (the light-security loop, TODO #21) ---------
+# ---- the genset blackout (the light-security loop) ---------
 # `_genset_down` (systems/rot_mixin._tick_power) holds per-scene blackout
 # timers; while one runs the scene's ELECTRIC fixtures die in every layer
 # at once (Scene.power_on gates lit_at, _draw_dark skips their pools, the
 # fixture art goes dark). Fire is exempt. No live trigger sets a timer
 # yet -- the trigger that used to fire it was cut (2026-07) and the
-# gas-genset failure meant to replace it is deferred (TODO #21); the
+# gas-genset failure meant to replace it is deferred; the
 # duration below is what a future trigger will use.
 BLACKOUT_DUR = 45.0          # seconds a blacked-out genset stays dark
 
@@ -215,7 +215,7 @@ BLACKOUT_DUR = 45.0          # seconds a blacked-out genset stays dark
 # but a LIGHTER gloom than the deep -- they read "dim, lit by the genset's
 # bulbs + window spill, dark in the corners," not a pitch-black cellar. The
 # flashlight works (not cult-dark). This is the ground "no light = danger"
-# will stand on (TODO #21); the refuge (SAFE_SCENES) is deliberately excluded.
+# will stand on; the refuge (SAFE_SCENES) is deliberately excluded.
 DIM_INTERIOR_SCENES = {"shop", "church", "barn", "schoolhouse",
                        "sheriff_office"}
 
@@ -231,7 +231,7 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "lost_space", "lost_corn", "lost_forest",
                "lost_road"} | DIM_INTERIOR_SCENES
 
-# The LOST SPACES (TODO #26): the liminal in-between fields. A DARK_SCENES
+# The LOST SPACES: the liminal in-between fields. A DARK_SCENES
 # subset that sits HEAVIER than an ordinary dark room so the hand-authored
 # focal island (the crop-circle bonfire, the pond lanterns, the station neon)
 # reads as a bright island in a black sea, and the sight-cone dark presses in.
@@ -284,7 +284,7 @@ KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold", "maras_room"}
 # still runs (cover here is meaningful).
 DIM_SAFE_SCENES = {"lodge_cellar"}
 
-# ---- The storm's STAGE: evidence-driven surface darkening (TODO #25) ----
+# ---- The storm's STAGE: evidence-driven surface darkening ----
 # The surface world DARKENS as the PI understands more -- the daylight draining
 # under His gathering attention. This is world-rot's LIGHT twin (DESIGN.md §2:
 # the veil thinning, the pale-yellow ashfall), driven by the SAME rot stage
@@ -299,7 +299,7 @@ DIM_SAFE_SCENES = {"lodge_cellar"}
 STORM_STAGE_SCENES = set(OUTDOOR_SCENES)
 STORM_DARK_GLOOM = (0, 44, 92, 138)     # darkness amount by rot stage 0..3
 
-# ---- THE MOUTH: falling out of the world (TODO #26) ----
+# ---- THE MOUTH: falling out of the world ----
 # A scene opts an edge in with `Scene.set_lost_edge`, but the edge is only a
 # way THROUGH when it is dark. That makes the lost spaces a consequence of the
 # evidence ladder rather than a separate system: at ev0 the surface is full
@@ -331,7 +331,7 @@ CULTIST_SCENES = {
     # standing in one is already a scene you back out of.
     "store_row", "chapel_row", "south_row", "bank_row", "lane_end",
     "river_road", "river_bend",
-    # The LOST SPACES (TODO #26). They must be cult scenes or _tick_cultists
+    # The LOST SPACES. They must be cult scenes or _tick_cultists
     # SWEEPS every cult-tagged NPC out of them every frame. Their population
     # is NOT the town's evidence ramp, though: each field sets
     # `cult_target = 0` so `_ensure_cultists` never tops them up, and drives
@@ -374,7 +374,7 @@ WATCHER_GAZE = 0.05           # visibility CLIMB per live Watcher per second
                               # while exposed -- the teeth of the mechanic
 WATCHER_FLOOR = 0.07          # residual visibility floor per live Watcher
 WATCHER_GAZE_DISPEL = 2.0     # seconds holding one in your gaze to dissolve it
-# ---- THE STORM: the flood as a MODE of the Watcher wave (TODO #25) ----
+# ---- THE STORM: the flood as a MODE of the Watcher wave ----
 # The storm is NOT a second spawner. Two populations of the same creature with
 # different rules read as a bug, not as escalation (half of all manifestations
 # already wear the amalgam skin), so the existing wave simply changes MODE: the
@@ -444,7 +444,7 @@ STORM_SPAWN_NEAR = 150.0      # px: closest a storm unit opens
 STORM_SPAWN_FAR = 420.0       # px: furthest (wider than a Watcher's 200 -- the
                               # flood comes from the whole room, not just ahead)
 
-WATCHER_LIGHT_BURN = 2.0      # "no light = danger" (TODO #21): a Watcher caught
+WATCHER_LIGHT_BURN = 2.0      # "no light = danger": a Watcher caught
                               # in a light pool / the flashlight beam dissolves
                               # this-much faster (on top of any gaze) -- light is
                               # how you clear them in a dark interior
@@ -482,7 +482,7 @@ KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fas
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
 KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
 
-# ---- THE APEX: the Mask that wears a unit (TODO #25) ----------------------
+# ---- THE APEX: the Mask that wears a unit ----------------------
 # The storm's one real threat. Regular units cannot touch you; this can.
 # Maintainer's spec: the Mask spawns in and FLOATS to an amalgam, deletes it and
 # BECOMES it -- reusing that amalgam's exact parts and adding 2-3 more -- it
@@ -498,7 +498,7 @@ KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
 # which is the loop the maintainer asked for ("it makes the loop more fun if the
 # player can do something to survive").
 APEX_VIS_GATE = 0.55          # visibility at/above which the Mask comes for you
-# THE FACE (TODO #25). A carved object must never EMOTE -- a mask that smiles is
+# THE FACE. A carved object must never EMOTE -- a mask that smiles is
 # a cartoon -- so what it does is WORK: the timber moving in ways timber cannot.
 # There is no mouth and no nose (NARRATIVE 6a), so the vocabulary is the sockets,
 # the embers, the seam and the crack. Driven by STATE, never a loop: on a loop it
@@ -515,14 +515,14 @@ APEX_MIGRATE_CD = 2.2         # s before it takes a new host after losing one
 APEX_EXTRA_LO, APEX_EXTRA_HI = 2, 3     # parts added to the host's own deal
 APEX_SPEED = KING_ROAM_SPEED
 APEX_CATCH_DIST = KING_CATCH_DIST
-# THE ONE TELL (TODO #25). Everything else the apex does is continuous -- it
+# THE ONE TELL. Everything else the apex does is continuous -- it
 # drifts in, it takes a host, it walks -- and horror needs the moment the rules
 # changed. The screech is that moment and the ONLY one: it fires once per host,
 # as `intent` first crosses this, and for nothing else in the game. Threshold
 # sits above the 0.15 that a HIDDEN player's intent is pinned to, so it can
 # never fire at someone it has not actually found.
 APEX_ROAR_INTENT = 0.72
-# THE REACH (TODO #25) -- the grabbing limbs, the apex's second distinguishing
+# THE REACH -- the grabbing limbs, the apex's second distinguishing
 # feature after the face. Ordinary units carry no limbs like these; the apex
 # grows them out of its own body toward WHERE YOU ARE, and closes them. They are
 # also the catch's telegraph, which contact otherwise does not have: at
@@ -541,7 +541,7 @@ APEX_REACH_STRAIN = 0.65      # ...and to being close enough to take you
 # Player sprint = PLAYER_SPRINT_MULT x the base walk (entities/player.py
 # speed). With the walk doubled (play-notes), sprint is a modest gear-up
 # that still lands ~0.9x the King above: you can never outrun the apex,
-# only hide (TODO #5 is the human tuning loop; raising this needs the King
+# only hide (raising this needs the King
 # raised too, or you outrun him).
 PLAYER_SPRINT_MULT = 1.25
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
@@ -692,7 +692,7 @@ STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
 # one-time Talk (cult_talk_given) is still the very first contact of a run.
 CULT_SHRUG_INVULN = 0.7       # s of grace after tearing free (no re-grab)
 CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
-# The stealth economy (TODO #5, tuned from the 2026-07 human playtest:
+# The stealth economy (tuned from the 2026-07 human playtest:
 # "running around the cultist beats hiding"). Three levers, re-derived
 # against the canonical speed ladder (King > player sprint 105 > chase >
 # player walk 84 > scout 57): a LOCKED cultist shifts into a chase gear
@@ -706,7 +706,7 @@ CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
 CULT_CHASE_MULT = 1.5         # locked-chase speed gear over base speed
 CULT_GRAB_REACH = 30.0        # px: contact-grab reach (was a bare 22)
 SUS_SPRINT_MULT = 1.6         # detection-score multiplier while sprinting
-# River stones (TODO #5, the distraction verb): a thrown stone is a
+# River stones (the distraction verb): a thrown stone is a
 # placed noise event, nothing more -- it rides the existing ear
 # (stealth.hear_noise) untouched. Loudness sits between the scout
 # threshold (0.7) and the searcher pull (0.9) ON PURPOSE: a stone turns
@@ -727,7 +727,7 @@ GLASS_REACH = 300.0           # px: a smashed pane carries
 # stays the bottomless dread it is -- this buys a wide lure, not a fact).
 WELL_ECHO_LOUD = 0.85         # scout-tier: routes the square, breaks no hunt
 WELL_ECHO_REACH = 340.0       # px: the rattle carries across the square
-# Cult liveness (TODO #23a, the behavior pilot): dressing on the SCOUT
+# Cult liveness (the behavior pilot): dressing on the SCOUT
 # state only -- neither beat ever touches notice/chase/search/investigate,
 # and detection keeps scoring straight through both (threat unchanged).
 CULT_SYNC_PERIOD = 21.0       # s between synchrony beats: every idle cult
@@ -869,14 +869,14 @@ MAX_FULLSCREEN_DARK = 204
 # at 3 evidence. The stage is min(3, evidence) for the surface (monotonic;
 # the underground deepens past that on its own evidence clock).
 #
-# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2): the
+# The TOWNSFOLK do NOT change (NARRATIVE §2): the
 # old ROT_CONVERT / ROT_TURN tables (peace-makers repainted cultist,
 # resisters' dialogue curdled) were CUT. The world rot is the PI's now, and
 # it lives in the four-tier conversation framing (scenes/dialogue._pi_framing
 # / _pi_tier). Sheriff Vane's fall stays PLAYER-DRIVEN (the VANE_* ledger
 # below, DESIGN.md §2).
 
-# ---- Sheriff Vane's despair/hope ledger (DESIGN.md §2; was TODO #2a) --
+# ---- Sheriff Vane's despair/hope ledger (DESIGN.md §2) --
 # A hidden balance decides the last holdout's fate; the player never sees
 # a number, only his mood (the conversation's framing line + the beats).
 # HOPE is earned one way: the PI SHARING a real discovery with him
@@ -884,7 +884,7 @@ MAX_FULLSCREEN_DARK = 204
 # opens his investigation thread. DESPAIR comes from the beats that read,
 # to a man who wants it all to end, as permission: the preacher's murder
 # (+VANE_DESPAIR_ACT) and the newspaper's front page (+VANE_PAPER_DESPAIR,
-# the break lever, TODO #2). Net despair >= VANE_HOLLOW_AT latches
+# the break lever). Net despair >= VANE_HOLLOW_AT latches
 # `vane_hollow` for good (once hollow, no return); his office then hosts
 # _spawn_hunting_sheriff on the next load, whatever the rot stage. The
 # NEGLECT OVERRIDE beats the ledger: reach VANE_NEGLECT_EVIDENCE canonical
@@ -913,7 +913,7 @@ UNDERGROUND_SCENES = {
 }
 
 # Where His gaze can OPEN. He watches under the open sky, in His own deep, and
-# -- since the "no light = danger" rework (TODO #21) -- inside the DARK
+# -- since the "no light = danger" rework -- inside the DARK
 # non-refuge interiors (`DIM_INTERIOR_SCENES`), where the light is the refuge
 # instead of the building: _tick_watchers treats being in the DARK there as
 # exposure, and a light pool / the flashlight is the cover (and burns them,

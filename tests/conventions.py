@@ -625,6 +625,43 @@ def _address_tics():
                 "    speaker that shares it (story audit, 2026-07):\n"
                 + "\n".join(rows))
 
+# ------------------------------------------------- 13. no work markers in code
+# THE RULE (CLAUDE.md): open work lives in TODO.md and nowhere else. A source
+# comment may cite DESIGN.md (how a system works) or CHANGELOG.md (why it got
+# that way); both are current-state docs that outlive the work. It may NOT
+# cite TODO.md, and it may not carry a bare TODO/FIXME/XXX marker.
+# WHY THIS CHECK: 183 `TODO #n` citations had accumulated on SHIPPED code as
+# provenance. TODO.md's own contract deletes a ticket the moment it lands, so
+# every one of those became a pointer into a void by design -- and worse, the
+# numbers got REUSED, so `TODO #8` in scenes/depths.py (the procession beat)
+# resolved to the live ticket for parked terrain megabuilds. A citation that
+# silently lands on unrelated work is worse than no citation. The whole set
+# was cut in 2026-07; this keeps them from growing back one comment at a time.
+# `TODO.md` as a bare FILENAME is fine (this file's own DOCS tuple names it).
+@check("no ticket citations or work markers in the source")
+def _no_work_markers():
+    # XXX is deliberately NOT in here: the scene layout rows spell walls with
+    # runs of X ("W.XX.......XXX.W"), so it fires on the map grammar itself.
+    pat = re.compile(r"\bTODO\b(?!\.md)|\bFIXME\b")
+    rows = []
+    for base, dirs, files in os.walk(_ROOT):
+        dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git")]
+        for fn in sorted(files):
+            if not fn.endswith(".py"):
+                continue
+            rel = os.path.relpath(os.path.join(base, fn), _ROOT)
+            if rel == os.path.join("tests", "conventions.py"):
+                continue          # this check's own pattern and prose
+            with open(os.path.join(base, fn)) as fh:
+                for i, line in enumerate(fh, 1):
+                    if pat.search(line):
+                        rows.append("    %s:%d  %s" % (rel, i, line.strip()[:88]))
+    if rows:
+        return ("    Open work belongs in TODO.md, not in a comment. Cite\n"
+                "    DESIGN.md or CHANGELOG.md instead, or say the thing\n"
+                "    plainly and drop the pointer:\n" + "\n".join(rows[:20]))
+
+
 def main():
     print("THRESHOLD conventions guard\n")
     for fn in (_fonts, _tilt_sets, _light_tables, _gate_keys, _doc_refs,

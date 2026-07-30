@@ -87,7 +87,7 @@ def _axe_head(surf, hx, hy, a, lead, s=1.0):
 
 def _axe_swing_angle(prog, sweep):
     """The swing's three phases mapped onto prog 0..1 (2026-07 redesign,
-    TODO #25: the old constant-speed sweep read as a windscreen wiper).
+    the old constant-speed sweep read as a windscreen wiper).
     WIND-UP (0..0.28): the head pulls BACK past the start side, easing
     out -- the anticipation. STRIKE (0.28..0.55): the whole arc crosses
     in this short window, cubic-fast -- the snap. FOLLOW-THROUGH

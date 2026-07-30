@@ -886,7 +886,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # `gait` carries the gaze-dispel fraction (the peeling) -- both are
         # presentation-only attrs the watcher ticks maintain.
         from rendering.amalgam import draw_amalgam_sprite
-        # THE APEX wears the Mask and its host's deal plus 2-3 parts (TODO #25).
+        # THE APEX wears the Mask and its host's deal plus 2-3 parts.
         # `apex_mask` is stamped by Game._tick_apex on the host it created; an
         # ordinary unit passes None and its draw is untouched.
         draw_amalgam_sprite(surf, x, y, seed=seed, gaze=gaze,

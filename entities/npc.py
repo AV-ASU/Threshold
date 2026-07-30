@@ -216,7 +216,7 @@ class NPC:
             self._apex_tick(dt, scene, player)
 
     def _apex_tick(self, dt, scene, player):
-        """THE APEX -- the Mask wearing a unit (TODO #25). It walks at you and
+        """THE APEX -- the Mask wearing a unit. It walks at you and
         NOTHING in the room stops it.
 
         The maintainer's rule: it "pierces the protection of the light" and is
@@ -238,7 +238,7 @@ class NPC:
         self._step_toward((player.x, player.y), dt, scene)
 
     def _storm_tick(self, dt, scene, player):
-        """A storm unit (TODO #25): it WALKS AT YOU and stops at the light.
+        """A storm unit: it WALKS AT YOU and stops at the light.
 
         The maintainer's rule: "regular amalgamations will walk to the player
         and get as close to them as possible without being in the light."
@@ -471,7 +471,7 @@ class NPC:
                 ang = (pygame.time.get_ticks() / 1000.0) % math.tau
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Default: SCOUT. The liveness beats first (TODO #23a: the
+        # Default: SCOUT. The liveness beats first (the
         # synchrony all-stop, then a crossing hand-off -- dressing only,
         # detection already scored this tick above), then errands (the
         # cult has JOBS; scenes declare stations), then the random mill.

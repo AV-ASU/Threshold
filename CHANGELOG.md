@@ -2706,6 +2706,41 @@
 
 ## Brimley geography
 
+- **2026-07 -- every ticket citation cut out of the source, and a check so they
+  cannot grow back.** The follow-through on the naming pass, from the
+  maintainer's read of it: *"we don't need that in the code."* Correct, and for
+  a reason worth stating once. The 183 `TODO #n` comments were not work markers
+  at all -- essentially every one was PROVENANCE on shipped code (`"""THE
+  KITCHEN WALL (interiors pilot, TODO #24)`, `# THE MOUTH (TODO #26)`). Exactly
+  one marked something open. But `TODO.md`'s contract deletes a ticket the
+  moment it lands, so provenance pointed at it rots ON LANDING, by design. The
+  durable homes already existed and the canon already said so: `DESIGN.md` for
+  how a system works, `CHANGELOG.md` for why it got that way. Neither is
+  deleted when work ships.
+
+  So the operation was DELETION, not the number-to-name mapping the previous
+  entry declined -- and that is what made it tractable. Mapping needs a
+  judgement per site about which ticket a reused number meant; deleting needs
+  none, because the prose around the citation already says what the code is.
+  `(interiors pilot, TODO #24)` loses four characters and nothing else.
+
+  A regex pass took 189 lines across 43 files; 38 of them came out mis-shaped,
+  because a comment's grammar had been leaning on the citation (`(DESIGN.md
+  §2;)`, `#. A LOCAL`, `the gas-genset failure meant to is deferred`). Those
+  were repaired by hand off a full before/after listing of every changed line,
+  not off a sample -- a spot-check had already passed while eight of them sat
+  in the file.
+
+  **The check is `tests/conventions.py` 13:** no `.py` may cite `TODO.md` or
+  carry a bare `TODO`/`FIXME`. Proven to fail before it was kept (an injected
+  marker in `systems/storm.py` and a `FIXME` in `ui/case_titles.py` both fired).
+  The first draft also matched `XXX` and fired on `scenes/lodge.py`'s layout
+  rows, where a wall run is spelled `"W.XX.......XXX.W"` -- so `XXX` is
+  deliberately out of the pattern, and the reason is written beside it. The
+  gate caught one thing this pass that review had not: `TOOLS.md` is generated
+  from tool docstrings, five of which lost citations, so it needed regenerating
+  (`python tools/index.py --md`).
+
 - **2026-07 -- `TODO.md` is bullets, and its tickets have NAMES.** The
   numbering is retired, on the maintainer's instruction and with a good reason
   waiting underneath it: the numbers looked like stable identifiers and were

@@ -131,7 +131,7 @@ def build_clearing():
     # their worldly effects here before they went below" conceit was rot, so
     # the beat, its [E] cue, and the burn-site framing are gone. The glade
     # keeps its props as plain dressing; it asserts nothing now. Its stated
-    # PURPOSE is an open question -- see TODO #1.)
+    # PURPOSE is an open question.)
     return sc
 def build_shop():
     """The General Store, rebuilt as a NESTED warren of subrooms (2026-07, the
@@ -256,7 +256,7 @@ def build_shop():
     sc.add_decoration(Decoration(9 * TILE + 0, 9 * TILE + 24, "drop_bulb",
                                  z=42))
     # (the bulkhead lamp is HOODED: its fan aims west into the room, so the
-    # wall behind it stays honest dark -- the cone-fixture pilot, TODO #21)
+    # wall behind it stays honest dark -- the cone-fixture pilot)
     sc.add_decoration(Decoration(14 * TILE + 16, 9 * TILE + 16, "wall_lamp",
                                  cone=(-1, 0, 55)))
     # The 90% rule (maintainer, 2026-07): with every light on, >=90% of the
@@ -307,7 +307,7 @@ def build_shop():
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
     # --- The stockroom (west, first door): THE RECEIVING CORNER (Wave 2
-    # ensemble; TODO #24): crate stack + check table + flour barrel composed
+    # ensemble): crate stack + check table + flour barrel composed
     # as ONE object with its wear (the dust ghost of sold-out stock, the
     # stopped tally, the shipped twin's ring stain). The candle stays its
     # own deco, SEATED on the check table, so it keeps emitting. Footprint

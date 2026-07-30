@@ -159,7 +159,7 @@ def build_lodge_yard():
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 24,
                                  "town_sign", text="BRIMLEY"))
 
-    # THE MOUTH (TODO #26). North and south of the yard is the forest band,
+    # THE MOUTH. North and south of the yard is the forest band,
     # and past it the map bound -- an invisible wall in daylight. Once the
     # storm has darkened the surface (rot stage 2, so you have earned two
     # pieces of Mara's trail), pushing through the treeline in the dark stops
@@ -168,7 +168,7 @@ def build_lodge_yard():
     # light by the porch is genuine cover -- a lit spot never opens.
     sc.set_lost_edge("ns", "lost_forest")
 
-    # ---- THE YARD VOCABULARY (DESIGN.md §14, TODO #26) ----
+    # ---- THE YARD VOCABULARY (DESIGN.md §14) ----
     # A yard's job is to tell you about a household without anybody speaking.
     # Every piece below answers who lives here and what they stopped doing;
     # nothing is here for texture. All are parts-built props checked against
@@ -239,7 +239,7 @@ def build_lodge_yard():
             objects[12][tx] = "X"
     sc.objects = objects
 
-    # Enclosed hide (the 2026-07 stealth pass, TODO #5): the gap under
+    # Enclosed hide (the 2026-07 stealth pass): the gap under
     # the Clerk's dead pickup. The corn perimeter stays the mobile
     # concealment the player breaks line of sight in.
     sc.hide_spots = [

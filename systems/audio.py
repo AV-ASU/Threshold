@@ -1015,7 +1015,7 @@ class Audio:                        #Starting screen needs music, something simp
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
     def _build_apex_roar(self, duration_ms=1150, vol=0.62):
-        """THE ONE TELL (TODO #25) -- the apex has DECIDED on you.
+        """THE ONE TELL -- the apex has DECIDED on you.
 
         Everything else about the apex is continuous: it drifts in, it takes a
         host, it walks. There is no before-and-after, and horror needs the moment

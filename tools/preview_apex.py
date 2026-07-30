@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview THE APEX (TODO #25) -- the Mask wearing a unit, in its various forms.
+"""Preview THE APEX -- the Mask wearing a unit, in its various forms.
 
 The apex is the storm's one real threat and the entity getting the most care, so
 it needs its own look surface rather than being judged off the amalgam sheet (it
