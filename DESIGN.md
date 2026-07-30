@@ -227,7 +227,7 @@ its head) and pings the cult to **investigate the body**, and the body
   promise: a room with no dark spot in view of you cannot open anything.
   **A fully lit room is SECURED; a blackout un-secures it** (guarded,
   `tests/stealth.py` §11).
-  **THE STORM is this same wave in a second MODE** (TODO #25, 2026-07), not a
+  **THE STORM is this same wave in a second MODE** (the storm ticket, 2026-07), not a
   separate spawner: `Game._storm_active()` is true past `STORM_GATE_EVIDENCE`
   (3) in a room the dark has taken (`scene_gloom() > 0`). While it is up the cap
   lifts (`WATCHER_MAX` 5 → `STORM_MAX` 22, a MEASURED bound -- see the config
@@ -242,7 +242,7 @@ its head) and pings the cult to **investigate the body**, and the body
   (`Game.actor_smear_range`, `STORM_SEE_RANGE`): a live 22-unit storm had ZERO
   units pass the plain cone, so the flood was invisible and "they ring the light"
   was unreadable. Guarded, `tests/stealth.py` §19.
-  **THE APEX is the storm's one real threat** (TODO #25, 2026-07): the Mask that
+  **THE APEX is the storm's one real threat** (the storm ticket, 2026-07): the Mask that
   WEARS a unit. **Not the keystone** -- the one Mask OBJECT is on the cult's
   altar until the PI lifts it, and the face riding a shadow here is a SLICE of
   Him (NARRATIVE §6a; guarded, `tests/conventions.py` check 12, which fails if
@@ -261,7 +261,7 @@ its head) and pings the cult to **investigate the body**, and the body
   OWN death card (`_death_kind == "apex"`) -- deliberately NOT the Unfolding's
   throat-swallow, which is the art of the body the storm replaces; it is a
   wordless placeholder fade until the amalgam's own catch animation is made
-  (TODO #25). **Its FACE expresses** (`intent` / `strain` / `skew` on
+  (the storm ticket). **Its FACE expresses** (`intent` / `strain` / `skew` on
   `draw_pallid_3d`, eased from apex state by `_apex_face`): a carved object must
   never EMOTE, so the Mask WORKS instead -- sockets narrowing to a slot as it
   acquires you, the seam gapping and the crack running as it closes to take you,
@@ -337,7 +337,7 @@ its head) and pings the cult to **investigate the body**, and the body
   Limbs walk backwards into their cuts; masses breathe themselves shut; a
   dying cut smokes. The gun and axe **share one weapon slot** (left-click
   to use; switch which is equipped from the inventory screen).
-- **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
+- **Deep-water WADE** (`WADE_*` config, `Game._wading`): the
   flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
   depths_threshing) stand in walkable `~` water. Wading a water tile
   **halves the player's speed** (sprint can't clear it) and throws a
@@ -391,7 +391,7 @@ What rises with the stage:
   settling on you, not snow, not weather. Light at stage 1, a steady
   yellow drift by stage 3.
 - **The daylight drains — the surface darkens with the stage (the storm's
-  STAGE; TODO #25, LIVE).** The outdoor world (`STORM_STAGE_SCENES`, which is
+  STAGE; the storm ticket, LIVE).** The outdoor world (`STORM_STAGE_SCENES`, which is
   `OUTDOOR_SCENES` -- every road, street and yard) dims monotonically with the rot stage, routed through the
   same `_draw_dark` lightmap the dim interiors use at a gloom that ramps 0 → 138
   (`STORM_DARK_GLOOM`): stage 0 is full day (early-out, byte-identical), stage 3
@@ -408,8 +408,8 @@ What rises with the stage:
   is help the player -- it is never concealment (§12) and a lamp pool is never
   cover from the gaze (§1). The dark is the CONDITION His things need, not a
   tool you get to use; what is still missing is the flood it exists to hold: the
-  amalgam-cut storm (TODO #25).
-- **The people do NOT change — the man hearing them does (TODO #22c,
+  amalgam-cut storm (the storm ticket).
+- **The people do NOT change — the man hearing them does (
   2026-07).** The town stays ordinary end to end: every local keeps their
   exact sprite, portrait, body, AND words (the town reads NORMAL; the
   wrongness is the *place*, not the people, NARRATIVE §2/§6). What rises
@@ -422,7 +422,7 @@ What rises with the stage:
   people-change layer — peace-makers *convert*, resisters *turn* — was CUT
   with this rework; DESIGN.md §9, NARRATIVE §6.)
 - **Sheriff Vane falls last, and hardest — and his fall is
-  player-driven (TODO #2a, built 2026-07).** The last holdout, and the
+  player-driven (built 2026-07).** The last holdout, and the
   one soul in town **claimed but unattuned** (he never dreamed the door;
   NARRATIVE §4). The world rot never turns him on its own; a hidden
   **despair/hope ledger** decides his fate (`vane_despair`, the `VANE_*`
@@ -450,7 +450,7 @@ What rises with the stage:
   branch only. **Despair** comes from the beats
   that read, to a man who wants it all to *end*, as permission: the
   preacher's murder (`+VANE_DESPAIR_ACT`) and the newspaper's front page
-  (`+VANE_PAPER_DESPAIR` — the break lever, TODO #2; the give-beat
+  (`+VANE_PAPER_DESPAIR` — the break lever, the favor-economy ticket; the give-beat
   telegraphs it as mood). Net despair at `VANE_HOLLOW_AT` **latches the
   hollow turn** (`vane_hollow`) — once hollow, no return — and hope
   banks only to `VANE_DESPAIR_FLOOR`, so rapport is real but never
@@ -580,7 +580,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. **Two dug side-chambers off the sorting floor (#14, 2026-07):** a FINISHED overflow store (crates, a shed-life pile, a kept candle, a wall tally) and a HALF-DUG niche (a low spoil pile, pick gouges, no light), each through a single ADIT cut into the north block clear of the tally + taxidermy mounts, off the patrol floor so the tuned crossing/tables/hides are untouched. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence: the unsent letter (`maras_room`, a canonical trail beat — NARRATIVE §6).** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (NARRATIVE §2). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (NARRATIVE §9), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Old Stores). |
-| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands (Mara is **proof, not a counted beat** since the TODO #22 rework: the calling-out fires but no longer counts). The talk itself is the last **close-up tableau** (`_open_mara_tableau`, TODO #2b): she opens masked and hooded, listed as one of the congregation, until the greet unmasks her — the reveal. **Lift the Pallid Mask → `pallid_mask`** — the **keystone item**, not a case beat (it left the count; NARRATIVE §6). No charcoal; you take the object itself. |
+| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands (Mara is **proof, not a counted beat** since the evidence rework: the calling-out fires but no longer counts). The talk itself is the last **close-up tableau** (`_open_mara_tableau`): she opens masked and hooded, listed as one of the congregation, until the greet unmasks her — the reveal. **Lift the Pallid Mask → `pallid_mask`** — the **keystone item**, not a case beat (it left the count; NARRATIVE §6). No charcoal; you take the object itself. |
 | 7 | **The Deepest Face** | `works_deepface` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
@@ -873,13 +873,13 @@ Built into the procedural draw layer (`scenes/base.py`,
     gate (`Scene.lit_at`'s angular test: behind a hooded lamp is honest
     dark), the cast-shadow pass, and the audit overlay's outline.
   - **Electric light runs on the gensets, LIVE (the power link;
-    TODO #21 first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
+    the light-pillar ticket, first slice).** The ELECTRIC kinds (`Scene._ELECTRIC_KINDS`:
     `wall_lamp`, `drop_bulb`, `yard_light`) emit only while their scene's
     power is on (`Scene.power_on`, maintained by `Game._tick_power` off
     the `_genset_down` blackout timers). A **blackout blacks its room
     out** for `BLACKOUT_DUR` (no live trigger since the moths were cut,
     2026-07 -- the gas-genset failure that will fire it is deferred,
-    TODO #21; the mechanism stands ready, guarded synthetically by
+    the light-pillar ticket; the mechanism stands ready, guarded synthetically by
     `tests/stealth.py` §17); during it the electric fixtures die in
     every layer at once -- no visible pool, no mechanical `lit_at` cover,
     and the fixture ART itself goes dark (a dead lamp is dark glass; the
@@ -1368,7 +1368,7 @@ game lets a character find, it takes.
 
 > The evidence rework, settled with the user 2026-07. This is the DESIGN
 > of record; the hard canon (the set, the invariants) lives in
-> NARRATIVE §6, and the code catch-up is TODO #22. It supersedes the
+> NARRATIVE §6, and the code has caught up to it. It supersedes the
 > "pool of six, any 3" model, which was never true in play.
 
 **Three categories, and only one is evidence.**
@@ -1958,7 +1958,7 @@ against it (`tests/stealth.py` §13 guards the contract):
   cut (playtest ruling; DIALOGUE.md reconciled). The `hide_enter` /
   `hide_exit` cues and the visible cover are the only tells.
 - **The surface hide desert was watered:** +6 enclosed hides on existing
-  props (TODO #5 lists them and what is still open).
+  props (the stealth ticket lists them and what is still open).
 - **River stones are the distraction verb** (`STONE_*` config; landed
   with the pass): finite walk-over pickups scattered where the water
   runs (both banks of the river run and the bend, the Cistern shores, the
@@ -1995,7 +1995,7 @@ against it (`tests/stealth.py` §13 guards the contract):
   hide is registered; a crosser raises the tell but never routes to the
   player below).
 
-### Cult liveness -- the scout is a body (TODO #23a pilot, 2026-07)
+### Cult liveness -- the scout is a body (the complex-behavior pilot, 2026-07)
 
 Two beats of body language on the SCOUT state alone, shared by both cult
 machines (`systems/stealth.py` `sync_pause` / `handoff_step`;
@@ -2027,7 +2027,7 @@ function).
 
 ---
 
-## 13. The lost spaces -- the in-between (TODO #26)
+## 13. The lost spaces -- the in-between
 
 Three procedurally-generated, non-repeating dark fields
 (`scenes/lost_space.py`; `lost_corn` / `lost_forest` / `lost_road`, plus the
@@ -2128,7 +2128,7 @@ the one beat the space exists to deliver. Enforced by
 
 ---
 
-## 14. The safe path -- the lit spine (TODO #26)
+## 14. The safe path -- the lit spine
 
 The middle of the three layers: **interior -> yard -> SAFE PATH <-> lost
 spaces** (`scenes/safe_path.py`). A path scene is a wide paved road under
@@ -2269,7 +2269,7 @@ two real landmarks, a full-width dirt row and the car footprint.)
 
 ---
 
-## 15. The yards -- a household without a word (TODO #26)
+## 15. The yards -- a household without a word
 
 The innermost of the three layers: **safe path -> YARD -> house**
 (`scenes/yards.py`). A yard is one household's own ground, and its whole job

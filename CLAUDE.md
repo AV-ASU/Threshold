@@ -301,7 +301,7 @@ it renders the procedural sprites to a labelled PNG strip.
     retired in one piece; its ten in-scene yard dressings and three new small
     houses are the INTERIM and go when it does. An interior served by a yard
     gets a SECOND door pointing at it, so both routes stay live meanwhile.
-  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, TODO #26;
+  - `scenes/lost_space.py` — **the LOST SPACES** (`LostSpace`, the lost-spaces ticket;
     the SYSTEM and its code map are `DESIGN.md` §13): a procedurally-generated,
     NON-REPEATING dark field (backrooms in-between). It works BECAUSE the tilt
     renderer is already a camera-window system and collision/sight route through
@@ -372,7 +372,7 @@ it renders the procedural sprites to a labelled PNG strip.
     the cult's errand machinery (`stealth.errand_step`; Garrick,
     Royce, the store Hettie, Rev. Crane). `chaser` runs the cultist state
     machine (`_cult_tick`: scout→chase→search→investigate). SCOUT carries
-    the **cult-liveness beats** (TODO #23a; `systems/stealth.py`
+    the **cult-liveness beats** (the complex-behavior ticket; `systems/stealth.py`
     `sync_pause`/`handoff_step`, `CULT_SYNC_*`/`CULT_HANDOFF_*` config):
     the shared-clock synchrony all-stop and the crossing hand-off —
     dressing that never touches the threat states (a frozen scout still
@@ -683,7 +683,7 @@ section is the CODE MAP only — where each system lives:
   `Scene.cult_spawns`/`cult_target` + `_spawn_cultist(from_pool=True)`
   (threat_mixin; prefill `_cult_prefilled`, top-up
   `CULT_TOPUP_INTERVAL`).
-- **The STORM** (TODO #25) — a MODE of the Watcher wave, never a second
+- **The STORM** (the storm ticket) — a MODE of the Watcher wave, never a second
   spawner: `_storm_active()` (past `STORM_GATE_EVIDENCE` in a room with
   `scene_gloom() > 0`), `_sync_storm_mode`, `npc._storm_tick` (walk at the
   player, refuse any step into light, cannot touch), `actor_smear_range` (units
@@ -697,7 +697,7 @@ section is the CODE MAP only — where each system lives:
   eased by `_apex_face`; a carved thing WORKS, it never emotes), and the axe/gun kill its HOST not the Mask (hooked in
   `_dispel_watcher`); its catch fires its OWN
   `_death_kind == "apex"` (a wordless PLACEHOLDER fade -- never the Unfolding's
-  card; the amalgam's real catch animation is owed, TODO #25), and
+  card; the amalgam's real catch animation is owed, the storm ticket), and
   `_tick_king_roam` stands the Unfolding down while a host is worn. Its two
   distinguishing beats: **THE SCREECH** (`Audio.apex_roar`, fired from
   `_apex_face` when `intent` crosses `APEX_ROAR_INTENT` -- one-shot per host,
@@ -883,7 +883,7 @@ section is the CODE MAP only — where each system lives:
   gloom (72) so a ground-floor room reads dim-lit-by-bulbs, not pitch-black
   (`_draw_dark`); lit by the genset `wall_lamp` fixture (DESIGN §6).
   `STORM_STAGE_SCENES` (Brimley + `OUTDOOR_SCENES`, 2026-07) is the surface
-  world that DARKENS with the evidence count (the storm's stage, TODO #25 /
+  world that DARKENS with the evidence count (the storm's stage, the storm ticket /
   DESIGN §2): `_draw_dark` runs there too at an ev-scaled gloom `STORM_DARK_GLOOM`
   (0 at ev0 -> early-out, byte-identical; night by ev3), so the road yard-lights
   become islands and the flashlight works outdoors. Understanding-driven, NOT a
@@ -894,7 +894,7 @@ section is the CODE MAP only — where each system lives:
   things need to open, so hiding in it would be hiding inside the threat.
   `tests/stealth.py` §11 + §18 fail if either comes back. `LOST_SPACE_SCENES` (the `lost_*` fields, 2026-07) is another
   `DARK_SCENES` subset with a HEAVIER gloom (150) so the lost space's lit focal
-  island reads as a bright island in a black sea (TODO #26).
+  island reads as a bright island in a black sea (the lost-spaces ticket).
 - `visibility` persists across scene loads (only `_reset_run_state`
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.
@@ -1062,7 +1062,7 @@ section is the CODE MAP only — where each system lives:
   `evidence` — `_evidence_count` is `len(save.arg("evidence"))` and drives the
   King-gate + world rot; only the five `CANONICAL_EVIDENCE` beats of Mara's
   trail (`maras_receipt`/`maras_record`/`maras_journal`/`maras_dig`/`maras_room`;
-  NARRATIVE §6, TODO #22) belong there — the bear is an optional non-counting
+  NARRATIVE §6) belong there — the bear is an optional non-counting
   item, and the Ledger/Preacher/dream file as notes. At the real Threshold (`scenes/depths.py build_threshold`
   `on_enter`), if `flashback_seen`, a recognition line lands before the
   doorframe beat: *"You have stood here before. In sleep."*
