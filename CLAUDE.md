@@ -155,14 +155,6 @@ python tools/screen_to_world.py <scene> --facing S --grid /tmp/g.png
 # reads as a sideways teleport.
 python tools/surface_map.py [--svg out.svg] [--json net.json]
 
-# EDIT THE CONNECTION LAYER VISUALLY. Bakes the live network into a
-# drag-and-drop editor (tools/network_editor.html is a TEMPLATE with no data of
-# its own, so it cannot drift): a link's side is DERIVED from where you drop a
-# scene, so the two ends of a seam can never disagree, and it prints the
-# `build_path(...)` / `build_yard_scene(...)` declarations to paste back. It
-# also measures whether the street network makes the player WANDER.
-python tools/surface_map.py --editor /tmp/net.html    # then open it in a browser
-
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
 ```

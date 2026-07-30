@@ -20,20 +20,9 @@ This reads it out of the built scenes instead:
   * which edges are §13 LOST-SPACE MOUTHS, since on this layer an unlit map
     edge is not a wall, it is the way out of the world.
 
-And it EDITS: `--editor` bakes the live network into a drag-and-drop page
-(tools/network_editor.html, a template carrying no data of its own so it cannot
-drift). A link's side there is DERIVED from where you drop a scene rather than
-typed, so the two ends of a seam can never disagree -- the farm_yard class of
-bug becomes unauthorable instead of merely testable -- and it prints the
-`build_path(...)` / `build_yard_scene(...)` declarations to paste back. It also
-MEASURES whether the town makes the player wander (junctions among the streets
-that carry a door, doors handed over per street, streets that carry nothing),
-because "this reads as a corridor" stops being an opinion once it is counted.
-
     python tools/surface_map.py                    # the ASCII map + the report
     python tools/surface_map.py --svg out.svg      # the compass plate
     python tools/surface_map.py --json net.json    # the raw network
-    python tools/surface_map.py --editor ed.html   # the editor, then open it
 """
 import os
 import sys
@@ -289,39 +278,6 @@ def main():
         open(path, "w").write(json.dumps(out, indent=1))
         print("\n  wrote %s (%d nodes, %d links)"
               % (path, len(nodes), len(links)))
-
-    if "--editor" in sys.argv:
-        # Bake the CURRENT network into the editor template, so the editor can
-        # never drift from the scenes it edits (the template ships with a
-        # placeholder and no data of its own).
-        import json
-        tpl = open(os.path.join("tools", "network_editor.html")).read()
-        nodes = [{"k": n["key"], "l": _layer(n["key"]),
-                  "c": at[n["key"]][0], "r": at[n["key"]][1], "lost": n["lost"]}
-                 for n in [{"key": k, "lost": world[k]["lost"]}
-                           for k in sorted(world)
-                           if _layer(k) != "interior" and k in at
-                           and "exits" in world[k]]]
-        links = []
-        for n in nodes:
-            for d, ch, t, sp in world[n["k"]]["exits"]:
-                if d is None or _layer(t) == "interior":
-                    continue
-                links.append({"a": n["k"], "b": t, "s": d, "ch": ch, "sp": sp})
-        doors = {k: [t for d, c, t, s in world[k]["exits"]
-                     if _layer(t) == "interior"]
-                 for k in sorted(world)
-                 if _layer(k) == "yard" and "exits" in world[k]}
-        data = ("const NET=%s;\nconst DOORS=%s;\n"
-                % (json.dumps({"nodes": nodes, "links": links},
-                              separators=(",", ":")),
-                   json.dumps(doors, separators=(",", ":"))))
-        out = "network_editor.built.html"
-        if sys.argv[-1].endswith(".html"):
-            out = sys.argv[-1]
-        open(out, "w").write(tpl.replace("/* @NETWORK_DATA@ */", data))
-        print("\n  wrote %s (%d nodes, %d links) -- open it in a browser"
-              % (out, len(nodes), len(links)))
 
     if "--svg" in sys.argv:
         out = sys.argv[sys.argv.index("--svg") + 1]

@@ -2942,36 +2942,6 @@
   town column on its east arm), and `river_road` / `clearing` disagree by a
   quarter turn.
 
-- **2026-07 — A visual editor for the connection layer** (maintainer: *"you
-  need a visual scene editor"*, and the entrance-way has to be denoted per
-  scene). Scoped deliberately to the NETWORK rather than to tile-by-tile
-  scene editing, because that is where the bugs actually were and because
-  street and yard declarations are already pure data (`build_path`'s `arms` +
-  `exits`, `build_yard_scene`'s `path_side`), so they round-trip.
-  `python tools/surface_map.py --editor out.html` bakes the live network into
-  a drag-and-drop page. **The design decision that makes it worth having: a
-  link's side is DERIVED from where you drop a scene, never typed.** Both ends
-  of every seam are computed from one layout, so the farm_yard class of bug
-  becomes unauthorable rather than merely testable; two scenes left diagonal
-  are shown as unresolved instead of being given an invented direction. It
-  prints the declarations to paste back, and it flags the declared sides that
-  no layout can satisfy -- which is the same three seams the report finds,
-  arrived at from the other end.
-  It also **measures whether the town makes the player wander**, because
-  "does this read as a corridor" is not a matter of opinion once the streets
-  that carry a door are counted: junctions among them, doors handed over per
-  street, streets that carry nothing, depth from the car. On the shipped
-  network that reads zero junctions and the verdict "a corridor" -- the
-  maintainer's own complaint, measured (open work: `TODO.md` #26).
-  `tools/network_editor.html` is a TEMPLATE carrying no data of its own, so
-  the editor cannot drift from the scenes it edits. Built and verified by
-  driving it in Chromium, which caught two bugs worth recording: links are
-  stored both ways (each scene declares its own exit), so counting link rows
-  double-counted every neighbour and reported a plain chain as eight
-  junctions; and the baseline for "what changed" was the declared sides
-  rather than the derived ones, so the three contradictory scenes showed as
-  edits before anything had been touched.
-
 ## Documentation process
 
 - **2026-07 — The consolidation: one timeline, and ticket numbers made
