@@ -53,8 +53,26 @@ CUT_RIM_HOT = (206, 164, 62)
 # tinted: enough to lift a near-black body off a near-black room, not enough
 # to read as the creature emitting light.
 # The visibility OUTLINE (see draw_amalgam_sprite).
+# The OUTLINE is the whole locator, so it is sized for the DARK SCENE it ships
+# in, not for the preview sheet. At 1px of (206,202,196) a live 15-unit storm
+# was unfindable: every unit was drawing ~400px, but the shapes did not
+# separate from a frame averaging 14 luminance. Neither alpha
+# (the blind-spot fog floor) nor the room gloom turned out to be the lever --
+# both were tried and measured, and both moved the peak delta by ~1 -- because
+# a near-black body simply has no value to spend. The EDGE is the only thing
+# that can carry it, which is what the outline was for in the first place.
+# The old note here said 2px "reads as cartoon line-art". On the isolated
+# contact sheet that is STILL TRUE and worth knowing -- at sheet scale against
+# the neutral card the edge swallows the body and the deals read as white line
+# drawings. Both judgements are real; they just disagree about which screen
+# matters, and the player only ever sees the dark one, where 2px is the
+# difference between counting six creatures and finding one. So: width raised,
+# COLOUR left at the original bone rather than brightened, which is what keeps
+# the sheet's complaint down to a quibble instead of a fair hit. Judge any
+# further change in a SCENE, in the dark (tools/capture_storm.py), and glance
+# at tools/preview_amalgam.py after to see what it costs.
 AMALGAM_EDGE = (206, 202, 196)   # bone; see the colour note in the docstring
-AMALGAM_EDGE_W = 1               # px. 2 reads as cartoon line-art.
+AMALGAM_EDGE_W = 2               # px, sized for the dark scene, not the sheet
 _EMIT_FLOOR = 90                 # alpha below this is atmosphere, not flesh
 # THE GAZE. "Every amalgam watches" is the family's one composition rule
 # (assemble), and at the old values you could not find an eye: EMBER was

@@ -2706,6 +2706,41 @@
 
 ## The light table, and one skin for His gaze
 
+- **2026-07 -- the road is storm-proof, and the LIGHT is what does it.**
+  Maintainer ruling, in their words: *"the road is only safe because of
+  light."* Measured first: `store_row` is 69% lit, because §14's lamp pattern
+  keeps the whole carriageway inside a pool, so a unit that refuses to step
+  into light cannot set foot on a street -- a live wave stalls in the verge
+  with its nearest unit 231px out. Ruled deliberate. The safe path now has TWO
+  separate safeties and they are worth keeping distinct: §14's GEOMETRY is
+  what keeps a lost-space mouth off the asphalt, and the LAMPS are what keep
+  the flood off it. Take the lamps away and a road is still not a mouth, but
+  it is stormable -- which is the trade a dark stretch of road should make.
+
+- **2026-07 -- the flood was unfindable, and the fix was the outline.** With
+  15 units up in `farm_yard` at ev3 you could find one. Two plausible causes
+  were tried and MEASURED to be wrong, which is the useful part of this entry:
+  the blind-spot fog floor (raised it, no effect -- units inside the sight cone
+  are already at alpha 255, so the floor never applies to the ones you are
+  looking at) and the room gloom (forced it to 0, median peak delta moved 14.0
+  -> 15.2). A near-black body has no VALUE to spend, so neither alpha nor
+  brightness could ever have been the lever. `AMALGAM_EDGE_W` 1 -> 2 took the
+  same frame from one findable unit to five or six.
+
+  The old note beside that constant said 2px "reads as cartoon line-art", and
+  on `tools/preview_amalgam.py` that is still true -- at sheet scale against a
+  neutral card the edge swallows the body. Both judgements are real; they
+  disagree about which screen matters, and the player only ever sees the dark
+  one. The colour was left at the original bone rather than brightened, which
+  keeps the sheet's complaint to a quibble. The body still reads as outline
+  more than as creature at game scale; that remainder is in `TODO.md`.
+
+  The measuring is now `tools/capture_storm.py --measure`, which renders the
+  frame with and without the units and DIFFS, because the first attempt at
+  this sampled the brightest pixel near each unit and got fooled by the corn
+  behind it -- reporting four separate units with identical peaks.
+
+
 - **2026-07 -- THE LIGHT TABLE: three declarations become one row.** A
   light-emitting kind used to be declared in three places that nothing tied
   together -- `Scene._LIGHT_KINDS` (the mechanical radius `lit_at` answers

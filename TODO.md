@@ -443,9 +443,21 @@
       never arrives in them, which contradicts "the storm fills ALL dark".
       Small enclosed rooms are the same shape of failure (`well_passage` and
       `lodge_yard` each build a single unit).
-    Fix the legibility first, since it is the one that makes every other
-    judgement about this system possible. Re-measure with the same tool rather
-    than eyeballing a frame.
+    **Reach is RULED and closed** (maintainer, 2026-07): the road is
+    storm-proof and the light is what does it, deliberately (`DESIGN.md` §1).
+    **Legibility is PARTLY fixed** -- `AMALGAM_EDGE_W` went to 2px, which took
+    a `farm_yard` frame from one findable unit to five or six. Two things were
+    tried and MEASURED not to be the lever, so do not re-try them: the
+    blind-spot fog floor (units in the sight cone are already at alpha 255) and
+    the room gloom (forcing it to 0 moved the median peak delta 14.0 -> 15.2).
+    A near-black body has no value to spend; only the EDGE can carry it.
+    **Still open:** the units read as outlines more than as creatures now, and
+    on the isolated preview sheet 2px is frankly line-art. The next move is
+    giving the body itself something to read at game scale in the dark
+    (interior value, not a glow) so the edge is not carrying the whole job
+    alone. Re-measure with `tools/capture_storm.py --measure`, and look in a
+    SCENE, never on the sheet.
+    **Still open:** `lost_corn` builds zero units (above). Untouched.
   - **THE AMALGAM'S CATCH ANIMATION.** The apex's death card is a wordless
     placeholder fade, hooked up and timed already (`_death_kind == "apex"`,
     3.8s, `render_mixin._draw_death_screen`), so this is purely the drawing:

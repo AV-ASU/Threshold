@@ -235,7 +235,16 @@ its head) and pings the cult to **investigate the body**, and the body
   open across the whole room, and every unit switches from standing still to
   **walking at the player** (`npc._storm_tick`), refusing any step into light --
   so **light is the only safety** and standing in a pool makes them ring its
-  edge. A unit **cannot touch or kill**: walking onto you is a scare, nothing
+  edge. **THE ROAD IS STORM-PROOF, AND IT IS THE LIGHT THAT DOES IT**
+  (maintainer ruling, 2026-07: *"the road is only safe because of light"*).
+  Measured: `store_row` is 69% lit, because §14's lamp pattern is built to keep
+  the whole carriageway inside a pool, so a unit that refuses to step into
+  light cannot set foot on a street -- a live wave stalls in the verge with its
+  nearest unit 231px out. This is deliberate and it is the SECOND, separate
+  reason the safe path is safe: §14's geometry rule is what keeps a lost-space
+  mouth off the asphalt, and the lamps are what keep the flood off it. Take the
+  lamps away and the road is still not a mouth, but it IS stormable, which is
+  exactly the trade a dark stretch of road should make. A unit **cannot touch or kill**: walking onto you is a scare, nothing
   more. **Every dispel still works** in a storm -- gaze, light, axe, round.
   Watchers do NOT stop at the gate; they become the storm. Units also stop
   obeying the sight cone and take the apex's fog curve instead

@@ -65,6 +65,57 @@ def lit_stand(scene):
                                                scene.h * TILE // 2)), False
 
 
+def measure(g, surf):
+    """How legible is the flood, in numbers instead of an opinion?
+
+    Renders the frame twice -- once as it is, once with the units pulled out of
+    the scene -- and DIFFS. The difference image is exactly what the storm
+    contributes and nothing else, which is the only honest way to ask this: a
+    first attempt sampled the brightest pixel near each unit and got fooled by
+    the corn behind it, reporting four separate units with identical peaks.
+
+    peakDelta is the strongest pixel a unit changes, against a frame that
+    averages ~14 luminance at ev3. Under ~15 is a smudge you cannot find; the
+    fix for that is alpha (STORM_SMEAR_FLOOR), never lifting the body's VALUE,
+    because a near-black creature that gets brighter stops being a shadow.
+    """
+    def frame():
+        surf.fill((0, 0, 0))
+        g.draw_world()
+        return pygame.surfarray.array3d(surf).transpose(1, 0, 2).astype(float)
+
+    import math
+    units = list(g._watchers)
+    with_units = frame()
+    keep = [n for n in g.scene.npcs if n not in units]
+    g.scene.npcs = keep
+    without = frame()
+    g.scene.npcs = keep + units
+
+    d = np.abs(with_units - without).mean(axis=2)
+    H, W = d.shape
+    rows = []
+    for u in units:
+        sx, sy = g.camera.project(u.x, u.y)
+        sx, sy = int(sx), int(sy)
+        dist = math.hypot(u.x - g.player.x, u.y - g.player.y)
+        if not (0 <= sx < W and 0 <= sy < H):
+            rows.append((dist, None))
+            continue
+        box = d[max(0, sy - 40):min(H, sy + 14), max(0, sx - 22):min(W, sx + 22)]
+        rows.append((dist, float(box.max())))
+    rows.sort(key=lambda r: r[0])
+    print(f"  frame mean luminance {with_units.mean(axis=2).mean():.1f}")
+    print(f"  {'dist':>6} {'peakDelta':>10}")
+    for dist, pk in rows:
+        print(f"  {dist:6.0f} {('off-screen' if pk is None else f'{pk:10.1f}')}")
+    on = [r for r in rows if r[1] is not None]
+    print(f"  units {len(units)}  on screen {len(on)}  "
+          f"peak>15 {sum(1 for r in on if r[1] > 15)}  "
+          f"peak>30 {sum(1 for r in on if r[1] > 30)}")
+    print(f"  total ink {d.sum():,.0f}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", default="store_row",
@@ -89,6 +140,9 @@ def main():
                          "frame to a porthole. That overlay is real and worth "
                          "looking at, but it is a different study than how the "
                          "flood moves -- pass --vis 1.0 for it.")
+    ap.add_argument("--measure", action="store_true",
+                    help="print how much INK the flood actually puts on screen "
+                         "instead of recording. See measure().")
     ap.add_argument("--no-apex", action="store_true",
                     help="hold visibility under APEX_VIS_GATE so the Mask "
                          "never arrives -- the plain flood on its own")
@@ -132,6 +186,11 @@ def main():
 
     surf = pygame.Surface((g.screen.get_width(), g.screen.get_height()))
     g.screen = surf
+
+    if args.measure:
+        measure(g, surf)
+        return
+
     dt = 1.0 / args.fps
     frames = int(args.seconds * args.fps)
     # x264 with an explicit crf rather than imageio's default quality ladder:
