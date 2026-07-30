@@ -1,0 +1,315 @@
+{
+ "key": "dark",
+ "floor": [
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx"
+ ],
+ "objects": [
+  "############",
+  "#..........#",
+  "#..........#",
+  "#..........#",
+  "#..........#",
+  "#..........#",
+  "#..........#",
+  "#..........#",
+  "#..D.......#",
+  "############"
+ ],
+ "decorations": [],
+ "npcs": [
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 112,
+   "y": 144,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 0.9610560305309546,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     112,
+     144
+    ]
+   },
+   "dialogue": "?build_dark.<locals>._murmur"
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 272,
+   "y": 144,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 1.2855442061252846,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     272,
+     144
+    ]
+   },
+   "dialogue": "?build_dark.<locals>._murmur"
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 144,
+   "y": 208,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 1.4123750690439163,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     144,
+     208
+    ]
+   },
+   "dialogue": "?build_dark.<locals>._murmur"
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 304,
+   "y": 208,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 0.7462117761362497,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     304,
+     208
+    ]
+   },
+   "dialogue": "?build_dark.<locals>._murmur"
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 272,
+   "y": 240,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 0.3141522559936307,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     272,
+     240
+    ]
+   },
+   "dialogue": "?build_dark.<locals>._murmur"
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 208,
+   "y": 176,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 0.6638521151119283,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     208,
+     176
+    ]
+   },
+   "dialogue": "?build_dark.<locals>._murmur"
+  }
+ ],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 10,
+  "w": 12,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "D": {
+    "()": [
+     "threshold",
+     "from_dark"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     208,
+     48
+    ]
+   },
+   "from_stair": {
+    "()": [
+     208,
+     48
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [],
+  "ambient_cues": [
+   [
+    3.882690198804502,
+    "heartbeat",
+    0.18,
+    3.5,
+    5.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

@@ -1,0 +1,386 @@
+{
+ "key": "toby_house",
+ "floor": [
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "=============="
+ ],
+ "objects": [
+  "WWWWWWWWWiWWWW",
+  "W....W.XX..xxW",
+  "W....W.....x.W",
+  "W............W",
+  "W....W.......W",
+  "WWWWWW.......F",
+  "W.........xx.W",
+  "W.........xx.W",
+  "W............W",
+  "WWWWWWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "bed",
+   "x": 352,
+   "y": 224,
+   "scale": 1.0,
+   "seed": 6970,
+   "t": 64.27721030626424,
+   "kwargs": {
+    "w": 54,
+    "h": 54
+   }
+  },
+  {
+   "kind": "bookshelf",
+   "x": 256,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 37.31058880681248,
+   "kwargs": {
+    "w": 58,
+    "h": 18
+   }
+  },
+  {
+   "kind": "table",
+   "x": 384,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 5438,
+   "t": 15.707612799681536,
+   "kwargs": {
+    "w": 54,
+    "h": 34
+   }
+  },
+  {
+   "kind": "chair",
+   "x": 368,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 5585,
+   "t": 30.915875177924924,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "radio",
+   "x": 368,
+   "y": 40,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 88.33693288695727,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 240,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "mounted_fish",
+   "x": 272,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "kerosene_lamp",
+   "x": 368,
+   "y": 34,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "clock",
+   "x": 392,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "corn_doll",
+   "x": 80,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "corn_doll",
+   "x": 118,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "missing_flyer",
+   "x": 400,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "sampler",
+   "x": 368,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 14,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "birdcage",
+   "x": 208,
+   "y": 72,
+   "scale": 1.0,
+   "seed": 8486,
+   "t": 90.70989668206849,
+   "kwargs": {}
+  },
+  {
+   "kind": "crayon_drawing",
+   "x": 204,
+   "y": 20,
+   "scale": 1.0,
+   "seed": 2781,
+   "t": 63.68262068007502,
+   "kwargs": {
+    "motif": "house"
+   }
+  },
+  {
+   "kind": "crayon_drawing",
+   "x": 244,
+   "y": 26,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 27.26319926016516,
+   "kwargs": {
+    "motif": "sun"
+   }
+  },
+  {
+   "kind": "crayon_drawing",
+   "x": 336,
+   "y": 18,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {
+    "motif": "family"
+   }
+  },
+  {
+   "kind": "crayons",
+   "x": 396,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 60,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 132,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 272,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 368,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 240,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "photo",
+   "x": 80,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [
+  {
+   "name": "Toby",
+   "sprite": "toby",
+   "x": 304,
+   "y": 208,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_kid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "toby",
+   "move_timer": 0.9610560305309546,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     304,
+     208
+    ]
+   },
+   "dialogue": "?toby_dialogue"
+  }
+ ],
+ "hooks": {
+  "on_enter": "scenes.interiors:_toby_house_on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 10,
+  "w": 14,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "toby_yard",
+     "from_toby_house"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     272,
+     240
+    ]
+   },
+   "from_toby_yard": {
+    "()": [
+     400,
+     176
+    ]
+   }
+  },
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [
+   {
+    "()": [
+     336,
+     264,
+     "under"
+    ]
+   }
+  ],
+  "_drawing_pos": {
+   "()": [
+    80,
+    48
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

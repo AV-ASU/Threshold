@@ -1,5 +1,5 @@
 """The full THRESHOLD test gate: conventions + smoke + flow + stealth +
-fold_pursuit + king_roam + render_smoke.
+fold_pursuit + king_roam + render_smoke + layouts.
 
 One command to run every harness before a commit/push. Self-configures the
 SDL dummy drivers (no display/audio needed) and sets PYTHONPATH, runs each
@@ -25,7 +25,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Order: cheapest/most-fundamental first.
 SUITES = ["conventions", "smoke", "flow", "stealth", "fold_pursuit",
-          "king_roam", "render_smoke"]
+          "king_roam", "render_smoke", "layouts"]
 
 
 def main():

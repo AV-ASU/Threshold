@@ -1,0 +1,169 @@
+{
+ "key": "the_cells",
+ "floor": [
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx"
+ ],
+ "objects": [
+  "#####F######",
+  "#####..#####",
+  "#..........#",
+  "####....####",
+  "#.x........#",
+  "####....####",
+  "#........x.#",
+  "####....####",
+  "#.x........#",
+  "#..........#",
+  "############"
+ ],
+ "decorations": [
+  {
+   "kind": "cot",
+   "x": 80,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "cot",
+   "x": 304,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "cot",
+   "x": 80,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "corn_doll",
+   "x": 304,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 316,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 92,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 208,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 314,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {
+    "ang": -1.5707963267948966
+   }
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 11,
+  "w": 12,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "works_sorting",
+     "from_the_cells"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     80
+    ]
+   },
+   "from_sorting": {
+    "()": [
+     176,
+     80
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [],
+  "ambient_cues": [
+   [
+    8.516720947848954,
+    "whisper",
+    0.13,
+    6.0,
+    11.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

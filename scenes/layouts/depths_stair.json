@@ -1,0 +1,104 @@
+{
+ "key": "depths_stair",
+ "floor": [
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx",
+  "xxxxxxxxx"
+ ],
+ "objects": [
+  "#########",
+  "####.####",
+  "###...###",
+  "##.....##",
+  "#.......#",
+  "#.......#",
+  "#.......#",
+  "##.....##",
+  "###...###",
+  "####.####",
+  "####D####"
+ ],
+ "decorations": [
+  {
+   "kind": "candle",
+   "x": 144,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 11,
+  "w": 9,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "D": {
+    "()": [
+     "dark",
+     "from_stair"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     48,
+     176
+    ]
+   },
+   "from_threshing": {
+    "()": [
+     48,
+     176
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [],
+  "ambient_cues": [
+   [
+    14.530937672609792,
+    "low_pulse",
+    0.1,
+    11.0,
+    16.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

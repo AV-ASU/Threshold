@@ -104,9 +104,9 @@ the lethal apex pursuer. (See the tilted-camera track below + `DESIGN.md §10`.)
 # Run (needs a display)
 python main.py
 
-# Full test gate — runs all seven harnesses (conventions + smoke + flow +
-# stealth + fold_pursuit + king_roam + render_smoke) and exits nonzero if any
-# fails. Self-configures SDL dummy drivers, so no env vars needed. Run from
+# Full test gate — runs all eight harnesses (conventions + smoke + flow +
+# stealth + fold_pursuit + king_roam + render_smoke + layouts) and exits
+# nonzero if any fails. Self-configures SDL dummy drivers, so no env vars needed. Run from
 # repo root before every commit/push.
 python tests/run_all.py
 
@@ -148,14 +148,21 @@ python tools/preview_terrain.py [--chars g d ";"] [--seams] [--plants]
 python tools/screen_to_world.py <scene> --facing S --ev 2 --at 60,245 --at ...
 python tools/screen_to_world.py <scene> --facing S --grid /tmp/g.png
 
-# LOOK AT A SCENE, AND TURN IT. A headless game that stays BOOTED: load a
-# scene, face n/e/s/w or spin, and take a clean frame -- the WHOLE map in shot,
-# with the HUD, the interact prompt, the toasts and the tutorial notice all
-# muted (the clock is frozen for reproducibility, so a notice never times out
-# on its own). Turning costs a command instead of a re-boot, which is what the
-# still-capture tools charge.
+# THE WORKBENCH -- one running game you LOOK at, EDIT and PLAY. Deliberately
+# ONE tool: the forty-seven others each boot their own game and none of them
+# can change anything, so every job started by picking between sporks and
+# ended in a still of a world you could not touch. This holds a game open.
+#   LOOK  scene/face/spin/at/close/zoom/shot -- the WHOLE map, no interface
+#         painted over it (the clock is frozen for reproducibility, which also
+#         means a notice never times out, so they are cleared per frame).
+#   EDIT  put/rm/mv/tile/floor/fill/npc/item/exit/spawn/undo -- and EVERY edit
+#         answers with a fresh PNG, because an edit you cannot see is a guess.
+#   PLAY  play/walk/key/step -- the real controls, the real interface, the
+#         real darkness. `look` goes back.
+#   SAVE  save writes the scene as a LAYOUT (scenes/layout.py).
 python tools/look.py serve &          # boot once, leave it up
-python tools/look.py scene shop_yard  # then: face e / spin 30 / at 12 9 / shot
+python tools/look.py scene shop_yard  # then: put woodpile 12 9 / play / walk s 20
+python tools/look.py help             # the full verb list
 
 # HOW DOES THE SURFACE CONNECT? There is no town map (DESIGN.md §15) -- the
 # geography lives in two dozen scenes' exit tables, so READ it out of the built
@@ -214,6 +221,19 @@ it renders the procedural sprites to a labelled PNG strip.
   (`scenes/__init__.py`). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
+  - `scenes/layout.py` — **A SCENE AS SAVED DATA** (`dump` /
+    `build_from_layout`, files in `scenes/layouts/`). The split that makes it
+    work: **placement is data, behaviour is not.** Tiles, props and their
+    kwargs, people and their numbers, and anything else a builder stashed on
+    the scene all travel as data (tuples and sets survive; JSON has neither).
+    Hooks, dialogue and any callable hung on the scene travel as
+    `module:name` and are imported back — so a layout can move a woodpile but
+    can never invent what happens when you knock. A closure defined inside a
+    builder has no importable name and fails LOUDLY at load rather than
+    handing back a room that lost its story; 40 scenes still do that, frozen
+    by count in `tests/layouts.py`, and lifting a hook to module level is what
+    finishes the move. Guarded: every scene is built, dumped, rebuilt and
+    compared field by field.
   - `scenes/base.py` — the `Scene` class + scene-builder helpers
     (`scatter_forest_band`, `chest_interact` …). Since 2026-07 it is a
     **facade**: the tile definitions + the entire terrain draw layer

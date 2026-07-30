@@ -1,0 +1,405 @@
+{
+ "key": "works_scriptorium",
+ "floor": [
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxx"
+ ],
+ "objects": [
+  "##############",
+  "###........###",
+  "##..x...x...##",
+  "#...x...x....#",
+  "F............E",
+  "#.....x......#",
+  "##.X.X..X.X.##",
+  "###........###",
+  "##############"
+ ],
+ "decorations": [
+  {
+   "kind": "table",
+   "x": 144,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "w": 30,
+    "h": 26
+   }
+  },
+  {
+   "kind": "table",
+   "x": 272,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 30,
+    "h": 26
+   }
+  },
+  {
+   "kind": "table",
+   "x": 208,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "w": 30,
+    "h": 26
+   }
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 112,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 208,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 336,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 336,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 272,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 112.0,
+   "y": 208.0,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 51.81671975334786,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 176.0,
+   "y": 208.0,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 81.62266069422749,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 272.0,
+   "y": 208.0,
+   "scale": 1.0,
+   "seed": 14,
+   "t": 55.54109041686123,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 336.0,
+   "y": 208.0,
+   "scale": 1.0,
+   "seed": 14,
+   "t": 82.28892888188716,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 70,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 67.08417724616831,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 378,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "small_chair",
+   "x": 144,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "small_chair",
+   "x": 272,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 208,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 6045,
+   "t": 15.815128737667205,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 368,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 5492,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 80,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 9837,
+   "t": 19.43003156648051,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 80,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 4370,
+   "t": 7.906997776661062,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door_wall",
+   "x": 240,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 6359,
+   "t": 99.49559553987243,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door_wall",
+   "x": 240,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 7324,
+   "t": 71.0419313144895,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_works_scriptorium.<locals>._interact"
+ },
+ "attrs": {
+  "h": 9,
+  "w": 14,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "works_sorting",
+     "from_below"
+    ]
+   },
+   "E": {
+    "()": [
+     "works_sign",
+     "from_above"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     240,
+     144
+    ]
+   },
+   "from_above": {
+    "()": [
+     80,
+     144
+    ]
+   },
+   "from_below": {
+    "()": [
+     368,
+     144
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     144,
+     80,
+     40
+    ]
+   },
+   {
+    "()": [
+     272,
+     80,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    4.077099621903766,
+    "blip_soft",
+    0.11,
+    3.0,
+    5.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_desk_pos": {
+   "()": [
+    144,
+    80
+   ]
+  },
+  "_mara_desk_pos": {
+   "()": [
+    272,
+    80
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     208,
+     200,
+     "under"
+    ]
+   }
+  ],
+  "_chalk_doors": [
+   {
+    "()": [
+     208,
+     80
+    ]
+   },
+   {
+    "()": [
+     368,
+     176
+    ]
+   },
+   {
+    "()": [
+     80,
+     112
+    ]
+   },
+   {
+    "()": [
+     80,
+     176
+    ]
+   },
+   {
+    "()": [
+     240,
+     48
+    ]
+   },
+   {
+    "()": [
+     240,
+     240
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {}
+}

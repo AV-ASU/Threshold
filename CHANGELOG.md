@@ -2942,6 +2942,57 @@
   town column on its east arm), and `river_road` / `clearing` disagree by a
   quarter turn.
 
+## The workbench, and scenes as data
+
+- **2026-07 — ONE tool that looks, edits and plays** (maintainer: *"why can't
+  we have one super tool that does everything you want when you want it and
+  you don't have to think about like do I want this spork or do I want the
+  spoon?"* and *"you need a full scene editor and the ability to play what you
+  just made"*). There were forty-seven tools. Each booted its own game, took
+  its own flags, printed its own thing, and none of them could change
+  anything: they rendered stills of a world you could not touch, so every job
+  began by choosing between sporks and ended by guessing.
+  `tools/look.py` holds ONE game open and answers three kinds of question.
+  LOOK: load a scene, turn it, walk the eye, zoom a corner -- the whole map in
+  frame with no interface painted over it. EDIT: put, remove, move, cut a
+  doorway, place a person -- **and every edit answers with a fresh picture**,
+  which is the whole point, because an edit you cannot see is a guess. PLAY:
+  hand the game back its interface and its darkness and drive it with the real
+  controls.
+  Three things it cost to get right, all of them found by looking rather than
+  reasoning: the tutorial notice sat across the middle of every shot because
+  the clock is frozen for reproducibility and a notice therefore never times
+  out; the frame was cropped to the player's camera window, so the fit is now
+  recomputed from the map's own corners at the live turn (a fixed zoom frames
+  one angle and crops the other three); and dropping the render caches to make
+  an edit visible emptied four fixed-shape caches whose readers index their
+  keys directly, killing every later command with a KeyError.
+
+- **2026-07 — Scenes can be written down** (`scenes/layout.py`; maintainer
+  chose data-layouts over code-editing when asked which way to go). A scene
+  existed only as the function that built it, so changing a room meant editing
+  code and knowing what a room held meant reading that code. A layout is the
+  room as data.
+  **The split: placement is data, behaviour is not.** Tiles, props and kwargs,
+  people and their numbers, and every attribute a builder stashed on the side
+  travel as data -- generically, so the format is never one field short, and
+  with tuples and sets preserved, since JSON has neither and a face direction
+  that returns as a list is a person facing nowhere. Hooks, dialogue and
+  callables travel as `module:name` and are imported back. A closure defined
+  inside a builder cannot be named, so it fails LOUDLY at load rather than
+  quietly handing back a room that lost its story.
+  `tests/layouts.py` builds all 71 scenes, dumps each, reads it back and
+  compares field by field: **67 round-trip exactly** (4 are procedural fields
+  with no fixed content to record). 40 still keep behaviour in a closure,
+  frozen by count so the number can only fall; lifting those hooks to module
+  level is what finishes the move.
+  Worth recording: the first version of that guard compared rendered frames
+  and the yards came back ~5% different while every wall, building, fence and
+  path was pixel-identical. The difference was scattered grass, whose cards
+  are cached by the identity of the decoration object, so equal-but-distinct
+  props take different cache paths. That is a property of the draw layer, not
+  the layout. The guard asserts the authored content instead, exactly.
+
 ## Documentation process
 
 - **2026-07 — The consolidation: one timeline, and ticket numbers made

@@ -1,0 +1,184 @@
+{
+ "key": "pell_house",
+ "floor": [
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============"
+ ],
+ "objects": [
+  "WWWWWWWWWWWW",
+  "Wx.........i",
+  "W...x......W",
+  "W..........W",
+  "W........x.W",
+  "W..........W",
+  "W....D.....W",
+  "WWWWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "stove",
+   "x": 48,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "w": 30,
+    "h": 40
+   }
+  },
+  {
+   "kind": "table",
+   "x": 144,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 30,
+    "h": 26
+   }
+  },
+  {
+   "kind": "cot",
+   "x": 304,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "w": 30,
+    "h": 16
+   }
+  },
+  {
+   "kind": "papers",
+   "x": 144,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "kerosene_lamp",
+   "x": 144,
+   "y": 82,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "overturned_chair",
+   "x": 304,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [
+  {
+   "name": "Old Pell",
+   "sprite": "old_townsman",
+   "x": 112,
+   "y": 144,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 40,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "old_townsman",
+   "move_timer": 0.6795411491932528,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     112,
+     144
+    ]
+   },
+   "dialogue": "?chorus_dialogue.<locals>._fn"
+  }
+ ],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 8,
+  "w": 12,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "D": {
+    "()": [
+     "pell_yard",
+     "from_pell_house"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     176
+    ]
+   },
+   "from_pell_yard": {
+    "()": [
+     176,
+     176
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": []
+ },
+ "fn_attrs": {}
+}

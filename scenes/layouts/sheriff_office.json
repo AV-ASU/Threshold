@@ -1,0 +1,546 @@
+{
+ "key": "sheriff_office",
+ "floor": [
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================"
+ ],
+ "objects": [
+  "WWWiiWWWWWWWWWWW",
+  "Wx....W.......XW",
+  "Wx....W........W",
+  "Wx.xx..........W",
+  "Wx....W....xx..W",
+  "W...XXW........F",
+  "WWW.WWWWWW.WWWWW",
+  "W.....W........W",
+  "Wx....W.xx..W.WW",
+  "Wx....W.x...W..W",
+  "W.x...W.....W..W",
+  "WWWWWWWWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "lawman_wall",
+   "x": 48,
+   "y": 64,
+   "scale": 1.0,
+   "seed": 7,
+   "t": 64.27721030626424,
+   "kwargs": {}
+  },
+  {
+   "kind": "lawman_desk",
+   "x": 128,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "bookshelf",
+   "x": 160,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 37.31058880681248,
+   "kwargs": {
+    "w": 58,
+    "h": 18
+   }
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 144,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 5438,
+   "t": 15.707612799681536,
+   "kwargs": {}
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 112,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 5585,
+   "t": 30.915875177924924,
+   "kwargs": {
+    "z": 42
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 176,
+   "y": 136,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 88.33693288695727,
+   "kwargs": {}
+  },
+  {
+   "kind": "buck_head",
+   "x": 80,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "mounted_fish",
+   "x": 48,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "calendar",
+   "x": 176,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "chair",
+   "x": 48,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "chair",
+   "x": 48,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "table",
+   "x": 80,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {
+    "w": 30,
+    "h": 30
+   }
+  },
+  {
+   "kind": "oil_portrait",
+   "x": 176,
+   "y": 222,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 80,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 29.51456038644067,
+   "kwargs": {}
+  },
+  {
+   "kind": "lantern",
+   "x": 144,
+   "y": 344,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 96,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {
+    "z": 38,
+    "broken": true
+   }
+  },
+  {
+   "kind": "gun_cabinet",
+   "x": 464,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {
+    "w": 28,
+    "h": 54
+   }
+  },
+  {
+   "kind": "polaroid_wall",
+   "x": 304,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "missing_flyer",
+   "x": 336,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "oil_portrait",
+   "x": 400,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "payphone",
+   "x": 464,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 31.059710566680888,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 474,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 304,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 304,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 400,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 1747,
+   "t": 53.816451178139644,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "table",
+   "x": 384,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {
+    "w": 54,
+    "h": 36
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 264,
+   "y": 136,
+   "scale": 1.0,
+   "seed": 3525,
+   "t": 4.915207595917314,
+   "kwargs": {}
+  },
+  {
+   "kind": "papers",
+   "x": 368,
+   "y": 134,
+   "scale": 1.0,
+   "seed": 41,
+   "t": 79.44653954978918,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "table",
+   "x": 288,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 86.76190071021502,
+   "kwargs": {
+    "w": 54,
+    "h": 36
+   }
+  },
+  {
+   "kind": "chair",
+   "x": 272,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 9562,
+   "t": 53.61414308731732,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 304,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 8636,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 368,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 86.88491852788115,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 240,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 5739,
+   "t": 86.32775509080443,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "bloodstain",
+   "x": 436,
+   "y": 344,
+   "scale": 1.4,
+   "seed": 6115,
+   "t": 13.581730848745366,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 474,
+   "y": 262,
+   "scale": 1.0,
+   "seed": 8241,
+   "t": 8.316400383702838,
+   "kwargs": {
+    "ang": 3.141592653589793
+   }
+  },
+  {
+   "kind": "mote",
+   "x": 144,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 9237,
+   "t": 24.977941341556175,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 304,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 3069,
+   "t": 65.34052784412341,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 112,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 9106,
+   "t": 82.20238438492743,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 336,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 344,
+   "t": 79.76879363605303,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [
+  {
+   "name": "Sheriff",
+   "sprite": "sheriff",
+   "x": 112,
+   "y": 144,
+   "movement": "watch",
+   "solid": true,
+   "voice": "blip_gruff",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "sheriff",
+   "move_timer": 0.9610560305309546,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     112,
+     144
+    ]
+   },
+   "dialogue": "?sheriff_dialogue"
+  }
+ ],
+ "hooks": {
+  "on_enter": "?build_sheriff_office.<locals>._fc_on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_sheriff_office.<locals>._office_interact"
+ },
+ "attrs": {
+  "h": 12,
+  "w": 16,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "sheriff_yard",
+     "from_sheriff_office"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     112,
+     272
+    ]
+   },
+   "from_sheriff_yard": {
+    "()": [
+     464,
+     176
+    ]
+   }
+  },
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     368,
+     144,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_record_pos": {
+   "()": [
+    368,
+    144
+   ]
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

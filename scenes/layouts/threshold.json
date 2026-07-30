@@ -1,0 +1,1392 @@
+{
+ "key": "threshold",
+ "floor": [
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "x~~xxxxxxxxxxx",
+  "x~~xxxxxxxxxxx",
+  "x~~xxxxxxxxxxx",
+  "x~~xxxxxxxxxxx",
+  "x~~xxxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~x00000xxxx",
+  "x~~xx00000xxxx",
+  "x~~xx00000xxxx",
+  "x~~xx00000xxxx",
+  "x~~xx00000xxxx",
+  "x~~xxxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xxx~~xxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xx~~xxxxxxxxxx",
+  "xxxxxxxxxxxxxx"
+ ],
+ "objects": [
+  "###XX#########",
+  "#..XX....#..##",
+  "#..XXX...#XX.#",
+  "#..XXX.X.X.X##",
+  "#..XXXX..X..##",
+  "#.XXXXX..XXX##",
+  "#.XX.XX....X##",
+  "#.XX.X.X.XXX.#",
+  "#XXXXX.X....##",
+  "#XX.XX...XX.##",
+  "#XX.....X..X##",
+  "#XX..X.X....##",
+  "#XX.XX...X..##",
+  "#.XX....X..X##",
+  "#.XX.XXX...X##",
+  "#.XX...XX..X##",
+  "#..XX.X.X..X##",
+  "#..XXX......##",
+  "#..XX.....XX##",
+  "#..XXXX.XX..##",
+  "#..XXXXX.X.X##",
+  "#.XXX..X.XXXX#",
+  "#.XXX.XXX.X.##",
+  "#.XXX.....X.##",
+  "#XXXX.....XX##",
+  "#XXXX.....X.##",
+  "#XXXX.....X.##",
+  "#XXXX.....X..#",
+  "#XXXXX...XX..#",
+  "#.XX.X....X.##",
+  "#.XX.X...XX.##",
+  "#..XX......X.#",
+  "#..XX.....XX##",
+  "#..XX....X..X#",
+  "#..XXX....XX.#",
+  "#..XX.......##",
+  "#..XX.......X#",
+  "#.XXX....#..##",
+  "#.XX.#...#.###",
+  "##############"
+ ],
+ "decorations": [
+  {
+   "kind": "doorframe",
+   "x": 240,
+   "y": 816,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "waterfall",
+   "x": 80,
+   "y": 1200,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 110
+   }
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 80,
+   "scale": 0.99,
+   "seed": 189,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 80,
+   "scale": 1.26,
+   "seed": 344,
+   "t": 2.276975163762307,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 80,
+   "scale": 1.11,
+   "seed": 375,
+   "t": 30.915875177924924,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 112,
+   "scale": 1.16,
+   "seed": 206,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 112,
+   "scale": 1.01,
+   "seed": 268,
+   "t": 30.575885575179072,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 112,
+   "scale": 0.75,
+   "seed": 330,
+   "t": 74.04169720868083,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 112,
+   "scale": 1.25,
+   "seed": 392,
+   "t": 74.190647184061,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 144,
+   "scale": 0.71,
+   "seed": 223,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 144,
+   "scale": 0.86,
+   "seed": 254,
+   "t": 84.43655961218651,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 144,
+   "scale": 0.79,
+   "seed": 347,
+   "t": 1.244595666314674,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 176,
+   "scale": 1.22,
+   "seed": 209,
+   "t": 7.8201602322543255,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 176,
+   "scale": 0.74,
+   "seed": 240,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 176,
+   "scale": 0.92,
+   "seed": 271,
+   "t": 51.81671975334786,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 176,
+   "scale": 0.93,
+   "seed": 364,
+   "t": 81.62266069422749,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 176,
+   "scale": 1.12,
+   "seed": 395,
+   "t": 51.42702621392144,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 176,
+   "scale": 1.27,
+   "seed": 426,
+   "t": 55.54109041686123,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 208,
+   "scale": 1.05,
+   "seed": 257,
+   "t": 82.28892888188716,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 208,
+   "scale": 0.72,
+   "seed": 288,
+   "t": 67.08417724616831,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 208,
+   "scale": 0.71,
+   "seed": 443,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 240,
+   "scale": 1.18,
+   "seed": 274,
+   "t": 49.791127805702175,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 240,
+   "scale": 1.25,
+   "seed": 336,
+   "t": 83.31340324619944,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 240,
+   "scale": 0.72,
+   "seed": 398,
+   "t": 81.72919315913337,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 240,
+   "scale": 1.18,
+   "seed": 429,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 240,
+   "scale": 0.77,
+   "seed": 460,
+   "t": 29.51456038644067,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 112,
+   "y": 272,
+   "scale": 0.95,
+   "seed": 229,
+   "t": 96.44377224676234,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 272,
+   "scale": 0.79,
+   "seed": 260,
+   "t": 39.781972406785385,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 272,
+   "scale": 0.96,
+   "seed": 291,
+   "t": 63.68262068007502,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 272,
+   "scale": 1.07,
+   "seed": 353,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 304,
+   "scale": 0.86,
+   "seed": 277,
+   "t": 62.71064917635159,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 304,
+   "scale": 1.16,
+   "seed": 308,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 304,
+   "scale": 1.1,
+   "seed": 432,
+   "t": 47.19720124655237,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 304,
+   "scale": 1.03,
+   "seed": 463,
+   "t": 81.87380373053276,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 272,
+   "y": 336,
+   "scale": 1.07,
+   "seed": 418,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 336,
+   "scale": 0.88,
+   "seed": 511,
+   "t": 76.88450067859586,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 368,
+   "scale": 1.01,
+   "seed": 342,
+   "t": 79.36861120940694,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 368,
+   "scale": 1.18,
+   "seed": 404,
+   "t": 13.762835458551647,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 400,
+   "scale": 1.0,
+   "seed": 328,
+   "t": 35.41138642325781,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 400,
+   "scale": 0.91,
+   "seed": 359,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 400,
+   "scale": 1.15,
+   "seed": 483,
+   "t": 89.85521300643833,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 272,
+   "y": 432,
+   "scale": 0.98,
+   "seed": 469,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 432,
+   "scale": 0.93,
+   "seed": 562,
+   "t": 59.2775364540325,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 464,
+   "scale": 0.88,
+   "seed": 393,
+   "t": 2.066108086498375,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 464,
+   "scale": 0.83,
+   "seed": 424,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 464,
+   "scale": 0.85,
+   "seed": 455,
+   "t": 4.5458276109133,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 464,
+   "scale": 1.18,
+   "seed": 579,
+   "t": 6.152827273566908,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 496,
+   "scale": 1.02,
+   "seed": 472,
+   "t": 10.666078323404937,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 272,
+   "y": 496,
+   "scale": 1.04,
+   "seed": 503,
+   "t": 40.681894804513085,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 496,
+   "scale": 1.04,
+   "seed": 596,
+   "t": 57.743743098640486,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 528,
+   "scale": 0.95,
+   "seed": 458,
+   "t": 96.17236421643858,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 272,
+   "y": 528,
+   "scale": 1.09,
+   "seed": 520,
+   "t": 79.44653954978918,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 528,
+   "scale": 1.04,
+   "seed": 613,
+   "t": 86.76190071021502,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 560,
+   "scale": 0.76,
+   "seed": 444,
+   "t": 11.143313002691734,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 592,
+   "scale": 0.9,
+   "seed": 616,
+   "t": 73.84663714741907,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 592,
+   "scale": 1.29,
+   "seed": 647,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 624,
+   "scale": 0.77,
+   "seed": 478,
+   "t": 52.710403404272476,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 624,
+   "scale": 0.88,
+   "seed": 509,
+   "t": 62.277313256347654,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 272,
+   "y": 624,
+   "scale": 0.79,
+   "seed": 571,
+   "t": 36.20007251447256,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 624,
+   "scale": 1.23,
+   "seed": 602,
+   "t": 51.62820469609498,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 656,
+   "scale": 0.72,
+   "seed": 495,
+   "t": 13.581730848745366,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 656,
+   "scale": 0.73,
+   "seed": 526,
+   "t": 37.323220136138794,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 656,
+   "scale": 0.98,
+   "seed": 557,
+   "t": 64.63892348334092,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 656,
+   "scale": 0.82,
+   "seed": 619,
+   "t": 24.977941341556175,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 656,
+   "scale": 1.15,
+   "seed": 681,
+   "t": 56.38015989467894,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 688,
+   "scale": 1.17,
+   "seed": 481,
+   "t": 93.55898215425592,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 688,
+   "scale": 1.11,
+   "seed": 574,
+   "t": 82.20238438492743,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 688,
+   "scale": 0.86,
+   "seed": 636,
+   "t": 55.58066204017992,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 688,
+   "scale": 0.84,
+   "seed": 667,
+   "t": 47.13189826981093,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 688,
+   "scale": 0.71,
+   "seed": 698,
+   "t": 87.70396555405868,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 400,
+   "y": 688,
+   "scale": 0.77,
+   "seed": 729,
+   "t": 17.825993472191914,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 720,
+   "scale": 0.84,
+   "seed": 498,
+   "t": 43.64619386061557,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 208,
+   "y": 720,
+   "scale": 1.07,
+   "seed": 560,
+   "t": 84.64899606739993,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 240,
+   "y": 720,
+   "scale": 0.75,
+   "seed": 591,
+   "t": 61.24264201644027,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 272,
+   "y": 720,
+   "scale": 0.87,
+   "seed": 622,
+   "t": 45.7034441687029,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 720,
+   "scale": 1.03,
+   "seed": 684,
+   "t": 52.48982352803452,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 752,
+   "scale": 0.82,
+   "seed": 515,
+   "t": 29.805117129658477,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 752,
+   "scale": 0.89,
+   "seed": 701,
+   "t": 6.936114847492991,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 112,
+   "y": 784,
+   "scale": 0.93,
+   "seed": 501,
+   "t": 36.09873513490679,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 784,
+   "scale": 1.12,
+   "seed": 532,
+   "t": 69.3209153890523,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 784,
+   "scale": 1.1,
+   "seed": 718,
+   "t": 93.3753769817419,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 784,
+   "scale": 0.87,
+   "seed": 749,
+   "t": 6.128145014400399,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 112,
+   "y": 816,
+   "scale": 1.18,
+   "seed": 518,
+   "t": 61.62489595176904,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 816,
+   "scale": 0.83,
+   "seed": 549,
+   "t": 48.69145242974403,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 816,
+   "scale": 1.13,
+   "seed": 735,
+   "t": 79.71030196764302,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 112,
+   "y": 848,
+   "scale": 0.94,
+   "seed": 535,
+   "t": 82.80801129585468,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 848,
+   "scale": 0.91,
+   "seed": 566,
+   "t": 70.86521483680293,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 848,
+   "scale": 1.27,
+   "seed": 752,
+   "t": 53.87814499888257,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 112,
+   "y": 880,
+   "scale": 1.03,
+   "seed": 552,
+   "t": 24.481362548176456,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 880,
+   "scale": 0.96,
+   "seed": 583,
+   "t": 96.46597518726836,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 880,
+   "scale": 1.25,
+   "seed": 769,
+   "t": 85.7928878473935,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 112,
+   "y": 912,
+   "scale": 1.26,
+   "seed": 569,
+   "t": 73.96748811778467,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 912,
+   "scale": 1.18,
+   "seed": 600,
+   "t": 54.736960561248026,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 912,
+   "scale": 0.76,
+   "seed": 631,
+   "t": 58.67754629747669,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 912,
+   "scale": 1.02,
+   "seed": 755,
+   "t": 10.673036771965826,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 912,
+   "scale": 0.77,
+   "seed": 786,
+   "t": 47.62383802952033,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 944,
+   "scale": 1.17,
+   "seed": 648,
+   "t": 67.92469159520576,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 944,
+   "scale": 0.86,
+   "seed": 803,
+   "t": 69.34757033332761,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 976,
+   "scale": 0.7,
+   "seed": 665,
+   "t": 23.698176988913445,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 976,
+   "scale": 1.21,
+   "seed": 789,
+   "t": 72.5264482686242,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 976,
+   "scale": 1.1,
+   "seed": 820,
+   "t": 49.03585250949789,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 1008,
+   "scale": 0.71,
+   "seed": 868,
+   "t": 29.735925841943754,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 1040,
+   "scale": 0.82,
+   "seed": 854,
+   "t": 69.39920100518418,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 1040,
+   "scale": 0.86,
+   "seed": 885,
+   "t": 91.48234598416181,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 304,
+   "y": 1072,
+   "scale": 0.85,
+   "seed": 840,
+   "t": 70.97783825238308,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 400,
+   "y": 1072,
+   "scale": 1.25,
+   "seed": 933,
+   "t": 19.693789981708342,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 176,
+   "y": 1104,
+   "scale": 0.89,
+   "seed": 733,
+   "t": 80.5644987079045,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 336,
+   "y": 1104,
+   "scale": 1.16,
+   "seed": 888,
+   "t": 25.041820148290274,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 368,
+   "y": 1104,
+   "scale": 1.02,
+   "seed": 919,
+   "t": 83.47070516625543,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 400,
+   "y": 1168,
+   "scale": 0.84,
+   "seed": 984,
+   "t": 84.57631316243702,
+   "kwargs": {}
+  },
+  {
+   "kind": "stalagmite",
+   "x": 144,
+   "y": 1200,
+   "scale": 1.3,
+   "seed": 753,
+   "t": 14.125171514508628,
+   "kwargs": {}
+  },
+  {
+   "kind": "water_channel",
+   "x": 196.62222222222218,
+   "y": 688.0,
+   "scale": 1.0,
+   "seed": 42,
+   "t": 58.59826162234825,
+   "kwargs": {
+    "path": [
+     {
+      "()": [
+       -68.62222222222218,
+       -608.0
+      ]
+     },
+     {
+      "()": [
+       -33.42222222222219,
+       -544.0
+      ]
+     },
+     {
+      "()": [
+       -1.4222222222221887,
+       -464.0
+      ]
+     },
+     {
+      "()": [
+       -20.622222222222177,
+       -384.0
+      ]
+     },
+     {
+      "()": [
+       11.377777777777823,
+       -304.0
+      ]
+     },
+     {
+      "()": [
+       30.57777777777781,
+       -224.0
+      ]
+     },
+     {
+      "()": [
+       8.177777777777834,
+       -144.0
+      ]
+     },
+     {
+      "()": [
+       36.97777777777782,
+       -64.0
+      ]
+     },
+     {
+      "()": [
+       20.977777777777817,
+       16.0
+      ]
+     },
+     {
+      "()": [
+       43.37777777777782,
+       80.0
+      ]
+     },
+     {
+      "()": [
+       43.37777777777782,
+       128.0
+      ]
+     },
+     {
+      "()": [
+       43.37777777777782,
+       176.0
+      ]
+     },
+     {
+      "()": [
+       20.977777777777817,
+       240.0
+      ]
+     },
+     {
+      "()": [
+       40.177777777777834,
+       304.0
+      ]
+     },
+     {
+      "()": [
+       4.977777777777817,
+       368.0
+      ]
+     },
+     {
+      "()": [
+       -23.822222222222166,
+       432.0
+      ]
+     },
+     {
+      "()": [
+       -59.02222222222218,
+       480.0
+      ]
+     },
+     {
+      "()": [
+       -97.42222222222217,
+       512.0
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "kind": "water_trail",
+   "x": 240,
+   "y": 822,
+   "scale": 1.0,
+   "seed": 99,
+   "t": 82.40000175285658,
+   "kwargs": {
+    "pool": true
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 1207,
+   "t": 97.77003701428845,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 390,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 7728,
+   "t": 35.94819343916819,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 390,
+   "y": 614,
+   "scale": 1.0,
+   "seed": 8413,
+   "t": 86.28233159664383,
+   "kwargs": {
+    "ang": 3.141592653589793
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 1190,
+   "scale": 1.0,
+   "seed": 196,
+   "t": 6.495015315542707,
+   "kwargs": {
+    "ang": -1.5707963267948966
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 390,
+   "y": 1190,
+   "scale": 1.0,
+   "seed": 7871,
+   "t": 1.8572180514410896,
+   "kwargs": {
+    "ang": 3.141592653589793
+   }
+  },
+  {
+   "kind": "mist",
+   "x": 304,
+   "y": 368,
+   "scale": 1.0,
+   "seed": 2128,
+   "t": 39.36802716595782,
+   "kwargs": {}
+  },
+  {
+   "kind": "mist",
+   "x": 176,
+   "y": 560,
+   "scale": 1.0,
+   "seed": 2421,
+   "t": 88.62913667459478,
+   "kwargs": {}
+  },
+  {
+   "kind": "mist",
+   "x": 368,
+   "y": 752,
+   "scale": 1.0,
+   "seed": 2045,
+   "t": 28.190005728763644,
+   "kwargs": {}
+  },
+  {
+   "kind": "mist",
+   "x": 144,
+   "y": 912,
+   "scale": 1.0,
+   "seed": 5247,
+   "t": 1.824505868051629,
+   "kwargs": {}
+  },
+  {
+   "kind": "mist",
+   "x": 336,
+   "y": 1040,
+   "scale": 1.0,
+   "seed": 8536,
+   "t": 34.24874812822595,
+   "kwargs": {}
+  },
+  {
+   "kind": "mist",
+   "x": 208,
+   "y": 1136,
+   "scale": 1.0,
+   "seed": 1038,
+   "t": 82.20070033820352,
+   "kwargs": {}
+  },
+  {
+   "kind": "mist",
+   "x": 272,
+   "y": 816,
+   "scale": 1.0,
+   "seed": 2392,
+   "t": 17.028116634662517,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?build_threshold.<locals>._threshold_on_enter",
+  "on_update": "?build_threshold.<locals>._threshold_update",
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 40,
+  "w": 14,
+  "music": "void",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": "void",
+  "window_glass": null,
+  "exits": {},
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     240,
+     1232
+    ]
+   },
+   "from_dark": {
+    "()": [
+     240,
+     1232
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_lintel_pos": {
+   "()": [
+    240,
+    816
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

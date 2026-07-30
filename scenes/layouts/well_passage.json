@@ -1,0 +1,588 @@
+{
+ "key": "well_passage",
+ "floor": [
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxx"
+ ],
+ "objects": [
+  "########################",
+  "########x..x###x..x#####",
+  "####x.##.sxx###..x######",
+  "#####.##X..X####.#######",
+  "#X.s..s..s..s..s..s..sX#",
+  "F......................E",
+  "#X..s..s..s..s..s..s..X#",
+  "#.................x....#",
+  "########################"
+ ],
+ "decorations": [
+  {
+   "kind": "barrel",
+   "x": 336,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 272,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 48.0,
+   "y": 144.0,
+   "scale": 1.0,
+   "seed": 2,
+   "t": 2.276975163762307,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 48.0,
+   "y": 208.0,
+   "scale": 1.0,
+   "seed": 2,
+   "t": 30.915875177924924,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 720.0,
+   "y": 144.0,
+   "scale": 1.0,
+   "seed": 11,
+   "t": 30.575885575179072,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 720.0,
+   "y": 208.0,
+   "scale": 1.0,
+   "seed": 11,
+   "t": 74.04169720868083,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 272.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 5,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 96,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 368.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 5,
+   "t": 84.43655961218651,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 96,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 304,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 1281,
+   "t": 1.244595666314674,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 656,
+   "y": 246,
+   "scale": 1.0,
+   "seed": 8618,
+   "t": 38.969128208863864,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 262,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 51.81671975334786,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 378,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 368,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 22,
+   "t": 77.69834007735729,
+   "kwargs": {
+    "w": 38,
+    "h": 18
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 368,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 21,
+   "t": 49.791127805702175,
+   "kwargs": {
+    "w": 30,
+    "h": 14
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 592,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 23,
+   "t": 83.31340324619944,
+   "kwargs": {
+    "w": 28,
+    "h": 14
+   }
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 80,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 2901,
+   "t": 81.72919315913337,
+   "kwargs": {}
+  },
+  {
+   "kind": "water_trail",
+   "x": 400,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 44.519722681601046,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "mote",
+   "x": 304,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 496,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 112,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 656,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 493.0,
+   "y": 126.0,
+   "scale": 1.0,
+   "seed": 31,
+   "t": 19.43003156648051,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 70,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 563.0,
+   "y": 126.0,
+   "scale": 1.0,
+   "seed": 31,
+   "t": 7.906997776661062,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 70,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "crate",
+   "x": 496,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 99.49559553987243,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 592,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "firewood",
+   "x": 560,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 24,
+   "t": 84.59750246342277,
+   "kwargs": {
+    "w": 34,
+    "h": 16
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 528,
+   "y": 54,
+   "scale": 1.0,
+   "seed": 8982,
+   "t": 89.85521300643833,
+   "kwargs": {}
+  },
+  {
+   "kind": "tally_marks",
+   "x": 560,
+   "y": 50,
+   "scale": 1.0,
+   "seed": 14,
+   "t": 95.18533169684959,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 144.0,
+   "y": 126.0,
+   "scale": 1.0,
+   "seed": 17,
+   "t": 33.172240819470524,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 208.0,
+   "y": 126.0,
+   "scale": 1.0,
+   "seed": 17,
+   "t": 56.966111097826264,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "spoil_heap",
+   "x": 144,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 7,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 166,
+   "y": 78,
+   "scale": 1.5,
+   "seed": 6665,
+   "t": 97.43458487589714,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 112,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 2,
+   "t": 4.379183446693435,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 496,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 86.88491852788115,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door_wall",
+   "x": 656,
+   "y": 252,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 91.21126485019975,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 9,
+  "w": 24,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "well_bottom",
+     "from_below"
+    ]
+   },
+   "E": {
+    "()": [
+     "works_cistern",
+     "from_above"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     272,
+     176
+    ]
+   },
+   "from_above": {
+    "()": [
+     48,
+     176
+    ]
+   },
+   "from_below": {
+    "()": [
+     720,
+     176
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [
+   {
+    "x": 336,
+    "y": 112,
+    "pose": null,
+    "face": {
+     "()": [
+      0,
+      -1
+     ]
+    },
+    "dwell": {
+     "()": [
+      3.0,
+      5.5
+     ]
+    }
+   },
+   {
+    "x": 592,
+    "y": 208,
+    "pose": null,
+    "face": {
+     "()": [
+      0,
+      1
+     ]
+    },
+    "dwell": {
+     "()": [
+      3.0,
+      5.5
+     ]
+    }
+   },
+   {
+    "x": 80,
+    "y": 176,
+    "pose": null,
+    "face": {
+     "()": [
+      -1,
+      0
+     ]
+    },
+    "dwell": {
+     "()": [
+      2.0,
+      4.0
+     ]
+    }
+   }
+  ],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     112,
+     208,
+     40
+    ]
+   },
+   {
+    "()": [
+     496,
+     208,
+     40
+    ]
+   },
+   {
+    "()": [
+     656,
+     252,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    7.334679592967943,
+    "cult_breath",
+    0.16,
+    5.0,
+    9.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [
+   {
+    "()": [
+     304,
+     104,
+     "under"
+    ]
+   },
+   {
+    "()": [
+     592,
+     168,
+     "under"
+    ]
+   }
+  ],
+  "_chalk_doors": [
+   {
+    "()": [
+     112,
+     208
+    ]
+   },
+   {
+    "()": [
+     496,
+     208
+    ]
+   },
+   {
+    "()": [
+     656,
+     252
+    ]
+   }
+  ],
+  "_chalk_voice": "chalk_works"
+ },
+ "fn_attrs": {}
+}

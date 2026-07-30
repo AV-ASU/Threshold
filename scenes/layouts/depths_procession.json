@@ -1,0 +1,586 @@
+{
+ "key": "depths_procession",
+ "floor": [
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ ],
+ "objects": [
+  "##############################",
+  "###..###..###..###.x###..##..#",
+  "###..###..###..###..###..##..#",
+  "#....X....X.....X....X....X..#",
+  "#............................E",
+  "#....X....X.....X....X....X..#",
+  "##..##..###..###..###..##..###",
+  "##..##..###.x###.X###..##.x###",
+  "######D#######################"
+ ],
+ "decorations": [
+  {
+   "kind": "candle",
+   "x": 80,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 144,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 208,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 272,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 336,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 400,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 464,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 528,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 592,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 656,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 720,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 784,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 848,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 176.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 16,
+   "t": 29.51456038644067,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 176.0,
+   "y": 176.0,
+   "scale": 1.0,
+   "seed": 16,
+   "t": 96.44377224676234,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 336.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 31,
+   "t": 63.68262068007502,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 336.0,
+   "y": 176.0,
+   "scale": 1.0,
+   "seed": 31,
+   "t": 16.979079151624433,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 528.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 49,
+   "t": 4.07912966471261,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 528.0,
+   "y": 176.0,
+   "scale": 1.0,
+   "seed": 49,
+   "t": 47.19720124655237,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 688.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 64,
+   "t": 91.8212950818762,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 688.0,
+   "y": 176.0,
+   "scale": 1.0,
+   "seed": 64,
+   "t": 76.88450067859586,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 848.0,
+   "y": 112.0,
+   "scale": 1.0,
+   "seed": 79,
+   "t": 13.762835458551647,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 848.0,
+   "y": 176.0,
+   "scale": 1.0,
+   "seed": 79,
+   "t": 35.41138642325781,
+   "kwargs": {
+    "ang": 1.5707963267948966,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 185.0,
+   "y": 194.0,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 89.85521300643833,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 78,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 263.0,
+   "y": 194.0,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 54.8278145133356,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 78,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 665.0,
+   "y": 194.0,
+   "scale": 1.0,
+   "seed": 21,
+   "t": 2.066108086498375,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 78,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 743.0,
+   "y": 194.0,
+   "scale": 1.0,
+   "seed": 21,
+   "t": 95.45819205765508,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 78,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "mine_rail",
+   "x": 240,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 7,
+   "t": 4.5458276109133,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "mine_rail",
+   "x": 432,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 13,
+   "t": 6.152827273566908,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "mine_rail",
+   "x": 624,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 19,
+   "t": 10.666078323404937,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "mine_rail",
+   "x": 816,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 25,
+   "t": 40.681894804513085,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "ore_cart",
+   "x": 560,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 57.743743098640486,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 102,
+   "scale": 1.0,
+   "seed": 5871,
+   "t": 96.17236421643858,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 922,
+   "y": 102,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 86.76190071021502,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "crate",
+   "x": 400,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 9562,
+   "t": 53.61414308731732,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 624,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 8636,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 848,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 86.88491852788115,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_depths_procession.<locals>._candles_interact"
+ },
+ "attrs": {
+  "h": 9,
+  "w": 30,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "E": {
+    "()": [
+     "depths_hall",
+     "from_procession"
+    ]
+   },
+   "D": {
+    "()": [
+     "the_old_stores",
+     "from_procession"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     48,
+     144
+    ]
+   },
+   "from_antechamber": {
+    "()": [
+     48,
+     144
+    ]
+   },
+   "from_the_old_stores": {
+    "()": [
+     208,
+     208
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [
+   {
+    "x": 208,
+    "y": 144,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      1
+     ]
+    },
+    "dwell": {
+     "()": [
+      2.5,
+      4.5
+     ]
+    }
+   },
+   {
+    "x": 528,
+    "y": 144,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      1
+     ]
+    },
+    "dwell": {
+     "()": [
+      2.5,
+      4.5
+     ]
+    }
+   },
+   {
+    "x": 848,
+    "y": 144,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      1
+     ]
+    },
+    "dwell": {
+     "()": [
+      2.5,
+      4.5
+     ]
+    }
+   }
+  ],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     272,
+     144,
+     36
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    4.0953758727210605,
+    "blip_soft",
+    0.12,
+    2.5,
+    4.5,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [
+   {
+    "()": [
+     376,
+     240,
+     "under"
+    ]
+   },
+   {
+    "()": [
+     624,
+     72,
+     "under"
+    ]
+   },
+   {
+    "()": [
+     824,
+     240,
+     "under"
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {}
+}

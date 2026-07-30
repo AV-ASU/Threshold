@@ -1,0 +1,353 @@
+{
+ "key": "backwoods_cabin",
+ "floor": [
+  "gggggggggggggggg",
+  "gggggggggggggggg",
+  "gggggggggggggggg",
+  "gggg========gggg",
+  "gggg========gggg",
+  "gggg========gggg",
+  "gggg========gggg",
+  "gggg========gggg",
+  "gggggggddggggggg",
+  "gggggggddggggggg",
+  "gggggggddggggggg",
+  "gggggggddggggggg"
+ ],
+ "objects": [
+  "TTTTTTTTTTTTTTTT",
+  "T..............T",
+  "T..............T",
+  "T...WWWiWWWW...T",
+  "T...WrrrrrrW...T",
+  "T...WrrrrrrW...T",
+  "T...WrrrrrrW...T",
+  "T...WWWDWWWW...T",
+  "T..x.X.........T",
+  "T..............T",
+  "T..............T",
+  "TTTTTTTHTTTTTTTT"
+ ],
+ "decorations": [
+  {
+   "kind": "phantom_mark",
+   "x": 176,
+   "y": 246,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 336,
+   "y": 246,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 80,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 432,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "hanging_figure",
+   "x": 272,
+   "y": 28,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 232,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 240,
+   "y": 278,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "firewood",
+   "x": 112,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {
+    "w": 44,
+    "h": 22
+   }
+  },
+  {
+   "kind": "antler_rack",
+   "x": 176,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {
+    "w": 22,
+    "h": 46
+   }
+  },
+  {
+   "kind": "lantern",
+   "x": 308,
+   "y": 298,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "wrong_photo",
+   "x": 336,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 449,
+   "y": 341,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 445,
+   "y": 259,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 430,
+   "y": 133,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 357,
+   "y": 338,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 439,
+   "y": 142,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 101,
+   "y": 185,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 405,
+   "y": 340,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 470,
+   "y": 130,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 324,
+   "y": 296,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 358,
+   "y": 75,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 152,
+   "y": 344,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 228,
+   "y": 53,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 56,
+   "y": 224,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 370,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_backwoods_cabin.<locals>._backwoods_interact"
+ },
+ "attrs": {
+  "h": 12,
+  "w": 16,
+  "music": "outside",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": "overcast",
+  "window_glass": null,
+  "exits": {
+   "H": {
+    "()": [
+     "gravel_road_north",
+     "from_backwoods_cabin"
+    ]
+   },
+   "D": {
+    "()": [
+     "backwoods_cabin_interior",
+     "from_outside"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     240,
+     304
+    ]
+   },
+   "from_road": {
+    "()": [
+     240,
+     304
+    ]
+   },
+   "from_interior": {
+    "()": [
+     240,
+     272
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     336,
+     304,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_notepad_pos": {
+   "()": [
+    336,
+    304
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     112,
+     304,
+     "in"
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {}
+}

@@ -1,0 +1,306 @@
+{
+ "key": "well_bottom",
+ "floor": [
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx",
+  "xxxxxxxxxxxx"
+ ],
+ "objects": [
+  "############",
+  "####....####",
+  "###O....x###",
+  "##.x...x..##",
+  "#..........#",
+  "#..........E",
+  "##x.......##",
+  "###....xx###",
+  "####....####",
+  "############"
+ ],
+ "decorations": [
+  {
+   "kind": "candle",
+   "x": 144,
+   "y": 86,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 314,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 282,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "ang": -1.5707963267948966
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 122,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 240,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 34.09390440834264,
+   "kwargs": {
+    "w": 44,
+    "h": 22
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 272,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 30.575885575179072,
+   "kwargs": {
+    "w": 40,
+    "h": 20
+   }
+  },
+  {
+   "kind": "barrel",
+   "x": 272,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 74.04169720868083,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 80,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "spoil_heap",
+   "x": 112,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 1,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "spoil_heap",
+   "x": 240,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 38.969128208863864,
+   "kwargs": {}
+  },
+  {
+   "kind": "wheelbarrow",
+   "x": 208,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 52.605862556522474,
+   "kwargs": {}
+  },
+  {
+   "kind": "water_trail",
+   "x": 144,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 5,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "water_trail",
+   "x": 176,
+   "y": 268,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 66.39368818915582,
+   "kwargs": {
+    "pool": true
+   }
+  },
+  {
+   "kind": "claw_marks",
+   "x": 328,
+   "y": 144,
+   "scale": 1.8,
+   "seed": 8966,
+   "t": 74.08047517451776,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 176,
+   "y": 42,
+   "scale": 1.4,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 176,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 208,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 144,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 240,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 176,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?build_well_bottom.<locals>._bottom_on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 10,
+  "w": 12,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "E": {
+    "()": [
+     "well_passage",
+     "from_above"
+    ]
+   },
+   "O": {
+    "()": [
+     "effigy_grove",
+     "from_well_bottom"
+    ]
+   }
+  },
+  "exit_directions": {
+   "O": "west"
+  },
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     176
+    ]
+   },
+   "from_grove": {
+    "()": [
+     144,
+     144
+    ]
+   },
+   "from_below": {
+    "()": [
+     304,
+     176
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [],
+  "ambient_cues": [
+   [
+    9.20395648323563,
+    "low_pulse",
+    0.12,
+    9.0,
+    14.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": []
+ },
+ "fn_attrs": {
+  "fold_charge_fn": "?build_well_bottom.<locals>._up_charge",
+  "exit_gate_fn": "?build_well_bottom.<locals>._up_gate"
+ }
+}

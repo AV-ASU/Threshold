@@ -1,0 +1,1094 @@
+{
+ "key": "river_bend",
+ "floor": [
+  ";gg;ggg;;gggg;g:ggggggg;~~~;gggggggg",
+  "ggg:g;ggggggg:;g;g:g:gg;~~~;gggggg;g",
+  "g;ggg:gggg;gg;g;:g;g;ggg;~~~;ggggggg",
+  ";gggg:gggggggggggg:ggggg;~~~;ggggg:;",
+  "gggggggggggggggggg;gggggg;~~~;ggg:gg",
+  ":g:;gg;ggg;gggggggggggggg;~~~;ggg:gg",
+  "ggg;ggggg;gggggg:gg;ggggg;~~~;gggggg",
+  "ggggg:ggggg;g;:ggggggggggg;~~~;ggggg",
+  "gggggggggg:ggggggggggggggg;~~~;gg;gg",
+  "g;;gg;gggggggggggggggggggg;~~~;ggggg",
+  "g;gggggggggggggggggggggggg;~~~;gg;g:",
+  "gg;;g;gggggggggggggggggggg;~~~;ggggg",
+  "ggg:ggggggggggggggdddddddddPPPdddddd",
+  "ggggggg:g;ggggggggdddddddddPPPdddddd",
+  "ggggg;g;ggggggggggPPPPPPPPPPPPPPPPPP",
+  ";gg:ggggggggggggggPPPPPPPPPPPPPPPPPP",
+  "gg;gggggggggggddPPPPP---------------",
+  "ggggggggggggggddPPPPPPPPPPPPPPPPPPPP",
+  "gg;;gggg;gggggddPPPPPPPPPPPPPPPPPPPP",
+  "ggggggggggggggddPPYPPddddPPPdddddddd",
+  ";gggggggggggggddPPYPPddddPPPdddddddd",
+  ":gggggggggggggddPPYPPddg;~;;;ggggggg",
+  ";gggggggg;ggggddPPYPPdd;~~~;ggg:;:gg",
+  "ggggggggggggggddPPYPPdd;~~~;gggggggg",
+  ";g;gggggg;g:ggddPPYPPdd;~~~;gggg:ggg",
+  ":gggg;ggggg:ggddPPYPPdd;~~~;ggg;gggg",
+  "gggggggggg;gggddPPYPPdd;~~~;gggg;g;g",
+  ";:ggg;:g:gggggddPPYPPdd;~~~;ggggg;gg",
+  ":;ggggggg;ggggddPPYPPdd;~~~;ggg:gggg",
+  ":;;g;ggggg;gggddPPYPPdd;~~~;ggg;:g:g",
+  "ggg;;gg;ggggggddPPYPPdd;~~~;gggggggg",
+  "g;;;ggggg;:gggddPPYPPdd;~~~;gggggg::"
+ ],
+ "objects": [
+  "TppTpTpp.TTTpppT.TTpT...xxx....pTpTp",
+  "Tp.pppppTpTpTT.TpTppT...xxx.....T.pT",
+  "Tp.TTp.TTpp.p.TpTT.Tp....xxx....pppp",
+  "p.pp.T..ppp.pppTpppp.....xxx.....Tp.",
+  "pTT.....T.TpT...p.T.......xxx....TTT",
+  ".pTT...TT..TpT.pTpp..T....xxx....p..",
+  ".pppTp......T..pp...p.....xxx....TpT",
+  "Tp.T....p..................xxx...TTp",
+  "..p....T......Tpp..........xxx...Tp.",
+  "pp.T.pp......pp.TT.........xxx....pp",
+  "TTTpT..p...................xxx...T.p",
+  "pp..p..p...................xxx......",
+  "Tp.........................$$$.....e",
+  "ppT.p.TT...................$$$.....e",
+  "pT..p.p....................$$$.....e",
+  "pT.T.p....................$$$......e",
+  ".TTpT..pT.................$$$......e",
+  "T.T..pT...................$$$......e",
+  "TpT.p.pp..................$$$......e",
+  ".Tp.TT..T................$$$.......e",
+  "pp.pT...p................$$$.......e",
+  "ppp..Tp..................x..........",
+  "p.......................xxx....TTpTp",
+  "ppp.p...pp..............xxx.....p..T",
+  "Tpp.pTT...T.p...........xxx....TpTTp",
+  "TTT......T.TT...........xxx...T.p.T.",
+  "T.T..T.T..T.T...........xxx....pTpTT",
+  "Tp..T.Tp..p.p...........xxx...pp.pp.",
+  ".p.TT.pTp...............xxx...pppTpp",
+  "p.ppT.p...pT............xxx....TTpTp",
+  "..TTpp..ppTT............xxx...Tp.TpT",
+  ".ppppTpppT.pp.aaaaaaaaa.xxx...TTppTT"
+ ],
+ "decorations": [
+  {
+   "kind": "bridge_rail",
+   "x": 816,
+   "y": 672,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "run": "h",
+    "len": 32
+   }
+  },
+  {
+   "kind": "bridge_rail",
+   "x": 848,
+   "y": 672,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "run": "h",
+    "len": 32
+   }
+  },
+  {
+   "kind": "bridge_rail",
+   "x": 880,
+   "y": 384,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "run": "h",
+    "len": 32
+   }
+  },
+  {
+   "kind": "bridge_rail",
+   "x": 880,
+   "y": 672,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "run": "h",
+    "len": 32
+   }
+  },
+  {
+   "kind": "bridge_rail",
+   "x": 912,
+   "y": 384,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {
+    "run": "h",
+    "len": 32
+   }
+  },
+  {
+   "kind": "bridge_rail",
+   "x": 944,
+   "y": 384,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {
+    "run": "h",
+    "len": 32
+   }
+  },
+  {
+   "kind": "street_lamp",
+   "x": 720,
+   "y": 656,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 592,
+   "y": 400,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 464,
+   "y": 528,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 944,
+   "y": 656,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 976,
+   "y": 368,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 720,
+   "y": 880,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 464,
+   "y": 880,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 592,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 32,
+  "w": 36,
+  "music": "outside",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": {
+   "n": "lost_forest",
+   "e": "lost_road",
+   "s": "lost_road",
+   "w": "lost_forest"
+  },
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "a": {
+    "()": [
+     "river_road",
+     "from_river_bend"
+    ]
+   },
+   "e": {
+    "()": [
+     "gravel_road_north",
+     "from_river_bend"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     592,
+     528
+    ]
+   },
+   "from_river_road": {
+    "()": [
+     592,
+     944
+    ]
+   },
+   "from_gravel_road_north": {
+    "()": [
+     1072,
+     528
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [
+   {
+    "x": 816,
+    "y": 144,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   },
+   {
+    "x": 976,
+    "y": 336,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   },
+   {
+    "x": 752,
+    "y": 848,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   },
+   {
+    "x": 880,
+    "y": 976,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   }
+  ],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "arms": "es",
+  "junction": {
+   "()": [
+    18,
+    16
+   ]
+  },
+  "is_safe_path": true,
+  "_river_tiles": {
+   "{}": [
+    {
+     "()": [
+      24,
+      0
+     ]
+    },
+    {
+     "()": [
+      24,
+      1
+     ]
+    },
+    {
+     "()": [
+      24,
+      22
+     ]
+    },
+    {
+     "()": [
+      24,
+      23
+     ]
+    },
+    {
+     "()": [
+      24,
+      24
+     ]
+    },
+    {
+     "()": [
+      24,
+      25
+     ]
+    },
+    {
+     "()": [
+      24,
+      26
+     ]
+    },
+    {
+     "()": [
+      24,
+      27
+     ]
+    },
+    {
+     "()": [
+      24,
+      28
+     ]
+    },
+    {
+     "()": [
+      24,
+      29
+     ]
+    },
+    {
+     "()": [
+      24,
+      30
+     ]
+    },
+    {
+     "()": [
+      24,
+      31
+     ]
+    },
+    {
+     "()": [
+      25,
+      0
+     ]
+    },
+    {
+     "()": [
+      25,
+      19
+     ]
+    },
+    {
+     "()": [
+      25,
+      1
+     ]
+    },
+    {
+     "()": [
+      25,
+      20
+     ]
+    },
+    {
+     "()": [
+      25,
+      21
+     ]
+    },
+    {
+     "()": [
+      25,
+      22
+     ]
+    },
+    {
+     "()": [
+      25,
+      23
+     ]
+    },
+    {
+     "()": [
+      25,
+      24
+     ]
+    },
+    {
+     "()": [
+      25,
+      25
+     ]
+    },
+    {
+     "()": [
+      25,
+      26
+     ]
+    },
+    {
+     "()": [
+      25,
+      27
+     ]
+    },
+    {
+     "()": [
+      25,
+      28
+     ]
+    },
+    {
+     "()": [
+      25,
+      29
+     ]
+    },
+    {
+     "()": [
+      25,
+      2
+     ]
+    },
+    {
+     "()": [
+      25,
+      30
+     ]
+    },
+    {
+     "()": [
+      25,
+      31
+     ]
+    },
+    {
+     "()": [
+      25,
+      3
+     ]
+    },
+    {
+     "()": [
+      26,
+      0
+     ]
+    },
+    {
+     "()": [
+      26,
+      15
+     ]
+    },
+    {
+     "()": [
+      26,
+      16
+     ]
+    },
+    {
+     "()": [
+      26,
+      17
+     ]
+    },
+    {
+     "()": [
+      26,
+      18
+     ]
+    },
+    {
+     "()": [
+      26,
+      19
+     ]
+    },
+    {
+     "()": [
+      26,
+      1
+     ]
+    },
+    {
+     "()": [
+      26,
+      20
+     ]
+    },
+    {
+     "()": [
+      26,
+      21
+     ]
+    },
+    {
+     "()": [
+      26,
+      22
+     ]
+    },
+    {
+     "()": [
+      26,
+      23
+     ]
+    },
+    {
+     "()": [
+      26,
+      24
+     ]
+    },
+    {
+     "()": [
+      26,
+      25
+     ]
+    },
+    {
+     "()": [
+      26,
+      26
+     ]
+    },
+    {
+     "()": [
+      26,
+      27
+     ]
+    },
+    {
+     "()": [
+      26,
+      28
+     ]
+    },
+    {
+     "()": [
+      26,
+      29
+     ]
+    },
+    {
+     "()": [
+      26,
+      2
+     ]
+    },
+    {
+     "()": [
+      26,
+      30
+     ]
+    },
+    {
+     "()": [
+      26,
+      31
+     ]
+    },
+    {
+     "()": [
+      26,
+      3
+     ]
+    },
+    {
+     "()": [
+      26,
+      4
+     ]
+    },
+    {
+     "()": [
+      26,
+      5
+     ]
+    },
+    {
+     "()": [
+      26,
+      6
+     ]
+    },
+    {
+     "()": [
+      27,
+      10
+     ]
+    },
+    {
+     "()": [
+      27,
+      11
+     ]
+    },
+    {
+     "()": [
+      27,
+      12
+     ]
+    },
+    {
+     "()": [
+      27,
+      13
+     ]
+    },
+    {
+     "()": [
+      27,
+      14
+     ]
+    },
+    {
+     "()": [
+      27,
+      15
+     ]
+    },
+    {
+     "()": [
+      27,
+      16
+     ]
+    },
+    {
+     "()": [
+      27,
+      17
+     ]
+    },
+    {
+     "()": [
+      27,
+      18
+     ]
+    },
+    {
+     "()": [
+      27,
+      19
+     ]
+    },
+    {
+     "()": [
+      27,
+      20
+     ]
+    },
+    {
+     "()": [
+      27,
+      21
+     ]
+    },
+    {
+     "()": [
+      27,
+      2
+     ]
+    },
+    {
+     "()": [
+      27,
+      3
+     ]
+    },
+    {
+     "()": [
+      27,
+      4
+     ]
+    },
+    {
+     "()": [
+      27,
+      5
+     ]
+    },
+    {
+     "()": [
+      27,
+      6
+     ]
+    },
+    {
+     "()": [
+      27,
+      7
+     ]
+    },
+    {
+     "()": [
+      27,
+      8
+     ]
+    },
+    {
+     "()": [
+      27,
+      9
+     ]
+    },
+    {
+     "()": [
+      28,
+      10
+     ]
+    },
+    {
+     "()": [
+      28,
+      11
+     ]
+    },
+    {
+     "()": [
+      28,
+      12
+     ]
+    },
+    {
+     "()": [
+      28,
+      13
+     ]
+    },
+    {
+     "()": [
+      28,
+      14
+     ]
+    },
+    {
+     "()": [
+      28,
+      15
+     ]
+    },
+    {
+     "()": [
+      28,
+      16
+     ]
+    },
+    {
+     "()": [
+      28,
+      17
+     ]
+    },
+    {
+     "()": [
+      28,
+      18
+     ]
+    },
+    {
+     "()": [
+      28,
+      4
+     ]
+    },
+    {
+     "()": [
+      28,
+      5
+     ]
+    },
+    {
+     "()": [
+      28,
+      6
+     ]
+    },
+    {
+     "()": [
+      28,
+      7
+     ]
+    },
+    {
+     "()": [
+      28,
+      8
+     ]
+    },
+    {
+     "()": [
+      28,
+      9
+     ]
+    },
+    {
+     "()": [
+      29,
+      10
+     ]
+    },
+    {
+     "()": [
+      29,
+      11
+     ]
+    },
+    {
+     "()": [
+      29,
+      12
+     ]
+    },
+    {
+     "()": [
+      29,
+      13
+     ]
+    },
+    {
+     "()": [
+      29,
+      14
+     ]
+    },
+    {
+     "()": [
+      29,
+      7
+     ]
+    },
+    {
+     "()": [
+      29,
+      8
+     ]
+    },
+    {
+     "()": [
+      29,
+      9
+     ]
+    }
+   ]
+  },
+  "_bridge_tiles": {
+   "{}": [
+    {
+     "()": [
+      25,
+      19
+     ]
+    },
+    {
+     "()": [
+      25,
+      20
+     ]
+    },
+    {
+     "()": [
+      26,
+      15
+     ]
+    },
+    {
+     "()": [
+      26,
+      16
+     ]
+    },
+    {
+     "()": [
+      26,
+      17
+     ]
+    },
+    {
+     "()": [
+      26,
+      18
+     ]
+    },
+    {
+     "()": [
+      26,
+      19
+     ]
+    },
+    {
+     "()": [
+      26,
+      20
+     ]
+    },
+    {
+     "()": [
+      27,
+      12
+     ]
+    },
+    {
+     "()": [
+      27,
+      13
+     ]
+    },
+    {
+     "()": [
+      27,
+      14
+     ]
+    },
+    {
+     "()": [
+      27,
+      15
+     ]
+    },
+    {
+     "()": [
+      27,
+      16
+     ]
+    },
+    {
+     "()": [
+      27,
+      17
+     ]
+    },
+    {
+     "()": [
+      27,
+      18
+     ]
+    },
+    {
+     "()": [
+      27,
+      19
+     ]
+    },
+    {
+     "()": [
+      27,
+      20
+     ]
+    },
+    {
+     "()": [
+      28,
+      12
+     ]
+    },
+    {
+     "()": [
+      28,
+      13
+     ]
+    },
+    {
+     "()": [
+      28,
+      14
+     ]
+    },
+    {
+     "()": [
+      28,
+      15
+     ]
+    },
+    {
+     "()": [
+      28,
+      16
+     ]
+    },
+    {
+     "()": [
+      28,
+      17
+     ]
+    },
+    {
+     "()": [
+      28,
+      18
+     ]
+    },
+    {
+     "()": [
+      29,
+      12
+     ]
+    },
+    {
+     "()": [
+      29,
+      13
+     ]
+    },
+    {
+     "()": [
+      29,
+      14
+     ]
+    }
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     880,
+     688,
+     "under"
+    ]
+   }
+  ],
+  "_bridge_hide_px": {
+   "()": [
+    880,
+    688
+   ]
+  },
+  "_bridge_deck_px": {
+   "()": [
+    800,
+    960,
+    384,
+    672
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

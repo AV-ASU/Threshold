@@ -1,0 +1,4956 @@
+{
+ "key": "farm_yard",
+ "floor": [
+  "ggg;gggg;g;gg:ggggg;:gggg:::;g",
+  ":ggggg;ggggg;ggggg:ggg:;ggg:gg",
+  "g:ggg;gg;gggggg:gg;g;gg:gggggg",
+  "g:gggggggggggggggggggggggggggg",
+  "gg:ggggggggggggggggggggggggg:g",
+  "g;gggggggggggggggggggggggggggg",
+  "g;gggggggggggggggggggggggggggg",
+  "::gggggggggggggggggggggggggg:g",
+  "g;ggggggggggggggggggggggggggg;",
+  "gg;gggggggggggggggggggggggggg;",
+  "gggggggggggggggggggggggggggggg",
+  "gdddddddddddgggggggggggggggggg",
+  "gggggggggggggggggggggggggggggg",
+  "gggggggggggggggggggggggggggggg",
+  "gggggggggggggggggggggggggggggg",
+  "ggggggggggggggggggggggggggggg:",
+  "gg:ggggggggggggggggggggggggggg",
+  "gg;gggggggggggggggggggggggggg;",
+  ":gggggggggggggggggggggggggggg:",
+  "ggggggggggggggggggggggggggg:::",
+  ":gggggggggggggggggggggggggggg:",
+  "gggggggggggg:g:gggg:gggggggggg",
+  ";g;;gg:ggggg:g;g:ggg:ggggggg::",
+  "gg:ggggggggg;ggg;;:;ggg:gg;g:;"
+ ],
+ "objects": [
+  "CCAACA..C..A.CA.C.C..AAAA.A.CC",
+  ".AA.C..ACC.AA.C.....A.AA....A.",
+  ".C.CA.........A.............C.",
+  "A............................C",
+  ".C...........................A",
+  "C.A.........................C.",
+  "AC..........................CC",
+  "..A...........................",
+  "C...........WWWiWiWWW......A.C",
+  "C...........WrrrrrrrW........A",
+  "............Wrrrrrrri.........",
+  "e...........DrrrrrrrW.........",
+  "e...........Wrrrrrrri.........",
+  "e...........WrrrrrrrW.........",
+  "............WWWiWiWWW.........",
+  "..A...........................",
+  ".A..........................A.",
+  ".............................C",
+  "C..........................ACC",
+  "AC............................",
+  "............................C.",
+  "CA......C..AA.....A.CA.C...AAC",
+  "..C.A...ACAA...C...C..CA..AC..",
+  ".A..C.ACAACA.AAAAAA.C..C...ACC"
+ ],
+ "decorations": [
+  {
+   "kind": "bush",
+   "x": 653,
+   "y": 15,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 595,
+   "y": 43,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 494,
+   "y": 83,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 76,
+   "y": 139,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 14,
+   "y": 243,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 77,
+   "y": 526,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 881,
+   "y": 620,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 911,
+   "y": 625,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 945,
+   "y": 620,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 12,
+   "y": 659,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 947,
+   "y": 659,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 619,
+   "y": 688,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 202,
+   "y": 717,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 650,
+   "y": 714,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 910,
+   "y": 726,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 948,
+   "y": 723,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 76,
+   "y": 748,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 527,
+   "y": 503,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 635,
+   "y": 498,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 588,
+   "y": 252,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 424,
+   "y": 502,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 531,
+   "y": 500,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 693,
+   "y": 250,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 356,
+   "y": 508,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 584,
+   "y": 245,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 646,
+   "y": 239,
+   "scale": 1.0,
+   "seed": 1747,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 365,
+   "y": 507,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 404,
+   "y": 243,
+   "scale": 1.0,
+   "seed": 3525,
+   "t": 4.915207595917314,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 395,
+   "y": 242,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 79.44653954978918,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 362,
+   "y": 500,
+   "scale": 1.0,
+   "seed": 9562,
+   "t": 53.61414308731732,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 580,
+   "y": 496,
+   "scale": 1.0,
+   "seed": 8636,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 125,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 86.88491852788115,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 137,
+   "y": 113,
+   "scale": 1.0,
+   "seed": 5739,
+   "t": 86.32775509080443,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 176,
+   "y": 117,
+   "scale": 1.0,
+   "seed": 6115,
+   "t": 13.581730848745366,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 217,
+   "y": 120,
+   "scale": 1.0,
+   "seed": 8241,
+   "t": 8.316400383702838,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 203,
+   "y": 115,
+   "scale": 1.0,
+   "seed": 9237,
+   "t": 24.977941341556175,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 233,
+   "y": 106,
+   "scale": 1.0,
+   "seed": 3069,
+   "t": 65.34052784412341,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 262,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 9106,
+   "t": 82.20238438492743,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 307,
+   "y": 104,
+   "scale": 1.0,
+   "seed": 344,
+   "t": 79.76879363605303,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 349,
+   "y": 117,
+   "scale": 1.0,
+   "seed": 2920,
+   "t": 87.70396555405868,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 358,
+   "y": 115,
+   "scale": 1.0,
+   "seed": 4857,
+   "t": 43.1804302606448,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 444,
+   "y": 115,
+   "scale": 1.0,
+   "seed": 7488,
+   "t": 61.24264201644027,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 473,
+   "y": 117,
+   "scale": 1.0,
+   "seed": 9347,
+   "t": 38.098152372910256,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 484,
+   "y": 101,
+   "scale": 1.0,
+   "seed": 1136,
+   "t": 29.805117129658477,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 552,
+   "y": 113,
+   "scale": 1.0,
+   "seed": 2208,
+   "t": 75.97757604791772,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 592,
+   "y": 115,
+   "scale": 1.0,
+   "seed": 8131,
+   "t": 69.3209153890523,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 635,
+   "y": 120,
+   "scale": 1.0,
+   "seed": 3749,
+   "t": 6.128145014400399,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 659,
+   "y": 101,
+   "scale": 1.0,
+   "seed": 4635,
+   "t": 48.69145242974403,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 664,
+   "y": 105,
+   "scale": 1.0,
+   "seed": 4854,
+   "t": 82.80801129585468,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 697,
+   "y": 122,
+   "scale": 1.0,
+   "seed": 4011,
+   "t": 53.87814499888257,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 708,
+   "y": 125,
+   "scale": 1.0,
+   "seed": 3103,
+   "t": 59.56053507675212,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 718,
+   "y": 102,
+   "scale": 1.0,
+   "seed": 169,
+   "t": 85.7928878473935,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 756,
+   "y": 109,
+   "scale": 1.0,
+   "seed": 9613,
+   "t": 54.736960561248026,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 747,
+   "y": 100,
+   "scale": 1.0,
+   "seed": 7601,
+   "t": 48.662134339459506,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 773,
+   "y": 107,
+   "scale": 1.0,
+   "seed": 5318,
+   "t": 47.62383802952033,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 819,
+   "y": 111,
+   "scale": 1.0,
+   "seed": 1068,
+   "t": 23.698176988913445,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 838,
+   "y": 115,
+   "scale": 1.0,
+   "seed": 4871,
+   "t": 49.03585250949789,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 119,
+   "y": 151,
+   "scale": 1.0,
+   "seed": 4932,
+   "t": 6.482179234915975,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 147,
+   "y": 154,
+   "scale": 1.0,
+   "seed": 3226,
+   "t": 70.97783825238308,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 133,
+   "y": 146,
+   "scale": 1.0,
+   "seed": 4102,
+   "t": 47.05405593338979,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 189,
+   "y": 142,
+   "scale": 1.0,
+   "seed": 323,
+   "t": 5.2881440778874245,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 204,
+   "y": 145,
+   "scale": 1.0,
+   "seed": 2314,
+   "t": 84.57631316243702,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 262,
+   "y": 136,
+   "scale": 1.0,
+   "seed": 6504,
+   "t": 28.28766821770564,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 308,
+   "y": 138,
+   "scale": 1.0,
+   "seed": 5658,
+   "t": 82.40000175285658,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 335,
+   "y": 141,
+   "scale": 1.0,
+   "seed": 8046,
+   "t": 7.368185638995417,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 368,
+   "y": 135,
+   "scale": 1.0,
+   "seed": 2202,
+   "t": 47.17034240277358,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 411,
+   "y": 140,
+   "scale": 1.0,
+   "seed": 8413,
+   "t": 87.45197259904415,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 463,
+   "y": 147,
+   "scale": 1.0,
+   "seed": 196,
+   "t": 6.495015315542707,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 486,
+   "y": 147,
+   "scale": 1.0,
+   "seed": 7871,
+   "t": 1.8572180514410896,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 534,
+   "y": 136,
+   "scale": 1.0,
+   "seed": 2128,
+   "t": 39.36802716595782,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 558,
+   "y": 151,
+   "scale": 1.0,
+   "seed": 2421,
+   "t": 88.62913667459478,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 625,
+   "y": 147,
+   "scale": 1.0,
+   "seed": 2045,
+   "t": 28.190005728763644,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 693,
+   "y": 153,
+   "scale": 1.0,
+   "seed": 5247,
+   "t": 1.824505868051629,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 713,
+   "y": 157,
+   "scale": 1.0,
+   "seed": 8536,
+   "t": 34.24874812822595,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 714,
+   "y": 138,
+   "scale": 1.0,
+   "seed": 1038,
+   "t": 82.20070033820352,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 756,
+   "y": 151,
+   "scale": 1.0,
+   "seed": 2392,
+   "t": 17.028116634662517,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 746,
+   "y": 136,
+   "scale": 1.0,
+   "seed": 2523,
+   "t": 5.452285800293721,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 782,
+   "y": 148,
+   "scale": 1.0,
+   "seed": 2236,
+   "t": 13.323536721087203,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 796,
+   "y": 151,
+   "scale": 1.0,
+   "seed": 4409,
+   "t": 11.489086612061094,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 827,
+   "y": 133,
+   "scale": 1.0,
+   "seed": 3117,
+   "t": 10.068426663041619,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 827,
+   "y": 137,
+   "scale": 1.0,
+   "seed": 7470,
+   "t": 7.305581120182958,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 848,
+   "y": 133,
+   "scale": 1.0,
+   "seed": 9265,
+   "t": 59.96461103523899,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 849,
+   "y": 140,
+   "scale": 1.0,
+   "seed": 1601,
+   "t": 55.62807303859512,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 105,
+   "y": 164,
+   "scale": 1.0,
+   "seed": 2903,
+   "t": 71.09924201354752,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 111,
+   "y": 173,
+   "scale": 1.0,
+   "seed": 2907,
+   "t": 55.964240443546295,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 141,
+   "y": 182,
+   "scale": 1.0,
+   "seed": 9526,
+   "t": 48.556518146981084,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 198,
+   "y": 167,
+   "scale": 1.0,
+   "seed": 9319,
+   "t": 12.871798021506308,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 245,
+   "y": 178,
+   "scale": 1.0,
+   "seed": 5512,
+   "t": 63.80202108432348,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 264,
+   "y": 175,
+   "scale": 1.0,
+   "seed": 2622,
+   "t": 15.140325841453596,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 272,
+   "y": 186,
+   "scale": 1.0,
+   "seed": 7114,
+   "t": 39.42265622460245,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 311,
+   "y": 175,
+   "scale": 1.0,
+   "seed": 6587,
+   "t": 61.734700940973084,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 331,
+   "y": 175,
+   "scale": 1.0,
+   "seed": 3347,
+   "t": 76.91786773175362,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 370,
+   "y": 168,
+   "scale": 1.0,
+   "seed": 8067,
+   "t": 41.74958188886494,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 404,
+   "y": 189,
+   "scale": 1.0,
+   "seed": 4725,
+   "t": 6.409288882082453,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 518,
+   "y": 178,
+   "scale": 1.0,
+   "seed": 9667,
+   "t": 44.015574807341714,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 559,
+   "y": 170,
+   "scale": 1.0,
+   "seed": 1204,
+   "t": 37.89716431610876,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 589,
+   "y": 184,
+   "scale": 1.0,
+   "seed": 1931,
+   "t": 85.53639164632685,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 655,
+   "y": 174,
+   "scale": 1.0,
+   "seed": 4474,
+   "t": 88.88970419714313,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 676,
+   "y": 178,
+   "scale": 1.0,
+   "seed": 1210,
+   "t": 72.90821669602828,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 752,
+   "y": 181,
+   "scale": 1.0,
+   "seed": 9941,
+   "t": 63.75950322775379,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 786,
+   "y": 185,
+   "scale": 1.0,
+   "seed": 7692,
+   "t": 9.257337046545677,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 822,
+   "y": 189,
+   "scale": 1.0,
+   "seed": 7764,
+   "t": 71.13319772496868,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 860,
+   "y": 183,
+   "scale": 1.0,
+   "seed": 7177,
+   "t": 25.96516646409367,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 174,
+   "y": 206,
+   "scale": 1.0,
+   "seed": 9679,
+   "t": 17.983656325007036,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 232,
+   "y": 212,
+   "scale": 1.0,
+   "seed": 7410,
+   "t": 36.623555171254495,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 262,
+   "y": 212,
+   "scale": 1.0,
+   "seed": 1494,
+   "t": 39.68906130394767,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 303,
+   "y": 196,
+   "scale": 1.0,
+   "seed": 2991,
+   "t": 29.822941801549028,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 344,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 5756,
+   "t": 12.616106205315647,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 370,
+   "y": 220,
+   "scale": 1.0,
+   "seed": 9909,
+   "t": 96.46064552485846,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 436,
+   "y": 198,
+   "scale": 1.0,
+   "seed": 6028,
+   "t": 56.93774216424755,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 451,
+   "y": 210,
+   "scale": 1.0,
+   "seed": 2290,
+   "t": 27.302348895289796,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 494,
+   "y": 220,
+   "scale": 1.0,
+   "seed": 2757,
+   "t": 42.048443962715695,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 526,
+   "y": 201,
+   "scale": 1.0,
+   "seed": 8637,
+   "t": 82.04388903516079,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 550,
+   "y": 209,
+   "scale": 1.0,
+   "seed": 5475,
+   "t": 81.15913473259181,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 625,
+   "y": 209,
+   "scale": 1.0,
+   "seed": 6135,
+   "t": 58.510620059977384,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 668,
+   "y": 197,
+   "scale": 1.0,
+   "seed": 5485,
+   "t": 85.69872427229001,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 731,
+   "y": 196,
+   "scale": 1.0,
+   "seed": 2055,
+   "t": 92.32759515365233,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 775,
+   "y": 203,
+   "scale": 1.0,
+   "seed": 202,
+   "t": 17.243252097262175,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 828,
+   "y": 207,
+   "scale": 1.0,
+   "seed": 6244,
+   "t": 26.18506224419106,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 846,
+   "y": 204,
+   "scale": 1.0,
+   "seed": 5520,
+   "t": 53.865367823696985,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 102,
+   "y": 237,
+   "scale": 1.0,
+   "seed": 1419,
+   "t": 28.041088222866627,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 180,
+   "y": 231,
+   "scale": 1.0,
+   "seed": 9031,
+   "t": 37.315496628958456,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 208,
+   "y": 231,
+   "scale": 1.0,
+   "seed": 8998,
+   "t": 73.13293014737334,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 216,
+   "y": 236,
+   "scale": 1.0,
+   "seed": 5564,
+   "t": 9.203597745886249,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 246,
+   "y": 248,
+   "scale": 1.0,
+   "seed": 8617,
+   "t": 34.29377354997338,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 233,
+   "y": 245,
+   "scale": 1.0,
+   "seed": 6792,
+   "t": 93.52894106588721,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 297,
+   "y": 227,
+   "scale": 1.0,
+   "seed": 8555,
+   "t": 51.671362722215505,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 324,
+   "y": 233,
+   "scale": 1.0,
+   "seed": 4681,
+   "t": 19.19681642735921,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 364,
+   "y": 247,
+   "scale": 1.0,
+   "seed": 9625,
+   "t": 48.73678801833448,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 440,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 2967,
+   "t": 93.464605109853,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 547,
+   "y": 231,
+   "scale": 1.0,
+   "seed": 9836,
+   "t": 85.21484940599973,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 598,
+   "y": 234,
+   "scale": 1.0,
+   "seed": 1482,
+   "t": 76.87027688967063,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 684,
+   "y": 227,
+   "scale": 1.0,
+   "seed": 474,
+   "t": 94.25144681502236,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 728,
+   "y": 237,
+   "scale": 1.0,
+   "seed": 5306,
+   "t": 12.844302127069106,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 772,
+   "y": 238,
+   "scale": 1.0,
+   "seed": 1963,
+   "t": 74.39142170207629,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 843,
+   "y": 227,
+   "scale": 1.0,
+   "seed": 4100,
+   "t": 77.8266633715018,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 117,
+   "y": 259,
+   "scale": 1.0,
+   "seed": 4316,
+   "t": 14.794129035718374,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 135,
+   "y": 276,
+   "scale": 1.0,
+   "seed": 2275,
+   "t": 47.52179945325642,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 164,
+   "y": 282,
+   "scale": 1.0,
+   "seed": 1182,
+   "t": 88.48910963360228,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 675,
+   "y": 271,
+   "scale": 1.0,
+   "seed": 3642,
+   "t": 3.5161397211330825,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 788,
+   "y": 264,
+   "scale": 1.0,
+   "seed": 6093,
+   "t": 12.108959667455277,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 821,
+   "y": 281,
+   "scale": 1.0,
+   "seed": 1407,
+   "t": 69.08467373395708,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 850,
+   "y": 265,
+   "scale": 1.0,
+   "seed": 47,
+   "t": 49.527480550979575,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 109,
+   "y": 308,
+   "scale": 1.0,
+   "seed": 1051,
+   "t": 71.85755904473302,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 216,
+   "y": 300,
+   "scale": 1.0,
+   "seed": 2131,
+   "t": 92.46145445411071,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 233,
+   "y": 293,
+   "scale": 1.0,
+   "seed": 4243,
+   "t": 67.41740877424044,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 278,
+   "y": 311,
+   "scale": 1.0,
+   "seed": 6495,
+   "t": 57.04882677482208,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 687,
+   "y": 307,
+   "scale": 1.0,
+   "seed": 7712,
+   "t": 19.537787800455042,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 746,
+   "y": 302,
+   "scale": 1.0,
+   "seed": 8057,
+   "t": 14.049787776145084,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 783,
+   "y": 306,
+   "scale": 1.0,
+   "seed": 4144,
+   "t": 19.9117236201955,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 842,
+   "y": 310,
+   "scale": 1.0,
+   "seed": 868,
+   "t": 90.4640020139109,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 372,
+   "y": 328,
+   "scale": 1.0,
+   "seed": 468,
+   "t": 4.0240755248527105,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 757,
+   "y": 335,
+   "scale": 1.0,
+   "seed": 115,
+   "t": 20.087740021876066,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 813,
+   "y": 340,
+   "scale": 1.0,
+   "seed": 8060,
+   "t": 10.887229213362193,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 861,
+   "y": 326,
+   "scale": 1.0,
+   "seed": 1689,
+   "t": 33.50190766466922,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 719,
+   "y": 356,
+   "scale": 1.0,
+   "seed": 1160,
+   "t": 36.556949727534146,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 828,
+   "y": 361,
+   "scale": 1.0,
+   "seed": 9274,
+   "t": 79.47881425077395,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 804,
+   "y": 365,
+   "scale": 1.0,
+   "seed": 6913,
+   "t": 36.842761799256294,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 837,
+   "y": 363,
+   "scale": 1.0,
+   "seed": 2649,
+   "t": 49.7816195751922,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 840,
+   "y": 394,
+   "scale": 1.0,
+   "seed": 4833,
+   "t": 71.4414277435763,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 99,
+   "y": 439,
+   "scale": 1.0,
+   "seed": 4877,
+   "t": 43.13247998417719,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 714,
+   "y": 426,
+   "scale": 1.0,
+   "seed": 5443,
+   "t": 45.75811937210087,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 791,
+   "y": 424,
+   "scale": 1.0,
+   "seed": 9800,
+   "t": 39.94247534896993,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 814,
+   "y": 421,
+   "scale": 1.0,
+   "seed": 8737,
+   "t": 22.97758952184471,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 849,
+   "y": 439,
+   "scale": 1.0,
+   "seed": 2095,
+   "t": 46.11099211890388,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 107,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 9721,
+   "t": 87.51056954385497,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 187,
+   "y": 474,
+   "scale": 1.0,
+   "seed": 14,
+   "t": 58.906708114917215,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 218,
+   "y": 457,
+   "scale": 1.0,
+   "seed": 722,
+   "t": 62.54049762529855,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 250,
+   "y": 460,
+   "scale": 1.0,
+   "seed": 5551,
+   "t": 30.27363962873604,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 236,
+   "y": 462,
+   "scale": 1.0,
+   "seed": 4584,
+   "t": 92.25976169094268,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 264,
+   "y": 477,
+   "scale": 1.0,
+   "seed": 2100,
+   "t": 51.54396561704849,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 294,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 7104,
+   "t": 67.18415428970587,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 709,
+   "y": 463,
+   "scale": 1.0,
+   "seed": 2587,
+   "t": 20.44846780535322,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 743,
+   "y": 459,
+   "scale": 1.0,
+   "seed": 3015,
+   "t": 9.441250831207526,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 811,
+   "y": 465,
+   "scale": 1.0,
+   "seed": 9359,
+   "t": 76.90406453160927,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 850,
+   "y": 453,
+   "scale": 1.0,
+   "seed": 5406,
+   "t": 29.930372032304888,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 164,
+   "y": 509,
+   "scale": 1.0,
+   "seed": 3403,
+   "t": 89.44056580894652,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 228,
+   "y": 492,
+   "scale": 1.0,
+   "seed": 9750,
+   "t": 19.339728846091287,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 357,
+   "y": 493,
+   "scale": 1.0,
+   "seed": 662,
+   "t": 1.8094985261856378,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 751,
+   "y": 486,
+   "scale": 1.0,
+   "seed": 9360,
+   "t": 29.47623068584939,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 764,
+   "y": 509,
+   "scale": 1.0,
+   "seed": 2844,
+   "t": 19.331177758640862,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 776,
+   "y": 501,
+   "scale": 1.0,
+   "seed": 3181,
+   "t": 3.950215805309587,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 825,
+   "y": 509,
+   "scale": 1.0,
+   "seed": 3776,
+   "t": 14.319569049437696,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 841,
+   "y": 485,
+   "scale": 1.0,
+   "seed": 5178,
+   "t": 72.74867113909687,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 198,
+   "y": 516,
+   "scale": 1.0,
+   "seed": 3477,
+   "t": 65.6938318730429,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 247,
+   "y": 521,
+   "scale": 1.0,
+   "seed": 5314,
+   "t": 79.08837566152069,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 270,
+   "y": 528,
+   "scale": 1.0,
+   "seed": 6654,
+   "t": 65.52381304020366,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 301,
+   "y": 528,
+   "scale": 1.0,
+   "seed": 7241,
+   "t": 3.875259249129026,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 324,
+   "y": 536,
+   "scale": 1.0,
+   "seed": 625,
+   "t": 74.25477520781558,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 343,
+   "y": 530,
+   "scale": 1.0,
+   "seed": 8552,
+   "t": 91.58947003881043,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 372,
+   "y": 539,
+   "scale": 1.0,
+   "seed": 1662,
+   "t": 59.24695191551724,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 429,
+   "y": 523,
+   "scale": 1.0,
+   "seed": 2261,
+   "t": 63.28871502677491,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 551,
+   "y": 537,
+   "scale": 1.0,
+   "seed": 6543,
+   "t": 27.321926392772177,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 720,
+   "y": 526,
+   "scale": 1.0,
+   "seed": 213,
+   "t": 67.58286697111224,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 789,
+   "y": 536,
+   "scale": 1.0,
+   "seed": 1300,
+   "t": 68.48909168875511,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 786,
+   "y": 523,
+   "scale": 1.0,
+   "seed": 9309,
+   "t": 73.42426882206969,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 813,
+   "y": 531,
+   "scale": 1.0,
+   "seed": 1309,
+   "t": 35.40368811777229,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 859,
+   "y": 533,
+   "scale": 1.0,
+   "seed": 4013,
+   "t": 51.011117953050665,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 841,
+   "y": 517,
+   "scale": 1.0,
+   "seed": 7546,
+   "t": 98.00198285767696,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 115,
+   "y": 558,
+   "scale": 1.0,
+   "seed": 3795,
+   "t": 75.60986499861835,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 185,
+   "y": 568,
+   "scale": 1.0,
+   "seed": 502,
+   "t": 14.580163444178694,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 217,
+   "y": 567,
+   "scale": 1.0,
+   "seed": 2663,
+   "t": 42.09051945450004,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 249,
+   "y": 573,
+   "scale": 1.0,
+   "seed": 3700,
+   "t": 73.36951585690252,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 244,
+   "y": 553,
+   "scale": 1.0,
+   "seed": 5059,
+   "t": 27.39730792567332,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 311,
+   "y": 550,
+   "scale": 1.0,
+   "seed": 2779,
+   "t": 63.15352117729298,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 345,
+   "y": 569,
+   "scale": 1.0,
+   "seed": 6495,
+   "t": 57.38264478779722,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 406,
+   "y": 559,
+   "scale": 1.0,
+   "seed": 8095,
+   "t": 47.64079562788446,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 436,
+   "y": 564,
+   "scale": 1.0,
+   "seed": 6182,
+   "t": 73.34934032736984,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 499,
+   "y": 555,
+   "scale": 1.0,
+   "seed": 7378,
+   "t": 86.66062305667114,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 621,
+   "y": 549,
+   "scale": 1.0,
+   "seed": 5317,
+   "t": 14.893943724300662,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 743,
+   "y": 568,
+   "scale": 1.0,
+   "seed": 3511,
+   "t": 16.322849979027275,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 786,
+   "y": 553,
+   "scale": 1.0,
+   "seed": 4881,
+   "t": 74.94294118670777,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 773,
+   "y": 549,
+   "scale": 1.0,
+   "seed": 1958,
+   "t": 37.89598910300611,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 810,
+   "y": 565,
+   "scale": 1.0,
+   "seed": 6040,
+   "t": 42.509611121695634,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 829,
+   "y": 567,
+   "scale": 1.0,
+   "seed": 1100,
+   "t": 47.72128439681151,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 836,
+   "y": 549,
+   "scale": 1.0,
+   "seed": 3172,
+   "t": 25.4014859568348,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 844,
+   "y": 549,
+   "scale": 1.0,
+   "seed": 1488,
+   "t": 67.14300077794906,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 102,
+   "y": 579,
+   "scale": 1.0,
+   "seed": 65,
+   "t": 69.91468505154262,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 150,
+   "y": 599,
+   "scale": 1.0,
+   "seed": 8365,
+   "t": 18.352143780187802,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 152,
+   "y": 600,
+   "scale": 1.0,
+   "seed": 86,
+   "t": 10.232915753211591,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 185,
+   "y": 585,
+   "scale": 1.0,
+   "seed": 7208,
+   "t": 80.68937651808766,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 163,
+   "y": 595,
+   "scale": 1.0,
+   "seed": 303,
+   "t": 14.624605729045282,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 198,
+   "y": 580,
+   "scale": 1.0,
+   "seed": 8387,
+   "t": 96.00852971146507,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 197,
+   "y": 598,
+   "scale": 1.0,
+   "seed": 7916,
+   "t": 0.6998885789185505,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 268,
+   "y": 601,
+   "scale": 1.0,
+   "seed": 3643,
+   "t": 94.95153937829923,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 310,
+   "y": 604,
+   "scale": 1.0,
+   "seed": 8658,
+   "t": 35.5223932810352,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 299,
+   "y": 587,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 3.602636931383185,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 327,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 6030,
+   "t": 93.20032487737531,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 335,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 265,
+   "t": 39.82046883598016,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 367,
+   "y": 595,
+   "scale": 1.0,
+   "seed": 2733,
+   "t": 29.21994575901391,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 404,
+   "y": 586,
+   "scale": 1.0,
+   "seed": 1997,
+   "t": 41.42994909020372,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 434,
+   "y": 580,
+   "scale": 1.0,
+   "seed": 4785,
+   "t": 48.647649408207904,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 498,
+   "y": 595,
+   "scale": 1.0,
+   "seed": 49,
+   "t": 24.44821047751229,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 517,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 3337,
+   "t": 85.60928104894734,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 563,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 8675,
+   "t": 61.58943633267159,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 598,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 2332,
+   "t": 20.84030983066888,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 623,
+   "y": 586,
+   "scale": 1.0,
+   "seed": 9983,
+   "t": 99.05727452098563,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 681,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 9189,
+   "t": 49.39398067788092,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 685,
+   "y": 594,
+   "scale": 1.0,
+   "seed": 4865,
+   "t": 52.84300364120126,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 733,
+   "y": 587,
+   "scale": 1.0,
+   "seed": 1652,
+   "t": 91.48231833931555,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 733,
+   "y": 588,
+   "scale": 1.0,
+   "seed": 5783,
+   "t": 88.35962623213574,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 745,
+   "y": 595,
+   "scale": 1.0,
+   "seed": 1225,
+   "t": 38.94015053088893,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 773,
+   "y": 603,
+   "scale": 1.0,
+   "seed": 8215,
+   "t": 2.476063538208917,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 816,
+   "y": 596,
+   "scale": 1.0,
+   "seed": 5822,
+   "t": 38.9925849384411,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 808,
+   "y": 582,
+   "scale": 1.0,
+   "seed": 9176,
+   "t": 79.98073573141598,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 836,
+   "y": 591,
+   "scale": 1.0,
+   "seed": 2041,
+   "t": 46.674680350972395,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 852,
+   "y": 602,
+   "scale": 1.0,
+   "seed": 2703,
+   "t": 58.91902420199603,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 122,
+   "y": 626,
+   "scale": 1.0,
+   "seed": 3363,
+   "t": 47.66042106298924,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 100,
+   "y": 627,
+   "scale": 1.0,
+   "seed": 5864,
+   "t": 64.6655816704395,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 150,
+   "y": 625,
+   "scale": 1.0,
+   "seed": 3511,
+   "t": 93.56083494795308,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 175,
+   "y": 628,
+   "scale": 1.0,
+   "seed": 3235,
+   "t": 97.54763196628599,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 181,
+   "y": 621,
+   "scale": 1.0,
+   "seed": 7359,
+   "t": 56.683977701396536,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 206,
+   "y": 620,
+   "scale": 1.0,
+   "seed": 2770,
+   "t": 48.989759763907244,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 221,
+   "y": 633,
+   "scale": 1.0,
+   "seed": 4803,
+   "t": 85.6168818381374,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 249,
+   "y": 627,
+   "scale": 1.0,
+   "seed": 5235,
+   "t": 2.318919857764379,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 266,
+   "y": 631,
+   "scale": 1.0,
+   "seed": 6417,
+   "t": 66.49551186050738,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 309,
+   "y": 627,
+   "scale": 1.0,
+   "seed": 9050,
+   "t": 23.628429062115764,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 332,
+   "y": 629,
+   "scale": 1.0,
+   "seed": 1927,
+   "t": 91.06454349717853,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 357,
+   "y": 635,
+   "scale": 1.0,
+   "seed": 5943,
+   "t": 54.899167923029054,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 424,
+   "y": 615,
+   "scale": 1.0,
+   "seed": 4633,
+   "t": 87.04823186340978,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 468,
+   "y": 633,
+   "scale": 1.0,
+   "seed": 8591,
+   "t": 21.20137068292225,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 540,
+   "y": 636,
+   "scale": 1.0,
+   "seed": 3169,
+   "t": 42.86226260758467,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 560,
+   "y": 630,
+   "scale": 1.0,
+   "seed": 7552,
+   "t": 35.091025006411755,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 583,
+   "y": 612,
+   "scale": 1.0,
+   "seed": 2495,
+   "t": 32.358724785138435,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 634,
+   "y": 614,
+   "scale": 1.0,
+   "seed": 2024,
+   "t": 58.56979613909824,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 616,
+   "y": 628,
+   "scale": 1.0,
+   "seed": 6578,
+   "t": 17.11303919026633,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 649,
+   "y": 612,
+   "scale": 1.0,
+   "seed": 396,
+   "t": 6.28319342312672,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 711,
+   "y": 630,
+   "scale": 1.0,
+   "seed": 5301,
+   "t": 19.953800549311694,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 753,
+   "y": 624,
+   "scale": 1.0,
+   "seed": 7697,
+   "t": 79.75483243562503,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 790,
+   "y": 622,
+   "scale": 1.0,
+   "seed": 9705,
+   "t": 99.22921455501394,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 792,
+   "y": 628,
+   "scale": 1.0,
+   "seed": 2549,
+   "t": 45.68850589579386,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 817,
+   "y": 620,
+   "scale": 1.0,
+   "seed": 2496,
+   "t": 71.33571077500159,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 124,
+   "y": 667,
+   "scale": 1.0,
+   "seed": 8793,
+   "t": 36.66316915043926,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 107,
+   "y": 645,
+   "scale": 1.0,
+   "seed": 3072,
+   "t": 17.753144915620744,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 132,
+   "y": 646,
+   "scale": 1.0,
+   "seed": 966,
+   "t": 56.16799365314551,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 179,
+   "y": 652,
+   "scale": 1.0,
+   "seed": 5805,
+   "t": 13.419124679905503,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 188,
+   "y": 653,
+   "scale": 1.0,
+   "seed": 8547,
+   "t": 7.20879444753505,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 196,
+   "y": 655,
+   "scale": 1.0,
+   "seed": 8064,
+   "t": 46.425437420522876,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 245,
+   "y": 662,
+   "scale": 1.0,
+   "seed": 2158,
+   "t": 40.25838456993394,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 235,
+   "y": 666,
+   "scale": 1.0,
+   "seed": 840,
+   "t": 51.893230205121135,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 277,
+   "y": 657,
+   "scale": 1.0,
+   "seed": 1132,
+   "t": 9.419041450587462,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 306,
+   "y": 643,
+   "scale": 1.0,
+   "seed": 621,
+   "t": 43.93997543513274,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 308,
+   "y": 651,
+   "scale": 1.0,
+   "seed": 3637,
+   "t": 10.478497085924122,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 326,
+   "y": 643,
+   "scale": 1.0,
+   "seed": 8641,
+   "t": 54.85273314505756,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 332,
+   "y": 659,
+   "scale": 1.0,
+   "seed": 9163,
+   "t": 79.26387618307731,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 359,
+   "y": 665,
+   "scale": 1.0,
+   "seed": 7913,
+   "t": 96.9403137160854,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 363,
+   "y": 643,
+   "scale": 1.0,
+   "seed": 4859,
+   "t": 17.740420005404232,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 403,
+   "y": 668,
+   "scale": 1.0,
+   "seed": 951,
+   "t": 24.345949652710363,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 434,
+   "y": 655,
+   "scale": 1.0,
+   "seed": 8904,
+   "t": 2.3871626895398235,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 444,
+   "y": 649,
+   "scale": 1.0,
+   "seed": 6780,
+   "t": 80.46553832040892,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 462,
+   "y": 663,
+   "scale": 1.0,
+   "seed": 5448,
+   "t": 47.82048788507042,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 504,
+   "y": 667,
+   "scale": 1.0,
+   "seed": 555,
+   "t": 88.90673996469711,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 487,
+   "y": 648,
+   "scale": 1.0,
+   "seed": 8765,
+   "t": 18.449236708714757,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 525,
+   "y": 657,
+   "scale": 1.0,
+   "seed": 2863,
+   "t": 14.060611920302424,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 558,
+   "y": 662,
+   "scale": 1.0,
+   "seed": 7109,
+   "t": 61.812197079325536,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 583,
+   "y": 658,
+   "scale": 1.0,
+   "seed": 7073,
+   "t": 17.63218847085919,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 628,
+   "y": 669,
+   "scale": 1.0,
+   "seed": 1062,
+   "t": 12.552877567444988,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 667,
+   "y": 663,
+   "scale": 1.0,
+   "seed": 1400,
+   "t": 1.2310829872165918,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 698,
+   "y": 653,
+   "scale": 1.0,
+   "seed": 6501,
+   "t": 8.752263204303745,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 675,
+   "y": 646,
+   "scale": 1.0,
+   "seed": 6235,
+   "t": 0.1742384962589827,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 715,
+   "y": 648,
+   "scale": 1.0,
+   "seed": 7355,
+   "t": 32.00374044637099,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 752,
+   "y": 649,
+   "scale": 1.0,
+   "seed": 1893,
+   "t": 66.58245694076386,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 785,
+   "y": 667,
+   "scale": 1.0,
+   "seed": 3777,
+   "t": 91.03569012954459,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 821,
+   "y": 668,
+   "scale": 1.0,
+   "seed": 2688,
+   "t": 66.02251684427377,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 851,
+   "y": 650,
+   "scale": 1.0,
+   "seed": 3221,
+   "t": 39.28476671032042,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 211,
+   "y": 23,
+   "scale": 1.0,
+   "seed": 8960,
+   "t": 43.96429517539515,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 309,
+   "y": 29,
+   "scale": 1.0,
+   "seed": 4858,
+   "t": 85.35287789222765,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 298,
+   "y": 26,
+   "scale": 1.0,
+   "seed": 3483,
+   "t": 26.642813331738036,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 339,
+   "y": 25,
+   "scale": 1.0,
+   "seed": 1526,
+   "t": 41.79599685361433,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 412,
+   "y": 20,
+   "scale": 1.0,
+   "seed": 5344,
+   "t": 22.951187158503405,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 394,
+   "y": 3,
+   "scale": 1.0,
+   "seed": 5530,
+   "t": 9.712062957063484,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 489,
+   "y": 8,
+   "scale": 1.0,
+   "seed": 4030,
+   "t": 73.58419181664628,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 496,
+   "y": 18,
+   "scale": 1.0,
+   "seed": 8906,
+   "t": 84.01242043142149,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 568,
+   "y": 14,
+   "scale": 1.0,
+   "seed": 2085,
+   "t": 17.18778584042746,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 817,
+   "y": 16,
+   "scale": 1.0,
+   "seed": 6116,
+   "t": 42.27993687047984,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 828,
+   "y": 4,
+   "scale": 1.0,
+   "seed": 4413,
+   "t": 67.28752231171379,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 888,
+   "y": 9,
+   "scale": 1.0,
+   "seed": 418,
+   "t": 22.41402267058239,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 23,
+   "y": 39,
+   "scale": 1.0,
+   "seed": 7095,
+   "t": 67.59142022358145,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 109,
+   "y": 52,
+   "scale": 1.0,
+   "seed": 7215,
+   "t": 77.04175372394594,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 165,
+   "y": 49,
+   "scale": 1.0,
+   "seed": 8399,
+   "t": 33.18780314387085,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 203,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 6032,
+   "t": 85.98164279622445,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 345,
+   "y": 59,
+   "scale": 1.0,
+   "seed": 2593,
+   "t": 34.06395972298479,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 427,
+   "y": 61,
+   "scale": 1.0,
+   "seed": 2367,
+   "t": 24.240340241929893,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 509,
+   "y": 46,
+   "scale": 1.0,
+   "seed": 7890,
+   "t": 15.972469301334137,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 536,
+   "y": 53,
+   "scale": 1.0,
+   "seed": 6549,
+   "t": 27.807375856992177,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 557,
+   "y": 54,
+   "scale": 1.0,
+   "seed": 7215,
+   "t": 10.747950806158324,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 598,
+   "y": 58,
+   "scale": 1.0,
+   "seed": 8956,
+   "t": 14.559177622976216,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 582,
+   "y": 37,
+   "scale": 1.0,
+   "seed": 1721,
+   "t": 2.835005772936394,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 618,
+   "y": 42,
+   "scale": 1.0,
+   "seed": 3519,
+   "t": 7.85137949566308,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 679,
+   "y": 41,
+   "scale": 1.0,
+   "seed": 1822,
+   "t": 25.75644954188001,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 824,
+   "y": 54,
+   "scale": 1.0,
+   "seed": 2525,
+   "t": 28.00540964630124,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 852,
+   "y": 59,
+   "scale": 1.0,
+   "seed": 6244,
+   "t": 67.03520565576359,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 888,
+   "y": 53,
+   "scale": 1.0,
+   "seed": 2725,
+   "t": 10.842538439800254,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 931,
+   "y": 56,
+   "scale": 1.0,
+   "seed": 3682,
+   "t": 59.55454313669794,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 19,
+   "y": 82,
+   "scale": 1.0,
+   "seed": 8508,
+   "t": 34.241314173213254,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 29,
+   "y": 92,
+   "scale": 1.0,
+   "seed": 8421,
+   "t": 38.21311947295938,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 87,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 8943,
+   "t": 55.22924902157938,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 196,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 3355,
+   "t": 38.28134170978652,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 221,
+   "y": 81,
+   "scale": 1.0,
+   "seed": 813,
+   "t": 7.082601865316429,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 228,
+   "y": 68,
+   "scale": 1.0,
+   "seed": 4505,
+   "t": 87.81734138833971,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 283,
+   "y": 77,
+   "scale": 1.0,
+   "seed": 8226,
+   "t": 26.319125423185994,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 308,
+   "y": 93,
+   "scale": 1.0,
+   "seed": 6143,
+   "t": 63.466998625539205,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 348,
+   "y": 93,
+   "scale": 1.0,
+   "seed": 1001,
+   "t": 67.29775159741051,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 381,
+   "y": 85,
+   "scale": 1.0,
+   "seed": 1524,
+   "t": 30.820891097927927,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 398,
+   "y": 92,
+   "scale": 1.0,
+   "seed": 6753,
+   "t": 90.50076274374071,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 431,
+   "y": 86,
+   "scale": 1.0,
+   "seed": 4309,
+   "t": 69.68642952436664,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 486,
+   "y": 90,
+   "scale": 1.0,
+   "seed": 3521,
+   "t": 17.42008973060284,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 518,
+   "y": 93,
+   "scale": 1.0,
+   "seed": 606,
+   "t": 90.0912097295675,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 520,
+   "y": 86,
+   "scale": 1.0,
+   "seed": 278,
+   "t": 57.988404618854496,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 555,
+   "y": 76,
+   "scale": 1.0,
+   "seed": 216,
+   "t": 68.30792514347738,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 547,
+   "y": 68,
+   "scale": 1.0,
+   "seed": 4721,
+   "t": 83.67646374135587,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 625,
+   "y": 68,
+   "scale": 1.0,
+   "seed": 5306,
+   "t": 26.33331188496808,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 647,
+   "y": 90,
+   "scale": 1.0,
+   "seed": 2973,
+   "t": 7.089317720070765,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 717,
+   "y": 76,
+   "scale": 1.0,
+   "seed": 312,
+   "t": 56.860203440131784,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 750,
+   "y": 76,
+   "scale": 1.0,
+   "seed": 1485,
+   "t": 73.46605571075379,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 778,
+   "y": 92,
+   "scale": 1.0,
+   "seed": 3860,
+   "t": 2.633301500122165,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 809,
+   "y": 82,
+   "scale": 1.0,
+   "seed": 8484,
+   "t": 17.127805922219576,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 857,
+   "y": 75,
+   "scale": 1.0,
+   "seed": 8666,
+   "t": 63.48561752369769,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 838,
+   "y": 83,
+   "scale": 1.0,
+   "seed": 7035,
+   "t": 4.81104295227921,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 871,
+   "y": 91,
+   "scale": 1.0,
+   "seed": 101,
+   "t": 82.0099221477997,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 936,
+   "y": 71,
+   "scale": 1.0,
+   "seed": 8280,
+   "t": 53.336829371636554,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 946,
+   "y": 67,
+   "scale": 1.0,
+   "seed": 9238,
+   "t": 33.89245063385039,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 39,
+   "y": 103,
+   "scale": 1.0,
+   "seed": 123,
+   "t": 61.654104015763934,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 48,
+   "y": 101,
+   "scale": 1.0,
+   "seed": 6392,
+   "t": 56.2558319270143,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 67,
+   "y": 111,
+   "scale": 1.0,
+   "seed": 5447,
+   "t": 29.494587769766113,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 73,
+   "y": 106,
+   "scale": 1.0,
+   "seed": 731,
+   "t": 44.90905407704583,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 889,
+   "y": 108,
+   "scale": 1.0,
+   "seed": 9360,
+   "t": 24.885791715255944,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 19,
+   "y": 138,
+   "scale": 1.0,
+   "seed": 3453,
+   "t": 70.88733264851584,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 87,
+   "y": 143,
+   "scale": 1.0,
+   "seed": 2912,
+   "t": 75.7780963276994,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 891,
+   "y": 146,
+   "scale": 1.0,
+   "seed": 1253,
+   "t": 8.308463780483777,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 920,
+   "y": 133,
+   "scale": 1.0,
+   "seed": 5396,
+   "t": 39.93522568639357,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 49,
+   "y": 182,
+   "scale": 1.0,
+   "seed": 3270,
+   "t": 80.71229433065152,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 35,
+   "y": 165,
+   "scale": 1.0,
+   "seed": 5598,
+   "t": 64.29265878624184,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 871,
+   "y": 187,
+   "scale": 1.0,
+   "seed": 6057,
+   "t": 8.412702427371022,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 878,
+   "y": 185,
+   "scale": 1.0,
+   "seed": 6452,
+   "t": 14.46919092059904,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 953,
+   "y": 185,
+   "scale": 1.0,
+   "seed": 6099,
+   "t": 34.45066999908413,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 86,
+   "y": 211,
+   "scale": 1.0,
+   "seed": 184,
+   "t": 64.98444809999407,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 884,
+   "y": 216,
+   "scale": 1.0,
+   "seed": 1725,
+   "t": 69.8678752997968,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 51,
+   "y": 247,
+   "scale": 1.0,
+   "seed": 5101,
+   "t": 92.78876802086894,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 889,
+   "y": 238,
+   "scale": 1.0,
+   "seed": 8977,
+   "t": 28.859123888191775,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 920,
+   "y": 246,
+   "scale": 1.0,
+   "seed": 5988,
+   "t": 16.7177521884757,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 935,
+   "y": 246,
+   "scale": 1.0,
+   "seed": 5505,
+   "t": 73.29449482750417,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 69,
+   "y": 283,
+   "scale": 1.0,
+   "seed": 8647,
+   "t": 36.68722398657712,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 902,
+   "y": 277,
+   "scale": 1.0,
+   "seed": 1830,
+   "t": 31.920665447418926,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 45,
+   "y": 297,
+   "scale": 1.0,
+   "seed": 2660,
+   "t": 45.69900757286628,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 924,
+   "y": 309,
+   "scale": 1.0,
+   "seed": 2417,
+   "t": 30.303226155044825,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 17,
+   "y": 346,
+   "scale": 1.0,
+   "seed": 9609,
+   "t": 73.58553576071198,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 81,
+   "y": 338,
+   "scale": 1.0,
+   "seed": 5077,
+   "t": 40.88067679828438,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 86,
+   "y": 346,
+   "scale": 1.0,
+   "seed": 7380,
+   "t": 64.64256491635733,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 902,
+   "y": 337,
+   "scale": 1.0,
+   "seed": 6410,
+   "t": 13.913861629099877,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 903,
+   "y": 339,
+   "scale": 1.0,
+   "seed": 3290,
+   "t": 53.36069105566011,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 890,
+   "y": 361,
+   "scale": 1.0,
+   "seed": 8749,
+   "t": 79.77034341696807,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 871,
+   "y": 365,
+   "scale": 1.0,
+   "seed": 5588,
+   "t": 60.97500452626565,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 905,
+   "y": 378,
+   "scale": 1.0,
+   "seed": 7459,
+   "t": 57.91722005629062,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 939,
+   "y": 381,
+   "scale": 1.0,
+   "seed": 9306,
+   "t": 46.78008297780287,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 40,
+   "y": 394,
+   "scale": 1.0,
+   "seed": 2805,
+   "t": 26.096157770257676,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 74,
+   "y": 410,
+   "scale": 1.0,
+   "seed": 4312,
+   "t": 93.3213221135969,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 68,
+   "y": 398,
+   "scale": 1.0,
+   "seed": 6335,
+   "t": 37.20857542357061,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 888,
+   "y": 408,
+   "scale": 1.0,
+   "seed": 7681,
+   "t": 51.838158672937965,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 873,
+   "y": 391,
+   "scale": 1.0,
+   "seed": 3107,
+   "t": 41.78783762011754,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 924,
+   "y": 388,
+   "scale": 1.0,
+   "seed": 794,
+   "t": 24.004289841724592,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 50,
+   "y": 442,
+   "scale": 1.0,
+   "seed": 2863,
+   "t": 11.850547944495627,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 82,
+   "y": 426,
+   "scale": 1.0,
+   "seed": 2427,
+   "t": 23.138138628733827,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 868,
+   "y": 438,
+   "scale": 1.0,
+   "seed": 8883,
+   "t": 24.124458142296255,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 911,
+   "y": 429,
+   "scale": 1.0,
+   "seed": 2870,
+   "t": 77.17916837732177,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 19,
+   "y": 456,
+   "scale": 1.0,
+   "seed": 3319,
+   "t": 19.327045161430846,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 870,
+   "y": 468,
+   "scale": 1.0,
+   "seed": 5285,
+   "t": 75.47073832030267,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 875,
+   "y": 456,
+   "scale": 1.0,
+   "seed": 9702,
+   "t": 47.13389627854093,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 909,
+   "y": 457,
+   "scale": 1.0,
+   "seed": 4035,
+   "t": 36.05383546376969,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 22,
+   "y": 507,
+   "scale": 1.0,
+   "seed": 8219,
+   "t": 93.62442159069286,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 39,
+   "y": 503,
+   "scale": 1.0,
+   "seed": 9277,
+   "t": 97.31360109092394,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 57,
+   "y": 507,
+   "scale": 1.0,
+   "seed": 1179,
+   "t": 57.50264663543314,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 874,
+   "y": 487,
+   "scale": 1.0,
+   "seed": 9999,
+   "t": 77.17187050985864,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 21,
+   "y": 530,
+   "scale": 1.0,
+   "seed": 3628,
+   "t": 99.66486563435265,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 20,
+   "y": 523,
+   "scale": 1.0,
+   "seed": 5546,
+   "t": 66.61067935350746,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 869,
+   "y": 530,
+   "scale": 1.0,
+   "seed": 2046,
+   "t": 0.5354533022946639,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 932,
+   "y": 536,
+   "scale": 1.0,
+   "seed": 8868,
+   "t": 3.5872400453823228,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 83,
+   "y": 552,
+   "scale": 1.0,
+   "seed": 4228,
+   "t": 95.01800580166665,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 93,
+   "y": 567,
+   "scale": 1.0,
+   "seed": 7861,
+   "t": 60.260368329676254,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 868,
+   "y": 547,
+   "scale": 1.0,
+   "seed": 3923,
+   "t": 58.11272083813548,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 871,
+   "y": 572,
+   "scale": 1.0,
+   "seed": 4875,
+   "t": 62.19186874167716,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 919,
+   "y": 549,
+   "scale": 1.0,
+   "seed": 3316,
+   "t": 26.19854039388495,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 43,
+   "y": 584,
+   "scale": 1.0,
+   "seed": 8739,
+   "t": 45.474238686082415,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 54,
+   "y": 595,
+   "scale": 1.0,
+   "seed": 7719,
+   "t": 77.00611787268555,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 72,
+   "y": 583,
+   "scale": 1.0,
+   "seed": 5148,
+   "t": 3.166741532200623,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 873,
+   "y": 627,
+   "scale": 1.0,
+   "seed": 33,
+   "t": 82.70585852110737,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 914,
+   "y": 636,
+   "scale": 1.0,
+   "seed": 67,
+   "t": 64.50793030180047,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 901,
+   "y": 616,
+   "scale": 1.0,
+   "seed": 5017,
+   "t": 86.94864725611853,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 67,
+   "y": 657,
+   "scale": 1.0,
+   "seed": 9357,
+   "t": 4.416482124189236,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 870,
+   "y": 657,
+   "scale": 1.0,
+   "seed": 4726,
+   "t": 44.82356543970491,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 957,
+   "y": 659,
+   "scale": 1.0,
+   "seed": 7303,
+   "t": 98.06587016966661,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 81,
+   "y": 680,
+   "scale": 1.0,
+   "seed": 6824,
+   "t": 21.393598722768935,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 74,
+   "y": 676,
+   "scale": 1.0,
+   "seed": 4479,
+   "t": 24.2052734991854,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 114,
+   "y": 677,
+   "scale": 1.0,
+   "seed": 9105,
+   "t": 19.425573379627803,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 157,
+   "y": 675,
+   "scale": 1.0,
+   "seed": 6031,
+   "t": 77.34740594222257,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 168,
+   "y": 690,
+   "scale": 1.0,
+   "seed": 1928,
+   "t": 3.0954408746398876,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 177,
+   "y": 677,
+   "scale": 1.0,
+   "seed": 6686,
+   "t": 21.262250775417822,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 198,
+   "y": 687,
+   "scale": 1.0,
+   "seed": 784,
+   "t": 83.469025278862,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 235,
+   "y": 683,
+   "scale": 1.0,
+   "seed": 2429,
+   "t": 31.027711548470982,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 240,
+   "y": 697,
+   "scale": 1.0,
+   "seed": 9385,
+   "t": 21.73018815630804,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 293,
+   "y": 692,
+   "scale": 1.0,
+   "seed": 8149,
+   "t": 60.19262064046084,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 306,
+   "y": 693,
+   "scale": 1.0,
+   "seed": 387,
+   "t": 95.69474335283039,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 328,
+   "y": 693,
+   "scale": 1.0,
+   "seed": 6256,
+   "t": 92.22719904984041,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 432,
+   "y": 682,
+   "scale": 1.0,
+   "seed": 7140,
+   "t": 19.04212784985948,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 452,
+   "y": 680,
+   "scale": 1.0,
+   "seed": 361,
+   "t": 10.131852342717062,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 500,
+   "y": 679,
+   "scale": 1.0,
+   "seed": 1041,
+   "t": 40.199330707506896,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 502,
+   "y": 688,
+   "scale": 1.0,
+   "seed": 29,
+   "t": 72.4101086331592,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 516,
+   "y": 696,
+   "scale": 1.0,
+   "seed": 2331,
+   "t": 68.85190608920496,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 561,
+   "y": 684,
+   "scale": 1.0,
+   "seed": 1728,
+   "t": 87.5445653185463,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 566,
+   "y": 700,
+   "scale": 1.0,
+   "seed": 6403,
+   "t": 45.49612980522307,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 795,
+   "y": 686,
+   "scale": 1.0,
+   "seed": 887,
+   "t": 45.17342510772552,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 849,
+   "y": 684,
+   "scale": 1.0,
+   "seed": 1702,
+   "t": 81.25737920812092,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 20,
+   "y": 724,
+   "scale": 1.0,
+   "seed": 9751,
+   "t": 66.53287589054247,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 36,
+   "y": 730,
+   "scale": 1.0,
+   "seed": 5993,
+   "t": 40.46461769422738,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 116,
+   "y": 731,
+   "scale": 1.0,
+   "seed": 2973,
+   "t": 86.11727059002048,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 171,
+   "y": 707,
+   "scale": 1.0,
+   "seed": 8803,
+   "t": 77.1308315377828,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 185,
+   "y": 731,
+   "scale": 1.0,
+   "seed": 7227,
+   "t": 80.2593353497047,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 218,
+   "y": 721,
+   "scale": 1.0,
+   "seed": 504,
+   "t": 79.53000296940755,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 196,
+   "y": 726,
+   "scale": 1.0,
+   "seed": 4651,
+   "t": 67.31034621639624,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 243,
+   "y": 709,
+   "scale": 1.0,
+   "seed": 4121,
+   "t": 24.675835436364025,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 408,
+   "y": 727,
+   "scale": 1.0,
+   "seed": 3579,
+   "t": 40.51035413562889,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 444,
+   "y": 718,
+   "scale": 1.0,
+   "seed": 573,
+   "t": 40.46518878213743,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 476,
+   "y": 732,
+   "scale": 1.0,
+   "seed": 3132,
+   "t": 9.703733199901897,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 523,
+   "y": 721,
+   "scale": 1.0,
+   "seed": 6224,
+   "t": 60.46699875103797,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 669,
+   "y": 707,
+   "scale": 1.0,
+   "seed": 7544,
+   "t": 91.73772171277842,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 691,
+   "y": 723,
+   "scale": 1.0,
+   "seed": 5200,
+   "t": 27.461856025216637,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 692,
+   "y": 712,
+   "scale": 1.0,
+   "seed": 8086,
+   "t": 67.4099864163922,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 791,
+   "y": 714,
+   "scale": 1.0,
+   "seed": 8247,
+   "t": 7.984922225836355,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 823,
+   "y": 718,
+   "scale": 1.0,
+   "seed": 7572,
+   "t": 51.41926870379825,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 817,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 5100,
+   "t": 97.09604679077127,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 914,
+   "y": 712,
+   "scale": 1.0,
+   "seed": 5712,
+   "t": 1.617471417630456,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 923,
+   "y": 724,
+   "scale": 1.0,
+   "seed": 7007,
+   "t": 40.0753369729491,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 939,
+   "y": 733,
+   "scale": 1.0,
+   "seed": 394,
+   "t": 82.45895748113647,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 18,
+   "y": 754,
+   "scale": 1.0,
+   "seed": 2236,
+   "t": 52.1688626956393,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 28,
+   "y": 740,
+   "scale": 1.0,
+   "seed": 8001,
+   "t": 95.16934212480402,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 84,
+   "y": 754,
+   "scale": 1.0,
+   "seed": 2026,
+   "t": 20.21602927800329,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 81,
+   "y": 747,
+   "scale": 1.0,
+   "seed": 5859,
+   "t": 45.37647741207721,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 101,
+   "y": 740,
+   "scale": 1.0,
+   "seed": 4987,
+   "t": 55.397054172563564,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 168,
+   "y": 763,
+   "scale": 1.0,
+   "seed": 6731,
+   "t": 86.46721887525895,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 411,
+   "y": 757,
+   "scale": 1.0,
+   "seed": 1272,
+   "t": 63.279223537095184,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 408,
+   "y": 757,
+   "scale": 1.0,
+   "seed": 7329,
+   "t": 64.07279274592878,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 618,
+   "y": 741,
+   "scale": 1.0,
+   "seed": 7451,
+   "t": 87.76356802308865,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 731,
+   "y": 743,
+   "scale": 1.0,
+   "seed": 286,
+   "t": 38.305060642147495,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 787,
+   "y": 755,
+   "scale": 1.0,
+   "seed": 5792,
+   "t": 57.991281811247205,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 775,
+   "y": 742,
+   "scale": 1.0,
+   "seed": 2095,
+   "t": 31.537603671642323,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 813,
+   "y": 745,
+   "scale": 1.0,
+   "seed": 5769,
+   "t": 3.4756205755176905,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 814,
+   "y": 743,
+   "scale": 1.0,
+   "seed": 6716,
+   "t": 36.716492542802115,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 840,
+   "y": 760,
+   "scale": 1.0,
+   "seed": 8084,
+   "t": 75.82624685709675,
+   "kwargs": {}
+  },
+  {
+   "kind": "tall_grass",
+   "x": 846,
+   "y": 751,
+   "scale": 1.0,
+   "seed": 7188,
+   "t": 3.1840600692288556,
+   "kwargs": {}
+  },
+  {
+   "kind": "stoop",
+   "x": 374,
+   "y": 368,
+   "scale": 1.0,
+   "seed": 7649,
+   "t": 8.55384620353783,
+   "kwargs": {
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "generator",
+   "x": 560,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 668,
+   "t": 87.38685437533651,
+   "kwargs": {
+    "running": false,
+    "broken": true
+   }
+  },
+  {
+   "kind": "fuel_can",
+   "x": 560,
+   "y": 212,
+   "scale": 1.0,
+   "seed": 5418,
+   "t": 7.516268902802992,
+   "kwargs": {
+    "tipped": true
+   }
+  },
+  {
+   "kind": "crate_stack",
+   "x": 304,
+   "y": 528,
+   "scale": 1.0,
+   "seed": 79,
+   "t": 62.276188905819005,
+   "kwargs": {
+    "tarp": true,
+    "opened": false,
+    "courses": 3
+   }
+  },
+  {
+   "kind": "crate_stack",
+   "x": 304,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 83,
+   "t": 74.89910489553505,
+   "kwargs": {
+    "tarp": false,
+    "opened": false,
+    "courses": 2
+   }
+  },
+  {
+   "kind": "husk_bundle",
+   "x": 368,
+   "y": 432,
+   "scale": 1.0,
+   "seed": 7104,
+   "t": 10.991870977607887,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door_wall",
+   "x": 368,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 4238,
+   "t": 16.570741257111298,
+   "kwargs": {}
+  },
+  {
+   "kind": "garden_patch",
+   "x": 752,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 87,
+   "t": 91.01884584919587,
+   "kwargs": {
+    "tended": false,
+    "w": 84,
+    "h": 104
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 304,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 9936,
+   "t": 48.532207936793625,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 272,
+   "y": 400,
+   "scale": 1.0,
+   "seed": 9195,
+   "t": 26.58004005747142,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 304,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 8957,
+   "t": 52.446905918700374,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 336,
+   "y": 496,
+   "scale": 1.0,
+   "seed": 2065,
+   "t": 37.322047182120855,
+   "kwargs": {}
+  },
+  {
+   "kind": "yard_fence",
+   "x": 112.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 79,
+   "t": 75.2154953524124,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 145.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 80,
+   "t": 62.833133505547636,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 178.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 81,
+   "t": 83.07958784652428,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 211.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 82,
+   "t": 37.82674023018425,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 244.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 83,
+   "t": 75.59654045229367,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 277.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 84,
+   "t": 73.26984880506431,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 310.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 85,
+   "t": 46.508136305834526,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 343.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 86,
+   "t": 30.021847886054452,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 376.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 87,
+   "t": 8.959276793926364,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 409.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 88,
+   "t": 84.55783909168323,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 442.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 89,
+   "t": 14.62120053421615,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 475.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 90,
+   "t": 27.369163006362275,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 508.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 91,
+   "t": 22.99335048919906,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 541.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 92,
+   "t": 50.062538133239485,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 574.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 93,
+   "t": 83.43585652148276,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 607.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 94,
+   "t": 87.81422528621454,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 640.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 95,
+   "t": 71.44848294560721,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 673.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 96,
+   "t": 84.90048950417699,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 706.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 97,
+   "t": 54.68160093261584,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 739.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 98,
+   "t": 22.80834676891925,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 772.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 99,
+   "t": 17.61939994327555,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 805.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 100,
+   "t": 18.37267170673782,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  },
+  {
+   "kind": "yard_fence",
+   "x": 838.5,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 101,
+   "t": 23.13946044057904,
+   "kwargs": {
+    "gap": false,
+    "yaw": 0.0
+   }
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?_cult_camp.<locals>._raise",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 24,
+  "w": 30,
+  "music": "village",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": {
+   "n": "lost_corn",
+   "e": "lost_corn",
+   "s": "lost_corn"
+  },
+  "skybox_kind": "overcast",
+  "window_glass": "dark",
+  "exits": {
+   "e": {
+    "()": [
+     "south_row",
+     "from_farm_yard"
+    ]
+   },
+   "D": {
+    "()": [
+     "abandoned_farmhouse",
+     "from_farm_yard"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     368,
+     368
+    ]
+   },
+   "from_abandoned_farmhouse": {
+    "()": [
+     368,
+     368
+    ]
+   },
+   "from_south_row": {
+    "()": [
+     48,
+     400
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [
+   {
+    "x": 208,
+    "y": 592,
+    "pose": null,
+    "face": {
+     "()": [
+      0,
+      -1
+     ]
+    },
+    "dwell": {
+     "()": [
+      8.0,
+      14.0
+     ]
+    }
+   }
+  ],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "is_yard": true,
+  "_camp_pos": {
+   "()": [
+    208,
+    560
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

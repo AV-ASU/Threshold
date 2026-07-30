@@ -1,0 +1,409 @@
+{
+ "key": "works_cistern",
+ "floor": [
+  "xxxxxxxxxxxxx",
+  "xxxx~~~~~xxxx",
+  "xxxx~~~~~xxxx",
+  "xxxx~~~~~xxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxx~~~~~xxxx",
+  "xxxx~~~~~xxxx",
+  "xxxx~~~~~xxxx",
+  "xxxxxxxxxxxxx"
+ ],
+ "objects": [
+  "#############",
+  "####.....####",
+  "####.X.X.####",
+  "####.....####",
+  "#...........#",
+  "F...........E",
+  "#...........#",
+  "##.#.....####",
+  "#x.#.X.X.####",
+  "####.....####",
+  "######D######"
+ ],
+ "decorations": [
+  {
+   "kind": "cistern_basin",
+   "x": 176,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 176,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "cistern_basin",
+   "x": 240,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 240,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "cistern_basin",
+   "x": 176,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 176,
+   "y": 262,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "cistern_basin",
+   "x": 240,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 240,
+   "y": 262,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 208,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 134,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 282,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 48.0,
+   "y": 226.0,
+   "scale": 1.0,
+   "seed": 13,
+   "t": 49.791127805702175,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "a"
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 112.0,
+   "y": 226.0,
+   "scale": 1.0,
+   "seed": 13,
+   "t": 83.31340324619944,
+   "kwargs": {
+    "ang": 0.0,
+    "span": 64,
+    "half": "b"
+   }
+  },
+  {
+   "kind": "spoil_heap",
+   "x": 48,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 12,
+   "t": 81.72919315913337,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 68,
+   "y": 274,
+   "scale": 1.5,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "water_trail",
+   "x": 80,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 37.98686933848091,
+   "kwargs": {
+    "pool": true
+   }
+  },
+  {
+   "kind": "valve",
+   "x": 80,
+   "y": 134,
+   "scale": 1.0,
+   "seed": 1295,
+   "t": 19.43003156648051,
+   "kwargs": {}
+  },
+  {
+   "kind": "loose_plank",
+   "x": 208,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 11,
+   "t": 76.88450067859586,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?build_works_cistern.<locals>._vats_on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 11,
+  "w": 13,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "well_passage",
+     "from_below"
+    ]
+   },
+   "E": {
+    "()": [
+     "works_sorting",
+     "from_above"
+    ]
+   },
+   "D": {
+    "()": [
+     "the_sump",
+     "from_vats"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     208,
+     176
+    ]
+   },
+   "from_above": {
+    "()": [
+     48,
+     176
+    ]
+   },
+   "from_below": {
+    "()": [
+     368,
+     176
+    ]
+   },
+   "from_the_sump": {
+    "()": [
+     208,
+     272
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [
+   {
+    "x": 80,
+    "y": 144,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   },
+   {
+    "x": 336,
+    "y": 208,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   }
+  ],
+  "triggers": [],
+  "noise_sources": [
+   {
+    "x": 80,
+    "y": 140,
+    "kind": "valve",
+    "on": false,
+    "t": 0.0,
+    "loud": 0.8,
+    "period": 1.1,
+    "reach": 380.0,
+    "sfx": "valve_hiss",
+    "on_notice": "You knock the pump arm loose. The hose line begins to clank and hiss.",
+    "off_notice": "You wedge the pump arm still.",
+    "silenced_notice": "A hand wedges the pump arm still. The hiss dies in the line."
+   }
+  ],
+  "cult_stations": [
+   {
+    "x": 176,
+    "y": 112,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      -1
+     ]
+    },
+    "dwell": {
+     "()": [
+      3.0,
+      6.0
+     ]
+    }
+   },
+   {
+    "x": 240,
+    "y": 112,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      -1
+     ]
+    },
+    "dwell": {
+     "()": [
+      3.0,
+      6.0
+     ]
+    }
+   },
+   {
+    "x": 176,
+    "y": 240,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      1
+     ]
+    },
+    "dwell": {
+     "()": [
+      3.0,
+      6.0
+     ]
+    }
+   },
+   {
+    "x": 240,
+    "y": 240,
+    "pose": "chant",
+    "face": {
+     "()": [
+      0,
+      1
+     ]
+    },
+    "dwell": {
+     "()": [
+      3.0,
+      6.0
+     ]
+    }
+   }
+  ],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     80,
+     140,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    6.770841116271557,
+    "low_pulse",
+    0.14,
+    6.0,
+    10.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [
+   {
+    "()": [
+     240,
+     296,
+     "under"
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {}
+}

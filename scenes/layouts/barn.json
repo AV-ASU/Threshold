@@ -1,0 +1,496 @@
+{
+ "key": "barn",
+ "floor": [
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================"
+ ],
+ "objects": [
+  "WWWWWWWWWWWWWWWW",
+  "W........W.....W",
+  "W.XX.XX..W.xx..W",
+  "W..............W",
+  "WX.......W.....W",
+  "WWWW.WWWWW.....W",
+  "W........WWWWWWW",
+  "W..............W",
+  "Wx.............W",
+  "Wx.............W",
+  "W..............W",
+  "WWWWWWWWFWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "wall_lamp",
+   "x": 240,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "gear_shelf",
+   "x": 96,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 54,
+    "h": 18
+   }
+  },
+  {
+   "kind": "gear_shelf",
+   "x": 192,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 10,
+   "t": 37.31058880681248,
+   "kwargs": {
+    "w": 54,
+    "h": 18
+   }
+  },
+  {
+   "kind": "table",
+   "x": 384,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 5438,
+   "t": 15.707612799681536,
+   "kwargs": {
+    "w": 54,
+    "h": 36
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 432,
+   "y": 56,
+   "scale": 1.0,
+   "seed": 5585,
+   "t": 30.915875177924924,
+   "kwargs": {}
+  },
+  {
+   "kind": "lantern",
+   "x": 80,
+   "y": 56,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 88.33693288695727,
+   "kwargs": {}
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 240,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 112,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 240,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {
+    "z": 38,
+    "broken": true
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 368,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 400,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "bloodstain",
+   "x": 368,
+   "y": 120,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "dark_pool",
+   "x": 432,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {
+    "r": 76,
+    "depth": 42
+   }
+  },
+  {
+   "kind": "buck_head",
+   "x": 208,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "mounted_fish",
+   "x": 80,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 474,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "antler_rack",
+   "x": 48,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {
+    "w": 22,
+    "h": 46
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 48,
+   "y": 288,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {
+    "w": 24,
+    "h": 58
+   }
+  },
+  {
+   "kind": "butter_churn",
+   "x": 50,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "preserve_shelf",
+   "x": 368,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 21,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "bedroll",
+   "x": 78,
+   "y": 242,
+   "scale": 1.0,
+   "seed": 21,
+   "t": 31.059710566680888,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "bedroll",
+   "x": 110,
+   "y": 306,
+   "scale": 1.0,
+   "seed": 30,
+   "t": 75.11500783156761,
+   "kwargs": {
+    "ang": 0.5
+   }
+  },
+  {
+   "kind": "bedroll",
+   "x": 206,
+   "y": 242,
+   "scale": 1.0,
+   "seed": 49,
+   "t": 38.68020366749029,
+   "kwargs": {
+    "ang": -0.4
+   }
+  },
+  {
+   "kind": "bedroll",
+   "x": 238,
+   "y": 306,
+   "scale": 1.0,
+   "seed": 58,
+   "t": 95.18533169684959,
+   "kwargs": {
+    "ang": 0.2
+   }
+  },
+  {
+   "kind": "bedroll",
+   "x": 142,
+   "y": 242,
+   "scale": 1.0,
+   "seed": 35,
+   "t": 64.29741831173082,
+   "kwargs": {
+    "ang": 0.3
+   }
+  },
+  {
+   "kind": "bedroll",
+   "x": 270,
+   "y": 274,
+   "scale": 1.0,
+   "seed": 64,
+   "t": 33.172240819470524,
+   "kwargs": {
+    "ang": -0.2
+   }
+  },
+  {
+   "kind": "effects_pile",
+   "x": 112,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 56.966111097826264,
+   "kwargs": {}
+  },
+  {
+   "kind": "effects_pile",
+   "x": 240,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 82,
+   "y": 332,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 97.43458487589714,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 238,
+   "y": 332,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 99.23746094615679,
+   "kwargs": {}
+  },
+  {
+   "kind": "cellar_hatch",
+   "x": 400,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 805,
+   "t": 91.3967516850214,
+   "kwargs": {}
+  },
+  {
+   "kind": "papers",
+   "x": 368,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 17,
+   "t": 96.17236421643858,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door",
+   "x": 144,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 79.44653954978918,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door_wall",
+   "x": 240,
+   "y": 42,
+   "scale": 1.0,
+   "seed": 5,
+   "t": 86.76190071021502,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": "?build_barn.<locals>._barn_update",
+  "on_exit": null,
+  "on_interact": "?build_barn.<locals>._barn_interact"
+ },
+ "attrs": {
+  "h": 12,
+  "w": 16,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "barn_yard",
+     "from_barn"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     272
+    ]
+   },
+   "from_barn_yard": {
+    "()": [
+     272,
+     336
+    ]
+   }
+  },
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     400,
+     144,
+     36
+    ]
+   },
+   {
+    "()": [
+     144,
+     304,
+     40
+    ]
+   },
+   {
+    "()": [
+     240,
+     42,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_barn_hatch_pos": {
+   "()": [
+    400,
+    144
+   ]
+  },
+  "_journal_pos": {
+   "()": [
+    368,
+    112
+   ]
+  },
+  "hide_spots": [],
+  "_chalk_doors": [
+   {
+    "()": [
+     144,
+     304
+    ]
+   },
+   {
+    "()": [
+     240,
+     42
+    ]
+   }
+  ],
+  "_chalk_voice": "chalk_surface"
+ },
+ "fn_attrs": {}
+}

@@ -1,0 +1,515 @@
+{
+ "key": "works_sign",
+ "floor": [
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx",
+  "xxxxxxxxxxxxx"
+ ],
+ "objects": [
+  "#############",
+  "####.....####",
+  "###.......###",
+  "##.........##",
+  "#...........#",
+  "F...........E",
+  "#...........#",
+  "#...x.x.x...#",
+  "#...........#",
+  "#...........#",
+  "#############"
+ ],
+ "decorations": [
+  {
+   "kind": "pedestal",
+   "x": 208,
+   "y": 88,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "altar_mask",
+   "x": 208,
+   "y": 88,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "z": 18
+   }
+  },
+  {
+   "kind": "wall_sign",
+   "x": 208,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 208,
+   "y": 50,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 144,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "yellow_sign",
+   "x": 272,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 144,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 176,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 240,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 272,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "pew",
+   "x": 144,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "pew",
+   "x": 208,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "pew",
+   "x": 272,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 314,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {
+    "ang": -1.5707963267948966
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 378,
+   "y": 314,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {
+    "ang": 3.141592653589793
+   }
+  }
+ ],
+ "npcs": [
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 144,
+   "y": 176,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": true,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 1.0359485244278044,
+   "facing": {
+    "()": [
+     0,
+     -1
+    ]
+   },
+   "home": {
+    "()": [
+     144,
+     176
+    ]
+   },
+   "dialogue": null
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 176,
+   "y": 176,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": true,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 1.2153096820382892,
+   "facing": {
+    "()": [
+     0,
+     -1
+    ]
+   },
+   "home": {
+    "()": [
+     176,
+     176
+    ]
+   },
+   "dialogue": null
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 240,
+   "y": 176,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": true,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 0.5452639852033032,
+   "facing": {
+    "()": [
+     0,
+     -1
+    ]
+   },
+   "home": {
+    "()": [
+     240,
+     176
+    ]
+   },
+   "dialogue": null
+  },
+  {
+   "name": "A kneeler",
+   "sprite": "cultist",
+   "x": 272,
+   "y": 176,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": true,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 1.0770996219037665,
+   "facing": {
+    "()": [
+     0,
+     -1
+    ]
+   },
+   "home": {
+    "()": [
+     272,
+     176
+    ]
+   },
+   "dialogue": null
+  },
+  {
+   "name": "Mara",
+   "sprite": "cultist",
+   "x": 208,
+   "y": 176,
+   "movement": "idle",
+   "solid": true,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 0.3163025747533441,
+   "facing": {
+    "()": [
+     0,
+     -1
+    ]
+   },
+   "home": {
+    "()": [
+     208,
+     176
+    ]
+   },
+   "dialogue": "?_mara_voice"
+  },
+  {
+   "name": "The rite-holder",
+   "sprite": "cultist",
+   "x": 176,
+   "y": 84,
+   "movement": "idle",
+   "solid": false,
+   "voice": "blip_mid",
+   "tag": null,
+   "no_prompt": true,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "cultist",
+   "move_timer": 1.9899119107974486,
+   "facing": {
+    "()": [
+     1,
+     0
+    ]
+   },
+   "home": {
+    "()": [
+     176,
+     84
+    ]
+   },
+   "dialogue": null
+  }
+ ],
+ "hooks": {
+  "on_enter": "?build_works_sign.<locals>._sign_on_enter",
+  "on_update": "?build_works_sign.<locals>._sign_update",
+  "on_exit": null,
+  "on_interact": "?build_works_sign.<locals>._interact"
+ },
+ "attrs": {
+  "h": 11,
+  "w": 13,
+  "music": "void",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "works_scriptorium",
+     "from_below"
+    ]
+   },
+   "E": {
+    "()": [
+     "works_deepface",
+     "from_above"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     208,
+     304
+    ]
+   },
+   "from_above": {
+    "()": [
+     48,
+     176
+    ]
+   },
+   "from_below": {
+    "()": [
+     368,
+     176
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     208,
+     84,
+     50
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    7.84167725257958,
+    "whisper",
+    0.16,
+    5.0,
+    9.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_sign_pos": {
+   "()": [
+    208,
+    84
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     144,
+     264,
+     "under"
+    ]
+   }
+  ],
+  "_kneelers": [
+   {
+    "npc": 0
+   },
+   {
+    "npc": 1
+   },
+   {
+    "npc": 2
+   },
+   {
+    "npc": 3
+   }
+  ],
+  "_mara": {
+   "npc": 4
+  },
+  "_mara_home": {
+   "()": [
+    208,
+    176
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

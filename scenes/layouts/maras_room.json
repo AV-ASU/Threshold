@@ -1,0 +1,172 @@
+{
+ "key": "maras_room",
+ "floor": [
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx"
+ ],
+ "objects": [
+  "##########",
+  "#x..#....#",
+  "#x..#....#",
+  "#........#",
+  "#####....#",
+  "#........#",
+  "#........#",
+  "#........#",
+  "#####F####"
+ ],
+ "decorations": [
+  {
+   "kind": "bed",
+   "x": 48,
+   "y": 64,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "w": 34,
+    "h": 52
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 208,
+   "y": 54,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 272,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 250,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "ang": -1.5707963267948966
+   }
+  },
+  {
+   "kind": "mote",
+   "x": 208,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 144,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_maras_room.<locals>._interact"
+ },
+ "attrs": {
+  "h": 9,
+  "w": 10,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "works_sorting",
+     "from_maras_room"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     240
+    ]
+   },
+   "from_works_sorting": {
+    "()": [
+     176,
+     240
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     80,
+     80,
+     46
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    9.698852872983132,
+    "whisper",
+    0.1,
+    8.0,
+    13.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_cot_pos": {
+   "()": [
+    80,
+    80
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     80,
+     112,
+     "under"
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {}
+}

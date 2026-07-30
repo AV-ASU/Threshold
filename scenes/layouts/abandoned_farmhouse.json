@@ -1,0 +1,316 @@
+{
+ "key": "abandoned_farmhouse",
+ "floor": [
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============"
+ ],
+ "objects": [
+  "WWWWWWWWWWWW",
+  "W.....W....W",
+  "W..........W",
+  "W.....W....W",
+  "WW.WWWWW.WWW",
+  "W.....W....W",
+  "W.....W....W",
+  "Wx....W....W",
+  "Wx....W....W",
+  "WWWWWWWFWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "candle",
+   "x": 80,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 304,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 112,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 272,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 60,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 272,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 80,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 316,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "bloodstain",
+   "x": 144,
+   "y": 248,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "preserve_shelf",
+   "x": 48,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 23,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "birdcage",
+   "x": 304,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 2658,
+   "t": 71.69411742260327,
+   "kwargs": {}
+  },
+  {
+   "kind": "bed",
+   "x": 48,
+   "y": 256,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 55.54109041686123,
+   "kwargs": {
+    "w": 34,
+    "h": 56
+   }
+  },
+  {
+   "kind": "mote",
+   "x": 112,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 144,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 304,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "washstand",
+   "x": 176,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "overturned_chair",
+   "x": 140,
+   "y": 116,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "oil_portrait",
+   "x": 240,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "sampler",
+   "x": 336,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 11,
+   "t": 62.71064917635159,
+   "kwargs": {}
+  },
+  {
+   "kind": "washstand",
+   "x": 144,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "overturned_chair",
+   "x": 172,
+   "y": 276,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "leaves",
+   "x": 336,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "overturned_chair",
+   "x": 236,
+   "y": 212,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "cellar_hatch",
+   "x": 272,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_abandoned_farmhouse.<locals>._farmhouse_interact"
+ },
+ "attrs": {
+  "h": 10,
+  "w": 12,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "farm_yard",
+     "from_abandoned_farmhouse"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     112,
+     48
+    ]
+   },
+   "from_farm_yard": {
+    "()": [
+     240,
+     272
+    ]
+   }
+  },
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     272,
+     240,
+     36
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_farmhouse_hatch": {
+   "()": [
+    272,
+    240
+   ]
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

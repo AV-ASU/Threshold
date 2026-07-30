@@ -1,0 +1,466 @@
+{
+ "key": "store_row",
+ "floor": [
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "gggggggggdddddddPPYPPddddddggggggggg",
+  "gggggggggdddddddPPYPPddddddggggggggg",
+  "gggggggggdddddddPPYPPddddddggggggggg",
+  "gggggggggdddddddPPYPPddddddggggggggg",
+  "ddddddddddddddddPPYPPddddddddddddddd",
+  "ddddddddddddddddPPYPPddddddddddddddd",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "----------------PPPPP---------------",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "ddddddddddddddddPPYPPddddddddddddddd",
+  "ddddddddddddddddPPYPPddddddddddddddd",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg",
+  "ggggggggggggggddPPYPPddggggggggggggg"
+ ],
+ "objects": [
+  "..............eeeeeeeee.............",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "4..................................a",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "....................................",
+  "..............^^^^^^^^^............."
+ ],
+ "decorations": [
+  {
+   "kind": "street_lamp",
+   "x": 720,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 464,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 720,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 464,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 944,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 944,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 720,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 464,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 720,
+   "y": 944,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 464,
+   "y": 944,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "well",
+   "x": 400,
+   "y": 400,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "wheelbarrow",
+   "x": 336,
+   "y": 392,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate_stack",
+   "x": 308,
+   "y": 338,
+   "scale": 1.0,
+   "seed": 17,
+   "t": 37.98686933848091,
+   "kwargs": {
+    "courses": 2
+   }
+  },
+  {
+   "kind": "leaves",
+   "x": 440,
+   "y": 426,
+   "scale": 1.0,
+   "seed": 8486,
+   "t": 90.70989668206849,
+   "kwargs": {}
+  },
+  {
+   "kind": "news_rack",
+   "x": 784,
+   "y": 400,
+   "scale": 1.0,
+   "seed": 2781,
+   "t": 63.68262068007502,
+   "kwargs": {}
+  },
+  {
+   "kind": "payphone",
+   "x": 820,
+   "y": 396,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 27.26319926016516,
+   "kwargs": {}
+  },
+  {
+   "kind": "town_sign",
+   "x": 848,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {
+    "text": "BRIMLEY"
+   }
+  },
+  {
+   "kind": "missing_flyer",
+   "x": 748,
+   "y": 436,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 808,
+   "y": 758,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 368,
+   "y": 784,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "glass_litter",
+   "x": 304,
+   "y": 400,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "tin_cans",
+   "x": 816,
+   "y": 816,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 89.85521300643833,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?_town_square.<locals>._square_interact"
+ },
+ "attrs": {
+  "h": 36,
+  "w": 36,
+  "music": "outside",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": {
+   "n": "lost_road",
+   "e": "lost_road",
+   "s": "lost_road",
+   "w": "lost_road"
+  },
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "4": {
+    "()": [
+     "gravel_road_north",
+     "from_store_row"
+    ]
+   },
+   "e": {
+    "()": [
+     "shop_yard",
+     "from_store_row"
+    ]
+   },
+   "a": {
+    "()": [
+     "school_yard",
+     "from_store_row"
+    ]
+   },
+   "^": {
+    "()": [
+     "chapel_row",
+     "from_store_row"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     592,
+     592
+    ]
+   },
+   "from_gravel_road_north": {
+    "()": [
+     80,
+     592
+    ]
+   },
+   "from_shop_yard": {
+    "()": [
+     592,
+     80
+    ]
+   },
+   "from_school_yard": {
+    "()": [
+     1072,
+     592
+    ]
+   },
+   "from_chapel_row": {
+    "()": [
+     592,
+     1072
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_sources": [],
+  "cult_stations": [
+   {
+    "x": 432,
+    "y": 400,
+    "pose": null,
+    "face": {
+     "()": [
+      -1,
+      0
+     ]
+    },
+    "dwell": {
+     "()": [
+      4.0,
+      7.0
+     ]
+    }
+   }
+  ],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     400,
+     400,
+     36
+    ]
+   },
+   {
+    "()": [
+     784,
+     400,
+     36
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "arms": "ensw",
+  "junction": {
+   "()": [
+    18,
+    18
+   ]
+  },
+  "is_safe_path": true,
+  "_river_tiles": {
+   "{}": []
+  },
+  "_bridge_tiles": {
+   "{}": []
+  },
+  "_well_pos": {
+   "()": [
+    400,
+    400
+   ]
+  },
+  "_barrow_pos": {
+   "()": [
+    336,
+    392
+   ]
+  },
+  "_news_rack_pos": {
+   "()": [
+    784,
+    400
+   ]
+  },
+  "_payphone_pos": {
+   "()": [
+    820,
+    396
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

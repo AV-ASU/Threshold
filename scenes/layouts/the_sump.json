@@ -1,0 +1,229 @@
+{
+ "key": "the_sump",
+ "floor": [
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxxxxxxxxx",
+  "xxx~~~~xxx",
+  "xxxx~~xxxx",
+  "xxxxxxxxxx"
+ ],
+ "objects": [
+  "#####F####",
+  "####..####",
+  "###....###",
+  "##......##",
+  "#..x...x.#",
+  "##......##",
+  "###.X.X###",
+  "####..####",
+  "##########"
+ ],
+ "decorations": [
+  {
+   "kind": "cistern_basin",
+   "x": 144,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "cistern_basin",
+   "x": 208,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "swallow_hole",
+   "x": 176,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "barrel",
+   "x": 240,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "crate",
+   "x": 112,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 112,
+   "y": 166,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 208,
+   "y": 198,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "smoke",
+   "x": 144,
+   "y": 230,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 176,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 70,
+   "y": 186,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "ang": -1.5707963267948966
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 250,
+   "y": 166,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?build_the_sump.<locals>._on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_the_sump.<locals>._interact"
+ },
+ "attrs": {
+  "h": 9,
+  "w": 10,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "works_cistern",
+     "from_the_sump"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     176
+    ]
+   },
+   "from_vats": {
+    "()": [
+     176,
+     80
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [
+   {
+    "x": 80,
+    "y": 176,
+    "key": "stone",
+    "qty": 1,
+    "on_pickup": null
+   }
+  ],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     112,
+     144,
+     40
+    ]
+   },
+   {
+    "()": [
+     240,
+     144,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    11.884917003867864,
+    "low_pulse",
+    0.12,
+    8.0,
+    13.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [],
+  "_note_pos": {
+   "()": [
+    112,
+    144
+   ]
+  },
+  "_powder_pos": {
+   "()": [
+    240,
+    144
+   ]
+  }
+ },
+ "fn_attrs": {}
+}

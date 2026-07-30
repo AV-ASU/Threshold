@@ -1,0 +1,353 @@
+{
+ "key": "gravel_road_north",
+ "floor": [
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ddddddddddddddPPYPPddddddddddddd",
+  "ddddddddddddddPPYPPddddddddddddd",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "--------------PPPPP-------------",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+  "ddddddddddddddPPYPPddddddddddddd",
+  "ddddddddddddddPPYPPddddddddddddd",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg",
+  "ggggggggggggddPPYPPddggggggggggg"
+ ],
+ "objects": [
+  "............eeeeeeeee...........",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  ".......................q........",
+  "................................",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "^..............................4",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "............aaaaaaaaa..........."
+ ],
+ "decorations": [
+  {
+   "kind": "street_lamp",
+   "x": 656,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 400,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 656,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 400,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 880,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 880,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 656,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 400,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 656,
+   "y": 944,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 400,
+   "y": 944,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 176,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 176,
+   "y": 464,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 304,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 784,
+   "y": 816,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 528,
+   "y": 368,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 432,
+   "y": 724,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 328,
+   "y": 150,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 712,
+   "y": 982,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 36,
+  "w": 32,
+  "music": "outside",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": {
+   "n": "lost_road",
+   "e": "lost_road",
+   "s": "lost_road",
+   "w": "lost_road"
+  },
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "a": {
+    "()": [
+     "country_lane",
+     "from_gravel_road_north"
+    ]
+   },
+   "e": {
+    "()": [
+     "backwoods_cabin",
+     "from_road"
+    ]
+   },
+   "^": {
+    "()": [
+     "river_bend",
+     "from_gravel_road_north"
+    ]
+   },
+   "4": {
+    "()": [
+     "store_row",
+     "from_gravel_road_north"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     528,
+     592
+    ]
+   },
+   "from_country_lane": {
+    "()": [
+     528,
+     1072
+    ]
+   },
+   "from_backwoods_cabin": {
+    "()": [
+     528,
+     80
+    ]
+   },
+   "from_river_bend": {
+    "()": [
+     80,
+     592
+    ]
+   },
+   "from_store_row": {
+    "()": [
+     944,
+     592
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "arms": "ensw",
+  "junction": {
+   "()": [
+    16,
+    18
+   ]
+  },
+  "is_safe_path": true,
+  "_river_tiles": {
+   "{}": []
+  },
+  "_bridge_tiles": {
+   "{}": []
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

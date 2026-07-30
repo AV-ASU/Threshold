@@ -1,0 +1,952 @@
+{
+ "key": "arrival_road",
+ "floor": [
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "dddddddddPPYPPddddddddd",
+  "dddddddddPPYPPddddddddd",
+  "dddddddddPPYPPddddddddd",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg",
+  "gggggggddPPYPPddggggggg"
+ ],
+ "objects": [
+  "TTT................TTTT",
+  "TTT.................TTT",
+  "TTT..............T.TTTT",
+  "TTTT...............TTTT",
+  "TTTT.............TTTTTT",
+  "TTT...............TTTTT",
+  "TTT..............TTTTTT",
+  "TTTTT.............TTTTT",
+  "TTTT................TTT",
+  "TTT...............TTTTT",
+  "TTTTTT.............TTTT",
+  "TTT.................TTT",
+  "TTTT.............TTTTTT",
+  "TTTTTT.............TTTT",
+  "TTTTT.T.............TTT",
+  "TTTTT............TTTTTT",
+  "TTTT...............TTTT",
+  "TTT..............TTTTTT",
+  "TTTTT..............TTTT",
+  "TTT................TTTT",
+  "TTTTT...............TTT",
+  "TTTTTT.............TTTT",
+  "TTTTT.............TTTTT",
+  "TTTT............T...TTT",
+  "TTT................TTTT",
+  "TTT.................TTT",
+  "TTTTT.............TTTTT",
+  "TTTTTT.............TTTT",
+  "TTTTT.............TTTTT",
+  "TTTT.............TTTTTT",
+  "TTTTT...........T...TTT",
+  "TTT.................TTT",
+  "TTTT.............TTTTTT",
+  "TTT..T............TTTTT",
+  "TTTTT...............TTT",
+  "TTTTTT............TTTTT",
+  "TTTTTTT.............TTT",
+  "TTTTT............TTTTTT",
+  "TTTTTT.............TTTT",
+  "TTTT...............TTTT",
+  "TTTTTT..............TTT",
+  "TTTT.............TTTTTT",
+  "TTTTTT..............TTT",
+  "TTT..............TTTTTT",
+  "TTT.................TTT",
+  "TTT..............T.TTTT",
+  "TTT..............TTTTTT",
+  "TTTTTT.............TTTT",
+  "TTTT.T............TTTTT",
+  "TTT...............TTTTT",
+  "TTT.................TTT",
+  "TTTTTT..............TTT",
+  "TTTTT............TTTTTT",
+  "TTTTT............TTTTTT",
+  "TTTTTT..............TTT",
+  "TTT...............TTTTT",
+  "TTTT...............TTTT",
+  "TTTTT...........xx.TTTT",
+  "TTT.............xxTTTTT",
+  "TTTT............xxTTTTT",
+  "TTT...T............TTTT",
+  "TTTTTT.............TTTT",
+  "TTTTAAA.............TTT",
+  "TATTTA..............TTT",
+  "TTAA.............TTTTTT",
+  "TAT................TTTT",
+  "a.....................e",
+  "a.....................e",
+  "a.....................e",
+  "TTAAATT.........TTTTTTT",
+  "TTATAAAT........TTTTTTT",
+  "TTTTTTTT........TTTTTTT",
+  "TTTTTTT.........TTTTTTT",
+  "TTTTTTT.........TTTTTTT",
+  "TTTTTTTIIIIIIIIITTTTTTT",
+  "TTTTTTTTT.....TTTTTTTTT",
+  "TTTTTTTTT.TT..TTTTTTTTT",
+  "TTTTTTTTTTTT..TTTTTTTTT",
+  "TTTTTTTTTTTTT.TTTTTTTTT",
+  "TTTTTTTTTTTTTTTTTTTTTTT"
+ ],
+ "decorations": [
+  {
+   "kind": "town_sign",
+   "x": 560,
+   "y": 2032,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "text": "BRIMLEY"
+   }
+  },
+  {
+   "kind": "town_sign",
+   "x": 208,
+   "y": 2104,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "text": "BRIMLEY"
+   }
+  },
+  {
+   "kind": "town_sign",
+   "x": 528,
+   "y": 2104,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "text": "LODGE"
+   }
+  },
+  {
+   "kind": "player_car",
+   "x": 560,
+   "y": 1872,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "yaw": -1.5707963267948966
+   }
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 677,
+   "y": 1355,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 582,
+   "y": 911,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 166,
+   "y": 1665,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 45,
+   "y": 1767,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 4,
+   "y": 2361,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 524,
+   "y": 16,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 600,
+   "y": 169,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 198,
+   "y": 1935,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 85,
+   "y": 1491,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 666,
+   "y": 246,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 205,
+   "y": 835,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 728,
+   "y": 1707,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 107,
+   "y": 375,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 193,
+   "y": 1012,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 210,
+   "y": 2083,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 593,
+   "y": 978,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 65,
+   "y": 1560,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 3,
+   "y": 634,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 651,
+   "y": 1626,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 83,
+   "y": 421,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 119,
+   "y": 1467,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 605,
+   "y": 2007,
+   "scale": 1.0,
+   "seed": 1747,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 531,
+   "y": 718,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 539,
+   "y": 1239,
+   "scale": 1.0,
+   "seed": 3525,
+   "t": 4.915207595917314,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 695,
+   "y": 1709,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 79.44653954978918,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 552,
+   "y": 1578,
+   "scale": 1.0,
+   "seed": 9562,
+   "t": 53.61414308731732,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 179,
+   "y": 490,
+   "scale": 1.0,
+   "seed": 8636,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 70,
+   "y": 1348,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 86.88491852788115,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 123,
+   "y": 1632,
+   "scale": 1.0,
+   "seed": 5739,
+   "t": 86.32775509080443,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 79,
+   "y": 1466,
+   "scale": 1.0,
+   "seed": 6115,
+   "t": 13.581730848745366,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 93,
+   "y": 2459,
+   "scale": 1.0,
+   "seed": 8241,
+   "t": 8.316400383702838,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 624,
+   "y": 2544,
+   "scale": 1.0,
+   "seed": 9237,
+   "t": 24.977941341556175,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 76,
+   "y": 2420,
+   "scale": 1.0,
+   "seed": 3069,
+   "t": 65.34052784412341,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 200,
+   "y": 1753,
+   "scale": 1.0,
+   "seed": 9106,
+   "t": 82.20238438492743,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 147,
+   "y": 2549,
+   "scale": 1.0,
+   "seed": 344,
+   "t": 79.76879363605303,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 156,
+   "y": 1522,
+   "scale": 1.0,
+   "seed": 2920,
+   "t": 87.70396555405868,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 518,
+   "y": 2531,
+   "scale": 1.0,
+   "seed": 4857,
+   "t": 43.1804302606448,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 628,
+   "y": 1981,
+   "scale": 1.0,
+   "seed": 7488,
+   "t": 61.24264201644027,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 541,
+   "y": 1193,
+   "scale": 1.0,
+   "seed": 9347,
+   "t": 38.098152372910256,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 200,
+   "y": 918,
+   "scale": 1.0,
+   "seed": 1136,
+   "t": 29.805117129658477,
+   "kwargs": {}
+  },
+  {
+   "kind": "missing_flyer",
+   "x": 176,
+   "y": 720,
+   "scale": 1.0,
+   "seed": 2208,
+   "t": 75.97757604791772,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 200,
+   "y": 406,
+   "scale": 1.0,
+   "seed": 8131,
+   "t": 69.3209153890523,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 1968,
+   "scale": 1.0,
+   "seed": 3749,
+   "t": 6.128145014400399,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 496,
+   "y": 1968,
+   "scale": 1.0,
+   "seed": 4635,
+   "t": 48.69145242974403,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 1616,
+   "scale": 1.0,
+   "seed": 4854,
+   "t": 82.80801129585468,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 496,
+   "y": 1616,
+   "scale": 1.0,
+   "seed": 4011,
+   "t": 53.87814499888257,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 1264,
+   "scale": 1.0,
+   "seed": 3103,
+   "t": 59.56053507675212,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 496,
+   "y": 1264,
+   "scale": 1.0,
+   "seed": 169,
+   "t": 85.7928878473935,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 912,
+   "scale": 1.0,
+   "seed": 9613,
+   "t": 54.736960561248026,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 496,
+   "y": 912,
+   "scale": 1.0,
+   "seed": 7601,
+   "t": 48.662134339459506,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 560,
+   "scale": 1.0,
+   "seed": 5318,
+   "t": 47.62383802952033,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 496,
+   "y": 560,
+   "scale": 1.0,
+   "seed": 1068,
+   "t": 23.698176988913445,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 240,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 4871,
+   "t": 49.03585250949789,
+   "kwargs": {}
+  },
+  {
+   "kind": "street_lamp",
+   "x": 496,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 4932,
+   "t": 6.482179234915975,
+   "kwargs": {}
+  },
+  {
+   "kind": "glass_litter",
+   "x": 496,
+   "y": 1872,
+   "scale": 1.0,
+   "seed": 23,
+   "t": 70.97783825238308,
+   "kwargs": {}
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 176,
+   "y": 2128,
+   "scale": 1.0,
+   "seed": 4102,
+   "t": 19.693789981708342,
+   "kwargs": {}
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 216,
+   "y": 2152,
+   "scale": 1.0,
+   "seed": 323,
+   "t": 5.2881440778874245,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 528,
+   "y": 2096,
+   "scale": 1.0,
+   "seed": 24,
+   "t": 84.57631316243702,
+   "kwargs": {}
+  },
+  {
+   "kind": "leaves",
+   "x": 240,
+   "y": 1968,
+   "scale": 1.0,
+   "seed": 9600,
+   "t": 14.125171514508628,
+   "kwargs": {}
+  },
+  {
+   "kind": "leaves",
+   "x": 496,
+   "y": 2192,
+   "scale": 1.0,
+   "seed": 3680,
+   "t": 39.70117704868318,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 146,
+   "y": 108,
+   "scale": 1.0,
+   "seed": 1207,
+   "t": 97.77003701428845,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 356,
+   "y": 303,
+   "scale": 1.0,
+   "seed": 7728,
+   "t": 35.94819343916819,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 403,
+   "y": 509,
+   "scale": 1.0,
+   "seed": 8413,
+   "t": 86.28233159664383,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 403,
+   "y": 592,
+   "scale": 1.0,
+   "seed": 196,
+   "t": 6.495015315542707,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 360,
+   "y": 842,
+   "scale": 1.0,
+   "seed": 7871,
+   "t": 1.8572180514410896,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 112,
+   "y": 1052,
+   "scale": 1.0,
+   "seed": 2128,
+   "t": 39.36802716595782,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 138,
+   "y": 1259,
+   "scale": 1.0,
+   "seed": 2421,
+   "t": 88.62913667459478,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 162,
+   "y": 1448,
+   "scale": 1.0,
+   "seed": 2045,
+   "t": 28.190005728763644,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 152,
+   "y": 1551,
+   "scale": 1.0,
+   "seed": 5247,
+   "t": 1.824505868051629,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 174,
+   "y": 1742,
+   "scale": 1.0,
+   "seed": 8536,
+   "t": 34.24874812822595,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 99,
+   "y": 1868,
+   "scale": 1.0,
+   "seed": 1038,
+   "t": 82.20070033820352,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": "?build_arrival_road.<locals>._road_update",
+  "on_exit": null,
+  "on_interact": "?build_arrival_road.<locals>._road_interact"
+ },
+ "attrs": {
+  "h": 80,
+  "w": 23,
+  "music": "outside",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "a": {
+    "()": [
+     "country_lane",
+     "from_arrival_road"
+    ]
+   },
+   "e": {
+    "()": [
+     "lodge_yard",
+     "from_arrival_road"
+    ]
+   },
+   "I": {
+    "()": [
+     "arrival_road",
+     "reloc_south_loop"
+    ]
+   }
+  },
+  "exit_directions": {
+   "I": "south"
+  },
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     368,
+     2160
+    ]
+   },
+   "reloc_south_loop": {
+    "()": [
+     368,
+     1712
+    ]
+   },
+   "from_lodge_yard": {
+    "()": [
+     688,
+     2160
+    ]
+   },
+   "from_country_lane": {
+    "()": [
+     48,
+     2160
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     528,
+     1872,
+     44
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_treadmill": {
+   "()": [
+    256,
+    1408
+   ]
+  },
+  "_car_pos": {
+   "()": [
+    528,
+    1872
+   ]
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

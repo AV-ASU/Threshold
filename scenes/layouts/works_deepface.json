@@ -1,0 +1,203 @@
+{
+ "key": "works_deepface",
+ "floor": [
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx"
+ ],
+ "objects": [
+  "###########",
+  "###.....###",
+  "##.......##",
+  "#.........#",
+  "F......x..#",
+  "#..x......#",
+  "##.......##",
+  "###.....###",
+  "###########"
+ ],
+ "decorations": [
+  {
+   "kind": "claw_marks",
+   "x": 144,
+   "y": 80,
+   "scale": 1.5,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 208,
+   "y": 76,
+   "scale": 1.2,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 112,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "tally_marks",
+   "x": 112,
+   "y": 20,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "tally_marks",
+   "x": 240,
+   "y": 20,
+   "scale": 1.0,
+   "seed": 12,
+   "t": 25.51267992030012,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "spoil_heap",
+   "x": 240,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 88.33693288695727,
+   "kwargs": {}
+  },
+  {
+   "kind": "firewood",
+   "x": 112,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 93.48850975961757,
+   "kwargs": {
+    "w": 30,
+    "h": 16
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 70,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 76.61308477961009,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 282,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": "?build_works_deepface.<locals>._on_exit",
+  "on_interact": "?build_works_deepface.<locals>._interact"
+ },
+ "attrs": {
+  "h": 9,
+  "w": 11,
+  "music": "void",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "works_sign",
+     "from_below"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     176
+    ]
+   },
+   "from_above": {
+    "()": [
+     80,
+     144
+    ]
+   },
+   "from_below": {
+    "()": [
+     272,
+     144
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     176,
+     80,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    10.130570086769819,
+    "low_pulse",
+    0.12,
+    10.0,
+    15.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_gate_pos": {
+   "()": [
+    176,
+    80
+   ]
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

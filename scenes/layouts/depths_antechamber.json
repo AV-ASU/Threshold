@@ -1,0 +1,260 @@
+{
+ "key": "depths_antechamber",
+ "floor": [
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx",
+  "xxxxxxxxxxx"
+ ],
+ "objects": [
+  "###########",
+  "#####.#####",
+  "####...####",
+  "###...xX###",
+  "##.....x.##",
+  "#.........E",
+  "##.......##",
+  "###X....###",
+  "####...####",
+  "#####.#####",
+  "###########"
+ ],
+ "decorations": [
+  {
+   "kind": "candle",
+   "x": 112,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 240,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 240,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "ang": 0.6,
+    "span": 0
+   }
+  },
+  {
+   "kind": "shoring_frame",
+   "x": 112,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 10,
+   "t": 2.276975163762307,
+   "kwargs": {
+    "ang": 2.2,
+    "span": 0
+   }
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 176,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 5585,
+   "t": 30.915875177924924,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 70,
+   "y": 70,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 88.33693288695727,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 282,
+   "y": 282,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "ang": 3.141592653589793
+   }
+  },
+  {
+   "kind": "crate",
+   "x": 240,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "spoil_heap",
+   "x": 208,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "mine_rail",
+   "x": 280,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 51.81671975334786,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "chalk_door",
+   "x": 112,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 67.08417724616831,
+   "kwargs": {}
+  },
+  {
+   "kind": "chalk_door_wall",
+   "x": 240,
+   "y": 106,
+   "scale": 1.0,
+   "seed": 1,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_depths_antechamber.<locals>._interact"
+ },
+ "attrs": {
+  "h": 11,
+  "w": 11,
+  "music": "basement",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "E": {
+    "()": [
+     "depths_procession",
+     "from_antechamber"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     208
+    ]
+   },
+   "from_above": {
+    "()": [
+     176,
+     176
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "cave",
+  "interactables": [
+   {
+    "()": [
+     176,
+     176,
+     36
+    ]
+   },
+   {
+    "()": [
+     112,
+     176,
+     40
+    ]
+   },
+   {
+    "()": [
+     240,
+     106,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [
+   [
+    9.291557155275486,
+    "cult_breath",
+    0.18,
+    6.0,
+    10.0,
+    0.0
+   ]
+  ],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [
+   {
+    "()": [
+     240,
+     168,
+     "under"
+    ]
+   }
+  ],
+  "_chalk_doors": [
+   {
+    "()": [
+     112,
+     176
+    ]
+   },
+   {
+    "()": [
+     240,
+     106
+    ]
+   }
+  ],
+  "_chalk_voice": "chalk_deep"
+ },
+ "fn_attrs": {}
+}

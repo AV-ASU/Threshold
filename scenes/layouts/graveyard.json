@@ -1,0 +1,462 @@
+{
+ "key": "graveyard",
+ "floor": [
+  "gggggggggggggg",
+  "gggggggggggggg",
+  "gggdggdggdgggg",
+  "gggggggggggggg",
+  "gggddgdggdgggg",
+  "ggggggggdggggg",
+  "gggdggddddgggg",
+  "ggggggggdggggg",
+  "ggggggggdggggg",
+  "gggggggggggggg"
+ ],
+ "objects": [
+  "TTTTTTTTTTTTTT",
+  "T............T",
+  "T..x..x..x...T",
+  "T............T",
+  "T..x..x..x...T",
+  "T............T",
+  "T..x..x..x...T",
+  "T............q",
+  "T............T",
+  "TTTTTTTTHTTTTT"
+ ],
+ "decorations": [
+  {
+   "kind": "headstone",
+   "x": 112,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 3,
+   "t": 48.052801526547725,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 217,
+   "y": 74,
+   "scale": 1.0,
+   "seed": 11,
+   "t": 64.27721030626424,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 297,
+   "y": 85,
+   "scale": 1.0,
+   "seed": 4,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 118,
+   "y": 151,
+   "scale": 1.0,
+   "seed": 8,
+   "t": 37.31058880681248,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 199,
+   "y": 140,
+   "scale": 1.0,
+   "seed": 15,
+   "t": 15.707612799681536,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 309,
+   "y": 153,
+   "scale": 1.0,
+   "seed": 2,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 106,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 9,
+   "t": 25.51267992030012,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 216,
+   "y": 211,
+   "scale": 1.0,
+   "seed": 6,
+   "t": 88.33693288695727,
+   "kwargs": {}
+  },
+  {
+   "kind": "headstone",
+   "x": 300,
+   "y": 199,
+   "scale": 1.0,
+   "seed": 13,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "bloodstain",
+   "x": 208,
+   "y": 216,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 76.61308477961009,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 80,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 368,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 100,
+   "y": 98,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 112,
+   "y": 72,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "z": 19.0
+   }
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 368,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "hanging_figure",
+   "x": 272,
+   "y": 28,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 208,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 304,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 250,
+   "y": 118,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 75,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 149,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 211,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 82,
+   "y": 58,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 382,
+   "y": 128,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 73,
+   "y": 274,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 137,
+   "y": 155,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 286,
+   "y": 258,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 312,
+   "y": 109,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 266,
+   "y": 139,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 358,
+   "y": 107,
+   "scale": 1.0,
+   "seed": 1747,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 168,
+   "y": 55,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 309,
+   "y": 265,
+   "scale": 1.0,
+   "seed": 3525,
+   "t": 4.915207595917314,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 171,
+   "y": 261,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 79.44653954978918,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 377,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 9562,
+   "t": 53.61414308731732,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 341,
+   "y": 151,
+   "scale": 1.0,
+   "seed": 8636,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 97,
+   "y": 276,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 86.88491852788115,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 358,
+   "y": 180,
+   "scale": 1.0,
+   "seed": 5739,
+   "t": 86.32775509080443,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 282,
+   "y": 280,
+   "scale": 1.0,
+   "seed": 6115,
+   "t": 13.581730848745366,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_graveyard.<locals>._graveyard_interact"
+ },
+ "attrs": {
+  "h": 10,
+  "w": 14,
+  "music": "village",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "H": {
+    "()": [
+     "church",
+     "from_graveyard"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     240,
+     240
+    ]
+   },
+   "from_church": {
+    "()": [
+     240,
+     240
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     112,
+     80,
+     36
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_worn_stone": {
+   "()": [
+    112,
+    80
+   ]
+  },
+  "_grave_stones": [
+   {
+    "()": [
+     112,
+     144
+    ]
+   },
+   {
+    "()": [
+     208,
+     144
+    ]
+   },
+   {
+    "()": [
+     304,
+     144
+    ]
+   }
+  ],
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

@@ -1,0 +1,894 @@
+{
+ "key": "cornfield_path",
+ "floor": [
+  ";gggggggggggggg:ggg;g;g:g:ggggggg:g:g;g;;ggg;;g;gggg:ggg;gg;",
+  ":ggg:ggg:;g;g:ggggg:ggggggg:gggg:ggggg:ggg:ggggg::gg;ggg;g:;",
+  ";;;ggggg;g:gg::g;ggggggggggggggggggggggggggggggggg:gggggg:g:",
+  "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg;",
+  ";ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+  "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+  "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg:gg",
+  "g:gggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+  "ggg:ggggg:gggggggggggggggggggggggggggggggg:gggggggg:gggggggg",
+  "ggg::gggg:;gg:;g;;g::ggg:ggggggg;ggggggg;g:ggggg:ggg:g;ggggg",
+  "gg:gg::gggggg;:g;gg;gg;g;g;:ggggg;g:g;g;::gggg:;ggggggggg;g;"
+ ],
+ "objects": [
+  "TT..ppTT.pp.p.T..pTpppppTpppp........pTpp..pTTp.pp.Tp.TppT..",
+  "..pp..T.TpTTp..p....p.Tp..Tpp.!!..T....p.p....Tp.T.....p....",
+  "T.....T.T...................p....T....T..Tp...............p.",
+  "pT....................R...................................pp",
+  "T.p...R.................XX...................R...........T..",
+  "p.T.......................................................pT",
+  "a.....................CCC...................................",
+  "a...........................................................",
+  "a.....................CCC.......R...........................",
+  "............R.............................................p.",
+  "T........................................XX.........R....T.T",
+  "p.....ppTT.pp...p.T.....ppp.....p.p...p....TTp.....T.T.p...T",
+  "T..p.....T..Tp.TT....TT..........p..pT.p..pp...p.....Tpp.T.p",
+  "T..ppp.p.p..TT.p.TTpT..Tp.p.T.S.p.p..ppp..p.Tp....pp.pppp.TT"
+ ],
+ "decorations": [
+  {
+   "kind": "rust_wagon",
+   "x": 800,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 51,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "yaw": -0.35
+   }
+  },
+  {
+   "kind": "rust_sedan",
+   "x": 1344,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 52,
+   "t": 64.27721030626424,
+   "kwargs": {
+    "yaw": 2.85
+   }
+  },
+  {
+   "kind": "bush",
+   "x": 1070,
+   "y": 16,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1135,
+   "y": 18,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 630,
+   "y": 45,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1044,
+   "y": 43,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1547,
+   "y": 54,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1869,
+   "y": 43,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 340,
+   "y": 78,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 429,
+   "y": 79,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 459,
+   "y": 74,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1839,
+   "y": 84,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1907,
+   "y": 82,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1837,
+   "y": 309,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 47,
+   "y": 333,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 113,
+   "y": 367,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1361,
+   "y": 363,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 144,
+   "y": 397,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 620,
+   "y": 397,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 655,
+   "y": 397,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 784,
+   "y": 406,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1552,
+   "y": 401,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1682,
+   "y": 397,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 76,
+   "y": 430,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 462,
+   "y": 436,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1134,
+   "y": 438,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1290,
+   "y": 428,
+   "scale": 1.0,
+   "seed": 1747,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "bush",
+   "x": 1491,
+   "y": 430,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 190,
+   "y": 185,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 35.834847292020164,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1175,
+   "y": 372,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 4.379183446693435,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1840,
+   "y": 228,
+   "scale": 1.0,
+   "seed": 1362,
+   "t": 56.826114932620676,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1392,
+   "y": 171,
+   "scale": 1.0,
+   "seed": 3069,
+   "t": 56.38015989467894,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1749,
+   "y": 345,
+   "scale": 1.0,
+   "seed": 2920,
+   "t": 47.13189826981093,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 941,
+   "y": 211,
+   "scale": 1.0,
+   "seed": 6242,
+   "t": 68.16395331698241,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1138,
+   "y": 193,
+   "scale": 1.0,
+   "seed": 5914,
+   "t": 6.936114847492991,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 342,
+   "y": 289,
+   "scale": 1.0,
+   "seed": 3749,
+   "t": 0.6873500468201565,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1061,
+   "y": 218,
+   "scale": 1.0,
+   "seed": 4854,
+   "t": 36.327952674517135,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1155,
+   "y": 179,
+   "scale": 1.0,
+   "seed": 169,
+   "t": 96.46597518726836,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1210,
+   "y": 367,
+   "scale": 1.0,
+   "seed": 7802,
+   "t": 10.673036771965826,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 853,
+   "y": 231,
+   "scale": 1.0,
+   "seed": 1068,
+   "t": 73.193844948161,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1060,
+   "y": 194,
+   "scale": 1.0,
+   "seed": 4932,
+   "t": 69.39920100518418,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1532,
+   "y": 175,
+   "scale": 1.0,
+   "seed": 4102,
+   "t": 80.5644987079045,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 186,
+   "y": 91,
+   "scale": 1.0,
+   "seed": 4634,
+   "t": 95.27879069838801,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1260,
+   "y": 171,
+   "scale": 1.0,
+   "seed": 8046,
+   "t": 7.368185638995417,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1051,
+   "y": 155,
+   "scale": 1.0,
+   "seed": 1064,
+   "t": 71.3619630884693,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1749,
+   "y": 64,
+   "scale": 1.0,
+   "seed": 6450,
+   "t": 87.26501053606489,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1333,
+   "y": 156,
+   "scale": 1.0,
+   "seed": 4618,
+   "t": 59.065587183693765,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 483,
+   "y": 74,
+   "scale": 1.0,
+   "seed": 5611,
+   "t": 98.53859865686215,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1302,
+   "y": 346,
+   "scale": 1.0,
+   "seed": 2789,
+   "t": 39.40250729277517,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 632,
+   "y": 129,
+   "scale": 1.0,
+   "seed": 2182,
+   "t": 12.522085125749637,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 612,
+   "y": 96,
+   "scale": 1.0,
+   "seed": 4409,
+   "t": 90.5376879085472,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 272,
+   "y": 162,
+   "scale": 1.0,
+   "seed": 9824,
+   "t": 99.67065189476932,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1170,
+   "y": 344,
+   "scale": 1.0,
+   "seed": 1601,
+   "t": 78.68329652569848,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1512,
+   "y": 145,
+   "scale": 1.0,
+   "seed": 2907,
+   "t": 1.5784969237546354,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1070,
+   "y": 356,
+   "scale": 1.0,
+   "seed": 1924,
+   "t": 85.7214730745824,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 740,
+   "y": 244,
+   "scale": 1.0,
+   "seed": 8223,
+   "t": 16.0092550473113,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1741,
+   "y": 364,
+   "scale": 1.0,
+   "seed": 3347,
+   "t": 76.91786773175362,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 904,
+   "y": 290,
+   "scale": 1.0,
+   "seed": 7211,
+   "t": 91.84876776368695,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1042,
+   "y": 285,
+   "scale": 1.0,
+   "seed": 1204,
+   "t": 76.34800065745635,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1807,
+   "y": 124,
+   "scale": 1.0,
+   "seed": 1210,
+   "t": 39.93261625850468,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1363,
+   "y": 354,
+   "scale": 1.0,
+   "seed": 7764,
+   "t": 45.71759214214307,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 591,
+   "y": 293,
+   "scale": 1.0,
+   "seed": 6000,
+   "t": 93.0752743712004,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1433,
+   "y": 300,
+   "scale": 1.0,
+   "seed": 1494,
+   "t": 34.66857423653417,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 701,
+   "y": 132,
+   "scale": 1.0,
+   "seed": 9909,
+   "t": 11.0841686661159,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1245,
+   "y": 232,
+   "scale": 1.0,
+   "seed": 6889,
+   "t": 37.78910647317375,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 378,
+   "y": 154,
+   "scale": 1.0,
+   "seed": 5475,
+   "t": 82.58339354931671,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1276,
+   "y": 251,
+   "scale": 1.0,
+   "seed": 8720,
+   "t": 64.32521889718315,
+   "kwargs": {}
+  },
+  {
+   "kind": "grass_tuft",
+   "x": 1764,
+   "y": 134,
+   "scale": 1.0,
+   "seed": 6244,
+   "t": 1.233120457716741,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 168,
+   "y": 86,
+   "scale": 1.0,
+   "seed": 5520,
+   "t": 53.865367823696985,
+   "kwargs": {}
+  },
+  {
+   "kind": "crow",
+   "x": 1224,
+   "y": 374,
+   "scale": 1.0,
+   "seed": 1419,
+   "t": 28.041088222866627,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 912,
+   "y": 60,
+   "scale": 1.0,
+   "seed": 9031,
+   "t": 37.315496628958456,
+   "kwargs": {}
+  },
+  {
+   "kind": "creepy_tree",
+   "x": 1488,
+   "y": 392,
+   "scale": 1.0,
+   "seed": 8998,
+   "t": 73.13293014737334,
+   "kwargs": {}
+  },
+  {
+   "kind": "hanging_figure",
+   "x": 1168,
+   "y": 28,
+   "scale": 1.0,
+   "seed": 5564,
+   "t": 9.203597745886249,
+   "kwargs": {}
+  },
+  {
+   "kind": "dead_crow",
+   "x": 656,
+   "y": 310,
+   "scale": 1.0,
+   "seed": 8617,
+   "t": 34.29377354997338,
+   "kwargs": {}
+  },
+  {
+   "kind": "corn_doll",
+   "x": 944,
+   "y": 72,
+   "scale": 1.0,
+   "seed": 6792,
+   "t": 93.52894106588721,
+   "kwargs": {}
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 976,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 8555,
+   "t": 51.671362722215505,
+   "kwargs": {}
+  },
+  {
+   "kind": "mud_footprint",
+   "x": 984,
+   "y": 120,
+   "scale": 1.0,
+   "seed": 4681,
+   "t": 19.19681642735921,
+   "kwargs": {}
+  },
+  {
+   "kind": "claw_marks",
+   "x": 1072,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 9625,
+   "t": 48.73678801833448,
+   "kwargs": {}
+  },
+  {
+   "kind": "wheelbarrow",
+   "x": 1488,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 2967,
+   "t": 93.464605109853,
+   "kwargs": {}
+  },
+  {
+   "kind": "leaves",
+   "x": 336,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 9836,
+   "t": 85.21484940599973,
+   "kwargs": {}
+  },
+  {
+   "kind": "leaves",
+   "x": 848,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 1482,
+   "t": 76.87027688967063,
+   "kwargs": {}
+  },
+  {
+   "kind": "leaves",
+   "x": 1424,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 474,
+   "t": 94.25144681502236,
+   "kwargs": {}
+  },
+  {
+   "kind": "tin_cans",
+   "x": 464,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 21,
+   "t": 12.844302127069106,
+   "kwargs": {}
+  },
+  {
+   "kind": "glass_litter",
+   "x": 1296,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 22,
+   "t": 32.38634075516031,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?build_cornfield_path.<locals>._forest_on_enter",
+  "on_update": "?build_cornfield_path.<locals>._forest_on_update",
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 14,
+  "w": 60,
+  "music": "outside",
+  "wrap_x": true,
+  "wrap_y": true,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "a": {
+    "()": [
+     "lodge_yard",
+     "from_forest"
+    ]
+   },
+   "!": {
+    "()": [
+     "cornfield_maze",
+     "from_cornfield_path"
+    ]
+   },
+   "S": {
+    "()": [
+     "country_lane",
+     "from_cornfield_path"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     48,
+     240
+    ]
+   },
+   "from_lodge_yard": {
+    "()": [
+     48,
+     240
+    ]
+   },
+   "from_barn": {
+    "()": [
+     1872,
+     240
+    ]
+   },
+   "from_cornfield_maze": {
+    "()": [
+     976,
+     240
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "hide_spots": [
+   {
+    "()": [
+     784,
+     176,
+     "under"
+    ]
+   },
+   {
+    "()": [
+     1328,
+     368,
+     "under"
+    ]
+   }
+  ],
+  "_fp_W": 60,
+  "_fp_H": 14,
+  "_fp_PATH_ROW": 7,
+  "_fp_SECRET_COL": 19
+ },
+ "fn_attrs": {}
+}

@@ -1,0 +1,563 @@
+{
+ "key": "shop",
+ "floor": [
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================",
+  "================"
+ ],
+ "objects": [
+  "WWWWWWWWWWWWWWWW",
+  "W....WXX..W..X.W",
+  "W....W.........W",
+  "WW.WWW....W..x.W",
+  "Wx...W....WWWWWW",
+  "Wx.............F",
+  "W..x.W......XX.W",
+  "W...xW.........W",
+  "WWWWWW...x.....W",
+  "W.......xx.....W",
+  "W.xx...........W",
+  "W..............W",
+  "WWWWWWWWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "rug",
+   "x": 280,
+   "y": 296,
+   "scale": 1.0,
+   "seed": 31,
+   "t": 64.27721030626424,
+   "kwargs": {
+    "w": 104,
+    "h": 64,
+    "color": {
+     "()": [
+      58,
+      60,
+      64
+     ]
+    }
+   }
+  },
+  {
+   "kind": "bare_shelf",
+   "x": 224,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 1,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 58,
+    "h": 18
+   }
+  },
+  {
+   "kind": "bare_shelf",
+   "x": 416,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 2,
+   "t": 37.31058880681248,
+   "kwargs": {
+    "w": 58,
+    "h": 18
+   }
+  },
+  {
+   "kind": "butcher_counter",
+   "x": 272,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 5438,
+   "t": 15.707612799681536,
+   "kwargs": {}
+  },
+  {
+   "kind": "butcher_counter",
+   "x": 304,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 5585,
+   "t": 30.915875177924924,
+   "kwargs": {}
+  },
+  {
+   "kind": "chair",
+   "x": 304,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 88.33693288695727,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "stove",
+   "x": 80,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "w": 30,
+    "h": 40,
+    "wall": "W"
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 112,
+   "y": 336,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {
+    "w": 44,
+    "h": 24
+   }
+  },
+  {
+   "kind": "butter_churn",
+   "x": 458,
+   "y": 328,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 288,
+   "y": 312,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "z": 42
+   }
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 464,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "cone": {
+     "()": [
+      -1,
+      0,
+      55
+     ]
+    }
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 144,
+   "y": 312,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {
+    "z": 38,
+    "broken": true
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 432,
+   "y": 312,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 272,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 400,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {
+    "z": 38,
+    "broken": true
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 272,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 400,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "drop_bulb",
+   "x": 80,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {
+    "z": 38
+   }
+  },
+  {
+   "kind": "kerosene_lamp",
+   "x": 272,
+   "y": 290,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {
+    "z": 14.0
+   }
+  },
+  {
+   "kind": "cash_register",
+   "x": 304,
+   "y": 304,
+   "scale": 1.1,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {
+    "z": 14.0
+   }
+  },
+  {
+   "kind": "bill_spike",
+   "x": 272,
+   "y": 297,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {
+    "z": 14.0
+   }
+  },
+  {
+   "kind": "buck_head",
+   "x": 240,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "mounted_fish",
+   "x": 304,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "stockroom_corner",
+   "x": 48,
+   "y": 160,
+   "scale": 1.0,
+   "seed": 12,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 120,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 9333,
+   "t": 33.172240819470524,
+   "kwargs": {
+    "z": 27
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 134,
+   "scale": 1.0,
+   "seed": 1008,
+   "t": 4.5458276109133,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "preserve_shelf",
+   "x": 80,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 17,
+   "t": 97.43458487589714,
+   "kwargs": {}
+  },
+  {
+   "kind": "dark_pool",
+   "x": 80,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {
+    "r": 84,
+    "depth": 52
+   }
+  },
+  {
+   "kind": "mirror",
+   "x": 112,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 3525,
+   "t": 4.915207595917314,
+   "kwargs": {}
+  },
+  {
+   "kind": "wrong_photo",
+   "x": 48,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 79.44653954978918,
+   "kwargs": {
+    "stage": 1
+   }
+  },
+  {
+   "kind": "shelf",
+   "x": 432,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 7,
+   "t": 53.61414308731732,
+   "kwargs": {
+    "w": 28,
+    "h": 16
+   }
+  },
+  {
+   "kind": "wrong_radio",
+   "x": 432,
+   "y": 54,
+   "scale": 1.0,
+   "seed": 717,
+   "t": 58.366989824198576,
+   "kwargs": {
+    "z": 22.0
+   }
+  },
+  {
+   "kind": "clock",
+   "x": 400,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 52.710403404272476,
+   "kwargs": {}
+  },
+  {
+   "kind": "calendar",
+   "x": 464,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 5739,
+   "t": 86.32775509080443,
+   "kwargs": {}
+  },
+  {
+   "kind": "chair",
+   "x": 432,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 6115,
+   "t": 13.581730848745366,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "mote",
+   "x": 368,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 8241,
+   "t": 8.316400383702838,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 176,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 9237,
+   "t": 24.977941341556175,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 304,
+   "y": 368,
+   "scale": 1.0,
+   "seed": 3069,
+   "t": 65.34052784412341,
+   "kwargs": {}
+  },
+  {
+   "kind": "papers",
+   "x": 272,
+   "y": 294,
+   "scale": 1.0,
+   "seed": 23,
+   "t": 82.20238438492743,
+   "kwargs": {
+    "z": 14.0
+   }
+  }
+ ],
+ "npcs": [
+  {
+   "name": "Hettie",
+   "sprite": "hettie",
+   "x": 272,
+   "y": 272,
+   "movement": "worker",
+   "solid": true,
+   "voice": "blip_high",
+   "tag": null,
+   "no_prompt": false,
+   "radius": 64,
+   "speed": 1.0,
+   "hp": 30,
+   "max_hp": 30,
+   "color": {
+    "()": [
+     240,
+     238,
+     230
+    ]
+   },
+   "portrait": "hettie",
+   "move_timer": 0.9610560305309546,
+   "facing": {
+    "()": [
+     0,
+     1
+    ]
+   },
+   "home": {
+    "()": [
+     272,
+     272
+    ]
+   },
+   "dialogue": "?hettie_dialogue"
+  }
+ ],
+ "hooks": {
+  "on_enter": null,
+  "on_update": "?build_shop.<locals>._shop_update",
+  "on_exit": null,
+  "on_interact": null
+ },
+ "attrs": {
+  "h": 13,
+  "w": 16,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "F": {
+    "()": [
+     "shop_yard",
+     "from_shop"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     272,
+     336
+    ]
+   },
+   "from_shop_yard": {
+    "()": [
+     464,
+     176
+    ]
+   }
+  },
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_receipt_pos": {
+   "()": [
+    272,
+    304
+   ]
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

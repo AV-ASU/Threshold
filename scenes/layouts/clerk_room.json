@@ -1,0 +1,289 @@
+{
+ "key": "clerk_room",
+ "floor": [
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "==============",
+  "=============="
+ ],
+ "objects": [
+  "WWWiWWWWWWWWWW",
+  "Wxxx....W....W",
+  "Wxx.....W.X..W",
+  "W.........X..W",
+  "W.......W....W",
+  "WWWWWWWWW....W",
+  "W.....x......W",
+  "W....xx......W",
+  "W............W",
+  "WWW1WWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "bed",
+   "x": 64,
+   "y": 64,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "w": 56,
+    "h": 56
+   }
+  },
+  {
+   "kind": "nightstand",
+   "x": 112,
+   "y": 48,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 26,
+    "h": 30
+   }
+  },
+  {
+   "kind": "wardrobe",
+   "x": 336,
+   "y": 96,
+   "scale": 1.0,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {
+    "w": 26,
+    "h": 54
+   }
+  },
+  {
+   "kind": "table",
+   "x": 192,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "w": 54,
+    "h": 32
+   }
+  },
+  {
+   "kind": "chair",
+   "x": 208,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {
+    "w": 22,
+    "h": 28
+   }
+  },
+  {
+   "kind": "rug",
+   "x": 136,
+   "y": 184,
+   "scale": 1.0,
+   "seed": 23,
+   "t": 93.48850975961757,
+   "kwargs": {
+    "w": 110,
+    "h": 70,
+    "color": {
+     "()": [
+      74,
+      48,
+      44
+     ]
+    }
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 80,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 76.61308477961009,
+   "kwargs": {}
+  },
+  {
+   "kind": "buck_head",
+   "x": 208,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "wall": "N"
+   }
+  },
+  {
+   "kind": "mounted_fish",
+   "x": 48,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {
+    "flip": true
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 410,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "kerosene_lamp",
+   "x": 208,
+   "y": 226,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "washstand",
+   "x": 50,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 40,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 100,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 160,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 220,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": null,
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "scenes.lodge:clerk_room_interact"
+ },
+ "attrs": {
+  "h": 10,
+  "w": 14,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "1": {
+    "()": [
+     "lodge_hall",
+     "from_clerk_room"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     272,
+     240
+    ]
+   },
+   "from_hall": {
+    "()": [
+     144,
+     272
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     336,
+     80,
+     40
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_dresser_pos": {
+   "()": [
+    176,
+    240
+   ]
+  },
+  "_closet_pos": {
+   "()": [
+    336,
+    80
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     56,
+     104,
+     "under"
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {}
+}

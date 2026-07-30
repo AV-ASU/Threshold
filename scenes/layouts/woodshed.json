@@ -1,0 +1,163 @@
+{
+ "key": "woodshed",
+ "floor": [
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============",
+  "============"
+ ],
+ "objects": [
+  "WWWWWWWWWWWW",
+  "W.....W....W",
+  "W.x...W....W",
+  "W..........W",
+  "W.....W....W",
+  "Wx....WWWWWW",
+  "Wx.........W",
+  "W...h......W",
+  "WWWWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "table",
+   "x": 80,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "w": 54,
+    "h": 36
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 80,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 6112,
+   "t": 70.61875345219582,
+   "kwargs": {}
+  },
+  {
+   "kind": "bloodstain",
+   "x": 116,
+   "y": 200,
+   "scale": 2.6,
+   "seed": 373,
+   "t": 59.992603329625815,
+   "kwargs": {}
+  },
+  {
+   "kind": "firewood",
+   "x": 48,
+   "y": 192,
+   "scale": 1.0,
+   "seed": 4179,
+   "t": 33.19260575559642,
+   "kwargs": {
+    "w": 24,
+    "h": 58
+   }
+  },
+  {
+   "kind": "kerosene_lamp",
+   "x": 80,
+   "y": 66,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 34.09390440834264,
+   "kwargs": {
+    "z": 11.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 346,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "?build_woodshed.<locals>._woodshed_on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "?build_woodshed.<locals>._woodshed_interact"
+ },
+ "attrs": {
+  "h": 9,
+  "w": 12,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "h": {
+    "()": [
+     "lodge_yard",
+     "from_woodshed"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": null,
+  "spawns": {
+   "default": {
+    "()": [
+     176,
+     208
+    ]
+   },
+   "from_yard": {
+    "()": [
+     144,
+     208
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_axe_pos": {
+   "()": [
+    272,
+    48
+   ]
+  },
+  "hide_spots": []
+ },
+ "fn_attrs": {}
+}

@@ -1,0 +1,527 @@
+{
+ "key": "lodge",
+ "floor": [
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "==================",
+  "=================="
+ ],
+ "objects": [
+  "WWWWWWWWWWWWWHWWWW",
+  "W................W",
+  "W.......xx......XW",
+  "Wxxx.............W",
+  "Wxxx........X....W",
+  "Wx...............W",
+  "Wx55.............W",
+  "W................W",
+  "W..............xxW",
+  "W..L.............W",
+  "W................W",
+  "WWWWWWWDWWWWWWWWWW"
+ ],
+ "decorations": [
+  {
+   "kind": "cellar_hatch",
+   "x": 112,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 4830,
+   "t": 48.052801526547725,
+   "kwargs": {
+    "padlock": true
+   }
+  },
+  {
+   "kind": "rug",
+   "x": 376,
+   "y": 236,
+   "scale": 1.0,
+   "seed": 23,
+   "t": 70.61875345219582,
+   "kwargs": {
+    "w": 140,
+    "h": 92,
+    "color": {
+     "()": [
+      70,
+      58,
+      40
+     ]
+    }
+   }
+  },
+  {
+   "kind": "dining_set",
+   "x": 96,
+   "y": 112,
+   "scale": 1.0,
+   "seed": 2573,
+   "t": 37.31058880681248,
+   "kwargs": {}
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 304,
+   "y": 16,
+   "scale": 1.0,
+   "seed": 5065,
+   "t": 2.276975163762307,
+   "kwargs": {}
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 40,
+   "y": 128,
+   "scale": 1.0,
+   "seed": 5009,
+   "t": 25.51267992030012,
+   "kwargs": {}
+  },
+  {
+   "kind": "wall_lamp",
+   "x": 536,
+   "y": 192,
+   "scale": 1.0,
+   "seed": 638,
+   "t": 93.48850975961757,
+   "kwargs": {}
+  },
+  {
+   "kind": "kitchen_wall",
+   "x": 30,
+   "y": 176,
+   "scale": 1.0,
+   "seed": 203,
+   "t": 33.97705745966264,
+   "kwargs": {}
+  },
+  {
+   "kind": "hearth_mass",
+   "x": 400,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 6384,
+   "t": 2.611401735396379,
+   "kwargs": {}
+  },
+  {
+   "kind": "clock",
+   "x": 336,
+   "y": 18,
+   "scale": 1.0,
+   "seed": 8489,
+   "t": 50.33441895697908,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 96,
+   "y": 106,
+   "scale": 1.0,
+   "seed": 8425,
+   "t": 97.70707176344588,
+   "kwargs": {
+    "z": 16
+   }
+  },
+  {
+   "kind": "candle",
+   "x": 404,
+   "y": 154,
+   "scale": 1.0,
+   "seed": 8966,
+   "t": 16.228977259554632,
+   "kwargs": {
+    "z": 26
+   }
+  },
+  {
+   "kind": "mote",
+   "x": 40,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 8157,
+   "t": 77.69834007735729,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 130,
+   "y": 140,
+   "scale": 1.0,
+   "seed": 2800,
+   "t": 48.638971770654635,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 220,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 4835,
+   "t": 17.708532843885738,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 310,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 6517,
+   "t": 37.98686933848091,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 400,
+   "y": 140,
+   "scale": 1.0,
+   "seed": 9955,
+   "t": 51.79742622139022,
+   "kwargs": {}
+  },
+  {
+   "kind": "mote",
+   "x": 490,
+   "y": 200,
+   "scale": 1.0,
+   "seed": 8823,
+   "t": 16.979079151624433,
+   "kwargs": {}
+  },
+  {
+   "kind": "missing_flyer",
+   "x": 304,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 7732,
+   "t": 4.07912966471261,
+   "kwargs": {}
+  },
+  {
+   "kind": "polaroid_wall",
+   "x": 336,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 3183,
+   "t": 19.271027906788905,
+   "kwargs": {}
+  },
+  {
+   "kind": "missing_flyer",
+   "x": 368,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 2254,
+   "t": 91.8212950818762,
+   "kwargs": {}
+  },
+  {
+   "kind": "overturned_chair",
+   "x": 432,
+   "y": 208,
+   "scale": 1.0,
+   "seed": 5088,
+   "t": 6.0846405879511405,
+   "kwargs": {}
+  },
+  {
+   "kind": "small_chair",
+   "x": 336,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 6337,
+   "t": 84.59750246342277,
+   "kwargs": {}
+  },
+  {
+   "kind": "small_chair",
+   "x": 496,
+   "y": 240,
+   "scale": 1.0,
+   "seed": 9712,
+   "t": 54.8278145133356,
+   "kwargs": {}
+  },
+  {
+   "kind": "phantom_mark",
+   "x": 272,
+   "y": 304,
+   "scale": 1.0,
+   "seed": 5434,
+   "t": 64.29741831173082,
+   "kwargs": {}
+  },
+  {
+   "kind": "counter",
+   "x": 272,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 744,
+   "t": 95.45819205765508,
+   "kwargs": {}
+  },
+  {
+   "kind": "counter",
+   "x": 304,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 1747,
+   "t": 53.816451178139644,
+   "kwargs": {}
+  },
+  {
+   "kind": "candle",
+   "x": 288,
+   "y": 68,
+   "scale": 1.0,
+   "seed": 9460,
+   "t": 99.23746094615679,
+   "kwargs": {
+    "z": 14
+   }
+  },
+  {
+   "kind": "ledger",
+   "x": 272,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 3525,
+   "t": 4.915207595917314,
+   "kwargs": {
+    "z": 14
+   }
+  },
+  {
+   "kind": "key_rack",
+   "x": 272,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 1825,
+   "t": 79.44653954978918,
+   "kwargs": {}
+  },
+  {
+   "kind": "service_bell",
+   "x": 310,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 9562,
+   "t": 53.61414308731732,
+   "kwargs": {
+    "z": 14.0
+   }
+  },
+  {
+   "kind": "mounted_fish",
+   "x": 208,
+   "y": 24,
+   "scale": 1.0,
+   "seed": 8636,
+   "t": 64.40305340572583,
+   "kwargs": {}
+  },
+  {
+   "kind": "kerosene_lamp",
+   "x": 78,
+   "y": 194,
+   "scale": 1.0,
+   "seed": 5931,
+   "t": 86.88491852788115,
+   "kwargs": {}
+  },
+  {
+   "kind": "cobweb",
+   "x": 38,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 5739,
+   "t": 86.32775509080443,
+   "kwargs": {
+    "ang": 0.0
+   }
+  },
+  {
+   "kind": "cobweb",
+   "x": 538,
+   "y": 38,
+   "scale": 1.0,
+   "seed": 6115,
+   "t": 13.581730848745366,
+   "kwargs": {
+    "ang": 1.5707963267948966
+   }
+  },
+  {
+   "kind": "firewood",
+   "x": 512,
+   "y": 272,
+   "scale": 1.0,
+   "seed": 8241,
+   "t": 8.316400383702838,
+   "kwargs": {
+    "w": 58,
+    "h": 24
+   }
+  },
+  {
+   "kind": "antler_rack",
+   "x": 528,
+   "y": 80,
+   "scale": 1.0,
+   "seed": 9237,
+   "t": 24.977941341556175,
+   "kwargs": {
+    "w": 22,
+    "h": 46
+   }
+  },
+  {
+   "kind": "oil_portrait",
+   "x": 424,
+   "y": 22,
+   "scale": 1.0,
+   "seed": 2,
+   "t": 65.34052784412341,
+   "kwargs": {}
+  },
+  {
+   "kind": "birdcage",
+   "x": 490,
+   "y": 144,
+   "scale": 1.0,
+   "seed": 9106,
+   "t": 18.736775831895947,
+   "kwargs": {}
+  }
+ ],
+ "npcs": [],
+ "hooks": {
+  "on_enter": "scenes.lodge:house_on_enter",
+  "on_update": null,
+  "on_exit": null,
+  "on_interact": "scenes.lodge:house_interact"
+ },
+ "attrs": {
+  "h": 12,
+  "w": 18,
+  "music": "home",
+  "wrap_x": false,
+  "wrap_y": false,
+  "lost_edges": null,
+  "skybox_kind": null,
+  "window_glass": null,
+  "exits": {
+   "H": {
+    "()": [
+     "lodge_hall",
+     "from_lodge"
+    ]
+   },
+   "D": {
+    "()": [
+     "lodge_yard",
+     "from_lodge"
+    ]
+   },
+   "L": {
+    "()": [
+     "lodge_cellar",
+     "from_lodge"
+    ]
+   }
+  },
+  "exit_directions": {},
+  "seethrough_doors": {
+   "{}": [
+    "H"
+   ]
+  },
+  "spawns": {
+   "default": {
+    "()": [
+     304,
+     304
+    ]
+   },
+   "from_hall": {
+    "()": [
+     432,
+     48
+    ]
+   },
+   "from_lodge_yard": {
+    "()": [
+     240,
+     336
+    ]
+   },
+   "from_lodge_cellar": {
+    "()": [
+     144,
+     272
+    ]
+   }
+  },
+  "_inner_doors": {},
+  "items": [],
+  "triggers": [],
+  "noise_traps": [],
+  "noise_sources": [],
+  "cult_stations": [],
+  "door_style": "wood",
+  "interactables": [
+   {
+    "()": [
+     112,
+     304,
+     40
+    ]
+   },
+   {
+    "()": [
+     272,
+     80,
+     44
+    ]
+   }
+  ],
+  "ambient_cues": [],
+  "combat": false,
+  "display_name": null,
+  "eye_cameras": [],
+  "_hatch_pos": {
+   "()": [
+    112,
+    304
+   ]
+  },
+  "_frontdesk_pos": {
+   "()": [
+    272,
+    80
+   ]
+  },
+  "hide_spots": [
+   {
+    "()": [
+     112,
+     88,
+     "under"
+    ]
+   }
+  ]
+ },
+ "fn_attrs": {
+  "exit_gate_fn": "?build_lodge.<locals>._house_gate"
+ }
+}
